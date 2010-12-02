@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <string.h>
 
 #include "pdsdata/xtc/Dgram.hh"
 #include "pdsdata/xtc/DetInfo.hh"

@@ -13,6 +13,8 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 using std::queue;
 using std::stack;
