@@ -1,3 +1,5 @@
+myana_morefeatures
+*.o
 CVS
 ./example/CVS
 ./release/pdstools/CVS
@@ -46,4 +48,3 @@ CVS
 ./release/pdsdata/app/CVS
 ./release/pdsdata/CVS
 ./release/CVS
-./CVS
