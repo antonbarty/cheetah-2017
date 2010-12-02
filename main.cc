@@ -71,7 +71,6 @@
 using std::vector;
 using std::string;
 using std::map;
-using std::auto_ptr;
 
 void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
                    float thresh, double* edge, int& n, int maxhits) {
