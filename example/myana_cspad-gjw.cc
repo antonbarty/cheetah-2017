@@ -13,6 +13,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <hdf5.h>
+
+#define ERROR(...) fprintf(stderr, __VA_ARGS__)
+#define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
 using namespace std;
 
@@ -174,6 +178,61 @@ void begincalib()
   printf("begincalib\n");
 }
 
+
+static int hdf5_write(const char *filename, const void *data,
+                      int width, int height, int type)
+{
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	herr_t r;
+	hsize_t size[2];
+	hsize_t max_size[2];
+
+	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if ( fh < 0 ) {
+		ERROR("Couldn't create file: %s\n", filename);
+		return 1;
+	}
+
+	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gh < 0 ) {
+		ERROR("Couldn't create group\n");
+		H5Fclose(fh);
+		return 1;
+	}
+
+	size[0] = width;
+	size[1] = height;
+	max_size[0] = width;
+	max_size[1] = height;
+	sh = H5Screate_simple(2, size, max_size);
+
+	dh = H5Dcreate(gh, "data", type, sh,
+	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( dh < 0 ) {
+		ERROR("Couldn't create dataset\n");
+		H5Fclose(fh);
+		return 1;
+	}
+
+	/* Muppet check */
+	H5Sget_simple_extent_dims(sh, size, max_size);
+
+	r = H5Dwrite(dh, type, H5S_ALL,
+	             H5S_ALL, H5P_DEFAULT, data);
+	if ( r < 0 ) {
+		ERROR("Couldn't write data\n");
+		H5Dclose(dh);
+		H5Fclose(fh);
+		return 1;
+	}
+
+	H5Gclose(gh);
+	H5Dclose(dh);
+	H5Fclose(fh);
+
+	return 0;
+}
+
 // This is called once every shot.  You can ask for
 // the individual detector shot data here.
 
@@ -259,6 +318,10 @@ void event()
 //gjw:  write out 2x8 array as binary 16 bit file
 	fwrite(data,sizeof(char)*2,ROWS*COLS*16,fp);
 	fclose(fp);
+
+	sprintf(filename,"%x.h5",element->fiducials());
+	hdf5_write(filename, data, ROWS*4, COLS*4, H5T_STD_U16LE);
+
 //gjw:  split 2x8 array into 2x2 (detector unit for rotation), 4 in a quad and write to file
 	uint16_t tbt[4][2*COLS][2*ROWS];
 	for(int g=0;g<4;g++){
@@ -268,6 +331,9 @@ void event()
 		FILE* fp1=fopen(filename,"w+");
 		fwrite(&tbt[g][0][0],sizeof(char)*2,ROWS*COLS*4,fp1);
 		fclose(fp1);
+
+		sprintf(filename,"%x-q%d.h5",element->fiducials(),g);
+		hdf5_write(filename, data, ROWS*2, COLS*2, H5T_STD_U16LE);
 	}
 //gjw:  rotate/reflect 2x2s into consistent orientations
 	uint16_t buff[2*COLS][2*ROWS];
@@ -288,6 +354,10 @@ void event()
 	fp1=fopen(filename,"w+");
 	fwrite(buff1[0],sizeof(char)*2,ROWS*COLS*4,fp1);
 	fclose(fp1);
+
+	sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),0);
+	hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
+
 //quad 1 (asics 4-7) 388x370
 //reflect	
 	for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
@@ -301,6 +371,9 @@ void event()
 	fwrite(buff3[0],sizeof(char)*2,ROWS*COLS*4,fp1);
 	fclose(fp1);
 
+	sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),1);
+	hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
+
 //quad 2 (asics 8-11) 370x388
 //rotate -90
 	for(unsigned int g=0;g<2*ROWS;g++)for(unsigned int j = 0;j<2*COLS;j++){
@@ -311,6 +384,9 @@ void event()
 	fp1=fopen(filename,"w+");
 	fwrite(buff1[0],sizeof(char)*2,ROWS*COLS*4,fp1);
 	fclose(fp1);
+
+	sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),2);
+	hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
 
 //quad 3 (asics 12-15) 388x370
 //reflect	
@@ -324,6 +400,9 @@ void event()
 	fp1=fopen(filename,"w+");
 	fwrite(buff2[0],sizeof(char)*2,ROWS*COLS*4,fp1);
 	fclose(fp1);
+
+	sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),3);
+	hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
      }
    }
   }

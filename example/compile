@@ -8,4 +8,4 @@ g++ -O4 -Irelease -Wall -c myana_cspad-gjw.cc
 g++ -O4 -Irelease -Wall -c CspadTemp.cc
 g++ -O4 -Irelease -Wall -c CspadGeometry.cc
 g++ -O4 -Irelease -Wall -c CspadCorrector.cc
-g++ -O4 ../main.o ../XtcRun.o myana_cspad-gjw.o CspadCorrector.o CspadGeometry.o CspadTemp.o -Wl,-rpath=./release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_cspad-gjw
+g++ -O4 ../main.o ../XtcRun.o myana_cspad-gjw.o CspadCorrector.o CspadGeometry.o CspadTemp.o -Wl,-rpath=./release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -lhdf5 -o myana_cspad-gjw
