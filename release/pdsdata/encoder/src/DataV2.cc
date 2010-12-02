@@ -30,7 +30,7 @@ Pds::Encoder::DataV2::DataV2(uint32_t timestamp, uint32_t count0,
 Pds::Encoder::DataV2::DataV2(uint32_t timestamp, uint32_t count0)
 {
   _33mhz_timestamp = timestamp;
-  _encoder_count[0] = count0;  /* This was '0' in the original..? */
+  _encoder_count[0] = count0;
   _encoder_count[1] = 0;
   _encoder_count[2] = 0;
 }
