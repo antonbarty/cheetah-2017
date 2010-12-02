@@ -261,6 +261,14 @@ void event()
   if (getFeeGasDet( gasdet )==0 && ievent<10)
     printf("gasdet %g/%g/%g/%g\n",
 	   gasdet[0], gasdet[1], gasdet[2], gasdet[3]);
+
+  double ft1, ft2, c1, c2;
+  if ( getPhaseCavity(ft1, ft2, c1, c2) == 0 ) {
+    printf("phase cav: %+11.8f %+11.8f %+11.8f %+11.8f\n", ft1, ft2, c1, c2);
+  } else {
+    printf("no phase cavity data.\n");
+  }
+
   Pds::CsPad::ElementIterator iter;
   //
   //  Dump some data from the first events
