@@ -11,6 +11,9 @@
 #include "CspadCorrector.hh"
 #include "CspadGeometry.hh"
 
+#include <stdio.h>
+#include <string.h>
+
 using namespace std;
 
 static CspadCorrector*      corrector;
