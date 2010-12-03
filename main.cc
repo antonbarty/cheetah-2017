@@ -2072,7 +2072,7 @@ int main(int argc, char *argv[])
 
   //printf("Opening output file %s\n", outfile);
   TFile *out;
-  out = new TFile(outfile, "RECREATE");
+  //out = new TFile(outfile, "RECREATE");
 
   if (caliblist) {
     printf("Opening caliblist %s\n", caliblist);
@@ -2136,8 +2136,8 @@ int main(int argc, char *argv[])
   }
   endjob();
 
-  out->Write();
-  out->Close();
+  //out->Write();
+  //out->Close();
 
   return 0;
 }
