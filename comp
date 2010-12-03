@@ -10,10 +10,10 @@ set OBJFILES='main.o XtcRun.o'
 
 prog = "myana_monitors"
 
-g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c XtcRun.cc
-g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c main.cc
-g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c myana.cc
-g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c $prog.cc
-g++ -m32 $CXXFLAGS $OBJFILES myana.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
-#g++ -m32 $CXXFLAGS $OBJFILES myana_morefeatures.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
-g++ -m32 $CXXFLAGS $OBJFILES prog.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o prog
+g++ $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c XtcRun.cc
+g++ $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c main.cc
+g++ $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c myana.cc
+g++ $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c $prog.cc
+g++  $CXXFLAGS $OBJFILES myana.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
+#g++ $CXXFLAGS $OBJFILES myana_morefeatures.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
+g++ $CXXFLAGS $OBJFILES prog.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o prog
