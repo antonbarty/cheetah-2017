@@ -1,0 +1,17 @@
+#!/bin/bash
+#export CXXFLAGS=-O4
+export ARCH=i386-linux-opt
+#release/build/pdsdata/lib/i386-linux-opt
+export ROOTSYS=/reg/g/pcds/package/root
+export PDSLIBS='-l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata'
+export OBJFILES='main.o XtcRun.o'
+
+prog="myana_monitors"
+
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c XtcRun.cc
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c main.cc
+#g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c myana.cc
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c $prog.cc
+g++ -m32 $CXXFLAGS $OBJFILES myana.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
+#g++ -m32 $CXXFLAGS $OBJFILES myana_morefeatures.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
+g++ -m32 $CXXFLAGS $OBJFILES $prog.o -Wl,-rpath=$ROOTSYS/lib:./release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o $prog

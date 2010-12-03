@@ -1,13 +1,13 @@
-/* $Id: main.cc,v 1.66 2010/11/02 16:52:54 weaver Exp $ */
+/* $Id: main.cc,v 1.67 2010/11/10 22:33:09 tomytsai Exp $ */
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
 #include <fcntl.h>
 
-//#include <TROOT.h>
-//#include <TApplication.h>
-//#include <TFile.h>
-//#include <TH1.h>
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TFile.h>
+#include <TH1.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -118,14 +118,14 @@ void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
   }
 }
 
-//void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-//                   float thresh, TH1* hist) {
-//  double edge[100];
-//  int n;
-//  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
-//  for(int i=0; i<n; i++)
-//    hist->Fill(edge[i],1.0);
-//}
+void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
+                   float thresh, TH1* hist) {
+  double edge[100];
+  int n;
+  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
+  for(int i=0; i<n; i++)
+    hist->Fill(edge[i],1.0);
+}
 
 /* 
  * Time Data
@@ -142,15 +142,19 @@ int getTime( int& seconds, int& nanoSeconds )
  
 int getLocalTime( const char*& time )
 {
-  static const char timeFormatStr[40] = "%04Y-%02m-%02d %02H:%02M:%02S"; /* Time format string */    
-  static char sTimeText[40];
-    
   int seconds = clockTimeCurDatagram.seconds();
   struct tm tmTimeStamp;
   localtime_r( (const time_t*) (void*) &seconds, &tmTimeStamp );    
+  static const char timeFormatStr[40] = "%d-%b-%y %02H:%02M:%02S";
+  char sTimeText[40];
   strftime(sTimeText, sizeof(sTimeText), timeFormatStr, &tmTimeStamp );
-    
-  time = sTimeText;
+
+  int nanoSeconds = clockTimeCurDatagram.nanoseconds();
+  int milliseconds = nanoSeconds/1000000;
+  static char timestring[40]; 
+  sprintf(timestring,"%s.%03d",sTimeText,milliseconds);
+
+  time = timestring;
   return 0;
 }
 
@@ -314,6 +318,8 @@ static int PrincetonDetectorIndex(const DetInfo::Detector det, int iDevId)
     iDetectorIndex = iDevId + SxrBeamlinePrinceton1;
   else if ( det == DetInfo::SxrEndstation )
     iDetectorIndex = iDevId + SxrEndstationPrinceton1;
+  else if ( det == DetInfo::XppEndstation )
+    iDetectorIndex = iDevId + XppPrinceton1;
   
   if ( iDetectorIndex < 0 || iDetectorIndex >= NumPrincetonDetector ) 
   {
@@ -1780,8 +1786,8 @@ public:
       case 1: process(info, *(const CsPad::ConfigV1*)(xtc->payload())); break;
       case 2: process(info, *(const CsPad::ConfigV2*)(xtc->payload())); break;
       default:
-	printf("Unknown version %d of Id_CspadConfig\n",xtc->contains.version());
-	break;
+  printf("Unknown version %d of Id_CspadConfig\n",xtc->contains.version());
+  break;
       } break;
     }
   case (TypeId::Id_CspadElement) :
@@ -1861,12 +1867,12 @@ static void dump(Pds::Dgram* dg)
   char buff[128];
   time_t t = dg->seq.clock().seconds();
   strftime(buff,128,"%H:%M:%S",localtime(&t));
-  printf("%s.%09u %08x/%08x %s extent 0x%x damage %x\n",
-	 buff,
-	 dg->seq.clock().nanoseconds(),
-	 dg->seq.stamp().fiducials(),dg->seq.stamp().vector(),
-	 Pds::TransitionId::name(dg->seq.service()),
-	 dg->xtc.extent, dg->xtc.damage.value());
+  //printf("%s.%09u %08x/%08x %s extent 0x%x damage %x\n",
+  // buff,
+  // dg->seq.clock().nanoseconds(),
+  // dg->seq.stamp().fiducials(),dg->seq.stamp().vector(),
+  // Pds::TransitionId::name(dg->seq.service()),
+  // dg->xtc.extent, dg->xtc.damage.value());
 }
 
 static void dump(Pds::Dgram* dg, unsigned ev)
@@ -1874,12 +1880,12 @@ static void dump(Pds::Dgram* dg, unsigned ev)
   char buff[128];
   time_t t = dg->seq.clock().seconds();
   strftime(buff,128,"%H:%M:%S",localtime(&t));
-  printf("%s.%09u %08x/%08x %s extent 0x%x damage %x event %d\n",
-	 buff,
-	 dg->seq.clock().nanoseconds(),
-	 dg->seq.stamp().fiducials(),dg->seq.stamp().vector(),
-	 Pds::TransitionId::name(dg->seq.service()),
-	 dg->xtc.extent, dg->xtc.damage.value(), ev);
+  //printf("%s.%09u %08x/%08x %s extent 0x%x damage %x event %d\n",
+  // buff,
+  // dg->seq.clock().nanoseconds(),
+  // dg->seq.stamp().fiducials(),dg->seq.stamp().vector(),
+  // Pds::TransitionId::name(dg->seq.service()),
+  // dg->xtc.extent, dg->xtc.damage.value(), ev);
 }
 
 void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, int iDebugLevel)
@@ -1888,7 +1894,7 @@ void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, int iDebugLevel)
 
   char* buffer = new char[0x2000000];
   Pds::Dgram* dg = (Pds::Dgram*)buffer;
-  printf("Using buffer %p\n",buffer);
+  //printf("Using buffer %p\n",buffer);
 
   Result r = OK;
   unsigned nevent = 0;
@@ -1911,7 +1917,7 @@ void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, int iDebugLevel)
     else if (nevent%nprint == 0) {
       dump(dg,nevent+1);
       if (nevent==10*nprint)
-	nprint *= 10;
+  nprint *= 10;
     }
     _fiducials = dg->seq.stamp().fiducials();
     damage = dg->xtc.damage.value();
@@ -1970,8 +1976,8 @@ void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, int iDebugLevel)
   } while(r==OK);
   
   endrun();
-  printf("Processed %d events, %d damaged, with damage mask 0x%x.\n", nevent,
-   ndamage, damagemask);
+  //printf("Processed %d events, %d damaged, with damage mask 0x%x.\n", nevent,
+  // ndamage, damagemask);
 
   delete[] buffer;
 }
@@ -1992,7 +1998,7 @@ XtcRun* getDarkFrameRun(unsigned run_number)
       XtcRun next;
       next.reset(*it);
       if (next.run_number() > run_number)
-	break;
+  break;
       run.reset(*it);
       nfiles=0;
     }
@@ -2064,9 +2070,9 @@ int main(int argc, char *argv[])
   if (filelist)
     makeoutfilename(filelist, outfile);
 
-//  printf("Opening output file %s\n", outfile);
-//  TFile *out;
-//  out = new TFile(outfile, "RECREATE");
+  //printf("Opening output file %s\n", outfile);
+  TFile *out;
+  out = new TFile(outfile, "RECREATE");
 
   if (caliblist) {
     printf("Opening caliblist %s\n", caliblist);
@@ -2078,7 +2084,7 @@ int main(int argc, char *argv[])
       //    (this conveniently groups chunks and slices)
       //
       while (fscanf(flist, "%s", filename) != EOF)
-	calib_files.push_back(std::string(filename));
+  calib_files.push_back(std::string(filename));
       calib_files.sort();
     }
   }
@@ -2130,8 +2136,8 @@ int main(int argc, char *argv[])
   }
   endjob();
 
-//  out->Write();
-//  out->Close();
+  out->Write();
+  out->Close();
 
   return 0;
 }

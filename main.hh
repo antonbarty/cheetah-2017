@@ -1,4 +1,4 @@
-/* $Id: main.hh,v 1.35 2010/10/21 21:51:19 weaver Exp $ */
+/* $Id: main.hh,v 1.36 2010/11/10 22:32:35 tomytsai Exp $ */
 #ifndef MAIN_H
 #define MAIN_H
 
@@ -40,7 +40,8 @@ enum FrameDetector
 enum PrincetonDetector
 {
     SxrBeamlinePrinceton1 = 0, SxrBeamlinePrinceton2 = 1, SxrEndstationPrinceton1 = 2, SxrEndstationPrinceton2 = 3,
-    AmoPrinceton1 = 0, AmoPrinceton2 = 1, AmoPrinceton3 = 2, AmoPrinceton4 = 3,
+    AmoPrinceton1 = 0, AmoPrinceton2 = 1, AmoPrinceton3 = 2, AmoPrinceton4 = 3,    
+    XppPrinceton1 = 0,
     NumPrincetonDetector = 4
 };
 
@@ -95,11 +96,11 @@ int getFccdConfig(FrameDetector det, uint16_t& outputMode, bool& ccdEnable, bool
                   uint16_t& waveform12, uint16_t& waveform13, uint16_t& waveform14);
 int getDiodeFexConfig (Pds::DetInfo::Detector det, int iDevId, float* base, float* scale);
 int getIpmFexConfig   (Pds::DetInfo::Detector det, int iDevId, 
-		       float* base0, float* scale0,
-		       float* base1, float* scale1,
-		       float* base2, float* scale2,
-		       float* base3, float* scale3,
-		       float& xscale, float& yscale);
+           float* base0, float* scale0,
+           float* base1, float* scale1,
+           float* base2, float* scale2,
+           float* base3, float* scale3,
+           float& xscale, float& yscale);
 
 namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; }}
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV1& cfg);
@@ -132,7 +133,7 @@ int getEvrData    (int id, unsigned int& eventCode, unsigned int& fiducial, unsi
 int getEncoderCount(Pds::DetInfo::Detector det, int iDevId, int& encoderCount, int chan=0);
 int getDiodeFexValue (Pds::DetInfo::Detector det, int iDevId, float& value);
 int getIpmFexValue   (Pds::DetInfo::Detector det, int iDevId, 
-		      float* channels, float& sum, float& xpos, float& ypos);
+          float* channels, float& sum, float& xpos, float& ypos);
 
 namespace Pds { namespace CsPad { class ElementIterator; }}
 int getCspadData  (Pds::DetInfo::Detector det, Pds::CsPad::ElementIterator& iter);
@@ -158,7 +159,7 @@ int   getEpicsPvValue (int pvId, const void*& value, int& dbrype, struct tm& tmT
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
                    float thresh, TH1* hist);
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-		    float thresh, double* edge, int& n, int maxhits);
+        float thresh, double* edge, int& n, int maxhits);
 
 class XtcRun;
 XtcRun* getDarkFrameRun(unsigned run);

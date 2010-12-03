@@ -1,11 +1,12 @@
 /* $Id: myana_morefeatures.cc,v 1.28 2010/10/14 19:36:55 jana Exp $ */
+#include <TROOT.h>
+#include <TH1F.h>
+#include <TProfile.h>
 
-#include <stdio.h>
 #include "myana.hh"
 #include "main.hh"
 
-#include "pdsdata/cspad/ElementIterator.hh"
-
+#include "release/pdsdata/cspad/ElementIterator.hh"
     
 static const int            numITofShot = 5;
 static const int            maxETofChannel = 20;
@@ -13,11 +14,15 @@ static const int            maxETofChannel = 20;
 static int                  numChannelsITof;
 static int                  numSamplesITof;
 static double               sampleIntervalITof;
+static TProfile*            profileITof = NULL;
+static TH1F*                h1fITof[numITofShot];
+static TH1F*                constFracITof;
 static unsigned int         shotCountITof = 0;
 
 static int                  numChannelsETof;
 static int                  numSamplesETof;
 static double               sampleIntervalETof;
+static TProfile*            profileETof[maxETofChannel];
 
 static int                  numChannelsMbes;
 static int                  numSamplesMbes;
@@ -50,7 +55,6 @@ static const int            numPv = sizeof(pvNames) / sizeof(pvNames[0]);
 static int                  numControlPv = 0;
 static int                  numMonitorPv = 0;
 
-using namespace std;
 using namespace Pds;
 
 // This function is called once at the beginning of the analysis job,
@@ -110,23 +114,23 @@ void beginjob() {
   fail = getAcqConfig( AmoITof, numChannelsITof, numSamplesITof, sampleIntervalITof);
     
   // create an "averaging" histogram (called "profile")
-//  profileITof = new TProfile("avg","avg",numSamplesITof,
-//                             0.0,sampleIntervalITof,"");
-//  profileITof->SetYTitle("Volts");    //optional
-//  profileITof->SetXTitle("Seconds");//optional
+  profileITof = new TProfile("avg","avg",numSamplesITof,
+                             0.0,sampleIntervalITof,"");
+  profileITof->SetYTitle("Volts");    //optional
+  profileITof->SetXTitle("Seconds");//optional
 
   // create a constant-fraction histogram for itof.
-//  constFracITof = new TH1F("ITOF Constant Fraction","ITOF Constant Fraction",
-//                           numSamplesITof,0.0,sampleIntervalITof);
+  constFracITof = new TH1F("ITOF Constant Fraction","ITOF Constant Fraction",
+                           numSamplesITof,0.0,sampleIntervalITof);
         
   char name[32];
   // create 5 individual shot histograms
   for (i=0;i<numITofShot;i=i+1) 
     {
- //     sprintf(name,"shot%3d",i);
- //     h1fITof[i] = new TH1F(name,name,numSamplesITof,0.0,sampleIntervalITof);
- //     h1fITof[i]->SetYTitle("Volts");    //optional
- //     h1fITof[i]->SetXTitle("Seconds");//optional
+      sprintf(name,"shot%3d",i);
+      h1fITof[i] = new TH1F(name,name,numSamplesITof,0.0,sampleIntervalITof);
+      h1fITof[i]->SetYTitle("Volts");    //optional
+      h1fITof[i]->SetXTitle("Seconds");//optional
     }    
 
   /*
@@ -135,11 +139,11 @@ void beginjob() {
   fail = getAcqConfig( AmoETof, numChannelsETof, numSamplesETof, sampleIntervalETof);    
   // create 5 individual shot histograms
   for (i=0;i<numChannelsETof;i=i+1) {
-//    sprintf(name,"ETOF Channel %d",i);
-//    profileETof[i] = new TProfile(name,name,numSamplesETof,
-//                                  0.0,sampleIntervalETof,"");
-//    profileETof[i]->SetYTitle("Volts");    //optional
-//    profileETof[i]->SetXTitle("Seconds");//optional
+    sprintf(name,"ETOF Channel %d",i);
+    profileETof[i] = new TProfile(name,name,numSamplesETof,
+                                  0.0,sampleIntervalETof,"");
+    profileETof[i]->SetYTitle("Volts");    //optional
+    profileETof[i]->SetXTitle("Seconds");//optional
   }    
     
   /*
@@ -252,15 +256,15 @@ void event()
   {        
     float baseline  = -0.03;
     float threshold = -0.06;
-//    fillConstFrac(timeITof,voltageITof,numSamplesITof,
-//                  baseline,threshold,constFracITof);
+    fillConstFrac(timeITof,voltageITof,numSamplesITof,
+                  baseline,threshold,constFracITof);
 
     for (i=0;i<numSamplesITof;i=i+1) 
       {
         double t = timeITof[i];
         double v = voltageITof[i];
-//        profileITof->Fill(t,v);
-//        if (shotCountITof<5) h1fITof[shotCountITof]->Fill(t,v);
+        profileITof->Fill(t,v);
+        if (shotCountITof<5) h1fITof[shotCountITof]->Fill(t,v);
       }
     shotCountITof++;
   }
@@ -279,7 +283,7 @@ void event()
         {
           double t = timeETof[j];
           double v = voltageETof[j];
-//          profileETof[i]->Fill(t,v);
+          profileETof[i]->Fill(t,v);
         }
     }
   }

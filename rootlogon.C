@@ -1,0 +1,3 @@
+{
+  TBrowser browser;
+}
