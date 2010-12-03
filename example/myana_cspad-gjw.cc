@@ -328,7 +328,7 @@ void event()
 	fclose(fp);
 
 	sprintf(filename,"%x.h5",element->fiducials());
-	hdf5_write(filename, data, ROWS*4, COLS*4, H5T_STD_U16LE);
+	hdf5_write(filename, data, ROWS*2, COLS*8, H5T_STD_U16LE);
 
 //gjw:  split 2x8 array into 2x2 (detector unit for rotation), 4 in a quad and write to file
 	uint16_t tbt[4][2*COLS][2*ROWS];
