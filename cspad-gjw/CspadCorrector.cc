@@ -1,7 +1,7 @@
 #include "CspadCorrector.hh"
 
-#include "../main.hh"
-#include "../XtcRun.hh"
+#include "../myana/main.hh"
+#include "../myana/XtcRun.hh"
 
 #include "pdsdata/xtc/Dgram.hh"
 #include "pdsdata/cspad/ElementHeader.hh"

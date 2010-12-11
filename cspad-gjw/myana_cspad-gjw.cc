@@ -1,8 +1,8 @@
 /* $Id: myana_cspad.cc,v 1.6 2010/10/21 22:09:43 weaver Exp $ */
 
-#include "../myana.hh"
-#include "../main.hh"
-#include "../XtcRun.hh"
+#include "../myana/myana.hh"
+#include "../myana/main.hh"
+#include "../myana/XtcRun.hh"
 #include "../release/pdsdata/cspad/ConfigV1.hh"
 #include "../release/pdsdata/cspad/ConfigV2.hh"
 #include "../release/pdsdata/cspad/ElementHeader.hh"
@@ -100,6 +100,8 @@ static bool beamOn()
   }
   return false;;
 }
+
+
 
 static MyQuad* quads[4];
     
