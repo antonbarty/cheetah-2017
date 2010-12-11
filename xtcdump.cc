@@ -39,8 +39,8 @@ void beginrun()
 	logfile = fopen(filename,"a");
   	
   	// Generate header line
-  	printf("FrameNumber, Timestamp, Fiducial_hex, Time, PhotonEnergy_eV, GMD1_mJ, GMD2_mJ\n");
-  	fprintf(logfile, "RunNo, FrameNumber, Timestamp, Fiducial_hex, ClockTime, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
+  	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, GMD1_mJ, GMD2_mJ\n");
+  	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
 }
 void begincalib()
 {
@@ -97,6 +97,19 @@ void event() {
 		// printf("Time (single shot): %s.%09d\n",time,nanoSeconds);
 
 
+  	/*
+  	 *	Is the beam on?
+  	 */
+		bool 	beamOn = 0;
+  		int nfifo = getEvrDataNumber();
+		for(int i=0; i<nfifo; i++) {
+    		unsigned eventCode, fiducial, timestamp;
+    		if (getEvrData(i,eventCode,fiducial,timestamp)) 
+      			printf("Failed to fetch evr fifo data\n");
+    		else if (eventCode==140)
+    			beamOn = 1;
+    	}
+		//printf("Beam %s\n", beamOn ? "On":"Off");
 
 
 
@@ -145,8 +158,9 @@ void event() {
 		// Calculate the resonant photon energy of the first active segment
 		double photonEnergyeV = 44.42*energyProfile*energyProfile;
 
-
+		// Calculate wavelength in Angstrom
 		double wavelengthA = 13988./photonEnergyeV;		
+
 		// printf("Resonant photon energy (energy corrected, eV): %f\n",photonEnergyeV);
 
 
@@ -188,8 +202,8 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-  	printf("r%04u, %li, %u, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber, timeStamp, fiducial, time, photonEnergyeV, wavelengthA, gmd1, gmd2);
-   	fprintf(logfile, "r%04u, %li, %u, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber, timeStamp, fiducial, time, photonEnergyeV, wavelengthA, gmd1, gmd2);
+  	printf("r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2);
+   	fprintf(logfile, "r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber, time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2);
 
   	// printf("%li, %s, %f, %f, %f\n", frameNumber, time, photonEnergyeV, gmd1, gmd2);
 
