@@ -34,6 +34,6 @@ xtcdump: main.o xtcdump.o XtcRun.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) $(LDFLAGS_ROOT) -o $@ $^
 
 test: xtcdump
-	./xtcdump -f ~schotte/xpp23410/samples/e66-r0039-s00-c00.xtc -n 21
+	./xtcdump -f ~schotte/xpp23410/sample_files/XTC/e66-r0039-s00-c00.xtc -n 21
 
 	
