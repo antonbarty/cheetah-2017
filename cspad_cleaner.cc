@@ -329,24 +329,13 @@ void event() {
 					unsigned section_id;
 
 
-					// loop over sections 
-					//	(each is a "two by one")
+					// loop over sections (each section is a "two by one")
 					uint16_t data[COLS*ROWS*16];
 					while(( s=iter.next(section_id) )) {  
-						//	  printf("           Section %d  { %04x %04x %04x %04x }\n",
-						//		 section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 						//gjw:  read out data in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-						memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*2*ROWS*COLS);
+						memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 					}
 					
-					//gjw:  hack to write all sections to file
-					//gjw:  write out 2x8 array as binary 16 bit file
-					//strcpy(filename,"");
-					//sprintf(filename,"%x.raw",element->fiducials());
-					//fp=fopen(filename,"w+");
-					//fwrite(data,sizeof(uint16_t),ROWS*COLS*16,fp);
-					//fclose(fp);
-
 					// ROWS = 194;  COLS = 185;
 					sprintf(filename,"%x.h5",element->fiducials());
 					hdf5_write(filename, data, 8*COLS, 2*ROWS, H5T_STD_U16LE);
@@ -356,16 +345,16 @@ void event() {
 					//gjw:  split 2x8 array into 2x2 (detector unit for rotation), 4 in a quad and write to file
 					uint16_t tbt[4][2*COLS][2*ROWS];
 					for(int g=0;g<4;g++){
+						// Copy memory into buffers
 						memcpy(&tbt[g],&data[g*2*2*ROWS*COLS],2*4*COLS*ROWS);
-						strcpy(filename,"");
-						sprintf(filename,"%x-q%d.raw",element->fiducials(),g);
-						FILE* fp1=fopen(filename,"w+");
-						fwrite(&tbt[g][0][0],sizeof(char)*2,ROWS*COLS*4,fp1);
-						fclose(fp1);
+
+						// Write to file
 						sprintf(filename,"%x-q%d.h5",element->fiducials(),g);
 						hdf5_write(filename, data, ROWS*2, COLS*2, H5T_STD_U16LE);
 					}
-					
+
+
+					// Geometrical corrections
 					//gjw:  rotate/reflect 2x2s into consistent orientations
 					uint16_t buff[2*COLS][2*ROWS];
 					uint16_t buff1[2*ROWS][2*COLS];
@@ -380,12 +369,8 @@ void event() {
 					// Rotate 90
 					for(unsigned int g=0;g<2*ROWS;g++)for(unsigned int j = 0;j<2*COLS;j++)
 						buff1[g][j]=buff[2*ROWS-1-j+2*(COLS-ROWS)][g];
+
 					// Write to file						
-					strcpy(filename,"");
-					sprintf(filename,"%x-q%d-corrected.raw",element->fiducials(),0);
-					fp1=fopen(filename,"w+");
-					fwrite(buff1[0],sizeof(char)*2,ROWS*COLS*4,fp1);
-					fclose(fp1);
 					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),0);
 					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
 
@@ -398,24 +383,15 @@ void event() {
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff3[g][j]=buff[g][2*ROWS-1-j];	
 					// Write to file
-					strcpy(filename,"");
-					sprintf(filename,"%x-q%d-corrected.raw",element->fiducials(),1);
-					fp1=fopen(filename,"w+");
-					fwrite(buff3[0],sizeof(char)*2,ROWS*COLS*4,fp1);
-					fclose(fp1);
 					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),1);
 					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
+
 
 					//quad 2 (asics 8-11) 370x388
 					//rotate -90
 					for(unsigned int g=0;g<2*ROWS;g++)for(unsigned int j = 0;j<2*COLS;j++)
 						buff1[g][j]=tbt[2][j][2*COLS-1-g+2*(ROWS-COLS)];
 					// Write to file
-					strcpy(filename,"");
-					sprintf(filename,"%x-q%d-corrected.raw",element->fiducials(),2);
-					fp1=fopen(filename,"w+");
-					fwrite(buff1[0],sizeof(char)*2,ROWS*COLS*4,fp1);
-					fclose(fp1);
 					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),2);
 					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
 
@@ -428,11 +404,6 @@ void event() {
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff2[g][j]=buff[g][2*ROWS-1-j];	
 					// Write to file
-					strcpy(filename,"");
-					sprintf(filename,"%x-q%d-corrected.raw",element->fiducials(),3);
-					fp1=fopen(filename,"w+");
-					fwrite(buff2[0],sizeof(char)*2,ROWS*COLS*4,fp1);
-					fclose(fp1);
 					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),3);
 					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
      			}
