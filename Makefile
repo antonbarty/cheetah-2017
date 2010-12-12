@@ -67,6 +67,7 @@ cspad_cleaner: cspad_cleaner.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDI
 
 # test data
 test: cspad_cleaner
-	./cspad_cleaner -f ~schotte/xpp23410/samples/e66-r0039-s00-c00.xtc -n 1
+	./cspad_cleaner -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 1   
+	#./cspad_cleaner -f ~gjwillms/cfel-cspad/e40-r0546-s00-c00.xtc -n 1   
 
 	
