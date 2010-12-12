@@ -247,7 +247,12 @@ static int hdf5_write(const char *filename, const void *data, int width, int hei
  */
 void event() {
 	
+	
 	printf("New event\n");
+	FILE* fp;
+	char filename[1024];
+
+
 	
 	/*
 	 * Get time information
@@ -303,13 +308,14 @@ void event() {
 		//  }
 
   		Pds::CsPad::ElementIterator iter;
-
 		fail=getCspadData(DetInfo::XppGon, iter);
+
 		if (fail==0) {
 			nevents++;
     		const Pds::CsPad::ElementHeader* element;
     		// loop over elements (quadrants)
-    		while( (element=iter.next()) ) {  
+    		
+    		while(( element=iter.next() )) {  
 				//gjw:  only quad 3 has data during commissioning
      			if(element->quad()==2){
 					//gjw:  check that we are not on a new fiducial
@@ -317,32 +323,34 @@ void event() {
 						printf("Fiducials %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
 					//gjw:  get temp on strong back 2 
 					printf("Temperature: %3.1fC\n",CspadTemp::instance().getTemp(element->sb_temp(2)));
-					//gjw:  read 2x1 "sections"
 
+					//gjw:  read 2x1 "sections"
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 
-					//gjw:  hack to write all sections to file
-					FILE* fp;
-					uint16_t data[COLS*ROWS*16];
-					char filename[64];
-					strcpy(filename,"");
-					sprintf(filename,"%x.raw",element->fiducials());
-					fp=fopen(filename,"w+");
 
-					// loop over sections (two by one's)
-					while( (s=iter.next(section_id)) ) {  
+					// loop over sections 
+					//	(each is a "two by one")
+					uint16_t data[COLS*ROWS*16];
+					while(( s=iter.next(section_id) )) {  
 						//	  printf("           Section %d  { %04x %04x %04x %04x }\n",
 						//		 section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 						//gjw:  read out data in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 						memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*2*ROWS*COLS);
 					}
+					
+					//gjw:  hack to write all sections to file
 					//gjw:  write out 2x8 array as binary 16 bit file
-					fwrite(data,sizeof(char)*2,ROWS*COLS*16,fp);
-					fclose(fp);
+					//strcpy(filename,"");
+					//sprintf(filename,"%x.raw",element->fiducials());
+					//fp=fopen(filename,"w+");
+					//fwrite(data,sizeof(uint16_t),ROWS*COLS*16,fp);
+					//fclose(fp);
 
+					// ROWS = 194;  COLS = 185;
 					sprintf(filename,"%x.h5",element->fiducials());
-					hdf5_write(filename, data, ROWS*4, COLS*4, H5T_STD_U16LE);
+					hdf5_write(filename, data, 8*COLS, 2*ROWS, H5T_STD_U16LE);
+					//hdf5_write(filename, data,  ROWS*2, COLS*8, H5T_STD_U16LE);
 
 
 					//gjw:  split 2x8 array into 2x2 (detector unit for rotation), 4 in a quad and write to file
