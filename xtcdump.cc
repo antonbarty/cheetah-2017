@@ -37,7 +37,12 @@ void beginrun()
 	char filename[1024];
 	sprintf(filename,"r%04u-data.csv",getRunNumber());
 	logfile = fopen(filename,"a");
-  	
+	if ( logfile == NULL ) {
+		fprintf(stderr, "Couldn't open file '%s' for writing.\n",
+		        filename);
+		exit(1);
+	}
+
   	// Generate header line
   	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, GMD1_mJ, GMD2_mJ\n");
   	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
