@@ -39,7 +39,7 @@ void beginrun()
 	logfile = fopen(filename,"a");
   	
   	// Generate header line
-  	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, GMD1_mJ, GMD2_mJ\n");
+  	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
   	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
 }
 void begincalib()

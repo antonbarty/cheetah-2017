@@ -10,7 +10,7 @@ CFLAGS			= -Irelease
 PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
 LD_FLAGS		= $(PDSLIBS) -Lrelease/build/pdsdata/lib/$(ARCH)/ 
 CFLAGS_ROOT		= $(shell $(ROOTSYS)/bin/root-config --cflags)
-LDFLAGS_ROOT	= $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath=$(ROOTSYS)/lib:release/build/pdsdata/lib/$(ARCH)/
+LDFLAGS_ROOT	= $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath=$(ROOTSYS)/lib:/reg/neh/home/barty/schotte/xtcdump/release/build/pdsdata/lib/$(ARCH)/
 
 all: $(TARGET)
 
