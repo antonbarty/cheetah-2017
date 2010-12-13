@@ -213,6 +213,13 @@ void event() {
 	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) ) {
 		fprintf(stderr, "Couldn't get mono position.\n");
 	}
+	const double R = 3.175;
+	const double D = 231.303;
+	const double theta0 = 15.08219;
+	const double Si111dspacing = 3.13556044;
+	const double theta = theta0 + 180/M_PI*2.0
+	                * atan( (sqrt(alio*alio+D*D+2.0*R*alio)-D) / (2.0*R+alio));
+	const double mono = 2.0*Si111dspacing*sin(theta/180*M_PI);
 
 
 	/*
@@ -227,8 +234,13 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-  	printf("r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f, %f\n", runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2, ipm3sum);
-   	fprintf(logfile, "r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber, time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2);
+	printf("r%04u, %4li, %s, 0x%x, %s, %f, %f, %f, %f, %f, %f\n",
+	      runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off",
+	      photonEnergyeV, wavelengthA, gmd1, gmd2, ipm3sum, mono);
+	fprintf(logfile, "r%04u, %4li, %s, 0x%x, %s, %f, %f, %f, %f, %f, %f\n",
+	        runNumber, frameNumber, time, fiducial,
+	        beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA,
+	        gmd1, gmd2, ipm3sum, mono);
 
   	// printf("%li, %s, %f, %f, %f\n", frameNumber, time, photonEnergyeV, gmd1, gmd2);
 
