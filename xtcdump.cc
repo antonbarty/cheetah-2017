@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <limits>
 
 #include "myana.hh"
 #include "main.hh"
@@ -48,12 +49,14 @@ void beginrun()
 	}
 
   	// Generate header line
-	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?,"
-	       " PhotonEnergy_eV, GMD1_mJ, GMD2_mJ, IPM1_V, IPM2_V, IPM3_V,"
+	printf("Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
+	       " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
+	       "    IPM1_V,     IPM2_V,     IPM3_V,"
 	       " Mono_A\n");
-	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?,"
-	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ, "
-	                 " IPM1_V, IPM2_V, IPM3_V, Mono_A\n");
+	fprintf(logfile, "Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
+	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
+	                 "   IPM1_V,     IPM2_V,     IPM3_V,"
+	                 " Mono_A\n");
 }
 void begincalib()
 {
@@ -129,66 +132,62 @@ void event() {
 	/*
 	 * Get electron beam parameters from beamline data
 	 */     
-		double fEbeamCharge;    // in nC
-		double fEbeamL3Energy;  // in MeV 
-		double fEbeamLTUPosX;   // in mm 
-		double fEbeamLTUPosY;   // in mm 
-		double fEbeamLTUAngX;   // in mrad 
-		double fEbeamLTUAngY;   // in mrad
-		double fEbeamPkCurrBC2; // in Amps
+	double fEbeamCharge;    // in nC
+	double fEbeamL3Energy;  // in MeV
+	double fEbeamLTUPosX;   // in mm
+	double fEbeamLTUPosY;   // in mm
+	double fEbeamLTUAngX;   // in mrad
+	double fEbeamLTUAngY;   // in mrad
+	double fEbeamPkCurrBC2; // in Amps
+	double photonEnergyeV;
+	double wavelengthA;
 
-		fail = getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY, fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2);
+	if ( getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
+	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
 
+		wavelengthA = std::numeric_limits<double>::quiet_NaN();
+		photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
 
-	/*
-	 * Calculate the resonant photon energy (ie: photon wavelength)
-	 */
+	} else {
 
+		/* Calculate the resonant photon energy (ie: photon wavelength) */
 		// Get the present peak current in Amps
 		double peakCurrent = fEbeamPkCurrBC2;
-  
 		// Get present charge in pC
 		double charge = 1000*fEbeamCharge;
-  
 		// Get present beam energy [GeV]
 		double DL2energyGeV = 0.001*fEbeamL3Energy;
-		
 		// wakeloss prior to undulators
 		double LTUwakeLoss = 0.0016293*peakCurrent;
-		
 		// Spontaneous radiation loss per segment
 		double SRlossPerSegment = 0.63*DL2energyGeV;
-		
 		// wakeloss in an undulator segment
 		double wakeLossPerSegment = 0.0003*peakCurrent;
-		
 		// energy loss per segment
 		double energyLossPerSegment = SRlossPerSegment + wakeLossPerSegment;
-		
 		// energy in first active undulator segment [GeV]
-		double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss - 0.0005*energyLossPerSegment;
-		
+		double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss
+		         - 0.0005*energyLossPerSegment;
 		// Calculate the resonant photon energy of the first active segment
-		double photonEnergyeV = 44.42*energyProfile*energyProfile;
-
+		photonEnergyeV = 44.42*energyProfile*energyProfile;
 		// Calculate wavelength in Angstrom
-		double wavelengthA = 13988./photonEnergyeV;		
-
-		// printf("Resonant photon energy (energy corrected, eV): %f\n",photonEnergyeV);
-
+		wavelengthA = 13988./photonEnergyeV;
+	}
 
 	/*
 	 * 	FEE gas detectors (pulse energy in mJ)
 	 */     
-		double 	shotEnergy[4];
-		fail = getFeeGasDet( shotEnergy );
-
-		double	gmd1;
-		double 	gmd2;
+	double shotEnergy[4];
+	double gmd1;
+	double gmd2;
+	if ( getFeeGasDet(shotEnergy) ) {
+		gmd1 = std::numeric_limits<double>::quiet_NaN();
+		gmd2 = std::numeric_limits<double>::quiet_NaN();
+	} else {
 		gmd1 = (shotEnergy[0]+shotEnergy[1])/2;
 		gmd2 = (shotEnergy[2]+shotEnergy[3])/2;
+	}
 
-		
 
 	/*
 	 * Phase cavity data
@@ -209,15 +208,15 @@ void event() {
 	float ipm1sum, ipm2sum, ipm3sum, xpos, ypos;
 	if ( getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes,
 	                    ipm1sum, xpos, ypos) ) {
-		ipm1sum = 1.0/0.0;
+		ipm1sum = std::numeric_limits<double>::quiet_NaN();
 	}
 	if ( getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,
 	                    ipm2sum, xpos, ypos) ) {
-		ipm2sum = 1.0/0.0;
+		ipm2sum = std::numeric_limits<double>::quiet_NaN();
 	}
 	if ( getIpmFexValue(Pds::DetInfo::XppSb3Ipm, 0, diodes,
 	                    ipm3sum, xpos, ypos) ) {
-		ipm3sum = 1.0/0.0;
+		ipm3sum = std::numeric_limits<double>::quiet_NaN();
 	}
 
 	/*
@@ -250,15 +249,15 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-	printf("r%04u, %4li, %s, 0x%5x, %s, %f, %f, %f, %f,"
-	       " %+f, %+f, %+f, %s\n",
+	printf("r%04u, %4li, %s, 0x%5x, %s, %10.6f, %10.2f, %10.6f, %10.6f,"
+	       " %+10.6f, %+10.6f, %+10.6f, %s\n",
 	      runNumber, frameNumber,  time, fiducial,
 	      beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
 	      gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
-	fprintf(logfile, "r%04u, %4li, %s, 0x%5x, %s, %f, %f, %f, %f,"
-	                 " %+f, %+f, %+f, %s\n",
+	fprintf(logfile, "r%04u, %4li, %s, 0x%5x, %s, %10.2f, %10.6f, %10.6f,"
+	                 "%10.6f, %+10.6f, %+10.6f, %+10.6f, %s\n",
 	        runNumber, frameNumber, time, fiducial,
-	        beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA,
+	        beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
 	        gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
 
   	// printf("%li, %s, %f, %f, %f\n", frameNumber, time, photonEnergyeV, gmd1, gmd2);
