@@ -10,7 +10,7 @@
  *	Static global variables
  */
 long 	frameNumber;
-FILE	*logfile;
+FILE	*logfile = NULL;
 
 
 /*
@@ -32,11 +32,15 @@ void beginrun()
 	printf("beginrun()\n");
   	frameNumber = 0;
   	
-  	
+	if ( logfile != NULL ) {
+		fprintf(stderr, "beginrun() called for a second time.  Uh-oh.\n");
+		abort();
+	}
+
 	// Create output file
 	char filename[1024];
 	sprintf(filename,"r%04u-data.csv",getRunNumber());
-	logfile = fopen(filename,"a");
+	logfile = fopen(filename,"w");
 	if ( logfile == NULL ) {
 		fprintf(stderr, "Couldn't open file '%s' for writing.\n",
 		        filename);
