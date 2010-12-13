@@ -48,8 +48,12 @@ void beginrun()
 	}
 
   	// Generate header line
-  	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, GMD1_mJ, GMD2_mJ\n");
-  	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?, PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ\n");
+	printf("Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?,"
+	       " PhotonEnergy_eV, GMD1_mJ, GMD2_mJ, IPM1_V, IPM2_V, IPM3_V,"
+	       " Mono_A\n");
+	fprintf(logfile, "Run#, FrameNumber, Timestamp, Fiducial_hex, BeamOn?,"
+	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ, "
+	                 " IPM1_V, IPM2_V, IPM3_V, Mono_A\n");
 }
 void begincalib()
 {
@@ -202,29 +206,37 @@ void event() {
 	 * Get IPM values
 	 */
 	float diodes[4];
-	float ipm2sum, ipm3sum, xpos, ypos;
-	int haveipm;
-	getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes, ipm2sum, xpos, ypos);
-	haveipm = getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,
-	                         ipm2sum, xpos, ypos);
-	getIpmFexValue(Pds::DetInfo::XppSb3Ipm, 0, diodes, ipm3sum, xpos, ypos);
-
+	float ipm1sum, ipm2sum, ipm3sum, xpos, ypos;
+	if ( getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes,
+	                    ipm1sum, xpos, ypos) ) {
+		ipm1sum = 1.0/0.0;
+	}
+	if ( getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,
+	                    ipm2sum, xpos, ypos) ) {
+		ipm2sum = 1.0/0.0;
+	}
+	if ( getIpmFexValue(Pds::DetInfo::XppSb3Ipm, 0, diodes,
+	                    ipm3sum, xpos, ypos) ) {
+		ipm3sum = 1.0/0.0;
+	}
 
 	/*
 	 * Get monochromator position
 	 */
+	char mono[32];
 	double alio;
 	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) ) {
-		fprintf(stderr, "Couldn't get mono position.\n");
+		snprintf(mono, 31, "n/a");
+	} else {
+		const double R = 3.175;
+		const double D = 231.303;
+		const double theta0 = 15.08219;
+		const double Si111dspacing = 3.13556044;
+		const double theta = theta0 + 180/M_PI*2.0
+		           * atan( (sqrt(alio*alio+D*D+2.0*R*alio)-D) / (2.0*R+alio));
+		const double monov = 2.0*Si111dspacing*sin(theta/180*M_PI);
+		snprintf(mono, 31, "%f", monov);
 	}
-	const double R = 3.175;
-	const double D = 231.303;
-	const double theta0 = 15.08219;
-	const double Si111dspacing = 3.13556044;
-	const double theta = theta0 + 180/M_PI*2.0
-	                * atan( (sqrt(alio*alio+D*D+2.0*R*alio)-D) / (2.0*R+alio));
-	const double mono = 2.0*Si111dspacing*sin(theta/180*M_PI);
-
 
 	/*
 	 * 	Retrieving Epics Pv Values
@@ -238,13 +250,16 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-	printf("r%04u, %4li, %s, 0x%x, %s, %f, %f, %f, %f, %f, %f\n",
-	      runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off",
-	      photonEnergyeV, wavelengthA, gmd1, gmd2, ipm3sum, mono);
-	fprintf(logfile, "r%04u, %4li, %s, 0x%x, %s, %f, %f, %f, %f, %f, %f\n",
+	printf("r%04u, %4li, %s, 0x%5x, %s, %f, %f, %f, %f,"
+	       " %+f, %+f, %+f, %s\n",
+	      runNumber, frameNumber,  time, fiducial,
+	      beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
+	      gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
+	fprintf(logfile, "r%04u, %4li, %s, 0x%5x, %s, %f, %f, %f, %f,"
+	                 " %+f, %+f, %+f, %s\n",
 	        runNumber, frameNumber, time, fiducial,
 	        beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA,
-	        gmd1, gmd2, ipm3sum, mono);
+	        gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
 
   	// printf("%li, %s, %f, %f, %f\n", frameNumber, time, photonEnergyeV, gmd1, gmd2);
 
