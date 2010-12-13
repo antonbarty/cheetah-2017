@@ -194,6 +194,26 @@ void event() {
 		fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 
 
+	/*
+	 * Get IPM values
+	 */
+	float diodes[4];
+	float ipm2sum, ipm3sum, xpos, ypos;
+	int haveipm;
+	getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes, ipm2sum, xpos, ypos);
+	haveipm = getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,
+	                         ipm2sum, xpos, ypos);
+	getIpmFexValue(Pds::DetInfo::XppSb3Ipm, 0, diodes, ipm3sum, xpos, ypos);
+
+
+	/*
+	 * Get monochromator position
+	 */
+	double alio;
+	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) ) {
+		fprintf(stderr, "Couldn't get mono position.\n");
+	}
+
 
 	/*
 	 * 	Retrieving Epics Pv Values
@@ -207,7 +227,7 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-  	printf("r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2);
+  	printf("r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f, %f\n", runNumber, frameNumber,  time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2, ipm3sum);
    	fprintf(logfile, "r%04u, %li, %s, 0x%x, %s, %f, %f, %f, %f\n", runNumber, frameNumber, time, fiducial, beamOn?"Beam On":"Beam Off", photonEnergyeV, wavelengthA, gmd1, gmd2);
 
   	// printf("%li, %s, %f, %f, %f\n", frameNumber, time, photonEnergyeV, gmd1, gmd2);
