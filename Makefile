@@ -1,16 +1,16 @@
-
-TARGET 			= xtcdump
-ARCH 			= i386-linux-opt
-ROOTSYS			= /reg/g/pcds/package/root
-OBJFILES		= main.o XtcRun.o
-CPP				= g++ -c
-LD 				= g++
-CPP_LD_FLAGS	= -m32 -O4 -Wall
+TARGET                  = xtcdump
+ARCH                    = i386-linux-opt
+ROOTSYS                 = /reg/g/pcds/package/root
+PCDS_PACKAGE            = /reg/neh/home/taw/myana/release/build/pdsdata/lib/$(ARCH)/
+OBJFILES                = main.o XtcRun.o
+CPP                     = g++ -c
+LD                      = g++
+CPP_LD_FLAGS            = -m32 -O4 -Wall
 CFLAGS			= -Irelease
-PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
-LD_FLAGS		= $(PDSLIBS) -Lrelease/build/pdsdata/lib/$(ARCH)/ 
-CFLAGS_ROOT		= $(shell $(ROOTSYS)/bin/root-config --cflags)
-LDFLAGS_ROOT	= $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath=$(ROOTSYS)/lib:/reg/neh/home/barty/schotte/xtcdump/release/build/pdsdata/lib/$(ARCH)/
+PDSLIBS                 = -lacqdata -lbld -lxtcdata -lopal1kdata -lcamdata -lpnccddata -lcontroldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
+LD_FLAGS                = $(PDSLIBS) -L$(PCDS_PACKAGE)
+CFLAGS_ROOT             = $(shell $(ROOTSYS)/bin/root-config --cflags)
+LDFLAGS_ROOT            = $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath=$(ROOTSYS)/lib:$(PCDS_PACKAGE)
 
 all: $(TARGET)
 
