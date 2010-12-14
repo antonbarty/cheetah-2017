@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <limits>
+#include <string.h>
 
 #include "myana.hh"
 #include "main.hh"
@@ -12,7 +13,7 @@
  */
 long 	frameNumber;
 FILE	*logfile = NULL;
-
+char 	current_filename[1024];
 
 /*
  * beginjob() is called once at the beginning of the analysis job
@@ -21,6 +22,7 @@ FILE	*logfile = NULL;
 void beginjob() 
 { 
 	printf("beginjob()\n");
+	strcpy(current_filename, "none");
 }
 
 
@@ -33,20 +35,36 @@ void beginrun()
 	printf("beginrun()\n");
   	frameNumber = 0;
   	
-	if ( logfile != NULL ) {
-		fprintf(stderr, "beginrun() called for a second time.  Uh-oh.\n");
-		abort();
-	}
+  	// Commented out as this causes problems when processing multiple runs from file
+	//if ( logfile != NULL ) {
+	//	fprintf(stderr, "beginrun() called for a second time.  Uh-oh.\n");
+	//	abort();
+	//}
 
-	// Create output file
+
+	// Current output filename
 	char filename[1024];
 	sprintf(filename,"r%04u-data.csv",getRunNumber());
-	logfile = fopen(filename,"w");
-	if ( logfile == NULL ) {
-		fprintf(stderr, "Couldn't open file '%s' for writing.\n",
-		        filename);
-		exit(1);
+	
+
+	// If run has changed, the output filename should be different to the currently open file 
+	// Create a new file with current filename (also do this if logfile==NULL!)
+	if(strcmp(current_filename, filename) != 0 || logfile == NULL) {
+		if ( logfile != NULL ) {
+			fclose(logfile);
+			logfile = NULL;
+		}
+
+		printf("Creating new data file %s\n", filename);
+		logfile = fopen(filename,"w");
+		if ( logfile == NULL ) {
+			fprintf(stderr, "Couldn't open file '%s' for writing.\n",
+					filename);
+			exit(1);
+		}
+		strcpy(current_filename, filename);
 	}
+
 
   	// Generate header line
 	printf("Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
@@ -73,59 +91,59 @@ void event() {
 	/*
 	 *	Increment frame number
 	 */
-		frameNumber++;
-		// printf("Frame Number %li\n",frameNumber);	
-		int fail = 0;
+	frameNumber++;
+	// printf("Frame Number %li\n",frameNumber);	
+	int fail = 0;
 
 	/*
 	 *	Get run number
 	 */
-	 	unsigned runNumber;
-	 	runNumber = getRunNumber();
+	unsigned runNumber;
+	runNumber = getRunNumber();
 
 
 	/*
 	 *	Get event information
 	 */	 
-		int 			numEvrData;
-		unsigned int 	eventCode;
-		unsigned int 	fiducial;
-		unsigned int 	timeStamp;
-		
-		numEvrData = getEvrDataNumber();
-		for (long i=0; i<numEvrData; i++) {
-			fail = getEvrData( i, eventCode, fiducial, timeStamp );
-		}
-		// EventCode==140 = Beam On
+	int 			numEvrData;
+	unsigned int 	eventCode;
+	unsigned int 	fiducial;
+	unsigned int 	timeStamp;
+	
+	numEvrData = getEvrDataNumber();
+	for (long i=0; i<numEvrData; i++) {
+		fail = getEvrData( i, eventCode, fiducial, timeStamp );
+	}
+	// EventCode==140 = Beam On
 
-		fail = getFiducials(fiducial);
+	fail = getFiducials(fiducial);
 
 
 	/*
  	 * Get time information
 	 */
-		int seconds;
-		int nanoSeconds;
-		const char* time;
-		
-		getTime( seconds, nanoSeconds );  
-		fail = getLocalTime( time );
-		// printf("Time (single shot): %s.%09d\n",time,nanoSeconds);
+	int seconds;
+	int nanoSeconds;
+	const char* time;
+	
+	getTime( seconds, nanoSeconds );  
+	fail = getLocalTime( time );
+	// printf("Time (single shot): %s.%09d\n",time,nanoSeconds);
 
 
   	/*
   	 *	Is the beam on?
   	 */
-		bool 	beamOn = 0;
-  		int nfifo = getEvrDataNumber();
-		for(int i=0; i<nfifo; i++) {
-    		unsigned eventCode, fiducial, timestamp;
-    		if (getEvrData(i,eventCode,fiducial,timestamp)) 
-      			printf("Failed to fetch evr fifo data\n");
-    		else if (eventCode==140)
-    			beamOn = 1;
-    	}
-		//printf("Beam %s\n", beamOn ? "On":"Off");
+	bool 	beamOn = 0;
+	int nfifo = getEvrDataNumber();
+	for(int i=0; i<nfifo; i++) {
+		unsigned eventCode, fiducial, timestamp;
+		if (getEvrData(i,eventCode,fiducial,timestamp)) 
+			printf("Failed to fetch evr fifo data\n");
+		else if (eventCode==140)
+			beamOn = 1;
+	}
+	//printf("Beam %s\n", beamOn ? "On":"Off");
 
 
 
@@ -193,12 +211,12 @@ void event() {
 	 * Phase cavity data
 	 *	(we probably won't need this info)
 	 */     
-  		double 	phaseCavityTime1 = nan("");
-  		double	phaseCavityTime2 = nan("");
-  		double	phaseCavityCharge1;
-  		double	phaseCavityCharge2;
+	double 	phaseCavityTime1 = nan("");
+	double	phaseCavityTime2 = nan("");
+	double	phaseCavityCharge1;
+	double	phaseCavityCharge2;
 
-		fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
+	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 
 
 	/*
@@ -242,8 +260,8 @@ void event() {
 	 *	Just an example - put what XPP PV values we want in here
 	 *	But be careful - EPICS is slow data and will not necessarily be correct on a shot-by-shot basis
 	 */  
-		float value;
-		fail = getPvFloat( "AMO:DIA:SHC:11:R", value );
+	float value;
+	fail = getPvFloat( "AMO:DIA:SHC:11:R", value );
 
 
 	/*
@@ -274,8 +292,10 @@ void event() {
 void endrun() 
 {
 	printf("endrun()\n");
-	fclose(logfile);
+	//fclose(logfile);
+	//logfile == NULL;
 }
+
 void endcalib() {
 	printf("endcalib()\n");
 }
@@ -287,4 +307,8 @@ void endcalib() {
  */
 void endjob() {
 	printf("endjob()\n");
+	if (logfile != NULL) {
+		fclose(logfile);
+		logfile = NULL;
+	}
 }
