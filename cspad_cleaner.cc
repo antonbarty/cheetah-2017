@@ -209,10 +209,10 @@ static int hdf5_write(const char *filename, const void *data, int width, int hei
 		return 1;
 	}
 
-	size[0] = width;
-	size[1] = height;
-	max_size[0] = width;
-	max_size[1] = height;
+	size[0] = height;
+	size[1] = width;
+	max_size[0] = height;
+	max_size[1] = width;
 	sh = H5Screate_simple(2, size, max_size);
 
 	dh = H5Dcreate(gh, "data", type, sh,
@@ -329,7 +329,7 @@ void event() {
 					unsigned section_id;
 
 
-					// loop over sections (each section is a "two by one")
+					// loop over sections and copy into data (each section is a "two by one")
 					uint16_t data[COLS*ROWS*16];
 					while(( s=iter.next(section_id) )) {  
 						//gjw:  read out data in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
@@ -338,15 +338,14 @@ void event() {
 					
 					// ROWS = 194;  COLS = 185;
 					sprintf(filename,"%x.h5",element->fiducials());
-					hdf5_write(filename, data, 8*COLS, 2*ROWS, H5T_STD_U16LE);
-					//hdf5_write(filename, data,  ROWS*2, COLS*8, H5T_STD_U16LE);
+					hdf5_write(filename, data, 2*ROWS, 8*COLS, H5T_STD_U16LE);
 
 
-					//gjw:  split 2x8 array into 2x2 (detector unit for rotation), 4 in a quad and write to file
+					//gjw:  split 2x8 array into 2x2 modules (detector unit for rotation), 4 in a quad and write to file
 					uint16_t tbt[4][2*COLS][2*ROWS];
 					for(int g=0;g<4;g++){
 						// Copy memory into buffers
-						memcpy(&tbt[g],&data[g*2*2*ROWS*COLS],2*4*COLS*ROWS);
+						memcpy(&tbt[g],&data[g*2*2*ROWS*COLS],2*2*COLS*ROWS*sizeof(uint16_t));
 
 						// Write to file
 						sprintf(filename,"%x-q%d.h5",element->fiducials(),g);
@@ -363,11 +362,11 @@ void event() {
 					FILE* fp1;
 				
 					//quad 0 (asics 0-3) 370x388 pixels
-					// Reflect
-					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
+					// Reflect X
+					for(unsigned int g=0;g<2*COLS;g++) for(unsigned int j=0;j<2*ROWS;j++)
 						buff[g][j]=tbt[0][2*COLS-1-g][j];	
 					// Rotate 90
-					for(unsigned int g=0;g<2*ROWS;g++)for(unsigned int j = 0;j<2*COLS;j++)
+					for(unsigned int g=0;g<2*ROWS;g++) for(unsigned int j = 0;j<2*COLS;j++)
 						buff1[g][j]=buff[2*ROWS-1-j+2*(COLS-ROWS)][g];
 
 					// Write to file						
@@ -376,10 +375,10 @@ void event() {
 
 
 					//quad 1 (asics 4-7) 388x370
-					//reflect	
+					//reflect X
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff[g][j]=tbt[1][2*COLS-1-g][j];	
-					//reflect	
+					//reflect Y
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff3[g][j]=buff[g][2*ROWS-1-j];	
 					// Write to file
@@ -397,10 +396,10 @@ void event() {
 
 
 					//quad 3 (asics 12-15) 388x370
-					//reflect	
+					//reflect X
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff[g][j]=tbt[3][2*COLS-1-g][j];	
-					//reflect	
+					//reflect Y
 					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
 						buff2[g][j]=buff[g][2*ROWS-1-j];	
 					// Write to file
