@@ -33,6 +33,7 @@ void beginjob()
 void beginrun() 
 {
 	printf("beginrun()\n");
+	printf("Processing r%04u\n",getRunNumber());
   	frameNumber = 0;
   	
   	// Commented out as this causes problems when processing multiple runs from file
@@ -67,10 +68,10 @@ void beginrun()
 
 
   	// Generate header line
-	printf("Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
-	       " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
-	       "    IPM1_V,     IPM2_V,     IPM3_V,"
-	       " Mono_A\n");
+	//printf("Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
+	//      " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
+	//       "    IPM1_V,     IPM2_V,     IPM3_V,"
+	//       " Mono_A\n");
 	fprintf(logfile, "Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
 	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
 	                 "   IPM1_V,     IPM2_V,     IPM3_V,"
@@ -267,11 +268,11 @@ void event() {
 	/*
 	 *	Print one line of output per event
 	 */
-	printf("r%04u, %4li, %s, 0x%5x, %s, %10.6f, %10.2f, %10.6f, %10.6f,"
-	       " %+10.6f, %+10.6f, %+10.6f, %s\n",
-	      runNumber, frameNumber,  time, fiducial,
-	      beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
-	      gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
+	//printf("r%04u, %4li, %s, 0x%5x, %s, %10.6f, %10.2f, %10.6f, %10.6f,"
+	//       " %+10.6f, %+10.6f, %+10.6f, %s\n",
+	//      runNumber, frameNumber,  time, fiducial,
+	//      beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
+	//      gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
 	fprintf(logfile, "r%04u, %4li, %s, 0x%5x, %s, %10.2f, %10.6f, %10.6f,"
 	                 "%10.6f, %+10.6f, %+10.6f, %+10.6f, %s\n",
 	        runNumber, frameNumber, time, fiducial,
