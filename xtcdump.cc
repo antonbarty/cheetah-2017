@@ -293,6 +293,7 @@ void event() {
 void endrun() 
 {
 	printf("endrun()\n");
+	printf("%li events processed\n",frameNumber);
 	//fclose(logfile);
 	//logfile == NULL;
 }
