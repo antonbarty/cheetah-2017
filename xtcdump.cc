@@ -259,7 +259,7 @@ void event() {
 	float aliof;
 	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) == 0 ) {
 		snprintf(mono, 31, "set: %f", alio_to_A(alio));
-	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONSET", aliof) == 0 ) {
+	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONGET", aliof) == 0 ) {
 		snprintf(mono, 31, "mon: %f", alio_to_A(aliof));
 	} else {
 		snprintf(mono, 31, "n/a");
