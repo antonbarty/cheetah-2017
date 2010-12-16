@@ -238,8 +238,8 @@ void event() {
 	 */
 	float diodes[4];
 	float ipm1sum, ipm2sum, ipm3sum, xpos, ypos;
-	if ( getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes,
-	                    ipm1sum, xpos, ypos) ) {
+	if ( getBldIpmFexValue(Pds::BldInfo::Nh2Sb1Ipm01, diodes,
+	                       ipm1sum, xpos, ypos) ) {
 		ipm1sum = std::numeric_limits<double>::quiet_NaN();
 	}
 	if ( getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,

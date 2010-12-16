@@ -1,10 +1,10 @@
-/* $Id: main.hh,v 1.36 2010/11/10 22:32:35 tomytsai Exp $ */
+/* $Id: main.hh,v 1.37 2010/11/30 18:42:58 wilfred Exp $ */
 #ifndef MAIN_H
 #define MAIN_H
 
 #include <stdint.h>
 #include "pdsdata/xtc/DetInfo.hh"
-
+#include "pdsdata/xtc/BldInfo.hh"
 class TH1;
 
 /*
@@ -72,6 +72,12 @@ enum EncoderDetector
     NumEncoderDetector  = 1
 };
 
+enum BldIpimbDetector
+{
+    BldNh2Sb1Ipm01 = 0,
+    NumBldIpimbDetector  = 1
+};
+
 /*
  * Configuration retrieval functions
  */
@@ -105,6 +111,10 @@ int getIpmFexConfig   (Pds::DetInfo::Detector det, int iDevId,
 namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; }}
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV1& cfg);
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV2& cfg);
+/* Note: Shared BLD Ipimb Config available on L1Accept Data Event */
+int getBldIpimbConfig(Pds::BldInfo::Type bldType, uint64_t& serialID, int& chargeAmpRange0,
+                      int& chargeAmpRange1, int& chargeAmpRange2, int& chargeAmpRange3);
+
 
 /*
  * L1Accept Data retrieval functions
@@ -133,10 +143,14 @@ int getEvrData    (int id, unsigned int& eventCode, unsigned int& fiducial, unsi
 int getEncoderCount(Pds::DetInfo::Detector det, int iDevId, int& encoderCount, int chan=0);
 int getDiodeFexValue (Pds::DetInfo::Detector det, int iDevId, float& value);
 int getIpmFexValue   (Pds::DetInfo::Detector det, int iDevId, 
-          float* channels, float& sum, float& xpos, float& ypos);
+                      float* channels, float& sum, float& xpos, float& ypos);
 
 namespace Pds { namespace CsPad { class ElementIterator; }}
 int getCspadData  (Pds::DetInfo::Detector det, Pds::CsPad::ElementIterator& iter);
+int getBldIpimbVolts(Pds::BldInfo::Type bldType, float &channel0, float &channel1,
+                     float &channel2, float &channel3);
+int getBldIpmFexValue(Pds::BldInfo::Type bldType, float* channels,
+                      float& sum, float& xpos, float& ypos);
 
 /*
  * Control data retrieval functions
