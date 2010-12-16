@@ -32,7 +32,7 @@ void beginjob()
  */
 void beginrun() 
 {
-	printf("beginrun()\n");
+	//printf("beginrun()\n");
 	printf("Processing r%04u\n",getRunNumber());
   	frameNumber = 0;
   	
@@ -292,7 +292,7 @@ void event() {
  */
 void endrun() 
 {
-	printf("endrun()\n");
+	//printf("endrun()\n");
 	printf("%li events processed\n",frameNumber);
 	//fclose(logfile);
 	//logfile == NULL;
