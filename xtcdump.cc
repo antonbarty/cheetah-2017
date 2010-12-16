@@ -203,7 +203,7 @@ void event() {
 		// Calculate the resonant photon energy of the first active segment
 		photonEnergyeV = 44.42*energyProfile*energyProfile;
 		// Calculate wavelength in Angstrom
-		wavelengthA = 13988./photonEnergyeV;
+		wavelengthA = 12398.42/photonEnergyeV;
 	}
 
 	/*
