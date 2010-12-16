@@ -83,6 +83,19 @@ void begincalib()
 }
 
 
+static double alio_to_A(double alio)
+{
+	const double R = 3.175;
+	const double D = 231.303;
+	const double theta0 = 15.08219;
+	const double Si111dspacing = 3.13556044;
+	const double theta = theta0 + 180/M_PI*2.0
+	           * atan( (sqrt(alio*alio+D*D+2.0*R*alio)-D) / (2.0*R+alio));
+	const double monov = 2.0*Si111dspacing*sin(theta/180*M_PI);
+	return monov;
+}
+
+
 /*
  *	event() is called once every shot.  
  * 	Process individual shot data here.
@@ -225,8 +238,8 @@ void event() {
 	 */
 	float diodes[4];
 	float ipm1sum, ipm2sum, ipm3sum, xpos, ypos;
-	if ( getIpmFexValue(Pds::DetInfo::XppSb1Ipm, 0, diodes,
-	                    ipm1sum, xpos, ypos) ) {
+	if ( getBldIpmFexValue(Pds::BldInfo::Nh2Sb1Ipm01, diodes,
+	                       ipm1sum, xpos, ypos) ) {
 		ipm1sum = std::numeric_limits<double>::quiet_NaN();
 	}
 	if ( getIpmFexValue(Pds::DetInfo::XppSb2Ipm, 0, diodes,
@@ -243,17 +256,13 @@ void event() {
 	 */
 	char mono[32];
 	double alio;
-	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) ) {
-		snprintf(mono, 31, "n/a");
+	float aliof;
+	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) == 0 ) {
+		snprintf(mono, 31, "set: %f", alio_to_A(alio));
+	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONSET", aliof) == 0 ) {
+		snprintf(mono, 31, "mon: %f", alio_to_A(aliof));
 	} else {
-		const double R = 3.175;
-		const double D = 231.303;
-		const double theta0 = 15.08219;
-		const double Si111dspacing = 3.13556044;
-		const double theta = theta0 + 180/M_PI*2.0
-		           * atan( (sqrt(alio*alio+D*D+2.0*R*alio)-D) / (2.0*R+alio));
-		const double monov = 2.0*Si111dspacing*sin(theta/180*M_PI);
-		snprintf(mono, 31, "%f", monov);
+		snprintf(mono, 31, "n/a");
 	}
 
 	/*

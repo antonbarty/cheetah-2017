@@ -46,6 +46,8 @@
 #include "pdsdata/lusi/DiodeFexConfigV1.hh"
 #include "pdsdata/lusi/DiodeFexV1.hh"
 
+static unsigned eventCount = 0;
+
 using namespace Pds;
 
 class myLevelIter : public XtcIterator {
@@ -192,7 +194,12 @@ public:
     printf("*** Processing PhaseCavity object\n");
     bldData.print();
     printf( "\n" );    
-  }  
+  }
+  void process(const DetInfo&, const BldDataIpimb& bldData) {
+    printf("*** Processing Bld-Ipimb object\n");
+    bldData.print();
+    printf( "\n" );
+  }
   void process(const DetInfo&, const EvrData::IOConfigV1&) {
     printf("*** Processing EVR IOconfig V1 object\n");
   }
@@ -210,16 +217,17 @@ public:
   }
   void process(const DetInfo&, const EvrData::DataV3& data) {
     printf("*** Processing Evr Data object\n");
-    
+    eventCount++;
+
     printf( "# of Fifo Events: %u\n", data.numFifoEvents() );
-    
-    //for ( unsigned int iEventIndex=0; iEventIndex< data.numFifoEvents(); iEventIndex++ )
-    //{
-    //  const EvrData::DataV3::FIFOEvent& event = data.fifoEvent(iEventIndex);
-    //  printf( "[%02u] Event Code %u  TimeStampHigh 0x%x  TimeStampLow 0x%x\n",
-    //    iEventIndex, event.EventCode, event.TimestampHigh, event.TimestampLow );
-    //}    
-    //printf( "\n" );    
+    for ( unsigned int iEventIndex=0; iEventIndex< data.numFifoEvents(); iEventIndex++ ) {
+      const EvrData::DataV3::FIFOEvent& event = data.fifoEvent(iEventIndex);
+      //printf( "[%02u] Event Code %u  TimeStampHigh 0x%x  TimeStampLow 0x%x\n",
+      //  iEventIndex, event.EventCode, event.TimestampHigh, event.TimestampLow );
+      if (event.EventCode == 162)
+        printf ("Blank shot eventcode 162 found at eventNo: %u \n",eventCount);
+    }
+    printf( "\n" );
   }  
   void process(const DetInfo&, const Princeton::ConfigV1&) {
     printf("*** Processing Princeton ConfigV1 object\n");
@@ -440,6 +448,11 @@ public:
     {
       process(info, *(const BldDataPhaseCavity*) xtc->payload() );
       break;        
+    }
+    case (TypeId::Id_SharedIpimb) :
+    {
+      process(info, *(const BldDataIpimb*) xtc->payload() );
+      break;
     }
     case (TypeId::Id_PrincetonConfig) :
     {

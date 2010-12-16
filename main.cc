@@ -1,4 +1,4 @@
-/* $Id: main.cc,v 1.67 2010/11/10 22:33:09 tomytsai Exp $ */
+/* $Id: main.cc,v 1.70 2010/12/06 18:29:07 weaver Exp $ */
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
@@ -47,6 +47,7 @@
 #include "pdsdata/evr/ConfigV2.hh"
 #include "pdsdata/evr/ConfigV3.hh"
 #include "pdsdata/evr/ConfigV4.hh"
+#include "pdsdata/evr/ConfigV5.hh"
 #include "pdsdata/evr/DataV3.hh"
 #include "pdsdata/princeton/ConfigV1.hh"
 #include "pdsdata/princeton/FrameV1.hh"
@@ -141,19 +142,15 @@ int getTime( int& seconds, int& nanoSeconds )
  
 int getLocalTime( const char*& time )
 {
+  static const char timeFormatStr[40] = "%04Y-%02m-%02d %02H:%02M:%02S"; /* Time format string */
+  static char sTimeText[40];
+
   int seconds = clockTimeCurDatagram.seconds();
   struct tm tmTimeStamp;
   localtime_r( (const time_t*) (void*) &seconds, &tmTimeStamp );    
-  static const char timeFormatStr[40] = "%d-%b-%y %02H:%02M:%02S";
-  char sTimeText[40];
   strftime(sTimeText, sizeof(sTimeText), timeFormatStr, &tmTimeStamp );
 
-  int nanoSeconds = clockTimeCurDatagram.nanoseconds();
-  int milliseconds = nanoSeconds/1000000;
-  static char timestring[40]; 
-  sprintf(timestring,"%s.%03d",sTimeText,milliseconds);
-
-  time = timestring;
+  time = sTimeText;
   return 0;
 }
 
@@ -200,6 +197,7 @@ static bool                     bControlProcessed;
 static unsigned char            lcPrincetonProcessed[NumPrincetonDetector];
 static unsigned char            lcIpimbProcessed    [NumIpimbDetector];
 static unsigned char            lcEncoderProcessed  [NumEncoderDetector];
+static unsigned char            lcBldIpimbProcessed [NumBldIpimbDetector];
 
 /*
  * Configuration data
@@ -243,6 +241,7 @@ static const Princeton::InfoV1*         lpPrincetonInfo [NumPrincetonDetector];
 static const Ipimb::DataV1*             lpIpimbData     [NumIpimbDetector];
 static const Encoder::DataV1*           lpEncoderData   [NumEncoderDetector];
 static const Encoder::DataV2*           lpEncoderDataV2 [NumEncoderDetector];
+static const BldDataIpimb*              lpBldIpimbData  [NumBldIpimbDetector];
 
 /*
  * Control (Calib) data
@@ -366,6 +365,19 @@ static int EncoderDetectorIndex(const DetInfo::Detector det, int iDevId)
   return iDevId;
 }
 
+static int BldIpimbDetectorIndex(const BldInfo::Type bldType)
+{
+  switch(bldType) {
+  case BldInfo::Nh2Sb1Ipm01: return 0;
+  default:
+    printf( "BldIpimbDetectorIndex(): Unsupported Bld Ipimb Type: %d\n", (int)bldType);
+    break;
+  }
+
+  return -1;
+}
+
+
 static const int NumPimDetector = 4;
 static const Lusi::DiodeFexConfigV1* lDiodeFexConfig[NumPimDetector];
 static const Lusi::DiodeFexV1*       lDiodeFexValue [NumPimDetector];
@@ -446,6 +458,9 @@ static int resetStaticData()
   memset( lDiodeFexConfig,    0, sizeof(lDiodeFexConfig) );
   memset( lIpmFexConfig  ,    0, sizeof(lIpmFexConfig  ) );
 
+  memset( lcBldIpimbProcessed, 0, sizeof(lcBldIpimbProcessed) );
+  memset( lpBldIpimbData,      0, sizeof(lpBldIpimbData) );
+
   lCspadConfigFound   = 0;
 
   bControlProcessed       = false;  
@@ -474,7 +489,8 @@ static int resetEventData()
     memset    ( lcIpimbProcessed, 0, sizeof(lcIpimbProcessed) );    
     memset    ( lcEncoderProcessed, 0, sizeof(lcEncoderProcessed) );    
     memset    ( lDiodeFexValue, 0, sizeof(lDiodeFexValue) );    
-    memset    ( lIpmFexValue, 0, sizeof(lIpmFexValue) );    
+    memset    ( lIpmFexValue, 0, sizeof(lIpmFexValue) );
+    memset    ( lcBldIpimbProcessed, 0, sizeof(lcBldIpimbProcessed) );
     
     lCspadData          = NULL;
 
@@ -846,6 +862,67 @@ int getIpimbVolts(Pds::DetInfo::Detector det, int iDevId,
   
   return 0;
 }
+
+int getBldIpimbVolts(Pds::BldInfo::Type bldType, float &channel0, float &channel1,
+                     float &channel2, float &channel3)
+{
+  int iDetectorIndex = BldIpimbDetectorIndex(bldType);
+  if (iDetectorIndex < 0) {
+    return 1;
+  }
+  if ( lcBldIpimbProcessed[iDetectorIndex] == 0 ) {
+    return 2;
+  }
+
+  const Ipimb::DataV1& bldIpimbData = lpBldIpimbData[iDetectorIndex]->ipimbData;
+  channel0 = bldIpimbData.channel0Volts();
+  channel1 = bldIpimbData.channel1Volts();
+  channel2 = bldIpimbData.channel2Volts();
+  channel3 = bldIpimbData.channel3Volts();
+
+  return 0;
+}
+
+int getBldIpimbConfig(Pds::BldInfo::Type bldType, uint64_t& serialID,
+                      int& chargeAmpRange0, int& chargeAmpRange1,
+                      int& chargeAmpRange2, int& chargeAmpRange3)
+{
+  int iDetectorIndex = BldIpimbDetectorIndex(bldType);
+  if (iDetectorIndex < 0) {
+    return 1;
+  }
+  if ( lcBldIpimbProcessed[iDetectorIndex] == 0 ) {
+    return 2;
+  }
+  const Ipimb::ConfigV1& bldIpimbConfig = lpBldIpimbData[iDetectorIndex]->ipimbConfig;
+  serialID = bldIpimbConfig.serialID();
+  chargeAmpRange0 = bldIpimbConfig.chargeAmpRange() & 0x3;
+  chargeAmpRange1 = (bldIpimbConfig.chargeAmpRange() >> 2) & 0x3;
+  chargeAmpRange2 = (bldIpimbConfig.chargeAmpRange() >> 4) & 0x3;
+  chargeAmpRange3 = (bldIpimbConfig.chargeAmpRange() >> 6) & 0x3;
+  return 0;
+}
+
+int getBldIpmFexValue   (Pds::BldInfo::Type bldType, float* channels,
+                         float& sum, float& xpos, float& ypos)
+{
+  int iDetectorIndex = BldIpimbDetectorIndex(bldType);
+  if (iDetectorIndex < 0) {
+    return 1;
+  }
+  if ( lcBldIpimbProcessed[iDetectorIndex] == 0 ) {
+    return 2;
+  }
+  const Lusi::IpmFexV1& bldIpmFexData = lpBldIpimbData[iDetectorIndex]->ipmFexData;
+  for(unsigned i=0; i<Lusi::IpmFexConfigV1::NCHANNELS; i++)
+    channels[i] = bldIpmFexData.channel[i];
+  sum  = bldIpmFexData.sum;
+  xpos = bldIpmFexData.xpos;
+  ypos = bldIpmFexData.ypos;
+
+  return 0;
+}
+
 
 int getEncoderCount(Pds::DetInfo::Detector det, int iDevId, int& encoderCount, int chan)
 {
@@ -1325,6 +1402,16 @@ public:
     pBldPhaseCavity = &bldData;
   }
 
+  void process(const DetInfo& detInfo, const BldDataIpimb* bldData)
+  {
+    const BldInfo& bldInfo = reinterpret_cast<const BldInfo&>(detInfo);
+    int iDetectorIndex = BldIpimbDetectorIndex(bldInfo.type());
+    if ( iDetectorIndex < 0 ) return;
+
+    lpBldIpimbData[iDetectorIndex] = bldData;
+    lcBldIpimbProcessed[iDetectorIndex] = 1;
+  }
+
   void process(const DetInfo& di, const Opal1k::ConfigV1& cfg) 
   {
     int iDetectorIndex = Opal1kDetectorIndex(di.detector(), di.devId());
@@ -1463,6 +1550,15 @@ public:
   }
   void process(const DetInfo&, const EvrData::ConfigV4&)
   {
+    return;
+  }
+  void process(const DetInfo&, const EvrData::ConfigV5& c)
+  {
+//     for(unsigned i=0; i<c.neventcodes(); i++) {
+//       printf("Eventcode %d : %s\n",
+//              c.eventcode(i).code(),
+//              c.eventcode(i).desc());
+//     }
     return;
   }
   void process(const DetInfo&, const EvrData::DataV3& data) 
@@ -1640,6 +1736,11 @@ public:
       process(info, *(const BldDataPhaseCavity*) xtc->payload() );
       break;
     }
+  case (TypeId::Id_SharedIpimb) :
+    {
+      process(info, (const BldDataIpimb*) xtc->payload() );
+      break;
+    }
   case (TypeId::Id_AcqConfig) :
     {
       unsigned version = xtc->contains.version();
@@ -1813,6 +1914,9 @@ public:
       case 4:
         process(info, *(const EvrData::ConfigV4*)(xtc->payload()));
         break;
+      case 5:
+        process(info, *(const EvrData::ConfigV5*)(xtc->payload()));
+        break;
       default:
         printf("Unsupported evr configuration version %d\n",version);
         break;
@@ -1843,8 +1947,8 @@ private:
 
 void usage(char* progname) 
 {
-  fprintf(stderr,"Usage: %s -f <filename> -l <filewithfilelist> -s <skipevts> -n <maxevts> -d <debug level> [-h]\n", progname);
-  fprintf(stderr,"Usage: The -l argument requires a file with a list of files in it.\n");
+  fprintf(stderr,"Usage: %s -f <filename> | -l <filewithfilelist> [-c <caliblist>] [-s <skipevts>] [-n <maxevts>] [-d <debug level>] [-h]\n", progname);
+  fprintf(stderr,"Usage: The -l and -c arguments require files with a list of files in them.\n");
 }
 
 void makeoutfilename(char* filename, char* outfilename) 
@@ -1975,8 +2079,8 @@ void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, int iDebugLevel)
   } while(r==OK);
   
   endrun();
-  //printf("Processed %d events, %d damaged, with damage mask 0x%x.\n", nevent,
-  // ndamage, damagemask);
+  printf("Processed %d events, %d damaged, with damage mask 0x%x.\n", nevent,
+   ndamage, damagemask);
 
   delete[] buffer;
 }
