@@ -266,15 +266,6 @@ void event() {
 	}
 
 	/*
-	 * 	Retrieving Epics Pv Values
-	 *	Just an example - put what XPP PV values we want in here
-	 *	But be careful - EPICS is slow data and will not necessarily be correct on a shot-by-shot basis
-	 */  
-	float value;
-	fail = getPvFloat( "AMO:DIA:SHC:11:R", value );
-
-
-	/*
 	 *	Print one line of output per event
 	 */
 	//printf("r%04u, %4li, %s, 0x%5x, %s, %10.6f, %10.2f, %10.6f, %10.6f,"
