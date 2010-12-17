@@ -185,8 +185,6 @@ void event() {
 		/* Calculate the resonant photon energy (ie: photon wavelength) */
 		// Get the present peak current in Amps
 		double peakCurrent = fEbeamPkCurrBC2;
-		// Get present charge in pC
-		double charge = 1000*fEbeamCharge;
 		// Get present beam energy [GeV]
 		double DL2energyGeV = 0.001*fEbeamL3Energy;
 		// wakeloss prior to undulators
