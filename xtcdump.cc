@@ -74,8 +74,8 @@ void beginrun()
 	//       " Mono_A\n");
 	fprintf(logfile, "Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
 	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
-	                 "   IPM1_V,     IPM2_V,     IPM3_V,"
-	                 " Mono_A\n");
+	                 "IPM1_V,     IPM2_V,     IPM3_V,"
+	                 " MSt,Mono_A,  Mono_eV\n");
 }
 void begincalib()
 {
@@ -258,11 +258,13 @@ void event() {
 	double alio;
 	float aliof;
 	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) == 0 ) {
-		snprintf(mono, 31, "set: %f", alio_to_A(alio));
+		snprintf(mono, 31, "mon,%7.6f,%5.2f", alio_to_A(alio),
+		                              12398.42/alio_to_A(alio));
 	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONGET", aliof) == 0 ) {
-		snprintf(mono, 31, "mon: %f", alio_to_A(aliof));
+		snprintf(mono, 31, "set,%7.6f,%5.2f", alio_to_A(aliof),
+		                              12398.42/alio_to_A(aliof));
 	} else {
-		snprintf(mono, 31, "n/a");
+		snprintf(mono, 31, "n/a,n/a,     n/a    ");
 	}
 
 	/*
