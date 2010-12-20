@@ -72,7 +72,7 @@ void beginrun()
 	//      " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
 	//       "    IPM1_V,     IPM2_V,     IPM3_V,"
 	//       " Mono_A\n");
-	fprintf(logfile, "Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
+	fprintf(logfile, "Run#, Frame, Timestamp,              Unix time, Fiducial, BeamOn?,"
 	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
 	                 "IPM1_V,     IPM2_V,     IPM3_V,"
 	                 " MSt,Mono_A,  Mono_eV\n");
@@ -273,9 +273,9 @@ void event() {
 	//      runNumber, frameNumber,  time, fiducial,
 	//      beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
 	//      gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
-	fprintf(logfile, "r%04u, %4li, %s, 0x%5x, %s, %10.2f, %10.6f, %10.6f,"
+	fprintf(logfile, "r%04u, %4li, %s, %i, 0x%5x, %s, %10.2f, %10.6f, %10.6f,"
 	                 "%10.6f, %+10.6f, %+10.6f, %+10.6f, %s\n",
-	        runNumber, frameNumber, time, fiducial,
+	        runNumber, frameNumber, time, seconds, fiducial,
 	        beamOn?"Beam On ":"Beam Off", photonEnergyeV, wavelengthA,
 	        gmd1, gmd2, ipm1sum, ipm2sum, ipm3sum, mono);
 
