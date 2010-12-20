@@ -74,8 +74,8 @@ void beginrun()
 	//       " Mono_A\n");
 	fprintf(logfile, "Run#, Frame, Timestamp,              Fiducial, BeamOn?,"
 	                 " PhotonEnergy_eV, Wavelength_A, GMD1_mJ, GMD2_mJ,"
-	                 "   IPM1_V,     IPM2_V,     IPM3_V,"
-	                 " Mono_A\n");
+	                 "IPM1_V,     IPM2_V,     IPM3_V,"
+	                 " MSt,Mono_A,  Mono_eV\n");
 }
 void begincalib()
 {
@@ -185,8 +185,6 @@ void event() {
 		/* Calculate the resonant photon energy (ie: photon wavelength) */
 		// Get the present peak current in Amps
 		double peakCurrent = fEbeamPkCurrBC2;
-		// Get present charge in pC
-		double charge = 1000*fEbeamCharge;
 		// Get present beam energy [GeV]
 		double DL2energyGeV = 0.001*fEbeamL3Energy;
 		// wakeloss prior to undulators
@@ -258,21 +256,14 @@ void event() {
 	double alio;
 	float aliof;
 	if ( getControlValue("XPP:MON:MPZ:07A:POSITIONSET", 0, alio) == 0 ) {
-		snprintf(mono, 31, "set: %f", alio_to_A(alio));
-	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONSET", aliof) == 0 ) {
-		snprintf(mono, 31, "mon: %f", alio_to_A(aliof));
+		snprintf(mono, 31, "mon,%7.6f,%5.2f", alio_to_A(alio),
+		                              12398.42/alio_to_A(alio));
+	} else if ( getPvFloat("XPP:MON:MPZ:07A:POSITIONGET", aliof) == 0 ) {
+		snprintf(mono, 31, "set,%7.6f,%5.2f", alio_to_A(aliof),
+		                              12398.42/alio_to_A(aliof));
 	} else {
-		snprintf(mono, 31, "n/a");
+		snprintf(mono, 31, "n/a,n/a,     n/a    ");
 	}
-
-	/*
-	 * 	Retrieving Epics Pv Values
-	 *	Just an example - put what XPP PV values we want in here
-	 *	But be careful - EPICS is slow data and will not necessarily be correct on a shot-by-shot basis
-	 */  
-	float value;
-	fail = getPvFloat( "AMO:DIA:SHC:11:R", value );
-
 
 	/*
 	 *	Print one line of output per event
