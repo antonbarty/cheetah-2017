@@ -1,0 +1,11 @@
+#!/bin/tcsh
+setenv CXXFLAGS -O4
+setenv ARCH x86_64-linux-dbg
+
+set PDSLIBS='-l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata'
+
+g++ -O4 -Irelease -Wall -c myana_cspad-gjw.cc
+g++ -O4 -Irelease -Wall -c CspadTemp.cc
+g++ -O4 -Irelease -Wall -c CspadGeometry.cc
+g++ -O4 -Irelease -Wall -c CspadCorrector.cc
+g++ -O4 ../main.o ../XtcRun.o myana_cspad-gjw.o CspadCorrector.o CspadGeometry.o CspadTemp.o -Wl,-rpath=./release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -lhdf5 -o myana_cspad-gjw
