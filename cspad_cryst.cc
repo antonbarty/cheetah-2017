@@ -310,6 +310,8 @@ void event() {
   		Pds::CsPad::ElementIterator iter;
 		fail=getCspadData(DetInfo::XppGon, iter);
 
+	
+	
 		if (fail==0) {
 			nevents++;
     		const Pds::CsPad::ElementHeader* element;

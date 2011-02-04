@@ -3,7 +3,7 @@
 #	Anton Barty, December 2010
 #	Note: need to have 
 ###############################################
-TARGET 			= cspad_cleaner
+TARGET 			= cspad_cryst
 ARCH 			= x86_64-linux
 
 MYANADIR		= myana
@@ -57,17 +57,17 @@ $(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)
 
 
 # csPAD cleaner
-cspad_cleaner.o: cspad_cleaner.cc 
+cspad_cryst.o: cspad_cryst.cc 
 	$(CPP) $(CFLAGS) $<
 
-cspad_cleaner: cspad_cleaner.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cspad_cryst: cspad_cryst.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 
 # test data
-test: cspad_cleaner
-	./cspad_cleaner -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 1   
+test: cspad_cryst
+	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 1   
 	#./cspad_cleaner -f ~gjwillms/cfel-cspad/e40-r0546-s00-c00.xtc -n 1   
 
 	
