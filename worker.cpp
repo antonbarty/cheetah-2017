@@ -32,13 +32,18 @@
  */
 void *worker(void *threadarg) {
 
-	// Reinstate threadInfo structure
+	/*
+	 *	Reinstate threadarg variables into a more useful form
+	 */
 	tThreadInfo *threadInfo;
+	tGlobal		*global;
 	threadInfo = (tThreadInfo*) threadarg;
+	global = threadInfo->pGlobal;
+	
 	
 	
 	/*
-	 *	Test - write out raw Quadrant info
+	 *	First test - write out raw Quadrant info
 	 */
 	FILE* fp;
 	char filename[1024];
@@ -170,9 +175,9 @@ void *worker(void *threadarg) {
 
 	
 	// Decrement thread pool counter by one
-	pthread_mutex_lock(threadInfo->nActiveThreads_mutex);
-	global.nActiveThreads -= 1;
-	pthread_mutex_unlock(threadInfo->nActiveThreads_mutex);
+	pthread_mutex_lock(&global->nActiveThreads_mutex);
+	global->nActiveThreads -= 1;
+	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
 	
 	// Free memory used by threadInfo structure and exit

@@ -13,7 +13,7 @@
 /*
  *	Global variables
  */
-static struct {
+typedef struct {
 	
 	// Thread management
 	int				nThreads;
@@ -28,7 +28,7 @@ static struct {
 	unsigned	module_cols;
 	
 	
-} global;
+} tGlobal;
 
 
 
@@ -36,6 +36,9 @@ static struct {
  *	Structure used for passing information to worker threads
  */
 typedef struct {
+	
+	// Reference to common global structure
+	tGlobal		*pGlobal;
 	
 	// cspad data
 	int			cspad_fail;

@@ -19,6 +19,8 @@
 #include "worker.h"
 
 
+static tGlobal		global;
+
 
 // Quad class definition
 class MyQuad {
@@ -101,7 +103,7 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
-	global.nThreads = 2;
+	global.nThreads = 1;
 	global.nActiveThreads = 0;
 	global.module_rows = ROWS;
 	global.module_cols = COLS;
@@ -216,6 +218,7 @@ void event() {
 	 */
 	tThreadInfo	*threadInfo;
 	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
+	threadInfo->pGlobal = &global;
 	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 
 	threadInfo->seconds = seconds;
@@ -326,8 +329,10 @@ void event() {
 	// (each thread is responsible for cleaning up its own threadInfo structure when done)
 	pthread_attr_destroy(&threadAttribute);
 	
-
-	usleep(1000000);
+	
+	// Pause 
+	printf("Pausing so you can read the output :-)\n");
+	usleep(2000000);
 	
 }
 // End of event data processing block
