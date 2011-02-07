@@ -148,9 +148,11 @@ void *worker(void *threadarg) {
 	/*
 	 *	Cleanup and exit
 	 */
+	printf("Cleaning up threads\n");
 	// Free memory used to store this data frame
 	for(int jj=0; jj<4; jj++) {
 		free(threadInfo->quad_data[jj]);	
+		threadInfo->quad_data[jj] = NULL;;	
 	}
 
 	
@@ -161,7 +163,7 @@ void *worker(void *threadarg) {
 	
 	
 	// Free memory used by threadInfo structure and exit
-	free(threadarg);
+	//free(threadarg);
 	pthread_exit(NULL);
 }
 

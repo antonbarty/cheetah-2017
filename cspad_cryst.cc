@@ -101,7 +101,7 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
-	global.nThreads = 1;
+	global.nThreads = 2;
 	global.nActiveThreads = 0;
 	global.module_rows = ROWS;
 	global.module_cols = COLS;
@@ -268,7 +268,7 @@ void event() {
 			
 
 			// Allocate data space for this quadrant
-			//threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
 
 			
 			// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
@@ -282,7 +282,6 @@ void event() {
 
 			
 			// Copy image data into threadInfo structure
-			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
 			memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
 			// printf("Quadrant %i data copied\n",quadrant);
 			
@@ -312,6 +311,7 @@ void event() {
 	
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
+		printf("Waiting: active threads = %i; nthreads allowed = %i\n",global.nThreads, global.nActiveThreads);
 		usleep(100000);
 	}
 		
@@ -320,6 +320,7 @@ void event() {
 	global.nActiveThreads += 1;
 	pthread_mutex_unlock(&global.nActiveThreads_mutex);
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
+	printf("Worker thread %i launched\n",ievent);
 	
 	
 	// Threads are created detached so we don't have to wait for anything to happen before returning
@@ -351,18 +352,18 @@ void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
 
-	for(unsigned i=0; i<4; i++)
-		quads[i]->write();
+	//for(unsigned i=0; i<4; i++)
+	//	quads[i]->write();
 
-	CspadGeometry geom;
-	const unsigned nb = 3400;
-	double* array = new double[(nb+2)*(nb+2)];
-	double sz = 0.25*double(nb)*109.92;
-	CsVector offset; offset[0]=sz; offset[1]=sz;
+	//CspadGeometry geom;
+	//const unsigned nb = 3400;
+	//double* array = new double[(nb+2)*(nb+2)];
+	//double sz = 0.25*double(nb)*109.92;
+	//CsVector offset; offset[0]=sz; offset[1]=sz;
 
-    for(unsigned i=0; i<4; i++) {
-	 	memset(array,0,(nb+2)*(nb+2)*sizeof(double));
-	}
+    //for(unsigned i=0; i<4; i++) {
+	// 	memset(array,0,(nb+2)*(nb+2)*sizeof(double));
+	//}
 
 	/*
 	 *	Thread management stuff

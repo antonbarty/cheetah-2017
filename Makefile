@@ -70,6 +70,6 @@ cspad_cryst: cspad_cryst.o worker.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CS
 
 # test data
 test: cspad_cryst
-	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 1   
+	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
 
 	
