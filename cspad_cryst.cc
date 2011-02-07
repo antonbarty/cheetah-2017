@@ -253,12 +253,13 @@ void event() {
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
 
-			// Which quadrant?
-			int quadrant = element->quad();
-			
 			// Have we jumped to a new fiducial (event??)
 			if (fiducials != element->fiducials())
 				printf("Fiducial jump: %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
+
+			
+			// Which quadrant?
+			int quadrant = element->quad();
 			
 			// Get temperature on strong back 
 			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
@@ -266,17 +267,25 @@ void event() {
 			threadInfo->quad_temperature[quadrant] = temperature;
 			
 
-			// Allocate space to store this quaddrant
-			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+			// Allocate data space for this quadrant
+			//threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
 
 			
 			// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 			const Pds::CsPad::Section* s;
 			unsigned section_id;
+			uint16_t data[COLS*ROWS*16];
 			while(( s=iter.next(section_id) )) {  
-				memcpy(&threadInfo->quad_data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+				//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+				memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 			}
 
+			
+			// Copy image data into threadInfo structure
+			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+			memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
+			// printf("Quadrant %i data copied\n",quadrant);
+			
 			
 			// Save quadrant to file (for debugging - delete later)
 			sprintf(filename,"%x-%i.h5",element->fiducials(),quadrant);
