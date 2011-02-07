@@ -27,10 +27,7 @@ class MyQuad {
 		char buff[64];
 		for(unsigned i=0; i<16; i++) {
 	  		sprintf(buff,"Q%d_ASIC%d_values",q,i);
-			//_h1[i] = new MyTH1(buff,1<<8,6,0);
-			//_h1[i] = new MyTH1(buff,1<<9,6,-1000);
 	  		sprintf(buff,"Q%d_ASIC%d_map",q,i);
-			//_h2[i] = new MyTH2(buff,COLS,ROWS);
 		}
 	}
 	
@@ -38,44 +35,19 @@ class MyQuad {
     	unsigned section_id;
     	const Pds::CsPad::Section* s;
     	while((s=iter.next(section_id))) {
-			//CspadSection& f = corrector->apply(*s,section_id,_quad);
-			//unsigned asic1 = section_id<<1;
-			//unsigned asic2 = asic1 + 1;
       		for(unsigned col=0; col<COLS; col++)
 				for(unsigned row=0; row<ROWS; row++) {	
-					//	  int v1 = int(f[col][row     ]);
-					//	  int v2 = int(f[col][row+ROWS]);
-					//	  _h1[asic1]->Fill(v1);
-					//	  _h1[asic2]->Fill(v2);
-					//	  _h2[asic1]->Fill(col,row,v1);
-					//	  _h2[asic2]->Fill(col,row,v2);
 				}
     	}
   	}    
   
   	void write() {
     	for(unsigned i=0; i<16; i++) {
-			//	_h1[i]->hist();
-			//	_h2[i]->hist();
     	}
   	}
-  	
-	//  const CspadSection& section(unsigned section_id)
-	//  {
-	//    const int* asic1 = _h2[(section_id<<1)+0]->contents();
-	//    const int* asic2 = _h2[(section_id<<1)+1]->contents();
-	//   for(unsigned col=0; col<COLS; col++)
-	//      for(unsigned row=0; row<ROWS; row++) {	
-	//	_s[col][row]      = *asic1++;
-	//	_s[col][row+ROWS] = *asic2++;
-	//     }
-	//    return _s;
-	//  }
 
 	private:
   		unsigned _quad;
-		//  MyTH1* _h1[16];
-		//  MyTH2* _h2[16];
   		CspadSection _s;
 };
 
