@@ -14,24 +14,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <hdf5.h>
+#include <pthreads.h>
+
+#include "worker.h"
+
 
 #define ERROR(...) fprintf(stderr, __VA_ARGS__)
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
-using namespace std;
-
-// Static variables
-static CspadCorrector*      corrector;
-static Pds::CsPad::ConfigV1 configV1;
-static Pds::CsPad::ConfigV2 configV2;
-static unsigned             configVsn;
-static unsigned             quadMask;
-static unsigned             asicMask;
-
-static const unsigned  ROWS = 194;
-static const unsigned  COLS = 185;
-
-static uint32_t nevents = 0;
 
 // Quad class definition
 class MyQuad {
@@ -122,20 +112,30 @@ void beginjob() {
 	/*
 	 * Get time information
 	 */
-		int fail = 0;
-		int seconds, nanoSeconds;
-		const char* time;
-	
-		getTime( seconds, nanoSeconds );	
-		fail = getLocalTime( time );
+	int fail = 0;
+	int seconds, nanoSeconds;
+	const char* time;
+
+	getTime( seconds, nanoSeconds );	
+	fail = getLocalTime( time );
+
 	
 	/*
 	 *	New csPad corrector
 	 */
-		corrector = new CspadCorrector(Pds::DetInfo::XppGon,0,CspadCorrector::DarkFrameOffset);
-					 
-		for(unsigned i=0; i<4; i++)
-			quads[i] = new MyQuad(i);
+	corrector = new CspadCorrector(Pds::DetInfo::XppGon,0,CspadCorrector::DarkFrameOffset);
+				 
+	for(unsigned i=0; i<4; i++)
+		quads[i] = new MyQuad(i);
+	
+	
+	/*
+	 *	Stuff for worker thread management
+	 */
+	global.nThreads = 1;
+	global.nActiveThreads = 0;
+	global.thread = (pthread_t*) calloc(global.nThreads, sizeof(pthread_t));
+	pthread_mutex_init(&global.nActiveThreads_mutex, NULL);
 }
 
 
@@ -186,63 +186,6 @@ void begincalib()
 
 
 /*
- *	Write data to HDF5 file
- */
- 
-static int hdf5_write(const char *filename, const void *data, int width, int height, int type) 
-{
-	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-	herr_t r;
-	hsize_t size[2];
-	hsize_t max_size[2];
-
-	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	if ( fh < 0 ) {
-		ERROR("Couldn't create file: %s\n", filename);
-		return 1;
-	}
-
-	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( gh < 0 ) {
-		ERROR("Couldn't create group\n");
-		H5Fclose(fh);
-		return 1;
-	}
-
-	size[0] = height;
-	size[1] = width;
-	max_size[0] = height;
-	max_size[1] = width;
-	sh = H5Screate_simple(2, size, max_size);
-
-	dh = H5Dcreate(gh, "data", type, sh,
-	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( dh < 0 ) {
-		ERROR("Couldn't create dataset\n");
-		H5Fclose(fh);
-		return 1;
-	}
-
-	/* Muppet check */
-	H5Sget_simple_extent_dims(sh, size, max_size);
-
-	r = H5Dwrite(dh, type, H5S_ALL,
-	             H5S_ALL, H5P_DEFAULT, data);
-	if ( r < 0 ) {
-		ERROR("Couldn't write data\n");
-		H5Dclose(dh);
-		H5Fclose(fh);
-		return 1;
-	}
-
-	H5Gclose(gh);
-	H5Dclose(dh);
-	H5Fclose(fh);
-
-	return 0;
-}
-
-/*
  *	This function is called once per shot
  */
 void event() {
@@ -253,169 +196,163 @@ void event() {
 	char filename[1024];
 
 
-	
 	/*
 	 * Get time information
 	 */
-		static int ievent = 0;
-		int fail = 0;
-		int seconds, nanoSeconds;
-		getTime( seconds, nanoSeconds );
-	
-		const char* time;
-		fail = getLocalTime( time );
+	static int ievent = 0;
+	int fail = 0;
+	int seconds, nanoSeconds;
+	getTime( seconds, nanoSeconds );
 
+	const char* time;
+	fail = getLocalTime( time );
+
+	
 	/*
 	 *	Get fiducials
 	 */
-		unsigned fiducials;
-		fail = getFiducials(fiducials);
+	unsigned fiducials;
+	fail = getFiducials(fiducials);
 
+	
 	/* 
 	 *	Is the beam on?
 	 */
-		bool beam = beamOn();
-		printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducials);
+	bool beam = beamOn();
+	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducials);
   
 	/*
 	 *	FEE Gas detector values 
 	 */
-		double gasdet[4];
-		if (getFeeGasDet( gasdet )==0 && ievent<10)
-			printf("gasdet %g/%g/%g/%g\n", gasdet[0], gasdet[1], gasdet[2], gasdet[3]);
+	double gasdet[4];
+	if (getFeeGasDet( gasdet )==0 && ievent<10)
+		printf("gasdet %g/%g/%g/%g\n", gasdet[0], gasdet[1], gasdet[2], gasdet[3]);
 
 	/*
 	 *	Phase cavity data
 	 */
-		double ft1, ft2, c1, c2;
-		if ( getPhaseCavity(ft1, ft2, c1, c2) == 0 ) 
-			printf("phase cav: %+11.8f %+11.8f %+11.8f %+11.8f\n", ft1, ft2, c1, c2);
-		else 
-			printf("no phase cavity data.\n");
+	double ft1, ft2, c1, c2;
+	if ( getPhaseCavity(ft1, ft2, c1, c2) == 0 ) 
+		printf("phase cav: %+11.8f %+11.8f %+11.8f %+11.8f\n", ft1, ft2, c1, c2);
+	else 
+		printf("no phase cavity data.\n");
+
+	
+	
+	/*
+	 *	Copy all interesting information into worker thread structure 
+	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
+	 */
+	tThreadInfo		*threadInfo;
+	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
+	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
+
+	threadInfo->seconds = seconds;
+	threadInfo->nanoSeconds = nanoSeconds;
+	strcpy(threadInfo->timeString, time);
+	threadInfo->fiducial = fiducials;
+	threadInfo->beamOn = beam;
+	threadInfo->gmd11 = gasdet[0];
+	threadInfo->gmd12 = gasdet[1];
+	threadInfo->gmd21 = gasdet[2];
+	threadInfo->gmd22 = gasdet[3];
+	threadInfo->ft1 = ft1;
+	threadInfo->ft2 = ft1;
+	threadInfo->c1 = c1;
+	threadInfo->c2 = c2;
+	for(int jj=0; jj<4; jj++) threadInfo->quad_data[jj] = NULL;
+	
+	
 
 	/*
-	 *	caPad data processing starts here
+	 *	Copy raw cspad image data into worker thread structure for processing
 	 */
-		//	
-		//	const Pds::CsPad::Section* s;
-		//	unsigned section_id;
-		//	while( (s=iter.next(section_id)) ) {  // loop over sections (two by one's)
-		//	  printf("           Section %d  { %04x %04x %04x %04x }\n",
-		//		 section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
-		//	}
-		//    }
-		//    }
-		//  }
+	Pds::CsPad::ElementIterator iter;
+	fail=getCspadData(DetInfo::XppGon, iter);
 
-  		Pds::CsPad::ElementIterator iter;
-		fail=getCspadData(DetInfo::XppGon, iter);
-
-	
-	
-		if (fail==0) {
-			nevents++;
-    		const Pds::CsPad::ElementHeader* element;
-    		// loop over elements (quadrants)
-    		
-    		while(( element=iter.next() )) {  
-				//gjw:  only quad 3 has data during commissioning
-     			if(element->quad()==2){
-					//gjw:  check that we are not on a new fiducial
-					if (fiducials != element->fiducials())
-						printf("Fiducials %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
-					//gjw:  get temp on strong back 2 
-					printf("Temperature: %3.1fC\n",CspadTemp::instance().getTemp(element->sb_temp(2)));
-
-					//gjw:  read 2x1 "sections"
-					const Pds::CsPad::Section* s;
-					unsigned section_id;
-
-
-					// loop over sections and copy into data (each section is a "two by one")
-					uint16_t data[COLS*ROWS*16];
-					while(( s=iter.next(section_id) )) {  
-						//gjw:  read out data in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-						memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
-					}
-					
-					// ROWS = 194;  COLS = 185;
-					sprintf(filename,"%x.h5",element->fiducials());
-					hdf5_write(filename, data, 2*ROWS, 8*COLS, H5T_STD_U16LE);
-
-
-					//gjw:  split 2x8 array into 2x2 modules (detector unit for rotation), 4 in a quad and write to file
-					uint16_t tbt[4][2*COLS][2*ROWS];
-					for(int g=0;g<4;g++){
-						// Copy memory into buffers
-						memcpy(&tbt[g],&data[g*2*2*ROWS*COLS],2*2*COLS*ROWS*sizeof(uint16_t));
-
-						// Write to file
-						sprintf(filename,"%x-q%d.h5",element->fiducials(),g);
-						hdf5_write(filename, data, ROWS*2, COLS*2, H5T_STD_U16LE);
-					}
-
-
-					// Geometrical corrections
-					//gjw:  rotate/reflect 2x2s into consistent orientations
-					uint16_t buff[2*COLS][2*ROWS];
-					uint16_t buff1[2*ROWS][2*COLS];
-					uint16_t buff2[2*COLS][2*ROWS];
-					uint16_t buff3[2*ROWS][2*COLS];
-					FILE* fp1;
-				
-					//quad 0 (asics 0-3) 370x388 pixels
-					// Reflect X
-					for(unsigned int g=0;g<2*COLS;g++) for(unsigned int j=0;j<2*ROWS;j++)
-						buff[g][j]=tbt[0][2*COLS-1-g][j];	
-					// Rotate 90
-					for(unsigned int g=0;g<2*ROWS;g++) for(unsigned int j = 0;j<2*COLS;j++)
-						buff1[g][j]=buff[2*ROWS-1-j+2*(COLS-ROWS)][g];
-
-					// Write to file						
-					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),0);
-					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
-
-
-					//quad 1 (asics 4-7) 388x370
-					//reflect X
-					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
-						buff[g][j]=tbt[1][2*COLS-1-g][j];	
-					//reflect Y
-					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
-						buff3[g][j]=buff[g][2*ROWS-1-j];	
-					// Write to file
-					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),1);
-					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
-
-
-					//quad 2 (asics 8-11) 370x388
-					//rotate -90
-					for(unsigned int g=0;g<2*ROWS;g++)for(unsigned int j = 0;j<2*COLS;j++)
-						buff1[g][j]=tbt[2][j][2*COLS-1-g+2*(ROWS-COLS)];
-					// Write to file
-					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),2);
-					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
-
-
-					//quad 3 (asics 12-15) 388x370
-					//reflect X
-					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
-						buff[g][j]=tbt[3][2*COLS-1-g][j];	
-					//reflect Y
-					for(unsigned int g=0;g<2*COLS;g++)for(unsigned int j=0;j<2*ROWS;j++)
-						buff2[g][j]=buff[g][2*ROWS-1-j];	
-					// Write to file
-					sprintf(filename,"%x-q%d-corrected.h5",element->fiducials(),3);
-					hdf5_write(filename, buff1[0], ROWS*2, COLS*2, H5T_STD_U16LE);
-     			}
-   			}
-  		}
-		else
+	if (fail) {
 		printf("getCspadData fail %d (%x)\n",fail,fiducials);
+		threadInfo->cspad_fail = fail;
+	}
+
+	else {
+		nevents++;
+		const Pds::CsPad::ElementHeader* element;
+
+		// loop over elements (quadrants)
+		while(( element=iter.next() )) {  
+
+			// Which quadrant?
+			int quadrant = element->quad();
+			
+			// Have we jumped to a new fiducial (event??)
+			if (fiducials != element->fiducials())
+				printf("Fiducial jump: %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
+			
+			// Get temperature on strong back 
+			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
+			printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
+			threadInfo->quad_temperature[quadrant] = temperature;
+			
+
+			// Allocate space to store this quaddrant
+			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+
+			
+			// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+			const Pds::CsPad::Section* s;
+			unsigned section_id;
+			while(( s=iter.next(section_id) )) {  
+				memcpy(&threadInfo->quad_data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+			}
+
+			
+			// Save quadrant to file (for debugging - delete later)
+			sprintf(filename,"%x-%i.h5",element->fiducials(),quadrant);
+			hdf5_write(filename, data, 2*ROWS, 8*COLS, H5T_STD_U16LE);
+		}
+	}
+	++ievent;
+
 	
-		++ievent;
+	
+	/*
+	 *	Spawn worker thread to process this frame
+	 */
+	pthread_t		thread;
+	pthread_attr_t	threadAttribute;
+	size_t			defaultStackSize,newStackSize;
+	int				returnStatus;
+
+	// Detached or joinable?
+	pthread_attr_init(&threadAttribute);
+	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+	
+	
+	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
+	while(global.nActiveThreads >= global.nThreads) {
+		usleep(100000);
+	}
+		
+	// Create a new worker thread for this data frame
+	pthread_mutex_lock(&global.nActiveThreads_mutex);
+	global.nActiveThreads += 1;
+	pthread_mutex_unlock(&global.nActiveThreads_mutex);
+	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
+	
+	
+	// Threads are created detached so we don't have to wait for anything to happen before returning
+	// (each thread is responsible for cleaning up its own threadInfo structure when done)
+	pthread_attr_destroy(&threadAttribute);
+	
+
+	
+	
 }
 // End of event data processing block
+
+
 
 
 /*
@@ -446,4 +383,10 @@ void endjob()
     for(unsigned i=0; i<4; i++) {
 	 	memset(array,0,(nb+2)*(nb+2)*sizeof(double));
 	}
+
+	/*
+	 *	Thread management stuff
+	 */
+	pthread_mutex_destroy(&global.nActiveThreads_mutex);
+
 }

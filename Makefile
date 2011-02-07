@@ -60,7 +60,10 @@ $(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)
 cspad_cryst.o: cspad_cryst.cc 
 	$(CPP) $(CFLAGS) $<
 
-cspad_cryst: cspad_cryst.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+worker.o: worker.cpp 
+	$(CPP) $(CFLAGS) $<
+
+cspad_cryst: cspad_cryst.o worker.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
@@ -68,6 +71,5 @@ cspad_cryst: cspad_cryst.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/C
 # test data
 test: cspad_cryst
 	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 1   
-	#./cspad_cleaner -f ~gjwillms/cfel-cspad/e40-r0546-s00-c00.xtc -n 1   
 
 	
