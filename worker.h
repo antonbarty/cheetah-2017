@@ -24,8 +24,8 @@ static struct {
 
 	
 	// cspad geometry
-	const unsigned	module_rows = 194;
-	const unsigned	module_cols = 185;
+	unsigned	module_rows;
+	unsigned	module_cols;
 	
 	
 } global;
@@ -93,10 +93,13 @@ static const unsigned  COLS = 185;
 
 static uint32_t nevents = 0;
 
+#define ERROR(...) fprintf(stderr, __VA_ARGS__)
+#define STATUS(...) fprintf(stderr, __VA_ARGS__)
+
 
 
 /*
  *	Function prototypes
  */
 void *worker(void *);
-static int hdf5_write(const char*, const void*, int, int, int);
+int hdf5_write(const char*, const void*, int, int, int);

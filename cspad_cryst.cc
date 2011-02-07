@@ -14,13 +14,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <hdf5.h>
-#include <pthreads.h>
+#include <pthread.h>
 
 #include "worker.h"
 
-
-#define ERROR(...) fprintf(stderr, __VA_ARGS__)
-#define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
 
 // Quad class definition
@@ -134,6 +131,8 @@ void beginjob() {
 	 */
 	global.nThreads = 1;
 	global.nActiveThreads = 0;
+	global.module_rows = ROWS;
+	global.module_cols = COLS;
 	global.thread = (pthread_t*) calloc(global.nThreads, sizeof(pthread_t));
 	pthread_mutex_init(&global.nActiveThreads_mutex, NULL);
 }
@@ -309,7 +308,7 @@ void event() {
 			
 			// Save quadrant to file (for debugging - delete later)
 			sprintf(filename,"%x-%i.h5",element->fiducials(),quadrant);
-			hdf5_write(filename, data, 2*ROWS, 8*COLS, H5T_STD_U16LE);
+			hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);
 		}
 	}
 	++ievent;

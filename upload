@@ -14,7 +14,7 @@ switch ($1)
 	case psexport:
 	#rsync -av --delete-after --exclude '.git' . barty@psexport.slac.stanford.edu:cspad
 	#rsync -av --delete-after --exclude '*.o' --exclude 'release' --exclude '.git' . barty@psexport.slac.stanford.edu:cspad
-	rsync -av --delete-after --exclude 'release' --exclude '.git' . barty@psexport.slac.stanford.edu:cspad
+	rsync -av --exclude 'release' --exclude 'build' --exclude '.git' --exclude '*.o' . barty@psexport.slac.stanford.edu:c/cspad-cryst/
 	breaksw
 	
 

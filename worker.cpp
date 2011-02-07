@@ -173,7 +173,7 @@ void *worker(void *threadarg) {
  *	Write data to HDF5 file
  */
 
-static int hdf5_write(const char *filename, const void *data, int width, int height, int type) 
+int hdf5_write(const char *filename, const void *data, int width, int height, int type) 
 {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
