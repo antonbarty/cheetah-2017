@@ -31,10 +31,23 @@
  *	Worker thread function for processing each cspad data frame
  */
 void *worker(void *threadarg) {
-	
+
+	// Reinstate threadInfo structure
 	tThreadInfo *threadInfo;
 	threadInfo = (tThreadInfo*) threadarg;
 	
+	
+	/*
+	 *	Test - write out raw Quadrant info
+	 */
+	FILE* fp;
+	char filename[1024];
+
+	for(int quadrant=0; quadrant<4; quadrant++) {
+		sprintf(filename,"%x-q%i.h5",threadInfo->fiducial,quadrant);
+		hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);		
+	} 
+
 	
 	/*
 	 *	This bit currently copied verbatim from Garth's myana code

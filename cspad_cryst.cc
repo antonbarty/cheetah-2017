@@ -214,7 +214,7 @@ void event() {
 	 *	Copy all interesting information into worker thread structure 
 	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
 	 */
-	tThreadInfo		*threadInfo;
+	tThreadInfo	*threadInfo;
 	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
 	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 
@@ -252,14 +252,13 @@ void event() {
 
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
-
+			
+			// Which quadrant is this?
+			int quadrant = element->quad();
+			
 			// Have we jumped to a new fiducial (event??)
 			if (fiducials != element->fiducials())
 				printf("Fiducial jump: %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
-
-			
-			// Which quadrant?
-			int quadrant = element->quad();
 			
 			// Get temperature on strong back 
 			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
@@ -287,8 +286,8 @@ void event() {
 			
 			
 			// Save quadrant to file (for debugging - delete later)
-			sprintf(filename,"%x-%i.h5",element->fiducials(),quadrant);
-			hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);
+			//sprintf(filename,"%x-q%i.h5",element->fiducials(),quadrant);
+			//hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);
 		}
 	}
 	++ievent;
@@ -320,7 +319,7 @@ void event() {
 	global.nActiveThreads += 1;
 	pthread_mutex_unlock(&global.nActiveThreads_mutex);
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
-	printf("Worker thread %i launched\n",ievent);
+	//printf("Worker thread %i launched\n",ievent);
 	
 	
 	// Threads are created detached so we don't have to wait for anything to happen before returning
@@ -328,7 +327,7 @@ void event() {
 	pthread_attr_destroy(&threadAttribute);
 	
 
-	
+	usleep(1000000);
 	
 }
 // End of event data processing block
