@@ -57,13 +57,16 @@ $(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)
 
 
 # csPAD cleaner
-cspad_cryst.o: cspad_cryst.cc 
+cspad_cryst.o: cspad_cryst.cpp 
 	$(CPP) $(CFLAGS) $<
 
 worker.o: worker.cpp 
 	$(CPP) $(CFLAGS) $<
 
-cspad_cryst: cspad_cryst.o worker.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+setup.o: setup.cpp 
+	$(CPP) $(CFLAGS) $<
+
+cspad_cryst: cspad_cryst.o setup.o worker.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 

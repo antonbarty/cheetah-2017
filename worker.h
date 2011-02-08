@@ -18,15 +18,16 @@ typedef struct {
 	// Thread management
 	int				nThreads;
 	int				nActiveThreads;
-	pthread_t		*thread;
+	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
 
 
-	
-	// cspad geometry
-	unsigned	module_rows;
-	unsigned	module_cols;
-	
+	// Detector geometry
+	float			*pix_x;
+	float			*pix_y;
+	float			*pix_z;
+	unsigned		module_rows;
+	unsigned		module_cols;
 	
 } tGlobal;
 
@@ -39,11 +40,14 @@ typedef struct {
 	
 	// Reference to common global structure
 	tGlobal		*pGlobal;
+	int			busy;
 	
 	// cspad data
 	int			cspad_fail;
 	float		quad_temperature[4];
 	uint16_t	*quad_data[4];
+	uint16_t	*raw_data;
+	uint16_t	*image;
 	
 	
 	// Beamline data, etc
@@ -106,3 +110,5 @@ static uint32_t nevents = 0;
  */
 void *worker(void *);
 int hdf5_write(const char*, const void*, int, int, int);
+void setup_threads(tGlobal*) ;
+

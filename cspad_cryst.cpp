@@ -17,6 +17,7 @@
 #include <pthread.h>
 
 #include "worker.h"
+#include "setup.h"
 
 
 static tGlobal		global;
@@ -103,12 +104,10 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
-	global.nThreads = 1;
-	global.nActiveThreads = 0;
 	global.module_rows = ROWS;
 	global.module_cols = COLS;
-	global.thread = (pthread_t*) calloc(global.nThreads, sizeof(pthread_t));
-	pthread_mutex_init(&global.nActiveThreads_mutex, NULL);
+	setup_threads(&global);
+	
 }
 
 
@@ -184,15 +183,15 @@ void event() {
 	/*
 	 *	Get fiducials
 	 */
-	unsigned fiducials;
-	fail = getFiducials(fiducials);
+	unsigned fiducial;
+	fail = getFiducials(fiducial);
 
 	
 	/* 
 	 *	Is the beam on?
 	 */
 	bool beam = beamOn();
-	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducials);
+	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
   
 	/*
 	 *	FEE Gas detector values 
@@ -213,30 +212,12 @@ void event() {
 	
 	
 	/*
-	 *	Copy all interesting information into worker thread structure 
-	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
+	 *	Create a new worker threadInfo structure in which to place all information
 	 */
 	tThreadInfo	*threadInfo;
 	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
-	threadInfo->pGlobal = &global;
-	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
-
-	threadInfo->seconds = seconds;
-	threadInfo->nanoSeconds = nanoSeconds;
-	strcpy(threadInfo->timeString, time);
-	threadInfo->fiducial = fiducials;
-	threadInfo->beamOn = beam;
-	threadInfo->gmd11 = gasdet[0];
-	threadInfo->gmd12 = gasdet[1];
-	threadInfo->gmd21 = gasdet[2];
-	threadInfo->gmd22 = gasdet[3];
-	threadInfo->ft1 = ft1;
-	threadInfo->ft2 = ft1;
-	threadInfo->c1 = c1;
-	threadInfo->c2 = c2;
-	for(int jj=0; jj<4; jj++) threadInfo->quad_data[jj] = NULL;
-	
-	
+	//for(int jj=0; jj<4; jj++) threadInfo->quad_data[jj] = NULL;
+		
 
 	/*
 	 *	Copy raw cspad image data into worker thread structure for processing
@@ -245,8 +226,9 @@ void event() {
 	fail=getCspadData(DetInfo::XppGon, iter);
 
 	if (fail) {
-		printf("getCspadData fail %d (%x)\n",fail,fiducials);
+		printf("getCspadData fail %d (%x)\n",fail,fiducial);
 		threadInfo->cspad_fail = fail;
+		return;
 	}
 
 	else {
@@ -260,8 +242,8 @@ void event() {
 			int quadrant = element->quad();
 			
 			// Have we jumped to a new fiducial (event??)
-			if (fiducials != element->fiducials())
-				printf("Fiducial jump: %x/%d:%x\n",fiducials,element->quad(),element->fiducials());
+			if (fiducial != element->fiducials())
+				printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
 			
 			// Get temperature on strong back 
 			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
@@ -282,19 +264,33 @@ void event() {
 				memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 			}
 
-			
 			// Copy image data into threadInfo structure
 			memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
-			// printf("Quadrant %i data copied\n",quadrant);
-			
-			
-			// Save quadrant to file (for debugging - delete later)
-			//sprintf(filename,"%x-q%i.h5",element->fiducials(),quadrant);
-			//hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);
 		}
 	}
 	++ievent;
 
+	/*
+	 *	Copy all interesting information into worker thread structure if we got this far.
+	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
+	 */
+	threadInfo->seconds = seconds;
+	threadInfo->nanoSeconds = nanoSeconds;
+	strcpy(threadInfo->timeString, time);
+	threadInfo->fiducial = fiducial;
+	threadInfo->beamOn = beam;
+	threadInfo->gmd11 = gasdet[0];
+	threadInfo->gmd12 = gasdet[1];
+	threadInfo->gmd21 = gasdet[2];
+	threadInfo->gmd22 = gasdet[3];
+	threadInfo->ft1 = ft1;
+	threadInfo->ft2 = ft1;
+	threadInfo->c1 = c1;
+	threadInfo->c2 = c2;
+	threadInfo->pGlobal = &global;
+	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
+
+	
 	
 	
 	/*
@@ -302,37 +298,38 @@ void event() {
 	 */
 	pthread_t		thread;
 	pthread_attr_t	threadAttribute;
-	size_t			defaultStackSize,newStackSize;
 	int				returnStatus;
 
-	// Detached or joinable?
-	pthread_attr_init(&threadAttribute);
-	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-	
 	
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
 		printf("Waiting: active threads = %i; nthreads allowed = %i\n",global.nThreads, global.nActiveThreads);
 		usleep(100000);
 	}
+
+	// Detached or joinable?
+	pthread_attr_init(&threadAttribute);
+	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+	
 		
 	// Create a new worker thread for this data frame
 	pthread_mutex_lock(&global.nActiveThreads_mutex);
 	global.nActiveThreads += 1;
 	pthread_mutex_unlock(&global.nActiveThreads_mutex);
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
+	threadInfo = NULL;
 	//printf("Worker thread %i launched\n",ievent);
 	
 	
 	// Threads are created detached so we don't have to wait for anything to happen before returning
 	// (each thread is responsible for cleaning up its own threadInfo structure when done)
 	pthread_attr_destroy(&threadAttribute);
-	
+	//pthread_detach(thread);
 	
 	// Pause 
-	printf("Pausing so you can read the output :-)\n");
-	usleep(2000000);
+	printf("Pausing so you have time to read the output :-)\n");
+	usleep(1000000);
 	
 }
 // End of event data processing block
@@ -356,22 +353,17 @@ void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
 
-	//for(unsigned i=0; i<4; i++)
-	//	quads[i]->write();
-
-	//CspadGeometry geom;
-	//const unsigned nb = 3400;
-	//double* array = new double[(nb+2)*(nb+2)];
-	//double sz = 0.25*double(nb)*109.92;
-	//CsVector offset; offset[0]=sz; offset[1]=sz;
-
-    //for(unsigned i=0; i<4; i++) {
-	// 	memset(array,0,(nb+2)*(nb+2)*sizeof(double));
-	//}
 
 	/*
 	 *	Thread management stuff
 	 */
-	pthread_mutex_destroy(&global.nActiveThreads_mutex);
+	printf("Waiting for threads to terminate\n");
 
+	while(global.nActiveThreads > 0) {
+		printf("\tactive threads = %i\n", global.nActiveThreads);
+		usleep(100000);
+	}
+	pthread_mutex_destroy(&global.nActiveThreads_mutex);
+	
+	printf("Done with my bit!\n");
 }
