@@ -47,12 +47,32 @@ void *worker(void *threadarg) {
 	 */
 	FILE* fp;
 	char filename[1024];
-
-	for(int quadrant=0; quadrant<4; quadrant++) {
-		sprintf(filename,"%x-q%i.h5",threadInfo->fiducial,quadrant);
+	int fiducial = threadInfo->fiducial;
+	/*	Not needed any more - left in place in case needed for debugging
+	 for(int quadrant=0; quadrant<4; quadrant++) {
+		sprintf(filename,"%x-q%i.h5",fiducial,quadrant);
 		hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);		
-	} 
+	}
+	 */
 
+	
+	/*
+	 *	Make one large array out of raw data
+	 */
+	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
+	long	i,j,ii;
+	for(int quadrant=0; quadrant<4; quadrant++) {
+		for(long k=0; k<2*ROWS*8*COLS; k++) {
+			i = k % (2*ROWS) + quadrant*(2*ROWS);
+			j = k / (2*ROWS);
+			ii  = i+(8*ROWS)*j;
+			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
+		}
+	}
+	sprintf(filename,"%x.h5",fiducial);
+	hdf5_write(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
+	
+	
 	
 	/*
 	 *	This bit currently copied verbatim from Garth's myana code
@@ -167,11 +187,13 @@ void *worker(void *threadarg) {
 	 *	Cleanup and exit
 	 */
 	printf("Cleaning up thread\n");
+
 	// Free memory used to store this data frame
 	for(int jj=0; jj<4; jj++) {
 		free(threadInfo->quad_data[jj]);	
 		threadInfo->quad_data[jj] = NULL;;	
 	}
+	free(threadInfo->raw_data);
 
 	
 	// Decrement thread pool counter by one

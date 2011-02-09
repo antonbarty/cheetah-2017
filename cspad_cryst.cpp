@@ -296,39 +296,40 @@ void event() {
 	/*
 	 *	Spawn worker thread to process this frame
 	 */
-	pthread_t		thread;
-	pthread_attr_t	threadAttribute;
-	int				returnStatus;
 
-	
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
 		printf("Waiting: active threads = %i; nthreads allowed = %i\n",global.nThreads, global.nActiveThreads);
 		usleep(100000);
 	}
 
-	// Detached or joinable?
+
+	// Create a new worker thread for this data frame
+	// Threads are created detached so we don't have to wait for anything to happen before returning
+	// (each thread is responsible for cleaning up its own threadInfo structure when done)
+
+	pthread_mutex_lock(&global.nActiveThreads_mutex);
+	global.nActiveThreads += 1;
+	pthread_mutex_unlock(&global.nActiveThreads_mutex);
+
+	
+	pthread_t		thread;
+	pthread_attr_t	threadAttribute;
+	int				returnStatus;
+
 	pthread_attr_init(&threadAttribute);
 	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	
-		
-	// Create a new worker thread for this data frame
-	pthread_mutex_lock(&global.nActiveThreads_mutex);
-	global.nActiveThreads += 1;
-	pthread_mutex_unlock(&global.nActiveThreads_mutex);
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
-	threadInfo = NULL;
-	//printf("Worker thread %i launched\n",ievent);
-	
-	
-	// Threads are created detached so we don't have to wait for anything to happen before returning
-	// (each thread is responsible for cleaning up its own threadInfo structure when done)
 	pthread_attr_destroy(&threadAttribute);
+	threadInfo = NULL;
 	//pthread_detach(thread);
 	
+	
+	
 	// Pause 
-	printf("Pausing so you have time to read the output :-)\n");
+	printf("Pausing to give time to read the output :-)\n");
 	usleep(1000000);
 	
 }
