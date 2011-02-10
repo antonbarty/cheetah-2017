@@ -32,6 +32,8 @@ typedef struct {
 	float			pix_dx;
 	unsigned		module_rows;
 	unsigned		module_cols;
+	long			image_nx;
+	long			image_nn;
 	
 } tGlobal;
 
@@ -114,7 +116,9 @@ static uint32_t nevents = 0;
  */
 void *worker(void *);
 int hdf5_write(const char*, const void*, int, int, int);
+void globalConfiguration(tGlobal*);
 void setupThreads(tGlobal*);
 void readDetectorGeometry(tGlobal*);
+void assemble2Dimage(tThreadInfo*, tGlobal*);
 
 

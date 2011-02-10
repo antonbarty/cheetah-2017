@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <math.h>
 #include <hdf5.h>
 
 #include "worker.h"
@@ -56,12 +57,13 @@ void *worker(void *threadarg) {
 	 */
 
 	
+	
 	/*
-	 *	Make one large array out of raw data and save it
+	 *	Make one large array out of raw data 
 	 */
 	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
-	long	i,j,ii;
 	for(int quadrant=0; quadrant<4; quadrant++) {
+		long	i,j,ii;
 		for(long k=0; k<2*ROWS*8*COLS; k++) {
 			i = k % (2*ROWS) + quadrant*(2*ROWS);
 			j = k / (2*ROWS);
@@ -69,16 +71,25 @@ void *worker(void *threadarg) {
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
+	// Write out for diagnostics
 	sprintf(filename,"%x.h5",fiducial);
 	hdf5_write(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
 	
 	
 	
 	/*
+	 *	Assemble quadrants into a 'realistic' 2D image
+	 */
+	assemble2Dimage(threadInfo, global);
+	sprintf(filename,"%x-image.h5",fiducial);
+	hdf5_write(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
+	
+	
+	
+	
+	/*
 	 *	This bit currently copied verbatim from Garth's myana code
 	 *	Commented out for now for debugging purposes
-	 
-	 
 	if (!threadInfo->cspad_fail) {
 		nevents++;
 		const Pds::CsPad::ElementHeader* element;
@@ -194,6 +205,7 @@ void *worker(void *threadarg) {
 		threadInfo->quad_data[jj] = NULL;;	
 	}
 	free(threadInfo->raw_data);
+	free(threadInfo->image);
 
 	
 	// Decrement thread pool counter by one
@@ -207,6 +219,88 @@ void *worker(void *threadarg) {
 	pthread_exit(NULL);
 }
 
+
+
+/*
+ *	Interpolate raw (corrected) cspad data into a physical 2D image
+ *	using pre-defined pixel mapping (as loaded from .h5 file)
+ */
+void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
+	
+	
+	// Allocate temporary arrays for pixel interpolation (needs to be floating point)
+	float	*data = (float*) calloc(global->image_nn,sizeof(float));
+	float	*weight = (float*) calloc(global->image_nn,sizeof(float));
+	for(long i=0;i<global->image_nn;i++){
+		data[i] = 0;
+		weight[i]= 0;
+	}
+	
+	
+	// Loop through all pixels and interpolate onto regular grid
+	float	x,y;
+	float	pixel_value,w;
+	long	ix, iy;
+	float	fx, fy;
+	long	image_index;
+	
+
+	for(long i=0;i<global->pix_nn;i++){
+		// Pixel location with (0,0) at array element (0,0) in bottom left corner
+		x = global->pix_x[i] + global->image_nx/2;
+		y = global->pix_y[i] + global->image_nx/2;
+		pixel_value = threadInfo->raw_data[i];
+		
+		// Split coordinate into integer and fractional parts
+		ix = (long) floor(x);
+		iy = (long) floor(y);
+		fx = x - ix;
+		fy = y - iy;
+		
+		// Interpolate intensity over nearest 4 pixels using fractional overlap as the weighting factor
+		// (0,0)
+		w = (1-fx)*(1-fy);
+		image_index = ix + global->image_nx*iy;
+		data[image_index] += w*pixel_value;
+		weight[image_index] += w;
+		// (+1,0)
+		w = (fx)*(1-fy);
+		image_index = (ix+1) + global->image_nx*iy;
+		data[image_index] += w*pixel_value;
+		weight[image_index] += w;
+		// (0,+1)
+		w = (1-fx)*(fy);
+		image_index = ix + global->image_nx*(iy+1);
+		data[image_index] += w*pixel_value;
+		weight[image_index] += w;
+		// (+1,+1)
+		w = (fx)*(fy);
+		image_index = (ix+1) + global->image_nx*(iy+1);
+		data[image_index] += w*pixel_value;
+		weight[image_index] += w;
+	}
+	
+	
+	// Reweight pixel interpolation
+	for(long i=0;i<global->pix_nn;i++){
+		data[i] /= weight[i];
+	}
+
+	
+	// Allocate memory for output image
+	threadInfo->image = (uint16_t*) calloc(global->image_nn,sizeof(uint16_t));
+
+	// Copy interpolated image across into image array
+	for(long i=0;i<global->image_nn;i++){
+		threadInfo->image[i] = (uint16_t) data[i];
+	}	
+	
+	
+	// Free temporary arrays
+	free(data);
+	free(weight);
+	
+}
 
 
 

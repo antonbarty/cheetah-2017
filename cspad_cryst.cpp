@@ -104,6 +104,7 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
+	globalConfiguration(&global);
 	setupThreads(&global);
 	readDetectorGeometry(&global);
 	

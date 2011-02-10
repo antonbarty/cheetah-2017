@@ -21,10 +21,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <math.h>
 #include <hdf5.h>
 
 #include "worker.h"
 #include "data2d.h"
+
+
+/*
+ *	Settings/configuration
+ */
+void globalConfiguration(tGlobal *global) {
+	
+	global->nThreads = 2;
+
+}
 
 
 
@@ -33,11 +44,7 @@
  */
 void setupThreads(tGlobal *global) {
 
-	global->nThreads = 2;
 	global->nActiveThreads = 0;
-
-	global->module_rows = ROWS;
-	global->module_cols = COLS;	
 
 	pthread_mutex_init(&global->nActiveThreads_mutex, NULL);
 	global->threadID = (pthread_t*) calloc(global->nThreads, sizeof(pthread_t));
@@ -46,12 +53,17 @@ void setupThreads(tGlobal *global) {
 
 }
 
+
+
 /*
  *	Read in detector configuration
  */
 void readDetectorGeometry(tGlobal *global) {
 	
+
 	// Pixel size (measurements in geometry file are in m)
+	global->module_rows = ROWS;
+	global->module_cols = COLS;	
 	global->pix_dx = 100e-6;
 
 	
@@ -104,4 +116,40 @@ void readDetectorGeometry(tGlobal *global) {
 		global->pix_y[i] = (float) detector_y.data[i];
 		global->pix_z[i] = (float) detector_z.data[i];
 	}
+	
+	
+	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
+	for(long i=0;i<nn;i++){
+		global->pix_x[i] /= global->pix_dx;
+		global->pix_y[i] /= global->pix_dx;
+		global->pix_z[i] /= global->pix_dx;
+	}
+	
+	
+	// Find bounds of image array
+	float	xmax = -1e9;
+	float	xmin =  1e9;
+	float	ymax = -1e9;
+	float	ymin =  1e9;
+	for(long i=0;i<nn;i++){
+		if (global->pix_x[i] > xmax) xmax = global->pix_x[i];
+		if (global->pix_x[i] < xmin) xmin = global->pix_x[i];
+		if (global->pix_y[i] > ymax) ymax = global->pix_y[i];
+		if (global->pix_y[i] < ymin) ymin = global->pix_y[i];
+	}
+	xmax = ceil(xmax);
+	xmin = floor(xmin);
+	ymax = ceil(ymax);
+	ymin = floor(ymin);
+	
+	
+	// How big must the output image be?
+	float max = xmax;
+	if(ymax > max) max = ymax;
+	if(fabs(xmin) > max) max = fabs(xmin);
+	if(fabs(ymin) > max) max = fabs(ymin);
+	global->image_nx = 2*(unsigned)max;
+	global->image_nn = global->image_nx*global->image_nx;
+	
+	
 }
