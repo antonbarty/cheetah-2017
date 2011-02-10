@@ -36,7 +36,6 @@ pro cspad_geometry
 	y = fltarr(8*ROWS,8*COLS)
 	z = fltarr(8*ROWS,8*COLS)
 	
-
 	;;
 	;;	Create 1st quadrant (4 modules)
 	;;
@@ -47,24 +46,21 @@ pro cspad_geometry
 	for i=0, 3 do begin
 		tmx = mx
 		tmy = my
-		rotate_module, tmx, tmy, mth[i]
+		;;rotate_module, tmx, tmy, mth[i]
 		tmx += msx[i]*module_width
 		tmy += msy[i]*module_width
 		x[0:2*ROWS-1,2*i*COLS:2*(i+1)*COLS-1] = tmx
 		y[0:2*ROWS-1,2*i*COLS:2*(i+1)*COLS-1] = tmy
 	endfor
 
-
 	;;
 	;;	Replicate this module across all 4 quadrants
 	;;
 	qth = [0,90,180,270]
-	mx = x[0:2*ROWS-1, *]
-	my = x[0:2*ROWS-1, *]
 	
 	for i=0, 3 do begin
-		tmx = mx
-		tmy = my
+		tmx = x[0:2*ROWS-1, *]
+		tmy = y[0:2*ROWS-1, *]
 		rotate_module, tmx, tmy, qth[i]
 		x[2*i*ROWS:2*(i+1)*ROWS-1,*] = tmx
 		y[2*i*ROWS:2*(i+1)*ROWS-1,*] = tmy
