@@ -2,8 +2,8 @@ pro rotate_module, x, y, theta
 
 	if theta eq 0 then return
 
-	tx = x*cos(theta) + y*sin(theta)
-	ty = x*sin(theta) - y*cos(theta)
+	tx = x*cos(!dtor*theta) + y*sin(!dtor*theta)
+	ty = x*sin(!dtor*theta) - y*cos(!dtor*theta)
 	
 	x = tx
 	y = ty
@@ -26,7 +26,7 @@ pro cspad_geometry
 
 	;; Create base module (consisting of two 2x1s with a 2-pixel split between them)
 	mx = xarr(2*ROWS,2*COLS)-ROWS
-	my = xarr(2*ROWS,2*COLS)-COLS
+	my = yarr(2*ROWS,2*COLS)-COLS
 	my[*,0:COLS-1] -= 1
 	my[*,COLS:2*COLS-1] += 1
 
