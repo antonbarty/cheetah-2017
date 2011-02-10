@@ -1,15 +1,29 @@
+;; Geometry according to Garth
+;;quad 0 (asics 0-3) 370x388 pixels
+;; Reflect X
+;; Rotate 90
+;;quad 1 (asics 4-7) 388x370
+;;reflect X
+;;reflect Y					
+;;quad 2 (asics 8-11) 370x388
+;;rotate -90								
+;;quad 3 (asics 12-15) 388x370
+;;reflect X
+;;reflect Y
+
+
+
 pro rotate_module, x, y, theta
 
 	if theta eq 0 then return
 
-	tx = x*cos(!dtor*theta) + y*sin(!dtor*theta)
-	ty = x*sin(!dtor*theta) - y*cos(!dtor*theta)
+	tx = x*cos(!dtor*theta) - y*sin(!dtor*theta)
+	ty = x*sin(!dtor*theta) + y*cos(!dtor*theta)
 	
 	x = tx
 	y = ty
 
 end
-
 
 
 pro cspad_geometry
@@ -39,14 +53,16 @@ pro cspad_geometry
 	;;
 	;;	Create 1st quadrant (4 modules)
 	;;
-	msx = [0.5,0.5, 1.5, 1.5]
-	msy = [0.5, 1.5, 0.5, 1.5]
-	mth = [0,90,90,0]
+	msx = [0.5, 0.5, 1.5, 1.5]		;; Module shift X (in multiples of module_width)
+	msy = [0.5, 1.5, 0.5, 1.5]		;; Module shift Y (in multiples of module_width)
+	mrx = [ 1,  1, 1, 1]			;; Coordinate reflection in X
+	mry = [ 1,  1, 1, 1]			;; Coordinate reflection in Y
+	mth = [ 0, 90, 90, 0]			;; Rotation (in degrees)
 	
 	for i=0, 3 do begin
-		tmx = mx
-		tmy = my
-		;;rotate_module, tmx, tmy, mth[i]
+		tmx = mrx[i]*mx
+		tmy = mry[i]*my
+		rotate_module, tmx, tmy, mth[i]
 		tmx += msx[i]*module_width
 		tmy += msy[i]*module_width
 		x[0:2*ROWS-1,2*i*COLS:2*(i+1)*COLS-1] = tmx
