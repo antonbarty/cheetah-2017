@@ -90,8 +90,8 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	// Get dimensions of data set (nx, ny, nn)
 	hsize_t dims[ndims];
 	H5Sget_simple_extent_dims(dataspace_id,dims,NULL);
-	nx = dims[0];
-	ny = dims[1];
+	ny = dims[0];
+	nx = dims[1];
 	nn = 1;
 	for(int i = 0;i<ndims;i++)
 		nn *= dims[i];
@@ -218,8 +218,8 @@ void cData2d::writeHDF5(char* filename){
 	// Data space dimensions
 	int	ndims = 2;
 	hsize_t dims[ndims];
-	dims[0] = nx;
-	dims[1] = ny;
+	dims[0] = ny;
+	dims[1] = nx;
 	
 	//  Write the data
 	hid_t dataspace_id;

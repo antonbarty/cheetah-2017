@@ -42,7 +42,7 @@ void setupThreads(tGlobal *global) {
 	pthread_mutex_init(&global->nActiveThreads_mutex, NULL);
 	global->threadID = (pthread_t*) calloc(global->nThreads, sizeof(pthread_t));
 	for(int i=0; i<global->nThreads; i++) 
-		global->threadID[i] = NULL;
+		global->threadID[i] = -1;
 
 }
 
@@ -51,7 +51,11 @@ void setupThreads(tGlobal *global) {
  */
 void readDetectorGeometry(tGlobal *global) {
 	
-	// Set filename here (hard code for now)
+	// Pixel size (measurements in geometry file are in m)
+	global->pix_dx = 100e-6;
+
+	
+	// Set filename here 
 	char	filename[1024];
 	printf("\tReading detector configuration:\n");
 	strcpy(filename,"cspad_pixelmap.h5");
