@@ -33,7 +33,7 @@
 void *worker(void *threadarg) {
 
 	/*
-	 *	Reinstate threadarg variables into a more useful form
+	 *	Turn threadarg into a more useful form
 	 */
 	tThreadInfo *threadInfo;
 	tGlobal		*global;
@@ -43,7 +43,7 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	First test - write out raw Quadrant info
+	 *	Basic test - write out raw Quadrant info
 	 */
 	FILE* fp;
 	char filename[1024];
@@ -57,7 +57,7 @@ void *worker(void *threadarg) {
 
 	
 	/*
-	 *	Make one large array out of raw data
+	 *	Make one large array out of raw data and save it
 	 */
 	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
 	long	i,j,ii;

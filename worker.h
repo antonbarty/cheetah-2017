@@ -23,6 +23,9 @@ typedef struct {
 
 
 	// Detector geometry
+	long			pix_nx;
+	long			pix_ny;
+	long			pix_nn;
 	float			*pix_x;
 	float			*pix_y;
 	float			*pix_z;
@@ -110,5 +113,7 @@ static uint32_t nevents = 0;
  */
 void *worker(void *);
 int hdf5_write(const char*, const void*, int, int, int);
-void setup_threads(tGlobal*) ;
+void setupThreads(tGlobal*);
+void readDetectorGeometry(tGlobal*);
+
 

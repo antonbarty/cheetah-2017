@@ -66,7 +66,10 @@ worker.o: worker.cpp
 setup.o: setup.cpp 
 	$(CPP) $(CFLAGS) $<
 
-cspad_cryst: cspad_cryst.o setup.o worker.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+data2d.o: data2d.cpp 
+	$(CPP) $(CFLAGS) $<
+
+cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 

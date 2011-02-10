@@ -104,9 +104,8 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
-	global.module_rows = ROWS;
-	global.module_cols = COLS;
-	setup_threads(&global);
+	setupThreads(&global);
+	readDetectorGeometry(&global);
 	
 }
 
