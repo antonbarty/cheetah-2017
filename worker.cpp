@@ -199,13 +199,14 @@ void *worker(void *threadarg) {
 	 */
 	printf("Cleaning up thread\n");
 
-	// Free memory used to store this data frame
+	// Free memory
 	for(int jj=0; jj<4; jj++) {
 		free(threadInfo->quad_data[jj]);	
 		threadInfo->quad_data[jj] = NULL;;	
 	}
 	free(threadInfo->raw_data);
 	free(threadInfo->image);
+	free(threadInfo);
 
 	
 	// Decrement thread pool counter by one
@@ -214,8 +215,7 @@ void *worker(void *threadarg) {
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
 	
-	// Free memory used by threadInfo structure and exit
-	//free(threadInfo);
+	// Exit thread
 	pthread_exit(NULL);
 }
 
@@ -231,15 +231,15 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 	// Allocate temporary arrays for pixel interpolation (needs to be floating point)
 	float	*data = (float*) calloc(global->image_nn,sizeof(float));
 	float	*weight = (float*) calloc(global->image_nn,sizeof(float));
-	for(long i=0;i<global->image_nn;i++){
+	for(long i=0; i<global->image_nn; i++){
 		data[i] = 0;
 		weight[i]= 0;
 	}
 	
 	
 	// Loop through all pixels and interpolate onto regular grid
-	float	x,y;
-	float	pixel_value,w;
+	float	x, y;
+	float	pixel_value, w;
 	long	ix, iy;
 	float	fx, fy;
 	long	image_index;
@@ -257,33 +257,46 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 		fx = x - ix;
 		fy = y - iy;
 		
-		// Interpolate intensity over nearest 4 pixels using fractional overlap as the weighting factor
+		//printf("%i\t%i\n",ix,iy);
+		
+		// Interpolate intensity over adjacent 4 pixels using fractional overlap as the weighting factor
 		// (0,0)
-		w = (1-fx)*(1-fy);
-		image_index = ix + global->image_nx*iy;
-		data[image_index] += w*pixel_value;
-		weight[image_index] += w;
+		if(ix>=0 && iy>=0 && ix<global->image_nx && iy<global->image_nx) {
+			w = (1-fx)*(1-fy);
+			image_index = ix + global->image_nx*iy;
+			data[image_index] += w*pixel_value;
+			weight[image_index] += w;
+		}
 		// (+1,0)
-		w = (fx)*(1-fy);
-		image_index = (ix+1) + global->image_nx*iy;
-		data[image_index] += w*pixel_value;
-		weight[image_index] += w;
+		if((ix+1)>=0 && iy>=0 && (ix+1)<global->image_nx && iy<global->image_nx) {
+			w = (fx)*(1-fy);
+			image_index = (ix+1) + global->image_nx*iy;
+			data[image_index] += w*pixel_value;
+			weight[image_index] += w;
+		}
 		// (0,+1)
-		w = (1-fx)*(fy);
-		image_index = ix + global->image_nx*(iy+1);
-		data[image_index] += w*pixel_value;
-		weight[image_index] += w;
+		if(ix>=0 && (iy+1)>=0 && ix<global->image_nx && (iy+1)<global->image_nx) {
+			w = (1-fx)*(fy);
+			image_index = ix + global->image_nx*(iy+1);
+			data[image_index] += w*pixel_value;
+			weight[image_index] += w;
+		}
 		// (+1,+1)
-		w = (fx)*(fy);
-		image_index = (ix+1) + global->image_nx*(iy+1);
-		data[image_index] += w*pixel_value;
-		weight[image_index] += w;
+		if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<global->image_nx && (iy+1)<global->image_nx) {
+			w = (fx)*(fy);
+			image_index = (ix+1) + global->image_nx*(iy+1);
+			data[image_index] += w*pixel_value;
+			weight[image_index] += w;
+		}
 	}
 	
 	
 	// Reweight pixel interpolation
-	for(long i=0;i<global->pix_nn;i++){
-		data[i] /= weight[i];
+	for(long i=0; i<global->image_nn; i++){
+		if(weight[i] < 0.1)
+			data[i] = 0;
+		else
+			data[i] /= weight[i];
 	}
 
 	
@@ -292,7 +305,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 	// Copy interpolated image across into image array
 	for(long i=0;i<global->image_nn;i++){
-		threadInfo->image[i] = (uint16_t) data[i];
+		threadInfo->image[i] = (uint16_t) floor(data[i]+0.5);
 	}	
 	
 	

@@ -33,7 +33,7 @@
  */
 void globalConfiguration(tGlobal *global) {
 	
-	global->nThreads = 2;
+	global->nThreads = 1;
 
 }
 
@@ -68,19 +68,29 @@ void readDetectorGeometry(tGlobal *global) {
 
 	
 	// Set filename here 
-	char	filename[1024];
+	char	detfile[1024];
 	printf("\tReading detector configuration:\n");
-	strcpy(filename,"cspad_pixelmap.h5");
-	printf("\t%s\n",filename);
+	strcpy(detfile,"cspad_pixelmap.h5");
+	printf("\t%s\n",detfile);
+	
+	
+	// Check whether pixel map file exists!
+	FILE* fp = fopen(detfile, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("Error: Detector configuration file does not exist: %s\n",detfile);
+		exit(1);
+	}
 	
 	
 	// Read pixel locations from file
 	cData2d		detector_x;
 	cData2d		detector_y;
 	cData2d		detector_z;
-	detector_x.readHDF5(filename, (char *) "x");
-	detector_y.readHDF5(filename, (char *) "y");
-	detector_z.readHDF5(filename, (char *) "z");
+	detector_x.readHDF5(detfile, (char *) "x");
+	detector_y.readHDF5(detfile, (char *) "y");
+	detector_z.readHDF5(detfile, (char *) "z");
 	
 	// Sanity check that all detector arrays are the same size (!)
 	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
@@ -107,7 +117,7 @@ void readDetectorGeometry(tGlobal *global) {
 	global->pix_x = (float *) calloc(nn, sizeof(float));
 	global->pix_y = (float *) calloc(nn, sizeof(float));
 	global->pix_z = (float *) calloc(nn, sizeof(float));
-	printf("\t%li x %li pixel array\n",nx,ny);
+	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
 	
 	
 	// Copy values from 2D array
@@ -141,6 +151,9 @@ void readDetectorGeometry(tGlobal *global) {
 	xmin = floor(xmin);
 	ymax = ceil(ymax);
 	ymin = floor(ymin);
+	printf("\tImage bounds:\n");
+	printf("\tx range %f to %f\n",xmin,xmax);
+	printf("\ty range %f to %f\n",ymin,ymax);
 	
 	
 	// How big must the output image be?
@@ -150,6 +163,6 @@ void readDetectorGeometry(tGlobal *global) {
 	if(fabs(ymin) > max) max = fabs(ymin);
 	global->image_nx = 2*(unsigned)max;
 	global->image_nn = global->image_nx*global->image_nx;
-	
+	printf("\tImage output array will be %i x %i\n",global->image_nx,global->image_nx);
 	
 }

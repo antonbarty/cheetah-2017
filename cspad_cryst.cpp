@@ -247,7 +247,7 @@ void event() {
 			
 			// Get temperature on strong back 
 			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
-			printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
+			//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
 			threadInfo->quad_temperature[quadrant] = temperature;
 			
 
@@ -321,16 +321,16 @@ void event() {
 	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	
+	printf("Launching worker thread\n");
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
 	pthread_attr_destroy(&threadAttribute);
-	threadInfo = NULL;
 	//pthread_detach(thread);
 	
 	
 	
 	// Pause 
 	printf("Pausing to give time to read the output :-)\n");
-	usleep(1000000);
+	usleep(2000000);
 	
 }
 // End of event data processing block
