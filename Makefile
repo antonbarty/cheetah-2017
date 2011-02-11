@@ -76,9 +76,11 @@ cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYAN
 
 # test data
 test: cspad_cryst
-	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
 
 valgrind: cspad_cryst
-	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
 
 	
