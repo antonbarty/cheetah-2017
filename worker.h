@@ -15,7 +15,11 @@
  */
 typedef struct {
 
-		
+	// Configuration files
+	char		configFile[1024];
+	char		geometryFile[1024];
+	
+	
 	// Run information
 	unsigned	runNumber;
 
@@ -123,6 +127,9 @@ static unsigned             asicMask;
 static const unsigned  ROWS = 194;
 static const unsigned  COLS = 185;
 
+static const unsigned int cbufsize = 1024;
+
+
 static uint32_t nevents = 0;
 
 #define ERROR(...) fprintf(stderr, __VA_ARGS__)
@@ -137,6 +144,8 @@ void *worker(void *);
 void writeHDF5(tThreadInfo*, tGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void globalConfiguration(tGlobal*);
+void parseConfigFile(tGlobal*);
+void parseConfigTag(char*, char*, tGlobal*);
 void setupThreads(tGlobal*);
 void readDetectorGeometry(tGlobal*);
 void assemble2Dimage(tThreadInfo*, tGlobal*);

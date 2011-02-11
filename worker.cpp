@@ -42,7 +42,7 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 
 	
-	printf("%i: Started worker thread\n", threadInfo->threadNum);
+	//printf("%i: Started worker thread\n", threadInfo->threadNum);
 	
 	
 	
@@ -97,7 +97,7 @@ void *worker(void *threadarg) {
 	/*
 	 *	Cleanup and exit
 	 */
-	printf("%i: Cleaning up and exiting\n",threadInfo->threadNum);
+	//printf("%i: Cleaning up and exiting\n",threadInfo->threadNum);
 
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
@@ -228,7 +228,7 @@ void writeHDF5(tThreadInfo *info, tGlobal *global){
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,info->fiducial);
-	printf("Writing data to: %s\n",outfile);
+	printf("%i: Writing data to: %s\n",info->threadNum,outfile);
 
 
 		

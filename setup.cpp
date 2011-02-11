@@ -33,10 +33,94 @@
  */
 void globalConfiguration(tGlobal *global) {
 
+	strcpy(global->configFile, "cspad-cryst.ini");
+	strcpy(global->geometryFile, "geometry/cspad_pixelmap.h5");
 	setenv("TZ","US/Pacific",1);
 	global->nThreads = 1;
 
 }
+
+
+
+/*
+ *	Read and process configuration file
+ */
+void parseConfigFile(tGlobal *global) {
+	char		cbuf[cbufsize];
+	char		tag[cbufsize];
+	char		value[cbufsize];
+	char		*cp;
+	FILE		*fp;
+	
+	
+	/*
+	 *	Open configuration file for reading
+	 */
+	printf("Parsing input configuration file:\n",global->configFile);
+	printf("\t%s\n",global->configFile);
+	
+	fp = fopen(global->configFile,"r");
+	if (fp == NULL) {
+		printf("\tCould not open configuration file \"%s\"\n",global->configFile);
+		printf("\tUsing default values\n");
+		return;
+	}
+	
+	/*
+	 *	Loop through configuration file until EOF 
+	 *	Ignore lines beginning with a '#' (comments)
+	 *	Split each line into tag and value at the '=' sign
+	 */
+	while (feof(fp) == 0) {
+		
+		cp = fgets(cbuf, cbufsize, fp);
+		if (cp == NULL) 
+			break;
+		
+		if (cbuf[0] == '#')
+			continue;
+		
+		cp = strpbrk(cbuf, "=");
+		if (cp == NULL)
+			continue;
+		
+		*(cp) = '\0';
+		sscanf(cp+1,"%s",value);
+		sscanf(cbuf,"%s",tag);
+		
+		parseConfigTag(tag, value, global);
+	}
+	
+	fclose(fp);
+	
+}
+
+/*
+ *	Process tags for both configuration file and command line options
+ */
+void parseConfigTag(char *tag, char *value, tGlobal *global) {
+	
+	/*
+	 *	Convert to lowercase
+	 */
+	for(int i=0; i<strlen(tag); i++) 
+		tag[i] = tolower(tag[i]);
+	
+	/*
+	 *	Parse known tags
+	 */
+	if (!strcmp(tag, "nthreads")) {
+		global->nThreads = atoi(value);
+	}
+	else if (!strcmp(tag, "geometry")) {
+		strcpy(global->geometryFile, value);
+	}
+	
+	else {
+		printf("\tUnknown tag (ignored): %s = %s\n",tag,value);
+	}
+}
+
 
 
 
@@ -71,13 +155,13 @@ void readDetectorGeometry(tGlobal *global) {
 	
 	// Set filename here 
 	char	detfile[1024];
-	printf("\tReading detector configuration:\n");
-	strcpy(detfile,"geometry/cspad_pixelmap.h5");
-	printf("\t%s\n",detfile);
+	printf("Reading detector configuration:\n");
+	//strcpy(detfile,"geometry/cspad_pixelmap.h5");
+	printf("\t%s\n",global->geometryFile);
 	
 	
 	// Check whether pixel map file exists!
-	FILE* fp = fopen(detfile, "r");
+	FILE* fp = fopen(global->geometryFile, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
@@ -90,9 +174,9 @@ void readDetectorGeometry(tGlobal *global) {
 	cData2d		detector_x;
 	cData2d		detector_y;
 	cData2d		detector_z;
-	detector_x.readHDF5(detfile, (char *) "x");
-	detector_y.readHDF5(detfile, (char *) "y");
-	detector_z.readHDF5(detfile, (char *) "z");
+	detector_x.readHDF5(global->geometryFile, (char *) "x");
+	detector_y.readHDF5(global->geometryFile, (char *) "y");
+	detector_z.readHDF5(global->geometryFile, (char *) "z");
 	
 	// Sanity check that all detector arrays are the same size (!)
 	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {

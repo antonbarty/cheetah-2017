@@ -108,6 +108,7 @@ void beginjob() {
 	 *	Stuff for worker thread management
 	 */
 	globalConfiguration(&global);
+	parseConfigFile(&global);
 	setupThreads(&global);
 	readDetectorGeometry(&global);
 	
@@ -172,7 +173,7 @@ void event() {
 	
 	// Variables
 	frameNumber++;
-	printf("Processing event %i\n", frameNumber);
+	//printf("Processing event %i\n", frameNumber);
 	FILE* fp;
 	char filename[1024];
 	int fail = 0;
@@ -319,7 +320,7 @@ void event() {
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);//timestatic);
 	strftime(buffer2,80,"%H%M%S",&timelocal);//timestatic);
 	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,fiducial);
-	printf("Filename would be: %s\n",outfile);
+	//printf("Filename would be: %s\n",outfile);
 	
 
 
@@ -434,8 +435,8 @@ void event() {
 
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
-		printf("Waiting: nthreads = %i\tactive = %i \n",global.nThreads, global.nActiveThreads);
-		usleep(100000);
+		//printf("Waiting: nthreads = %i\tactive = %i \n",global.nThreads, global.nActiveThreads);
+		usleep(1000);
 	}
 
 
@@ -457,7 +458,7 @@ void event() {
 	
 	
 	// Pause 
-	printf("Pausing to give time to read the output :-)\n");
+	//printf("Pausing to give time to read the output :-)\n");
 	usleep(2000000);
 	
 }
