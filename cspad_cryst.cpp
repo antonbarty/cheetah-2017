@@ -96,7 +96,9 @@ void beginjob() {
 	/*
 	 *	New csPad corrector
 	 */
-	corrector = new CspadCorrector(Pds::DetInfo::XppGon,0,CspadCorrector::DarkFrameOffset);
+	//corrector = new CspadCorrector(Pds::DetInfo::XppGon,0,CspadCorrector::DarkFrameOffset);
+	corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
+
 				 
 	for(unsigned i=0; i<4; i++)
 		quads[i] = new MyQuad(i);
@@ -114,14 +116,16 @@ void beginjob() {
 
 void fetchConfig()
 {
-	if (getCspadConfig( Pds::DetInfo::XppGon, configV1 )==0) {
+	//if (getCspadConfig( Pds::DetInfo::XppGon, configV1 )==0) {
+	if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
 		asicMask = configV1.asicMask();
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV1.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 	}
-	else if (getCspadConfig( Pds::DetInfo::XppGon, configV2 )==0) {
+	//else if (getCspadConfig( Pds::DetInfo::XppGon, configV2 )==0) {
+	else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV2 )==0) {
 		configVsn= 2;
 		quadMask = configV2.quadMask();
 		asicMask = configV2.asicMask();
@@ -204,8 +208,8 @@ void event() {
 	int seconds, nanoSeconds;
 	const char* timestring;
 	getTime( seconds, nanoSeconds );
-	fail = getLocalTime( timestring );
-	printf("%s\n",timestring);
+	//fail = getLocalTime( timestring );
+	//printf("%s\n",timestring);
 
 	/*
 	 *	Get fiducials
@@ -365,7 +369,9 @@ void event() {
 	 *	Copy raw cspad image data into worker thread structure for processing
 	 */
 	Pds::CsPad::ElementIterator iter;
-	fail=getCspadData(DetInfo::XppGon, iter);
+	//fail=getCspadData(DetInfo::XppGon, iter);
+	fail=getCspadData(DetInfo::CxiDs1, iter);
+
 
 	if (fail) {
 		printf("getCspadData fail %d (%x)\n",fail,fiducial);
