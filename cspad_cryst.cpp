@@ -201,12 +201,8 @@ void event() {
 	/*
 	 * Get time information
 	 */
-	static int ievent = 0;
 	int seconds, nanoSeconds;
 	getTime( seconds, nanoSeconds );
-
-	//const char* time;
-	//fail = getLocalTime( time );
 
 	
 	/*
@@ -292,14 +288,47 @@ void event() {
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
 	
-	
-	
+
+
 	/*
 	 *	Create a new threadInfo structure in which to place all information
 	 */
 	tThreadInfo	*threadInfo;
 	threadInfo = (tThreadInfo*) malloc(sizeof(tThreadInfo));
 		
+	
+	/*
+	 *	Copy all interesting information into worker thread structure if we got this far.
+	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
+	 */
+	threadInfo->seconds = seconds;
+	threadInfo->nanoSeconds = nanoSeconds;
+	threadInfo->fiducial = fiducial;
+	threadInfo->runNumber = getRunNumber();
+	threadInfo->beamOn = beam;
+	
+	threadInfo->gmd11 = gasdet[0];
+	threadInfo->gmd12 = gasdet[1];
+	threadInfo->gmd21 = gasdet[2];
+	threadInfo->gmd22 = gasdet[3];
+	
+	threadInfo->fEbeamCharge = fEbeamCharge;		// in nC
+	threadInfo->fEbeamL3Energy = fEbeamL3Energy;	// in MeV
+	threadInfo->fEbeamLTUPosX = fEbeamLTUPosX;		// in mm
+	threadInfo->fEbeamLTUPosY = fEbeamLTUPosY;		// in mm
+	threadInfo->fEbeamLTUAngX = fEbeamLTUAngX;		// in mrad
+	threadInfo->fEbeamLTUAngY = fEbeamLTUAngY;		// in mrad
+	threadInfo->fEbeamPkCurrBC2 = fEbeamPkCurrBC2;	// in Amps
+	threadInfo->photonEnergyeV = photonEnergyeV;	// in eV
+	threadInfo->wavelengthA = wavelengthA;			// in Angstrom
+	
+	threadInfo->phaseCavityTime1 = phaseCavityTime1;
+	threadInfo->phaseCavityTime2 = phaseCavityTime2;
+	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
+	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
+	
+	threadInfo->pGlobal = &global;
+	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 	
 	
 
@@ -314,7 +343,6 @@ void event() {
 		threadInfo->cspad_fail = fail;
 		return;
 	}
-
 	else {
 		nevents++;
 		const Pds::CsPad::ElementHeader* element;
@@ -352,79 +380,43 @@ void event() {
 			memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
 		}
 	}
-	++ievent;
 
-	
-	/*
-	 *	Copy all interesting information into worker thread structure if we got this far.
-	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
-	 */
-	threadInfo->seconds = seconds;
-	threadInfo->nanoSeconds = nanoSeconds;
-	//strcpy(threadInfo->timeString, time);
-	threadInfo->fiducial = fiducial;
-	threadInfo->runNumber = getRunNumber();
-	threadInfo->beamOn = beam;
-	
-	threadInfo->gmd11 = gasdet[0];
-	threadInfo->gmd12 = gasdet[1];
-	threadInfo->gmd21 = gasdet[2];
-	threadInfo->gmd22 = gasdet[3];
-	
-	threadInfo->fEbeamCharge = fEbeamCharge;		// in nC
-	threadInfo->fEbeamL3Energy = fEbeamL3Energy;	// in MeV
-	threadInfo->fEbeamLTUPosX = fEbeamLTUPosX;		// in mm
-	threadInfo->fEbeamLTUPosY = fEbeamLTUPosY;		// in mm
-	threadInfo->fEbeamLTUAngX = fEbeamLTUAngX;		// in mrad
-	threadInfo->fEbeamLTUAngY = fEbeamLTUAngY;		// in mrad
-	threadInfo->fEbeamPkCurrBC2 = fEbeamPkCurrBC2;	// in Amps
-	threadInfo->photonEnergyeV = photonEnergyeV;	// in eV
-	threadInfo->wavelengthA = wavelengthA;			// in Angstrom
-	
-	threadInfo->phaseCavityTime1 = phaseCavityTime1;
-	threadInfo->phaseCavityTime2 = phaseCavityTime2;
-	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
-	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
-	
-	threadInfo->pGlobal = &global;
-	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 
 	
 	
 	
 	/*
 	 *	Spawn worker thread to process this frame
+	 *	Threads are created detached so we don't have to wait for anything to happen before returning
+	 *		(each thread is responsible for cleaning up its own threadInfo structure when done)
 	 */
+	pthread_t		thread;
+	pthread_attr_t	threadAttribute;
+	int				returnStatus;
+	
 
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
-		printf("Waiting: active threads = %i; nthreads allowed = %i\n",global.nThreads, global.nActiveThreads);
+		printf("Waiting: nthreads = %i\tactive = %i \n",global.nThreads, global.nActiveThreads);
 		usleep(100000);
 	}
 
 
-	// Create a new worker thread for this data frame
-	// Threads are created detached so we don't have to wait for anything to happen before returning
-	// (each thread is responsible for cleaning up its own threadInfo structure when done)
-
+	// Increment threadpool counter
 	pthread_mutex_lock(&global.nActiveThreads_mutex);
 	global.nActiveThreads += 1;
+	threadInfo->threadNum = ++global.threadCounter;
 	pthread_mutex_unlock(&global.nActiveThreads_mutex);
-
 	
-	pthread_t		thread;
-	pthread_attr_t	threadAttribute;
-	int				returnStatus;
-
+	// Set detached state
 	pthread_attr_init(&threadAttribute);
 	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	
-	printf("Launching worker thread\n");
+	// Create a new worker thread for this data frame
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
 	pthread_attr_destroy(&threadAttribute);
 	//pthread_detach(thread);
-	
 	
 	
 	// Pause 

@@ -23,6 +23,7 @@ typedef struct {
 	// Thread management
 	long			nThreads;
 	long			nActiveThreads;
+	long			threadCounter;
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
 
@@ -52,6 +53,7 @@ typedef struct {
 	// Reference to common global structure
 	tGlobal		*pGlobal;
 	int			busy;
+	long		threadNum;
 	
 	// cspad data
 	int			cspad_fail;

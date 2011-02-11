@@ -42,6 +42,8 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 
 	
+	printf("%i: Started worker thread\n", threadInfo->threadNum);
+	
 	
 	
 	/*
@@ -95,29 +97,21 @@ void *worker(void *threadarg) {
 	/*
 	 *	Cleanup and exit
 	 */
-	printf("Cleaning up thread\n");
+	printf("%i: Cleaning up and exiting\n",threadInfo->threadNum);
 
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
-
 	// Free memory
-	printf("1\n");
 	for(int quadrant=0; quadrant<4; quadrant++) 
 		free(threadInfo->quad_data[quadrant]);	
-	printf("2\n");
 	free(threadInfo->raw_data);
-	printf("3\n");
 	free(threadInfo->image);
-	printf("4\n");
 	free(threadInfo);
 
-	
-	
 	// Exit thread
-	printf("5\n");
 	pthread_exit(NULL);
 }
 
@@ -223,6 +217,7 @@ void writeHDF5(tThreadInfo *info, tGlobal *global){
 	
 	/*
 	 * Copied from the way LCLS formats its time string 
+	 *	localtime_r is supposed to be thread safe (!)
 	 */
 	//static const char timeFormatStr[40] = "%04Y-%02m-%02d %02H:%02M:%02S"; /* Time format string */    
 	//static char sTimeText[40];
@@ -235,19 +230,21 @@ void writeHDF5(tThreadInfo *info, tGlobal *global){
 	/*
 	 *	Create filename based on date, time and LCLS fiducial for this image
 	 */
-	char outfile[1024];
+
+	
+	int			unixtime;
+	struct tm	tmTimeStamp;
 	char buffer1[80];
 	char buffer2[80];
-
-	int			unixtime = info->seconds;
-	struct tm	tmTimeStamp;
-	//localtime_r( (const time_t*) (void*) &unixtime, &tmTimeStamp );    
-	localtime_r( (const time_t*) &unixtime, &tmTimeStamp );    
-	//localtime_r( &unixtime, &tmTimeStamp );    
+	char outfile[1024];
+	
+	unixtime = info->seconds;
+	printf("Time: %i\n",info->seconds);
+	localtime_r( (const time_t*)(void*)&unixtime, &tmTimeStamp );    
 	strftime(buffer1, 80, "%Y_%b%d", &tmTimeStamp);
 	strftime(buffer2, 80, "%H%M%S", &tmTimeStamp);
 	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,info->runNumber,buffer2,info->fiducial);
-	printf("Writing data to: %s\n",outfile);
+	printf("%i: Writing data to: %s\n",info->threadNum, outfile);
 
 		
 	

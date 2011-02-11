@@ -46,6 +46,7 @@ void globalConfiguration(tGlobal *global) {
 void setupThreads(tGlobal *global) {
 
 	global->nActiveThreads = 0;
+	global->threadCounter = 0;
 
 	pthread_mutex_init(&global->nActiveThreads_mutex, NULL);
 	global->threadID = (pthread_t*) calloc(global->nThreads, sizeof(pthread_t));
