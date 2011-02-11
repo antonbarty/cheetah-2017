@@ -14,10 +14,15 @@
  *	Global variables
  */
 typedef struct {
+
+		
+	// Run information
+	unsigned	runNumber;
+
 	
 	// Thread management
-	int				nThreads;
-	int				nActiveThreads;
+	long			nThreads;
+	long			nActiveThreads;
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
 
@@ -62,16 +67,28 @@ typedef struct {
 	unsigned	fiducial;
 	char		timeString[1024];
 	bool		beamOn;
+	unsigned	runNumber;
 	
 	double		gmd11;
 	double		gmd12;
 	double		gmd21;
 	double		gmd22;
 	
-	double		ft1;
-	double		ft2;
-	double		c1;
-	double		c2;
+	double		fEbeamCharge;		// in nC
+	double		fEbeamL3Energy;		// in MeV
+	double		fEbeamLTUPosX;		// in mm
+	double		fEbeamLTUPosY;		// in mm
+	double		fEbeamLTUAngX;		// in mrad
+	double		fEbeamLTUAngY;		// in mrad
+	double		fEbeamPkCurrBC2;	// in Amps
+	
+	double		photonEnergyeV;		// in eV
+	double		wavelengthA;		// in Angstrom
+	
+	double		phaseCavityTime1;
+	double		phaseCavityTime2;
+	double		phaseCavityCharge1;
+	double		phaseCavityCharge2;
 
 	
 	

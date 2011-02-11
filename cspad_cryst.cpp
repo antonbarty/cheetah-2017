@@ -21,6 +21,7 @@
 
 
 static tGlobal		global;
+static long			frameNumber;
 
 
 // Quad class definition
@@ -140,10 +141,13 @@ void fetchConfig()
  */
 void beginrun() 
 {
-	printf("beginrun\n");
-	
+	//printf("beginrun\n");
+	printf("Processing r%04u\n",getRunNumber());
 	fetchConfig();
 	corrector->loadConstants(getRunNumber());
+	global.runNumber = getRunNumber();
+	frameNumber = 0;
+
 }
 
 /*
@@ -162,17 +166,42 @@ void begincalib()
  */
 void event() {
 	
-	
-	printf("New event\n");
+	// Variables
+	frameNumber++;
+	printf("Processing event %i\n", frameNumber);
 	FILE* fp;
 	char filename[1024];
+	int fail = 0;
 
+	
+	
+	/*
+	 *	Get run number
+	 */
+	unsigned runNumber;
+	runNumber = getRunNumber();
+	
+	
+	/*
+	 *	Get event information
+	 */	 
+	int 			numEvrData;
+	unsigned		fiducial;
+	unsigned int 	eventCode;
+	unsigned int 	timeStamp;	
+	numEvrData = getEvrDataNumber();
+	for (long i=0; i<numEvrData; i++) {
+		fail = getEvrData( i, eventCode, fiducial, timeStamp );
+	}
+	// EventCode==140 = Beam On
+	
+	
+	
 
 	/*
 	 * Get time information
 	 */
 	static int ievent = 0;
-	int fail = 0;
 	int seconds, nanoSeconds;
 	getTime( seconds, nanoSeconds );
 
@@ -183,7 +212,6 @@ void event() {
 	/*
 	 *	Get fiducials
 	 */
-	unsigned fiducial;
 	fail = getFiducials(fiducial);
 
 	
@@ -193,31 +221,87 @@ void event() {
 	bool beam = beamOn();
 	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
   
+	
 	/*
-	 *	FEE Gas detector values 
-	 */
+	 * Get electron beam parameters from beamline data
+	 */     
+	double fEbeamCharge;    // in nC
+	double fEbeamL3Energy;  // in MeV
+	double fEbeamLTUPosX;   // in mm
+	double fEbeamLTUPosY;   // in mm
+	double fEbeamLTUAngX;   // in mrad
+	double fEbeamLTUAngY;   // in mrad
+	double fEbeamPkCurrBC2; // in Amps
+	double photonEnergyeV;
+	double wavelengthA;
+	
+	if ( getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
+	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
+		
+		wavelengthA = std::numeric_limits<double>::quiet_NaN();
+		photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
+		
+	} else {
+		
+		/* Calculate the resonant photon energy (ie: photon wavelength) */
+		// Get the present peak current in Amps
+		double peakCurrent = fEbeamPkCurrBC2;
+		// Get present beam energy [GeV]
+		double DL2energyGeV = 0.001*fEbeamL3Energy;
+		// wakeloss prior to undulators
+		double LTUwakeLoss = 0.0016293*peakCurrent;
+		// Spontaneous radiation loss per segment
+		double SRlossPerSegment = 0.63*DL2energyGeV;
+		// wakeloss in an undulator segment
+		double wakeLossPerSegment = 0.0003*peakCurrent;
+		// energy loss per segment
+		double energyLossPerSegment = SRlossPerSegment + wakeLossPerSegment;
+		// energy in first active undulator segment [GeV]
+		double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss
+		- 0.0005*energyLossPerSegment;
+		// Calculate the resonant photon energy of the first active segment
+		photonEnergyeV = 44.42*energyProfile*energyProfile;
+		// Calculate wavelength in Angstrom
+		wavelengthA = 12398.42/photonEnergyeV;
+	}
+	
+	
+	/*
+	 * 	FEE gas detectors (pulse energy in mJ)
+	 */     
 	double gasdet[4];
-	if (getFeeGasDet( gasdet )==0 && ievent<10)
-		printf("gasdet %g/%g/%g/%g\n", gasdet[0], gasdet[1], gasdet[2], gasdet[3]);
-
-	/*
-	 *	Phase cavity data
-	 */
-	double ft1, ft2, c1, c2;
-	if ( getPhaseCavity(ft1, ft2, c1, c2) == 0 ) 
-		printf("phase cav: %+11.8f %+11.8f %+11.8f %+11.8f\n", ft1, ft2, c1, c2);
-	else 
-		printf("no phase cavity data.\n");
-
+	double gmd1;
+	double gmd2;
+	if ( getFeeGasDet(gasdet) ) {
+		gmd1 = std::numeric_limits<double>::quiet_NaN();
+		gmd2 = std::numeric_limits<double>::quiet_NaN();
+	} else {
+		gmd1 = (gasdet[0]+gasdet[1])/2;
+		gmd2 = (gasdet[2]+gasdet[3])/2;
+	}
 	
 	
 	/*
-	 *	Create a new worker threadInfo structure in which to place all information
+	 * Phase cavity data
+	 *	(we probably won't need this info)
+	 */     
+	double 	phaseCavityTime1;
+	double	phaseCavityTime2;
+	double	phaseCavityCharge1;
+	double	phaseCavityCharge2;
+	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
+	
+	
+	
+	
+	/*
+	 *	Create a new threadInfo structure in which to place all information
 	 */
 	tThreadInfo	*threadInfo;
 	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
-	//for(int jj=0; jj<4; jj++) threadInfo->quad_data[jj] = NULL;
 		
+	
+	
 
 	/*
 	 *	Copy raw cspad image data into worker thread structure for processing
@@ -270,6 +354,7 @@ void event() {
 	}
 	++ievent;
 
+	
 	/*
 	 *	Copy all interesting information into worker thread structure if we got this far.
 	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
@@ -278,15 +363,29 @@ void event() {
 	threadInfo->nanoSeconds = nanoSeconds;
 	strcpy(threadInfo->timeString, time);
 	threadInfo->fiducial = fiducial;
+	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
+	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
 	threadInfo->gmd21 = gasdet[2];
 	threadInfo->gmd22 = gasdet[3];
-	threadInfo->ft1 = ft1;
-	threadInfo->ft2 = ft1;
-	threadInfo->c1 = c1;
-	threadInfo->c2 = c2;
+	
+	threadInfo->fEbeamCharge = fEbeamCharge;		// in nC
+	threadInfo->fEbeamL3Energy = fEbeamL3Energy;	// in MeV
+	threadInfo->fEbeamLTUPosX = fEbeamLTUPosX;		// in mm
+	threadInfo->fEbeamLTUPosY = fEbeamLTUPosY;		// in mm
+	threadInfo->fEbeamLTUAngX = fEbeamLTUAngX;		// in mrad
+	threadInfo->fEbeamLTUAngY = fEbeamLTUAngY;		// in mrad
+	threadInfo->fEbeamPkCurrBC2 = fEbeamPkCurrBC2;	// in Amps
+	threadInfo->photonEnergyeV = photonEnergyeV;	// in eV
+	threadInfo->wavelengthA = wavelengthA;			// in Angstrom
+	
+	threadInfo->phaseCavityTime1 = phaseCavityTime1;
+	threadInfo->phaseCavityTime2 = phaseCavityTime2;
+	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
+	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
+	
 	threadInfo->pGlobal = &global;
 	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 
