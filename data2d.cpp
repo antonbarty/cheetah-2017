@@ -118,14 +118,14 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
-			delete buffer;
+			free(buffer);
 		}
 		else if (size == sizeof(double)) {
 			double* buffer = (double *) calloc(nn, sizeof(double));
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
-			delete buffer;
+			free(buffer);
 		}
 		else {
 			printf("2dData::readHDF5: unknown floating point type, size=%i\n",(int) size);
@@ -138,21 +138,21 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
-			delete buffer;
+			free(buffer);
 		}
 		else if (size == sizeof(int)) {
 			int* buffer = (int *) calloc(nn, sizeof(int)); 
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
-			delete buffer;
+			free(buffer);
 		}
 		else if (size == sizeof(long)) {
 			long* buffer = (long *) calloc(nn, sizeof(long));
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
-			delete buffer;
+			free(buffer);
 		}
 		else {
 			printf("2dData::readHDF5: unknown integer type, size=%i\n",(int) size);

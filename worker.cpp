@@ -36,10 +36,11 @@ void *worker(void *threadarg) {
 	/*
 	 *	Turn threadarg into a more useful form
 	 */
-	tThreadInfo *threadInfo;
-	tGlobal		*global;
+	tGlobal			*global;
+	tThreadInfo		*threadInfo;
 	threadInfo = (tThreadInfo*) threadarg;
 	global = threadInfo->pGlobal;
+
 	
 	
 	
@@ -73,7 +74,7 @@ void *worker(void *threadarg) {
 	}
 	// Write out for diagnostics
 	sprintf(filename,"%x.h5",fiducial);
-	writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
+	//writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
 	
 	
 	
@@ -82,9 +83,13 @@ void *worker(void *threadarg) {
 	 */
 	assemble2Dimage(threadInfo, global);
 	sprintf(filename,"%x-image.h5",fiducial);
-	writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
+	//writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
 	
 	
+	/*
+	 *	Write out to our favourite HDF5 format
+	 */
+	writeHDF5(threadInfo, global);
 	
 	
 	/*
@@ -92,23 +97,27 @@ void *worker(void *threadarg) {
 	 */
 	printf("Cleaning up thread\n");
 
-	// Free memory
-	for(int jj=0; jj<4; jj++) {
-		free(threadInfo->quad_data[jj]);	
-		threadInfo->quad_data[jj] = NULL;;	
-	}
-	free(threadInfo->raw_data);
-	free(threadInfo->image);
-	free(threadInfo);
-
-	
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
+
+	// Free memory
+	printf("1\n");
+	for(int quadrant=0; quadrant<4; quadrant++) 
+		free(threadInfo->quad_data[quadrant]);	
+	printf("2\n");
+	free(threadInfo->raw_data);
+	printf("3\n");
+	free(threadInfo->image);
+	printf("4\n");
+	free(threadInfo);
+
+	
 	
 	// Exit thread
+	printf("5\n");
 	pthread_exit(NULL);
 }
 
@@ -198,7 +207,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 	// Copy interpolated image across into image array
 	for(long i=0;i<global->image_nn;i++){
-		threadInfo->image[i] = (uint16_t) floor(data[i]+0.5);
+		threadInfo->image[i] = (uint16_t) data[i];
 	}	
 	
 	
@@ -210,7 +219,38 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 
 
-void writeHDF5(tThreadInfo *threadInfo, tGlobal *global){
+void writeHDF5(tThreadInfo *info, tGlobal *global){
+	
+	/*
+	 * Copied from the way LCLS formats its time string 
+	 */
+	//static const char timeFormatStr[40] = "%04Y-%02m-%02d %02H:%02M:%02S"; /* Time format string */    
+	//static char sTimeText[40];
+	//int seconds = clockTimeCurDatagram.seconds();
+	//struct tm tmTimeStamp;
+	//localtime_r( (const time_t*) (void*) &seconds, &tmTimeStamp );    
+	//strftime(sTimeText, sizeof(sTimeText), timeFormatStr, &tmTimeStamp );
+
+	
+	/*
+	 *	Create filename based on date, time and LCLS fiducial for this image
+	 */
+	char outfile[1024];
+	char buffer1[80];
+	char buffer2[80];
+
+	int			unixtime = info->seconds;
+	struct tm	tmTimeStamp;
+	//localtime_r( (const time_t*) (void*) &unixtime, &tmTimeStamp );    
+	localtime_r( (const time_t*) &unixtime, &tmTimeStamp );    
+	//localtime_r( &unixtime, &tmTimeStamp );    
+	strftime(buffer1, 80, "%Y_%b%d", &tmTimeStamp);
+	strftime(buffer2, 80, "%H%M%S", &tmTimeStamp);
+	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,info->runNumber,buffer2,info->fiducial);
+	printf("Writing data to: %s\n",outfile);
+
+		
+	
 	
 }
 

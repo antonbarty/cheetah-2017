@@ -32,7 +32,8 @@
  *	Settings/configuration
  */
 void globalConfiguration(tGlobal *global) {
-	
+
+	setenv("TZ","US/Pacific",1);
 	global->nThreads = 1;
 
 }

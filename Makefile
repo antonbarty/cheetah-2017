@@ -15,7 +15,7 @@ OBJFILES		= main.o XtcRun.o
 CPP				= g++ -c
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
-CFLAGS			= -Irelease -I$(HDF5DIR)/include
+CFLAGS			= -Irelease -I$(HDF5DIR)/include -g
 PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
 LD_FLAGS		= -Lrelease/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  $(PDSLIBS) -lhdf5 -lpthread -Wl,-rpath=./release/build/pdsdata/lib/$(ARCH)/
 CFLAGS_ROOT		= $(shell $(ROOTSYS)/bin/root-config --cflags)
@@ -77,5 +77,8 @@ cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYAN
 # test data
 test: cspad_cryst
 	./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+
+valgrind: cspad_cryst
+	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
 
 	

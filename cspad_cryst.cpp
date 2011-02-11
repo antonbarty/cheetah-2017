@@ -90,7 +90,7 @@ void beginjob() {
 	const char* time;
 
 	getTime( seconds, nanoSeconds );	
-	fail = getLocalTime( time );
+	// fail = getLocalTime( time );
 
 	
 	/*
@@ -205,8 +205,8 @@ void event() {
 	int seconds, nanoSeconds;
 	getTime( seconds, nanoSeconds );
 
-	const char* time;
-	fail = getLocalTime( time );
+	//const char* time;
+	//fail = getLocalTime( time );
 
 	
 	/*
@@ -298,7 +298,7 @@ void event() {
 	 *	Create a new threadInfo structure in which to place all information
 	 */
 	tThreadInfo	*threadInfo;
-	threadInfo = (tThreadInfo*) malloc(sizeof(threadInfo));
+	threadInfo = (tThreadInfo*) malloc(sizeof(tThreadInfo));
 		
 	
 	
@@ -361,7 +361,7 @@ void event() {
 	 */
 	threadInfo->seconds = seconds;
 	threadInfo->nanoSeconds = nanoSeconds;
-	strcpy(threadInfo->timeString, time);
+	//strcpy(threadInfo->timeString, time);
 	threadInfo->fiducial = fiducial;
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
