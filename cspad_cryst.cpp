@@ -202,9 +202,11 @@ void event() {
 	 * Get time information
 	 */
 	int seconds, nanoSeconds;
+	const char* timestring;
 	getTime( seconds, nanoSeconds );
+	fail = getLocalTime( timestring );
+	printf("%s\n",timestring);
 
-	
 	/*
 	 *	Get fiducials
 	 */
@@ -287,6 +289,33 @@ void event() {
 	double	phaseCavityCharge2;
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
+	
+	
+	/*
+	 *	Debugging of how to parse timestamps
+	 */
+
+	char outfile[1024];
+	char buffer1[80];
+	char buffer2[80];
+	char buffer3[80];
+
+	//Pds::Dgram *datagram = reinterpret_cast<Pds::Dgram*>(cassevent.datagrambuffer());
+	time_t eventTime = seconds;
+	
+	//time_t eventTime = datagram->seq.clock().seconds();
+	//int32_t eventFiducial = datagram->seq.stamp().fiducials();
+	// Look into using tzset rather than setenv(TZ)
+	setenv("TZ","US/Pacific",1);
+	//struct tm *timeinfo=localtime( &eventTime );
+	struct tm *timestatic, timelocal;
+	//timeinfo=localtime( &eventTime );
+	timestatic=localtime_r( &eventTime, &timelocal );
+
+	strftime(buffer1,80,"%Y_%b%d",&timelocal);//timestatic);
+	strftime(buffer2,80,"%H%M%S",&timelocal);//timestatic);
+	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,fiducial);
+	printf("Writing data to: %s\n",outfile);
 	
 
 
@@ -382,6 +411,7 @@ void event() {
 	}
 
 
+	
 	
 	
 	
