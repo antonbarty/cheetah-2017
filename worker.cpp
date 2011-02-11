@@ -52,7 +52,7 @@ void *worker(void *threadarg) {
 	/*	Not needed any more - left in place in case needed for debugging
 	 for(int quadrant=0; quadrant<4; quadrant++) {
 		sprintf(filename,"%x-q%i.h5",fiducial,quadrant);
-		hdf5_write(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);		
+		writeSimpleHDF5(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);		
 	}
 	 */
 
@@ -73,7 +73,7 @@ void *worker(void *threadarg) {
 	}
 	// Write out for diagnostics
 	sprintf(filename,"%x.h5",fiducial);
-	hdf5_write(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
+	writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
 	
 	
 	
@@ -82,7 +82,7 @@ void *worker(void *threadarg) {
 	 */
 	assemble2Dimage(threadInfo, global);
 	sprintf(filename,"%x-image.h5",fiducial);
-	hdf5_write(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
+	writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
 	
 	
 	
@@ -210,12 +210,19 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 
 
+void writeHDF5(tThreadInfo *threadInfo, tGlobal *global){
+	
+}
+
+
+
+
 
 /*
- *	Write data to HDF5 file
+ *	Write test data to a simple HDF5 file
  */
 
-int hdf5_write(const char *filename, const void *data, int width, int height, int type) 
+void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type) 
 {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
@@ -225,14 +232,12 @@ int hdf5_write(const char *filename, const void *data, int width, int height, in
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {
 		ERROR("Couldn't create file: %s\n", filename);
-		return 1;
 	}
 	
 	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
 		ERROR("Couldn't create group\n");
 		H5Fclose(fh);
-		return 1;
 	}
 	
 	size[0] = height;
@@ -246,7 +251,6 @@ int hdf5_write(const char *filename, const void *data, int width, int height, in
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
-		return 1;
 	}
 	
 	/* Muppet check */
@@ -258,12 +262,9 @@ int hdf5_write(const char *filename, const void *data, int width, int height, in
 		ERROR("Couldn't write data\n");
 		H5Dclose(dh);
 		H5Fclose(fh);
-		return 1;
 	}
 	
 	H5Gclose(gh);
 	H5Dclose(dh);
 	H5Fclose(fh);
-	
-	return 0;
 }
