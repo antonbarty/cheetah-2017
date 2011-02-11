@@ -214,41 +214,239 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 
 void writeHDF5(tThreadInfo *info, tGlobal *global){
-	
 	/*
-	 * Copied from the way LCLS formats its time string 
-	 *	localtime_r is supposed to be thread safe (!)
+	 *	Create filename based on date, time and fiducial for this image
 	 */
-	//static const char timeFormatStr[40] = "%04Y-%02m-%02d %02H:%02M:%02S"; /* Time format string */    
-	//static char sTimeText[40];
-	//int seconds = clockTimeCurDatagram.seconds();
-	//struct tm tmTimeStamp;
-	//localtime_r( (const time_t*) (void*) &seconds, &tmTimeStamp );    
-	//strftime(sTimeText, sizeof(sTimeText), timeFormatStr, &tmTimeStamp );
-
-	
-	/*
-	 *	Create filename based on date, time and LCLS fiducial for this image
-	 */
-
-	
-	int			unixtime;
-	struct tm	tmTimeStamp;
-	char buffer1[80];
-	char buffer2[80];
 	char outfile[1024];
+	char buffer1[80];
+	char buffer2[80];	
+	time_t eventTime = info->seconds;
 	
-	unixtime = info->seconds;
-	printf("Time: %i\n",info->seconds);
-	localtime_r( (const time_t*)(void*)&unixtime, &tmTimeStamp );    
-	strftime(buffer1, 80, "%Y_%b%d", &tmTimeStamp);
-	strftime(buffer2, 80, "%H%M%S", &tmTimeStamp);
-	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,info->runNumber,buffer2,info->fiducial);
-	printf("%i: Writing data to: %s\n",info->threadNum, outfile);
+	//setenv("TZ","US/Pacific",1);		// <--- Dangerous (not thread safe!)
+	struct tm *timestatic, timelocal;
+	timestatic=localtime_r( &eventTime, &timelocal );	
+	strftime(buffer1,80,"%Y_%b%d",&timelocal);
+	strftime(buffer2,80,"%H%M%S",&timelocal);
+	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,info->fiducial);
+	printf("Writing data to: %s\n",outfile);
+
 
 		
+	/* 
+ 	 *  HDF5 variables
+	 */
+	hid_t		hdf_fileID;
+	hid_t		dataspace_id;
+	hid_t		dataset_id;
+	hid_t		datatype;
+	hsize_t 	size[2],max_size[2];
+	herr_t		hdf_error;
+	hid_t   	gid;
+	char 		fieldname[100]; 
 	
 	
+	/*
+	 *	Create the HDF5 file
+	 */
+	hdf_fileID = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	
+	
+	/*
+	 *	Save image data into '/data' part of HDF5 file
+	 */
+	gid = H5Gcreate(hdf_fileID, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gid < 0 ) {
+		ERROR("%i: Couldn't create group\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	
+	// Assembled image
+	size[0] = global->image_nx;	// size[0] = height
+	size[1] = global->image_nx;	// size[1] = width
+	max_size[0] = global->image_nx;
+	max_size[1] = global->image_nx;
+	dataspace_id = H5Screate_simple(2, size, max_size);
+	dataset_id = H5Dcreate(gid, "data", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( dataset_id < 0 ) {
+		ERROR("%i: Couldn't create dataset\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
+	if ( hdf_error < 0 ) {
+		ERROR("%i: Couldn't write data\n", info->threadNum);
+		H5Dclose(dataspace_id);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	H5Dclose(dataset_id);
+	H5Sclose(dataspace_id);
+	
+
+	// Raw data
+	size[0] = 8*COLS;	// size[0] = height
+	size[1] = 8*ROWS;	// size[1] = width
+	max_size[0] = 8*COLS;
+	max_size[1] = 8*ROWS;
+	dataspace_id = H5Screate_simple(2, size, max_size);
+	dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( dataset_id < 0 ) {
+		ERROR("%i: Couldn't create dataset\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->raw_data);
+	if ( hdf_error < 0 ) {
+		ERROR("%i: Couldn't write data\n", info->threadNum);
+		H5Dclose(dataspace_id);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	H5Dclose(dataset_id);
+	H5Sclose(dataspace_id);
+
+	// Done with this group
+	H5Gclose(gid);
+	
+	
+	double		phaseCavityTime1;
+	double		phaseCavityTime2;
+	double		phaseCavityCharge1;
+	double		phaseCavityCharge2;
+	
+	/*
+	 *	Write LCLS event information
+	 */
+	gid = H5Gcreate1(hdf_fileID,"LCLS",0);
+	size[0] = 1;
+	dataspace_id = H5Screate_simple( 1, size, NULL );
+	//dataspace_id = H5Screate(H5S_SCALAR);
+	
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/machineTime", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->seconds );
+	H5Dclose(dataset_id);
+	
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/fiducial", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fiducial );
+	H5Dclose(dataset_id);
+		
+	// Electron beam data
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamCharge", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamCharge );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamL3Energy", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamL3Energy );
+	H5Dclose(dataset_id);
+	
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamPkCurrBC2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamPkCurrBC2 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUPosX", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamLTUPosX );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUPosY", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamLTUPosY );
+	H5Dclose(dataset_id);
+	
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUAngX", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamLTUAngX );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUAngY", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->fEbeamLTUAngY );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityTime1", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->phaseCavityTime1 );
+	H5Dclose(dataset_id);
+	
+	// Phase cavity information
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityTime2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->phaseCavityTime2 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityCharge1", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->phaseCavityCharge1 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityCharge2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->phaseCavityCharge2 );
+	H5Dclose(dataset_id);
+	
+	// Calculated photon energy
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/photon_energy_eV", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->photonEnergyeV);
+	H5Dclose(dataset_id);
+	
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/photon_wavelength_A", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->wavelengthA);
+	H5Dclose(dataset_id);
+	
+	
+	// Gas detector values
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_11_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd11 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_12_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd12 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_21_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd21 );
+	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_22_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd22 );	
+	H5Dclose(dataset_id);
+
+	// Finished with scalar dataset ID
+	H5Sclose(dataspace_id);
+	
+	
+	// Time in human readable format
+	// Writing strings in HDF5 is a little tricky --> this could be improved!
+	char* timestr;
+	timestr = ctime(&eventTime);
+	dataspace_id = H5Screate(H5S_SCALAR);
+	datatype = H5Tcopy(H5T_C_S1);  
+	H5Tset_size(datatype,strlen(timestr)+1);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/eventTimeString", datatype, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, timestr );
+	H5Dclose(dataset_id);
+	H5Sclose(dataspace_id);
+	hdf_error = H5Lcreate_soft( "/LCLS/eventTimeString", hdf_fileID, "/LCLS/eventTime",0,0);
+	
+	
+	// Close group and flush buffers
+	H5Gclose(gid);
+	H5Fflush(hdf_fileID,H5F_SCOPE_LOCAL);
+
+	
+	/*
+	 *	Clean up stale HDF5 links
+	 *		(thanks Tom/Filipe)
+	 */
+	int n_ids;
+	hid_t ids[256];
+	n_ids = H5Fget_obj_ids(hdf_fileID, H5F_OBJ_ALL, 256, ids);
+	for ( int i=0; i<n_ids; i++ ) {
+		hid_t id;
+		H5I_type_t type;
+		id = ids[i];
+		type = H5Iget_type(id);
+		if ( type == H5I_GROUP ) H5Gclose(id);
+		if ( type == H5I_DATASET ) H5Dclose(id);
+		if ( type == H5I_DATATYPE ) H5Tclose(id);
+		if ( type == H5I_DATASPACE ) H5Sclose(id);
+		if ( type == H5I_ATTR ) H5Aclose(id);
+	}
+	
+	H5Fclose(hdf_fileID); 
 }
 
 

@@ -315,7 +315,7 @@ void event() {
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);//timestatic);
 	strftime(buffer2,80,"%H%M%S",&timelocal);//timestatic);
 	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,fiducial);
-	printf("Writing data to: %s\n",outfile);
+	printf("Filename would be: %s\n",outfile);
 	
 
 
