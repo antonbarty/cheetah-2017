@@ -1,12 +1,16 @@
-/* $Id: main.hh,v 1.35 2010/10/21 21:51:19 weaver Exp $ */
+/* $Id: main.hh,v 1.38 2011/02/04 22:51:43 weaver Exp $ */
 #ifndef MAIN_H
 #define MAIN_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include "pdsdata/xtc/DetInfo.hh"
-
+#include "pdsdata/xtc/BldInfo.hh"
+#include "pdsdata/pnCCD/FrameV1.hh"
+#include "pdsdata/pnCCD/ConfigV1.hh"
+/*
 class TH1;
-
+*/
 /*
  * Time functions
  */
@@ -22,53 +26,17 @@ int getRunNumber();
  */
 enum AcqDetector
 {
-    AmoIms = 0, AmoGasdet = 1, AmoETof = 2, AmoITof = 3, AmoMbes = 4, AmoVmiAcq = 5, AmoBpsAcq = 6, Camp = 7,
-    SxrBeamlineAcq1 = 0, SxrBeamlineAcq2 = 1, SxrEndstationAcq1 = 2, SxrEndstationAcq2 = 3,
-    NumAcqDetector = 8
+  AmoIms, AmoGasdet, AmoETof, AmoITof, AmoMbes, AmoVmiAcq, AmoBpsAcq, Camp,
+  SxrBeamlineAcq1, SxrBeamlineAcq2, SxrEndstationAcq1, SxrEndstationAcq2
 };
 
 enum FrameDetector
 {
-    AmoVmi = 0, AmoBps1 = 1, AmoBps2 = 2,
-    SxrBeamlineOpal1 = 0, SxrBeamlineOpal2 = 1, SxrEndstationOpal1 = 2, SxrEndstationOpal2 = 3,
-    SxrFccd = 4,
-    XppSb1PimCvd = 0, XppMonPimCvd = 1, XppSb3PimCvd = 2, XppSb4PimCvd = 3,
-    XppEndstationCam1 = 4,
-    NumFrameDetector = 5
-};
-
-enum PrincetonDetector
-{
-    SxrBeamlinePrinceton1 = 0, SxrBeamlinePrinceton2 = 1, SxrEndstationPrinceton1 = 2, SxrEndstationPrinceton2 = 3,
-    AmoPrinceton1 = 0, AmoPrinceton2 = 1, AmoPrinceton3 = 2, AmoPrinceton4 = 3,
-    NumPrincetonDetector = 4
-};
-
-enum IpimbDetector
-{
-    SxrBeamlineIpimb1  = 0,  SxrBeamlineIpimb2  = 1,  SxrBeamlineIpimb3  = 2,  SxrBeamlineIpimb4  = 3, 
-    SxrBeamlineIpimb5  = 4,  SxrBeamlineIpimb6  = 5,  SxrBeamlineIpimb7  = 6,  SxrBeamlineIpimb8  = 7, 
-    SxrBeamlineIpimb9  = 8,  SxrBeamlineIpimb10 = 9,  SxrBeamlineIpimb11 = 10, SxrBeamlineIpimb12 = 11, 
-    SxrBeamlineIpimb13 = 12, SxrBeamlineIpimb14 = 13, SxrBeamlineIpimb15 = 14, SxrBeamlineIpimb16 = 15, 
-    SxrEndstationIpimb1  = 16, SxrEndstationIpimb2  = 17, SxrEndstationIpimb3  = 18, SxrEndstationIpimb4  = 19, 
-    SxrEndstationIpimb5  = 20, SxrEndstationIpimb6  = 21, SxrEndstationIpimb7  = 22, SxrEndstationIpimb8  = 23, 
-    SxrEndstationIpimb9  = 24, SxrEndstationIpimb10 = 25, SxrEndstationIpimb11 = 26, SxrEndstationIpimb12 = 27, 
-    SxrEndstationIpimb13 = 28, SxrEndstationIpimb14 = 29, SxrEndstationIpimb15 = 30, SxrEndstationIpimb16 = 31, 
-    XppSb1Ipm =  0, XppSb1Pim  = 1, XppMonPim  = 2, XppSb2Ipm =  3, 
-    XppSb3Ipm =  4, XppSb3Pim  = 5, XppSb4Pim  = 6, 
-    NumIpimbDetector = 32
-};
-
-enum PnCcdDetector
-{
-    PnCcd0 = 0, PnCcd1 = 1,
-    NumPnCcdDetector = 2
-};
-
-enum EncoderDetector
-{
-    SxrBeamlineEncoder1 = 0,
-    NumEncoderDetector  = 1
+  AmoVmi, AmoBps1, AmoBps2, 
+  SxrBeamlineOpal1, SxrBeamlineOpal2, SxrEndstationOpal1, SxrEndstationOpal2,
+  SxrFccd,
+  XppSb1PimCvd, XppMonPimCvd, XppSb3PimCvd, XppSb4PimCvd,
+  XppEndstationCam1
 };
 
 /*
@@ -78,6 +46,7 @@ int getAcqConfig      (AcqDetector det, int& numChannels, int& numSamples, doubl
 #define getOpal1kConfig(x)  getFrameConfig(x)
 #define getTm6740Config(x)  getFrameConfig(x)
 int getFrameConfig   (FrameDetector det);
+int getFrameConfig   (Pds::DetInfo  det);
 int getPrincetonConfig(Pds::DetInfo::Detector det, int iDevId, int& width, int& height, int& orgX, int& orgY, int& binX, int&binY);
 int getIpimbConfig   (Pds::DetInfo::Detector det, int iDevId, uint64_t& serialID,
                       int& chargeAmpRange0, int& chargeAmpRange1,
@@ -95,15 +64,20 @@ int getFccdConfig(FrameDetector det, uint16_t& outputMode, bool& ccdEnable, bool
                   uint16_t& waveform12, uint16_t& waveform13, uint16_t& waveform14);
 int getDiodeFexConfig (Pds::DetInfo::Detector det, int iDevId, float* base, float* scale);
 int getIpmFexConfig   (Pds::DetInfo::Detector det, int iDevId, 
-		       float* base0, float* scale0,
-		       float* base1, float* scale1,
-		       float* base2, float* scale2,
-		       float* base3, float* scale3,
-		       float& xscale, float& yscale);
+           float* base0, float* scale0,
+           float* base1, float* scale1,
+           float* base2, float* scale2,
+           float* base3, float* scale3,
+           float& xscale, float& yscale);
 
 namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; }}
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV1& cfg);
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV2& cfg);
+
+/* Note: Shared BLD Ipimb Config available on L1Accept Data Event */
+int getBldIpimbConfig(Pds::BldInfo::Type bldType, uint64_t& serialID, int& chargeAmpRange0,
+                      int& chargeAmpRange1, int& chargeAmpRange2, int& chargeAmpRange3);
+
 
 /*
  * L1Accept Data retrieval functions
@@ -113,6 +87,7 @@ int getAcqValue   (AcqDetector det, int channel, double*& time, double*& voltage
 #define getOpal1kValue(w, x, y, z) getFrameValue(w, x, y, z)
 #define getTm6740Value(w, x, y, z) getFrameValue(w, x, y, z)
 int getFrameValue(FrameDetector det, int& frameWidth, int& frameHeight, unsigned short*& image );
+int getFrameValue(Pds::DetInfo  det, int& frameWidth, int& frameHeight, unsigned short*& image );
 int getPrincetonValue      (Pds::DetInfo::Detector det, int iDevId, unsigned short *& image);
 int getPrincetonTemperature(Pds::DetInfo::Detector det, int iDevId, float& temperature);
 int getIpimbVolts          (Pds::DetInfo::Detector det, int iDevId, 
@@ -123,19 +98,26 @@ int getEBeam      (double& charge, double& energy, double& posx, double& posy,
 int getEBeam      (double& charge, double& energy, double& posx, double& posy,
                    double& angx, double& angy, double& pkcurr);
 int getPhaseCavity(double& fitTime1, double& fitTime2, double& charge1,  double& charge2);
+
 int getPvInt      (const char* pvName, int& value);
 int getPvFloat    (const char* pvName, float& value);
 int getPvString   (const char* pvName, char*& value);
+int getPnCcdConfig(int deviceId, const Pds::PNCCD::ConfigV1*& c );
+int getPnCcdRaw   (int deviceId, const Pds::PNCCD::FrameV1*& frame );
 int getPnCcdValue (int deviceId, unsigned char*& image, int& width, int& height );
 int getEvrDataNumber();
 int getEvrData    (int id, unsigned int& eventCode, unsigned int& fiducial, unsigned int& timeStamp);
 int getEncoderCount(Pds::DetInfo::Detector det, int iDevId, int& encoderCount, int chan=0);
 int getDiodeFexValue (Pds::DetInfo::Detector det, int iDevId, float& value);
 int getIpmFexValue   (Pds::DetInfo::Detector det, int iDevId, 
-		      float* channels, float& sum, float& xpos, float& ypos);
+                      float* channels, float& sum, float& xpos, float& ypos);
 
 namespace Pds { namespace CsPad { class ElementIterator; }}
 int getCspadData  (Pds::DetInfo::Detector det, Pds::CsPad::ElementIterator& iter);
+int getBldIpimbVolts(Pds::BldInfo::Type bldType, float &channel0, float &channel1,
+                     float &channel2, float &channel3);
+int getBldIpmFexValue(Pds::BldInfo::Type bldType, float* channels, 
+                      float& sum, float& xpos, float& ypos);
 
 /*
  * Control data retrieval functions
@@ -154,11 +136,12 @@ int getMonitorValue   (const char* pvName, int arrayIndex, double& hilimit, doub
 int   getEpicsPvNumber();
 int   getEpicsPvConfig(int iPvId, const char*& sPvName, int& iType, int& iNumElements);
 int   getEpicsPvValue (int pvId, const void*& value, int& dbrype, struct tm& tmTimeStamp, int& nanoSec);
-
+/*
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
                    float thresh, TH1* hist);
+*/
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-		    float thresh, double* edge, int& n, int maxhits);
+        float thresh, double* edge, int& n, int maxhits);
 
 class XtcRun;
 XtcRun* getDarkFrameRun(unsigned run);

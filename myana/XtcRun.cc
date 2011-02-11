@@ -4,9 +4,6 @@
 #include "pdsdata/xtc/TransitionId.hh"
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 static bool _live=false;
 

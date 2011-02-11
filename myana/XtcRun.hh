@@ -1,7 +1,7 @@
 #ifndef XtcRun_hh
 #define XtcRun_hh
 
-#include "../release/pdsdata/xtc/Dgram.hh"
+#include "release/pdsdata/xtc/Dgram.hh"
 
 #include <list>
 #include <string>
