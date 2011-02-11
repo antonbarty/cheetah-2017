@@ -391,16 +391,17 @@ void event() {
 				int quadrant = element->quad();
 				
 				// Have we jumped to a new fiducial (event??)
-				if (fiducial != element->fiducials())
-					printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
+				//if (fiducial != element->fiducials())
+				//	printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
 				
 				// Get temperature on strong back 
 				float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
-				printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
+				//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
 				threadInfo->quad_temperature[quadrant] = temperature;
 				
 				
 				// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+				// Why do we need to use the buffer???
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
 				uint16_t data[COLS*ROWS*16];

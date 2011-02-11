@@ -75,7 +75,7 @@ void *worker(void *threadarg) {
 		}
 	}
 	// Write out for diagnostics
-	sprintf(filename,"%x.h5",fiducial);
+	//sprintf(filename,"%x.h5",fiducial);
 	//writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
 	
 	
@@ -84,14 +84,14 @@ void *worker(void *threadarg) {
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	assemble2Dimage(threadInfo, global);
-	sprintf(filename,"%x-image.h5",fiducial);
-	writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
+	//sprintf(filename,"%x-image.h5",fiducial);
+	//writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
 	
 	
 	/*
 	 *	Write out to our favourite HDF5 format
 	 */
-	//writeHDF5(threadInfo, global);
+	writeHDF5(threadInfo, global);
 	
 	
 	/*
