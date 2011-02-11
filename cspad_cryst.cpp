@@ -363,7 +363,9 @@ void event() {
 	threadInfo->pGlobal = &global;
 	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 	
-	
+	for(int quadrant=0; quadrant<4; quadrant++)
+		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+
 
 	/*
 	 *	Copy raw cspad image data into worker thread structure for processing
@@ -384,35 +386,33 @@ void event() {
 
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
-			
-			// Which quadrant is this?
-			int quadrant = element->quad();
-			
-			// Have we jumped to a new fiducial (event??)
-			if (fiducial != element->fiducials())
-				printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
-			
-			// Get temperature on strong back 
-			float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
-			//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
-			threadInfo->quad_temperature[quadrant] = temperature;
-			
+			if(element->quad() < 4) {
+				// Which quadrant is this?
+				int quadrant = element->quad();
+				
+				// Have we jumped to a new fiducial (event??)
+				if (fiducial != element->fiducials())
+					printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
+				
+				// Get temperature on strong back 
+				float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
+				printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
+				threadInfo->quad_temperature[quadrant] = temperature;
+				
+				
+				// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+				const Pds::CsPad::Section* s;
+				unsigned section_id;
+				uint16_t data[COLS*ROWS*16];
+				while(( s=iter.next(section_id) )) {  
+					//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+					memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+				}
 
-			// Allocate data space for this quadrant
-			threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
-
-			
-			// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-			const Pds::CsPad::Section* s;
-			unsigned section_id;
-			uint16_t data[COLS*ROWS*16];
-			while(( s=iter.next(section_id) )) {  
-				//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
-				memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+				// Copy image data into threadInfo structure
+				memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
+				
 			}
-
-			// Copy image data into threadInfo structure
-			memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
 		}
 	}
 

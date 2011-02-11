@@ -12,10 +12,10 @@ HDF5DIR 		= /reg/neh/home/barty/hdf5
 ROOTSYS			= /reg/g/pcds/package/root
 OBJFILES		= main.o XtcRun.o
 
-CPP				= g++ -c
+CPP				= g++ -c -g
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
-CFLAGS			= -Irelease -I$(HDF5DIR)/include -g
+CFLAGS			= -Irelease -I$(HDF5DIR)/include
 PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
 LD_FLAGS		= -Lrelease/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  $(PDSLIBS) -lhdf5 -lpthread -Wl,-rpath=./release/build/pdsdata/lib/$(ARCH)/
 CFLAGS_ROOT		= $(shell $(ROOTSYS)/bin/root-config --cflags)
@@ -77,10 +77,17 @@ cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYAN
 # test data
 test: cspad_cryst
 	#./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	#./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
+
+gdb: cspad_cryst
+	#gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
 valgrind: cspad_cryst
 	#valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	#valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
 	
