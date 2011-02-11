@@ -57,7 +57,7 @@ pro cspad_geometry
 	msy = [0.5, 1.5, 0.5, 1.5]		;; Module shift Y (in multiples of module_width)
 	mrx = [ 1,  1, 1, 1]			;; Coordinate reflection in X
 	mry = [ 1,  1, 1, 1]			;; Coordinate reflection in Y
-	mth = [ 0, 90, 90, 0]			;; Rotation (in degrees)
+	mth = [ 0, 90, 180, 90]			;; Rotation (in degrees)
 	
 	for i=0, 3 do begin
 		tmx = mrx[i]*mx

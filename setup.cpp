@@ -72,7 +72,7 @@ void readDetectorGeometry(tGlobal *global) {
 	// Set filename here 
 	char	detfile[1024];
 	printf("\tReading detector configuration:\n");
-	strcpy(detfile,"cspad_pixelmap.h5");
+	strcpy(detfile,"geometry/cspad_pixelmap.h5");
 	printf("\t%s\n",detfile);
 	
 	
