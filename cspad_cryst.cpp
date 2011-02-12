@@ -96,7 +96,6 @@ void beginjob() {
 	/*
 	 *	New csPad corrector
 	 */
-	//corrector = new CspadCorrector(Pds::DetInfo::XppGon,0,CspadCorrector::DarkFrameOffset);
 	corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
 
 				 
@@ -117,7 +116,6 @@ void beginjob() {
 
 void fetchConfig()
 {
-	//if (getCspadConfig( Pds::DetInfo::XppGon, configV1 )==0) {
 	if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
@@ -125,7 +123,6 @@ void fetchConfig()
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV1.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 	}
-	//else if (getCspadConfig( Pds::DetInfo::XppGon, configV2 )==0) {
 	else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV2 )==0) {
 		configVsn= 2;
 		quadMask = configV2.quadMask();
@@ -222,6 +219,8 @@ void event() {
 	 *	Is the beam on?
 	 */
 	bool beam = beamOn();
+	if(!beam)
+		return;
 	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
   
 	
@@ -295,34 +294,6 @@ void event() {
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
 	
-	
-	/*
-	 *	Debugging of how to parse timestamps
-	 */
-
-	char outfile[1024];
-	char buffer1[80];
-	char buffer2[80];
-	char buffer3[80];
-
-	//Pds::Dgram *datagram = reinterpret_cast<Pds::Dgram*>(cassevent.datagrambuffer());
-	time_t eventTime = seconds;
-	
-	//time_t eventTime = datagram->seq.clock().seconds();
-	//int32_t eventFiducial = datagram->seq.stamp().fiducials();
-	// Look into using tzset rather than setenv(TZ)
-	setenv("TZ","US/Pacific",1);
-	//struct tm *timeinfo=localtime( &eventTime );
-	struct tm *timestatic, timelocal;
-	//timeinfo=localtime( &eventTime );
-	timestatic=localtime_r( &eventTime, &timelocal );
-
-	strftime(buffer1,80,"%Y_%b%d",&timelocal);//timestatic);
-	strftime(buffer2,80,"%H%M%S",&timelocal);//timestatic);
-	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,fiducial);
-	//printf("Filename would be: %s\n",outfile);
-	
-
 
 	/*
 	 *	Create a new threadInfo structure in which to place all information
@@ -372,7 +343,6 @@ void event() {
 	 *	Copy raw cspad image data into worker thread structure for processing
 	 */
 	Pds::CsPad::ElementIterator iter;
-	//fail=getCspadData(DetInfo::XppGon, iter);
 	fail=getCspadData(DetInfo::CxiDs1, iter);
 
 
@@ -407,10 +377,11 @@ void event() {
 				unsigned section_id;
 				uint16_t data[COLS*ROWS*16];
 				while(( s=iter.next(section_id) )) {  
+					printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 					//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 					memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}
-
+				
 				// Copy image data into threadInfo structure
 				memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
 				
