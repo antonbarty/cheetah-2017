@@ -45,7 +45,7 @@ void *worker(void *threadarg) {
 	
 
 	/*
-	 *	Assemble quadrants into one large array 
+	 *	Assemble all four quadrants into one large array 
 	 */
 	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
 	for(int quadrant=0; quadrant<4; quadrant++) {
@@ -59,6 +59,16 @@ void *worker(void *threadarg) {
 	}
 	//sprintf(filename,"%x.h5",fiducial);
 	//writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
+	
+	
+	/*
+	 *	Remove common mode offsets
+	 */
+	
+	// By each column
+	
+	// By each quadrant
+	
 	
 	
 	

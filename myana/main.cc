@@ -931,7 +931,7 @@ int getCspadData  (DetInfo::Detector det, CsPad::ElementIterator& iter)
   { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
                                           TypeId(TypeId::Id_CspadConfig,1) );
     if (cfg) {
-      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV1*>(xtc->payload()),
+      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV1*>(cfg->payload()),
                                     *xtc);
       return 0;
     }
@@ -940,7 +940,7 @@ int getCspadData  (DetInfo::Detector det, CsPad::ElementIterator& iter)
   { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
                                           TypeId(TypeId::Id_CspadConfig,2) );
     if (cfg) {
-      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV2*>(xtc->payload()),
+      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV2*>(cfg->payload()),
                                     *xtc);
       return 0;
     }
