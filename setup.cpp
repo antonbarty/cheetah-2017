@@ -47,8 +47,8 @@ void cGlobal::defaultConfiguration(void) {
 
 /*
  *	Parse command line arguments 
- *
-void cSettings::parseCommandLineArguments(int argc, char **argv) {
+ */
+void cGlobal::parseCommandLineArguments(int argc, char **argv) {
 	
 	// No arguments specified = ask for help
 	if (argc == 1) {
@@ -69,7 +69,7 @@ void cSettings::parseCommandLineArguments(int argc, char **argv) {
 		}
 	}
 }
-*/
+
 
 /*
  *	Read and process configuration file

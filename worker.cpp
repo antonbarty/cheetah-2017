@@ -43,27 +43,9 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 
 	
-	//printf("%i: Started worker thread\n", threadInfo->threadNum);
-	
-	
-	
-	/*
-	 *	Basic test - write out raw Quadrant info
-	 */
-	FILE* fp;
-	char filename[1024];
-	int fiducial = threadInfo->fiducial;
-	/*	Not needed any more - left in place in case needed for debugging
-	 for(int quadrant=0; quadrant<4; quadrant++) {
-		sprintf(filename,"%x-q%i.h5",fiducial,quadrant);
-		writeSimpleHDF5(filename, threadInfo->quad_data[quadrant], 2*ROWS, 8*COLS, H5T_STD_U16LE);		
-	}
-	 */
 
-	
-	
 	/*
-	 *	Make one large array out of raw data 
+	 *	Assemble quadrants into one large array 
 	 */
 	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
 	for(int quadrant=0; quadrant<4; quadrant++) {
@@ -75,7 +57,6 @@ void *worker(void *threadarg) {
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
-	// Write out for diagnostics
 	//sprintf(filename,"%x.h5",fiducial);
 	//writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
 	
@@ -95,11 +76,10 @@ void *worker(void *threadarg) {
 	writeHDF5(threadInfo, global);
 	
 	
+	
 	/*
 	 *	Cleanup and exit
 	 */
-	//printf("%i: Cleaning up and exiting\n",threadInfo->threadNum);
-
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -140,7 +120,6 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	long	ix, iy;
 	float	fx, fy;
 	long	image_index;
-	
 
 	for(long i=0;i<global->pix_nn;i++){
 		// Pixel location with (0,0) at array element (0,0) in bottom left corner
@@ -213,7 +192,9 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
-
+/*
+ *	Write out processed data to our 'standard' HDF5 format
+ */
 void writeHDF5(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
