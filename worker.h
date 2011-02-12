@@ -10,43 +10,6 @@
 
 
 
-/*
- *	Global variables
- */
-typedef struct {
-
-	// Configuration files
-	char		configFile[1024];
-	char		geometryFile[1024];
-	
-	
-	// Run information
-	unsigned	runNumber;
-
-	
-	// Thread management
-	long			nThreads;
-	long			nActiveThreads;
-	long			threadCounter;
-	pthread_t		*threadID;
-	pthread_mutex_t	nActiveThreads_mutex;
-
-
-	// Detector geometry
-	long			pix_nx;
-	long			pix_ny;
-	long			pix_nn;
-	float			*pix_x;
-	float			*pix_y;
-	float			*pix_z;
-	float			pix_dx;
-	unsigned		module_rows;
-	unsigned		module_cols;
-	long			image_nx;
-	long			image_nn;
-	
-} tGlobal;
-
 
 
 /*
@@ -55,7 +18,7 @@ typedef struct {
 typedef struct {
 	
 	// Reference to common global structure
-	tGlobal		*pGlobal;
+	cGlobal		*pGlobal;
 	int			busy;
 	long		threadNum;
 	
@@ -100,8 +63,6 @@ typedef struct {
 	
 	// Thread management
 	int		threadID;
-
-	char	filename[1024];
 	
 	// Memory protection
 	pthread_mutex_t	*nActiveThreads_mutex;
@@ -141,14 +102,9 @@ static uint32_t nevents = 0;
  *	Function prototypes
  */
 void *worker(void *);
-void writeHDF5(tThreadInfo*, tGlobal*);
+void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
-void globalConfiguration(tGlobal*);
-void parseConfigFile(tGlobal*);
-void parseConfigTag(char*, char*, tGlobal*);
-void setupThreads(tGlobal*);
-void readDetectorGeometry(tGlobal*);
-void assemble2Dimage(tThreadInfo*, tGlobal*);
+void assemble2Dimage(tThreadInfo*, cGlobal*);
 
 
 

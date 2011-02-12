@@ -24,28 +24,57 @@
 #include <math.h>
 #include <hdf5.h>
 
+#include "setup.h"
 #include "worker.h"
 #include "data2d.h"
 
 
 /*
- *	Settings/configuration
+ *	Default settings/configuration
  */
-void globalConfiguration(tGlobal *global) {
+void cGlobal::defaultConfiguration(void) {
 
-	strcpy(global->configFile, "cspad-cryst.ini");
-	strcpy(global->geometryFile, "geometry/cspad_pixelmap.h5");
+	// Default configuration files
+	strcpy(configFile, "cspad-cryst.ini");
+	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	setenv("TZ","US/Pacific",1);
-	global->nThreads = 1;
+	
+	// Default to single-threaded
+	nThreads = 1;
 
 }
 
 
+/*
+ *	Parse command line arguments 
+ *
+void cSettings::parseCommandLineArguments(int argc, char **argv) {
+	
+	// No arguments specified = ask for help
+	if (argc == 1) {
+		printf("No configuration file spcified\n");
+		printf("\t--> using default settings\n");
+		return;
+	}
+	
+	// First argument is always the configuration file
+	parseConfigFile(argv[1]);
+	
+	// Other arguments are optional switches but take same syntax prefixed by an '-'
+	if (argc > 2) {
+		for (long i=2; i<argc; i++) {
+			if (argv[i][0] == '-' && i+1 < argc) {
+				parseConfigTag(argv[i]+1, argv[++i]);
+			}
+		}
+	}
+}
+*/
 
 /*
  *	Read and process configuration file
  */
-void parseConfigFile(tGlobal *global) {
+void cGlobal::parseConfigFile(char* filename) {
 	char		cbuf[cbufsize];
 	char		tag[cbufsize];
 	char		value[cbufsize];
@@ -56,12 +85,12 @@ void parseConfigFile(tGlobal *global) {
 	/*
 	 *	Open configuration file for reading
 	 */
-	printf("Parsing input configuration file:\n",global->configFile);
-	printf("\t%s\n",global->configFile);
+	printf("Parsing input configuration file:\n",filename);
+	printf("\t%s\n",filename);
 	
-	fp = fopen(global->configFile,"r");
+	fp = fopen(filename,"r");
 	if (fp == NULL) {
-		printf("\tCould not open configuration file \"%s\"\n",global->configFile);
+		printf("\tCould not open configuration file \"%s\"\n",filename);
 		printf("\tUsing default values\n");
 		return;
 	}
@@ -88,7 +117,7 @@ void parseConfigFile(tGlobal *global) {
 		sscanf(cp+1,"%s",value);
 		sscanf(cbuf,"%s",tag);
 		
-		parseConfigTag(tag, value, global);
+		parseConfigTag(tag, value);
 	}
 	
 	fclose(fp);
@@ -98,7 +127,7 @@ void parseConfigFile(tGlobal *global) {
 /*
  *	Process tags for both configuration file and command line options
  */
-void parseConfigTag(char *tag, char *value, tGlobal *global) {
+void cGlobal::parseConfigTag(char *tag, char *value) {
 	
 	/*
 	 *	Convert to lowercase
@@ -110,11 +139,14 @@ void parseConfigTag(char *tag, char *value, tGlobal *global) {
 	 *	Parse known tags
 	 */
 	if (!strcmp(tag, "nthreads")) {
-		global->nThreads = atoi(value);
+		nThreads = atoi(value);
 	}
 	else if (!strcmp(tag, "geometry")) {
-		strcpy(global->geometryFile, value);
+		strcpy(geometryFile, value);
 	}
+	//else if (!strcmp(tag, "detectorz")) {
+	//	detectorZ = atof(value);
+	//}
 	
 	else {
 		printf("\tUnknown tag (ignored): %s = %s\n",tag,value);
@@ -127,15 +159,15 @@ void parseConfigTag(char *tag, char *value, tGlobal *global) {
 /*
  *	Setup stuff to do with thread management, settings, etc.
  */
-void setupThreads(tGlobal *global) {
+void cGlobal::setupThreads() {
 
-	global->nActiveThreads = 0;
-	global->threadCounter = 0;
+	nActiveThreads = 0;
+	threadCounter = 0;
 
-	pthread_mutex_init(&global->nActiveThreads_mutex, NULL);
-	global->threadID = (pthread_t*) calloc(global->nThreads, sizeof(pthread_t));
-	for(int i=0; i<global->nThreads; i++) 
-		global->threadID[i] = -1;
+	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	for(int i=0; i<nThreads; i++) 
+		threadID[i] = -1;
 
 }
 
@@ -144,24 +176,24 @@ void setupThreads(tGlobal *global) {
 /*
  *	Read in detector configuration
  */
-void readDetectorGeometry(tGlobal *global) {
+void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Pixel size (measurements in geometry file are in m)
-	global->module_rows = ROWS;
-	global->module_cols = COLS;	
-	global->pix_dx = 100e-6;
+	module_rows = ROWS;
+	module_cols = COLS;	
+	pix_dx = 100e-6;
 
 	
 	// Set filename here 
 	char	detfile[1024];
 	printf("Reading detector configuration:\n");
 	//strcpy(detfile,"geometry/cspad_pixelmap.h5");
-	printf("\t%s\n",global->geometryFile);
+	printf("\t%s\n",filename);
 	
 	
 	// Check whether pixel map file exists!
-	FILE* fp = fopen(global->geometryFile, "r");
+	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
@@ -174,9 +206,9 @@ void readDetectorGeometry(tGlobal *global) {
 	cData2d		detector_x;
 	cData2d		detector_y;
 	cData2d		detector_z;
-	detector_x.readHDF5(global->geometryFile, (char *) "x");
-	detector_y.readHDF5(global->geometryFile, (char *) "y");
-	detector_z.readHDF5(global->geometryFile, (char *) "z");
+	detector_x.readHDF5(filename, (char *) "x");
+	detector_y.readHDF5(filename, (char *) "y");
+	detector_z.readHDF5(filename, (char *) "z");
 	
 	// Sanity check that all detector arrays are the same size (!)
 	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
@@ -197,28 +229,28 @@ void readDetectorGeometry(tGlobal *global) {
 	long	nx = 8*ROWS;
 	long	ny = 8*COLS;
 	long	nn = nx*ny;
-	global->pix_nx = nx;
-	global->pix_ny = ny;
-	global->pix_nn = nn;
-	global->pix_x = (float *) calloc(nn, sizeof(float));
-	global->pix_y = (float *) calloc(nn, sizeof(float));
-	global->pix_z = (float *) calloc(nn, sizeof(float));
+	pix_nx = nx;
+	pix_ny = ny;
+	pix_nn = nn;
+	pix_x = (float *) calloc(nn, sizeof(float));
+	pix_y = (float *) calloc(nn, sizeof(float));
+	pix_z = (float *) calloc(nn, sizeof(float));
 	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
 	
 	
 	// Copy values from 2D array
 	for(long i=0;i<nn;i++){
-		global->pix_x[i] = (float) detector_x.data[i];
-		global->pix_y[i] = (float) detector_y.data[i];
-		global->pix_z[i] = (float) detector_z.data[i];
+		pix_x[i] = (float) detector_x.data[i];
+		pix_y[i] = (float) detector_y.data[i];
+		pix_z[i] = (float) detector_z.data[i];
 	}
 	
 	
 	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
 	for(long i=0;i<nn;i++){
-		global->pix_x[i] /= global->pix_dx;
-		global->pix_y[i] /= global->pix_dx;
-		global->pix_z[i] /= global->pix_dx;
+		pix_x[i] /= pix_dx;
+		pix_y[i] /= pix_dx;
+		pix_z[i] /= pix_dx;
 	}
 	
 	
@@ -228,10 +260,10 @@ void readDetectorGeometry(tGlobal *global) {
 	float	ymax = -1e9;
 	float	ymin =  1e9;
 	for(long i=0;i<nn;i++){
-		if (global->pix_x[i] > xmax) xmax = global->pix_x[i];
-		if (global->pix_x[i] < xmin) xmin = global->pix_x[i];
-		if (global->pix_y[i] > ymax) ymax = global->pix_y[i];
-		if (global->pix_y[i] < ymin) ymin = global->pix_y[i];
+		if (pix_x[i] > xmax) xmax = pix_x[i];
+		if (pix_x[i] < xmin) xmin = pix_x[i];
+		if (pix_y[i] > ymax) ymax = pix_y[i];
+		if (pix_y[i] < ymin) ymin = pix_y[i];
 	}
 	xmax = ceil(xmax);
 	xmin = floor(xmin);
@@ -247,8 +279,8 @@ void readDetectorGeometry(tGlobal *global) {
 	if(ymax > max) max = ymax;
 	if(fabs(xmin) > max) max = fabs(xmin);
 	if(fabs(ymin) > max) max = fabs(ymin);
-	global->image_nx = 2*(unsigned)max;
-	global->image_nn = global->image_nx*global->image_nx;
-	printf("\tImage output array will be %i x %i\n",global->image_nx,global->image_nx);
+	image_nx = 2*(unsigned)max;
+	image_nn = image_nx*image_nx;
+	printf("\tImage output array will be %i x %i\n",image_nx,image_nx);
 	
 }

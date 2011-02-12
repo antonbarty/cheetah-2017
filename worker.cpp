@@ -24,6 +24,7 @@
 #include <math.h>
 #include <hdf5.h>
 
+#include "setup.h"
 #include "worker.h"
 
 
@@ -36,7 +37,7 @@ void *worker(void *threadarg) {
 	/*
 	 *	Turn threadarg into a more useful form
 	 */
-	tGlobal			*global;
+	cGlobal			*global;
 	tThreadInfo		*threadInfo;
 	threadInfo = (tThreadInfo*) threadarg;
 	global = threadInfo->pGlobal;
@@ -121,7 +122,7 @@ void *worker(void *threadarg) {
  *	Interpolate raw (corrected) cspad data into a physical 2D image
  *	using pre-defined pixel mapping (as loaded from .h5 file)
  */
-void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
+void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Allocate temporary arrays for pixel interpolation (needs to be floating point)
@@ -213,7 +214,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, tGlobal *global){
 
 
 
-void writeHDF5(tThreadInfo *info, tGlobal *global){
+void writeHDF5(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */

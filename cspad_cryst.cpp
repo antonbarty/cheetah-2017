@@ -16,11 +16,11 @@
 #include <hdf5.h>
 #include <pthread.h>
 
-#include "worker.h"
 #include "setup.h"
+#include "worker.h"
 
 
-static tGlobal		global;
+static cGlobal		global;
 static long			frameNumber;
 
 
@@ -106,10 +106,10 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
-	globalConfiguration(&global);
-	parseConfigFile(&global);
-	setupThreads(&global);
-	readDetectorGeometry(&global);
+	global.defaultConfiguration();
+	global.parseConfigFile(global.configFile);
+	global.readDetectorGeometry(global.geometryFile);
+	global.setupThreads();
 	
 }
 
