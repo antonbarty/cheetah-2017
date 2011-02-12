@@ -219,9 +219,9 @@ void event() {
 	 *	Is the beam on?
 	 */
 	bool beam = beamOn();
+	//printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
 	if(!beam)
 		return;
-	printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
   
 	
 	/*
@@ -366,8 +366,13 @@ void event() {
 				//	printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
 				
 				// Get temperature on strong back 
-				float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
+				//float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
+				float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
 				//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
+				//printf("Temperature: %3.1fC\n",CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0)));
+
+
+
 				threadInfo->quad_temperature[quadrant] = temperature;
 				
 				
@@ -377,7 +382,7 @@ void event() {
 				unsigned section_id;
 				uint16_t data[COLS*ROWS*16];
 				while(( s=iter.next(section_id) )) {  
-					printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
+					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 					//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 					memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}

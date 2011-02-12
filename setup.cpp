@@ -182,7 +182,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	// Pixel size (measurements in geometry file are in m)
 	module_rows = ROWS;
 	module_cols = COLS;	
-	pix_dx = 100e-6;
+	pix_dx = 110e-6;
 
 	
 	// Set filename here 
