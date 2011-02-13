@@ -23,6 +23,7 @@ public:
 	int			powdersum;
 	int			saveRaw;
 	int			debugLevel;
+	int			hdf5dump;
 	
 	
 	// Power user settings

@@ -41,6 +41,7 @@ void cGlobal::defaultConfiguration(void) {
 	subtractDarkcal = 0;
 	powdersum = 1;
 	saveRaw = 0;
+	hdf5dump = 0;
 	debugLevel = 2;
 	
 	// Power user settings
@@ -203,6 +204,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
+	}
+	else if (!strcmp(tag, "hdf5dump")) {
+		hdf5dump = atoi(value);
 	}
 	
 	// Power user settings

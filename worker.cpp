@@ -73,7 +73,6 @@ void *worker(void *threadarg) {
 	}
 	
 	
-	
 	/*
 	 *	Subtract darkcal image
 	 */
@@ -81,6 +80,20 @@ void *worker(void *threadarg) {
 		subtractDarkcal(threadInfo, global);
 	}
 	
+
+	/*
+	 *	Deal with saturated pixels
+	 */
+	
+	
+	/*
+	 *	Hitfinding
+	 */
+	int	hit = 0;
+	
+	// Everything is a hit if we are in hdf5dump mode! 
+	if(global->hdf5dump)
+		hit = 1;
 	
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
@@ -96,9 +109,13 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Write out to our favourite HDF5 format
+	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
-	writeHDF5(threadInfo, global);
+	if(hit)
+		writeHDF5(threadInfo, global);
+	else
+		printf("%i: Processed\n", threadInfo->threadNum);
+
 	
 	
 	
