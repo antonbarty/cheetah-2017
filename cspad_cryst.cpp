@@ -446,11 +446,16 @@ void event() {
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
 	pthread_attr_destroy(&threadAttribute);
 	//pthread_detach(thread);
+	global.nprocessedframes += 1;
 	
+
 	
-	// Pause 
-	//printf("Pausing to give time to read the output :-)\n");
-	usleep(2000000);
+	/*
+	 *	Save periodic powder patterns
+	 */
+	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 ){
+		saveRunningSums(&global);
+	}
 	
 }
 // End of event data processing block
@@ -473,48 +478,26 @@ void endrun()
 void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
-	char	filename[1024];
 
-	/*
-	 *	Thread management stuff
-	 */
-	printf("Waiting for threads to terminate\n");
 
+	// Wait for threads to finish
 	while(global.nActiveThreads > 0) {
-		printf("\tactive threads = %i\n", global.nActiveThreads);
+		printf("Waiting for %i worker threads to terminate\n", global.nActiveThreads);
 		usleep(100000);
 	}
+	
+	
+	// Save powder patterns
+	saveRunningSums(&global);
+
+	
+	
+	// Cleanup
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);
 
 	
-	/*
-	 *	Write out powder pattern
-	 */
-	printf("Saving raw sum data to file\n");
-	sprintf(filename,"r%04u-RawSum.h5",global.runNumber);
-	writeSimpleHDF5(filename, global.powderRaw, global.pix_nx, global.pix_ny, H5T_STD_U32LE);	
-
-	printf("Saving assembled sum data to file\n");
-	sprintf(filename,"r%04u-AssembledSum.h5",global.runNumber);
-	writeSimpleHDF5(filename, global.powderAssembled, global.image_nx, global.image_nx, H5T_STD_U32LE);	
-	
-	
-	/*
-	 *	Compute and save darkcal
-	 */
-	printf("Processing darkcal\n");
-	sprintf(filename,"r%04u-darkcal.h5",global.runNumber);
-	uint16_t *data = (uint16_t*) calloc(global.pix_nn, sizeof(uint16_t));
-	for(long i=0; i<global.pix_nn; i++)
-		global.powderRaw[i] /= global.npowder;
-	for(long i=0; i<global.pix_nn; i++)
-		data[i] = (uint16_t) global.powderRaw[i];
-	
-	printf("Saving darkcal to file\n");
-	writeSimpleHDF5(filename, data, global.pix_nx, global.pix_ny, H5T_STD_U16LE);	
-	free(data);
 	
 	printf("Done with my bit!\n");
 }
