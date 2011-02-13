@@ -479,7 +479,10 @@ void endjob()
 		usleep(100000);
 	}
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
+	pthread_mutex_destroy(&global.powdersum1_mutex);
+	pthread_mutex_destroy(&global.powdersum2_mutex);
 
+	
 	/*
 	 *	Write out powder pattern
 	 */
@@ -499,7 +502,9 @@ void endjob()
 	sprintf(filename,"r%04u-darkcal.h5",global.runNumber);
 	uint16_t *data = (uint16_t*) calloc(global.pix_nn, sizeof(uint16_t));
 	for(long i=0; i<global.pix_nn; i++)
-		data[i] = (uint16_t) floor(global.powderRaw[i] / global.npowder);
+		global.powderRaw[i] /= global.npowder;
+	for(long i=0; i<global.pix_nn; i++)
+		data[i] = (uint16_t) global.powderRaw[i];
 	
 	printf("Saving darkcal to file\n");
 	writeSimpleHDF5(filename, data, global.pix_nx, global.pix_ny, H5T_STD_U16LE);	

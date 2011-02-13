@@ -75,7 +75,7 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Subtract common mode offsets
+	 *	Subtract darkcal image
 	 */
 	if(global->subtractDarkcal) {
 		subtractDarkcal(threadInfo, global);
@@ -191,13 +191,13 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 
 	uint16_t	value;
+	// Make sure subtraction bottoms out at 0 and does not go 'negative'
 	for(long i=0;i<global->pix_nn;i++){
 		value = threadInfo->corrected_data[i];
 		if(value > global->darkcal[i])
 			threadInfo->corrected_data[i] -= global->darkcal[i];
 		else
 			threadInfo->corrected_data[i] = 0;
-		
 	}
 }
 
@@ -211,7 +211,7 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	global->npowder += 1;
 	for(long i=0; i<global->pix_nn; i++)
-		global->powderRaw[i] += threadInfo->raw_data[i];
+		global->powderRaw[i] += threadInfo->corrected_data[i];
 	pthread_mutex_unlock(&global->powdersum1_mutex);
 
 	
