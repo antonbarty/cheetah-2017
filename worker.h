@@ -27,6 +27,7 @@ typedef struct {
 	float		quad_temperature[4];
 	uint16_t	*quad_data[4];
 	uint16_t	*raw_data;
+	uint16_t	*corrected_data;
 	uint16_t	*image;
 	
 	
@@ -96,15 +97,17 @@ static uint32_t nevents = 0;
 #define ERROR(...) fprintf(stderr, __VA_ARGS__)
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
-
+#define DEBUGL1_ONLY if(global->debugLevel >= 1)
+#define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
 /*
  *	Function prototypes
  */
 void *worker(void *);
+void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global);
+void assemble2Dimage(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
-void assemble2Dimage(tThreadInfo*, cGlobal*);
 
 
 

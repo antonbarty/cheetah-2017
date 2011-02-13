@@ -34,14 +34,28 @@
  */
 void cGlobal::defaultConfiguration(void) {
 
-	// Default configuration files
+	// Default processing options
+	cmModule = 1;
+	cmColumn = 0;
+	bgSubtract = 1;
+	powdersum = 1;
+	saveRaw = 0;
+	debugLevel = 2;
+	
+	// Power user settings
+	cmFloor = 0.1;
+	
+
+	// Default to single-threaded
+	nThreads = 1;
+
+	
+	// Default configuration files and timezone
 	strcpy(configFile, "cspad-cryst.ini");
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	setenv("TZ","US/Pacific",1);
 	
-	// Default to single-threaded
-	nThreads = 1;
-
+	
 }
 
 
@@ -144,10 +158,33 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
-	//else if (!strcmp(tag, "detectorz")) {
-	//	detectorZ = atof(value);
-	//}
+
+	// Processing options
+	else if (!strcmp(tag, "cmmodule")) {
+		cmModule = atoi(value);
+	}
+	else if (!strcmp(tag, "cmcolumn")) {
+		cmColumn = atoi(value);
+	}
+	else if (!strcmp(tag, "bgsubtract")) {
+		bgSubtract = atoi(value);
+	}
+	else if (!strcmp(tag, "powdersum")) {
+		powdersum = atoi(value);
+	}
+	else if (!strcmp(tag, "saveraw")) {
+		saveRaw = atoi(value);
+	}
 	
+	// Power user settings
+	else if (!strcmp(tag, "cmfloor")) {
+		cmFloor = atof(value);
+	}
+	else if (!strcmp(tag, "debuglevel")) {
+		debugLevel = atoi(value);
+	}
+	
+	// Unknown tags
 	else {
 		printf("\tUnknown tag (ignored): %s = %s\n",tag,value);
 	}

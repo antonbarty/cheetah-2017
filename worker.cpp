@@ -57,17 +57,21 @@ void *worker(void *threadarg) {
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
-	//sprintf(filename,"%x.h5",fiducial);
-	//writeSimpleHDF5(filename, threadInfo->raw_data, 8*ROWS, 8*COLS, H5T_STD_U16LE);		
+	threadInfo->corrected_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
+	memcpy(threadInfo->corrected_data, threadInfo->raw_data, 8*ROWS*8*COLS*sizeof(uint16_t));
 	
+
 	
 	/*
-	 *	Remove common mode offsets
+	 *	Subtract common mode offsets
 	 */
+	if(global->cmModule) {
+		cmModuleSubtract(threadInfo, global);
+	}
+	else if(global->cmColumn) {
+		
+	}
 	
-	// By each column
-	
-	// By each quadrant
 	
 	
 	
@@ -76,8 +80,6 @@ void *worker(void *threadarg) {
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	assemble2Dimage(threadInfo, global);
-	//sprintf(filename,"%x-image.h5",fiducial);
-	//writeSimpleHDF5(filename, threadInfo->image, global->image_nx, global->image_nx, H5T_STD_U16LE);		
 	
 	
 	/*
@@ -107,6 +109,68 @@ void *worker(void *threadarg) {
 }
 
 
+/*
+ *	Subtract common mode on each module
+ *	This is done in a very slow way now - speed up later once we know it works!
+ */
+void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
+
+	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+	
+	long		e;
+	long		counter;
+	uint16_t	value;
+	uint16_t	median;
+	
+	// Create histogram array
+	int			nhist = 65535;
+	uint16_t	*histogram;
+	histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+	
+	// Loop over modules (8x8 array)
+	for(long mi=0; mi<8; mi++){
+		for(long mj=0; mj<8; mj++){
+
+			// Zero histogram
+			memset(histogram, 0, nhist*sizeof(uint16_t));
+			
+			
+			// Loop over pixels within a module
+			for(long i=0; i<ROWS; i++){
+				for(long j=0; j<COLS; j++){
+					e = (j + mj*COLS) * (8*ROWS);
+					e += i + mi*ROWS;
+					histogram[threadInfo->corrected_data[e]] += 1;
+				}
+			}
+			
+			// Find median value
+			counter = 0;
+			for(long i=0; i<nhist; i++){
+				counter += histogram[i];
+				if(counter > (global->cmFloor*ROWS*COLS)) {
+					median = i;
+					break;
+				}
+			}
+			//DEBUGL2_ONLY printf("Median of module (%i,%i) = %i\n",mi,mj,median);
+
+			// Subtract median value
+			for(long i=0; i<ROWS; i++){
+				for(long j=0; j<COLS; j++){
+					e = (j + mj*COLS) * (8*ROWS);
+					e += i + mi*ROWS;
+					value = threadInfo->corrected_data[e];
+					if(value > median)
+						threadInfo->corrected_data[e] -= median;
+					else
+						threadInfo->corrected_data[e] = 0;
+				}
+			}
+		}
+	}
+}
+
 
 /*
  *	Interpolate raw (corrected) cspad data into a physical 2D image
@@ -135,7 +199,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 		// Pixel location with (0,0) at array element (0,0) in bottom left corner
 		x = global->pix_x[i] + global->image_nx/2;
 		y = global->pix_y[i] + global->image_nx/2;
-		pixel_value = threadInfo->raw_data[i];
+		pixel_value = threadInfo->corrected_data[i];
 		
 		// Split coordinate into integer and fractional parts
 		ix = (long) floor(x);
@@ -276,28 +340,31 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	H5Sclose(dataspace_id);
 	
 
-	// Raw data
-	size[0] = 8*COLS;	// size[0] = height
-	size[1] = 8*ROWS;	// size[1] = width
-	max_size[0] = 8*COLS;
-	max_size[1] = 8*ROWS;
-	dataspace_id = H5Screate_simple(2, size, max_size);
-	dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( dataset_id < 0 ) {
-		ERROR("%i: Couldn't create dataset\n", info->threadNum);
-		H5Fclose(hdf_fileID);
-		return;
+	// Save raw data?
+	if(global->saveRaw) {
+		size[0] = 8*COLS;	// size[0] = height
+		size[1] = 8*ROWS;	// size[1] = width
+		max_size[0] = 8*COLS;
+		max_size[1] = 8*ROWS;
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->raw_data);
+		if ( hdf_error < 0 ) {
+			ERROR("%i: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
 	}
-	hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->raw_data);
-	if ( hdf_error < 0 ) {
-		ERROR("%i: Couldn't write data\n", info->threadNum);
-		H5Dclose(dataspace_id);
-		H5Fclose(hdf_fileID);
-		return;
-	}
-	H5Dclose(dataset_id);
-	H5Sclose(dataspace_id);
 
+	
 	// Done with this group
 	H5Gclose(gid);
 	

@@ -15,6 +15,19 @@
 class cGlobal {
 	
 public:
+	// Switches for processing options
+	int			cmModule;
+	int			cmColumn;
+	int			bgSubtract;
+	int			powdersum;
+	int			saveRaw;
+	int			debugLevel;
+	
+	
+	// Power user settings
+	float		cmFloor;
+	
+	
 	// Configuration files
 	char		configFile[1024];
 	char		geometryFile[1024];

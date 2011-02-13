@@ -60,13 +60,13 @@ $(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)
 cspad_cryst.o: cspad_cryst.cpp 
 	$(CPP) $(CFLAGS) $<
 
-worker.o: worker.cpp 
+worker.o: worker.cpp worker.h 
 	$(CPP) $(CFLAGS) $<
 
-setup.o: setup.cpp 
+setup.o: setup.cpp setup.h 
 	$(CPP) $(CFLAGS) $<
 
-data2d.o: data2d.cpp 
+data2d.o: data2d.cpp data2d.h 
 	$(CPP) $(CFLAGS) $<
 
 cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
