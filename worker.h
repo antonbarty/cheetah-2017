@@ -60,7 +60,7 @@ typedef struct {
 	double		phaseCavityCharge1;
 	double		phaseCavityCharge2;
 
-	
+	float		datarate;
 	
 	// Thread management
 	int		threadID;

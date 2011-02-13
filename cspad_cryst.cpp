@@ -185,6 +185,14 @@ void event() {
 	int fail = 0;
 
 	
+	/*
+	 *	How quickly are we processing the data? 
+	 */
+	float datarate;
+	datarate = (float)CLOCKS_PER_SEC/(float)(clock() - global.lastclock);
+	global.lastclock = clock();
+	
+	
 	
 	/*
 	 *	Get run number
@@ -320,6 +328,7 @@ void event() {
 	threadInfo->fiducial = fiducial;
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
+	threadInfo->datarate = datarate;
 	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
@@ -499,5 +508,5 @@ void endjob()
 
 	
 	
-	printf("Done with my bit!\n");
+	printf("Done!\n");
 }

@@ -60,6 +60,7 @@ void cGlobal::defaultConfiguration(void) {
 	setenv("TZ","US/Pacific",1);
 	npowder = 0;
 	nprocessedframes = 0;
+	lastclock = clock();
 	
 	
 }

@@ -70,6 +70,8 @@ public:
 	uint32_t		*powderAssembled;
 	long			npowder;
 	long			nprocessedframes;
+	clock_t			lastclock;
+
 	
 	
 	
