@@ -82,7 +82,7 @@ void *worker(void *threadarg) {
 	
 
 	/*
-	 *	Deal with saturated pixels
+	 *	Identify and remove hot pixels
 	 */
 	
 	
@@ -114,7 +114,7 @@ void *worker(void *threadarg) {
 	if(hit)
 		writeHDF5(threadInfo, global);
 	else
-		printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,threadInfo->datarate);
+		printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,global->datarate);
 
 	
 	
@@ -351,7 +351,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,info->fiducial);
-	printf("%i (%2.1f Hz): Writing data to: %s\n",info->threadNum,info->datarate, outfile);
+	printf("%i (%2.1f Hz): Writing data to: %s\n",info->threadNum,global->datarate, outfile);
 
 
 		

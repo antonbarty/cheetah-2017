@@ -61,6 +61,7 @@ void cGlobal::defaultConfiguration(void) {
 	npowder = 0;
 	nprocessedframes = 0;
 	lastclock = clock();
+	datarate = 1;
 	
 	
 }

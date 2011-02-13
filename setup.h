@@ -71,6 +71,7 @@ public:
 	long			npowder;
 	long			nprocessedframes;
 	clock_t			lastclock;
+	float			datarate;
 
 	
 	

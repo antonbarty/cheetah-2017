@@ -186,11 +186,12 @@ void event() {
 
 	
 	/*
-	 *	How quickly are we processing the data? 
+	 *	How quickly are we processing the data? (average over last 10 events)
 	 */
 	float datarate;
 	datarate = (float)CLOCKS_PER_SEC/(float)(clock() - global.lastclock);
 	global.lastclock = clock();
+	global.datarate = (datarate+9*global.datarate)/10.;
 	
 	
 	
@@ -328,7 +329,6 @@ void event() {
 	threadInfo->fiducial = fiducial;
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
-	threadInfo->datarate = datarate;
 	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
