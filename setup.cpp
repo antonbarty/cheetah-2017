@@ -46,6 +46,7 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Power user settings
 	cmFloor = 0.1;
+	saveInterval = 0;
 	
 
 	// Default to single-threaded
@@ -58,6 +59,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(darkcalFile, "darkcal.h5");
 	setenv("TZ","US/Pacific",1);
 	npowder = 0;
+	nprocessedframes = 0;
 	
 	
 }
@@ -207,6 +209,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hdf5dump")) {
 		hdf5dump = atoi(value);
+	}
+	else if (!strcmp(tag, "saveinterval")) {
+		saveInterval = atoi(value);
 	}
 	
 	// Power user settings

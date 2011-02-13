@@ -28,6 +28,7 @@ public:
 	
 	// Power user settings
 	float		cmFloor;
+	int			saveInterval;
 	
 	
 	// Configuration files
@@ -68,6 +69,7 @@ public:
 	uint32_t		*powderRaw;
 	uint32_t		*powderAssembled;
 	long			npowder;
+	long			nprocessedframes;
 	
 	
 	

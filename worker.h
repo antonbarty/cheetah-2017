@@ -110,6 +110,8 @@ void addToPowder(tThreadInfo*, cGlobal*);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
+void saveRunningSums(cGlobal*);
+
 
 
 
