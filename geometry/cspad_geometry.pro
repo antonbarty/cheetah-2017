@@ -170,7 +170,7 @@ pro cspad_geometry
 	;;
 	;;	Replicate this module across all 4 quadrants
 	;;
-	qth = [0,90,180,270]
+	qth = [0,-90,-180,-270]
 	x0 = x[0:2*ROWS-1, *]
 	y0 = y[0:2*ROWS-1, *]
 	
