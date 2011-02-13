@@ -190,11 +190,9 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 
-	uint16_t	value;
 	// Make sure subtraction bottoms out at 0 and does not go 'negative'
 	for(long i=0;i<global->pix_nn;i++){
-		value = threadInfo->corrected_data[i];
-		if(value > global->darkcal[i])
+		if(threadInfo->corrected_data[i] > global->darkcal[i])
 			threadInfo->corrected_data[i] -= global->darkcal[i];
 		else
 			threadInfo->corrected_data[i] = 0;

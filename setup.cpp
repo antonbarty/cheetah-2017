@@ -37,7 +37,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Default processing options
 	cmModule = 1;
 	cmColumn = 0;
-	subtractBg = 1;
+	subtractBg = 0;
 	subtractDarkcal = 0;
 	powdersum = 1;
 	saveRaw = 0;
@@ -48,7 +48,7 @@ void cGlobal::defaultConfiguration(void) {
 	
 
 	// Default to single-threaded
-	nThreads = 1;
+	nThreads = 16;
 
 	
 	// Default configuration files and timezone

@@ -344,8 +344,11 @@ void event() {
 	threadInfo->pGlobal = &global;
 	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 	
-	for(int quadrant=0; quadrant<4; quadrant++)
+	for(int quadrant=0; quadrant<4; quadrant++) {
 		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
+		memset(threadInfo->quad_data[quadrant], 0, ROWS*COLS*16*sizeof(uint16_t));
+	}
+	
 
 
 	/*
@@ -364,6 +367,8 @@ void event() {
 		nevents++;
 		const Pds::CsPad::ElementHeader* element;
 
+		uint16_t *data = (uint16_t*)calloc(COLS*ROWS*16, sizeof(uint16_t));
+		
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
 			if(element->quad() < 4) {
@@ -389,7 +394,8 @@ void event() {
 				// Why do we need to use the buffer???
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
-				uint16_t data[COLS*ROWS*16];
+				//uint16_t data[COLS*ROWS*16];
+				memset(data, 0, ROWS*COLS*16*sizeof(uint16_t));
 				while(( s=iter.next(section_id) )) {  
 					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 					//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
