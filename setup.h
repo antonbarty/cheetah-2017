@@ -18,7 +18,8 @@ public:
 	// Switches for processing options
 	int			cmModule;
 	int			cmColumn;
-	int			bgSubtract;
+	int			subtractBg;
+	int			subtractDarkcal;
 	int			powdersum;
 	int			saveRaw;
 	int			debugLevel;
@@ -31,6 +32,7 @@ public:
 	// Configuration files
 	char		configFile[1024];
 	char		geometryFile[1024];
+	char		darkcalFile[1024];
 	
 	// Run information
 	unsigned	runNumber;
@@ -42,6 +44,8 @@ public:
 	long			threadCounter;
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
+	pthread_mutex_t	powdersum1_mutex;
+	pthread_mutex_t	powdersum2_mutex;
 	
 	
 	// Detector geometry
@@ -57,13 +61,25 @@ public:
 	long			image_nx;
 	long			image_nn;
 	
+	
+	// Common variables
+	uint16_t		*darkcal;
+	uint32_t		*powderRaw;
+	uint32_t		*powderAssembled;
+	long			npowder;
+	
+	
+	
+	
 public:
 	void defaultConfiguration(void);
 	void parseConfigFile(char *);
 	void parseCommandLineArguments(int, char**);
 	void setupThreads(void);
 	void readDetectorGeometry(char *);
+	void readDarkcal(char *);
 
+	
 private:
 	void parseConfigTag(char*, char*);
 

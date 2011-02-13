@@ -37,7 +37,8 @@ void cGlobal::defaultConfiguration(void) {
 	// Default processing options
 	cmModule = 1;
 	cmColumn = 0;
-	bgSubtract = 1;
+	subtractBg = 1;
+	subtractDarkcal = 0;
 	powdersum = 1;
 	saveRaw = 0;
 	debugLevel = 2;
@@ -53,7 +54,9 @@ void cGlobal::defaultConfiguration(void) {
 	// Default configuration files and timezone
 	strcpy(configFile, "cspad-cryst.ini");
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
+	strcpy(darkcalFile, "darkcal.h5");
 	setenv("TZ","US/Pacific",1);
+	npowder = 0;
 	
 	
 }
@@ -83,6 +86,26 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
 		}
 	}
 }
+
+
+
+/*
+ *	Setup stuff to do with thread management, settings, etc.
+ */
+void cGlobal::setupThreads() {
+	
+	nActiveThreads = 0;
+	threadCounter = 0;
+	
+	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	pthread_mutex_init(&powdersum1_mutex, NULL);
+	pthread_mutex_init(&powdersum2_mutex, NULL);
+	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	for(int i=0; i<nThreads; i++) 
+		threadID[i] = -1;
+	
+}
+
 
 
 /*
@@ -158,7 +181,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
-
+	else if (!strcmp(tag, "darkcal")) {
+		strcpy(darkcalFile, value);
+	}
+	
 	// Processing options
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -166,8 +192,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "cmcolumn")) {
 		cmColumn = atoi(value);
 	}
-	else if (!strcmp(tag, "bgsubtract")) {
-		bgSubtract = atoi(value);
+	else if (!strcmp(tag, "subtractbg")) {
+		subtractBg = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractdarkcal")) {
+		subtractDarkcal = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		powdersum = atoi(value);
@@ -192,24 +221,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 
 
 
-
-/*
- *	Setup stuff to do with thread management, settings, etc.
- */
-void cGlobal::setupThreads() {
-
-	nActiveThreads = 0;
-	threadCounter = 0;
-
-	pthread_mutex_init(&nActiveThreads_mutex, NULL);
-	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
-	for(int i=0; i<nThreads; i++) 
-		threadID[i] = -1;
-
-}
-
-
-
 /*
  *	Read in detector configuration
  */
@@ -223,9 +234,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 
 	
 	// Set filename here 
-	char	detfile[1024];
 	printf("Reading detector configuration:\n");
-	//strcpy(detfile,"geometry/cspad_pixelmap.h5");
 	printf("\t%s\n",filename);
 	
 	
@@ -234,7 +243,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("Error: Detector configuration file does not exist: %s\n",detfile);
+		printf("Error: Detector configuration file does not exist: %s\n",filename);
 		exit(1);
 	}
 	
@@ -319,5 +328,43 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	image_nx = 2*(unsigned)max;
 	image_nn = image_nx*image_nx;
 	printf("\tImage output array will be %i x %i\n",image_nx,image_nx);
+	
+}
+
+
+/*
+ *	Read in darkcal file
+ */
+void cGlobal::readDarkcal(char *filename){
+	
+	printf("Reading darkcal configuration:\n");
+	printf("\t%s\n",filename);
+	
+	
+	// Create memory space and pad with zeros
+	darkcal = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+	memset(darkcal,0, pix_nn*sizeof(uint16_t));
+	
+	
+	
+	// Check whether pixel map file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tDarkcal file does not exist: %s\n",filename);
+		printf("\tDefaulting to all-zero darkcal\n");
+		return;
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		dark2d;
+	dark2d.readHDF5(filename);
+	
+	
+	// Copy into darkcal array
+	for(long i=0;i<pix_nn;i++)
+		darkcal[i] = (uint16_t) dark2d.data[i];
 	
 }

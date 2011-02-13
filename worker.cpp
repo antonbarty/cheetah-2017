@@ -69,17 +69,30 @@ void *worker(void *threadarg) {
 		cmModuleSubtract(threadInfo, global);
 	}
 	else if(global->cmColumn) {
-		
+		// Blank for now
 	}
 	
 	
 	
+	/*
+	 *	Subtract common mode offsets
+	 */
+	if(global->subtractDarkcal) {
+		subtractDarkcal(threadInfo, global);
+	}
 	
 	
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	assemble2Dimage(threadInfo, global);
+	
+	
+	/*
+	 *	Maintain a running sum of data
+	 */
+	addToPowder(threadInfo, global);
+	
 	
 	
 	/*
@@ -169,6 +182,45 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			}
 		}
 	}
+}
+
+
+/*
+ *	Subtract pre-loaded darkcal file
+ */
+void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
+
+	uint16_t	value;
+	for(long i=0;i<global->pix_nn;i++){
+		value = threadInfo->corrected_data[i];
+		if(value > global->darkcal[i])
+			threadInfo->corrected_data[i] -= global->darkcal[i];
+		else
+			threadInfo->corrected_data[i] = 0;
+		
+	}
+}
+
+
+/*
+ *	Maintain running powder patterns
+ */
+void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
+	
+	// Sum raw format data
+	pthread_mutex_lock(&global->powdersum1_mutex);
+	global->npowder += 1;
+	for(long i=0; i<global->pix_nn; i++)
+		global->powderRaw[i] += threadInfo->raw_data[i];
+	pthread_mutex_unlock(&global->powdersum1_mutex);
+
+	
+	// Sum assembled data
+	pthread_mutex_lock(&global->powdersum2_mutex);
+	for(long i=0; i<global->image_nn; i++)
+		global->powderAssembled[i] += threadInfo->image[i];
+	pthread_mutex_unlock(&global->powdersum2_mutex);
+	
 }
 
 

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <hdf5.h>
+#include <math.h>
 #include <pthread.h>
 
 #include "setup.h"
@@ -110,7 +111,15 @@ void beginjob() {
 	global.parseConfigFile(global.configFile);
 	global.readDetectorGeometry(global.geometryFile);
 	global.setupThreads();
+	global.readDarkcal(global.darkcalFile);
 	
+	/*
+	 *	Set up arrays for remembering powder data
+	 */
+	global.powderRaw = (uint32_t*) calloc(global.pix_nn, sizeof(uint32_t));
+	global.powderAssembled = (uint32_t*) calloc(global.image_nn, sizeof(uint32_t));
+	memset(global.powderRaw,0, global.pix_nn*sizeof(uint32_t));
+	memset(global.powderAssembled,0, global.image_nn*sizeof(uint32_t));
 }
 
 
@@ -458,7 +467,7 @@ void endrun()
 void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
-
+	char	filename[1024];
 
 	/*
 	 *	Thread management stuff
@@ -470,6 +479,31 @@ void endjob()
 		usleep(100000);
 	}
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
+
+	/*
+	 *	Write out powder pattern
+	 */
+	printf("Saving raw sum data to file\n");
+	sprintf(filename,"r%04u-RawSum.h5",global.runNumber);
+	writeSimpleHDF5(filename, global.powderRaw, global.pix_nx, global.pix_ny, H5T_STD_U32LE);	
+
+	printf("Saving assembled sum data to file\n");
+	sprintf(filename,"r%04u-AssembledSum.h5",global.runNumber);
+	writeSimpleHDF5(filename, global.powderAssembled, global.image_nx, global.image_nx, H5T_STD_U32LE);	
+	
+	
+	/*
+	 *	Compute and save darkcal
+	 */
+	printf("Processing darkcal\n");
+	sprintf(filename,"r%04u-darkcal.h5",global.runNumber);
+	uint16_t *data = (uint16_t*) calloc(global.pix_nn, sizeof(uint16_t));
+	for(long i=0; i<global.pix_nn; i++)
+		data[i] = (uint16_t) floor(global.powderRaw[i] / global.npowder);
+	
+	printf("Saving darkcal to file\n");
+	writeSimpleHDF5(filename, data, global.pix_nx, global.pix_ny, H5T_STD_U16LE);	
+	free(data);
 	
 	printf("Done with my bit!\n");
 }

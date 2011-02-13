@@ -104,7 +104,9 @@ static uint32_t nevents = 0;
  *	Function prototypes
  */
 void *worker(void *);
-void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global);
+void cmModuleSubtract(tThreadInfo*, cGlobal*);
+void subtractDarkcal(tThreadInfo*, cGlobal*);
+void addToPowder(tThreadInfo*, cGlobal*);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
