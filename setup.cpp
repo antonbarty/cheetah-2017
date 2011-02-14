@@ -48,6 +48,7 @@ void cGlobal::defaultConfiguration(void) {
 	saveRaw = 0;
 	debugLevel = 2;
 	autohotpixel = 1;
+	startFrames = 0;
 	
 	// Power user settings
 	cmFloor = 0.1;
@@ -59,6 +60,7 @@ void cGlobal::defaultConfiguration(void) {
 	hotpixADC = 1000;
 	hotpixMemory = 50;
 	selfDarkMemory = 100;
+	scaleDarkcal = 0;
 	
 
 	// Default to single-threaded
@@ -271,6 +273,14 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		selfDarkMemory = atof(value);
 	}
+	else if (!strcmp(tag, "scaledarkcal")) {
+		scaleDarkcal = atoi(value);
+	}
+	else if (!strcmp(tag, "startframes")) {
+		startFrames = atoi(value);
+	}
+	
+	
 	
 	// Unknown tags
 	else {

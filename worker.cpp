@@ -91,6 +91,8 @@ void *worker(void *threadarg) {
 		killHotpixels(threadInfo, global);
 	}
 	
+	
+	
 	/*
 	 *	Hitfinding
 	 */
@@ -100,34 +102,47 @@ void *worker(void *threadarg) {
 	}
 
 	
-	/*
-	 *	Assemble quadrants into a 'realistic' 2D image
-	 */
-	assemble2Dimage(threadInfo, global);
-	
-	
 	
 	/*
-	 *	Maintain a running sum of data
+	 *	Are we still in 'frame digesting' mode?
 	 */
-	addToPowder(threadInfo, global);
+	if(threadInfo->threadNum < global->startFrames) {
+		printf("%i (%2.1fHz): Digesting initial frames\n", threadInfo->threadNum,global->datarate);
+		threadInfo->image = NULL;
+		goto cleanup;
+	}
+	else {
+		/*
+		 *	Assemble quadrants into a 'realistic' 2D image
+		 */
+		assemble2Dimage(threadInfo, global);
+		
+		
+		
+		/*
+		 *	Maintain a running sum of data
+		 */
+		addToPowder(threadInfo, global);
+		
+		
+		
+		/*
+		 *	If this is a hit, write out to our favourite HDF5 format
+		 */
+		if(global->hdf5dump) 
+			writeHDF5(threadInfo, global);
+		else if(hit && global->savehits)
+			writeHDF5(threadInfo, global);
+		else
+			printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,global->datarate);
+	}
+		
 	
-	
-	
-	/*
-	 *	If this is a hit, write out to our favourite HDF5 format
-	 */
-	if(global->hdf5dump) 
-		writeHDF5(threadInfo, global);
-	else if(hit && global->savehits)
-		writeHDF5(threadInfo, global);
-	else
-		printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,global->datarate);
-
 	
 	/*
 	 *	Cleanup and exit
 	 */
+	cleanup:
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -244,14 +259,18 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	}
 	pthread_mutex_unlock(&global->selfdark_mutex);
 
-
-	// Find appropriate weighting 
-	for(long i=0;i<global->pix_nn;i++){
-		top += global->selfdark[i]*threadInfo->corrected_data[i];
-		s1 += global->selfdark[i]*global->selfdark[i];
-		s2 += threadInfo->corrected_data[i]*threadInfo->corrected_data[i];
+	
+	// Find appropriate scaling factor 
+	if(global->scaleDarkcal) {
+		for(long i=0;i<global->pix_nn;i++){
+			top += global->selfdark[i]*threadInfo->corrected_data[i];
+			s1 += global->selfdark[i]*global->selfdark[i];
+			s2 += threadInfo->corrected_data[i]*threadInfo->corrected_data[i];
+		}
+		factor = top/(sqrt(s1)*sqrt(s2));		
 	}
-	factor = top/(sqrt(s1)*sqrt(s2));
+	else 
+		factor=1;
 	
 	
 	// Do the weighted subtraction

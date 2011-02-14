@@ -16,6 +16,7 @@ class cGlobal {
 	
 public:
 	// Switches for processing options
+	int			startFrames;
 	int			cmModule;
 	int			cmColumn;
 	int			subtractBg;
@@ -36,6 +37,7 @@ public:
 	int			powderthresh;
 	int			hitfinderADC;
 	int			hitfinderNAT;
+	int			scaleDarkcal;
 	float		hotpixFreq;
 	float		hotpixADC;
 	float		hotpixMemory;

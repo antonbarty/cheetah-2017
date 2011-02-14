@@ -193,7 +193,9 @@ void event() {
 	 *	How quickly are we processing the data? (average over last 10 events)
 	 */
 	float datarate;
-	datarate = (float)CLOCKS_PER_SEC/(float)(clock() - global.lastclock);
+	float dt = (clock() - global.lastclock);
+	dt /= CLOCKS_PER_SEC;
+	datarate = 1.0/dt;
 	global.lastclock = clock();
 	global.datarate = (datarate+9*global.datarate)/10.;
 	
@@ -466,7 +468,7 @@ void event() {
 	/*
 	 *	Save periodic powder patterns
 	 */
-	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 ){
+	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.startFrames+50) ){
 		saveRunningSums(&global);
 	}
 	
