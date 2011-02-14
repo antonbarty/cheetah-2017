@@ -92,15 +92,16 @@ void *worker(void *threadarg) {
 	 *	Hitfinding
 	 */
 	int	hit = 0;
-	
-	// Everything is a hit if we are in hdf5dump mode! 
-	if(global->hdf5dump)
-		hit = 1;
+	if(global->hitfinder){
+		hit = hitfinder(threadInfo, global);
+	}
+
 	
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	assemble2Dimage(threadInfo, global);
+	
 	
 	
 	/*
@@ -113,18 +114,17 @@ void *worker(void *threadarg) {
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
-	if(hit)
+	if(global->hdf5dump) 
+		writeHDF5(threadInfo, global);
+	else if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
 	else
 		printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,global->datarate);
 
 	
-	
-	
 	/*
 	 *	Cleanup and exit
 	 */
-	cleanup:
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -218,6 +218,31 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 			threadInfo->corrected_data[i] = 0;
 	}
 }
+
+
+
+/*
+ *	A basic hitfinder
+ */
+int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
+
+	long nat=0;
+	int	 hit=0;
+	
+	for(long i=0;i<global->pix_nn;i++){
+		if(threadInfo->corrected_data[i] > global->hitfinderADC){
+			nat++;
+		}
+	}	
+
+	if(nat >= global->hitfinderNAT)
+		hit = 1;
+
+	return(hit);
+
+}
+
+
 
 /*
  *	Identify and kill hot pixels

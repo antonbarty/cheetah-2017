@@ -21,6 +21,7 @@ public:
 	int			subtractBg;
 	int			subtractDarkcal;
 	int			hitfinder;
+	int			savehits;
 	int			powdersum;
 	int			saveRaw;
 	int			debugLevel;

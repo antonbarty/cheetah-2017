@@ -103,6 +103,7 @@ void *worker(void *);
 void cmModuleSubtract(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);
+int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);

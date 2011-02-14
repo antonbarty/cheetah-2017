@@ -41,9 +41,10 @@ void cGlobal::defaultConfiguration(void) {
 	subtractBg = 0;
 	subtractDarkcal = 0;
 	hitfinder = 0;
+	savehits = 0;
+	hdf5dump = 0;
 	powdersum = 1;
 	saveRaw = 0;
-	hdf5dump = 0;
 	debugLevel = 2;
 	autohotpixel = 1;
 	
@@ -215,6 +216,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
+	}
+	else if (!strcmp(tag, "savehits")) {
+		savehits = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		powdersum = atoi(value);
