@@ -57,8 +57,10 @@ void *worker(void *threadarg) {
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
-	threadInfo->corrected_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
-	memcpy(threadInfo->corrected_data, threadInfo->raw_data, 8*ROWS*8*COLS*sizeof(uint16_t));
+	threadInfo->corrected_data = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
+	//memcpy(threadInfo->corrected_data, threadInfo->raw_data, 8*ROWS*8*COLS*sizeof(int16_t));
+	for(long i=0;i<global->pix_nn;i++)
+		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 	
 
 	
@@ -212,11 +214,14 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				for(long j=0; j<COLS; j++){
 					e = (j + mj*COLS) * (8*ROWS);
 					e += i + mi*ROWS;
-					value = threadInfo->corrected_data[e];
-					if(value > median)
-						threadInfo->corrected_data[e] -= median;
-					else
-						threadInfo->corrected_data[e] = 0;
+					threadInfo->corrected_data[e] -= median;
+
+					// Zero checking only needed if corrected data is uint16
+					//value = threadInfo->corrected_data[e];
+					//if(value > median)
+					//	threadInfo->corrected_data[e] -= median;
+					//else
+					//	threadInfo->corrected_data[e] = 0;
 				}
 			}
 		}
@@ -230,13 +235,18 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 
+	for(long i=0;i<global->pix_nn;i++)
+		threadInfo->corrected_data[i] -= global->darkcal[i];
+		
+	
 	// Make sure subtraction bottoms out at 0 and does not go 'negative'
-	for(long i=0;i<global->pix_nn;i++){
-		if(threadInfo->corrected_data[i] > global->darkcal[i])
-			threadInfo->corrected_data[i] -= global->darkcal[i];
-		else
-			threadInfo->corrected_data[i] = 0;
-	}
+	// Zero checking only needed if corrected data is uint16
+	//for(long i=0;i<global->pix_nn;i++){
+	//	if(threadInfo->corrected_data[i] > global->darkcal[i])
+	//		threadInfo->corrected_data[i] -= global->darkcal[i];
+	//	else
+	//		threadInfo->corrected_data[i] = 0;
+	//}
 }
 
 
@@ -274,12 +284,15 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Do the weighted subtraction
-	for(long i=0;i<global->pix_nn;i++){
-		if(threadInfo->corrected_data[i] > factor*global->selfdark[i])
+	// Zero checking only needed if corrected data is uint16
+	for(long i=0;i<global->pix_nn;i++)
 			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
-		else
-			threadInfo->corrected_data[i] = 0;
-	}	
+	//for(long i=0;i<global->pix_nn;i++){
+	//	if(threadInfo->corrected_data[i] > factor*global->selfdark[i])
+	//		threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
+	//	else
+	//		threadInfo->corrected_data[i] = 0;
+	//}	
 	
 }
 
@@ -433,11 +446,11 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 
 	
 	// Allocate memory for output image
-	threadInfo->image = (uint16_t*) calloc(global->image_nn,sizeof(uint16_t));
+	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 
 	// Copy interpolated image across into image array
 	for(long i=0;i<global->image_nn;i++){
-		threadInfo->image[i] = (uint16_t) data[i];
+		threadInfo->image[i] = (int16_t) data[i];
 	}	
 	
 	
@@ -505,13 +518,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	max_size[0] = global->image_nx;
 	max_size[1] = global->image_nx;
 	dataspace_id = H5Screate_simple(2, size, max_size);
-	dataset_id = H5Dcreate(gid, "data", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dataset_id = H5Dcreate(gid, "data", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dataset_id < 0 ) {
 		ERROR("%i: Couldn't create dataset\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
-	hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
+	hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
 	if ( hdf_error < 0 ) {
 		ERROR("%i: Couldn't write data\n", info->threadNum);
 		H5Dclose(dataspace_id);
@@ -755,14 +768,14 @@ void saveRunningSums(cGlobal *global) {
 	printf("Saving raw sum data to file\n");
 	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
 	pthread_mutex_lock(&global->powdersum1_mutex);
-	writeSimpleHDF5(filename, global->powderRaw, global->pix_nx, global->pix_ny, H5T_STD_U32LE);	
+	writeSimpleHDF5(filename, global->powderRaw, global->pix_nx, global->pix_ny, H5T_STD_I32LE);	
 	pthread_mutex_unlock(&global->powdersum1_mutex);
 	
 
 	printf("Saving assembled sum data to file\n");
 	sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
 	pthread_mutex_lock(&global->powdersum2_mutex);
-	writeSimpleHDF5(filename, global->powderAssembled, global->image_nx, global->image_nx, H5T_STD_U32LE);	
+	writeSimpleHDF5(filename, global->powderAssembled, global->image_nx, global->image_nx, H5T_STD_I32LE);	
 	pthread_mutex_unlock(&global->powdersum2_mutex);
 	
 	
@@ -771,14 +784,14 @@ void saveRunningSums(cGlobal *global) {
 	 */
 	printf("Processing darkcal\n");
 	sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
-	uint16_t *data = (uint16_t*) calloc(global->pix_nn, sizeof(uint16_t));
+	int16_t *data = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	for(long i=0; i<global->pix_nn; i++)
-		data[i] = (uint16_t) (global->powderRaw[i]/global->npowder);
+		data[i] = (int16_t) (global->powderRaw[i]/global->npowder);
 	pthread_mutex_unlock(&global->powdersum1_mutex);
 	
 	printf("Saving darkcal to file\n");
-	writeSimpleHDF5(filename, data, global->pix_nx, global->pix_ny, H5T_STD_U16LE);	
+	writeSimpleHDF5(filename, data, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
 	free(data);
 	
 }

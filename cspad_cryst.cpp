@@ -116,14 +116,14 @@ void beginjob() {
 	/*
 	 *	Set up arrays for remembering powder data
 	 */
-	global.powderRaw = (uint32_t*) calloc(global.pix_nn, sizeof(uint32_t));
+	global.powderRaw = (int32_t*) calloc(global.pix_nn, sizeof(int32_t));
 	global.hotpixelmask = (float*) calloc(global.pix_nn, sizeof(float));
 	global.selfdark = (float*) calloc(global.pix_nn, sizeof(float));
-	global.powderAssembled = (uint32_t*) calloc(global.image_nn, sizeof(uint32_t));
-	memset(global.powderRaw,0, global.pix_nn*sizeof(uint32_t));
+	global.powderAssembled = (int32_t*) calloc(global.image_nn, sizeof(int32_t));
+	memset(global.powderRaw,0, global.pix_nn*sizeof(int32_t));
 	memset(global.hotpixelmask,0, global.pix_nn*sizeof(float));
 	memset(global.selfdark,0, global.pix_nn*sizeof(float));
-	memset(global.powderAssembled,0, global.image_nn*sizeof(uint32_t));
+	memset(global.powderAssembled,0, global.image_nn*sizeof(int32_t));
 }
 
 

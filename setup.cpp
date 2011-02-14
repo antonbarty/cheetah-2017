@@ -417,8 +417,8 @@ void cGlobal::readDarkcal(char *filename){
 	
 	
 	// Create memory space and pad with zeros
-	darkcal = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-	memset(darkcal,0, pix_nn*sizeof(uint16_t));
+	darkcal = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	memset(darkcal,0, pix_nn*sizeof(int16_t));
 	
 	
 	
@@ -440,6 +440,6 @@ void cGlobal::readDarkcal(char *filename){
 	
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
-		darkcal[i] = (uint16_t) dark2d.data[i];
+		darkcal[i] = (int16_t) dark2d.data[i];
 	
 }
