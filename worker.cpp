@@ -231,17 +231,33 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
+	float	top = 0;
+	float	s1 = 0;
+	float	s2 = 0;
+	float	factor;
+
+	
+	// Add current (uncorrected) image to self darkcal
 	pthread_mutex_lock(&global->selfdark_mutex);
 	for(long i=0;i<global->pix_nn;i++){
 		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
 	}
 	pthread_mutex_unlock(&global->selfdark_mutex);
-	
-	
-	long	nhot = 0;
+
+
+	// Find appropriate weighting 
 	for(long i=0;i<global->pix_nn;i++){
-		if(threadInfo->corrected_data[i] > global->selfdark[i])
-			threadInfo->corrected_data[i] -= (int) global->selfdark[i];
+		top += global->selfdark[i]*threadInfo->corrected_data[i];
+		s1 += global->selfdark[i]*global->selfdark[i];
+		s2 += threadInfo->corrected_data[i]*threadInfo->corrected_data[i];
+	}
+	factor = top/(sqrt(s1)*sqrt(s2));
+	
+	
+	// Do the weighted subtraction
+	for(long i=0;i<global->pix_nn;i++){
+		if(threadInfo->corrected_data[i] > factor*global->selfdark[i])
+			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
 		else
 			threadInfo->corrected_data[i] = 0;
 	}	
