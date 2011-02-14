@@ -43,10 +43,14 @@ void cGlobal::defaultConfiguration(void) {
 	saveRaw = 0;
 	hdf5dump = 0;
 	debugLevel = 2;
+	autohotpixel = 1;
 	
 	// Power user settings
 	cmFloor = 0.1;
 	saveInterval = 0;
+	hotpixFreq = 0.9;
+	hotpixADC = 1000;
+	hotpixMemory = 50;
 	
 
 	// Default to single-threaded
@@ -103,6 +107,7 @@ void cGlobal::setupThreads() {
 	threadCounter = 0;
 	
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&powdersum1_mutex, NULL);
 	pthread_mutex_init(&powdersum2_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
@@ -215,6 +220,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveinterval")) {
 		saveInterval = atoi(value);
 	}
+	else if (!strcmp(tag, "autohotpixel")) {
+		autohotpixel = atoi(value);
+	}
+
 	
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {
@@ -223,6 +232,18 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "debuglevel")) {
 		debugLevel = atoi(value);
 	}
+	else if (!strcmp(tag, "hotpixfreq")) {
+		hotpixFreq = atof(value);
+	}
+	else if (!strcmp(tag, "hotpixadc")) {
+		hotpixADC = atof(value);
+	}
+	else if (!strcmp(tag, "hotpixmemory")) {
+		hotpixMemory = atof(value);
+	}
+	
+	
+
 	
 	// Unknown tags
 	else {

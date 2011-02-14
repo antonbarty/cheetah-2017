@@ -84,7 +84,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	Identify and remove hot pixels
 	 */
-	
+	if(global->autohotpixel){
+		killHotpixels(threadInfo, global);
+	}
 	
 	/*
 	 *	Hitfinding
@@ -216,6 +218,29 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	}
 }
 
+/*
+ *	Identify and kill hot pixels
+ */
+void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
+
+	
+	pthread_mutex_lock(&global->hotpixel_mutex);
+	for(long i=0;i<global->pix_nn;i++){
+		global->hotpixelmask[i] = ( ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0)) + (global->hotpixMemory-1)*global->hotpixelmask[i]) / global->hotpixMemory;
+	}
+	pthread_mutex_unlock(&global->hotpixel_mutex);
+
+	
+	long	nhot = 0;
+	for(long i=0;i<global->pix_nn;i++){
+		if(global->hotpixelmask[i] > global->hotpixFreq) {
+			threadInfo->corrected_data[i] = 0;
+			//nhot++;
+		}
+	}	
+	//printf("%i\n",nhot);
+}
+	
 
 /*
  *	Maintain running powder patterns

@@ -24,11 +24,15 @@ public:
 	int			saveRaw;
 	int			debugLevel;
 	int			hdf5dump;
+	int			autohotpixel;
 	
 	
 	// Power user settings
 	float		cmFloor;
 	int			saveInterval;
+	float		hotpixFreq;
+	float		hotpixADC;
+	float		hotpixMemory;
 	
 	
 	// Configuration files
@@ -46,6 +50,7 @@ public:
 	long			threadCounter;
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
+	pthread_mutex_t	hotpixel_mutex;
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
 	
@@ -68,6 +73,7 @@ public:
 	uint16_t		*darkcal;
 	uint32_t		*powderRaw;
 	uint32_t		*powderAssembled;
+	float			*hotpixelmask;
 	long			npowder;
 	long			nprocessedframes;
 	clock_t			lastclock;

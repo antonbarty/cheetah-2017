@@ -117,8 +117,10 @@ void beginjob() {
 	 *	Set up arrays for remembering powder data
 	 */
 	global.powderRaw = (uint32_t*) calloc(global.pix_nn, sizeof(uint32_t));
+	global.hotpixelmask = (float*) calloc(global.pix_nn, sizeof(float));
 	global.powderAssembled = (uint32_t*) calloc(global.image_nn, sizeof(uint32_t));
 	memset(global.powderRaw,0, global.pix_nn*sizeof(uint32_t));
+	memset(global.hotpixelmask,0, global.pix_nn*sizeof(float));
 	memset(global.powderAssembled,0, global.image_nn*sizeof(uint32_t));
 }
 
@@ -351,7 +353,6 @@ void event() {
 	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
 	
 	threadInfo->pGlobal = &global;
-	threadInfo->nActiveThreads_mutex = &global.nActiveThreads_mutex;
 	
 	for(int quadrant=0; quadrant<4; quadrant++) {
 		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));

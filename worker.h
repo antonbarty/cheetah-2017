@@ -63,8 +63,6 @@ typedef struct {
 	// Thread management
 	int		threadID;
 	
-	// Memory protection
-	pthread_mutex_t	*nActiveThreads_mutex;
 	
 	
 } tThreadInfo;
@@ -104,6 +102,7 @@ static uint32_t nevents = 0;
 void *worker(void *);
 void cmModuleSubtract(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
+void killHotpixels(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
