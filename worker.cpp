@@ -137,6 +137,7 @@ void *worker(void *threadarg) {
 	for(int quadrant=0; quadrant<4; quadrant++) 
 		free(threadInfo->quad_data[quadrant]);	
 	free(threadInfo->raw_data);
+	free(threadInfo->corrected_data);
 	free(threadInfo->image);
 	free(threadInfo);
 
@@ -205,6 +206,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			}
 		}
 	}
+	free(histogram);
 }
 
 
