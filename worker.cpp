@@ -124,6 +124,7 @@ void *worker(void *threadarg) {
 	/*
 	 *	Cleanup and exit
 	 */
+	cleanup:
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -257,7 +258,8 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	// Sum assembled data
 	pthread_mutex_lock(&global->powdersum2_mutex);
 	for(long i=0; i<global->image_nn; i++)
-		global->powderAssembled[i] += threadInfo->image[i];
+		if(threadInfo->image[i] > global->powderthresh)
+			global->powderAssembled[i] += threadInfo->image[i];
 	pthread_mutex_unlock(&global->powdersum2_mutex);
 	
 }

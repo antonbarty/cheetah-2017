@@ -40,6 +40,7 @@ void cGlobal::defaultConfiguration(void) {
 	cmColumn = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
+	hitfinder = 0;
 	powdersum = 1;
 	saveRaw = 0;
 	hdf5dump = 0;
@@ -49,6 +50,9 @@ void cGlobal::defaultConfiguration(void) {
 	// Power user settings
 	cmFloor = 0.1;
 	saveInterval = 0;
+	powderthresh = 0;
+	hitfinderADC = 100;
+	hitfinderNAT = 100;
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -209,6 +213,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "subtractdarkcal")) {
 		subtractDarkcal = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinder")) {
+		hitfinder = atoi(value);
+	}
 	else if (!strcmp(tag, "powdersum")) {
 		powdersum = atoi(value);
 	}
@@ -242,7 +249,15 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotpixMemory = atof(value);
 	}
-	
+	else if (!strcmp(tag, "powderthresh")) {
+		powderthresh = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderadc")) {
+		hitfinderADC = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindernat")) {
+		hitfinderNAT = atoi(value);
+	}
 	
 
 	

@@ -138,8 +138,8 @@ pro cspad_geometry
 	;; Create base module (consisting of two 2x1s with a 2-pixel split between them)
 	mx = xarr(2*ROWS,2*COLS)-ROWS
 	my = yarr(2*ROWS,2*COLS)-COLS
-	my[*,0:COLS-1] -= 1
-	my[*,COLS:2*COLS-1] += 1
+	;;my[*,0:COLS-1] -= 1
+	;;my[*,COLS:2*COLS-1] += 1
 
 
 	;; Create output arrays

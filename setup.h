@@ -20,6 +20,7 @@ public:
 	int			cmColumn;
 	int			subtractBg;
 	int			subtractDarkcal;
+	int			hitfinder;
 	int			powdersum;
 	int			saveRaw;
 	int			debugLevel;
@@ -30,6 +31,9 @@ public:
 	// Power user settings
 	float		cmFloor;
 	int			saveInterval;
+	int			powderthresh;
+	int			hitfinderADC;
+	int			hitfinderNAT;
 	float		hotpixFreq;
 	float		hotpixADC;
 	float		hotpixMemory;
