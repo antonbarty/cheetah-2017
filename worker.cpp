@@ -79,6 +79,9 @@ void *worker(void *threadarg) {
 	if(global->subtractDarkcal) {
 		subtractDarkcal(threadInfo, global);
 	}
+	if(global->selfDarkcal) {
+		subtractSelfdarkcal(threadInfo, global);
+	}
 	
 
 	/*
@@ -217,6 +220,30 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 		else
 			threadInfo->corrected_data[i] = 0;
 	}
+}
+
+
+
+/*
+ *	Subtract self generated darkcal file
+ */
+void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
+	
+	pthread_mutex_lock(&global->selfdark_mutex);
+	for(long i=0;i<global->pix_nn;i++){
+		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
+	}
+	pthread_mutex_unlock(&global->selfdark_mutex);
+	
+	
+	long	nhot = 0;
+	for(long i=0;i<global->pix_nn;i++){
+		if(threadInfo->corrected_data[i] > global->selfdark[i])
+			threadInfo->corrected_data[i] -= (int) global->selfdark[i];
+		else
+			threadInfo->corrected_data[i] = 0;
+	}	
+	
 }
 
 

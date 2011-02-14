@@ -40,6 +40,7 @@ void cGlobal::defaultConfiguration(void) {
 	cmColumn = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
+	selfDarkcal = 0;
 	hitfinder = 0;
 	savehits = 0;
 	hdf5dump = 0;
@@ -57,6 +58,7 @@ void cGlobal::defaultConfiguration(void) {
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
+	selfDarkMemory = 100;
 	
 
 	// Default to single-threaded
@@ -114,6 +116,7 @@ void cGlobal::setupThreads() {
 	
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
+	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&powdersum1_mutex, NULL);
 	pthread_mutex_init(&powdersum2_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
@@ -235,8 +238,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "autohotpixel")) {
 		autohotpixel = atoi(value);
 	}
-
+	else if (!strcmp(tag, "selfdarkcal")) {
+		selfDarkcal = atoi(value);
+	}
 	
+
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);
@@ -262,8 +268,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindernat")) {
 		hitfinderNAT = atoi(value);
 	}
-	
-
+	else if (!strcmp(tag, "selfdarkmemory")) {
+		selfDarkMemory = atof(value);
+	}
 	
 	// Unknown tags
 	else {

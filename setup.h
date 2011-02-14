@@ -20,6 +20,7 @@ public:
 	int			cmColumn;
 	int			subtractBg;
 	int			subtractDarkcal;
+	int			selfDarkcal;
 	int			hitfinder;
 	int			savehits;
 	int			powdersum;
@@ -38,6 +39,7 @@ public:
 	float		hotpixFreq;
 	float		hotpixADC;
 	float		hotpixMemory;
+	float		selfDarkMemory;
 	
 	
 	// Configuration files
@@ -56,6 +58,7 @@ public:
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
 	pthread_mutex_t	hotpixel_mutex;
+	pthread_mutex_t	selfdark_mutex;
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
 	
@@ -79,6 +82,7 @@ public:
 	uint32_t		*powderRaw;
 	uint32_t		*powderAssembled;
 	float			*hotpixelmask;
+	float			*selfdark;
 	long			npowder;
 	long			nprocessedframes;
 	clock_t			lastclock;

@@ -118,9 +118,11 @@ void beginjob() {
 	 */
 	global.powderRaw = (uint32_t*) calloc(global.pix_nn, sizeof(uint32_t));
 	global.hotpixelmask = (float*) calloc(global.pix_nn, sizeof(float));
+	global.selfdark = (float*) calloc(global.pix_nn, sizeof(float));
 	global.powderAssembled = (uint32_t*) calloc(global.image_nn, sizeof(uint32_t));
 	memset(global.powderRaw,0, global.pix_nn*sizeof(uint32_t));
 	memset(global.hotpixelmask,0, global.pix_nn*sizeof(float));
+	memset(global.selfdark,0, global.pix_nn*sizeof(float));
 	memset(global.powderAssembled,0, global.image_nn*sizeof(uint32_t));
 }
 
@@ -377,7 +379,7 @@ void event() {
 		nevents++;
 		const Pds::CsPad::ElementHeader* element;
 
-		uint16_t *data = (uint16_t*)calloc(COLS*ROWS*16, sizeof(uint16_t));
+//		uint16_t *data = (uint16_t*)calloc(COLS*ROWS*16, sizeof(uint16_t));
 		
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
@@ -405,18 +407,19 @@ void event() {
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
 				//uint16_t data[COLS*ROWS*16];
-				memset(data, 0, ROWS*COLS*16*sizeof(uint16_t));
+				//memset(data, 0, ROWS*COLS*16*sizeof(uint16_t));
 				while(( s=iter.next(section_id) )) {  
 					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
-					//memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
-					memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+					memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+					//memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}
 				
 				// Copy image data into threadInfo structure
-				memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
+				//memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
 				
 			}
 		}
+//		free(data);
 	}
 
 
@@ -503,9 +506,16 @@ void endjob()
 	
 	
 	// Cleanup
+	free(global.darkcal);
+	free(global.powderAssembled);
+	free(global.powderRaw);
+	free(global.hotpixelmask);
+	free(global.selfdark);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);
+	pthread_mutex_destroy(&global.selfdark_mutex);
+	pthread_mutex_destroy(&global.hotpixel_mutex);
 
 	
 	
