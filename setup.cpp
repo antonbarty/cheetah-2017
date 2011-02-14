@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <hdf5.h>
+#include <fenv.h>
 
 #include "setup.h"
 #include "worker.h"
@@ -343,10 +344,16 @@ void cGlobal::readDetectorGeometry(char* filename) {
 		if (pix_y[i] > ymax) ymax = pix_y[i];
 		if (pix_y[i] < ymin) ymin = pix_y[i];
 	}
-	xmax = ceil(xmax);
-	xmin = floor(xmin);
-	ymax = ceil(ymax);
-	ymin = floor(ymin);
+	//xmax = ceil(xmax);
+	//xmin = floor(xmin);
+	//ymax = ceil(ymax);
+	//ymin = floor(ymin);
+
+	fesetround(1);
+	xmax = lrint(xmax);
+	xmin = lrint(xmin);
+	ymax = lrint(ymax);
+	ymin = lrint(ymin);
 	printf("\tImage bounds:\n");
 	printf("\tx range %f to %f\n",xmin,xmax);
 	printf("\ty range %f to %f\n",ymin,ymax);

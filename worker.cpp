@@ -222,7 +222,6 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
  *	Identify and kill hot pixels
  */
 void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
-
 	
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	for(long i=0;i<global->pix_nn;i++){
