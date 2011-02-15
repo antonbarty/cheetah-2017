@@ -549,13 +549,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		max_size[0] = 8*COLS;
 		max_size[1] = 8*ROWS;
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_U16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%i: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
-		hdf_error = H5Dwrite(dataset_id, H5T_STD_U16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->raw_data);
+		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data);
 		if ( hdf_error < 0 ) {
 			ERROR("%i: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
@@ -772,7 +772,6 @@ void saveRunningSums(cGlobal *global) {
 	/*
 	 *	Save raw data
 	 */
-
 	printf("Saving raw sum data to file\n");
 	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
 	float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
@@ -785,6 +784,9 @@ void saveRunningSums(cGlobal *global) {
 	writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
 	free(buffer1);
 
+	/*
+	 *	Save assembled powder pattern
+	 */
 	printf("Saving assembled sum data to file\n");
 	sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
 	float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
@@ -795,7 +797,7 @@ void saveRunningSums(cGlobal *global) {
 	pthread_mutex_unlock(&global->powdersum2_mutex);
 	writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
 	free(buffer2);
-	//writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_STD_I64LE);	
+
 	
 	/*
 	 *	Compute and save darkcal
