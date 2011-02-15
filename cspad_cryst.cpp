@@ -189,16 +189,6 @@ void event() {
 	int fail = 0;
 
 	
-	/*
-	 *	How quickly are we processing the data? (average over last 10 events)
-	 */
-	float datarate;
-	float dt = (clock() - global.lastclock);
-	dt /= CLOCKS_PER_SEC;
-	datarate = 1.0/dt;
-	global.lastclock = clock();
-	global.datarate = (datarate+9*global.datarate)/10.;
-	
 	
 	
 	/*
@@ -381,8 +371,6 @@ void event() {
 		nevents++;
 		const Pds::CsPad::ElementHeader* element;
 
-//		uint16_t *data = (uint16_t*)calloc(COLS*ROWS*16, sizeof(uint16_t));
-		
 		// loop over elements (quadrants)
 		while(( element=iter.next() )) {  
 			if(element->quad() < 4) {
@@ -398,30 +386,18 @@ void event() {
 				float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
 				//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
 				//printf("Temperature: %3.1fC\n",CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0)));
-
-
-
 				threadInfo->quad_temperature[quadrant] = temperature;
 				
 				
 				// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-				// Why do we need to use the buffer???
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
-				//uint16_t data[COLS*ROWS*16];
-				//memset(data, 0, ROWS*COLS*16*sizeof(uint16_t));
 				while(( s=iter.next(section_id) )) {  
 					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 					memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
-					//memcpy(&data[section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}
-				
-				// Copy image data into threadInfo structure
-				//memcpy(threadInfo->quad_data[quadrant], data, 16*ROWS*COLS*sizeof(uint16_t));
-				
 			}
 		}
-//		free(data);
 	}
 
 
@@ -441,7 +417,6 @@ void event() {
 
 	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
-		//printf("Waiting: nthreads = %i\tactive = %i \n",global.nThreads, global.nActiveThreads);
 		usleep(1000);
 	}
 
@@ -471,6 +446,19 @@ void event() {
 	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.startFrames+50) ){
 		saveRunningSums(&global);
 	}
+	
+	
+	/*
+	 *	How quickly are we processing the data? (average over last 10 events)
+	 */
+	float datarate;
+	float dt = (clock() - global.lastclock);
+	dt /= CLOCKS_PER_SEC;
+	datarate = 1.0/dt;
+	global.lastclock = clock();
+	global.datarate = (datarate+9*global.datarate)/10.;
+	
+	
 	
 }
 // End of event data processing block

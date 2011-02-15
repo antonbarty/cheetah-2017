@@ -70,8 +70,8 @@ void *worker(void *threadarg) {
 	if(global->cmModule) {
 		cmModuleSubtract(threadInfo, global);
 	}
-	else if(global->cmColumn) {
-		// Blank for now
+	else if(global->cmSubModule) {
+		cmSubModuleSubtract(threadInfo, global);
 	}
 	
 	
@@ -131,10 +131,10 @@ void *worker(void *threadarg) {
 	/*
 	 *	Kill negative values just before saving
 	 */
-	for(long i=0;i<global->image_nn;i++){
-		if(threadInfo->image[i]<0)
-			threadInfo->image[i] = 0;
-	}
+	//for(long i=0;i<global->image_nn;i++){
+	//	if(threadInfo->image[i]<0)
+	//		threadInfo->image[i] = 0;
+	//}
 	
 	
 	/*
@@ -238,6 +238,80 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	free(histogram);
 }
 
+/*
+ *	Subtract common mode on each module
+ *	This is done in a very slow way now - speed up later once we know it works!
+ */
+void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
+	
+	// ROWS = 194;
+	// COLS = 185;
+	
+	long		e;
+	long		ii,jj;
+	long		counter;
+	uint16_t	value;
+	uint16_t	median;
+	
+	// Create histogram array
+	int			nhist = 65535;
+	uint16_t	*histogram;
+	histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+	
+	// Subunits
+	long	nn=global->cmSubModule;		// Multiple of 2 please!
+	if(nn < 2 )
+		return;
+	
+	// Loop over whole modules (8x8 array)
+	for(long mi=0; mi<8; mi++){
+		for(long mj=0; mj<8; mj++){
+			
+			
+			// Loop over sub-modules
+			for(long smi=0; smi<ROWS; smi+=ROWS/nn){
+				for(long smj=0; smj<COLS; smj+=COLS/nn){
+				
+					// Zero histogram
+					memset(histogram, 0, nhist*sizeof(uint16_t));
+				
+				
+					// Loop over pixels within this subregion
+					for(long i=0; i<ROWS/nn && (i+smi)<ROWS; i++){
+						for(long j=0; j<COLS/nn && (j+smj)<COLS; j++){
+							jj = smj + j + mj*COLS;
+							ii = smi + i + mi*ROWS;
+							e = ii + jj*8*ROWS;
+							histogram[threadInfo->corrected_data[e]] += 1;
+						}
+					}
+					
+					// Find median value
+					counter = 0;
+					for(long i=0; i<nhist; i++){
+						counter += histogram[i];
+						if(counter > (0.25*ROWS*COLS/(nn*nn))) {
+							median = i;
+							break;
+						}
+					}
+				
+					// Subtract median value
+					for(long i=0; i<ROWS/nn && (i+smi)<ROWS; i++){
+						for(long j=0; j<COLS/nn && (j+smj)<COLS; j++){
+							jj = smj + j + mj*COLS;
+							ii = smi + i + mi*ROWS;
+							e = ii + jj*8*ROWS;
+							threadInfo->corrected_data[e] -= median;
+						}
+					}
+				}
+			}
+		}
+	}
+	free(histogram);
+}
+
 
 /*
  *	Subtract pre-loaded darkcal file
@@ -269,6 +343,7 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	float	s1 = 0;
 	float	s2 = 0;
 	float	factor;
+	float	gmd;
 
 	
 	// Add current (uncorrected) image to self darkcal
@@ -276,6 +351,8 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	for(long i=0;i<global->pix_nn;i++){
 		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
 	}
+	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
+	global->avgGMD = ( gmd + (global->selfDarkMemory-1)*global->avgGMD) / global->selfDarkMemory;
 	pthread_mutex_unlock(&global->selfdark_mutex);
 
 	
@@ -289,6 +366,7 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 		factor = top/(sqrt(s1)*sqrt(s2));		
 	}
 	else 
+		//factor = gmd/global->avgGMD;
 		factor=1;
 	
 	
@@ -409,8 +487,6 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 		fx = x - ix;
 		fy = y - iy;
 		
-		//printf("%i\t%i\n",ix,iy);
-		
 		// Interpolate intensity over adjacent 4 pixels using fractional overlap as the weighting factor
 		// (0,0)
 		if(ix>=0 && iy>=0 && ix<global->image_nx && iy<global->image_nx) {
@@ -445,7 +521,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 	// Reweight pixel interpolation
 	for(long i=0; i<global->image_nn; i++){
-		if(weight[i] < 0.1)
+		if(weight[i] < 0.05)
 			data[i] = 0;
 		else
 			data[i] /= weight[i];
@@ -770,21 +846,6 @@ void saveRunningSums(cGlobal *global) {
 	char	filename[1024];
 
 	/*
-	 *	Save raw data
-	 */
-	printf("Saving raw sum data to file\n");
-	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
-	float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
-	pthread_mutex_lock(&global->powdersum1_mutex);
-	for(long i=0; i<global->pix_nn; i++)
-		buffer1[i] = (float) global->powderRaw[i];
-	pthread_mutex_unlock(&global->powdersum1_mutex);
-	for(long i=0; i<global->pix_nn; i++)
-		if (buffer1[i] < 0) buffer1[i] = 0;
-	writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
-	free(buffer1);
-
-	/*
 	 *	Save assembled powder pattern
 	 */
 	printf("Saving assembled sum data to file\n");
@@ -797,6 +858,22 @@ void saveRunningSums(cGlobal *global) {
 	pthread_mutex_unlock(&global->powdersum2_mutex);
 	writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
 	free(buffer2);
+	
+
+	/*
+	 *	Save raw data
+	 */
+	printf("Saving raw sum data to file\n");
+	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
+	float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
+	pthread_mutex_lock(&global->powdersum1_mutex);
+	for(long i=0; i<global->pix_nn; i++)
+		buffer1[i] = (float) global->powderRaw[i];
+	pthread_mutex_unlock(&global->powdersum1_mutex);
+	//for(long i=0; i<global->pix_nn; i++)
+	//	if (buffer1[i] < 0) buffer1[i] = 0;
+	writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
+	free(buffer1);
 
 	
 	/*
@@ -809,8 +886,8 @@ void saveRunningSums(cGlobal *global) {
 	for(long i=0; i<global->pix_nn; i++)
 		buffer3[i] = (int16_t) (global->powderRaw[i]/(float)global->npowder);
 	pthread_mutex_unlock(&global->powdersum1_mutex);
-	for(long i=0; i<global->pix_nn; i++)
-		if (buffer3[i] < 0) buffer3[i] = 0;
+	//for(long i=0; i<global->pix_nn; i++)
+	//	if (buffer3[i] < 0) buffer3[i] = 0;
 	printf("Saving darkcal to file\n");
 	writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
 	free(buffer3);

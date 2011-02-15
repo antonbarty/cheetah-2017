@@ -37,7 +37,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Default processing options
 	cmModule = 1;
-	cmColumn = 0;
+	cmSubModule = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
 	selfDarkcal = 0;
@@ -61,6 +61,7 @@ void cGlobal::defaultConfiguration(void) {
 	hotpixMemory = 50;
 	selfDarkMemory = 100;
 	scaleDarkcal = 0;
+	avgGMD = 0;
 	
 
 	// Default to single-threaded
@@ -74,7 +75,7 @@ void cGlobal::defaultConfiguration(void) {
 	setenv("TZ","US/Pacific",1);
 	npowder = 0;
 	nprocessedframes = 0;
-	lastclock = clock();
+	lastclock = clock()-10;
 	datarate = 1;
 	
 	
@@ -207,11 +208,14 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	
 	// Processing options
+	else if (!strcmp(tag, "subtractcmmodule")) {
+		cmModule = atoi(value);
+	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
 	}
-	else if (!strcmp(tag, "cmcolumn")) {
-		cmColumn = atoi(value);
+	else if (!strcmp(tag, "subtractcmsubmodule")) {
+		cmSubModule = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		subtractBg = atoi(value);

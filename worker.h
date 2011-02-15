@@ -101,6 +101,7 @@ static uint32_t nevents = 0;
  */
 void *worker(void *);
 void cmModuleSubtract(tThreadInfo*, cGlobal*);
+void cmSubModuleSubtract(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
 void subtractSelfdarkcal(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);

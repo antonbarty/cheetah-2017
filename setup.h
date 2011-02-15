@@ -18,7 +18,7 @@ public:
 	// Switches for processing options
 	int			startFrames;
 	int			cmModule;
-	int			cmColumn;
+	int			cmSubModule;
 	int			subtractBg;
 	int			subtractDarkcal;
 	int			selfDarkcal;
@@ -85,6 +85,7 @@ public:
 	int64_t			*powderAssembled;
 	float			*hotpixelmask;
 	float			*selfdark;
+	float			avgGMD;
 	long			npowder;
 	long			nprocessedframes;
 	clock_t			lastclock;
