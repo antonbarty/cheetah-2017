@@ -109,36 +109,45 @@ void *worker(void *threadarg) {
 	 *	Are we still in 'frame digesting' mode?
 	 */
 	if(threadInfo->threadNum < global->startFrames) {
-		printf("%i (%2.1fHz): Digesting initial frames\n", threadInfo->threadNum,global->datarate);
+		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
 		threadInfo->image = NULL;
 		goto cleanup;
 	}
-	else {
-		/*
-		 *	Assemble quadrants into a 'realistic' 2D image
-		 */
-		assemble2Dimage(threadInfo, global);
-		
-		
-		
-		/*
-		 *	Maintain a running sum of data
-		 */
-		addToPowder(threadInfo, global);
-		
-		
-		
-		/*
-		 *	If this is a hit, write out to our favourite HDF5 format
-		 */
-		if(global->hdf5dump) 
-			writeHDF5(threadInfo, global);
-		else if(hit && global->savehits)
-			writeHDF5(threadInfo, global);
-		else
-			printf("%i (%2.1fHz): Processed\n", threadInfo->threadNum,global->datarate);
+
+	
+	/*
+	 *	Assemble quadrants into a 'realistic' 2D image
+	 */
+	assemble2Dimage(threadInfo, global);
+	
+	
+	
+	/*
+	 *	Maintain a running sum of data
+	 */
+	addToPowder(threadInfo, global);
+	
+	
+	/*
+	 *	Kill negative values just before saving
+	 */
+	for(long i=0;i<global->image_nn;i++){
+		if(threadInfo->image[i]<0)
+			threadInfo->image[i] = 0;
 	}
-		
+	
+	
+	/*
+	 *	If this is a hit, write out to our favourite HDF5 format
+	 */
+	if(global->hdf5dump) 
+		writeHDF5(threadInfo, global);
+	else if(hit && global->savehits)
+		writeHDF5(threadInfo, global);
+	else
+		printf("r%04u:%i (%3.1fHz): Processed\n", global->runNumber,threadInfo->threadNum,global->datarate);
+
+	
 	
 	
 	/*
@@ -337,10 +346,8 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	for(long i=0;i<global->pix_nn;i++){
 		if(global->hotpixelmask[i] > global->hotpixFreq) {
 			threadInfo->corrected_data[i] = 0;
-			//nhot++;
 		}
 	}	
-	//printf("%i\n",nhot);
 }
 	
 
@@ -450,8 +457,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 
 	// Copy interpolated image across into image array
 	for(long i=0;i<global->image_nn;i++){
-		threadInfo->image[i] = (int16_t) data[i];
-	}	
+			threadInfo->image[i] = (int16_t) data[i];
+	}
 	
 	
 	// Free temporary arrays
@@ -478,8 +485,8 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,getRunNumber(),buffer2,info->fiducial);
-	printf("%i (%2.1f Hz): Writing data to: %s\n",info->threadNum,global->datarate, outfile);
+	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+	printf("r%04u:%i (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
 
 		
@@ -765,34 +772,46 @@ void saveRunningSums(cGlobal *global) {
 	/*
 	 *	Save raw data
 	 */
+
 	printf("Saving raw sum data to file\n");
 	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
+	float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
 	pthread_mutex_lock(&global->powdersum1_mutex);
-	writeSimpleHDF5(filename, global->powderRaw, global->pix_nx, global->pix_ny, H5T_STD_I32LE);	
+	for(long i=0; i<global->pix_nn; i++)
+		buffer1[i] = (float) global->powderRaw[i];
 	pthread_mutex_unlock(&global->powdersum1_mutex);
-	
+	for(long i=0; i<global->pix_nn; i++)
+		if (buffer1[i] < 0) buffer1[i] = 0;
+	writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
+	free(buffer1);
 
 	printf("Saving assembled sum data to file\n");
 	sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
+	float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
 	pthread_mutex_lock(&global->powdersum2_mutex);
-	writeSimpleHDF5(filename, global->powderAssembled, global->image_nx, global->image_nx, H5T_STD_I32LE);	
+	for(long i=0; i<global->image_nn; i++){
+		buffer2[i] = (float) global->powderAssembled[i];
+	}
 	pthread_mutex_unlock(&global->powdersum2_mutex);
-	
+	writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
+	free(buffer2);
+	//writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_STD_I64LE);	
 	
 	/*
 	 *	Compute and save darkcal
 	 */
 	printf("Processing darkcal\n");
 	sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
-	int16_t *data = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+	int16_t *buffer3 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	for(long i=0; i<global->pix_nn; i++)
-		data[i] = (int16_t) (global->powderRaw[i]/global->npowder);
+		buffer3[i] = (int16_t) (global->powderRaw[i]/(float)global->npowder);
 	pthread_mutex_unlock(&global->powdersum1_mutex);
-	
+	for(long i=0; i<global->pix_nn; i++)
+		if (buffer3[i] < 0) buffer3[i] = 0;
 	printf("Saving darkcal to file\n");
-	writeSimpleHDF5(filename, data, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
-	free(data);
+	writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
+	free(buffer3);
 	
 }
 

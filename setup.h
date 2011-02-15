@@ -80,9 +80,9 @@ public:
 	
 	
 	// Common variables
-	int16_t			*darkcal;
-	int32_t			*powderRaw;
-	int32_t			*powderAssembled;
+	int32_t			*darkcal;
+	int64_t			*powderRaw;
+	int64_t			*powderAssembled;
 	float			*hotpixelmask;
 	float			*selfdark;
 	long			npowder;
