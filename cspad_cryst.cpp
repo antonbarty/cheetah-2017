@@ -112,6 +112,7 @@ void beginjob() {
 	global.readDetectorGeometry(global.geometryFile);
 	global.setupThreads();
 	global.readDarkcal(global.darkcalFile);
+	global.writeInitialLog();
 	
 	/*
 	 *	Set up arrays for remembering powder data
@@ -445,6 +446,7 @@ void event() {
 	 */
 	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.startFrames+50) ){
 		saveRunningSums(&global);
+		global.updateLogfile();
 	}
 	
 	
@@ -456,7 +458,8 @@ void event() {
 	dt /= CLOCKS_PER_SEC;
 	datarate = 1.0/dt;
 	global.lastclock = clock();
-	global.datarate = (datarate+9*global.datarate)/10.;
+	//global.datarate = (datarate+9*global.datarate)/10.;
+	global.datarate = datarate;
 	
 	
 	
@@ -492,8 +495,11 @@ void endjob()
 	
 	// Save powder patterns
 	saveRunningSums(&global);
-
+	global.writeFinalLog();
 	
+	// Hitrate?
+	printf("%i files processed, %i hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
+
 	
 	// Cleanup
 	free(global.darkcal);

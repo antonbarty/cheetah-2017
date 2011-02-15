@@ -48,6 +48,7 @@ public:
 	char		configFile[1024];
 	char		geometryFile[1024];
 	char		darkcalFile[1024];
+	char		logfile[1024];
 	
 	// Run information
 	unsigned	runNumber;
@@ -63,6 +64,7 @@ public:
 	pthread_mutex_t	selfdark_mutex;
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
+	pthread_mutex_t	nhits_mutex;
 	
 	
 	// Detector geometry
@@ -88,8 +90,11 @@ public:
 	float			avgGMD;
 	long			npowder;
 	long			nprocessedframes;
+	long			nhits;
+	
 	clock_t			lastclock;
 	float			datarate;
+	time_t			tstart, tend;
 
 	
 	
@@ -102,6 +107,10 @@ public:
 	void setupThreads(void);
 	void readDetectorGeometry(char *);
 	void readDarkcal(char *);
+	
+	void writeInitialLog(void);
+	void updateLogfile(void);
+	void writeFinalLog(void);
 
 	
 private:

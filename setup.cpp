@@ -72,11 +72,14 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(configFile, "cspad-cryst.ini");
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	strcpy(darkcalFile, "darkcal.h5");
+	strcpy(logfile, "log.txt");
 	setenv("TZ","US/Pacific",1);
 	npowder = 0;
 	nprocessedframes = 0;
+	nhits = 0;
 	lastclock = clock()-10;
 	datarate = 1;
+	time(&tstart);
 	
 	
 }
@@ -122,6 +125,7 @@ void cGlobal::setupThreads() {
 	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&powdersum1_mutex, NULL);
 	pthread_mutex_init(&powdersum2_mutex, NULL);
+	pthread_mutex_init(&nhits_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	for(int i=0; i<nThreads; i++) 
 		threadID[i] = -1;
@@ -447,3 +451,122 @@ void cGlobal::readDarkcal(char *filename){
 		darkcal[i] = (int32_t) dark2d.data[i];
 	
 }
+
+/*
+ *	Write initial log file
+ */
+void cGlobal::writeInitialLog(void){
+	FILE *fp;
+	
+	
+	// Start time
+	char	timestr[1024];
+	time_t	rawtime;
+	tm		*timeinfo;
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(timestr,80,"%c",timeinfo);
+	
+	
+	
+	// Logfile name
+	printf("Writing log file: %s\n", logfile);
+
+	fp = fopen (logfile,"w");
+	fprintf(fp, "start time: %s\n",timestr);
+	fprintf(fp, ">-------- Start of job --------<\n");
+
+	fclose (fp);
+}
+
+
+/*
+ *	Update log file
+ */
+void cGlobal::updateLogfile(void){
+	FILE *fp;
+	
+	// Calculate hit rate
+	float hitrate;
+	hitrate = 100.*( nhits / (float) nprocessedframes);
+	
+	// Elapsed processing time
+	double	dtime;
+	int		hrs, mins, secs; 
+	time(&tend);
+	dtime = difftime(tend,tstart);
+	hrs = (int) floor(dtime / 3600);
+	mins = (int) floor((dtime-3600*hrs)/60);
+	secs = (int) floor(dtime-3600*hrs-60*mins);
+	
+	// Average data rate
+	float	fps;
+	fps = nprocessedframes / dtime;
+	
+	
+	// Logfile name
+	printf("Writing log file: %s\n", logfile);
+	fp = fopen (logfile,"a");
+	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
+	fclose (fp);
+	
+}
+
+/*
+ *	Write final log file
+ */
+void cGlobal::writeFinalLog(void){
+
+	
+	FILE *fp;
+	
+	// Logfile name
+	printf("Writing log file: %s\n", logfile);
+	fp = fopen (logfile,"a");
+
+	
+	// Calculate hit rate
+	float hitrate;
+	hitrate = 100.*( nhits / (float) nprocessedframes);
+	
+
+	// End time
+	char	timestr[1024];
+	time_t	rawtime;
+	tm		*timeinfo;
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(timestr,80,"%c",timeinfo);
+	
+	
+	// Elapsed processing time
+	double	dtime;
+	int		hrs, mins, secs; 
+	time(&tend);
+	dtime = difftime(tend,tstart);
+	hrs = (int) floor(dtime / 3600);
+	mins = (int) floor((dtime-3600*hrs)/60);
+	secs = (int) floor(dtime-3600*hrs-60*mins);
+	
+
+	// Average data rate
+	float	fps;
+	fps = nprocessedframes / dtime;
+				 
+				 
+	
+	// Save log file
+	fprintf(fp, ">-------- End of job --------<\n");
+	fprintf(fp, "End time: %s\n",timestr);
+	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
+	fprintf(fp, "Frames processed: %i\n",nprocessedframes);
+	fprintf(fp, "nFrames in powder pattern: %i\n",npowder);
+	fprintf(fp, "Number of hits: %i\n",nhits);
+	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
+	fprintf(fp, "Average data rate: %2.2f fps\n",fps);
+
+	fclose (fp);
+
+	
+}
+

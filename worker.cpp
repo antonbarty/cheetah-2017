@@ -102,7 +102,7 @@ void *worker(void *threadarg) {
 	if(global->hitfinder){
 		hit = hitfinder(threadInfo, global);
 	}
-
+	
 	
 	
 	/*
@@ -393,17 +393,26 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	long nat=0;
 	int	 hit=0;
 	
+	// Pixels above ADC threshold
 	for(long i=0;i<global->pix_nn;i++){
 		if(threadInfo->corrected_data[i] > global->hitfinderADC){
 			nat++;
 		}
 	}	
 
+	// Hit? 
 	if(nat >= global->hitfinderNAT)
 		hit = 1;
 
+	
+	// Update central counter
+	if(hit) {
+		pthread_mutex_lock(&global->nhits_mutex);
+		global->nhits++;
+		pthread_mutex_unlock(&global->nhits_mutex);
+	}
+	
 	return(hit);
-
 }
 
 
