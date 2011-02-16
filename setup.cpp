@@ -507,7 +507,7 @@ void cGlobal::updateLogfile(void){
 	// Logfile name
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
-	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
+	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
 	fclose (fp);
 	
 }
