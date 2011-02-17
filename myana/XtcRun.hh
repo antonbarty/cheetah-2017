@@ -1,10 +1,14 @@
 #ifndef XtcRun_hh
 #define XtcRun_hh
 
-#include "release/pdsdata/xtc/Dgram.hh"
+#include <pdsdata/xtc/Dgram.hh>
 
 #include <list>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 //
 //  Some C++ classes to manage slice/chunk complexities

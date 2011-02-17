@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <hdf5.h>
+#include <stdlib.h>
 
 #include "setup.h"
 #include "worker.h"

@@ -24,6 +24,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <fenv.h>
+#include <stdlib.h>
 
 #include "setup.h"
 #include "worker.h"
