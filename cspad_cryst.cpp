@@ -309,6 +309,16 @@ void event() {
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
 	
+	/*
+	 *	CXI detector position
+	 */
+	double detpos;
+	float detposf;
+	if ( getControlValue("CXI:DS1:MMS:06", 0, detpos) == 0 ) {
+	} else if ( getPvFloat("CXI:DS1:MMS:06", detposf) == 0 ) {
+		detpos = detposf;
+	}
+	
 
 	/*
 	 *	Create a new threadInfo structure in which to place all information
@@ -346,6 +356,8 @@ void event() {
 	threadInfo->phaseCavityTime2 = phaseCavityTime2;
 	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
 	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
+	
+	threadInfo->detectorPosition = detpos;			// CXI detector position
 	
 	threadInfo->pGlobal = &global;
 	

@@ -55,6 +55,8 @@ typedef struct {
 	double		photonEnergyeV;		// in eV
 	double		wavelengthA;		// in Angstrom
 	
+	double		detectorPosition; 
+	
 	double		phaseCavityTime1;
 	double		phaseCavityTime2;
 	double		phaseCavityCharge1;
