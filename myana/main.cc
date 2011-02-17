@@ -74,7 +74,6 @@
 using std::vector;
 using std::string;
 using std::map;
-using std::auto_ptr;
 using namespace Pds;
 
 static string GenerateCtrlPvHashKey( const char* pvName, int arrayIndex);
