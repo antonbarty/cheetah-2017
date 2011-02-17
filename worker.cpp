@@ -342,6 +342,7 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	float	top = 0;
 	float	s1 = 0;
 	float	s2 = 0;
+	float	v1, v2;
 	float	factor;
 	float	gmd;
 
@@ -359,28 +360,29 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	// Find appropriate scaling factor 
 	if(global->scaleDarkcal) {
 		for(long i=0;i<global->pix_nn;i++){
-			top += global->selfdark[i]*threadInfo->corrected_data[i];
-			s1 += global->selfdark[i]*global->selfdark[i];
-			s2 += threadInfo->corrected_data[i]*threadInfo->corrected_data[i];
+			//v1 = pow(global->selfdark[i], 0.25);
+			//v2 = pow(threadInfo->corrected_data[i], 0.25);
+			v1 = global->selfdark[i];
+			v2 = threadInfo->corrected_data[i];
+			if(v2 > global->hitfinderADC)
+				continue;
+			
+			// Simple inner product gives cos(theta), which is always less than zero
+			// Want ( (a.b)/|b| ) * (b/|b|)
+			top += v1*v2;
+			s1 += v1*v1;
+			s2 += v2*v2;
 		}
-		factor = top/(sqrt(s1)*sqrt(s2));		
+		factor = top/s1;
 	}
 	else 
-		//factor = gmd/global->avgGMD;
 		factor=1;
 	
 	
 	// Do the weighted subtraction
 	// Zero checking only needed if corrected data is uint16
 	for(long i=0;i<global->pix_nn;i++)
-			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
-	//for(long i=0;i<global->pix_nn;i++){
-	//	if(threadInfo->corrected_data[i] > factor*global->selfdark[i])
-	//		threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
-	//	else
-	//		threadInfo->corrected_data[i] = 0;
-	//}	
-	
+			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);	
 }
 
 
