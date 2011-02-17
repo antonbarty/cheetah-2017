@@ -13,8 +13,6 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
-#include <unistd.h>
-#include <sys/types.h>
 
 using std::queue;
 using std::stack;
@@ -109,6 +107,28 @@ XtcMonitorServer::~XtcMonitorServer()
   sprintf(qname, "/PdsShuffleQueue_%s",_tag);  mq_unlink(qname);
 }
 
+bool XtcMonitorServer::_send_sequence()
+{
+  struct mq_attr attr;
+  mq_getattr(_myInputEvQueue, &attr);
+  unsigned depth = _sequence->depth();
+  if (attr.mq_curmsgs >= int(depth)) {
+    for(unsigned i=0; i<depth; i++) {
+      if (mq_receive(_myInputEvQueue, (char*)&_myMsg, sizeof(_myMsg), NULL) < 0) 
+        perror("mq_receive");
+
+      ShMsg m(_myMsg, _sequence->dgram(i));
+      if (mq_timedsend(_shuffleQueue, (const char*)&m, sizeof(m), 0, &_tmo)) {
+        printf("ShuffleQ timedout\n");
+        _deleteDatagram(_sequence->dgram(i));
+      }
+    }
+    _sequence->clear();
+    return true;
+  }
+  return false;
+}
+
 XtcMonitorServer::Result XtcMonitorServer::events(Dgram* dg) 
 {
   Dgram& dgrm = *dg;
@@ -119,30 +139,14 @@ XtcMonitorServer::Result XtcMonitorServer::events(Dgram* dg)
   }
 
   if (dgrm.seq.service() == TransitionId::L1Accept) {
-    if (!_sequence->complete()) {
-      _sequence->insert(dg);
-      return Deferred;
-    }
-    else {
-      struct mq_attr attr;
-      mq_getattr(_myInputEvQueue, &attr);
-      unsigned depth = _sequence->depth();
-      if (attr.mq_curmsgs >= int(depth)) {
-	for(unsigned i=0; i<depth; i++) {
-	  if (mq_receive(_myInputEvQueue, (char*)&_myMsg, sizeof(_myMsg), NULL) < 0) 
-	    perror("mq_receive");
+    if (_sequence->complete())
+      if (!_send_sequence())
+        return Handled;
 
-	  ShMsg m(_myMsg, _sequence->dgram(i));
-	  if (mq_timedsend(_shuffleQueue, (const char*)&m, sizeof(m), 0, &_tmo)) {
-	    printf("ShuffleQ timedout\n");
-	    _deleteDatagram(_sequence->dgram(i));
-	  }
-	}
-	_sequence->clear();
-	_sequence->insert(dg);
-	return Deferred;
-      }
-    }
+    _sequence->insert(dg);
+    if (_sequence->complete())
+      _send_sequence();
+    return Deferred;
   }
   else {
 

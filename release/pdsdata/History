@@ -1,3 +1,7 @@
+2010-Dec-17	weaver	Tag V02-10-02	Added new acqiris/Tdc data types.
+2010-Dec-09	tomy		Modified xtc/Detinfo.hh and xtc/src/DetInfo.cc to add CXI detector IDs.
+2010-Nov-30	weaver	Tag V02-10-00.  Added evr/ConfigV5 and evr/SequencerConfigV1.
+2010-Nov-02     caf     Tag V02-08-05.
 2010-Sep-20	weaver	Tag V02-08-00.	Added Cspad ElementIterator and Config/ElementV2.
 2010-Sep-1	weaver	Tag V02-07-00.  Cspad definitions are stable now.
 2010-Aug-10	weaver  Tag V02-06-00.  Added LUSI diagnostic FEX data and config types.

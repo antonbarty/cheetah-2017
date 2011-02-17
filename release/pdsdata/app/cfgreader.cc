@@ -148,7 +148,12 @@ public:
     printf("*** Processing PhaseCavity object\n");
     bldData.print();
     printf( "\n" );    
-  }  
+  }
+  void process(const DetInfo&, const BldDataIpimb& bldData) {
+    printf("*** Processing Bld-Ipimb object\n");
+    bldData.print();
+    printf( "\n" );    
+  }    
   void process(const DetInfo&, const EvrData::IOConfigV1&) {
     printf("*** Processing EVR IOconfig V1 object\n");
   }
@@ -318,6 +323,11 @@ public:
     case (TypeId::Id_PhaseCavity) :
     {
       process(info, *(const BldDataPhaseCavity*) xtc->payload() );
+      break;        
+    }
+    case (TypeId::Id_SharedIpimb) :
+    {
+      process(info, *(const BldDataIpimb*) xtc->payload() );
       break;        
     }
     case (TypeId::Id_PrincetonConfig) :
