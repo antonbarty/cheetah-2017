@@ -404,6 +404,13 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
 
 	
+	/*
+	 *	Apply peak search mask 
+	 *	(multiply data by 0 for regions we want to ignore!)
+	 */
+	for(long i=0;i<global->pix_nn;i++){
+		temp[i] *= global->peakmask[i]; 
+	}
 	
 	
 	/*
@@ -420,7 +427,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							
 
 	
-	// Count clustered pixels above threshold
+	/* 
+	 *	Count clustered pixels above threshold
+	 */
 	nat = 0;
 	for(long j=1; j<8*COLS-1; j++){
 		for(long i=1; i<8*ROWS-1; i++) {
