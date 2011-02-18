@@ -396,10 +396,20 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	int	 hit=0;
 	long ii,nn;
 
-	// Simply the number of pixels above ADC threshold
+
 	/*
+	 *	Use a data buffer so we can zero out pixels already counted
+	 */
+	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
+
+	
+	
+	
+	/*
+	// Simply count the number of pixels above ADC threshold (very basic)
 	for(long i=0;i<global->pix_nn;i++){
-		if(threadInfo->corrected_data[i] > global->hitfinderADC){
+		if(temp[i] > global->hitfinderADC){
 			nat++;
 		}
 	}
@@ -408,9 +418,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 							
-	// Usde a buffer so we can zero out pixels already counted
-	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
-	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
 
 	
 	// Count clustered pixels above threshold

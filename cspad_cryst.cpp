@@ -112,6 +112,8 @@ void beginjob() {
 	global.readDetectorGeometry(global.geometryFile);
 	global.setupThreads();
 	global.readDarkcal(global.darkcalFile);
+	global.readGaincal(global.gaincalFile);
+	global.readPeakmask(global.peaksearchFile);
 	global.writeInitialLog();
 	
 	/*
@@ -522,6 +524,8 @@ void endjob()
 	free(global.powderRaw);
 	free(global.hotpixelmask);
 	free(global.selfdark);
+	free(global.gaincal);
+	free(global.peakmask);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);

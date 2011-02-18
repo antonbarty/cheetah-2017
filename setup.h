@@ -49,6 +49,8 @@ public:
 	char		configFile[1024];
 	char		geometryFile[1024];
 	char		darkcalFile[1024];
+	char		gaincalFile[1024];
+	char		peaksearchFile[1024];
 	char		logfile[1024];
 	
 	// Run information
@@ -86,8 +88,10 @@ public:
 	int32_t			*darkcal;
 	int64_t			*powderRaw;
 	int64_t			*powderAssembled;
+	int16_t			*peakmask;
 	float			*hotpixelmask;
 	float			*selfdark;
+	float			*gaincal;
 	float			avgGMD;
 	long			npowder;
 	long			nprocessedframes;
@@ -109,6 +113,8 @@ public:
 	void setupThreads(void);
 	void readDetectorGeometry(char *);
 	void readDarkcal(char *);
+	void readGaincal(char *);
+	void readPeakmask(char *);
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);
