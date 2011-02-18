@@ -38,6 +38,7 @@ public:
 	int			hitfinderADC;
 	int			hitfinderNAT;
 	int			hitfinderCluster;
+	int			hitfinderUsePeakmask;
 	int			scaleDarkcal;
 	float		hotpixFreq;
 	float		hotpixADC;

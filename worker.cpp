@@ -408,8 +408,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	 *	Apply peak search mask 
 	 *	(multiply data by 0 for regions we want to ignore!)
 	 */
-	for(long i=0;i<global->pix_nn;i++){
-		temp[i] *= global->peakmask[i]; 
+	if(global->hitfinderUsePeakmask) {
+		for(long i=0;i<global->pix_nn;i++){
+			temp[i] *= global->peakmask[i]; 
+		}
 	}
 	
 	
@@ -421,10 +423,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		}
 	}
 	 */
-
-	
-	
-							
 
 	
 	/* 

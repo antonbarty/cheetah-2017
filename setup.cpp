@@ -57,6 +57,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
 	hitfinderCluster = 3;
+	hitfinderUsePeakmask = 0;
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -219,7 +220,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "gaincal")) {
 		strcpy(gaincalFile, value);
 	}
-	else if (!strcmp(tag, "peaksearchmask")) {
+	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
 	}
 
@@ -293,6 +294,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderusepeakmask")) {
+		hitfinderUsePeakmask = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		selfDarkMemory = atof(value);
