@@ -38,6 +38,7 @@ namespace Pds {
     void _flushQueue       (mqd_t q, char* m, unsigned sz);
     void _moveQueue        (mqd_t iq, mqd_t oq);
     void _push_transition  (int ibuffer);
+    bool _send_sequence    ();
   protected:
     void _pop_transition   ();
   private:

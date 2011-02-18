@@ -5,9 +5,9 @@ using namespace Pds;
 
 int BldDataFEEGasDetEnergy::print() const
 {    
-    printf("GDET:FEE:11:ENRC ( in mJ ): %lf\n", f_11_ENRC );
+    printf("GDET:FEE:11:ENRC ( in mJ ): %lf\n", f_11_ENRC );    
     printf("GDET:FEE:12:ENRC ( in mJ ): %lf\n", f_12_ENRC );
-    printf("GDET:FEE:21:ENRC ( in mJ ): %lf\n", f_21_ENRC );
+    printf("GDET:FEE:21:ENRC ( in mJ ): %lf\n", f_21_ENRC ); 
     printf("GDET:FEE:22:ENRC ( in mJ ): %lf\n", f_22_ENRC );
     
     return 0;
@@ -42,6 +42,26 @@ int BldDataPhaseCavity::print() const
     printf("FitTime2 ( in pico-seconds ): %lf\n", fFitTime2 );
     printf("Charge1  ( in pico-columbs ): %lf\n", fCharge1 );
     printf("Charge2  ( in pico-columbs ): %lf\n", fCharge2 );
+    
+    return 0;
+}
+
+int BldDataIpimb::print() const 
+{   
+    printf("BLD Shared IPIMB Data:\n");
+    printf("  Trig Count      : %llu \n",ipimbData.triggerCounter());
+    printf("  IpimbDataCh-0   : %f   \n",ipimbData.channel0Volts());
+    printf("  IpimbDataCh-1   : %f   \n",ipimbData.channel1Volts());    	
+    printf("  IpimbDataCh-2   : %f   \n",ipimbData.channel2Volts());	
+    printf("  IpimbDataCh-3   : %f   \n",ipimbData.channel3Volts());
+
+    printf("  IpmFexDataCh-0  : %f   \n",ipmFexData.channel[0]);	
+    printf("  IpmFexDataCh-1  : %f   \n",ipmFexData.channel[1]);
+    printf("  IpmFexDataCh-2  : %f   \n",ipmFexData.channel[2]);
+    printf("  IpmFexDataCh-3  : %f   \n",ipmFexData.channel[3]);
+    printf("  IpmFexDataSum   : %f   \n",ipmFexData.sum);
+    printf("  IpmFexDataXpos  : %f   \n",ipmFexData.xpos);
+    printf("  IpmFexDataYpos  : %f   \n",ipmFexData.ypos);
     
     return 0;
 }

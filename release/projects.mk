@@ -7,9 +7,9 @@ projects := rtems \
             rceapp
 #            rcehw
 
-rtems_use := /afs/slac.stanford.edu/g/npa/package/rtems/4.9.2
+#rtems_use := /afs/slac.stanford.edu/g/npa/package/rtems/4.9.2
 #rtems_use := /reg/g/pcds/package/rtems/4.9.2
-#rtems_use := ~/rtems/4.9.2
+rtems_use := ~/rtems/4.9.2
 
 pdsdata_use := release
 rce_use    := release
@@ -31,8 +31,10 @@ projects := pdsdata \
       pvcam \
       pds \
       pdsapp \
-      ami
-
+      ami \
+            rce \
+            rceusr \
+            rceapp
 
 epics_use   := /reg/g/pcds/package/external/epicsca-pcds-R1.0-r410
 acqiris_use := /reg/g/pcds/package/external/acqiris_3.3a
@@ -47,5 +49,8 @@ pds_use := release
 pdsdata_use := release
 pdsapp_use := release
 ami_use := release
+rce_use := release
+rceusr_use := release
+rceapp_use := release
 
 endif

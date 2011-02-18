@@ -17,9 +17,15 @@ class Pds::Encoder::DataV2
  public:
    enum { Version = 2 };
 
-   DataV2();
-   DataV2( uint32_t timestamp, uint32_t count0, uint32_t count1, uint32_t count2);
-   DataV2( uint32_t timestamp, uint32_t count0);
+   DataV2()
+      : _33mhz_timestamp( 0 ),
+        _encoder_count( (uint32_t[3]) {0,0,0}) {}
+   DataV2( uint32_t timestamp, uint32_t count0, uint32_t count1, uint32_t count2)
+      : _33mhz_timestamp( timestamp ),
+        _encoder_count( (uint32_t[3]){count0,count1,count2} ) {}
+   DataV2( uint32_t timestamp, uint32_t count0)
+      : _33mhz_timestamp( timestamp ),
+        _encoder_count( (uint32_t[3]){count0,0,0} ) {}
 
    static Pds::TypeId typeId()
       { return TypeId( TypeId::Id_EncoderData, Version ); }

@@ -28,10 +28,8 @@ const char* DetInfo::name(Detector det){
     "EpicsArch", "BldEb",
     "SxrBeamline", "SxrEndstation",
     "XppSb1Ipm", "XppSb1Pim", "XppMonPim", "XppSb2Ipm", "XppSb3Ipm", "XppSb3Pim", "XppSb4Pim", "XppGon", "XppLas", "XppEndstation",
-    "AmoEndstation",
-    "CxiEndstation",
-    "XcsEndstation",
-    "MecEndstation"   
+    "AmoEndstation", "CxiEndstation", "XcsEndstation", "MecEndstation",
+    "CxiDg1", "CxiDg2", "CxiDg3", "CxiDg4", "CxiKb1", "CxiDs1", "CxiDs2", "CxiDsu", "CxiSc1"
   };
   return (det < NumDetector ? _detNames[det] : "-Invalid-");
 }
@@ -48,7 +46,8 @@ const char* DetInfo::name(Device dev) {
     "Fccd",
     "Ipimb",
     "Encoder",
-    "Cspad"
+    "Cspad",
+    "AcqTDC"
   };
   return (dev < NumDevice ? _devNames[dev] : "-Invalid-");
 }

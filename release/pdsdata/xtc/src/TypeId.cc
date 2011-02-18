@@ -51,6 +51,9 @@ const char* TypeId::name(Type type)
     "DiodeFexConfig",
     "DiodeFex",
     "PimImageConfig",
+    "SharedIpimb",
+    "AcqTDCConfig",
+    "AcqTDCData"
   };
   return (type < NumberOf ? _names[type] : "-Invalid-");
 }

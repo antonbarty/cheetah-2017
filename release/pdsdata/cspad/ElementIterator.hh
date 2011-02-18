@@ -68,6 +68,7 @@ namespace Pds {
       const Section* next(unsigned& sectionID);
     private:
       const ElementHeader* _elem;
+      const ElementHeader* _end;
       unsigned             _qmask;
       unsigned             _smask[4];
       unsigned             _smaskc;
