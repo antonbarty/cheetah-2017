@@ -36,7 +36,7 @@
 void cGlobal::defaultConfiguration(void) {
 
 	// Default processing options
-	cmModule = 1;
+	cmModule = 0;
 	cmSubModule = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
@@ -56,6 +56,7 @@ void cGlobal::defaultConfiguration(void) {
 	powderthresh = 0;
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
+	hitfinderCluster = 3;
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -79,6 +80,7 @@ void cGlobal::defaultConfiguration(void) {
 	nhits = 0;
 	lastclock = clock()-10;
 	datarate = 1;
+	detectorZ = 0;
 	time(&tstart);
 	
 	
@@ -277,6 +279,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindernat")) {
 		hitfinderNAT = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindercluster")) {
+		hitfinderCluster = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		selfDarkMemory = atof(value);

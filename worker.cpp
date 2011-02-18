@@ -392,20 +392,82 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
-	long nat=0;
+	long nat;
 	int	 hit=0;
-	
-	// Pixels above ADC threshold
+	long ii,nn;
+
+	// Simply the number of pixels above ADC threshold
+	/*
 	for(long i=0;i<global->pix_nn;i++){
 		if(threadInfo->corrected_data[i] > global->hitfinderADC){
 			nat++;
 		}
-	}	
+	}
+	 */
 
-	// Hit? 
+	
+	
+							
+	// Usde a buffer so we can zero out pixels already counted
+	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
+
+	
+	// Count clustered pixels above threshold
+	nat = 0;
+	for(long j=1; j<8*COLS-1; j++){
+		for(long i=1; i<8*ROWS-1; i++) {
+			nn = 0;
+			ii = i+(8*ROWS)*j;
+			if(temp[i+(8*ROWS)*j] > global->hitfinderADC) {
+				nn += 1;
+				
+				if(temp[i+1+(8*ROWS)*j] > global->hitfinderADC) {
+					nn++;
+				}
+				if(temp[i-1+(8*ROWS)*j] > global->hitfinderADC) {
+					nn++;
+				}
+				if(temp[i+(8*ROWS)*(j+1)] > global->hitfinderADC){
+					nn++;
+				}
+				if(temp[i+1+(8*ROWS)*(j+1)] > global->hitfinderADC) {
+					nn++;
+				}
+				if(temp[i-1+(8*ROWS)*(j+1)] > global->hitfinderADC){
+					nn++;
+				}
+				if(temp[i+(8*ROWS)*(j-1)] > global->hitfinderADC){
+					nn++;
+				}
+				if(temp[i+1+(8*ROWS)*(j-1)] > global->hitfinderADC) {
+					nn++;
+				}
+				if(temp[i-1+(8*ROWS)*(j-1)] > global->hitfinderADC) {
+					nn++;
+				}
+			}
+
+			if(nn >= global->hitfinderCluster) {
+				nat++;
+				temp[i+(8*ROWS)*j] = 0;
+				temp[i+1+(8*ROWS)*j] = 0;
+				temp[i-1+(8*ROWS)*j] = 0;
+				temp[i+(8*ROWS)*(j+1)] = 0;
+				temp[i+1+(8*ROWS)*(j+1)] = 0;
+				temp[i-1+(8*ROWS)*(j+1)] = 0;
+				temp[i+(8*ROWS)*(j-1)] = 0;
+				temp[i+1+(8*ROWS)*(j-1)] = 0;
+				temp[i-1+(8*ROWS)*(j-1)] = 0;
+				
+			}
+		} 
+	}
+	
 	if(nat >= global->hitfinderNAT)
 		hit = 1;
-
+	
+	
 	
 	// Update central counter
 	if(hit) {
@@ -414,6 +476,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 	
+	free(temp);
 	return(hit);
 }
 
@@ -755,7 +818,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	
 	// Motor positions
 	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorPosition", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->detectorPosition );	
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
 	H5Dclose(dataset_id);
 	
 	

@@ -310,14 +310,19 @@ void event() {
 	
 	
 	/*
-	 *	CXI detector position
+	 *	CXI detector position (Z)
 	 */
-	double detpos;
-	float detposf;
-	if ( getControlValue("CXI:DS1:MMS:06", 0, detpos) == 0 ) {
-	} else if ( getPvFloat("CXI:DS1:MMS:06", detposf) == 0 ) {
-		detpos = detposf;
+	float detposnew;
+	if ( getPvFloat("CXI:DS1:MMS:06", detposnew) == 0 ) {
+		/* When encoder reads -500mm, detector is at its closest possible
+		 * position to the specimen, and is 79mm from the centre of the 
+		 * 8" flange where the injector is mounted.  The injector itself is
+		 * about 4mm further away from the detector than this. */
+		// printf("New detector pos %e\n", detposnew);
+		global.detectorZ = 500.0 + detposnew + 79.0;
 	}
+
+	
 	
 
 	/*
@@ -356,8 +361,6 @@ void event() {
 	threadInfo->phaseCavityTime2 = phaseCavityTime2;
 	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
 	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
-	
-	threadInfo->detectorPosition = detpos;			// CXI detector position
 	
 	threadInfo->pGlobal = &global;
 	

@@ -1125,7 +1125,7 @@ int getPvFloat(const char* pvName, float& value)
       value = (float) *(double*) pValue;
       break;
     default:
-      printf( "getPvInt(%s): Not an floating point value PV.\n", pvName );    
+      //printf( "getPvInt(%s): Not an floating point value PV.\n", pvName );    
       return 3; // Unsupported iDbrType
     }    
     

@@ -37,6 +37,7 @@ public:
 	int			powderthresh;
 	int			hitfinderADC;
 	int			hitfinderNAT;
+	int			hitfinderCluster;
 	int			scaleDarkcal;
 	float		hotpixFreq;
 	float		hotpixADC;
@@ -91,6 +92,7 @@ public:
 	long			npowder;
 	long			nprocessedframes;
 	long			nhits;
+	double			detectorZ;
 	
 	clock_t			lastclock;
 	float			datarate;
