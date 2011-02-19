@@ -54,10 +54,15 @@ void cGlobal::defaultConfiguration(void) {
 	cmFloor = 0.1;
 	saveInterval = 0;
 	powderthresh = 0;
+	
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
-	hitfinderCluster = 3;
+	hitfinderNpeaks = 50;
+	hitfinderAlgorithm = 3;
+	hitfinderMinPixCount = 3;
+	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
+
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -295,6 +300,20 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfindernpeaks")) {
+		hitfinderNpeaks = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderalgorithm")) {
+		hitfinderAlgorithm = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderminpixcount")) {
+		hitfinderMinPixCount = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxpixcount")) {
+		hitfinderMaxPixCount = atoi(value);
+	}
+	
+	
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
 	}

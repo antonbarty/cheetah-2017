@@ -37,6 +37,10 @@ public:
 	int			powderthresh;
 	int			hitfinderADC;
 	int			hitfinderNAT;
+	int			hitfinderNpeaks;
+	int			hitfinderAlgorithm;
+	int			hitfinderMinPixCount;
+	int			hitfinderMaxPixCount;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	int			scaleDarkcal;

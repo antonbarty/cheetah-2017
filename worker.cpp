@@ -145,7 +145,7 @@ void *worker(void *threadarg) {
 	else if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
 	else
-		printf("r%04u:%i (%3.1fHz): Processed\n", global->runNumber,threadInfo->threadNum,global->datarate);
+		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
 	
 	
@@ -392,9 +392,10 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
-	long nat;
-	int	 hit=0;
-	long ii,nn;
+	long	nat, lastnat;
+	long	counter;
+	int		hit=0;
+	long	ii,jj,nn;
 
 
 	/*
@@ -402,11 +403,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	 */
 	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
-
+	for(long i=0;i<global->pix_nn;i++)
+		if(temp[i] < 0)
+			temp[i] = 0; 
+	nat = 0;
+	counter = 0;
+	
 	
 	/*
 	 *	Apply peak search mask 
-	 *	(multiply data by 0 for regions we want to ignore!)
+	 *	(multiply data by 0 to ignore regions)
 	 */
 	if(global->hitfinderUsePeakmask) {
 		for(long i=0;i<global->pix_nn;i++){
@@ -416,74 +422,140 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	/*
-	// Simply count the number of pixels above ADC threshold (very basic)
-	for(long i=0;i<global->pix_nn;i++){
-		if(temp[i] > global->hitfinderADC){
-			nat++;
-		}
-	}
+	 *	Use one of various hitfinder algorithms
 	 */
-
-	
-	/* 
-	 *	Count clustered pixels above threshold
-	 */
-	nat = 0;
-	for(long j=1; j<8*COLS-1; j++){
-		for(long i=1; i<8*ROWS-1; i++) {
-			nn = 0;
-			ii = i+(8*ROWS)*j;
-			if(temp[i+(8*ROWS)*j] > global->hitfinderADC) {
-				nn += 1;
-				
-				if(temp[i+1+(8*ROWS)*j] > global->hitfinderADC) {
-					nn++;
-				}
-				if(temp[i-1+(8*ROWS)*j] > global->hitfinderADC) {
-					nn++;
-				}
-				if(temp[i+(8*ROWS)*(j+1)] > global->hitfinderADC){
-					nn++;
-				}
-				if(temp[i+1+(8*ROWS)*(j+1)] > global->hitfinderADC) {
-					nn++;
-				}
-				if(temp[i-1+(8*ROWS)*(j+1)] > global->hitfinderADC){
-					nn++;
-				}
-				if(temp[i+(8*ROWS)*(j-1)] > global->hitfinderADC){
-					nn++;
-				}
-				if(temp[i+1+(8*ROWS)*(j-1)] > global->hitfinderADC) {
-					nn++;
-				}
-				if(temp[i-1+(8*ROWS)*(j-1)] > global->hitfinderADC) {
-					nn++;
+	switch(global->hitfinderAlgorithm) {
+		
+		case 1 :		// Simply count the number of pixels above ADC threshold (very basic)
+			for(long i=0;i<global->pix_nn;i++){
+				if(temp[i] > global->hitfinderADC){
+					nat++;
 				}
 			}
+			if(nat >= global->hitfinderNAT)
+				hit = 1;
+			break;
 
-			if(nn >= global->hitfinderCluster) {
-				nat++;
-				temp[i+(8*ROWS)*j] = 0;
-				temp[i+1+(8*ROWS)*j] = 0;
-				temp[i-1+(8*ROWS)*j] = 0;
-				temp[i+(8*ROWS)*(j+1)] = 0;
-				temp[i+1+(8*ROWS)*(j+1)] = 0;
-				temp[i-1+(8*ROWS)*(j+1)] = 0;
-				temp[i+(8*ROWS)*(j-1)] = 0;
-				temp[i+1+(8*ROWS)*(j-1)] = 0;
-				temp[i-1+(8*ROWS)*(j-1)] = 0;
-				
+	
+		case 2 :		//	Count clusters of pixels above threshold
+			for(long j=1; j<8*COLS-1; j++){
+				for(long i=1; i<8*ROWS-1; i++) {
+					nn = 0;
+					ii = i+(8*ROWS)*j;
+					if(temp[i+(8*ROWS)*j] > global->hitfinderADC) {
+						nn += 1;
+						if(temp[i+1+(8*ROWS)*j] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*j] > global->hitfinderADC) nn++;
+						if(temp[i+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i+1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+						if(temp[i+1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+					}
+					if(nn >= global->hitfinderCluster) {
+						nat++;
+						temp[i+(8*ROWS)*j] = 0;
+						temp[i+1+(8*ROWS)*j] = 0;
+						temp[i-1+(8*ROWS)*j] = 0;
+						temp[i+(8*ROWS)*(j+1)] = 0;
+						temp[i+1+(8*ROWS)*(j+1)] = 0;
+						temp[i-1+(8*ROWS)*(j+1)] = 0;
+						temp[i+(8*ROWS)*(j-1)] = 0;
+						temp[i+1+(8*ROWS)*(j-1)] = 0;
+						temp[i-1+(8*ROWS)*(j-1)] = 0;
+					}
+				}
 			}
-		} 
+			if(nat >= global->hitfinderNAT)
+				hit = 1;
+			break;
+
+
+	
+	
+		case 3 : 	// Real peak counter
+		default:
+			int search_x[] = {-1,0,1,-1,1,-1,0,1};
+			int search_y[] = {-1,-1,-1,0,0,1,1,1};
+			int	search_n = 8;
+			long e;
+			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
+			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
+			// Loop over modules (8x8 array)
+			for(long mj=0; mj<8; mj++){
+				for(long mi=0; mi<8; mi++){
+					
+					// Loop over pixels within a module
+					for(long j=0; j<COLS; j++){
+						for(long i=0; i<ROWS; i++){
+
+							e = (j+mj*COLS)*global->pix_nx;
+							e += i+mi*ROWS;
+							
+							if(temp[e] > global->hitfinderADC){
+								// This might be the start of a peak - start searching
+								inx[0] = i;
+								iny[0] = j;
+								nat = 1;
+								
+								// Keep looping until the pixel count within this peak does not change (!)
+								do {
+									lastnat = nat;
+									// Loop through points known to be within this peak
+									for(long p=0; p<nat; p++){
+										// Loop through search pattern
+										for(long k=0; k<search_n; k++){
+											// Array bounds check
+											if(inx[p]-search_x[k] < 0)
+												continue;
+											if(inx[p]+search_x[k] >= ROWS)
+												continue;
+											if(iny[p]-search_y[k] < 0)
+												continue;
+											if(iny[p]+search_y[k] >= COLS)
+												continue;
+											
+											// Neighbour point 
+											e = (iny[p]+search_y[k]+mj*COLS)*global->pix_nx;
+											e += inx[p]+search_x[k]+mi*ROWS;
+											
+											if(e >= global->pix_nn || nat >= global->pix_nn)
+												printf("Array bounds error!\n");
+											
+											// Above threshold?
+											if(temp[e] > global->hitfinderADC){
+												temp[e] = 0;
+												inx[nat] = i;
+												iny[nat] = j;
+												nat++; 
+											}
+										}
+									}
+								} while(lastnat != nat);
+								
+								// Peak or junk?
+								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
+									counter ++;
+								}
+							}
+						}
+					}
+				}
+			}	
+			// Hit?
+			threadInfo->nPeaks = counter;
+			if(counter >= global->hitfinderNpeaks)
+				hit = 1;
+			
+			free(inx);
+			free(iny);
+			break;
 	}
-	
-	if(nat >= global->hitfinderNAT)
-		hit = 1;
+		
 	
 	
-	
-	// Update central counter
+	// Update central hit counter
 	if(hit) {
 		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;

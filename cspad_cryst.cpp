@@ -343,6 +343,7 @@ void event() {
 	threadInfo->fiducial = fiducial;
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
+	threadInfo->nPeaks = 0;
 	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
