@@ -476,8 +476,8 @@ void event() {
 	dt /= CLOCKS_PER_SEC;
 	datarate = 1.0/dt;
 	global.lastclock = clock();
-	//global.datarate = (datarate+9*global.datarate)/10.;
-	global.datarate = datarate;
+	global.datarate = (datarate+4*global.datarate)/5.;
+	//global.datarate = datarate;
 	
 	
 	

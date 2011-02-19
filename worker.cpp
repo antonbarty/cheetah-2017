@@ -397,17 +397,14 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	int		hit=0;
 	long	ii,jj,nn;
 
+	nat = 0;
+	counter = 0;
 
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
 	 */
 	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
-	for(long i=0;i<global->pix_nn;i++)
-		if(temp[i] < 0)
-			temp[i] = 0; 
-	nat = 0;
-	counter = 0;
 	
 	
 	/*
@@ -426,7 +423,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	 */
 	switch(global->hitfinderAlgorithm) {
 		
-		case 1 :		// Simply count the number of pixels above ADC threshold (very basic)
+		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
 					nat++;
@@ -437,7 +434,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			break;
 
 	
-		case 2 :		//	Count clusters of pixels above threshold
+		case 2 :	//	Count clusters of pixels above threshold
 			for(long j=1; j<8*COLS-1; j++){
 				for(long i=1; i<8*ROWS-1; i++) {
 					nn = 0;
@@ -467,7 +464,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 					}
 				}
 			}
-			if(nat >= global->hitfinderNAT)
+			threadInfo->nPeaks = nat;
+			if(nat >= global->hitfinderMinPixCount)
 				hit = 1;
 			break;
 
@@ -492,6 +490,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 							e = (j+mj*COLS)*global->pix_nx;
 							e += i+mi*ROWS;
+
+							if(e >= global->pix_nn)
+								printf("Array bounds error!\n");
 							
 							if(temp[e] > global->hitfinderADC){
 								// This might be the start of a peak - start searching
@@ -507,24 +508,26 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 										// Loop through search pattern
 										for(long k=0; k<search_n; k++){
 											// Array bounds check
-											if(inx[p]-search_x[k] < 0)
+											if(inx[p]-search_x[k] < 1)
 												continue;
-											if(inx[p]+search_x[k] >= ROWS)
+											if(inx[p]+search_x[k] >= ROWS-1)
 												continue;
-											if(iny[p]-search_y[k] < 0)
+											if(iny[p]-search_y[k] < 1)
 												continue;
-											if(iny[p]+search_y[k] >= COLS)
+											if(iny[p]+search_y[k] >= COLS-1)
 												continue;
 											
 											// Neighbour point 
 											e = (iny[p]+search_y[k]+mj*COLS)*global->pix_nx;
 											e += inx[p]+search_x[k]+mi*ROWS;
 											
-											if(e >= global->pix_nn || nat >= global->pix_nn)
+											if(e >= global->pix_nn)
 												printf("Array bounds error!\n");
 											
 											// Above threshold?
 											if(temp[e] > global->hitfinderADC){
+												if(nat >= global->pix_nn)
+													printf("Array bounds error!\n");
 												temp[e] = 0;
 												inx[nat] = i;
 												iny[nat] = j;
