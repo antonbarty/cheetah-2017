@@ -107,6 +107,7 @@ public:
 	double			detectorZ;
 	
 	clock_t			lastclock;
+	time_t			lasttime;
 	float			datarate;
 	time_t			tstart, tend;
 

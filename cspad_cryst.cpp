@@ -216,6 +216,19 @@ void event() {
 	
 	
 	
+	/*
+	 *	How quickly are we processing the data? (average over last 10 events)
+	 */	
+	float dt, datarate;
+	dt = clock() - global.lastclock;
+	if(dt != 0) {
+		datarate = ((float)CLOCKS_PER_SEC)/dt;
+		global.lastclock = clock();
+		global.datarate = (datarate+9*global.datarate)/10.;
+	}
+	
+	
+	
 
 	/*
 	 * Get time information
@@ -467,17 +480,6 @@ void event() {
 		global.updateLogfile();
 	}
 	
-	
-	/*
-	 *	How quickly are we processing the data? (average over last 10 events)
-	 */
-	float datarate;
-	float dt = (clock() - global.lastclock);
-	dt /= CLOCKS_PER_SEC;
-	datarate = 1.0/dt;
-	global.lastclock = clock();
-	global.datarate = (datarate+4*global.datarate)/5.;
-	//global.datarate = datarate;
 	
 	
 	
