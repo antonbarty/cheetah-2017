@@ -82,6 +82,8 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(gaincalFile, "gaincal.h5");
 	strcpy(peaksearchFile, "peakmask.h5");
 	strcpy(logfile, "log.txt");
+	strcpy(framefile, "frames.txt");
+	
 
 	setenv("TZ","US/Pacific",1);
 
@@ -91,10 +93,37 @@ void cGlobal::defaultConfiguration(void) {
 	lastclock = clock()-10;
 	datarate = 1;
 	detectorZ = 0;
+	runNumber = getRunNumber();
 	time(&tstart);
 	
 	
 }
+
+
+
+/*
+ *	Setup stuff to do with thread management, settings, etc.
+ */
+void cGlobal::setupThreads() {
+	
+	nActiveThreads = 0;
+	threadCounter = 0;
+	
+	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	pthread_mutex_init(&hotpixel_mutex, NULL);
+	pthread_mutex_init(&selfdark_mutex, NULL);
+	pthread_mutex_init(&powdersum1_mutex, NULL);
+	pthread_mutex_init(&powdersum2_mutex, NULL);
+	pthread_mutex_init(&nhits_mutex, NULL);
+	pthread_mutex_init(&framefp_mutex, NULL);
+	
+	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	for(int i=0; i<nThreads; i++) 
+		threadID[i] = -1;
+	
+}
+
+
 
 
 /*
@@ -122,27 +151,6 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
 	}
 }
 
-
-
-/*
- *	Setup stuff to do with thread management, settings, etc.
- */
-void cGlobal::setupThreads() {
-	
-	nActiveThreads = 0;
-	threadCounter = 0;
-	
-	pthread_mutex_init(&nActiveThreads_mutex, NULL);
-	pthread_mutex_init(&hotpixel_mutex, NULL);
-	pthread_mutex_init(&selfdark_mutex, NULL);
-	pthread_mutex_init(&powdersum1_mutex, NULL);
-	pthread_mutex_init(&powdersum2_mutex, NULL);
-	pthread_mutex_init(&nhits_mutex, NULL);
-	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
-	for(int i=0; i<nThreads; i++) 
-		threadID[i] = -1;
-	
-}
 
 
 
@@ -611,8 +619,15 @@ void cGlobal::writeInitialLog(void){
 	fp = fopen (logfile,"w");
 	fprintf(fp, "start time: %s\n",timestr);
 	fprintf(fp, ">-------- Start of job --------<\n");
-
 	fclose (fp);
+	
+	
+	// Open a new frame file at the same time
+	pthread_mutex_lock(&framefp_mutex);
+	sprintf(framefile,"r%04u-frames.txt",getRunNumber());
+	framefp = fopen (framefile,"w");
+	fprintf(framefp, "# FrameNumber, EventName, npeaks\n");
+	pthread_mutex_unlock(&framefp_mutex);
 }
 
 
@@ -640,11 +655,18 @@ void cGlobal::updateLogfile(void){
 	fps = nprocessedframes / dtime;
 	
 	
-	// Logfile name
+	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
 	fclose (fp);
+	
+	
+	// Flush frame file buffer
+	pthread_mutex_lock(&framefp_mutex);
+	fclose(framefp);
+	framefp = fopen (framefile,"a");
+	pthread_mutex_unlock(&framefp_mutex);
 	
 }
 
@@ -703,6 +725,12 @@ void cGlobal::writeFinalLog(void){
 
 	fclose (fp);
 
+	
+	// Flush frame file buffer
+	pthread_mutex_lock(&framefp_mutex);
+	fclose(framefp);
+	pthread_mutex_unlock(&framefp_mutex);
+	
 	
 }
 

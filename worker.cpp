@@ -43,6 +43,12 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 
 	
+	/*
+	 *	Create a name for this event
+	 */
+	nameEvent(threadInfo, global);
+		
+	
 
 	/*
 	 *	Assemble all four quadrants into one large array 
@@ -147,6 +153,15 @@ void *worker(void *threadarg) {
 	else
 		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
+	
+
+	/*
+	 *	Write out information on each frame to a log file
+	 */
+	pthread_mutex_lock(&global->framefp_mutex);
+	//fprintf(global->framefp, "%i, %s, npeaks=%i\n",threadInfo->threadNum,threadInfo->eventname, threadInfo->nPeaks);
+	fprintf(global->framefp, "%i, %s, %i\n",threadInfo->threadNum,threadInfo->eventname, threadInfo->nPeaks);
+	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
 	
@@ -707,10 +722,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
-/*
- *	Write out processed data to our 'standard' HDF5 format
- */
-void writeHDF5(tThreadInfo *info, cGlobal *global){
+
+void nameEvent(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -724,7 +737,30 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+	sprintf(info->eventname,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+}
+	
+	
+/*
+ *	Write out processed data to our 'standard' HDF5 format
+ */
+void writeHDF5(tThreadInfo *info, cGlobal *global){
+	/*
+	 *	Create filename based on date, time and fiducial for this image
+	 */
+	char outfile[1024];
+	//char buffer1[80];
+	//char buffer2[80];	
+	//time_t eventTime = info->seconds;
+
+	//setenv("TZ","US/Pacific",1);		// <--- Dangerous (not thread safe!)
+	//struct tm *timestatic, timelocal;
+	//timestatic=localtime_r( &eventTime, &timelocal );	
+	//strftime(buffer1,80,"%Y_%b%d",&timelocal);
+	//strftime(buffer2,80,"%H%M%S",&timelocal);
+	//sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+
+	strcpy(outfile, info->eventname);
 	printf("r%04u:%i (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
 
@@ -918,6 +954,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	// Time in human readable format
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
 	char* timestr;
+	time_t eventTime = info->seconds;
 	timestr = ctime(&eventTime);
 	dataspace_id = H5Screate(H5S_SCALAR);
 	datatype = H5Tcopy(H5T_C_S1);  

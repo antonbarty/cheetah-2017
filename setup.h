@@ -57,6 +57,8 @@ public:
 	char		gaincalFile[1024];
 	char		peaksearchFile[1024];
 	char		logfile[1024];
+	char		framefile[1024];
+	FILE		*framefp;
 	
 	// Run information
 	unsigned	runNumber;
@@ -73,6 +75,7 @@ public:
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
 	pthread_mutex_t	nhits_mutex;
+	pthread_mutex_t	framefp_mutex;
 	
 	
 	// Detector geometry
