@@ -626,7 +626,7 @@ void cGlobal::writeInitialLog(void){
 	pthread_mutex_lock(&framefp_mutex);
 	sprintf(framefile,"r%04u-frames.txt",getRunNumber());
 	framefp = fopen (framefile,"w");
-	fprintf(framefp, "# FrameNumber, EventName, npeaks\n");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
 	pthread_mutex_unlock(&framefp_mutex);
 }
 

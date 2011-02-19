@@ -160,7 +160,7 @@ void *worker(void *threadarg) {
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
 	//fprintf(global->framefp, "%i, %s, npeaks=%i\n",threadInfo->threadNum,threadInfo->eventname, threadInfo->nPeaks);
-	fprintf(global->framefp, "%i, %s, %i\n",threadInfo->threadNum,threadInfo->eventname, threadInfo->nPeaks);
+	fprintf(global->framefp, "%i, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
@@ -500,14 +500,14 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				for(long mi=0; mi<8; mi++){
 					
 					// Loop over pixels within a module
-					for(long j=0; j<COLS; j++){
-						for(long i=0; i<ROWS; i++){
+					for(long j=1; j<COLS-1; j++){
+						for(long i=1; i<ROWS-1; i++){
 
 							e = (j+mj*COLS)*global->pix_nx;
 							e += i+mi*ROWS;
 
 							if(e >= global->pix_nn)
-								printf("Array bounds error!\n");
+								printf("Array bounds error: e=%i\n");
 							
 							if(temp[e] > global->hitfinderADC){
 								// This might be the start of a peak - start searching
@@ -523,29 +523,31 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 										// Loop through search pattern
 										for(long k=0; k<search_n; k++){
 											// Array bounds check
-											if(inx[p]-search_x[k] < 1)
+											if((inx[p]+search_x[k]) < 0)
 												continue;
-											if(inx[p]+search_x[k] >= ROWS-1)
+											if((inx[p]+search_x[k]) >= ROWS)
 												continue;
-											if(iny[p]-search_y[k] < 1)
+											if((iny[p]+search_y[k]) < 0)
 												continue;
-											if(iny[p]+search_y[k] >= COLS-1)
+											if((iny[p]+search_y[k]) >= COLS)
 												continue;
 											
 											// Neighbour point 
 											e = (iny[p]+search_y[k]+mj*COLS)*global->pix_nx;
 											e += inx[p]+search_x[k]+mi*ROWS;
 											
-											if(e >= global->pix_nn)
-												printf("Array bounds error!\n");
+											if(e < 0 || e >= global->pix_nn){
+												printf("Array bounds error: e=%i\n",e);
+												continue;
+											}
 											
 											// Above threshold?
 											if(temp[e] > global->hitfinderADC){
-												if(nat >= global->pix_nn)
-													printf("Array bounds error!\n");
+												if(nat < 0 || nat >= global->pix_nn)
+													printf("Array bounds error: nat=%i\n",nat);
 												temp[e] = 0;
-												inx[nat] = i;
-												iny[nat] = j;
+												inx[nat] = inx[p]+search_x[k];
+												iny[nat] = iny[p]+search_y[k];
 												nat++; 
 											}
 										}
