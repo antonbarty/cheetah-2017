@@ -124,10 +124,13 @@ void beginjob() {
 	global.selfdark = (float*) calloc(global.pix_nn, sizeof(float));
 	global.powderRaw = (int64_t*) calloc(global.pix_nn, sizeof(int64_t));
 	global.powderAssembled = (int64_t*) calloc(global.image_nn, sizeof(int64_t));
-	memset(global.hotpixelmask,0, global.pix_nn*sizeof(float));
-	memset(global.selfdark,0, global.pix_nn*sizeof(float));
 	memset(global.powderRaw,0, global.pix_nn*sizeof(int64_t));
 	memset(global.powderAssembled,0, global.image_nn*sizeof(int64_t));
+	for(long i=0; i<global->pix_nn; i++) {
+		global.hotpixelmask[i] = 0;
+		global.selfdark[i] = 0;
+	}
+	
 }
 
 
