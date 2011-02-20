@@ -332,18 +332,17 @@ void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 
-	for(long i=0;i<global->pix_nn;i++)
-		threadInfo->corrected_data[i] -= global->darkcal[i];
-		
+
+	// Do darkcal subtraction
+	// Watch out for integer wraparound!
+	int32_t diff;
+	for(long i=0;i<global->pix_nn;i++) {
+		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
+		if(diff < -32767) diff = -32767;
+		if(diff > 32767) diff = 32767;
+		threadInfo->corrected_data[i] = (int16_t) diff;
+	}
 	
-	// Make sure subtraction bottoms out at 0 and does not go 'negative'
-	// Zero checking only needed if corrected data is uint16
-	//for(long i=0;i<global->pix_nn;i++){
-	//	if(threadInfo->corrected_data[i] > global->darkcal[i])
-	//		threadInfo->corrected_data[i] -= global->darkcal[i];
-	//	else
-	//		threadInfo->corrected_data[i] = 0;
-	//}
 }
 
 
@@ -394,9 +393,15 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Do the weighted subtraction
-	// Zero checking only needed if corrected data is uint16
-	for(long i=0;i<global->pix_nn;i++)
-			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);	
+	// Watch out for integer wraparound!
+	int32_t diff;
+	for(long i=0;i<global->pix_nn;i++) {
+		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t)(factor*global->selfdark[i]);	
+		if(diff < -32767) diff = -32767;
+		if(diff > 32767) diff = 32767;
+		threadInfo->corrected_data[i] = (int16_t) diff;
+	}
+			
 }
 
 
@@ -505,8 +510,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							e = (j+mj*COLS)*global->pix_nx;
 							e += i+mi*ROWS;
 
-							if(e >= global->pix_nn)
-								printf("Array bounds error: e=%i\n");
+							//if(e >= global->pix_nn)
+							//	printf("Array bounds error: e=%i\n");
 							
 							if(temp[e] > global->hitfinderADC){
 								// This might be the start of a peak - start searching
@@ -535,15 +540,17 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 											e = (iny[p]+search_y[k]+mj*COLS)*global->pix_nx;
 											e += inx[p]+search_x[k]+mi*ROWS;
 											
-											if(e < 0 || e >= global->pix_nn){
-												printf("Array bounds error: e=%i\n",e);
-												continue;
-											}
+											//if(e < 0 || e >= global->pix_nn){
+											//	printf("Array bounds error: e=%i\n",e);
+											//	continue;
+											//}
 											
 											// Above threshold?
 											if(temp[e] > global->hitfinderADC){
-												if(nat < 0 || nat >= global->pix_nn)
-													printf("Array bounds error: nat=%i\n",nat);
+												//if(nat < 0 || nat >= global->pix_nn) {
+												//	printf("Array bounds error: nat=%i\n",nat);
+												//	break
+												//}
 												temp[e] = 0;
 												inx[nat] = inx[p]+search_x[k];
 												iny[nat] = iny[p]+search_y[k];
