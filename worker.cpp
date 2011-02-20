@@ -159,7 +159,6 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	//fprintf(global->framefp, "%i, %s, npeaks=%i\n",threadInfo->threadNum,threadInfo->eventname, threadInfo->nPeaks);
 	fprintf(global->framefp, "%i, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
@@ -765,7 +764,10 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	strcpy(outfile, info->eventname);
 	printf("r%04u:%i (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
-
+	pthread_mutex_lock(&global->framefp_mutex);
+	fprintf(global->cleanedfp, "r%04u/%s, %i\n",global->runNumber, info->eventname, info->nPeaks);
+	pthread_mutex_unlock(&global->framefp_mutex);
+	
 		
 	/* 
  	 *  HDF5 variables
@@ -784,6 +786,9 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 *	Create the HDF5 file
 	 */
 	hdf_fileID = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	
+	
+	
 	
 	
 	/*

@@ -59,7 +59,9 @@ public:
 	char		peaksearchFile[1024];
 	char		logfile[1024];
 	char		framefile[1024];
+	char		cleanedfile[1024];
 	FILE		*framefp;
+	FILE		*cleanedfp;
 	
 	// Run information
 	unsigned	runNumber;

@@ -85,6 +85,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(peaksearchFile, "peakmask.h5");
 	strcpy(logfile, "log.txt");
 	strcpy(framefile, "frames.txt");
+	strcpy(cleanedfile, "cleaned.txt");
 	
 
 	setenv("TZ","US/Pacific",1);
@@ -631,9 +632,15 @@ void cGlobal::writeInitialLog(void){
 	
 	// Open a new frame file at the same time
 	pthread_mutex_lock(&framefp_mutex);
+	
 	sprintf(framefile,"r%04u-frames.txt",getRunNumber());
 	framefp = fopen (framefile,"w");
 	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
+
+	sprintf(cleanedfile,"r%04u-cleaned.txt",getRunNumber());
+	cleanedfp = fopen (cleanedfile,"w");
+	fprintf(cleanedfp, "# Filename, npeaks\n");
+	
 	pthread_mutex_unlock(&framefp_mutex);
 }
 
@@ -673,6 +680,8 @@ void cGlobal::updateLogfile(void){
 	pthread_mutex_lock(&framefp_mutex);
 	fclose(framefp);
 	framefp = fopen (framefile,"a");
+	fclose(cleanedfp);
+	cleanedfp = fopen (cleanedfile,"a");
 	pthread_mutex_unlock(&framefp_mutex);
 	
 }
@@ -736,6 +745,7 @@ void cGlobal::writeFinalLog(void){
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
 	fclose(framefp);
+	fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
 	
 	
