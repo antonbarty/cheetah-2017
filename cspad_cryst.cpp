@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include <hdf5.h>
 #include <math.h>
 #include <pthread.h>
@@ -219,10 +220,15 @@ void event() {
 	/*
 	 *	How quickly are we processing the data? (average over last 10 events)
 	 */	
-	float dt, datarate;
+	timeval	now;
+	float dt, dt_us, datarate;
+	gettimeofday(&now, NULL);
+	dt_us = (float) (now.tv_usec - global.lasttime.tv_usec);
 	dt = clock() - global.lastclock;
-	if(dt != 0) {
+	if(dt_us != 0) {
 		datarate = ((float)CLOCKS_PER_SEC)/dt;
+		//datarate = 1/(1e6*dt_us);
+		gettimeofday(&global.lasttime, NULL);
 		global.lastclock = clock();
 		global.datarate = (datarate+9*global.datarate)/10.;
 	}

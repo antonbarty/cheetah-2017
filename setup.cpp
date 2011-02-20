@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 #include <math.h>
 #include <hdf5.h>
 #include <fenv.h>
@@ -58,6 +59,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
 	hitfinderNpeaks = 50;
+	hitfinderNpeaksMax = 100000;
 	hitfinderAlgorithm = 3;
 	hitfinderMinPixCount = 3;
 	hitfinderMaxPixCount = 20;
@@ -91,6 +93,7 @@ void cGlobal::defaultConfiguration(void) {
 	nprocessedframes = 0;
 	nhits = 0;
 	lastclock = clock()-10;
+	gettimeofday(&lasttime, NULL);
 	datarate = 1;
 	detectorZ = 0;
 	runNumber = getRunNumber();
@@ -291,10 +294,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		hotpixFreq = atof(value);
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
-		hotpixADC = atof(value);
+		hotpixADC = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
-		hotpixMemory = atof(value);
+		hotpixMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "powderthresh")) {
 		powderthresh = atoi(value);
@@ -311,6 +314,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindernpeaks")) {
 		hitfinderNpeaks = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfindernpeaksmax")) {
+		hitfinderNpeaksMax = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderalgorithm")) {
 		hitfinderAlgorithm = atoi(value);
 	}
@@ -320,6 +326,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
+	
 	
 	
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {

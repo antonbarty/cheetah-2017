@@ -565,7 +565,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			}	
 			// Hit?
 			threadInfo->nPeaks = counter;
-			if(counter >= global->hitfinderNpeaks)
+			if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
 				hit = 1;
 			
 			free(inx);
@@ -593,19 +593,19 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
  */
 void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
+	long	nhot = 0;
+
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	for(long i=0;i<global->pix_nn;i++){
-		global->hotpixelmask[i] = ( ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0)) + (global->hotpixMemory-1)*global->hotpixelmask[i]) / global->hotpixMemory;
-	}
-	pthread_mutex_unlock(&global->hotpixel_mutex);
+		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0))) / global->hotpixMemory;
 
-	
-	long	nhot = 0;
-	for(long i=0;i<global->pix_nn;i++){
 		if(global->hotpixelmask[i] > global->hotpixFreq) {
 			threadInfo->corrected_data[i] = 0;
+			nhot++;
 		}
-	}	
+	}
+	pthread_mutex_unlock(&global->hotpixel_mutex);
+	threadInfo->nHot = nhot;
 }
 	
 

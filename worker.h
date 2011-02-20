@@ -30,6 +30,7 @@ typedef struct {
 	int16_t		*corrected_data;
 	int16_t		*image;
 	int			nPeaks;
+	int			nHot;
 	
 	
 	// Beamline data, etc

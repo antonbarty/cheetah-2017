@@ -38,15 +38,16 @@ public:
 	int			hitfinderADC;
 	int			hitfinderNAT;
 	int			hitfinderNpeaks;
+	int			hitfinderNpeaksMax;
 	int			hitfinderAlgorithm;
 	int			hitfinderMinPixCount;
 	int			hitfinderMaxPixCount;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	int			scaleDarkcal;
+	int			hotpixADC;
+	int			hotpixMemory;
 	float		hotpixFreq;
-	float		hotpixADC;
-	float		hotpixMemory;
 	float		selfDarkMemory;
 	
 	
@@ -107,10 +108,11 @@ public:
 	double			detectorZ;
 	
 	clock_t			lastclock;
-	time_t			lasttime;
+	timeval			lasttime;	
 	float			datarate;
 	time_t			tstart, tend;
 
+	
 	
 	
 	
