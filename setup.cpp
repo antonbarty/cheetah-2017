@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 #include <math.h>
 #include <hdf5.h>
 #include <fenv.h>
@@ -37,7 +38,7 @@
 void cGlobal::defaultConfiguration(void) {
 
 	// Default processing options
-	cmModule = 1;
+	cmModule = 0;
 	cmSubModule = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
@@ -55,8 +56,16 @@ void cGlobal::defaultConfiguration(void) {
 	cmFloor = 0.1;
 	saveInterval = 0;
 	powderthresh = 0;
+	
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
+	hitfinderNpeaks = 50;
+	hitfinderNpeaksMax = 100000;
+	hitfinderAlgorithm = 3;
+	hitfinderMinPixCount = 3;
+	hitfinderMaxPixCount = 20;
+	hitfinderUsePeakmask = 0;
+
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -73,17 +82,53 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(configFile, "cspad-cryst.ini");
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	strcpy(darkcalFile, "darkcal.h5");
+	strcpy(gaincalFile, "gaincal.h5");
+	strcpy(peaksearchFile, "peakmask.h5");
 	strcpy(logfile, "log.txt");
+	strcpy(framefile, "frames.txt");
+	strcpy(cleanedfile, "cleaned.txt");
+	
+
 	setenv("TZ","US/Pacific",1);
+
 	npowder = 0;
 	nprocessedframes = 0;
 	nhits = 0;
 	lastclock = clock()-10;
+	gettimeofday(&lasttime, NULL);
 	datarate = 1;
+	detectorZ = 0;
+	runNumber = getRunNumber();
 	time(&tstart);
 	
 	
 }
+
+
+
+/*
+ *	Setup stuff to do with thread management, settings, etc.
+ */
+void cGlobal::setupThreads() {
+	
+	nActiveThreads = 0;
+	threadCounter = 0;
+	
+	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	pthread_mutex_init(&hotpixel_mutex, NULL);
+	pthread_mutex_init(&selfdark_mutex, NULL);
+	pthread_mutex_init(&powdersum1_mutex, NULL);
+	pthread_mutex_init(&powdersum2_mutex, NULL);
+	pthread_mutex_init(&nhits_mutex, NULL);
+	pthread_mutex_init(&framefp_mutex, NULL);
+	
+	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	for(int i=0; i<nThreads; i++) 
+		threadID[i] = -1;
+	
+}
+
+
 
 
 /*
@@ -111,27 +156,6 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
 	}
 }
 
-
-
-/*
- *	Setup stuff to do with thread management, settings, etc.
- */
-void cGlobal::setupThreads() {
-	
-	nActiveThreads = 0;
-	threadCounter = 0;
-	
-	pthread_mutex_init(&nActiveThreads_mutex, NULL);
-	pthread_mutex_init(&hotpixel_mutex, NULL);
-	pthread_mutex_init(&selfdark_mutex, NULL);
-	pthread_mutex_init(&powdersum1_mutex, NULL);
-	pthread_mutex_init(&powdersum2_mutex, NULL);
-	pthread_mutex_init(&nhits_mutex, NULL);
-	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
-	for(int i=0; i<nThreads; i++) 
-		threadID[i] = -1;
-	
-}
 
 
 
@@ -211,6 +235,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "darkcal")) {
 		strcpy(darkcalFile, value);
 	}
+	else if (!strcmp(tag, "gaincal")) {
+		strcpy(gaincalFile, value);
+	}
+	else if (!strcmp(tag, "peakmask")) {
+		strcpy(peaksearchFile, value);
+	}
+
 	
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
@@ -265,10 +296,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		hotpixFreq = atof(value);
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
-		hotpixADC = atof(value);
+		hotpixADC = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
-		hotpixMemory = atof(value);
+		hotpixMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "powderthresh")) {
 		powderthresh = atoi(value);
@@ -278,6 +309,30 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindernat")) {
 		hitfinderNAT = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindercluster")) {
+		hitfinderCluster = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindernpeaks")) {
+		hitfinderNpeaks = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindernpeaksmax")) {
+		hitfinderNpeaksMax = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderalgorithm")) {
+		hitfinderAlgorithm = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderminpixcount")) {
+		hitfinderMinPixCount = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxpixcount")) {
+		hitfinderMaxPixCount = atoi(value);
+	}
+	
+	
+	
+	else if (!strcmp(tag, "hitfinderusepeakmask")) {
+		hitfinderUsePeakmask = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		selfDarkMemory = atof(value);
@@ -443,15 +498,112 @@ void cGlobal::readDarkcal(char *filename){
 	
 	
 	// Read darkcal data from file
-	cData2d		dark2d;
-	dark2d.readHDF5(filename);
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tDefaulting to all-zero darkcal\n");
+		return;
+	} 
+	
+	// Copy into darkcal array
+	for(long i=0;i<pix_nn;i++)
+		darkcal[i] = (int32_t) temp2d.data[i];
+	
+}
+
+
+/*
+ *	Read in gaincal file
+ */
+void cGlobal::readGaincal(char *filename){
+	
+	printf("Reading detector gain calibration:\n");
+	printf("\t%s\n",filename);
+	
+	
+	// Create memory space and set default gain to 1 everywhere
+	gaincal = (float*) calloc(pix_nn, sizeof(float));
+	for(long i=0;i<pix_nn;i++)
+		gaincal[i] = 1;
+	
+		
+	// Check whether gain calibration file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tGain calibration file does not exist: %s\n",filename);
+		printf("\tDefaulting to uniform gaincal\n");
+		return;
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tDefaulting to uniform gaincal\n");
+		return;
+	} 
 	
 	
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
-		darkcal[i] = (int32_t) dark2d.data[i];
-	
+		gaincal[i] = (float) temp2d.data[i];
 }
+
+
+/*
+ *	Read in peaksearch mask
+ */
+void cGlobal::readPeakmask(char *filename){
+	
+	printf("Reading peak search mask:\n");
+	printf("\t%s\n",filename);
+	
+	
+	// Create memory space and default to searching for peaks everywhere
+	peakmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	for(long i=0;i<pix_nn;i++)
+		peakmask[i] = 1;
+	
+	
+	// Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tPeak search mask does not exist: %s\n",filename);
+		printf("\tDefaulting to uniform search mask\n");
+		return;
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+	
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tDefaulting to uniform peak search mask\n");
+		return;
+	} 
+	
+	
+	// Copy into darkcal array
+	for(long i=0;i<pix_nn;i++)
+		peakmask[i] = (int) temp2d.data[i];
+}
+
 
 /*
  *	Write initial log file
@@ -476,8 +628,21 @@ void cGlobal::writeInitialLog(void){
 	fp = fopen (logfile,"w");
 	fprintf(fp, "start time: %s\n",timestr);
 	fprintf(fp, ">-------- Start of job --------<\n");
-
 	fclose (fp);
+	
+	
+	// Open a new frame file at the same time
+	pthread_mutex_lock(&framefp_mutex);
+	
+	sprintf(framefile,"r%04u-frames.txt",getRunNumber());
+	framefp = fopen (framefile,"w");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
+
+	sprintf(cleanedfile,"r%04u-cleaned.txt",getRunNumber());
+	cleanedfp = fopen (cleanedfile,"w");
+	fprintf(cleanedfp, "# Filename, npeaks\n");
+	
+	pthread_mutex_unlock(&framefp_mutex);
 }
 
 
@@ -505,11 +670,20 @@ void cGlobal::updateLogfile(void){
 	fps = nprocessedframes / dtime;
 	
 	
-	// Logfile name
+	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
 	fclose (fp);
+	
+	
+	// Flush frame file buffer
+	pthread_mutex_lock(&framefp_mutex);
+	fclose(framefp);
+	framefp = fopen (framefile,"a");
+	fclose(cleanedfp);
+	cleanedfp = fopen (cleanedfile,"a");
+	pthread_mutex_unlock(&framefp_mutex);
 	
 }
 
@@ -568,6 +742,13 @@ void cGlobal::writeFinalLog(void){
 
 	fclose (fp);
 
+	
+	// Flush frame file buffer
+	pthread_mutex_lock(&framefp_mutex);
+	fclose(framefp);
+	fclose(cleanedfp);
+	pthread_mutex_unlock(&framefp_mutex);
+	
 	
 }
 

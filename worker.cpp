@@ -44,6 +44,12 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 
 	
+	/*
+	 *	Create a name for this event
+	 */
+	nameEvent(threadInfo, global);
+		
+	
 
 	/*
 	 *	Assemble all four quadrants into one large array 
@@ -146,8 +152,16 @@ void *worker(void *threadarg) {
 	else if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
 	else
-		printf("r%04u:%i (%3.1fHz): Processed\n", global->runNumber,threadInfo->threadNum,global->datarate);
+		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
+	
+
+	/*
+	 *	Write out information on each frame to a log file
+	 */
+	pthread_mutex_lock(&global->framefp_mutex);
+	fprintf(global->framefp, "%i, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
+	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
 	
@@ -343,6 +357,7 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	float	top = 0;
 	float	s1 = 0;
 	float	s2 = 0;
+	float	v1, v2;
 	float	factor;
 	float	gmd;
 
@@ -360,28 +375,29 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	// Find appropriate scaling factor 
 	if(global->scaleDarkcal) {
 		for(long i=0;i<global->pix_nn;i++){
-			top += global->selfdark[i]*threadInfo->corrected_data[i];
-			s1 += global->selfdark[i]*global->selfdark[i];
-			s2 += threadInfo->corrected_data[i]*threadInfo->corrected_data[i];
+			//v1 = pow(global->selfdark[i], 0.25);
+			//v2 = pow(threadInfo->corrected_data[i], 0.25);
+			v1 = global->selfdark[i];
+			v2 = threadInfo->corrected_data[i];
+			if(v2 > global->hitfinderADC)
+				continue;
+			
+			// Simple inner product gives cos(theta), which is always less than zero
+			// Want ( (a.b)/|b| ) * (b/|b|)
+			top += v1*v2;
+			s1 += v1*v1;
+			s2 += v2*v2;
 		}
-		factor = top/(sqrt(s1)*sqrt(s2));		
+		factor = top/s1;
 	}
 	else 
-		//factor = gmd/global->avgGMD;
 		factor=1;
 	
 	
 	// Do the weighted subtraction
 	// Zero checking only needed if corrected data is uint16
 	for(long i=0;i<global->pix_nn;i++)
-			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
-	//for(long i=0;i<global->pix_nn;i++){
-	//	if(threadInfo->corrected_data[i] > factor*global->selfdark[i])
-	//		threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);
-	//	else
-	//		threadInfo->corrected_data[i] = 0;
-	//}	
-	
+			threadInfo->corrected_data[i] -= (int) (factor*global->selfdark[i]);	
 }
 
 
@@ -391,28 +407,182 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
-	long nat=0;
-	int	 hit=0;
+	long	nat, lastnat;
+	long	counter;
+	int		hit=0;
+	long	ii,jj,nn;
+
+	nat = 0;
+	counter = 0;
+
+	/*
+	 *	Use a data buffer so we can zero out pixels already counted
+	 */
+	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
 	
-	// Pixels above ADC threshold
-	for(long i=0;i<global->pix_nn;i++){
-		if(threadInfo->corrected_data[i] > global->hitfinderADC){
-			nat++;
+	
+	/*
+	 *	Apply peak search mask 
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	if(global->hitfinderUsePeakmask) {
+		for(long i=0;i<global->pix_nn;i++){
+			temp[i] *= global->peakmask[i]; 
 		}
-	}	
-
-	// Hit? 
-	if(nat >= global->hitfinderNAT)
-		hit = 1;
+	}
+	
+	
+	/*
+	 *	Use one of various hitfinder algorithms
+	 */
+	switch(global->hitfinderAlgorithm) {
+		
+		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
+			for(long i=0;i<global->pix_nn;i++){
+				if(temp[i] > global->hitfinderADC){
+					nat++;
+				}
+			}
+			if(nat >= global->hitfinderNAT)
+				hit = 1;
+			break;
 
 	
-	// Update central counter
+		case 2 :	//	Count clusters of pixels above threshold
+			for(long j=1; j<8*COLS-1; j++){
+				for(long i=1; i<8*ROWS-1; i++) {
+					nn = 0;
+					ii = i+(8*ROWS)*j;
+					if(temp[i+(8*ROWS)*j] > global->hitfinderADC) {
+						nn += 1;
+						if(temp[i+1+(8*ROWS)*j] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*j] > global->hitfinderADC) nn++;
+						if(temp[i+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i+1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
+						if(temp[i+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+						if(temp[i+1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+						if(temp[i-1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
+					}
+					if(nn >= global->hitfinderCluster) {
+						nat++;
+						temp[i+(8*ROWS)*j] = 0;
+						temp[i+1+(8*ROWS)*j] = 0;
+						temp[i-1+(8*ROWS)*j] = 0;
+						temp[i+(8*ROWS)*(j+1)] = 0;
+						temp[i+1+(8*ROWS)*(j+1)] = 0;
+						temp[i-1+(8*ROWS)*(j+1)] = 0;
+						temp[i+(8*ROWS)*(j-1)] = 0;
+						temp[i+1+(8*ROWS)*(j-1)] = 0;
+						temp[i-1+(8*ROWS)*(j-1)] = 0;
+					}
+				}
+			}
+			threadInfo->nPeaks = nat;
+			if(nat >= global->hitfinderMinPixCount)
+				hit = 1;
+			break;
+
+
+	
+	
+		case 3 : 	// Real peak counter
+		default:
+			int search_x[] = {-1,0,1,-1,1,-1,0,1};
+			int search_y[] = {-1,-1,-1,0,0,1,1,1};
+			int	search_n = 8;
+			long e;
+			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
+			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
+			// Loop over modules (8x8 array)
+			for(long mj=0; mj<8; mj++){
+				for(long mi=0; mi<8; mi++){
+					
+					// Loop over pixels within a module
+					for(long j=1; j<COLS-1; j++){
+						for(long i=1; i<ROWS-1; i++){
+
+							e = (j+mj*COLS)*global->pix_nx;
+							e += i+mi*ROWS;
+
+							if(e >= global->pix_nn)
+								printf("Array bounds error: e=%i\n");
+							
+							if(temp[e] > global->hitfinderADC){
+								// This might be the start of a peak - start searching
+								inx[0] = i;
+								iny[0] = j;
+								nat = 1;
+								
+								// Keep looping until the pixel count within this peak does not change (!)
+								do {
+									lastnat = nat;
+									// Loop through points known to be within this peak
+									for(long p=0; p<nat; p++){
+										// Loop through search pattern
+										for(long k=0; k<search_n; k++){
+											// Array bounds check
+											if((inx[p]+search_x[k]) < 0)
+												continue;
+											if((inx[p]+search_x[k]) >= ROWS)
+												continue;
+											if((iny[p]+search_y[k]) < 0)
+												continue;
+											if((iny[p]+search_y[k]) >= COLS)
+												continue;
+											
+											// Neighbour point 
+											e = (iny[p]+search_y[k]+mj*COLS)*global->pix_nx;
+											e += inx[p]+search_x[k]+mi*ROWS;
+											
+											if(e < 0 || e >= global->pix_nn){
+												printf("Array bounds error: e=%i\n",e);
+												continue;
+											}
+											
+											// Above threshold?
+											if(temp[e] > global->hitfinderADC){
+												if(nat < 0 || nat >= global->pix_nn)
+													printf("Array bounds error: nat=%i\n",nat);
+												temp[e] = 0;
+												inx[nat] = inx[p]+search_x[k];
+												iny[nat] = iny[p]+search_y[k];
+												nat++; 
+											}
+										}
+									}
+								} while(lastnat != nat);
+								
+								// Peak or junk?
+								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
+									counter ++;
+								}
+							}
+						}
+					}
+				}
+			}	
+			// Hit?
+			threadInfo->nPeaks = counter;
+			if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
+				hit = 1;
+			
+			free(inx);
+			free(iny);
+			break;
+	}
+		
+	
+	
+	// Update central hit counter
 	if(hit) {
 		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 	
+	free(temp);
 	return(hit);
 }
 
@@ -423,19 +593,19 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
  */
 void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
+	long	nhot = 0;
+
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	for(long i=0;i<global->pix_nn;i++){
-		global->hotpixelmask[i] = ( ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0)) + (global->hotpixMemory-1)*global->hotpixelmask[i]) / global->hotpixMemory;
-	}
-	pthread_mutex_unlock(&global->hotpixel_mutex);
+		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0))) / global->hotpixMemory;
 
-	
-	long	nhot = 0;
-	for(long i=0;i<global->pix_nn;i++){
 		if(global->hotpixelmask[i] > global->hotpixFreq) {
 			threadInfo->corrected_data[i] = 0;
+			nhot++;
 		}
-	}	
+	}
+	pthread_mutex_unlock(&global->hotpixel_mutex);
+	threadInfo->nHot = nhot;
 }
 	
 
@@ -554,10 +724,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
-/*
- *	Write out processed data to our 'standard' HDF5 format
- */
-void writeHDF5(tThreadInfo *info, cGlobal *global){
+
+void nameEvent(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -571,10 +739,36 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+	sprintf(info->eventname,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+}
+	
+	
+/*
+ *	Write out processed data to our 'standard' HDF5 format
+ */
+void writeHDF5(tThreadInfo *info, cGlobal *global){
+	/*
+	 *	Create filename based on date, time and fiducial for this image
+	 */
+	char outfile[1024];
+	//char buffer1[80];
+	//char buffer2[80];	
+	//time_t eventTime = info->seconds;
+
+	//setenv("TZ","US/Pacific",1);		// <--- Dangerous (not thread safe!)
+	//struct tm *timestatic, timelocal;
+	//timestatic=localtime_r( &eventTime, &timelocal );	
+	//strftime(buffer1,80,"%Y_%b%d",&timelocal);
+	//strftime(buffer2,80,"%H%M%S",&timelocal);
+	//sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+
+	strcpy(outfile, info->eventname);
 	printf("r%04u:%i (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
-
+	pthread_mutex_lock(&global->framefp_mutex);
+	fprintf(global->cleanedfp, "r%04u/%s, %i\n",global->runNumber, info->eventname, info->nPeaks);
+	pthread_mutex_unlock(&global->framefp_mutex);
+	
 		
 	/* 
  	 *  HDF5 variables
@@ -593,6 +787,9 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 *	Create the HDF5 file
 	 */
 	hdf_fileID = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	
+	
+	
 	
 	
 	/*
@@ -751,6 +948,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd22 );	
 	H5Dclose(dataset_id);
 
+	
+	// Motor positions
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorPosition", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
+	H5Dclose(dataset_id);
+	
+	
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);
 	
@@ -758,6 +962,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	// Time in human readable format
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
 	char* timestr;
+	time_t eventTime = info->seconds;
 	timestr = ctime(&eventTime);
 	dataspace_id = H5Screate(H5S_SCALAR);
 	datatype = H5Tcopy(H5T_C_S1);  

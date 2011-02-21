@@ -37,10 +37,17 @@ public:
 	int			powderthresh;
 	int			hitfinderADC;
 	int			hitfinderNAT;
+	int			hitfinderNpeaks;
+	int			hitfinderNpeaksMax;
+	int			hitfinderAlgorithm;
+	int			hitfinderMinPixCount;
+	int			hitfinderMaxPixCount;
+	int			hitfinderCluster;
+	int			hitfinderUsePeakmask;
 	int			scaleDarkcal;
+	int			hotpixADC;
+	int			hotpixMemory;
 	float		hotpixFreq;
-	float		hotpixADC;
-	float		hotpixMemory;
 	float		selfDarkMemory;
 	
 	
@@ -48,7 +55,13 @@ public:
 	char		configFile[1024];
 	char		geometryFile[1024];
 	char		darkcalFile[1024];
+	char		gaincalFile[1024];
+	char		peaksearchFile[1024];
 	char		logfile[1024];
+	char		framefile[1024];
+	char		cleanedfile[1024];
+	FILE		*framefp;
+	FILE		*cleanedfp;
 	
 	// Run information
 	unsigned	runNumber;
@@ -65,6 +78,7 @@ public:
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
 	pthread_mutex_t	nhits_mutex;
+	pthread_mutex_t	framefp_mutex;
 	
 	
 	// Detector geometry
@@ -85,17 +99,22 @@ public:
 	int32_t			*darkcal;
 	int64_t			*powderRaw;
 	int64_t			*powderAssembled;
+	int16_t			*peakmask;
 	float			*hotpixelmask;
 	float			*selfdark;
+	float			*gaincal;
 	float			avgGMD;
 	long			npowder;
 	long			nprocessedframes;
 	long			nhits;
+	double			detectorZ;
 	
 	clock_t			lastclock;
+	timeval			lasttime;	
 	float			datarate;
 	time_t			tstart, tend;
 
+	
 	
 	
 	
@@ -107,6 +126,8 @@ public:
 	void setupThreads(void);
 	void readDetectorGeometry(char *);
 	void readDarkcal(char *);
+	void readGaincal(char *);
+	void readPeakmask(char *);
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);

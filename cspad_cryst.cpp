@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 #include <hdf5.h>
 #include <math.h>
 #include <pthread.h>
@@ -114,6 +115,8 @@ void beginjob() {
 	global.readDetectorGeometry(global.geometryFile);
 	global.setupThreads();
 	global.readDarkcal(global.darkcalFile);
+	global.readGaincal(global.gaincalFile);
+	global.readPeakmask(global.peaksearchFile);
 	global.writeInitialLog();
 	
 	/*
@@ -123,10 +126,13 @@ void beginjob() {
 	global.selfdark = (float*) calloc(global.pix_nn, sizeof(float));
 	global.powderRaw = (int64_t*) calloc(global.pix_nn, sizeof(int64_t));
 	global.powderAssembled = (int64_t*) calloc(global.image_nn, sizeof(int64_t));
-	memset(global.hotpixelmask,0, global.pix_nn*sizeof(float));
-	memset(global.selfdark,0, global.pix_nn*sizeof(float));
 	memset(global.powderRaw,0, global.pix_nn*sizeof(int64_t));
 	memset(global.powderAssembled,0, global.image_nn*sizeof(int64_t));
+	for(long i=0; i<global->pix_nn; i++) {
+		global.hotpixelmask[i] = 0;
+		global.selfdark[i] = 0;
+	}
+	
 }
 
 
@@ -213,6 +219,24 @@ void event() {
 		fail = getEvrData( i, eventCode, fiducial, timeStamp );
 	}
 	// EventCode==140 = Beam On
+	
+	
+	
+	/*
+	 *	How quickly are we processing the data? (average over last 10 events)
+	 */	
+	timeval	now;
+	float dt, dt_us, datarate;
+	gettimeofday(&now, NULL);
+	dt_us = (float) (now.tv_usec - global.lasttime.tv_usec);
+	dt = clock() - global.lastclock;
+	if(dt_us != 0) {
+		datarate = ((float)CLOCKS_PER_SEC)/dt;
+		//datarate = 1/(1e6*dt_us);
+		gettimeofday(&global.lasttime, NULL);
+		global.lastclock = clock();
+		global.datarate = (datarate+9*global.datarate)/10.;
+	}
 	
 	
 	
@@ -311,6 +335,21 @@ void event() {
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
 	
+	/*
+	 *	CXI detector position (Z)
+	 */
+	float detposnew;
+	if ( getPvFloat("CXI:DS1:MMS:06", detposnew) == 0 ) {
+		/* When encoder reads -500mm, detector is at its closest possible
+		 * position to the specimen, and is 79mm from the centre of the 
+		 * 8" flange where the injector is mounted.  The injector itself is
+		 * about 4mm further away from the detector than this. */
+		// printf("New detector pos %e\n", detposnew);
+		global.detectorZ = 500.0 + detposnew + 79.0;
+	}
+
+	
+	
 
 	/*
 	 *	Create a new threadInfo structure in which to place all information
@@ -328,6 +367,7 @@ void event() {
 	threadInfo->fiducial = fiducial;
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
+	threadInfo->nPeaks = 0;
 	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
@@ -452,17 +492,6 @@ void event() {
 	}
 	
 	
-	/*
-	 *	How quickly are we processing the data? (average over last 10 events)
-	 */
-	float datarate;
-	float dt = (clock() - global.lastclock);
-	dt /= CLOCKS_PER_SEC;
-	datarate = 1.0/dt;
-	global.lastclock = clock();
-	//global.datarate = (datarate+9*global.datarate)/10.;
-	global.datarate = datarate;
-	
 	
 	
 }
@@ -509,6 +538,8 @@ void endjob()
 	free(global.powderRaw);
 	free(global.hotpixelmask);
 	free(global.selfdark);
+	free(global.gaincal);
+	free(global.peakmask);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);

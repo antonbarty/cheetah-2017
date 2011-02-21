@@ -29,6 +29,8 @@ typedef struct {
 	uint16_t	*raw_data;
 	int16_t		*corrected_data;
 	int16_t		*image;
+	int			nPeaks;
+	int			nHot;
 	
 	
 	// Beamline data, etc
@@ -36,6 +38,7 @@ typedef struct {
 	int			nanoSeconds;
 	unsigned	fiducial;
 	char		timeString[1024];
+	char		eventname[1024];
 	bool		beamOn;
 	unsigned	runNumber;
 	
@@ -54,6 +57,8 @@ typedef struct {
 	
 	double		photonEnergyeV;		// in eV
 	double		wavelengthA;		// in Angstrom
+	
+	double		detectorPosition; 
 	
 	double		phaseCavityTime1;
 	double		phaseCavityTime2;
@@ -108,6 +113,7 @@ void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
+void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void saveRunningSums(cGlobal*);
