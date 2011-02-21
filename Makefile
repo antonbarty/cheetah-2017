@@ -1,7 +1,15 @@
 ###############################################
 # 	Makefile for LCLS csPad detector version of myana
 #	Anton Barty, December 2010
-#	Note: need to have 
+#
+#	Note: before this makefile will work it is necessary to compile 
+#	the LCLS libraries.  This is done as follows:
+#	> cd release/pdsdata
+#	> make x86_64-linux
+#	(this creates the LCLS libraries necessary for compile to complete.
+#	if not done, you'll get an error such as 'can not find libacqdata.so'.
+#	Change the target CPU/OS combination if working on a different system, eg: OS-X)
+#
 ###############################################
 TARGET 			= cspad_cryst
 ARCH 			= x86_64-linux
