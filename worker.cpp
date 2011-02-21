@@ -338,8 +338,8 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	int32_t diff;
 	for(long i=0;i<global->pix_nn;i++) {
 		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
-		if(diff < -32767) diff = -32767;
-		if(diff > 32767) diff = 32767;
+		if(diff < -32766) diff = -32767;
+		if(diff > 32766) diff = 32767;
 		threadInfo->corrected_data[i] = (int16_t) diff;
 	}
 	
@@ -397,8 +397,8 @@ void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	int32_t diff;
 	for(long i=0;i<global->pix_nn;i++) {
 		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t)(factor*global->selfdark[i]);	
-		if(diff < -32767) diff = -32767;
-		if(diff > 32767) diff = 32767;
+		if(diff < -32766) diff = -32767;
+		if(diff > 32766) diff = 32767;
 		threadInfo->corrected_data[i] = (int16_t) diff;
 	}
 			
