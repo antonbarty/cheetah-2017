@@ -17,6 +17,8 @@
 #include <hdf5.h>
 #include <math.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <limits>
 
 #include "setup.h"
 #include "worker.h"
