@@ -40,6 +40,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Default processing options
 	cmModule = 0;
 	cmSubModule = 0;
+	generateDarkcal = 0;
 	subtractBg = 0;
 	subtractDarkcal = 0;
 	selfDarkcal = 0;
@@ -125,6 +126,22 @@ void cGlobal::setupThreads() {
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	for(int i=0; i<nThreads; i++) 
 		threadID[i] = -1;
+
+	
+	// If generating a darkcal file we do things slightly differently
+	if(generateDarkcal) {
+		cmModule = 0;
+		cmSubModule = 0;
+		subtractBg = 0;
+		subtractDarkcal = 0;
+		selfDarkcal = 0;
+		hitfinder = 0;
+		savehits = 0;
+		hdf5dump = 0;
+		saveRaw = 0;
+		autohotpixel = 0;
+		startFrames = 0;
+	}
 	
 }
 
@@ -252,6 +269,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "subtractcmsubmodule")) {
 		cmSubModule = atoi(value);
+	}
+	else if (!strcmp(tag, "generatedarkcal")) {
+		generateDarkcal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		subtractBg = atoi(value);

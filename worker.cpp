@@ -1068,51 +1068,56 @@ void saveRunningSums(cGlobal *global) {
 	char	filename[1024];
 
 	/*
-	 *	Save assembled powder pattern
-	 */
-	printf("Saving assembled sum data to file\n");
-	sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
-	float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
-	pthread_mutex_lock(&global->powdersum2_mutex);
-	for(long i=0; i<global->image_nn; i++){
-		buffer2[i] = (float) global->powderAssembled[i];
-	}
-	pthread_mutex_unlock(&global->powdersum2_mutex);
-	writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
-	free(buffer2);
-	
-
-	/*
-	 *	Save raw data
-	 */
-	printf("Saving raw sum data to file\n");
-	sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
-	float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
-	pthread_mutex_lock(&global->powdersum1_mutex);
-	for(long i=0; i<global->pix_nn; i++)
-		buffer1[i] = (float) global->powderRaw[i];
-	pthread_mutex_unlock(&global->powdersum1_mutex);
-	//for(long i=0; i<global->pix_nn; i++)
-	//	if (buffer1[i] < 0) buffer1[i] = 0;
-	writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
-	free(buffer1);
-
-	
-	/*
 	 *	Compute and save darkcal
 	 */
-	printf("Processing darkcal\n");
-	sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
-	int16_t *buffer3 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
-	pthread_mutex_lock(&global->powdersum1_mutex);
-	for(long i=0; i<global->pix_nn; i++)
-		buffer3[i] = (int16_t) (global->powderRaw[i]/(float)global->npowder);
-	pthread_mutex_unlock(&global->powdersum1_mutex);
-	//for(long i=0; i<global->pix_nn; i++)
-	//	if (buffer3[i] < 0) buffer3[i] = 0;
-	printf("Saving darkcal to file\n");
-	writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
-	free(buffer3);
+	if(global->generateDarkcal) {
+		printf("Processing darkcal\n");
+		sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
+		int16_t *buffer3 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+		pthread_mutex_lock(&global->powdersum1_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer3[i] = (int16_t) (global->powderRaw[i]/(float)global->npowder);
+		pthread_mutex_unlock(&global->powdersum1_mutex);
+		//for(long i=0; i<global->pix_nn; i++)
+		//	if (buffer3[i] < 0) buffer3[i] = 0;
+		printf("Saving darkcal to file\n");
+		writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
+		free(buffer3);
+	}
+
+	else {
+		/*
+		 *	Save assembled powder pattern
+		 */
+		printf("Saving assembled sum data to file\n");
+		sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
+		float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
+		pthread_mutex_lock(&global->powdersum2_mutex);
+		for(long i=0; i<global->image_nn; i++){
+			buffer2[i] = (float) global->powderAssembled[i];
+		}
+		pthread_mutex_unlock(&global->powdersum2_mutex);
+		writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
+		free(buffer2);
+		
+		
+		/*
+		 *	Save powder pattern in raw layout
+		 */
+		printf("Saving raw sum data to file\n");
+		sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
+		float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
+		pthread_mutex_lock(&global->powdersum1_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer1[i] = (float) global->powderRaw[i];
+		pthread_mutex_unlock(&global->powdersum1_mutex);
+		//for(long i=0; i<global->pix_nn; i++)
+		//	if (buffer1[i] < 0) buffer1[i] = 0;
+		writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
+		free(buffer1);
+		
+	}
+
 	
 }
 

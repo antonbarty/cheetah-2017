@@ -19,6 +19,7 @@ public:
 	int			startFrames;
 	int			cmModule;
 	int			cmSubModule;
+	int			generateDarkcal;
 	int			subtractBg;
 	int			subtractDarkcal;
 	int			selfDarkcal;
