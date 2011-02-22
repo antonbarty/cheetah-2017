@@ -141,6 +141,7 @@ void cGlobal::setupThreads() {
 		saveRaw = 0;
 		autohotpixel = 0;
 		startFrames = 0;
+		powderthresh = 0;
 	}
 	
 }
