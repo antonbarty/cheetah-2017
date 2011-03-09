@@ -11,6 +11,10 @@ switch ($1)
 	#rsync -av cass barty@mms1.desy.de:local/cass/mimicass
 	breaksw
 	
+	case cfelsgi:
+	rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cspad-cryst/
+	breaksw
+	
 	case psexport:
 	#rsync -av --delete-after --exclude '.git' . barty@psexport.slac.stanford.edu:cspad
 	#rsync -av --delete-after --exclude '*.o' --exclude 'release' --exclude '.git' . barty@psexport.slac.stanford.edu:cspad
