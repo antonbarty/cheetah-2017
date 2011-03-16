@@ -110,11 +110,31 @@ void cGlobal::defaultConfiguration(void) {
 /*
  *	Setup stuff to do with thread management, settings, etc.
  */
-void cGlobal::setupThreads() {
+void cGlobal::setup() {
 	
+	
+	/*
+	 *	Set up arrays for remembering powder data, background, etc.
+	 */
+	hotpixelmask = (float*) calloc(pix_nn, sizeof(float));
+	selfdark = (float*) calloc(pix_nn, sizeof(float));
+	powderRaw = (int64_t*) calloc(pix_nn, sizeof(int64_t));
+	powderAssembled = (int64_t*) calloc(image_nn, sizeof(int64_t));
+	for(long i=0; i<pix_nn; i++) {
+		hotpixelmask[i] = 0;
+		selfdark[i] = 0;
+		powderRaw[i] = 0;
+	}
+	for(long i=0; i<image_nn; i++) {
+		powderAssembled[i] = 0;
+	}	
+
+	
+	/*
+	 *	Set up thread management
+	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
-	
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
@@ -122,13 +142,12 @@ void cGlobal::setupThreads() {
 	pthread_mutex_init(&powdersum2_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
-	
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
-	for(int i=0; i<nThreads; i++) 
-		threadID[i] = -1;
 
 	
-	// If generating a darkcal file we do things slightly differently
+	/*
+	 *	Trap specific configurations and mutually incompatible options
+	 */
 	if(generateDarkcal) {
 		cmModule = 0;
 		cmSubModule = 0;

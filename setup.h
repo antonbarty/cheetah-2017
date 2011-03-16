@@ -124,7 +124,7 @@ public:
 	void defaultConfiguration(void);
 	void parseConfigFile(char *);
 	void parseCommandLineArguments(int, char**);
-	void setupThreads(void);
+	void setup(void);
 	void readDetectorGeometry(char *);
 	void readDarkcal(char *);
 	void readGaincal(char *);

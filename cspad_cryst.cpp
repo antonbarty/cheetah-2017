@@ -1,4 +1,14 @@
-/* $Id: myana_cspad.cc,v 1.6 2010/10/21 22:09:43 weaver Exp $ */
+/*
+ *  cspad_cryst.cpp
+ *  cspad_cryst
+ *
+ *  Created by Anton Barty on 7/2/11.
+ *  Copyright 2011 CFEL. All rights reserved.
+ *	
+ *	This file based on myana_cspad.cc,v 1.6 2010/10/21 22:09:43 by Matt Weaver, SLAC 
+ *
+ */
+
 
 #include "myana/myana.hh"
 #include "myana/main.hh"
@@ -113,25 +123,12 @@ void beginjob() {
 	global.defaultConfiguration();
 	global.parseConfigFile(global.configFile);
 	global.readDetectorGeometry(global.geometryFile);
-	global.setupThreads();
+	global.setup();
 	global.readDarkcal(global.darkcalFile);
 	global.readGaincal(global.gaincalFile);
 	global.readPeakmask(global.peaksearchFile);
 	global.writeInitialLog();
 	
-	/*
-	 *	Set up arrays for remembering powder data
-	 */
-	global.hotpixelmask = (float*) calloc(global.pix_nn, sizeof(float));
-	global.selfdark = (float*) calloc(global.pix_nn, sizeof(float));
-	global.powderRaw = (int64_t*) calloc(global.pix_nn, sizeof(int64_t));
-	global.powderAssembled = (int64_t*) calloc(global.image_nn, sizeof(int64_t));
-	memset(global.powderRaw,0, global.pix_nn*sizeof(int64_t));
-	memset(global.powderAssembled,0, global.image_nn*sizeof(int64_t));
-	for(long i=0; i<global.pix_nn; i++) {
-		global.hotpixelmask[i] = 0;
-		global.selfdark[i] = 0;
-	}
 	
 }
 
