@@ -28,7 +28,7 @@ public:
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
-	char		badpixelMask[1024];
+	char		badpixelFile[1024];
 	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
 	char		darkcalFile[1024];		// File containing dark calibration
@@ -42,6 +42,7 @@ public:
 
 	// Gain correction
 	int			useGaincal;
+	int			invertGain;
 	char		gaincalFile[1024];
 	
 	// Running background subtraction
@@ -132,6 +133,7 @@ public:
 	int64_t			*powderRaw;
 	int64_t			*powderAssembled;
 	int16_t			*peakmask;
+	int16_t			*badpixelmask;
 	float			*hotpixelmask;
 	float			*selfdark;
 	float			*gaincal;
@@ -157,6 +159,7 @@ public:
 	void readDarkcal(char *);
 	void readGaincal(char *);
 	void readPeakmask(char *);
+	void readBadpixelMask(char *);
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);

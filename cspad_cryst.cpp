@@ -127,6 +127,7 @@ void beginjob() {
 	global.readDarkcal(global.darkcalFile);
 	global.readGaincal(global.gaincalFile);
 	global.readPeakmask(global.peaksearchFile);
+	global.readBadpixelMask(global.badpixelFile);
 	global.writeInitialLog();
 }
 

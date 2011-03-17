@@ -45,7 +45,7 @@ void cGlobal::defaultConfiguration(void) {
 	pixelSize = 110e-6;
 	
 	// Bad pixel mask
-	strcpy(badpixelMask, "badpixels.h5");
+	strcpy(badpixelFile, "badpixels.h5");
 	useBadPixelMask = 0;
 
 	// Static dark calibration (electronic offsets)
@@ -61,6 +61,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Gain calibration correction
 	strcpy(gaincalFile, "gaincal.h5");
 	useGaincal = 0;
+	invertGain = 0;
 	
 	// Subtraction of running background (persistent photon background) 
 	selfDarkcal = 0;
@@ -100,34 +101,13 @@ void cGlobal::defaultConfiguration(void) {
 	// Verbosity
 	debugLevel = 2;
 	
-	// Power user settings
-	
-
-	avgGMD = 0;
-	
-
 	// Default to only a few threads
 	nThreads = 16;
-
 	
 	// Log files
 	strcpy(logfile, "log.txt");
 	strcpy(framefile, "frames.txt");
 	strcpy(cleanedfile, "cleaned.txt");
-	
-	// Make sure to use SLAC timezone!
-	setenv("TZ","US/Pacific",1);
-
-	// Starting values for other things
-	npowder = 0;
-	nprocessedframes = 0;
-	nhits = 0;
-	lastclock = clock()-10;
-	gettimeofday(&lasttime, NULL);
-	datarate = 1;
-	detectorZ = 0;
-	runNumber = getRunNumber();
-	time(&tstart);
 	
 	
 }
@@ -138,8 +118,6 @@ void cGlobal::defaultConfiguration(void) {
  *	Setup stuff to do with thread management, settings, etc.
  */
 void cGlobal::setup() {
-	
-	
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
@@ -189,6 +167,23 @@ void cGlobal::setup() {
 		startFrames = 0;
 		powderthresh = 0;
 	}
+	
+	/*
+	 *	Other stuff
+	 */
+	npowder = 0;
+	nprocessedframes = 0;
+	nhits = 0;
+	lastclock = clock()-10;
+	gettimeofday(&lasttime, NULL);
+	datarate = 1;
+	detectorZ = 0;
+	runNumber = getRunNumber();
+	time(&tstart);
+	avgGMD = 0;
+
+	// Make sure to use SLAC timezone!
+	setenv("TZ","US/Pacific",1);
 	
 }
 
@@ -306,7 +301,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		strcpy(peaksearchFile, value);
 	}
 	else if (!strcmp(tag, "badpixelmask")) {
-		strcpy(badpixelMask, value);
+		strcpy(badpixelFile, value);
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
@@ -317,6 +312,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usegaincal")) {
 		useGaincal = atoi(value);
+	}
+	else if (!strcmp(tag, "invertgain")) {
+		invertGain = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractcmsubmodule")) {
 		cmSubModule = atoi(value);
@@ -631,9 +629,22 @@ void cGlobal::readGaincal(char *filename){
 	} 
 	
 	
-	// Copy into darkcal array
+	// Copy into gaincal array
 	for(long i=0;i<pix_nn;i++)
 		gaincal[i] = (float) temp2d.data[i];
+
+
+	// Invert the gain so we have an array that all we need to do is simple multiplication
+	// Pixels with zero gain become dead pixels
+	if(invertGain) {
+		for(long i=0;i<pix_nn;i++) {
+			if(gaincal[i] != 0)
+				gaincal[i] = 1.0/gaincal[i];
+			else 
+				gaincal[i] = 0;
+		}
+	}
+	
 }
 
 
@@ -678,7 +689,52 @@ void cGlobal::readPeakmask(char *filename){
 	
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
-		peakmask[i] = (int) temp2d.data[i];
+		peakmask[i] = (int16_t) temp2d.data[i];
+}
+
+
+/*
+ *	Read in bad pixel mask
+ */
+void cGlobal::readBadpixelMask(char *filename){
+	
+	printf("Reading bad pixel mask:\n");
+	printf("\t%s\n",filename);
+	
+	
+	// Create memory space and default to searching for peaks everywhere
+	badpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	for(long i=0;i<pix_nn;i++)
+		badpixelmask[i] = 1;
+	
+	
+	// Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tPeak search mask does not exist: %s\n",filename);
+		printf("\tDefaulting to uniform search mask\n");
+		return;
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+	
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tDefaulting to uniform peak search mask\n");
+		return;
+	} 
+	
+	
+	// Copy back into array
+	for(long i=0;i<pix_nn;i++)
+		badpixelmask[i] = (int16_t) temp2d.data[i];
 }
 
 
