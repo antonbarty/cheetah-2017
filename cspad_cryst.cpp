@@ -128,9 +128,8 @@ void beginjob() {
 	global.readGaincal(global.gaincalFile);
 	global.readPeakmask(global.peaksearchFile);
 	global.writeInitialLog();
-	
-	
 }
+
 
 
 void fetchConfig()

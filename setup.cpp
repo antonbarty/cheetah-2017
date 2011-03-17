@@ -37,12 +37,20 @@
  */
 void cGlobal::defaultConfiguration(void) {
 
+	// ini file to use
+	strcpy(configFile, "cspad-cryst.ini");
+
+	// Geometry
+	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
+	pixelSize = 110e-6;
+	
+
 	// Default processing options
 	cmModule = 0;
 	cmSubModule = 0;
 	generateDarkcal = 0;
 	subtractBg = 0;
-	subtractDarkcal = 0;
+	subtractDarkcal = 1;
 	selfDarkcal = 0;
 	hitfinder = 0;
 	savehits = 0;
@@ -80,8 +88,6 @@ void cGlobal::defaultConfiguration(void) {
 
 	
 	// Default configuration files and timezone
-	strcpy(configFile, "cspad-cryst.ini");
-	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	strcpy(darkcalFile, "darkcal.h5");
 	strcpy(gaincalFile, "gaincal.h5");
 	strcpy(peaksearchFile, "peakmask.h5");
@@ -329,6 +335,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);
 	}
+	else if (!strcmp(tag, "pixelsize")) {
+		pixelSize = atof(value);
+	}
 	else if (!strcmp(tag, "debuglevel")) {
 		debugLevel = atoi(value);
 	}
@@ -403,7 +412,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	// Pixel size (measurements in geometry file are in m)
 	module_rows = ROWS;
 	module_cols = COLS;	
-	pix_dx = 110e-6;
+	pix_dx = pixelSize;
 
 	
 	// Set filename here 

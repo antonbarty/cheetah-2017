@@ -15,14 +15,28 @@
 class cGlobal {
 	
 public:
-	// Switches for processing options
-	int			startFrames;
-	int			cmModule;
-	int			cmSubModule;
-	int			generateDarkcal;
-	int			subtractBg;
-	int			subtractDarkcal;
+	
+	/*
+	 *	Various switches for processing options
+	 */
+
+	// Real-space geometry
+	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
+	float		pixelSize;
+	
+	// Common mode and pedastal subtraction
+	int			cmModule;				// Subtract common mode from each ASIC
+	int			cmSubModule;			// Subtract common mode from subsets of each ASIC (currently 16 sub-portions)
+	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
+	
+	// Static dark calibration (static offsets on each pixel to be subtracted)
+	char		darkcalFile[1024];		// File containing dark calibration
+	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
+	int			subtractDarkcal;		// Subtract the darkcal (or not)?
+
+	
 	int			selfDarkcal;
+	int			subtractBg;
 	int			hitfinder;
 	int			savehits;
 	int			powdersum;
@@ -33,7 +47,6 @@ public:
 	
 	
 	// Power user settings
-	float		cmFloor;
 	int			saveInterval;
 	int			powderthresh;
 	int			hitfinderADC;
@@ -54,8 +67,6 @@ public:
 	
 	// Configuration files
 	char		configFile[1024];
-	char		geometryFile[1024];
-	char		darkcalFile[1024];
 	char		gaincalFile[1024];
 	char		peaksearchFile[1024];
 	char		logfile[1024];
