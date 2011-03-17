@@ -17,9 +17,11 @@ class cGlobal {
 public:
 	
 	/*
-	 *	Various switches for processing options
+	 *	Various switches and processing options
 	 */
-
+	// ini file to read
+	char		configFile[1024];
+	
 	// Real-space geometry
 	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
@@ -28,60 +30,74 @@ public:
 	int			useBadPixelMask;
 	char		badpixelMask[1024];
 	
-	// Common mode and pedastal subtraction
-	int			cmModule;				// Subtract common mode from each ASIC
-	int			cmSubModule;			// Subtract common mode from subsets of each ASIC (currently 16 sub-portions)
-	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
-	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
 	char		darkcalFile[1024];		// File containing dark calibration
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
 	int			subtractDarkcal;		// Subtract the darkcal (or not)?
-
 	
+	// Common mode and pedastal subtraction
+	int			cmModule;				// Subtract common mode from each ASIC
+	int			cmSubModule;			// Subtract common mode from subsets of each ASIC (currently 16 sub-portions)
+	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
+
+	// Gain correction
+	int			useGaincal;
+	char		gaincalFile[1024];
+	
+	// Running background subtraction
 	int			selfDarkcal;
 	int			subtractBg;
-	int			hitfinder;
-	int			savehits;
-	int			powdersum;
-	int			saveRaw;
-	int			debugLevel;
-	int			hdf5dump;
+	int			scaleDarkcal;
+	float		selfDarkMemory;
+	
+	// Kill persistently hot pixels
 	int			autohotpixel;
+	int			hotpixADC;
+	int			hotpixMemory;
+	float		hotpixFreq;
+	int			startFrames;
 	
-	
-	// Power user settings
-	int			saveInterval;
-	int			powderthresh;
+	// Hitfinding
+	int			hitfinder;
+	int			hitfinderAlgorithm;
 	int			hitfinderADC;
 	int			hitfinderNAT;
 	int			hitfinderNpeaks;
 	int			hitfinderNpeaksMax;
-	int			hitfinderAlgorithm;
 	int			hitfinderMinPixCount;
 	int			hitfinderMaxPixCount;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
-	int			scaleDarkcal;
-	int			hotpixADC;
-	int			hotpixMemory;
-	float		hotpixFreq;
-	float		selfDarkMemory;
-	
-	
-	// Configuration files
-	char		configFile[1024];
-	char		gaincalFile[1024];
 	char		peaksearchFile[1024];
+	
+	// Powder pattern generation
+	int			powdersum;
+	int			powderthresh;
+	int			saveInterval;
+	
+	// Saving options
+	int			savehits;
+	int			saveRaw;
+	int			hdf5dump;
+	
+	// Verbosity
+	int			debugLevel;
+	
+	// Log files
 	char		logfile[1024];
 	char		framefile[1024];
 	char		cleanedfile[1024];
-	FILE		*framefp;
-	FILE		*cleanedfp;
 	
+	
+	/*
+	 *	Stuff used for managing the program execution
+	 */
 	// Run information
 	unsigned	runNumber;
-	
+
+	// Log file pointers
+	FILE		*framefp;
+	FILE		*cleanedfp;
 	
 	// Thread management
 	long			nThreads;
@@ -130,9 +146,6 @@ public:
 	float			datarate;
 	time_t			tstart, tend;
 
-	
-	
-	
 	
 	
 public:

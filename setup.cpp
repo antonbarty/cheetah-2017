@@ -45,31 +45,38 @@ void cGlobal::defaultConfiguration(void) {
 	pixelSize = 110e-6;
 	
 	// Bad pixel mask
-	strcpy(badpixelMask, "darkcal.h5");
+	strcpy(badpixelMask, "badpixels.h5");
 	useBadPixelMask = 0;
 
+	// Static dark calibration (electronic offsets)
+	strcpy(darkcalFile, "darkcal.h5");
+	subtractDarkcal = 1;
+	generateDarkcal = 0;
 	
-	// Default processing options
+	// Common mode subtraction from each ASIC
 	cmModule = 0;
 	cmSubModule = 0;
-	generateDarkcal = 0;
-	subtractBg = 0;
-	subtractDarkcal = 1;
-	selfDarkcal = 0;
-	hitfinder = 0;
-	savehits = 0;
-	hdf5dump = 0;
-	powdersum = 1;
-	saveRaw = 0;
-	debugLevel = 2;
-	autohotpixel = 1;
-	startFrames = 0;
-	
-	// Power user settings
 	cmFloor = 0.1;
-	saveInterval = 0;
-	powderthresh = 0;
+
+	// Gain calibration correction
+	strcpy(gaincalFile, "gaincal.h5");
+	useGaincal = 0;
 	
+	// Subtraction of running background (persistent photon background) 
+	selfDarkcal = 0;
+	subtractBg = 0;
+	selfDarkMemory = 50;
+	startFrames = 0;
+	scaleDarkcal = 0;
+	
+	// Kill persistently hot pixels
+	autohotpixel = 1;
+	hotpixFreq = 0.9;
+	hotpixADC = 1000;
+	hotpixMemory = 50;
+	
+	// Hitfinding
+	hitfinder = 0;
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
 	hitfinderNpeaks = 50;
@@ -78,30 +85,40 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMinPixCount = 3;
 	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
+	strcpy(peaksearchFile, "peakmask.h5");
 
-	hotpixFreq = 0.9;
-	hotpixADC = 1000;
-	hotpixMemory = 50;
-	selfDarkMemory = 100;
-	scaleDarkcal = 0;
+	// Powder paattern generation
+	powdersum = 1;
+	powderthresh = 0;
+	
+	// Saving options
+	savehits = 0;
+	saveRaw = 0;
+	hdf5dump = 0;
+	saveInterval = 500;
+	
+	// Verbosity
+	debugLevel = 2;
+	
+	// Power user settings
+	
+
 	avgGMD = 0;
 	
 
-	// Default to single-threaded
+	// Default to only a few threads
 	nThreads = 16;
 
 	
-	// Default configuration files and timezone
-	strcpy(darkcalFile, "darkcal.h5");
-	strcpy(gaincalFile, "gaincal.h5");
-	strcpy(peaksearchFile, "peakmask.h5");
+	// Log files
 	strcpy(logfile, "log.txt");
 	strcpy(framefile, "frames.txt");
 	strcpy(cleanedfile, "cleaned.txt");
 	
-
+	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);
 
+	// Starting values for other things
 	npowder = 0;
 	nprocessedframes = 0;
 	nhits = 0;
@@ -291,16 +308,15 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "badpixelmask")) {
 		strcpy(badpixelMask, value);
 	}
-	
-	useBadPixelMask = 0;
-
-	
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
 		cmModule = atoi(value);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
+	}
+	else if (!strcmp(tag, "usegaincal")) {
+		useGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractcmsubmodule")) {
 		cmSubModule = atoi(value);
