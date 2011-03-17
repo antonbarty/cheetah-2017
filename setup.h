@@ -24,6 +24,10 @@ public:
 	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
 	
+	// Bad pixel masks
+	int			useBadPixelMask;
+	char		badpixelMask[1024];
+	
 	// Common mode and pedastal subtraction
 	int			cmModule;				// Subtract common mode from each ASIC
 	int			cmSubModule;			// Subtract common mode from subsets of each ASIC (currently 16 sub-portions)

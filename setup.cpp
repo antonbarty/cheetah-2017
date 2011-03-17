@@ -44,7 +44,11 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
 	pixelSize = 110e-6;
 	
+	// Bad pixel mask
+	strcpy(badpixelMask, "darkcal.h5");
+	useBadPixelMask = 0;
 
+	
 	// Default processing options
 	cmModule = 0;
 	cmSubModule = 0;
@@ -284,6 +288,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
 	}
+	else if (!strcmp(tag, "badpixelmask")) {
+		strcpy(badpixelMask, value);
+	}
+	
+	useBadPixelMask = 0;
 
 	
 	// Processing options
@@ -301,6 +310,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		subtractBg = atoi(value);
+	}
+	else if (!strcmp(tag, "usebadpixelmask")) {
+		useBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractdarkcal")) {
 		subtractDarkcal = atoi(value);
