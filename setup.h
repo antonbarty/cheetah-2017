@@ -32,8 +32,8 @@ public:
 	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
 	char		darkcalFile[1024];		// File containing dark calibration
+	int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
-	int			subtractDarkcal;		// Subtract the darkcal (or not)?
 	
 	// Common mode and pedastal subtraction
 	int			cmModule;				// Subtract common mode from each ASIC
@@ -46,13 +46,13 @@ public:
 	char		gaincalFile[1024];
 	
 	// Running background subtraction
-	int			selfDarkcal;
+	int			useSelfDarkcal;
 	int			subtractBg;
 	int			scaleDarkcal;
 	float		selfDarkMemory;
 	
 	// Kill persistently hot pixels
-	int			autohotpixel;
+	int			useAutoHotpixel;
 	int			hotpixADC;
 	int			hotpixMemory;
 	float		hotpixFreq;

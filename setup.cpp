@@ -50,7 +50,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Static dark calibration (electronic offsets)
 	strcpy(darkcalFile, "darkcal.h5");
-	subtractDarkcal = 1;
+	useDarkcalSubtraction = 1;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
@@ -64,14 +64,14 @@ void cGlobal::defaultConfiguration(void) {
 	invertGain = 0;
 	
 	// Subtraction of running background (persistent photon background) 
-	selfDarkcal = 0;
+	useSelfDarkcal = 0;
 	subtractBg = 0;
 	selfDarkMemory = 50;
 	startFrames = 0;
 	scaleDarkcal = 0;
 	
 	// Kill persistently hot pixels
-	autohotpixel = 1;
+	useAutoHotpixel = 1;
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -157,13 +157,13 @@ void cGlobal::setup() {
 		cmModule = 0;
 		cmSubModule = 0;
 		subtractBg = 0;
-		subtractDarkcal = 0;
-		selfDarkcal = 0;
+		useDarkcalSubtraction = 0;
+		useSelfDarkcal = 0;
 		hitfinder = 0;
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
-		autohotpixel = 0;
+		useAutoHotpixel = 0;
 		startFrames = 0;
 		powderthresh = 0;
 	}
@@ -328,8 +328,8 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usebadpixelmask")) {
 		useBadPixelMask = atoi(value);
 	}
-	else if (!strcmp(tag, "subtractdarkcal")) {
-		subtractDarkcal = atoi(value);
+	else if (!strcmp(tag, "useDarkcalSubtraction")) {
+		useDarkcalSubtraction = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
@@ -349,11 +349,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveinterval")) {
 		saveInterval = atoi(value);
 	}
-	else if (!strcmp(tag, "autohotpixel")) {
-		autohotpixel = atoi(value);
+	else if (!strcmp(tag, "useAutoHotpixel")) {
+		useAutoHotpixel = atoi(value);
 	}
-	else if (!strcmp(tag, "selfdarkcal")) {
-		selfDarkcal = atoi(value);
+	else if (!strcmp(tag, "useSelfDarkcal")) {
+		useSelfDarkcal = atoi(value);
 	}
 	
 

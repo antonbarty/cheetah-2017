@@ -85,18 +85,18 @@ void *worker(void *threadarg) {
 	/*
 	 *	Subtract darkcal image
 	 */
-	if(global->subtractDarkcal) {
-		subtractDarkcal(threadInfo, global);
+	if(global->useDarkcalSubtraction) {
+		useDarkcalSubtraction(threadInfo, global);
 	}
-	if(global->selfDarkcal) {
-		subtractSelfdarkcal(threadInfo, global);
+	if(global->useSelfDarkcal) {
+		subtractuseSelfDarkcal(threadInfo, global);
 	}
 	
 
 	/*
 	 *	Identify and remove hot pixels
 	 */
-	if(global->autohotpixel){
+	if(global->useAutoHotpixel){
 		killHotpixels(threadInfo, global);
 	}
 	
@@ -331,7 +331,7 @@ void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 /*
  *	Subtract pre-loaded darkcal file
  */
-void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
+void useDarkcalSubtraction(tThreadInfo *threadInfo, cGlobal *global){
 
 
 	// Do darkcal subtraction
@@ -351,7 +351,7 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 /*
  *	Subtract self generated darkcal file
  */
-void subtractSelfdarkcal(tThreadInfo *threadInfo, cGlobal *global){
+void subtractuseSelfDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
 	float	top = 0;
 	float	s1 = 0;
