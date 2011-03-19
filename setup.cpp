@@ -328,7 +328,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usebadpixelmask")) {
 		useBadPixelMask = atoi(value);
 	}
-	else if (!strcmp(tag, "useDarkcalSubtraction")) {
+	else if (!strcmp(tag, "usedarkcalsubtraction")) {
 		useDarkcalSubtraction = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinder")) {
@@ -349,10 +349,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveinterval")) {
 		saveInterval = atoi(value);
 	}
-	else if (!strcmp(tag, "useAutoHotpixel")) {
+	else if (!strcmp(tag, "useautohotpixel")) {
 		useAutoHotpixel = atoi(value);
 	}
-	else if (!strcmp(tag, "useSelfDarkcal")) {
+	else if (!strcmp(tag, "useselfdarkcal")) {
 		useSelfDarkcal = atoi(value);
 	}
 	
