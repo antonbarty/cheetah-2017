@@ -46,7 +46,7 @@ public:
 	char		gaincalFile[1024];
 	
 	// Running background subtraction
-	int			useSelfDarkcal;
+	int			useSubtractPersistentBackground;
 	int			subtractBg;
 	int			scaleDarkcal;
 	float		selfDarkMemory;

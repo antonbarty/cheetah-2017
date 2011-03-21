@@ -42,17 +42,11 @@ void *worker(void *threadarg) {
 	tThreadInfo		*threadInfo;
 	threadInfo = (tThreadInfo*) threadarg;
 	global = threadInfo->pGlobal;
-
+	
+	
 	
 	/*
-	 *	Create a name for this event
-	 */
-	nameEvent(threadInfo, global);
-		
-	
-
-	/*
-	 *	Assemble all four quadrants into one large array 
+	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
 	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
 	for(int quadrant=0; quadrant<4; quadrant++) {
@@ -65,14 +59,26 @@ void *worker(void *threadarg) {
 		}
 	}
 	threadInfo->corrected_data = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
-	//memcpy(threadInfo->corrected_data, threadInfo->raw_data, 8*ROWS*8*COLS*sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 	
+	
+	/*
+	 *	Create a unique name for this event
+	 */
+	nameEvent(threadInfo, global);
+		
+	
+	/*
+	 *	Subtract darkcal image (static electronic offsets)
+	 */
+	if(global->useDarkcalSubtraction) {
+		subtractDarkcal(threadInfo, global);
+	}
 
 	
 	/*
-	 *	Subtract common mode offsets
+	 *	Subtract common mode offsets (electronic offsets)
 	 */
 	if(global->cmModule) {
 		cmModuleSubtract(threadInfo, global);
@@ -83,13 +89,18 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Subtract darkcal image
+	 *	Apply gain correction
 	 */
-	if(global->useDarkcalSubtraction) {
-		useDarkcalSubtraction(threadInfo, global);
+	if(global->useGaincal) {
+		applyGainCalibration(threadInfo, global);
 	}
-	if(global->useSelfDarkcal) {
-		subtractuseSelfDarkcal(threadInfo, global);
+
+	
+	/*
+	 *	Subtract running photon background
+	 */
+	if(global->useSubtractPersistentBackground) {
+		subtractPersistentBackground(threadInfo, global);
 	}
 	
 
@@ -135,14 +146,6 @@ void *worker(void *threadarg) {
 	addToPowder(threadInfo, global);
 	
 	
-	/*
-	 *	Kill negative values just before saving
-	 */
-	//for(long i=0;i<global->image_nn;i++){
-	//	if(threadInfo->image[i]<0)
-	//		threadInfo->image[i] = 0;
-	//}
-	
 	
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
@@ -184,6 +187,96 @@ void *worker(void *threadarg) {
 
 	// Exit thread
 	pthread_exit(NULL);
+}
+
+
+/*
+ *	Subtract pre-loaded darkcal file
+ */
+void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
+	
+	
+	// Do darkcal subtraction
+	// Watch out for integer wraparound!
+	int32_t diff;
+	for(long i=0;i<global->pix_nn;i++) {
+		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
+		if(diff < -32766) diff = -32767;
+		if(diff > 32766) diff = 32767;
+		threadInfo->corrected_data[i] = (int16_t) diff;
+	}
+	
+}
+
+
+
+/*
+ *	Subtract self generated darkcal file
+ */
+void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
+	
+	float	top = 0;
+	float	s1 = 0;
+	float	s2 = 0;
+	float	v1, v2;
+	float	factor;
+	float	gmd;
+	
+	
+	// Add current (uncorrected) image to self darkcal
+	pthread_mutex_lock(&global->selfdark_mutex);
+	for(long i=0;i<global->pix_nn;i++){
+		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
+	}
+	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
+	global->avgGMD = ( gmd + (global->selfDarkMemory-1)*global->avgGMD) / global->selfDarkMemory;
+	pthread_mutex_unlock(&global->selfdark_mutex);
+	
+	
+	// Find appropriate scaling factor 
+	if(global->scaleDarkcal) {
+		for(long i=0;i<global->pix_nn;i++){
+			//v1 = pow(global->selfdark[i], 0.25);
+			//v2 = pow(threadInfo->corrected_data[i], 0.25);
+			v1 = global->selfdark[i];
+			v2 = threadInfo->corrected_data[i];
+			if(v2 > global->hitfinderADC)
+				continue;
+			
+			// Simple inner product gives cos(theta), which is always less than zero
+			// Want ( (a.b)/|b| ) * (b/|b|)
+			top += v1*v2;
+			s1 += v1*v1;
+			s2 += v2*v2;
+		}
+		factor = top/s1;
+	}
+	else 
+		factor=1;
+	
+	
+	// Do the weighted subtraction
+	// Watch out for integer wraparound!
+	int32_t diff;
+	for(long i=0;i<global->pix_nn;i++) {
+		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t)(factor*global->selfdark[i]);	
+		if(diff < -32766) diff = -32767;
+		if(diff > 32766) diff = 32767;
+		threadInfo->corrected_data[i] = (int16_t) diff;
+	}	
+}
+
+
+/*
+ *	Apply gain correction
+ *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
+ *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
+ */
+void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
+	
+	for(long i=0;i<global->pix_nn;i++) 
+		threadInfo->corrected_data[i] *= global->gaincal[i];
+	
 }
 
 
@@ -328,82 +421,6 @@ void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
-/*
- *	Subtract pre-loaded darkcal file
- */
-void useDarkcalSubtraction(tThreadInfo *threadInfo, cGlobal *global){
-
-
-	// Do darkcal subtraction
-	// Watch out for integer wraparound!
-	int32_t diff;
-	for(long i=0;i<global->pix_nn;i++) {
-		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
-		if(diff < -32766) diff = -32767;
-		if(diff > 32766) diff = 32767;
-		threadInfo->corrected_data[i] = (int16_t) diff;
-	}
-	
-}
-
-
-
-/*
- *	Subtract self generated darkcal file
- */
-void subtractuseSelfDarkcal(tThreadInfo *threadInfo, cGlobal *global){
-	
-	float	top = 0;
-	float	s1 = 0;
-	float	s2 = 0;
-	float	v1, v2;
-	float	factor;
-	float	gmd;
-
-	
-	// Add current (uncorrected) image to self darkcal
-	pthread_mutex_lock(&global->selfdark_mutex);
-	for(long i=0;i<global->pix_nn;i++){
-		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
-	}
-	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
-	global->avgGMD = ( gmd + (global->selfDarkMemory-1)*global->avgGMD) / global->selfDarkMemory;
-	pthread_mutex_unlock(&global->selfdark_mutex);
-
-	
-	// Find appropriate scaling factor 
-	if(global->scaleDarkcal) {
-		for(long i=0;i<global->pix_nn;i++){
-			//v1 = pow(global->selfdark[i], 0.25);
-			//v2 = pow(threadInfo->corrected_data[i], 0.25);
-			v1 = global->selfdark[i];
-			v2 = threadInfo->corrected_data[i];
-			if(v2 > global->hitfinderADC)
-				continue;
-			
-			// Simple inner product gives cos(theta), which is always less than zero
-			// Want ( (a.b)/|b| ) * (b/|b|)
-			top += v1*v2;
-			s1 += v1*v1;
-			s2 += v2*v2;
-		}
-		factor = top/s1;
-	}
-	else 
-		factor=1;
-	
-	
-	// Do the weighted subtraction
-	// Watch out for integer wraparound!
-	int32_t diff;
-	for(long i=0;i<global->pix_nn;i++) {
-		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t)(factor*global->selfdark[i]);	
-		if(diff < -32766) diff = -32767;
-		if(diff > 32766) diff = 32767;
-		threadInfo->corrected_data[i] = (int16_t) diff;
-	}
-			
-}
 
 
 

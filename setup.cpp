@@ -64,7 +64,7 @@ void cGlobal::defaultConfiguration(void) {
 	invertGain = 0;
 	
 	// Subtraction of running background (persistent photon background) 
-	useSelfDarkcal = 0;
+	useSubtractPersistentBackground = 0;
 	subtractBg = 0;
 	selfDarkMemory = 50;
 	startFrames = 0;
@@ -88,7 +88,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderUsePeakmask = 0;
 	strcpy(peaksearchFile, "peakmask.h5");
 
-	// Powder paattern generation
+	// Powder pattern generation
 	powdersum = 1;
 	powderthresh = 0;
 	
@@ -158,7 +158,7 @@ void cGlobal::setup() {
 		cmSubModule = 0;
 		subtractBg = 0;
 		useDarkcalSubtraction = 0;
-		useSelfDarkcal = 0;
+		useSubtractPersistentBackground = 0;
 		hitfinder = 0;
 		savehits = 0;
 		hdf5dump = 0;
@@ -353,7 +353,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		useAutoHotpixel = atoi(value);
 	}
 	else if (!strcmp(tag, "useselfdarkcal")) {
-		useSelfDarkcal = atoi(value);
+		useSubtractPersistentBackground = atoi(value);
 	}
 	
 
