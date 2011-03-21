@@ -95,6 +95,13 @@ void *worker(void *threadarg) {
 		applyGainCorrection(threadInfo, global);
 	}
 
+	/*
+	 *	Apply bad pixel map
+	 */
+	if(global->useBadPixelMask) {
+		applyBadPixelMask(threadInfo, global);
+	} 
+	
 	
 	/*
 	 *	Subtract running photon background
@@ -276,6 +283,18 @@ void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
 	
 	for(long i=0;i<global->pix_nn;i++) 
 		threadInfo->corrected_data[i] *= global->gaincal[i];
+	
+}
+
+
+/*
+ *	Apply bad pixel mask
+ *	Assumes that all we have to do here is a multiplication.
+ */
+void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global){
+	
+	for(long i=0;i<global->pix_nn;i++) 
+		threadInfo->corrected_data[i] *= global->badpixelmask[i];
 	
 }
 
