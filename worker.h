@@ -109,7 +109,7 @@ void cmModuleSubtract(tThreadInfo*, cGlobal*);
 void cmSubModuleSubtract(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
 void applyGainCorrection(tThreadInfo*, cGlobal*);
-void subtractSelfDarkcal(tThreadInfo*, cGlobal*);
+void subtractPersistentBackground(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*);

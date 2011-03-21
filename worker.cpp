@@ -92,7 +92,7 @@ void *worker(void *threadarg) {
 	 *	Apply gain correction
 	 */
 	if(global->useGaincal) {
-		applyGainCalibration(threadInfo, global);
+		applyGainCorrection(threadInfo, global);
 	}
 
 	
@@ -226,15 +226,15 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
 	// Add current (uncorrected) image to self darkcal
 	pthread_mutex_lock(&global->selfdark_mutex);
 	for(long i=0;i<global->pix_nn;i++){
-		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->selfDarkMemory-1)*global->selfdark[i]) / global->selfDarkMemory;
+		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
 	}
 	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
-	global->avgGMD = ( gmd + (global->selfDarkMemory-1)*global->avgGMD) / global->selfDarkMemory;
+	global->avgGMD = ( gmd + (global->bgMemory-1)*global->avgGMD) / global->bgMemory;
 	pthread_mutex_unlock(&global->selfdark_mutex);
 	
 	
 	// Find appropriate scaling factor 
-	if(global->scaleDarkcal) {
+	if(global->scaleBackground) {
 		for(long i=0;i<global->pix_nn;i++){
 			//v1 = pow(global->selfdark[i], 0.25);
 			//v2 = pow(threadInfo->corrected_data[i], 0.25);

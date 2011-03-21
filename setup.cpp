@@ -66,9 +66,9 @@ void cGlobal::defaultConfiguration(void) {
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
 	subtractBg = 0;
-	selfDarkMemory = 50;
+	bgMemory = 50;
 	startFrames = 0;
-	scaleDarkcal = 0;
+	scaleBackground = 0;
 	
 	// Kill persistently hot pixels
 	useAutoHotpixel = 1;
@@ -355,6 +355,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "useselfdarkcal")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
+	else if (!strcmp(tag, "subtractpersistentbackground")) {
+		useSubtractPersistentBackground = atoi(value);
+	}
 	
 
 	// Power user settings
@@ -410,10 +413,16 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderUsePeakmask = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
-		selfDarkMemory = atof(value);
+		bgMemory = atof(value);
 	}
-	else if (!strcmp(tag, "scaledarkcal")) {
-		scaleDarkcal = atoi(value);
+	else if (!strcmp(tag, "bgmemory")) {
+		bgMemory = atof(value);
+	}
+	else if (!strcmp(tag, "scaleBackground")) {
+		scaleBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "scaleDarkcal")) {
+		scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);

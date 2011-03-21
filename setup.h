@@ -48,8 +48,8 @@ public:
 	// Running background subtraction
 	int			useSubtractPersistentBackground;
 	int			subtractBg;
-	int			scaleDarkcal;
-	float		selfDarkMemory;
+	int			scaleBackground;
+	float		bgMemory;
 	
 	// Kill persistently hot pixels
 	int			useAutoHotpixel;
