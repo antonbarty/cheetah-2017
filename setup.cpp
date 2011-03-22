@@ -881,6 +881,61 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Number of hits: %i\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average data rate: %2.2f fps\n",fps);
+	
+	fprintf(fp, "\nIni parameters:\n\n");
+        
+	fprintf(fp, "nthreads=%d\n",nThreads);
+        fprintf(fp, "geometry=%s\n",geometryFile);
+        fprintf(fp, "darkcal=%s\n",darkcalFile);
+        fprintf(fp, "gaincal=%s\n",gaincalFile);
+        fprintf(fp, "peakmask=%s\n",peaksearchFile);
+        fprintf(fp, "badpixelmask=%s\n",badpixelFile);
+	
+	fprintf(fp, "\n#Processing options\n\n");
+	
+	fprintf(fp, "subtractcmmodule=%d\n",cmModule);
+	fprintf(fp, "cmmodule=%d\n",cmModule);
+	fprintf(fp, "usegaincal=%d\n",useGaincal);
+	fprintf(fp, "invertgain=%d\n",invertGain);
+	fprintf(fp, "subtractcmsubmodule=%d\n",cmSubModule);
+	fprintf(fp, "generatedarkcal=%d\n",generateDarkcal);
+	fprintf(fp, "subtractbg=%d\n",subtractBg);
+	fprintf(fp, "usebadpixelmask=%d\n",useBadPixelMask);
+	fprintf(fp, "usedarkcalsubtraction=%d\n",useDarkcalSubtraction);
+	fprintf(fp, "hitfinder=%d\n",hitfinder);
+	fprintf(fp, "savehits=%d\n",savehits);
+	fprintf(fp, "powdersum=%d\n",powdersum);
+	fprintf(fp, "saveraw=%d\n",saveRaw);
+	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
+	fprintf(fp, "saveinterval=%d\n",saveInterval);
+	fprintf(fp, "useautohotpixel=%d\n",useAutoHotpixel);
+	fprintf(fp, "useselfdarkcal=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "subtractpersistentbackground=%d\n",useSubtractPersistentBackground);
+	
+	fprintf(fp, "\n#Power user settings\n\n");
+	
+	fprintf(fp, "cmfloor=%f\n",cmFloor);
+	fprintf(fp, "pixelsize=%f\n",pixelSize);
+	fprintf(fp, "debuglevel=%d\n",debugLevel);
+	fprintf(fp, "hotpixfreq=%f\n",hotpixFreq);
+	fprintf(fp, "hotpixadc=%d\n",hotpixADC);
+	fprintf(fp, "hotpixmemory=%d\n",hotpixMemory);
+	fprintf(fp, "powderthresh=%d\n",powderthresh);
+	fprintf(fp, "hitfinderadc=%d\n",hitfinderADC);
+	fprintf(fp, "hitfindernat=%d\n",hitfinderNAT);
+	fprintf(fp, "hitfindercluster=%d\n",hitfinderCluster);
+	fprintf(fp, "hitfindernpeaks=%d\n",hitfinderNpeaks);
+	fprintf(fp, "hitfindernpeaksmax=%d\n",hitfinderNpeaksMax);
+	fprintf(fp, "hitfinderalgorithm=%d\n",hitfinderAlgorithm);
+	fprintf(fp, "hitfinderminpixcount=%d\n",hitfinderMinPixCount);
+	fprintf(fp, "hitfindermaxpixcount=%d\n",hitfinderMaxPixCount);
+	fprintf(fp, "hitfinderusepeakmask=%d\n",hitfinderUsePeakmask);
+	fprintf(fp, "selfdarkmemory=%f\n",bgMemory);
+	fprintf(fp, "bgmemory=%f\n",bgMemory);
+	fprintf(fp, "scaleBackground=%d\n",scaleBackground);
+	fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
+	fprintf(fp, "startframes=%d\n",startFrames);
+	
 
 	fclose (fp);
 
