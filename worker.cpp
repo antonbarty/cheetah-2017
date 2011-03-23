@@ -157,7 +157,7 @@ void *worker(void *threadarg) {
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
-	if(global->hdf5dump) 
+	if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))
 		writeHDF5(threadInfo, global);
 	else if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
