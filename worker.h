@@ -31,6 +31,9 @@ typedef struct {
 	int16_t		*image;
 	int			nPeaks;
 	int			nHot;
+	float * com_x;  // peak center of mass x
+	float * com_y;  // peak center of mass y
+	float * int_intensity; // integrated peak intensities
 	
 	
 	// Beamline data, etc

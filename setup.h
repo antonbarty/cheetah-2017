@@ -70,6 +70,7 @@ public:
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	char		peaksearchFile[1024];
+	int			savePeakInfo;
 	
 	// Powder pattern generation
 	int			powdersum;

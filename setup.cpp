@@ -87,6 +87,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
 	strcpy(peaksearchFile, "peakmask.h5");
+	savePeakInfo = 1;
 
 	// Powder pattern generation
 	powdersum = 1;
@@ -336,6 +337,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savehits")) {
 		savehits = atoi(value);
+	}
+	else if (!strcmp(tag, "savepeakinfo")) {
+		savePeakInfo = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		powdersum = atoi(value);
@@ -903,6 +907,7 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "usebadpixelmask=%d\n",useBadPixelMask);
 	fprintf(fp, "usedarkcalsubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
+	fprintf(fp, "savepeakinfo=%d\n",savePeakInfo);
 	fprintf(fp, "savehits=%d\n",savehits);
 	fprintf(fp, "powdersum=%d\n",powdersum);
 	fprintf(fp, "saveraw=%d\n",saveRaw);
