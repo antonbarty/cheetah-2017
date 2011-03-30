@@ -151,8 +151,7 @@ void *worker(void *threadarg) {
 	 *	Maintain a running sum of data
 	 */
 	addToPowder(threadInfo, global);
-	
-	
+		
 	
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
@@ -617,10 +616,13 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								// Peak or junk?
 								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
 									
-									threadInfo->int_intensity[counter] = totI;
-									threadInfo->com_x[counter] = com_x/totI;
-									threadInfo->com_y[counter] = com_y/totI;
 									counter ++;
+									
+									if ( counter > global->hitfinderNpeaksMax ) continue;
+									
+									threadInfo->int_intensity[counter-1] = totI;
+									threadInfo->com_x[counter-1] = com_x/totI;
+									threadInfo->com_y[counter-1] = com_y/totI;
 
 								}
 							}
@@ -940,6 +942,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
    }
 
    if(global->savePeakInfo && global->hitfinder) {
+
       size[0] = info->nPeaks; // size[0] = height
       size[1] = 3;   // size[1] = width
       max_size[0] = info->nPeaks;
