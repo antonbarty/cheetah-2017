@@ -190,6 +190,9 @@ void *worker(void *threadarg) {
 	free(threadInfo->corrected_data);
 	free(threadInfo->image);
 	free(threadInfo);
+	free(threadInfo->com_x);
+	free(threadInfo->com_y);
+	free(threadInfo->int_intensity);
 
 	// Exit thread
 	pthread_exit(NULL);
