@@ -458,7 +458,7 @@ void event() {
 	
 	// Periodically pause and let all threads finish
 	// On cfelsgi we seem to get mutex-lockup on some threads if we don't do this
-	if( global.threadPurge && (global.nprocessedframes%global.threadPurge) ){
+	if( global.threadPurge && (global.nprocessedframes%global.threadPurge)==0 ){
 		while(global.nActiveThreads > 0) {
 			printf("Pausing to let remaining %i worker threads to terminate\n", global.nActiveThreads);
 			usleep(100000);
