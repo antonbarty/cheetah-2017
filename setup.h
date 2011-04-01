@@ -105,6 +105,7 @@ public:
 	long			nThreads;
 	long			nActiveThreads;
 	long			threadCounter;
+	long			threadPurge;
 	pthread_t		*threadID;
 	pthread_mutex_t	nActiveThreads_mutex;
 	pthread_mutex_t	hotpixel_mutex;

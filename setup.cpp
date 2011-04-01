@@ -104,6 +104,7 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Default to only a few threads
 	nThreads = 16;
+	threadPurge = 10000;
 	
 	// Log files
 	strcpy(logfile, "log.txt");

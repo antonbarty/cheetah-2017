@@ -453,9 +453,19 @@ void event() {
 	pthread_t		thread;
 	pthread_attr_t	threadAttribute;
 	int				returnStatus;
-	
 
-	// Avoid fork-bombing the system: wait until we have a spare thread in the thread pool
+	
+	
+	// Periodically pause and let all threads finish
+	// On cfelsgi we seem to get mutex-lockup on some threads if we don't do this
+	if( global.threadPurge && (global.nprocessedframes%global.threadPurge) ){
+		while(global.nActiveThreads > 0) {
+			printf("Pausing to let remaining %i worker threads to terminate\n", global.nActiveThreads);
+			usleep(100000);
+		}
+	}
+
+	// Wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
 		usleep(1000);
 	}
