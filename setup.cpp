@@ -290,6 +290,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
+	if (!strcmp(tag, "threadpurge")) {
+		threadPurge = atoi(value);
+	}
 	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
