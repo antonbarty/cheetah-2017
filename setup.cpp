@@ -290,7 +290,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
-	if (!strcmp(tag, "threadpurge")) {
+	else if (!strcmp(tag, "threadpurge")) {
 		threadPurge = atoi(value);
 	}
 	else if (!strcmp(tag, "geometry")) {
@@ -426,10 +426,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "bgmemory")) {
 		bgMemory = atof(value);
 	}
-	else if (!strcmp(tag, "scaleBackground")) {
+	else if (!strcmp(tag, "scalebackground")) {
 		scaleBackground = atoi(value);
 	}
-	else if (!strcmp(tag, "scaleDarkcal")) {
+	else if (!strcmp(tag, "scaledarkcal")) {
 		scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "startframes")) {
