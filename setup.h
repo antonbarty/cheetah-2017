@@ -127,6 +127,7 @@ public:
 	unsigned		module_rows;
 	unsigned		module_cols;
 	long			image_nx;
+	long			image_ny;
 	long			image_nn;
 	
 	

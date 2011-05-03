@@ -728,7 +728,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	for(long i=0;i<global->pix_nn;i++){
 		// Pixel location with (0,0) at array element (0,0) in bottom left corner
 		x = global->pix_x[i] + global->image_nx/2;
-		y = global->pix_y[i] + global->image_nx/2;
+		y = global->pix_y[i] + global->image_ny/2;
 		pixel_value = threadInfo->corrected_data[i];
 		
 		// Split coordinate into integer and fractional parts
@@ -739,28 +739,28 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 		
 		// Interpolate intensity over adjacent 4 pixels using fractional overlap as the weighting factor
 		// (0,0)
-		if(ix>=0 && iy>=0 && ix<global->image_nx && iy<global->image_nx) {
+		if(ix>=0 && iy>=0 && ix<global->image_nx && iy<global->image_ny) {
 			w = (1-fx)*(1-fy);
 			image_index = ix + global->image_nx*iy;
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (+1,0)
-		if((ix+1)>=0 && iy>=0 && (ix+1)<global->image_nx && iy<global->image_nx) {
+		if((ix+1)>=0 && iy>=0 && (ix+1)<global->image_nx && iy<global->image_ny) {
 			w = (fx)*(1-fy);
 			image_index = (ix+1) + global->image_nx*iy;
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (0,+1)
-		if(ix>=0 && (iy+1)>=0 && ix<global->image_nx && (iy+1)<global->image_nx) {
+		if(ix>=0 && (iy+1)>=0 && ix<global->image_nx && (iy+1)<global->image_ny) {
 			w = (1-fx)*(fy);
 			image_index = ix + global->image_nx*(iy+1);
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (+1,+1)
-		if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<global->image_nx && (iy+1)<global->image_nx) {
+		if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<global->image_nx && (iy+1)<global->image_ny) {
 			w = (fx)*(fy);
 			image_index = (ix+1) + global->image_nx*(iy+1);
 			data[image_index] += w*pixel_value;
@@ -873,9 +873,9 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 	
 	// Assembled image
-	size[0] = global->image_nx;	// size[0] = height
+	size[0] = global->image_ny;	// size[0] = height
 	size[1] = global->image_nx;	// size[1] = width
-	max_size[0] = global->image_nx;
+	max_size[0] = global->image_ny;
 	max_size[1] = global->image_nx;
 	dataspace_id = H5Screate_simple(2, size, max_size);
 	dataset_id = H5Dcreate(gid, "data", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -1216,7 +1216,7 @@ void saveRunningSums(cGlobal *global) {
 			buffer2[i] = (float) global->powderAssembled[i];
 		}
 		pthread_mutex_unlock(&global->powdersum2_mutex);
-		writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
+		writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_ny, H5T_NATIVE_FLOAT);	
 		free(buffer2);
 		
 		

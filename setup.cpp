@@ -552,13 +552,10 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 	
 	// How big must the output image be?
-	float max = xmax;
-	if(ymax > max) max = ymax;
-	if(fabs(xmin) > max) max = fabs(xmin);
-	if(fabs(ymin) > max) max = fabs(ymin);
-	image_nx = 2*(unsigned)max;
-	image_nn = image_nx*image_nx;
-	printf("\tImage output array will be %i x %i\n",image_nx,image_nx);
+  image_nx = xmax-xmin+1;
+  image_ny = ymax-ymin+1;
+  image_nn = image_nx*image_ny;
+	printf("\tImage output array will be %i x %i\n",image_nx,image_ny);
 	
 }
 
