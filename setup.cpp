@@ -541,6 +541,18 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	//ymax = ceil(ymax);
 	//ymin = floor(ymin);
 
+
+  // shift origin to bottom left corner:
+  for(long ii=0;ii<nn;++ii){
+    pix_x[ii]-=xmin;
+    pix_y[ii]-=ymin;
+  }
+  xmax-=xmin;
+  xmin=0;
+  ymax-=ymin;
+  ymin=0;
+
+
 	fesetround(1);
 	xmax = lrint(xmax);
 	xmin = lrint(xmin);

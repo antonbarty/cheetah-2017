@@ -727,8 +727,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 
 	for(long i=0;i<global->pix_nn;i++){
 		// Pixel location with (0,0) at array element (0,0) in bottom left corner
-		x = global->pix_x[i] + global->image_nx/2;
-		y = global->pix_y[i] + global->image_ny/2;
+		x = global->pix_x[i];
+		y = global->pix_y[i];
 		pixel_value = threadInfo->corrected_data[i];
 		
 		// Split coordinate into integer and fractional parts
