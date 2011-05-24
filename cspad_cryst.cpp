@@ -467,7 +467,7 @@ void event() {
 
 	// Wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
-		usleep(1000);
+		usleep(100);
 	}
 
 

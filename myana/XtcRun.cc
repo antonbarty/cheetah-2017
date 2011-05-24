@@ -57,9 +57,10 @@ Result XtcSlice::next(Pds::Dgram* dg)
     }
 
   //  Read and fill the payload
-  Result r = _read(dg->xtc.payload(), dg->xtc.sizeofPayload(), false);
+  //Result r = _read(dg->xtc.payload(), dg->xtc.sizeofPayload(), false);
+  Result r = _read(dg->xtc.payload(), dg->xtc.sizeofPayload(), true);
   if (r != OK) {
-    printf("Unexpected eof in %s\n",_current->data());
+    printf("XtcSlice::next(): Unexpected eof in %s\n",_current->data());
     return r;
   }
 
@@ -97,7 +98,7 @@ bool XtcSlice::_open()
 Result XtcSlice::_next()
 {
   if (_hdr.seq.service()==Pds::TransitionId::EndRun) {
-    //      printf("Reached eor in %s\n",_current->data());
+          printf("Reached EndRun in %s\n",_current->data());
     ::close(_fd); _fd = 0;
     return End;
   }
@@ -106,7 +107,7 @@ Result XtcSlice::_next()
   Result r = _read(&_hdr, sizeof(Pds::Dgram), true);
   if (r != OK) {
     if (!_live) {
-      printf("Unexpected eof in %s\n",_current->data());
+      printf("XtcSlice::_next(): Unexpected eof in %s\n",_current->data());
       ::close(_fd); _fd = 0;
       if (++_current == _chunks.end()) 
         return End;
