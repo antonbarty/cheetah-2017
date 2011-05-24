@@ -94,7 +94,7 @@ static bool beamOn()
 // This function is called once at the beginning of the analysis job,
 // You can ask for detector "configuration" information here.
 void beginjob() {
-	printf("beginjob()\n");
+	printf("User analysis beginjob() routine called.\n");
 	
 	/*
 	 * Get time information
@@ -162,7 +162,7 @@ void fetchConfig()
  */
 void beginrun() 
 {
-	//printf("beginrun\n");
+	printf("User analysis beginrun() routine called.\n");
 	printf("Processing r%04u\n",getRunNumber());
 	fetchConfig();
 	corrector->loadConstants(getRunNumber());
@@ -176,8 +176,8 @@ void beginrun()
  */
 void begincalib()
 {
+	printf("User analysis begincalib() routine called.\n");
 	fetchConfig();
-	printf("begincalib\n");
 }
 
 
@@ -239,7 +239,7 @@ void event() {
 	
 
 	/*
-	 * Get time information
+	 * Get event time information
 	 */
 	int seconds, nanoSeconds;
 	const char* timestring;
@@ -248,7 +248,7 @@ void event() {
 	//printf("%s\n",timestring);
 
 	/*
-	 *	Get fiducials
+	 *	Get event fiducials
 	 */
 	fail = getFiducials(fiducial);
 
@@ -511,7 +511,7 @@ void event() {
  *	Stuff that happens at the end
  */
 void endcalib() {
-	printf("endcalib()\n");
+	printf("User analysis endcalib() routine called.\n");
 }
 
 void endrun() 
