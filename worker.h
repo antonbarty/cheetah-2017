@@ -114,6 +114,8 @@ void subtractDarkcal(tThreadInfo*, cGlobal*);
 void applyGainCorrection(tThreadInfo*, cGlobal*);
 void applyBadPixelMask(tThreadInfo*, cGlobal*);
 void subtractPersistentBackground(tThreadInfo*, cGlobal*);
+void calculatePersistentBackground(float*, int16_t*);
+void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*);
@@ -122,6 +124,7 @@ void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void saveRunningSums(cGlobal*);
+int16_t kth_smallest(int16_t*, long, long);
 
 
 

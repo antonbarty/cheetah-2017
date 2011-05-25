@@ -69,6 +69,12 @@ void cGlobal::defaultConfiguration(void) {
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
+	bgMedian = 0.5;
+	bgRecalc = bgMemory;
+	bgIncludeHits = 0;
+	bgNoBeamReset = 0;
+	bgFiducialGlitchReset = 0;
+	
 	
 	// Kill persistently hot pixels
 	useAutoHotpixel = 1;
@@ -125,6 +131,7 @@ void cGlobal::setup() {
 	 */
 	hotpixelmask = (float*) calloc(pix_nn, sizeof(float));
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
+	bg_buffer = (int16_t) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	powderRaw = (int64_t*) calloc(pix_nn, sizeof(int64_t));
 	powderAssembled = (int64_t*) calloc(image_nn, sizeof(int64_t));
 	for(long i=0; i<pix_nn; i++) {
@@ -145,6 +152,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
+	pthread_mutex_init(&bgbuffer_mutex, NULL);
 	pthread_mutex_init(&powdersum1_mutex, NULL);
 	pthread_mutex_init(&powdersum2_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
@@ -183,6 +191,8 @@ void cGlobal::setup() {
 	runNumber = getRunNumber();
 	time(&tstart);
 	avgGMD = 0;
+	bgCounter = 0;
+	last_bg_update = 0;
 
 	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);
@@ -420,12 +430,29 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
 	}
+
+	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		bgMemory = atof(value);
 	}
 	else if (!strcmp(tag, "bgmemory")) {
-		bgMemory = atof(value);
+		bgMemory = atoi(value);
 	}
+	else if (!strcmp(tag, "bgrecalc")) {
+		bgRecalc = atoi(value);
+	}
+	else if (!strcmp(tag, "bgmedian")) {
+		bgMedian = atoi(value);
+	}
+	else if (!strcmp(tag, "bgincludehits")) {
+		bgIncludeHits = atoi(value);
+	}
+	else if (!strcmp(tag, "bgnobeamreset")) {
+		bgNoBeamReset = atoi(value);
+	}
+	else if (!strcmp(tag, "bgfiducialglitchreset")) {
+		bgFiducialGlitchReset = atoi(value);
+	}	
 	else if (!strcmp(tag, "scalebackground")) {
 		scaleBackground = atoi(value);
 	}

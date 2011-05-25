@@ -49,7 +49,15 @@ public:
 	int			useSubtractPersistentBackground;
 	int			subtractBg;
 	int			scaleBackground;
-	float		bgMemory;
+	float		bgMedian;
+	long		bgMemory;
+	long		bgRecalc;
+	long		bgCounter;
+	long		last_bg_update;
+	int			bgIncludeHits;
+	int			bgNoBeamReset;
+	int			bgFiducialGlitchReset;
+	
 	
 	// Kill persistently hot pixels
 	int			useAutoHotpixel;
@@ -110,6 +118,7 @@ public:
 	pthread_mutex_t	nActiveThreads_mutex;
 	pthread_mutex_t	hotpixel_mutex;
 	pthread_mutex_t	selfdark_mutex;
+	pthread_mutex_t	bgbuffer_mutex;
 	pthread_mutex_t	powdersum1_mutex;
 	pthread_mutex_t	powdersum2_mutex;
 	pthread_mutex_t	nhits_mutex;
@@ -130,12 +139,15 @@ public:
 	long			image_nn;
 	
 	
-	// Common variables
+	/*
+	 *	Common variables
+	 */
 	int32_t			*darkcal;
 	int64_t			*powderRaw;
 	int64_t			*powderAssembled;
 	int16_t			*peakmask;
 	int16_t			*badpixelmask;
+	int16_t			*bg_buffer;
 	float			*hotpixelmask;
 	float			*selfdark;
 	float			*gaincal;

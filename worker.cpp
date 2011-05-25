@@ -58,9 +58,16 @@ void *worker(void *threadarg) {
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
+	
+	/*
+	 *	Create additional arrays for corrected data, etc
+	 */
 	threadInfo->corrected_data = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
+	
+	threadInfo->image = NULL;
+
 	
 	
 	/*
@@ -104,6 +111,24 @@ void *worker(void *threadarg) {
 	
 	
 	/*
+	 *	Skip first set of frames to build up running estimate of background...
+	 */
+	if (global->bgCounter < global->bgMemory || threadInfo->threadNum < global->startFrames) {
+		updateBackgroundBuffer(threadInfo, global); 
+		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
+		goto cleanup;
+	}
+	
+	
+	/*
+	 *	Periodic recalculation of photon background
+	 */
+	if( global->bgCounter != global->last_bg_update && ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) ) {
+		calculatePersistentBackground(bg0, global->bg_buffer);
+	}
+	
+	
+	/*
 	 *	Subtract running photon background
 	 */
 	if(global->useSubtractPersistentBackground) {
@@ -131,13 +156,11 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Are we still in 'frame digesting' mode?
+	 *	Update running backround estimate
 	 */
-	if(threadInfo->threadNum < global->startFrames) {
-		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
-		threadInfo->image = NULL;
-		goto cleanup;
-	}
+	if (hit==0 || global->bgIncludeHits) {
+		updateBackgroundBuffer(threadInfo, global); 
+	}		
 
 	
 	/*
@@ -164,6 +187,8 @@ void *worker(void *threadarg) {
 		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
 	
+	
+	
 
 	/*
 	 *	Write out information on each frame to a log file
@@ -189,10 +214,10 @@ void *worker(void *threadarg) {
 	free(threadInfo->raw_data);
 	free(threadInfo->corrected_data);
 	free(threadInfo->image);
-	free(threadInfo);
 	free(threadInfo->com_x);
 	free(threadInfo->com_y);
 	free(threadInfo->int_intensity);
+	free(threadInfo);
 
 	// Exit thread
 	pthread_exit(NULL);
@@ -220,6 +245,93 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 
 
 /*
+ *	Find kth smallest element of a data array
+ *	Algorithm from Wirth "Algorithms + data structures = programs" 
+ *	Englewood Cliffs: Prentice-Hall, 1976, p. 366
+ *	See: http://ndevilla.free.fr/median/median.pdf
+ */
+#define SWAP(a,b) { int16_t t=(a);(a)=(b);(b)=t; }
+int16_t kth_smallest(int16_t *a, long n, long k) {
+	register long i,j,l,m;
+	register int16_t x;
+	l=0; 
+	m=n-1; 
+	while (l<m) {
+		x=a[k]; 
+		i=l; 
+		j=m; 
+		do {
+			while (a[i]<x) i++ ;
+			while (x<a[j]) j-- ;
+			if (i<=j) {
+				SWAP(a[i],a[j]); 
+				i++; 
+				j--;
+			} 
+		} while (i<=j);
+		if (j<k) l=i; 
+		if (k<i) m=j ;
+	} 			
+	return a[k] ;
+}
+#undef SWAP
+
+
+/*
+ *	Calculate median background from stack of remembered frames
+ */
+void calculatePersistentBackground(cGlobal *global) {
+
+
+	long	median_element = (long)((float)global->bgMemory*global->bgMedian);
+	int16_t	*buffer = (int16_t*) calloc(global->bgMemory, sizeof(int16_t));
+	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->bgMemory);	
+	
+	// Lock the global variables
+	pthread_mutex_lock(&global->bgbuffer_mutex);
+	pthread_mutex_lock(&global->selfdark_mutex);
+
+	// Loop over all pixels 
+	for(long i=0; i<global->pix_nn; i++) {
+		
+		// Create a local array for sorting
+		for(long j=0; j< global->bgMemory; j++) {
+			buffer[j] = global->bg_buffer[j*global->pix_nn+i];
+		}
+		
+		// Find median value of the temporary array
+		global->selfdark[i] = kth_smallest(buffer, global->bgMemory, median_element);
+	}
+	
+	global->last_bg_update = global->bgCounter;
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
+	pthread_mutex_unlock(&global->selfdark_mutex);
+
+	free (buffer);
+}
+
+
+
+/*
+ *	Update background buffer
+ */
+void updateBackgroundBuffer(cGlobal *global) {
+	
+	pthread_mutex_lock(&global->bgbuffer_mutex);
+	long frameID = global->bgCounter%global->bgMemory;	
+	
+	//memcpy(bg_buffer+pix_nn*frameID, threadInfo->corrected_data, pix_nn*sizeof(int16_t));
+	for(long i=0;i<global->pix_nn;i++)
+		global->bg_buffer[global->pix_nn*frameID + i] = (int16_t) threadInfo->corrected_data[i];
+	
+	global->bgCounter += 1;
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
+	
+}
+
+
+
+/*
  *	Subtract self generated darkcal file
  */
 void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
@@ -234,9 +346,9 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	// Add current (uncorrected) image to self darkcal
 	pthread_mutex_lock(&global->selfdark_mutex);
-	for(long i=0;i<global->pix_nn;i++){
-		global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
-	}
+	//for(long i=0;i<global->pix_nn;i++){
+	//	global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
+	//}
 	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
 	global->avgGMD = ( gmd + (global->bgMemory-1)*global->avgGMD) / global->bgMemory;
 	pthread_mutex_unlock(&global->selfdark_mutex);

@@ -232,7 +232,8 @@ void event() {
 		//datarate = 1/(1e6*dt_us);
 		gettimeofday(&global.lasttime, NULL);
 		global.lastclock = clock();
-		global.datarate = (datarate+9*global.datarate)/10.;
+		//global.datarate = (datarate+9*global.datarate)/10.;
+		global.datarate = datarate;
 	}
 	
 	
@@ -547,11 +548,14 @@ void endjob()
 	free(global.selfdark);
 	free(global.gaincal);
 	free(global.peakmask);
+	free(global.bg_buffer);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);
 	pthread_mutex_destroy(&global.selfdark_mutex);
 	pthread_mutex_destroy(&global.hotpixel_mutex);
+	pthread_mutex_destroy(&global.bgbuffer_mutex);
+	
 
 	
 	
