@@ -23,7 +23,7 @@ HDF5DIR 		= /cfel/common
 ROOTSYS			= /reg/g/pcds/package/root
 OBJFILES		= main.o XtcRun.o
 
-CPP				= g++ -c -g
+CPP				= g++ -c -g -O3
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
 CFLAGS			= -Irelease -I$(HDF5DIR)/include
