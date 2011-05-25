@@ -27,7 +27,8 @@ typedef struct {
 	float		quad_temperature[4];
 	uint16_t	*quad_data[4];
 	uint16_t	*raw_data;
-	int16_t		*corrected_data;
+	float		*corrected_data;
+	int16_t		*corrected_data_int16;
 	int16_t		*image;
 	int			nPeaks;
 	int			nHot;

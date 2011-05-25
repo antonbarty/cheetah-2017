@@ -62,11 +62,11 @@ void *worker(void *threadarg) {
 	/*
 	 *	Create additional arrays for corrected data, etc
 	 */
-	threadInfo->corrected_data = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
+	threadInfo->corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
+	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
+	threadInfo->image = NULL;
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
-	
-	threadInfo->image = NULL;
 
 	
 	
@@ -111,18 +111,19 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Skip first set of frames to build up running estimate of background...
+	 *	Keep track of running background estimates
 	 */
-	if (global->bgCounter < global->bgMemory || threadInfo->threadNum < global->startFrames) {
+	// Keep memory of non-background-subtracted data (needed for later reference)
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
+	}
+	// Skip first set of frames to build up running estimate of background...
+	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory) {
 		updateBackgroundBuffer(threadInfo, global); 
 		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
 		goto cleanup;
 	}
-	
-	
-	/*
-	 *	Periodic recalculation of photon background
-	 */
+	// Periodic recalculation of photon background
 	if( global->bgCounter != global->last_bg_update && ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) ) {
 		calculatePersistentBackground(bg0, global->bg_buffer);
 	}
@@ -144,7 +145,6 @@ void *worker(void *threadarg) {
 	}
 	
 	
-	
 	/*
 	 *	Hitfinding
 	 */
@@ -152,7 +152,6 @@ void *worker(void *threadarg) {
 	if(global->hitfinder){
 		hit = hitfinder(threadInfo, global);
 	}
-	
 	
 	
 	/*
@@ -213,6 +212,7 @@ void *worker(void *threadarg) {
 		free(threadInfo->quad_data[quadrant]);	
 	free(threadInfo->raw_data);
 	free(threadInfo->corrected_data);
+	free(threadInfo->corrected_data_int16);
 	free(threadInfo->image);
 	free(threadInfo->com_x);
 	free(threadInfo->com_y);
@@ -231,14 +231,19 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Do darkcal subtraction
-	// Watch out for integer wraparound!
-	int32_t diff;
+	for(long i=0;i<global->pix_nn;i++) {
+		threadInfo->corrected_data[i] -= global->darkcal[i]; 
+	}
+
+	// If corrected_data is int16 we need to watch for int16 wraparound
+	/*int32_t diff;
 	for(long i=0;i<global->pix_nn;i++) {
 		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
 		if(diff < -32766) diff = -32767;
 		if(diff > 32766) diff = 32767;
 		threadInfo->corrected_data[i] = (int16_t) diff;
 	}
+	 */
 	
 }
 
@@ -320,9 +325,9 @@ void updateBackgroundBuffer(cGlobal *global) {
 	pthread_mutex_lock(&global->bgbuffer_mutex);
 	long frameID = global->bgCounter%global->bgMemory;	
 	
-	//memcpy(bg_buffer+pix_nn*frameID, threadInfo->corrected_data, pix_nn*sizeof(int16_t));
-	for(long i=0;i<global->pix_nn;i++)
-		global->bg_buffer[global->pix_nn*frameID + i] = (int16_t) threadInfo->corrected_data[i];
+	memcpy(bg_buffer+global->pix_nn*frameID, threadInfo->corrected_data_int16, pix_nn*sizeof(int16_t));
+	//for(long i=0;i<global->pix_nn;i++)
+	//	global->bg_buffer[global->pix_nn*frameID + i] = threadInfo->corrected_data_int16[i];
 	
 	global->bgCounter += 1;
 	pthread_mutex_unlock(&global->bgbuffer_mutex);
@@ -377,14 +382,10 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Do the weighted subtraction
-	// Watch out for integer wraparound!
-	int32_t diff;
 	for(long i=0;i<global->pix_nn;i++) {
-		diff = (int32_t) threadInfo->corrected_data[i] - (int32_t)(factor*global->selfdark[i]);	
-		if(diff < -32766) diff = -32767;
-		if(diff > 32766) diff = 32767;
-		threadInfo->corrected_data[i] = (int16_t) diff;
+		threadInfo->corrected_data[i] -= (factor*global->selfdark[i]);	
 	}	
+
 }
 
 
@@ -573,8 +574,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
 	 */
-	int16_t *temp = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
-	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(int16_t));
+	float *temp = (float*) calloc(global->pix_nn, sizeof(float));
+	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(float));
 	
 	
 	/*
@@ -777,16 +778,20 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long	nhot = 0;
 
+	// Update global hot pixel register
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	for(long i=0;i<global->pix_nn;i++){
 		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0))) / global->hotpixMemory;
+	}
+	pthread_mutex_unlock(&global->hotpixel_mutex);
 
+	// Apply to killing hot pixels
+	for(long i=0;i<global->pix_nn;i++){
 		if(global->hotpixelmask[i] > global->hotpixFreq) {
 			threadInfo->corrected_data[i] = 0;
 			nhot++;
 		}
 	}
-	pthread_mutex_unlock(&global->hotpixel_mutex);
 	threadInfo->nHot = nhot;
 }
 	
@@ -800,7 +805,7 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	global->npowder += 1;
 	for(long i=0; i<global->pix_nn; i++)
-		global->powderRaw[i] += threadInfo->corrected_data[i];
+		global->powderRaw[i] += lrint(threadInfo->corrected_data[i]);
 	pthread_mutex_unlock(&global->powdersum1_mutex);
 
 	
@@ -895,7 +900,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 
 	// Copy interpolated image across into image array
 	for(long i=0;i<global->image_nn;i++){
-			threadInfo->image[i] = (int16_t) data[i];
+			threadInfo->image[i] = (int16_t) lrint(data[i]);
 	}
 	
 	
@@ -924,6 +929,7 @@ void nameEvent(tThreadInfo *info, cGlobal *global){
 	sprintf(info->eventname,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
 }
 	
+
 	
 /*
  *	Write out processed data to our 'standard' HDF5 format
@@ -1020,7 +1026,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			H5Fclose(hdf_fileID);
 			return;
 		}
-		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data);
+		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data_int16);
 		if ( hdf_error < 0 ) {
 			ERROR("%i: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
@@ -1040,8 +1046,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	/*
 	 * save peak info
 	 */
-
-
    gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
    if ( gid < 0 ) {
       ERROR("%i: Couldn't create group\n", info->threadNum);
