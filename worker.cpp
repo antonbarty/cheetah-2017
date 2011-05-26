@@ -291,12 +291,12 @@ int16_t kth_smallest(int16_t *a, long n, long k) {
 void calculatePersistentBackground(cGlobal *global) {
 
 
-	long	median_element = (long)((float)global->bgMemory*global->bgMedian);
+	long	median_element = lrint((global->bgMemory*global->bgMedian));
 	int16_t	*buffer = (int16_t*) calloc(global->bgMemory, sizeof(int16_t));
 	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->bgMemory);	
 	
 	// Lock the global variables
-	pthread_mutex_lock(&global->bgbuffer_mutex);
+	//pthread_mutex_lock(&global->bgbuffer_mutex);
 	pthread_mutex_lock(&global->selfdark_mutex);
 
 	// Loop over all pixels 
@@ -312,7 +312,7 @@ void calculatePersistentBackground(cGlobal *global) {
 	}
 	
 	global->last_bg_update = global->bgCounter;
-	pthread_mutex_unlock(&global->bgbuffer_mutex);
+	//pthread_mutex_unlock(&global->bgbuffer_mutex);
 	pthread_mutex_unlock(&global->selfdark_mutex);
 
 	free (buffer);

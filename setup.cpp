@@ -444,7 +444,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		bgRecalc = atoi(value);
 	}
 	else if (!strcmp(tag, "bgmedian")) {
-		bgMedian = atoi(value);
+		bgMedian = atof(value);
 	}
 	else if (!strcmp(tag, "bgincludehits")) {
 		bgIncludeHits = atoi(value);
@@ -867,11 +867,11 @@ void cGlobal::writeInitialLog(void){
 	// Open a new frame file at the same time
 	pthread_mutex_lock(&framefp_mutex);
 	
-	sprintf(framefile,"r%04u-frames.txt",getRunNumber());
+	sprintf(framefile,"frames.txt");
 	framefp = fopen (framefile,"w");
 	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
 
-	sprintf(cleanedfile,"r%04u-cleaned.txt",getRunNumber());
+	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
 	fprintf(cleanedfp, "# Filename, npeaks\n");
 	
