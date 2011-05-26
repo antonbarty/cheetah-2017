@@ -115,7 +115,7 @@ void subtractDarkcal(tThreadInfo*, cGlobal*);
 void applyGainCorrection(tThreadInfo*, cGlobal*);
 void applyBadPixelMask(tThreadInfo*, cGlobal*);
 void subtractPersistentBackground(tThreadInfo*, cGlobal*);
-void calculatePersistentBackground(float*, int16_t*);
+void calculatePersistentBackground(cGlobal*);
 void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);

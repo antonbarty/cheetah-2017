@@ -133,7 +133,7 @@ void cGlobal::setup() {
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
 	powderRaw = (double*) calloc(pix_nn, sizeof(double));
 	powderAssembled = (double*) calloc(image_nn, sizeof(double));
-	bg_buffer = (int16_t) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	for(long i=0; i<pix_nn; i++) {
 		hotpixelmask[i] = 0;
 		selfdark[i] = 0;
@@ -185,7 +185,6 @@ void cGlobal::setup() {
 	nprocessedframes = 0;
 	nhits = 0;
 	lastclock = clock()-10;
-	gettimeofday(&lasttime, NULL);
 	datarate = 1;
 	detectorZ = 0;
 	runNumber = getRunNumber();
@@ -195,7 +194,7 @@ void cGlobal::setup() {
 	last_bg_update = 0;
 	
 	time(&tlast);
-	tLastFrame=0;
+	lastTimingFrame=0;
 
 	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);

@@ -233,7 +233,7 @@ void event() {
 	
 	if(dtime > 0) {
 		datarate1 = ((float)CLOCKS_PER_SEC)/dt;
-		datarate2 = (frameNumber - global.lastTimingFrame)/dtime 
+		datarate2 = (frameNumber - global.lastTimingFrame)/dtime;
 		global.lastclock = clock();
 		global.lastTimingFrame = frameNumber;
 		time(&global.tlast);

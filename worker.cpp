@@ -42,7 +42,8 @@ void *worker(void *threadarg) {
 	tThreadInfo		*threadInfo;
 	threadInfo = (tThreadInfo*) threadarg;
 	global = threadInfo->pGlobal;
-	
+	int	hit = 0;
+
 	
 	
 	/*
@@ -124,9 +125,12 @@ void *worker(void *threadarg) {
 		goto cleanup;
 	}
 	// Periodic recalculation of photon background
+	pthread_mutex_lock(&global->bgbuffer_mutex);
 	if( global->bgCounter != global->last_bg_update && ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) ) {
-		calculatePersistentBackground(bg0, global->bg_buffer);
+		calculatePersistentBackground(global);
 	}
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
+
 	
 	
 	/*
@@ -148,7 +152,6 @@ void *worker(void *threadarg) {
 	/*
 	 *	Hitfinding
 	 */
-	int	hit = 0;
 	if(global->hitfinder){
 		hit = hitfinder(threadInfo, global);
 	}
@@ -320,12 +323,12 @@ void calculatePersistentBackground(cGlobal *global) {
 /*
  *	Update background buffer
  */
-void updateBackgroundBuffer(cGlobal *global) {
+void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global) {
 	
 	pthread_mutex_lock(&global->bgbuffer_mutex);
 	long frameID = global->bgCounter%global->bgMemory;	
 	
-	memcpy(bg_buffer+global->pix_nn*frameID, threadInfo->corrected_data_int16, pix_nn*sizeof(int16_t));
+	memcpy(global->bg_buffer+global->pix_nn*frameID, threadInfo->corrected_data_int16, global->pix_nn*sizeof(int16_t));
 	//for(long i=0;i<global->pix_nn;i++)
 	//	global->bg_buffer[global->pix_nn*frameID + i] = threadInfo->corrected_data_int16[i];
 	
@@ -445,7 +448,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				for(long j=0; j<COLS; j++){
 					e = (j + mj*COLS) * (8*ROWS);
 					e += i + mi*ROWS;
-					histogram[threadInfo->corrected_data[e]] += 1;
+					histogram[lrint(threadInfo->corrected_data[e])] += 1;
 				}
 			}
 			
@@ -524,7 +527,7 @@ void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 							jj = smj + j + mj*COLS;
 							ii = smi + i + mi*ROWS;
 							e = ii + jj*8*ROWS;
-							histogram[threadInfo->corrected_data[e]] += 1;
+							histogram[lrint(threadInfo->corrected_data[e])] += 1;
 						}
 					}
 					
