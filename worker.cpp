@@ -996,29 +996,30 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 	
 	// Assembled image
-	size[0] = global->image_nx;	// size[0] = height
-	size[1] = global->image_nx;	// size[1] = width
-	max_size[0] = global->image_nx;
-	max_size[1] = global->image_nx;
-	dataspace_id = H5Screate_simple(2, size, max_size);
-	dataset_id = H5Dcreate(gid, "data", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( dataset_id < 0 ) {
-		ERROR("%i: Couldn't create dataset\n", info->threadNum);
-		H5Fclose(hdf_fileID);
-		return;
-	}
-	hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
-	if ( hdf_error < 0 ) {
-		ERROR("%i: Couldn't write data\n", info->threadNum);
-		H5Dclose(dataspace_id);
-		H5Fclose(hdf_fileID);
-		return;
-	}
-	H5Dclose(dataset_id);
-	H5Sclose(dataspace_id);
-	
+	if(global->saveAssembled) {
+		size[0] = global->image_nx;	// size[0] = height
+		size[1] = global->image_nx;	// size[1] = width
+		max_size[0] = global->image_nx;
+		max_size[1] = global->image_nx;
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid, "assembleddata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
+		if ( hdf_error < 0 ) {
+			ERROR("%i: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}	
 
-	// Save raw data?
+	// Save raw data
 	if(global->saveRaw) {
 		size[0] = 8*COLS;	// size[0] = height
 		size[1] = 8*ROWS;	// size[1] = width
@@ -1043,7 +1044,16 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 
 	
-	// Done with this group
+	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
+	if(global->saveAssembled) {
+		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
+	}
+	else {
+		hdf_error = H5Lcreate_soft( "/data/rawdata", hdf_fileID, "/data/data",0,0);
+	}
+	
+	
+	// Done with thie /data group
 	H5Gclose(gid);
 
 

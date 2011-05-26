@@ -101,6 +101,7 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Saving options
 	savehits = 0;
+	saveAssembled = 1;
 	saveRaw = 0;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -177,6 +178,12 @@ void cGlobal::setup() {
 		startFrames = 0;
 		powderthresh = 0;
 	}
+	
+	if(saveRaw==0 && saveAssembled == 0) {
+		saveAssembled = 1;
+	}
+	
+	
 	
 	/*
 	 *	Other stuff
@@ -362,6 +369,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
+	}
+	else if (!strcmp(tag, "saveassembled")) {
+		saveAssembled = atoi(value);
 	}
 	else if (!strcmp(tag, "hdf5dump")) {
 		hdf5dump = atoi(value);

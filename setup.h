@@ -88,6 +88,7 @@ public:
 	// Saving options
 	int			savehits;
 	int			saveRaw;
+	int			saveAssembled;
 	int			hdf5dump;
 	
 	// Verbosity
