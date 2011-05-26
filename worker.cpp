@@ -112,19 +112,15 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Keep track of running background estimates
+	 *	Use all data from the first set of frames to build up running estimate of background...
 	 */
-	// Keep memory of non-background-subtracted data (needed for later reference)
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
-	}
-	// Skip first set of frames to build up running estimate of background...
 	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory) {
 		updateBackgroundBuffer(threadInfo, global); 
-		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
-		goto cleanup;
 	}
-	// Periodic recalculation of photon background
+	
+	/*
+	 *	Recalculate running background from time to time
+	 */
 	pthread_mutex_lock(&global->bgbuffer_mutex);
 	if( global->bgCounter != global->last_bg_update && ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) ) {
 		calculatePersistentBackground(global);
@@ -132,7 +128,14 @@ void *worker(void *threadarg) {
 	pthread_mutex_unlock(&global->bgbuffer_mutex);
 
 	
+	/* 
+	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
+	 */
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
+	}
 	
+
 	/*
 	 *	Subtract running photon background
 	 */
@@ -148,6 +151,14 @@ void *worker(void *threadarg) {
 		killHotpixels(threadInfo, global);
 	}
 	
+
+	/*
+	 *	Skip first set of frames to build up running estimate of background...
+	 */
+	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory) {
+		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
+		goto cleanup;
+	}
 	
 	/*
 	 *	Hitfinding
@@ -158,11 +169,19 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Update running backround estimate
+	 *	Update running backround estimate based on non-hits
 	 */
 	if (hit==0 || global->bgIncludeHits) {
 		updateBackgroundBuffer(threadInfo, global); 
 	}		
+
+	
+	/*
+	 *	Keep copy of (now background subtracted) data in memory (needed for saving images)
+	 */
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
+	}
 
 	
 	/*
@@ -177,6 +196,8 @@ void *worker(void *threadarg) {
 	 */
 	addToPowder(threadInfo, global);
 		
+	
+	
 	
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
@@ -781,10 +802,15 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long	nhot = 0;
 
+	int	*buffer = (int *) calloc(global->pix_nn,sizeof(int));
+	for(long i=0;i<global->pix_nn;i++){
+		buffer[i] = (threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0);
+	}
+	
 	// Update global hot pixel register
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	for(long i=0;i<global->pix_nn;i++){
-		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + ((threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0))) / global->hotpixMemory;
+		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + buffer[i]) / global->hotpixMemory;
 	}
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 
@@ -796,6 +822,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 		}
 	}
 	threadInfo->nHot = nhot;
+	free(buffer);
 }
 	
 
@@ -903,9 +930,18 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	// Allocate memory for output image
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 
-	// Copy interpolated image across into image array
+	// Check for int16 overflow
 	for(long i=0;i<global->image_nn;i++){
-			threadInfo->image[i] = (int16_t) lrint(data[i]);
+		if(lrint(data[i]) > 32767) 
+			data[i]=32767;
+		if(lrint(data[i]) < -32767) 
+			data[i]=-32767;
+	}
+	
+	
+	// Copy interpolated image across into int_16 image array
+	for(long i=0;i<global->image_nn;i++){
+		threadInfo->image[i] = (int16_t) lrint(data[i]);
 	}
 	
 	
