@@ -222,18 +222,24 @@ void event() {
 	/*
 	 *	How quickly are we processing the data? (average over last 10 events)
 	 */	
-	timeval	now;
-	float dt, dt_us, datarate;
-	gettimeofday(&now, NULL);
-	dt_us = (float) (now.tv_usec - global.lasttime.tv_usec);
+	time_t	tnow;
+	double	dt, datarate1;
+	double	dtime, datarate2;
+	int		hrs, mins, secs; 
+
+	time(&tnow);
+	dtime = difftime(tnow, global.tlast);
 	dt = clock() - global.lastclock;
-	if(dt_us != 0) {
-		datarate = ((float)CLOCKS_PER_SEC)/dt;
-		//datarate = 1/(1e6*dt_us);
-		gettimeofday(&global.lasttime, NULL);
+	
+	if(dtime > 0) {
+		datarate1 = ((float)CLOCKS_PER_SEC)/dt;
+		datarate2 = (frameNumber - global.lastTimingFrame)/dtime 
 		global.lastclock = clock();
+		global.lastTimingFrame = frameNumber;
+		time(&global.tlast);
+
+		global.datarate = datarate2;
 		//global.datarate = (datarate+9*global.datarate)/10.;
-		global.datarate = datarate;
 	}
 	
 	
@@ -462,13 +468,13 @@ void event() {
 	if( global.threadPurge && (global.nprocessedframes%global.threadPurge)==0 ){
 		while(global.nActiveThreads > 0) {
 			printf("Pausing to let remaining %i worker threads to terminate\n", global.nActiveThreads);
-			usleep(100000);
+			usleep(10000);
 		}
 	}
 
 	// Wait until we have a spare thread in the thread pool
 	while(global.nActiveThreads >= global.nThreads) {
-		usleep(100);
+		usleep(1000);
 	}
 
 

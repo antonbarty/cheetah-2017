@@ -103,7 +103,7 @@ void cGlobal::defaultConfiguration(void) {
 	savehits = 0;
 	saveRaw = 0;
 	hdf5dump = 0;
-	saveInterval = 500;
+	saveInterval = 1000;
 	
 	// Verbosity
 	debugLevel = 2;
@@ -193,6 +193,9 @@ void cGlobal::setup() {
 	avgGMD = 0;
 	bgCounter = 0;
 	last_bg_update = 0;
+	
+	time(&tlast);
+	tLastFrame=0;
 
 	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);

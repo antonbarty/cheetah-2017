@@ -157,10 +157,11 @@ public:
 	long			nhits;
 	double			detectorZ;
 	
-	clock_t			lastclock;
-	timeval			lasttime;	
-	float			datarate;
 	time_t			tstart, tend;
+	time_t			tlast, tnow;
+	clock_t			lastclock;
+	float			datarate;
+	long			lastTimingFrame;
 
 	
 	
