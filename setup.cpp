@@ -131,9 +131,9 @@ void cGlobal::setup() {
 	 */
 	hotpixelmask = (float*) calloc(pix_nn, sizeof(float));
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
+	powderRaw = (double*) calloc(pix_nn, sizeof(double));
+	powderAssembled = (double*) calloc(image_nn, sizeof(double));
 	bg_buffer = (int16_t) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-	powderRaw = (int64_t*) calloc(pix_nn, sizeof(int64_t));
-	powderAssembled = (int64_t*) calloc(image_nn, sizeof(int64_t));
 	for(long i=0; i<pix_nn; i++) {
 		hotpixelmask[i] = 0;
 		selfdark[i] = 0;

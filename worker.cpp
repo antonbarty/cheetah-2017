@@ -805,7 +805,9 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	global->npowder += 1;
 	for(long i=0; i<global->pix_nn; i++)
-		global->powderRaw[i] += lrint(threadInfo->corrected_data[i]);
+		if(threadInfo->corrected_data[i] > global->powderthresh)
+			global->powderRaw[i] += threadInfo->corrected_data[i];
+		//global->powderRaw[i] += lrint(threadInfo->corrected_data[i]);
 	pthread_mutex_unlock(&global->powdersum1_mutex);
 
 	
@@ -1311,10 +1313,8 @@ void saveRunningSums(cGlobal *global) {
 		int16_t *buffer3 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 		pthread_mutex_lock(&global->powdersum1_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer3[i] = (int16_t) (global->powderRaw[i]/(float)global->npowder);
+			buffer3[i] = (int16_t) lrint((global->powderRaw[i]/global->npowder));
 		pthread_mutex_unlock(&global->powdersum1_mutex);
-		//for(long i=0; i<global->pix_nn; i++)
-		//	if (buffer3[i] < 0) buffer3[i] = 0;
 		printf("Saving darkcal to file\n");
 		writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
 		free(buffer3);
@@ -1326,14 +1326,14 @@ void saveRunningSums(cGlobal *global) {
 		 */
 		printf("Saving assembled sum data to file\n");
 		sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
-		float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
+		//float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
 		pthread_mutex_lock(&global->powdersum2_mutex);
-		for(long i=0; i<global->image_nn; i++){
-			buffer2[i] = (float) global->powderAssembled[i];
-		}
+		//for(long i=0; i<global->image_nn; i++){
+		//	buffer2[i] = (float) global->powderAssembled[i];
+		//}
+		writeSimpleHDF5(filename, global->powderAssembled, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
 		pthread_mutex_unlock(&global->powdersum2_mutex);
-		writeSimpleHDF5(filename, buffer2, global->image_nx, global->image_nx, H5T_NATIVE_FLOAT);	
-		free(buffer2);
+		//free(buffer2);
 		
 		
 		/*
@@ -1341,15 +1341,15 @@ void saveRunningSums(cGlobal *global) {
 		 */
 		printf("Saving raw sum data to file\n");
 		sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
-		float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
+		//float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
 		pthread_mutex_lock(&global->powdersum1_mutex);
-		for(long i=0; i<global->pix_nn; i++)
-			buffer1[i] = (float) global->powderRaw[i];
+		//for(long i=0; i<global->pix_nn; i++)
+		//	buffer1[i] = (float) global->powderRaw[i];
+		writeSimpleHDF5(filename, global->powderRaw, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		pthread_mutex_unlock(&global->powdersum1_mutex);
 		//for(long i=0; i<global->pix_nn; i++)
 		//	if (buffer1[i] < 0) buffer1[i] = 0;
-		writeSimpleHDF5(filename, buffer1, global->pix_nx, global->pix_ny, H5T_NATIVE_FLOAT);	
-		free(buffer1);
+		//free(buffer1);
 		
 	}
 

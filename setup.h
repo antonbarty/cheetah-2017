@@ -143,11 +143,11 @@ public:
 	 *	Common variables
 	 */
 	int32_t			*darkcal;
-	int64_t			*powderRaw;
-	int64_t			*powderAssembled;
 	int16_t			*peakmask;
 	int16_t			*badpixelmask;
 	int16_t			*bg_buffer;
+	double			*powderRaw;
+	double			*powderAssembled;
 	float			*hotpixelmask;
 	float			*selfdark;
 	float			*gaincal;
