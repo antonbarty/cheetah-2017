@@ -147,6 +147,7 @@ public:
 	int16_t			*peakmask;
 	int16_t			*badpixelmask;
 	int16_t			*bg_buffer;
+	int16_t			*badpix_buffer;
 	double			*powderRaw;
 	double			*powderAssembled;
 	float			*hotpixelmask;

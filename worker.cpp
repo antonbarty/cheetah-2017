@@ -65,7 +65,10 @@ void *worker(void *threadarg) {
 	 */
 	threadInfo->corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
 	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
-	threadInfo->image = NULL;
+	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
+	threadInfo->com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->int_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 
@@ -350,6 +353,7 @@ void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global) {
 	long frameID = global->bgCounter%global->bgMemory;	
 	
 	memcpy(global->bg_buffer+global->pix_nn*frameID, threadInfo->corrected_data_int16, global->pix_nn*sizeof(int16_t));
+
 	//for(long i=0;i<global->pix_nn;i++)
 	//	global->bg_buffer[global->pix_nn*frameID + i] = threadInfo->corrected_data_int16[i];
 	
@@ -675,14 +679,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			long e;
 			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
 			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
-         threadInfo->com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-         threadInfo->com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-         threadInfo->int_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-         float totI;
-         float com_x;
-         float com_y;
-         int thisx;
-         int thisy;
+			float totI;
+			float com_x;
+			float com_y;
+			int thisx;
+			int thisy;
 
 			// Loop over modules (8x8 array)
 			for(long mj=0; mj<8; mj++){
@@ -927,8 +928,6 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	}
 
 	
-	// Allocate memory for output image
-	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 
 	// Check for int16 overflow
 	for(long i=0;i<global->image_nn;i++){

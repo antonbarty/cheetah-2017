@@ -324,7 +324,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
 	}
-	else if (!strcmp(tag, "badpixelmask")) {
+	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
 	}
 	// Processing options
@@ -349,7 +349,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "subtractbg")) {
 		subtractBg = atoi(value);
 	}
-	else if (!strcmp(tag, "usebadpixelmask")) {
+	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "usedarkcalsubtraction")) {
@@ -385,7 +385,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "useselfdarkcal")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
-	else if (!strcmp(tag, "subtractpersistentbackground")) {
+	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
 	
@@ -814,7 +814,13 @@ void cGlobal::writeInitialLog(void){
 	// Logfile name
 	printf("Writing log file: %s\n", logfile);
 
-	fp = fopen (logfile,"w");
+	fp = fopen(logfile,"w");
+	if(fp == NULL) {
+		printf("Error: Can not open %s for writing\n",logfile);
+		printf("Aborting...");
+		exit(1);
+	}
+	
 	fprintf(fp, "start time: %s\n",timestr);
 
 	fprintf(fp, "\nIni parameters:\n");
@@ -879,10 +885,20 @@ void cGlobal::writeInitialLog(void){
 	
 	sprintf(framefile,"frames.txt");
 	framefp = fopen (framefile,"w");
+	if(framefp == NULL) {
+		printf("Error: Can not open %s for writing\n",framefile);
+		printf("Aborting...");
+		exit(1);
+	}
 	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
-
+	
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
+	if(cleanedfp == NULL) {
+		printf("Error: Can not open %s for writing\n",cleanedfile);
+		printf("Aborting...");
+		exit(1);
+	}
 	fprintf(cleanedfp, "# Filename, npeaks\n");
 	
 	pthread_mutex_unlock(&framefp_mutex);
@@ -922,10 +938,12 @@ void cGlobal::updateLogfile(void){
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
-	fclose(framefp);
-	framefp = fopen (framefile,"a");
-	fclose(cleanedfp);
-	cleanedfp = fopen (cleanedfile,"a");
+	//fclose(framefp);
+	//framefp = fopen (framefile,"a");
+	//fclose(cleanedfp);
+	//cleanedfp = fopen (cleanedfile,"a");
+	fflush(framefp);
+	fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
 	
 }
