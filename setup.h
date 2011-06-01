@@ -63,7 +63,11 @@ public:
 	int			useAutoHotpixel;
 	int			hotpixADC;
 	int			hotpixMemory;
+	int			hotpixRecalc;
 	float		hotpixFreq;
+	long		hotpixCounter;
+	long		nhot;
+	long		last_hotpix_update;
 	int			startFrames;
 	
 	// Hitfinding
@@ -147,10 +151,10 @@ public:
 	int16_t			*peakmask;
 	int16_t			*badpixelmask;
 	int16_t			*bg_buffer;
-	int16_t			*badpix_buffer;
+	int16_t			*hotpix_buffer;
+	int16_t			*hotpixelmask;
 	double			*powderRaw;
 	double			*powderAssembled;
-	float			*hotpixelmask;
 	float			*selfdark;
 	float			*gaincal;
 	float			avgGMD;

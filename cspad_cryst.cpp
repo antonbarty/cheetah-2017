@@ -555,6 +555,7 @@ void endjob()
 	free(global.gaincal);
 	free(global.peakmask);
 	free(global.bg_buffer);
+	free(global.hotpix_buffer);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powdersum1_mutex);
 	pthread_mutex_destroy(&global.powdersum2_mutex);

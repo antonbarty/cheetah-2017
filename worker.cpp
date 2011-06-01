@@ -125,11 +125,21 @@ void *worker(void *threadarg) {
 	 *	Recalculate running background from time to time
 	 */
 	pthread_mutex_lock(&global->bgbuffer_mutex);
-	if( global->bgCounter != global->last_bg_update && ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) ) {
+	if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
 		calculatePersistentBackground(global);
 	}
 	pthread_mutex_unlock(&global->bgbuffer_mutex);
 
+	
+	/*
+	 *	Recalculate hot pixel maskfrom time to time
+	 */
+	pthread_mutex_lock(&global->hotpixel_mutex);
+	if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
+		calculateHotPixelMask(global);
+	}
+	pthread_mutex_unlock(&global->hotpixel_mutex);
+	
 	
 	/* 
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
@@ -274,6 +284,67 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
 }
 
+
+/*
+ *	Identify and kill hot pixels
+ */
+void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
+	
+	long	nhot = 0;
+	
+	// Apply local threshold mask
+	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
+	for(long i=0;i<global->pix_nn;i++){
+		buffer[i] = (threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0);
+	}
+
+	// Update global hot pixel buffer
+	pthread_mutex_lock(&global->hotpixel_mutex);
+	long frameID = global->hotpixCounter%global->hotpixMemory;	
+	memcpy(global->hotpix_buffer+global->pix_nn*frameID, buffer, global->pix_nn*sizeof(int16_t));
+	global->hotpixCounter += 1;
+	pthread_mutex_unlock(&global->hotpixel_mutex);
+
+
+	
+	// Apply global hot pixel mask 
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
+	}
+	threadInfo->nHot = global->nhot;
+	
+	// Cleanup...
+	free(buffer);
+}
+
+
+void calculateHotPixelMask(cGlobal *global){
+
+	long	cutoff = lrint((global->hotpixMemory*global->hotpixFreq));
+	printf("Recalculating hot pixel mask at %li/%li\n",cutoff,global->hotpixMemory);	
+	
+	// Loop over all pixels 
+	long	counter;
+	long	nhot;
+	for(long i=0; i<global->pix_nn; i++) {
+		
+		counter = 0;
+		for(long j=0; j< global->hotpixMemory; j++) {
+			counter += global->hotpix_buffer[j*global->pix_nn+i]; 
+		}
+		
+		// Apply threshold
+		if(counter < cutoff) {
+			global->hotpixelmask[i] = 1;
+		}
+		else{
+			global->hotpixelmask[i] = 0;
+			nhot++;				
+		}		
+	}	
+	global->nhot = nhot;
+	global->last_hotpix_update = global->hotpixCounter;
+}
 
 
 /*
@@ -796,35 +867,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 
 
-/*
- *	Identify and kill hot pixels
- */
-void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
-	
-	long	nhot = 0;
-
-	int	*buffer = (int *) calloc(global->pix_nn,sizeof(int));
-	for(long i=0;i<global->pix_nn;i++){
-		buffer[i] = (threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0);
-	}
-	
-	// Update global hot pixel register
-	pthread_mutex_lock(&global->hotpixel_mutex);
-	for(long i=0;i<global->pix_nn;i++){
-		global->hotpixelmask[i] = ( (global->hotpixMemory-1)*global->hotpixelmask[i] + buffer[i]) / global->hotpixMemory;
-	}
-	pthread_mutex_unlock(&global->hotpixel_mutex);
-
-	// Apply to killing hot pixels
-	for(long i=0;i<global->pix_nn;i++){
-		if(global->hotpixelmask[i] > global->hotpixFreq) {
-			threadInfo->corrected_data[i] = 0;
-			nhot++;
-		}
-	}
-	threadInfo->nHot = nhot;
-	free(buffer);
-}
 	
 
 /*

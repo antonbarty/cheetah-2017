@@ -130,11 +130,12 @@ void cGlobal::setup() {
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
-	hotpixelmask = (float*) calloc(pix_nn, sizeof(float));
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
 	powderRaw = (double*) calloc(pix_nn, sizeof(double));
 	powderAssembled = (double*) calloc(image_nn, sizeof(double));
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
 		hotpixelmask[i] = 0;
 		selfdark[i] = 0;
@@ -199,6 +200,10 @@ void cGlobal::setup() {
 	avgGMD = 0;
 	bgCounter = 0;
 	last_bg_update = 0;
+	hotpixCounter = 0;
+	last_hotpix_update = 0;
+	hotpixRecalc = bgRecalc;
+	nhot = 0;
 	
 	time(&tlast);
 	lastTimingFrame=0;
