@@ -381,7 +381,7 @@ int16_t kth_smallest(int16_t *a, long n, long k) {
 
 
 /*
- *	Calculate median background from stack of remembered frames
+ *	Calculate persistent background from stack of remembered frames
  */
 void calculatePersistentBackground(cGlobal *global) {
 
@@ -871,25 +871,46 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 /*
  *	Maintain running powder patterns
+ *	Use a buffer to minimise time spent within mutex locks
  */
 void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	
-	// Sum raw format data
+	double *buffer;
+	
+	
+	/*
+	 *	Sum raw format data
+	 */
+	buffer = (double*) calloc(global->pix_nn, sizeof(double));
+	for(long i=0; i<global->pix_nn; i++){
+		buffer[i] = 0;
+		if(threadInfo->corrected_data[i] > global->powderthresh)
+			buffer[i] = threadInfo->corrected_data[i];
+	}
+
 	pthread_mutex_lock(&global->powdersum1_mutex);
 	global->npowder += 1;
 	for(long i=0; i<global->pix_nn; i++)
-		if(threadInfo->corrected_data[i] > global->powderthresh)
-			global->powderRaw[i] += threadInfo->corrected_data[i];
-		//global->powderRaw[i] += lrint(threadInfo->corrected_data[i]);
+		global->powderRaw[i] += buffer[i];
 	pthread_mutex_unlock(&global->powdersum1_mutex);
+	free(buffer);
 
 	
-	// Sum assembled data
+	/*
+	 *	Sum assembled data
+	 */
+	buffer = (double*) calloc(global->image_nn, sizeof(double));
+	for(long i=0; i<global->image_nn; i++){
+		buffer[i] = 0;
+		if(threadInfo->image[i] > global->powderthresh)
+			buffer[i] = threadInfo->image[i];
+	}
+	
 	pthread_mutex_lock(&global->powdersum2_mutex);
 	for(long i=0; i<global->image_nn; i++)
-		if(threadInfo->image[i] > global->powderthresh)
-			global->powderAssembled[i] += threadInfo->image[i];
+		global->powderAssembled[i] += buffer[i];
 	pthread_mutex_unlock(&global->powdersum2_mutex);
+	free(buffer);
 	
 }
 
@@ -1400,30 +1421,30 @@ void saveRunningSums(cGlobal *global) {
 	if(global->generateDarkcal) {
 		printf("Processing darkcal\n");
 		sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
-		int16_t *buffer3 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+		int16_t *buffer = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
 		pthread_mutex_lock(&global->powdersum1_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer3[i] = (int16_t) lrint((global->powderRaw[i]/global->npowder));
+			buffer[i] = (int16_t) lrint((global->powderRaw[i]/global->npowder));
 		pthread_mutex_unlock(&global->powdersum1_mutex);
 		printf("Saving darkcal to file\n");
-		writeSimpleHDF5(filename, buffer3, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
-		free(buffer3);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
+		free(buffer);
 	}
 
 	else {
+		double *buffer;
+
 		/*
 		 *	Save assembled powder pattern
-		 */
+		 */		
 		printf("Saving assembled sum data to file\n");
 		sprintf(filename,"r%04u-AssembledSum.h5",global->runNumber);
-		//float *buffer2 = (float*) calloc(global->image_nn, sizeof(float));
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
 		pthread_mutex_lock(&global->powdersum2_mutex);
-		//for(long i=0; i<global->image_nn; i++){
-		//	buffer2[i] = (float) global->powderAssembled[i];
-		//}
-		writeSimpleHDF5(filename, global->powderAssembled, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
+		memcpy(buffer, global->powderAssembled, global->image_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powdersum2_mutex);
-		//free(buffer2);
+		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 		
 		
 		/*
@@ -1431,15 +1452,12 @@ void saveRunningSums(cGlobal *global) {
 		 */
 		printf("Saving raw sum data to file\n");
 		sprintf(filename,"r%04u-RawSum.h5",global->runNumber);
-		//float *buffer1 = (float*) calloc(global->pix_nn, sizeof(float));
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powdersum1_mutex);
-		//for(long i=0; i<global->pix_nn; i++)
-		//	buffer1[i] = (float) global->powderRaw[i];
-		writeSimpleHDF5(filename, global->powderRaw, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		memcpy(buffer, global->powderRaw, global->pix_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powdersum1_mutex);
-		//for(long i=0; i<global->pix_nn; i++)
-		//	if (buffer1[i] < 0) buffer1[i] = 0;
-		//free(buffer1);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 		
 	}
 
