@@ -98,6 +98,9 @@ void cGlobal::defaultConfiguration(void) {
 	// Powder pattern generation
 	powdersum = 1;
 	powderthresh = 0;
+	powderHitsOnly = 0;
+	powderBlanksOnly = 0;
+
 	
 	// Saving options
 	savehits = 0;
@@ -183,6 +186,12 @@ void cGlobal::setup() {
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}
+	
+	if(powderHitsOnly && powderBlanksOnly) {
+		powderHitsOnly = 0;
+		powderBlanksOnly = 0;
+	}
+
 	
 	
 	
@@ -416,6 +425,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "powderthresh")) {
 		powderthresh = atoi(value);
+	}
+	else if (!strcmp(tag, "powderhitsonly")) {
+		powderHitsOnly = atoi(value);
+	}
+	else if (!strcmp(tag, "powderblanksonly")) {
+		powderBlanksOnly = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atoi(value);

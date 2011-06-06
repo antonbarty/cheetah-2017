@@ -207,7 +207,15 @@ void *worker(void *threadarg) {
 	/*
 	 *	Maintain a running sum of data
 	 */
-	addToPowder(threadInfo, global);
+	if(global->powderHitsOnly && hit) {
+		addToPowder(threadInfo, global);
+	}
+	else if(global->powderBlanksOnly && hit){
+		addToPowder(threadInfo, global);
+	} 
+	else {
+		addToPowder(threadInfo, global);
+	}
 		
 	
 	

@@ -86,6 +86,8 @@ public:
 	
 	// Powder pattern generation
 	int			powdersum;
+	int			powderHitsOnly;
+	int			powderBlanksOnly;
 	int			powderthresh;
 	int			saveInterval;
 	
