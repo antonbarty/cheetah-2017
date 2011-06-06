@@ -205,17 +205,17 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Maintain a running sum of data
+	 *	Maintain a running sum of data (powder patterns)
 	 */
+	if(global->powderHitsOnly==0 && global->powderBlanksOnly==0) {
+		addToPowder(threadInfo, global);
+	}
 	if(global->powderHitsOnly==1 && hit==1) {
 		addToPowder(threadInfo, global);
 	}
-	else if(global->powderBlanksOnly==1 && hit==1){
+	if(global->powderBlanksOnly==1 && hit==0){
 		addToPowder(threadInfo, global);
 	} 
-	else {
-		addToPowder(threadInfo, global);
-	}
 		
 	
 	

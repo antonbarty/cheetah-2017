@@ -98,7 +98,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Powder pattern generation
 	powdersum = 1;
 	powderthresh = 0;
-	powderHitsOnly = 0;
+	powderHitsOnly = 1;
 	powderBlanksOnly = 0;
 
 	
@@ -1006,8 +1006,10 @@ void cGlobal::writeFinalLog(void){
 	
 
 	// Average data rate
-	float	fps;
+	float	fps, mbs;
 	fps = nprocessedframes / dtime;
+	mbs = fps*pix_nn*sizeof(uint16_t);
+	mbs /= (1024.*1024.);
 				 
 				 
 	
@@ -1019,7 +1021,8 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "nFrames in powder pattern: %i\n",npowder);
 	fprintf(fp, "Number of hits: %i\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
-	fprintf(fp, "Average data rate: %2.2f fps\n",fps);
+	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
+	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	
 	fclose (fp);
 
