@@ -187,7 +187,7 @@ void cGlobal::setup() {
 		saveAssembled = 1;
 	}
 	
-	if(powderHitsOnly && powderBlanksOnly) {
+	if(powderHitsOnly==1 && powderBlanksOnly==1) {
 		powderHitsOnly = 0;
 		powderBlanksOnly = 0;
 	}

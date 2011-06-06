@@ -207,10 +207,10 @@ void *worker(void *threadarg) {
 	/*
 	 *	Maintain a running sum of data
 	 */
-	if(global->powderHitsOnly && hit) {
+	if(global->powderHitsOnly==1 && hit==1) {
 		addToPowder(threadInfo, global);
 	}
-	else if(global->powderBlanksOnly && hit){
+	else if(global->powderBlanksOnly==1 && hit==1){
 		addToPowder(threadInfo, global);
 	} 
 	else {
@@ -883,42 +883,80 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
  */
 void addToPowder(tThreadInfo *threadInfo, cGlobal *global){
 	
-	double *buffer;
 	
+	int		useBuffer=0;
+	double  *buffer;
 	
-	/*
-	 *	Sum raw format data
-	 */
-	buffer = (double*) calloc(global->pix_nn, sizeof(double));
-	for(long i=0; i<global->pix_nn; i++){
-		buffer[i] = 0;
-		if(threadInfo->corrected_data[i] > global->powderthresh)
-			buffer[i] = threadInfo->corrected_data[i];
-	}
-
-	pthread_mutex_lock(&global->powdersum1_mutex);
-	global->npowder += 1;
-	for(long i=0; i<global->pix_nn; i++)
-		global->powderRaw[i] += buffer[i];
-	pthread_mutex_unlock(&global->powdersum1_mutex);
-	free(buffer);
 
 	
 	/*
-	 *	Sum assembled data
+	 *	Version without using a buffer (comparison in mutex block)
 	 */
-	buffer = (double*) calloc(global->image_nn, sizeof(double));
-	for(long i=0; i<global->image_nn; i++){
-		buffer[i] = 0;
-		if(threadInfo->image[i] > global->powderthresh)
-			buffer[i] = threadInfo->image[i];
+	if(useBuffer == 0) {
+		/*
+		 *	Sum raw format data
+		 */
+		pthread_mutex_lock(&global->powdersum1_mutex);
+		global->npowder += 1;
+		for(long i=0; i<global->pix_nn; i++) {
+			if(threadInfo->corrected_data[i] > global->powderthresh)
+				global->powderRaw[i] += threadInfo->corrected_data[i];
+		}
+		pthread_mutex_unlock(&global->powdersum1_mutex);
+				
+		/*
+		 *	Sum assembled data
+		 */
+		pthread_mutex_lock(&global->powdersum2_mutex);
+		for(long i=0; i<global->image_nn; i++){
+			if(threadInfo->image[i] > global->powderthresh)
+				global->powderAssembled[i] += threadInfo->image[i];
+		}
+		pthread_mutex_unlock(&global->powdersum2_mutex);
 	}
 	
-	pthread_mutex_lock(&global->powdersum2_mutex);
-	for(long i=0; i<global->image_nn; i++)
-		global->powderAssembled[i] += buffer[i];
-	pthread_mutex_unlock(&global->powdersum2_mutex);
-	free(buffer);
+	/*
+	 *	Version with comparison and type conversion outside mutex block
+	 */
+	else {
+		/*
+		 *	Sum raw format data
+		 */
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		for(long i=0; i<global->pix_nn; i++){
+			if(threadInfo->corrected_data[i] > global->powderthresh)
+				buffer[i] = threadInfo->corrected_data[i];
+			else
+				buffer[i] = 0;
+		}
+		pthread_mutex_lock(&global->powdersum1_mutex);
+		global->npowder += 1;
+		for(long i=0; i<global->pix_nn; i++) {
+			global->powderRaw[i] += buffer[i];
+		}
+		pthread_mutex_unlock(&global->powdersum1_mutex);
+		free(buffer);
+		
+		
+		/*
+		 *	Sum assembled data
+		 */
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
+		for(long i=0; i<global->image_nn; i++){
+			if(threadInfo->image[i] > global->powderthresh)
+				buffer[i] = threadInfo->image[i];
+			else
+				buffer[i] = 0;
+		}
+		pthread_mutex_lock(&global->powdersum2_mutex);
+		for(long i=0; i<global->image_nn; i++){
+			global->powderAssembled[i] += buffer[i];
+		}
+		pthread_mutex_unlock(&global->powdersum2_mutex);
+		free(buffer);
+		
+		
+	}
 	
 }
 
