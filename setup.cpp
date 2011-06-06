@@ -75,6 +75,9 @@ void cGlobal::defaultConfiguration(void) {
 	bgNoBeamReset = 0;
 	bgFiducialGlitchReset = 0;
 	
+	// Local background subtraction
+	useLocalBackgroundSubtraction = 0;
+	localBackgroundRadius = 3;
 	
 	// Kill persistently hot pixels
 	useAutoHotpixel = 1;
@@ -112,8 +115,13 @@ void cGlobal::defaultConfiguration(void) {
 	// Verbosity
 	debugLevel = 2;
 	
+	// I/O speed test?
+	ioSpeedTest = 0;
+
+	
 	// Default to only a few threads
 	nThreads = 16;
+	useHelperThreads = 0;
 	threadPurge = 10000;
 	
 	// Log files
@@ -323,6 +331,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
+	else if (!strcmp(tag, "usehelperthreads")) {
+		useHelperThreads = atoi(value);
+	}
+	else if (!strcmp(tag, "iospeedtest")) {
+		ioSpeedTest = atoi(value);
+	}
 	else if (!strcmp(tag, "threadpurge")) {
 		threadPurge = atoi(value);
 	}
@@ -403,7 +417,16 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		useSubtractPersistentBackground = atoi(value);
 	}
 	
-
+	// Local background subtraction
+	else if (!strcmp(tag, "useLocalbackgroundsubtraction")) {
+		useLocalBackgroundSubtraction = atoi(value);
+	}
+	else if (!strcmp(tag, "localbackgroundradius")) {
+		localBackgroundRadius = atoi(value);
+	}
+	
+	
+	
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);

@@ -58,6 +58,10 @@ public:
 	int			bgNoBeamReset;
 	int			bgFiducialGlitchReset;
 	
+	// Local background subtraction
+	int			useLocalBackgroundSubtraction;
+	long		localBackgroundRadius;
+	
 	
 	// Kill persistently hot pixels
 	int			useAutoHotpixel;
@@ -105,6 +109,8 @@ public:
 	char		framefile[1024];
 	char		cleanedfile[1024];
 	
+	// I/O speed test
+	int			ioSpeedTest;
 	
 	/*
 	 *	Stuff used for managing the program execution
@@ -117,6 +123,7 @@ public:
 	FILE		*cleanedfp;
 	
 	// Thread management
+	int				useHelperThreads;
 	long			nThreads;
 	long			nActiveThreads;
 	long			threadCounter;
