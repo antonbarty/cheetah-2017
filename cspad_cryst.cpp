@@ -451,8 +451,8 @@ void event() {
 	/*
 	 *	I/O speed test?
 	 */
-	if(global->ioSpeedTest) {
-		printf("r%04u:%i (%3.1fHz): I/O Speed test\n", global->runNumber, frameNumber, global->datarate);		
+	if(global.ioSpeedTest) {
+		printf("r%04u:%i (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
 		for(int quadrant=0; quadrant<4; quadrant++) {
 			free(threadInfo->quad_data[quadrant]);
 		}

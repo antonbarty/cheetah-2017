@@ -94,9 +94,6 @@ void *worker(void *threadarg) {
 	if(global->cmModule) {
 		cmModuleSubtract(threadInfo, global);
 	}
-	else if(global->cmSubModule) {
-		cmSubModuleSubtract(threadInfo, global);
-	}
 	
 	
 	/*
@@ -161,7 +158,7 @@ void *worker(void *threadarg) {
 	 *	Local background subtraction
 	 */
 	if(global->useLocalBackgroundSubtraction) {
-		subtractLocalBackground(threadInfo, global){
+		subtractLocalBackground(threadInfo, global);
 	}
 		
 
@@ -452,7 +449,7 @@ void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global) {
 
 
 /*
- *	Subtract self generated darkcal file
+ *	Subtract persistent background (scaled)
  */
 void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
@@ -610,8 +607,8 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	// Search subunits
 	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= COLS/2 )
 		return;
-	long nn = (2*global->localBackgroundRadius+1)^2;
-	printf("%li\n",nn);
+	long nn = (2*global->localBackgroundRadius+1);
+	nn=nn*nn;
 	
 	
 	// Create local arrays needed for background subtraction
@@ -633,22 +630,27 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 					e += i+mi*ROWS;
 					
 					// Loop over median window
-					for(long ii=-global->localBackgroundRadius; ii=<global->localBackgroundRadius; ii++){
-						for(long jj=-global->localBackgroundRadius; jj=<global->localBackgroundRadius; jj++){
+					for(long jj=-global->localBackgroundRadius; jj<=global->localBackgroundRadius; jj++){
+						for(long ii=-global->localBackgroundRadius; ii<=global->localBackgroundRadius; ii++){
 
 							// Quick array bounds check
-							if((j+jj) < 0)
-								continue;
-							if((j+jj) >= COLS)
-								continue;
 							if((i+ii) < 0)
 								continue;
 							if((i+ii) >= ROWS)
+								continue;
+							if((j+jj) < 0)
+								continue;
+							if((j+jj) >= COLS)
 								continue;
 
 							ee = (j+jj+mj*COLS)*global->pix_nx;
 							ee += i+ii+mi*ROWS;
 
+							if(ee < 0 || ee >= global->pix_nn){
+								printf("Error: Array bounds error: e = %li > %li\n",e,global->pix_nn);
+								continue;
+							}
+							
 							buffer[counter] = lrint(threadInfo->corrected_data[ee]);
 							counter++;
 						}
@@ -658,7 +660,11 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 					if(counter == 0) {
 						printf("Error: Local background counter == 0\n");
 						localBg[e] = 0;
-						continue
+						continue;
+					}
+					if(counter > nn) {
+						printf("Error: counter == %li > %li\n",counter,nn);
+						continue;
 					}
 					
 					// Find median value

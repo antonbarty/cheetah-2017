@@ -413,7 +413,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	
 	// Local background subtraction
-	else if (!strcmp(tag, "useLocalbackgroundsubtraction")) {
+	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
 		useLocalBackgroundSubtraction = atoi(value);
 	}
 	else if (!strcmp(tag, "localbackgroundradius")) {
