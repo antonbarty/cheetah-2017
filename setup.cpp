@@ -975,12 +975,12 @@ void cGlobal::updateLogfile(void){
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
-	//fclose(framefp);
-	//framefp = fopen (framefile,"a");
-	//fclose(cleanedfp);
-	//cleanedfp = fopen (cleanedfile,"a");
-	fflush(framefp);
-	fflush(cleanedfp);
+	fclose(framefp);
+	framefp = fopen (framefile,"a");
+	fclose(cleanedfp);
+	cleanedfp = fopen (cleanedfile,"a");
+	//fflush(framefp);
+	//fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
 	
 }

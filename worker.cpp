@@ -142,7 +142,7 @@ void *worker(void *threadarg) {
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
 	 */
 	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
+		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
 	}
 	
 
@@ -168,6 +168,9 @@ void *worker(void *threadarg) {
 	if(global->useAutoHotpixel){
 		killHotpixels(threadInfo, global);
 	}
+	if(global->useBadPixelMask) {
+		applyBadPixelMask(threadInfo, global);
+	} 
 	
 
 	/*
@@ -198,7 +201,7 @@ void *worker(void *threadarg) {
 	 *	Keep copy of (now background subtracted) data in memory (needed for saving images)
 	 */
 	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data_int16[i] = lrint(threadInfo->corrected_data[i]);
+		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
 	}
 
 	
@@ -215,10 +218,10 @@ void *worker(void *threadarg) {
 	if(global->powderHitsOnly==0 && global->powderBlanksOnly==0) {
 		addToPowder(threadInfo, global);
 	}
-	if(global->powderHitsOnly==1 && hit==1) {
+	else if(global->powderHitsOnly==1 && hit==1) {
 		addToPowder(threadInfo, global);
 	}
-	if(global->powderBlanksOnly==1 && hit==0){
+	else if(global->powderBlanksOnly==1 && hit==0){
 		addToPowder(threadInfo, global);
 	} 
 		
@@ -228,9 +231,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
-	if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))
+	if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
-	else if(hit && global->savehits)
+	else if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))
 		writeHDF5(threadInfo, global);
 	else
 		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
@@ -305,29 +308,25 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long	nhot = 0;
 	
-	// Apply local threshold mask
+	// Apply the current hot pixel mask 
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
+	}
+	threadInfo->nHot = global->nhot;
+
+	
+	// Update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++){
-		buffer[i] = (threadInfo->corrected_data[i]>global->hotpixADC)?(1.0):(0.0);
+		buffer[i] = (abs(threadInfo->corrected_data[i])>global->hotpixADC)?(1.0):(0.0);
 	}
-
-	// Update global hot pixel buffer
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	long frameID = global->hotpixCounter%global->hotpixMemory;	
 	memcpy(global->hotpix_buffer+global->pix_nn*frameID, buffer, global->pix_nn*sizeof(int16_t));
 	global->hotpixCounter += 1;
 	pthread_mutex_unlock(&global->hotpixel_mutex);
-
-
-	
-	// Apply global hot pixel mask 
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
-	}
-	threadInfo->nHot = global->nhot;
-	
-	// Cleanup...
 	free(buffer);
+
 }
 
 
@@ -1244,7 +1243,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
       return;
    }
 
-   if(global->savePeakInfo && global->hitfinder) {
+   if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
 
       size[0] = info->nPeaks; // size[0] = height
       size[1] = 3;   // size[1] = width
