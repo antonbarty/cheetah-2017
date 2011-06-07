@@ -55,7 +55,6 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Common mode subtraction from each ASIC
 	cmModule = 0;
-	cmSubModule = 0;
 	cmFloor = 0.1;
 
 	// Gain calibration correction
@@ -178,7 +177,6 @@ void cGlobal::setup() {
 	 */
 	if(generateDarkcal) {
 		cmModule = 0;
-		cmSubModule = 0;
 		subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useSubtractPersistentBackground = 0;
@@ -367,9 +365,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);
-	}
-	else if (!strcmp(tag, "subtractcmsubmodule")) {
-		cmSubModule = atoi(value);
 	}
 	else if (!strcmp(tag, "generatedarkcal")) {
 		generateDarkcal = atoi(value);
@@ -879,7 +874,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "cmmodule=%d\n",cmModule);
 	fprintf(fp, "usegaincal=%d\n",useGaincal);
 	fprintf(fp, "invertgain=%d\n",invertGain);
-	fprintf(fp, "subtractcmsubmodule=%d\n",cmSubModule);
 	fprintf(fp, "generatedarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "subtractbg=%d\n",subtractBg);
 	fprintf(fp, "usebadpixelmask=%d\n",useBadPixelMask);

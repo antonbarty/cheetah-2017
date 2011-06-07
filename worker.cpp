@@ -158,6 +158,14 @@ void *worker(void *threadarg) {
 	
 
 	/*
+	 *	Local background subtraction
+	 */
+	if(global->useLocalBackgroundSubtraction) {
+		subtractLocalBackground(threadInfo, global){
+	}
+		
+
+	/*
 	 *	Identify and remove hot pixels
 	 */
 	if(global->useAutoHotpixel){
@@ -588,77 +596,88 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 /*
- *	Subtract common mode on each module
- *	This is done in a very slow way now - speed up later once we know it works!
+ *	Local background subtraction
  */
-void cmSubModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
+void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	// ROWS = 194;
 	// COLS = 185;
 	
-	long		e;
-	long		ii,jj;
+	long		e,ee;
 	long		counter;
-	uint16_t	value;
-	uint16_t	median;
 	
-	// Create histogram array
-	int			nhist = 65535;
-	uint16_t	*histogram;
-	histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
 	
-	// Subunits
-	long	nn=global->cmSubModule;		// Multiple of 2 please!
-	if(nn < 2 )
+	// Search subunits
+	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= COLS/2 )
 		return;
+	long nn = (2*global->localBackgroundRadius+1)^2;
+	printf("%li\n",nn);
 	
-	// Loop over whole modules (8x8 array)
+	
+	// Create local arrays needed for background subtraction
+	int16_t *localBg = (int16_t*) calloc(global->pix_nn, sizeof(int16_t)); 
+	int16_t	*buffer = (int16_t*) calloc(nn, sizeof(int16_t));
+
+	
+	
+	// Loop over ASIC modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
 		for(long mj=0; mj<8; mj++){
 			
-			
-			// Loop over sub-modules
-			for(long smi=0; smi<ROWS; smi+=ROWS/nn){
-				for(long smj=0; smj<COLS; smj+=COLS/nn){
-				
-					// Zero histogram
-					memset(histogram, 0, nhist*sizeof(uint16_t));
-				
-				
-					// Loop over pixels within this subregion
-					for(long i=0; i<ROWS/nn && (i+smi)<ROWS; i++){
-						for(long j=0; j<COLS/nn && (j+smj)<COLS; j++){
-							jj = smj + j + mj*COLS;
-							ii = smi + i + mi*ROWS;
-							e = ii + jj*8*ROWS;
-							histogram[lrint(threadInfo->corrected_data[e])] += 1;
+			// Loop over pixels within a module
+			for(long j=0; j<COLS; j++){
+				for(long i=0; i<ROWS; i++){
+
+					counter = 0;
+					e = (j+mj*COLS)*global->pix_nx;
+					e += i+mi*ROWS;
+					
+					// Loop over median window
+					for(long ii=-global->localBackgroundRadius; ii=<global->localBackgroundRadius; ii++){
+						for(long jj=-global->localBackgroundRadius; jj=<global->localBackgroundRadius; jj++){
+
+							// Quick array bounds check
+							if((j+jj) < 0)
+								continue;
+							if((j+jj) >= COLS)
+								continue;
+							if((i+ii) < 0)
+								continue;
+							if((i+ii) >= ROWS)
+								continue;
+
+							ee = (j+jj+mj*COLS)*global->pix_nx;
+							ee += i+ii+mi*ROWS;
+
+							buffer[counter] = lrint(threadInfo->corrected_data[ee]);
+							counter++;
 						}
+					}
+							
+					// No elements -> trap an error
+					if(counter == 0) {
+						printf("Error: Local background counter == 0\n");
+						localBg[e] = 0;
+						continue
 					}
 					
 					// Find median value
-					counter = 0;
-					for(long i=0; i<nhist; i++){
-						counter += histogram[i];
-						if(counter > (0.25*ROWS*COLS/(nn*nn))) {
-							median = i;
-							break;
-						}
-					}
-				
-					// Subtract median value
-					for(long i=0; i<ROWS/nn && (i+smi)<ROWS; i++){
-						for(long j=0; j<COLS/nn && (j+smj)<COLS; j++){
-							jj = smj + j + mj*COLS;
-							ii = smi + i + mi*ROWS;
-							e = ii + jj*8*ROWS;
-							threadInfo->corrected_data[e] -= median;
-						}
-					}
+					localBg[e] = kth_smallest(buffer, counter, counter/2);
 				}
 			}
 		}
 	}
-	free(histogram);
+	
+	
+	// Actually do the local background subtraction
+	for(long i=0;i<global->pix_nn;i++) {
+		threadInfo->corrected_data[i] -= localBg[i];	
+	}	
+	
+	
+	// Cleanup
+	free(localBg);
+	free(buffer);
 }
 
 
@@ -783,9 +802,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								inx[0] = i;
 								iny[0] = j;
 								nat = 1;
-                        totI = 0; 
-                        com_x = 0; 
-                        com_y = 0; 
+								totI = 0; 
+								com_x = 0; 
+								com_y = 0; 
 								
 								// Keep looping until the pixel count within this peak does not change (!)
 								do {
@@ -805,9 +824,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												continue;
 											
 											// Neighbour point 
-                                 thisx = (iny[p]+search_y[k]+mj*COLS);
-                                 thisy = inx[p]+search_x[k]+mi*ROWS;
-                                 e = thisx*global->pix_nx + thisy;
+											thisx = (iny[p]+search_y[k]+mj*COLS);
+											thisy = inx[p]+search_x[k]+mi*ROWS;
+											e = thisx*global->pix_nx + thisy;
 											
 											//if(e < 0 || e >= global->pix_nn){
 											//	printf("Array bounds error: e=%i\n",e);
@@ -820,13 +839,13 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												//	printf("Array bounds error: nat=%i\n",nat);
 												//	break
 												//}
-                                    totI += temp[e]; // add to integrated intensity
-                                    com_x += temp[e]*( (float) thisx ); // for center of mass x
-                                    com_y += temp[e]*( (float) thisy ); // for center of mass y
-                                    temp[e] = 0; // zero out this intensity so that we don't count it again
-                                    inx[nat] = inx[p]+search_x[k];
-                                    iny[nat] = iny[p]+search_y[k];
-                                    nat++;
+												totI += temp[e]; // add to integrated intensity
+												com_x += temp[e]*( (float) thisx ); // for center of mass x
+												com_y += temp[e]*( (float) thisy ); // for center of mass y
+												temp[e] = 0; // zero out this intensity so that we don't count it again
+												inx[nat] = inx[p]+search_x[k];
+												iny[nat] = iny[p]+search_y[k];
+												nat++;
 
 											}
 										}

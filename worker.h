@@ -110,12 +110,12 @@ static uint32_t nevents = 0;
  */
 void *worker(void *);
 void cmModuleSubtract(tThreadInfo*, cGlobal*);
-void cmSubModuleSubtract(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
 void applyGainCorrection(tThreadInfo*, cGlobal*);
 void applyBadPixelMask(tThreadInfo*, cGlobal*);
 void subtractPersistentBackground(tThreadInfo*, cGlobal*);
 void calculatePersistentBackground(cGlobal*);
+void subtractLocalBackground(tThreadInfo*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);

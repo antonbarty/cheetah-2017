@@ -37,7 +37,6 @@ public:
 	
 	// Common mode and pedastal subtraction
 	int			cmModule;				// Subtract common mode from each ASIC
-	int			cmSubModule;			// Subtract common mode from subsets of each ASIC (currently 16 sub-portions)
 	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
 
 	// Gain correction
