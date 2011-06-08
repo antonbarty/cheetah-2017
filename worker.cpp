@@ -857,14 +857,14 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								// Peak or junk?
 								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
 									
-									counter ++;
+									if ( counter > global->hitfinderNpeaksMax ) 
+										continue;
 									
-									if ( counter > global->hitfinderNpeaksMax ) continue;
-									
-									threadInfo->int_intensity[counter-1] = totI;
-									threadInfo->com_x[counter-1] = com_x/totI;
-									threadInfo->com_y[counter-1] = com_y/totI;
+									threadInfo->int_intensity[counter] = totI;
+									threadInfo->com_x[counter] = com_x/totI;
+									threadInfo->com_y[counter] = com_y/totI;
 
+									counter++;
 								}
 							}
 						}
@@ -1533,10 +1533,10 @@ void saveRunningSums(cGlobal *global) {
 		printf("Processing darkcal\n");
 		sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
 		int16_t *buffer = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
-		pthread_mutex_lock(&global->powdersum1_mutex);
+		pthread_mutex_lock(&global->powderHitsRaw_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = (int16_t) lrint((global->powderRaw[i]/global->npowder));
-		pthread_mutex_unlock(&global->powdersum1_mutex);
+			buffer[i] = (int16_t) lrint((global->powderHitsRaw[i]/global->npowderHits));
+		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
 		printf("Saving darkcal to file\n");
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
 		free(buffer);
@@ -1554,7 +1554,7 @@ void saveRunningSums(cGlobal *global) {
 		buffer = (double*) calloc(global->image_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderHitsAssembled_mutex);
 		memcpy(buffer, global->powderHitsAssembled, global->image_nn*sizeof(double));
-		pthread_mutex_unlock(&global->powderHitsAssembled);
+		pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
 		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
 
 		// Blanks
@@ -1562,7 +1562,7 @@ void saveRunningSums(cGlobal *global) {
 		sprintf(filename,"r%04u-sumBlanksAssembled.h5",global->runNumber);
 		pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
 		memcpy(buffer, global->powderBlanksAssembled, global->image_nn*sizeof(double));
-		pthread_mutex_unlock(&global->powderBlanksAssembled);
+		pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
 		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
