@@ -88,8 +88,8 @@ public:
 	
 	// Powder pattern generation
 	int			powdersum;
-	int			powderHitsOnly;
-	int			powderBlanksOnly;
+	int			powderSumHits;
+	int			powderSumBlanks;
 	int			powderthresh;
 	int			saveInterval;
 	int			savePeakInfo;
@@ -132,8 +132,10 @@ public:
 	pthread_mutex_t	hotpixel_mutex;
 	pthread_mutex_t	selfdark_mutex;
 	pthread_mutex_t	bgbuffer_mutex;
-	pthread_mutex_t	powdersum1_mutex;
-	pthread_mutex_t	powdersum2_mutex;
+	pthread_mutex_t	powderHitsRaw_mutex;
+	pthread_mutex_t	powderHitsAssembled_mutex;
+	pthread_mutex_t	powderBlanksRaw_mutex;
+	pthread_mutex_t	powderBlanksAssembled_mutex;
 	pthread_mutex_t	nhits_mutex;
 	pthread_mutex_t	framefp_mutex;
 	
@@ -161,12 +163,15 @@ public:
 	int16_t			*bg_buffer;
 	int16_t			*hotpix_buffer;
 	int16_t			*hotpixelmask;
-	double			*powderRaw;
-	double			*powderAssembled;
+	double			*powderHitsRaw;
+	double			*powderHitsAssembled;
+	double			*powderBlanksRaw;
+	double			*powderBlanksAssembled;
 	float			*selfdark;
 	float			*gaincal;
 	float			avgGMD;
-	long			npowder;
+	long			npowderHits;
+	long			npowderBlanks;
 	long			nprocessedframes;
 	long			nhits;
 	double			detectorZ;

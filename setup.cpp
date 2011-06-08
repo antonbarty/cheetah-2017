@@ -100,8 +100,8 @@ void cGlobal::defaultConfiguration(void) {
 	// Powder pattern generation
 	powdersum = 1;
 	powderthresh = 0;
-	powderHitsOnly = 1;
-	powderBlanksOnly = 0;
+	powderSumHits = 1;
+	powderSumBlanks = 0;
 
 	
 	// Saving options
@@ -141,18 +141,22 @@ void cGlobal::setup() {
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
-	powderRaw = (double*) calloc(pix_nn, sizeof(double));
-	powderAssembled = (double*) calloc(image_nn, sizeof(double));
+	powderHitsRaw = (double*) calloc(pix_nn, sizeof(double));
+	powderBlanksRaw = (double*) calloc(pix_nn, sizeof(double));
+	powderHitsAssembled = (double*) calloc(image_nn, sizeof(double));
+	powderBlanksAssembled = (double*) calloc(image_nn, sizeof(double));
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
 	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
 		hotpixelmask[i] = 0;
 		selfdark[i] = 0;
-		powderRaw[i] = 0;
+		powderHitsRaw[i] = 0;
+		powderBlanksRaw[i] = 0;
 	}
 	for(long i=0; i<image_nn; i++) {
-		powderAssembled[i] = 0;
+		powderHitsAssembled[i] = 0;
+		powderBlanksAssembled[i] = 0;
 	}	
 
 	
@@ -165,8 +169,10 @@ void cGlobal::setup() {
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
-	pthread_mutex_init(&powdersum1_mutex, NULL);
-	pthread_mutex_init(&powdersum2_mutex, NULL);
+	pthread_mutex_init(&powderHitsRaw_mutex, NULL);
+	pthread_mutex_init(&powderHitsAssembled_mutex, NULL);
+	pthread_mutex_init(&powderBlanksRaw_mutex, NULL);
+	pthread_mutex_init(&powderBlanksAssembled_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
@@ -193,18 +199,14 @@ void cGlobal::setup() {
 		saveAssembled = 1;
 	}
 	
-	if(powderHitsOnly==1 && powderBlanksOnly==1) {
-		powderHitsOnly = 0;
-		powderBlanksOnly = 0;
-	}
-
 	
 	
 	
 	/*
 	 *	Other stuff
 	 */
-	npowder = 0;
+	npowderHits = 0;
+	npowderBlanks = 0;
 	nprocessedframes = 0;
 	nhits = 0;
 	lastclock = clock()-10;
@@ -444,11 +446,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "powderthresh")) {
 		powderthresh = atoi(value);
 	}
-	else if (!strcmp(tag, "powderhitsonly")) {
-		powderHitsOnly = atoi(value);
+	else if (!strcmp(tag, "powdersumhits")) {
+		powderSumHits = atoi(value);
 	}
-	else if (!strcmp(tag, "powderblanksonly")) {
-		powderBlanksOnly = atoi(value);
+	else if (!strcmp(tag, "powdersumblanks")) {
+		powderSumBlanks = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atoi(value);
@@ -975,12 +977,12 @@ void cGlobal::updateLogfile(void){
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
-	fclose(framefp);
-	framefp = fopen (framefile,"a");
-	fclose(cleanedfp);
-	cleanedfp = fopen (cleanedfile,"a");
-	//fflush(framefp);
-	//fflush(cleanedfp);
+	//fclose(framefp);
+	//framefp = fopen (framefile,"a");
+	//fclose(cleanedfp);
+	//cleanedfp = fopen (cleanedfile,"a");
+	fflush(framefp);
+	fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
 	
 }
@@ -1035,7 +1037,8 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "End time: %s\n",timestr);
 	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
 	fprintf(fp, "Frames processed: %i\n",nprocessedframes);
-	fprintf(fp, "nFrames in powder pattern: %i\n",npowder);
+	fprintf(fp, "nFrames in hits powder pattern: %i\n",npowderHits);
+	fprintf(fp, "nFrames in blanks powder pattern: %i\n",npowderBlanks);
 	fprintf(fp, "Number of hits: %i\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);

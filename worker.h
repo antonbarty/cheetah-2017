@@ -120,7 +120,7 @@ void calculateHotPixelMask(cGlobal*);
 void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
 void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
-void addToPowder(tThreadInfo*, cGlobal*);
+void addToPowder(tThreadInfo*, cGlobal*, int);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
