@@ -93,6 +93,8 @@ public:
 	int			powderthresh;
 	int			saveInterval;
 	int			savePeakInfo;
+	int			savePeakList;
+
 	
 	// Saving options
 	int			savehits;
@@ -107,6 +109,7 @@ public:
 	char		logfile[1024];
 	char		framefile[1024];
 	char		cleanedfile[1024];
+	char		peaksfile[1024];
 	
 	// I/O speed test
 	int			ioSpeedTest;
@@ -120,6 +123,7 @@ public:
 	// Log file pointers
 	FILE		*framefp;
 	FILE		*cleanedfp;
+	FILE		*peaksfp;
 	
 	// Thread management
 	int				useHelperThreads;
@@ -138,6 +142,7 @@ public:
 	pthread_mutex_t	powderBlanksAssembled_mutex;
 	pthread_mutex_t	nhits_mutex;
 	pthread_mutex_t	framefp_mutex;
+	pthread_mutex_t	peaksfp_mutex;
 	
 	
 	// Detector geometry

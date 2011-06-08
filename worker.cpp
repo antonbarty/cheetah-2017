@@ -236,6 +236,14 @@ void *worker(void *threadarg) {
 		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
 	
+	/*
+	 *	If this is a hit, write out peak info to peak list file
+	 */
+	//if(hit && global->savePeakList) {
+	if(hit && global->savePeakInfo) {
+		writePeakFile(tThreadInfo *threadInfo, cGlobal *global);
+	}
+
 	
 	
 
@@ -826,9 +834,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												continue;
 											
 											// Neighbour point 
+											e = thisx*global->pix_nx + thisy;
 											thisx = (iny[p]+search_y[k]+mj*COLS);
 											thisy = inx[p]+search_x[k]+mi*ROWS;
-											e = thisx*global->pix_nx + thisy;
 											
 											//if(e < 0 || e >= global->pix_nn){
 											//	printf("Array bounds error: e=%i\n",e);
@@ -1468,6 +1476,26 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 }
 
 
+void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
+
+	// No peaks --> go home
+	if(threadInfo->nPeaks <= 0) {
+		return
+	}
+	
+	// Dump peak info to file
+	pthread_mutex_lock(&peaksfp_mutex);
+	fprintf(global->peaksfp, "%s\n", threadInfo->eventname);
+	fprintf(global->peaksfp, "lambda=%f\n", threadInfo->wavelengthA);
+	fprintf(global->peaksfp, "npeaks=%f\n", threadInfo->nPeaks);
+	for(long i=0; i<threadInfo->nPeaks; i++) {
+		fprintf(global->peaksfp, "%f, %f, %f\n", threadInfo->com_x[i], threadInfo->com_y[i], threadInfo->int_intensity[i];
+		
+	}
+	pthread_mutex_unlock(&peaksfp_mutex);
+	
+	
+}
 
 
 
@@ -1556,10 +1584,12 @@ void saveRunningSums(cGlobal *global) {
 		memcpy(buffer, global->powderHitsAssembled, global->image_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
 		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 
 		// Blanks
 		printf("Saving summed blanks assembled sum data to file\n");
 		sprintf(filename,"r%04u-sumBlanksAssembled.h5",global->runNumber);
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
 		memcpy(buffer, global->powderBlanksAssembled, global->image_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);

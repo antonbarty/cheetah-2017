@@ -124,6 +124,7 @@ void addToPowder(tThreadInfo*, cGlobal*, int);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
+void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void saveRunningSums(cGlobal*);
 int16_t kth_smallest(int16_t*, long, long);

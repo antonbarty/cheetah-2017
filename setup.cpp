@@ -111,6 +111,9 @@ void cGlobal::defaultConfiguration(void) {
 	hdf5dump = 0;
 	saveInterval = 1000;
 	
+	// Peak lists
+	savePeakList = 1;
+	
 	// Verbosity
 	debugLevel = 2;
 	
@@ -127,6 +130,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(logfile, "log.txt");
 	strcpy(framefile, "frames.txt");
 	strcpy(cleanedfile, "cleaned.txt");
+	strcpy(peaksfile, "peaks.txt");
 	
 	
 }
@@ -175,6 +179,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&powderBlanksAssembled_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
+	pthread_mutex_init(&peaksfp_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 	
@@ -938,9 +943,20 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks\n");
-	
+	fprintf(cleanedfp, "# Filename, npeaks\n");	
 	pthread_mutex_unlock(&framefp_mutex);
+	
+	
+	pthread_mutex_lock(&peaksfp_mutex);
+	sprintf(peaksfile,"peaks.txt");
+	peaksfp = fopen (peaksfile,"w");
+	if(peaksfp == NULL) {
+		printf("Error: Can not open %s for writing\n",peaksfile);
+		printf("Aborting...");
+		exit(1);
+	}
+	pthread_mutex_unlock(&peaksfp_mutex);
+	
 }
 
 
@@ -984,6 +1000,11 @@ void cGlobal::updateLogfile(void){
 	fflush(framefp);
 	fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+	
+	pthread_mutex_lock(&peaksfp_mutex);
+	fflush(peaksfp);
+	pthread_mutex_unlock(&peaksfp_mutex);
+	
 	
 }
 
@@ -1052,6 +1073,10 @@ void cGlobal::writeFinalLog(void){
 	fclose(framefp);
 	fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+	
+	pthread_mutex_lock(&peaksfp_mutex);
+	fclose(peaksfp);
+	pthread_mutex_unlock(&peaksfp_mutex);
 	
 	
 }
