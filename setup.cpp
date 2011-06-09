@@ -955,6 +955,9 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
+	if(savePeakInfo==0) {
+		fprintf(peaksfp, "savePeakInfo has been turned off in the config file.\n");
+	}
 	pthread_mutex_unlock(&peaksfp_mutex);
 	
 }

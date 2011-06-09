@@ -241,7 +241,7 @@ void *worker(void *threadarg) {
 	 */
 	//if(hit && global->savePeakList) {
 	if(hit && global->savePeakInfo) {
-		writePeakFile(tThreadInfo *threadInfo, cGlobal *global);
+		writePeakFile(threadInfo, global);
 	}
 
 	
@@ -834,9 +834,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												continue;
 											
 											// Neighbour point 
-											e = thisx*global->pix_nx + thisy;
 											thisx = (iny[p]+search_y[k]+mj*COLS);
 											thisy = inx[p]+search_x[k]+mi*ROWS;
+											e = thisx*global->pix_nx + thisy;
 											
 											//if(e < 0 || e >= global->pix_nn){
 											//	printf("Array bounds error: e=%i\n",e);
@@ -1480,19 +1480,20 @@ void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 
 	// No peaks --> go home
 	if(threadInfo->nPeaks <= 0) {
-		return
+		return;
 	}
 	
 	// Dump peak info to file
-	pthread_mutex_lock(&peaksfp_mutex);
+	pthread_mutex_lock(&global->peaksfp_mutex);
 	fprintf(global->peaksfp, "%s\n", threadInfo->eventname);
-	fprintf(global->peaksfp, "lambda=%f\n", threadInfo->wavelengthA);
-	fprintf(global->peaksfp, "npeaks=%f\n", threadInfo->nPeaks);
+	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", threadInfo->photonEnergyeV);
+	fprintf(global->peaksfp, "wavelength_A=%f\n", threadInfo->wavelengthA);
+	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(threadInfo->gmd21+threadInfo->gmd21)/2);
+	fprintf(global->peaksfp, "npeaks=%li\n", threadInfo->nPeaks);
 	for(long i=0; i<threadInfo->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f\n", threadInfo->com_x[i], threadInfo->com_y[i], threadInfo->int_intensity[i];
-		
+		fprintf(global->peaksfp, "%f, %f, %f\n", threadInfo->com_x[i], threadInfo->com_y[i], threadInfo->int_intensity[i]);
 	}
-	pthread_mutex_unlock(&peaksfp_mutex);
+	pthread_mutex_unlock(&global->peaksfp_mutex);
 	
 	
 }
