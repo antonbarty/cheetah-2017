@@ -276,6 +276,7 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_com_x);
 	free(threadInfo->peak_com_y);
 	free(threadInfo->peak_intensity);
+	free(threadInfo->peak_npix);
 	free(threadInfo);
 
 	// Exit thread
