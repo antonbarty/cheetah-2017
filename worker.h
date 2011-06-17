@@ -32,10 +32,12 @@ typedef struct {
 	int16_t		*image;
 	int			nPeaks;
 	int			nHot;
-	float * com_x;  // peak center of mass x
-	float * com_y;  // peak center of mass y
-	float * int_intensity; // integrated peak intensities
 	
+	// Peak info
+	float		*peak_com_x;		// peak center of mass x
+	float		*peak_com_y;		// peak center of mass y
+	float		*peak_intensity;	// integrated peak intensities
+	float		*peak_npix;			// Number of pixels in peak
 	
 	// Beamline data, etc
 	int			seconds;

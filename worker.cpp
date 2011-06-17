@@ -66,9 +66,10 @@ void *worker(void *threadarg) {
 	threadInfo->corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
 	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
-	threadInfo->com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->int_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 
@@ -272,9 +273,9 @@ void *worker(void *threadarg) {
 	free(threadInfo->corrected_data);
 	free(threadInfo->corrected_data_int16);
 	free(threadInfo->image);
-	free(threadInfo->com_x);
-	free(threadInfo->com_y);
-	free(threadInfo->int_intensity);
+	free(threadInfo->peak_com_x);
+	free(threadInfo->peak_com_y);
+	free(threadInfo->peak_intensity);
 	free(threadInfo);
 
 	// Exit thread
@@ -788,8 +789,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
 			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
 			float totI;
-			float com_x;
-			float com_y;
+			float peak_com_x;
+			float peak_com_y;
 			int thisx;
 			int thisy;
 
@@ -813,8 +814,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								iny[0] = j;
 								nat = 1;
 								totI = 0; 
-								com_x = 0; 
-								com_y = 0; 
+								peak_com_x = 0; 
+								peak_com_y = 0; 
 								
 								// Keep looping until the pixel count within this peak does not change (!)
 								do {
@@ -850,8 +851,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												//	break
 												//}
 												totI += temp[e]; // add to integrated intensity
-												com_x += temp[e]*( (float) thisx ); // for center of mass x
-												com_y += temp[e]*( (float) thisy ); // for center of mass y
+												peak_com_x += temp[e]*( (float) thisx ); // for center of mass x
+												peak_com_y += temp[e]*( (float) thisy ); // for center of mass y
 												temp[e] = 0; // zero out this intensity so that we don't count it again
 												inx[nat] = inx[p]+search_x[k];
 												iny[nat] = iny[p]+search_y[k];
@@ -868,10 +869,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									if ( counter > global->hitfinderNpeaksMax ) 
 										continue;
 									
-									threadInfo->int_intensity[counter] = totI;
-									threadInfo->com_x[counter] = com_x/totI;
-									threadInfo->com_y[counter] = com_y/totI;
-
+									threadInfo->peak_intensity[counter] = totI;
+									threadInfo->peak_com_x[counter] = peak_com_x/totI;
+									threadInfo->peak_com_y[counter] = peak_com_y/totI;
+									threadInfo->peak_npix = nat;
 									counter++;
 								}
 							}
@@ -1278,48 +1279,48 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	/*
 	 * save peak info
 	 */
-   gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   if ( gid < 0 ) {
-      ERROR("%i: Couldn't create group\n", info->threadNum);
-      H5Fclose(hdf_fileID);
-      return;
-   }
+	gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gid < 0 ) {
+		ERROR("%i: Couldn't create group\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
 
-   gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   if ( gid < 0 ) {
-      ERROR("%i: Couldn't create group\n", info->threadNum);
-      H5Fclose(hdf_fileID);
-      return;
-   }
+	gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gid < 0 ) {
+		ERROR("%i: Couldn't create group\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
 
    if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
 
-      size[0] = info->nPeaks; // size[0] = height
-      size[1] = 3;   // size[1] = width
-      max_size[0] = info->nPeaks;
-      max_size[1] = 3;
-      double * peak_info = (double *) calloc(3*info->nPeaks, sizeof(double));
-      for (int i=0; i<info->nPeaks;i++){
-         peak_info[i*3] = info->com_y[i];
-         peak_info[i*3+1] = info->com_x[i];
-         peak_info[i*3+2] = info->int_intensity[i];
-      }
-      dataspace_id = H5Screate_simple(2, size, max_size);
-      dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      if ( dataset_id < 0 ) {
-         ERROR("%i: Couldn't create dataset\n", info->threadNum);
-         H5Fclose(hdf_fileID);
-         return;
-      }
-      hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
-      if ( hdf_error < 0 ) {
-         ERROR("%i: Couldn't write data\n", info->threadNum);
-         H5Dclose(dataspace_id);
-         H5Fclose(hdf_fileID);
-         return;
-      }
-      H5Dclose(dataset_id);
-      H5Sclose(dataspace_id);
+		size[0] = info->nPeaks;		// size[0] = height
+		size[1] = 3;					// size[1] = width
+		max_size[0] = info->nPeaks;
+		max_size[1] = 3;
+		double * peak_info = (double *) calloc(3*info->nPeaks, sizeof(double));
+		for (int i=0; i<info->nPeaks;i++){
+			peak_info[i*3] = info->peak_com_y[i];
+			peak_info[i*3+1] = info->peak_com_x[i];
+			peak_info[i*3+2] = info->peak_intensity[i];
+		}
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
+		if ( hdf_error < 0 ) {
+			 ERROR("%i: Couldn't write data\n", info->threadNum);
+			 H5Dclose(dataspace_id);
+			 H5Fclose(hdf_fileID);
+			 return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
    }
 
    // Done with this group
@@ -1491,7 +1492,7 @@ void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(threadInfo->gmd21+threadInfo->gmd21)/2);
 	fprintf(global->peaksfp, "npeaks=%li\n", threadInfo->nPeaks);
 	for(long i=0; i<threadInfo->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f\n", threadInfo->com_x[i], threadInfo->com_y[i], threadInfo->int_intensity[i]);
+		fprintf(global->peaksfp, "%f, %f, %f, %f\n", threadInfo->peak_com_x[i], threadInfo->peak_com_y[i], threadInfo->peak_npix[i], threadInfo->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
 	
