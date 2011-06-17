@@ -884,7 +884,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									threadInfo->peak_intensity[counter] = totI;
 									threadInfo->peak_com_x[counter] = peak_com_x/totI;
 									threadInfo->peak_com_y[counter] = peak_com_y/totI;
-									threadInfo->peak_npix = nat;
+									threadInfo->peak_npix[counter] = nat;
 									counter++;
 								}
 							}
