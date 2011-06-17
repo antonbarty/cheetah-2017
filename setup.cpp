@@ -109,6 +109,7 @@ void cGlobal::defaultConfiguration(void) {
 	saveAssembled = 1;
 	saveRaw = 0;
 	hdf5dump = 0;
+	saveDetectorCorrectedOnly = 0;
 	saveInterval = 1000;
 	
 	// Peak lists
@@ -402,6 +403,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
+	}
+	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+		saveDetectorCorrectedOnly = atoi(value);
 	}
 	else if (!strcmp(tag, "hdf5dump")) {
 		hdf5dump = atoi(value);

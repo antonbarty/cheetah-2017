@@ -65,6 +65,7 @@ void *worker(void *threadarg) {
 	 */
 	threadInfo->corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
 	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
+	threadInfo->detector_corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
@@ -142,6 +143,7 @@ void *worker(void *threadarg) {
 	/* 
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
 	 */
+	memcpy(threadInfo->detector_corrected_data, threadInfo->corrected_data, global->pix_nn*sizeof(float));
 	for(long i=0;i<global->pix_nn;i++){
 		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
 	}
@@ -199,7 +201,15 @@ void *worker(void *threadarg) {
 
 	
 	/*
-	 *	Keep copy of (now background subtracted) data in memory (needed for saving images)
+	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted
+	 */
+	if(global->saveDetectorCorrectedOnly) {
+		memcpy(threadInfo->corrected_data, threadInfo->detector_corrected_data, global->pix_nn*sizeof(float));
+	}
+	
+
+	/*
+	 *	Keep int16 copy of corrected data (needed for saving images)
 	 */
 	for(long i=0;i<global->pix_nn;i++){
 		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
@@ -271,6 +281,7 @@ void *worker(void *threadarg) {
 		free(threadInfo->quad_data[quadrant]);	
 	free(threadInfo->raw_data);
 	free(threadInfo->corrected_data);
+	free(threadInfo->detector_corrected_data);
 	free(threadInfo->corrected_data_int16);
 	free(threadInfo->image);
 	free(threadInfo->peak_com_x);
