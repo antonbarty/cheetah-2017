@@ -1345,6 +1345,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		}
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
+	   free(peak_info);
    }
 
    // Done with this group
@@ -1457,6 +1458,16 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);
 	
+
+	// cspad temperature
+	size[0] = 4;
+	dataspace_id = H5Screate_simple(1, size, NULL);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->quad_temperature[0]);
+	H5Dclose(dataset_id);
+	H5Sclose(dataspace_id);
+	
+
 	
 	// Time in human readable format
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
@@ -1471,6 +1482,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	H5Dclose(dataset_id);
 	H5Sclose(dataspace_id);
 	hdf_error = H5Lcreate_soft( "/LCLS/eventTimeString", hdf_fileID, "/LCLS/eventTime",0,0);
+	
 	
 	
 	// Close group and flush buffers
