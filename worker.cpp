@@ -207,7 +207,15 @@ void *worker(void *threadarg) {
 		memcpy(threadInfo->corrected_data, threadInfo->detector_corrected_data, global->pix_nn*sizeof(float));
 	}
 	
-
+	/*
+	 *	If using detector raw, do it here
+	 */
+	if(global->saveDetectorRaw) {
+		for(long i=0;i<global->pix_nn;i++)
+			threadInfo->corrected_data[i] = threadInfo->raw_data[i];
+	}
+	
+	
 	/*
 	 *	Keep int16 copy of corrected data (needed for saving images)
 	 */
@@ -232,13 +240,17 @@ void *worker(void *threadarg) {
 	if(global->powderSumBlanks==1 && hit==0){
 		addToPowder(threadInfo, global, hit);
 	} 
-		
+	if(global->generateDarkcal==1){
+		addToPowder(threadInfo, global, 1);
+	} 
 	
+		
 	
 	
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
+	save:
 	if(hit && global->savehits)
 		writeHDF5(threadInfo, global);
 	else if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))

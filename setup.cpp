@@ -99,7 +99,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Powder pattern generation
 	powdersum = 1;
-	powderthresh = 0;
+	powderthresh = -20000;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
 
@@ -110,6 +110,7 @@ void cGlobal::defaultConfiguration(void) {
 	saveRaw = 0;
 	hdf5dump = 0;
 	saveDetectorCorrectedOnly = 0;
+	saveDetectorRaw = 0;
 	saveInterval = 1000;
 	
 	// Peak lists
@@ -196,6 +197,10 @@ void cGlobal::setup() {
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
+		saveDetectorRaw = 1;
+		powderSumHits = 1;
+		powderSumBlanks = 1;
+		powderthresh = -20000;
 		useAutoHotpixel = 0;
 		startFrames = 0;
 		powderthresh = 0;
@@ -406,6 +411,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
 		saveDetectorCorrectedOnly = atoi(value);
+	}
+	else if (!strcmp(tag, "savedetectorraw")) {
+		saveDetectorRaw = atoi(value);
 	}
 	else if (!strcmp(tag, "hdf5dump")) {
 		hdf5dump = atoi(value);

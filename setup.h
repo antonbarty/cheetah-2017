@@ -95,6 +95,7 @@ public:
 	int			savePeakInfo;
 	int			savePeakList;
 	int			saveDetectorCorrectedOnly;
+	int			saveDetectorRaw;
 
 	
 	// Saving options
