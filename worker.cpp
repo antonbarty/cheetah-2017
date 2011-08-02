@@ -338,14 +338,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long	nhot = 0;
 	
-	// Apply the current hot pixel mask 
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
-	}
-	threadInfo->nHot = global->nhot;
-
-	
-	// Update global hot pixel buffer
+	// First update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++){
 		buffer[i] = (abs(threadInfo->corrected_data[i])>global->hotpixADC)?(1.0):(0.0);
@@ -356,6 +349,15 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	global->hotpixCounter += 1;
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	free(buffer);
+
+	
+	// Apply the current hot pixel mask 
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
+	}
+	threadInfo->nHot = global->nhot;
+
+	
 
 }
 
