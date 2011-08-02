@@ -11,7 +11,7 @@
 #	Change the target CPU/OS combination if working on a different system, eg: OS-X)
 #
 ###############################################
-TARGET 			= cspad_cryst
+TARGET 			= cheetah
 ARCH 			= x86_64-linux
 
 MYANADIR		= myana
@@ -68,7 +68,7 @@ $(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)
 
 
 # csPAD cleaner
-cspad_cryst.o: cspad_cryst.cpp 
+cheetah.o: cheetah.cpp 
 	$(CPP) $(CFLAGS) $<
 
 worker.o: worker.cpp worker.h 
@@ -80,25 +80,25 @@ setup.o: setup.cpp setup.h
 data2d.o: data2d.cpp data2d.h 
 	$(CPP) $(CFLAGS) $<
 
-cspad_cryst: cspad_cryst.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o setup.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 
 # test data
-test: cspad_cryst
-	#./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
+test: cheetah
+	#./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
-gdb: cspad_cryst
-	#gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	gdb ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
+gdb: cheetah
+	#gdb ./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#gdb ./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	gdb ./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
-valgrind: cspad_cryst
-	#valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	valgrind ./cspad_cryst -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
+valgrind: cheetah
+	#valgrind ./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
+	#valgrind ./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
+	valgrind ./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
 	

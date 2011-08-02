@@ -12,7 +12,7 @@ switch ($1)
 	breaksw
 	
 	case cfelsgi:
-	rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cspad-cryst/
+	rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cheetah/
 	breaksw
 	
 	case psexport:

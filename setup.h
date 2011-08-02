@@ -1,6 +1,6 @@
 /*
  *  setup.cpp
- *  cspad_cryst
+ *  cheetah
  *
  *  Created by Anton Barty on 7/2/11.
  *  Copyright 2011 CFEL. All rights reserved.
