@@ -155,10 +155,10 @@ void cGlobal::setup() {
 	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
 	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
-		hotpixelmask[i] = 0;
 		selfdark[i] = 0;
 		powderHitsRaw[i] = 0;
 		powderBlanksRaw[i] = 0;
+		hotpixelmask[i] = 1;
 	}
 	for(long i=0; i<image_nn; i++) {
 		powderHitsAssembled[i] = 0;
