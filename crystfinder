@@ -9,7 +9,7 @@ setenv XTCDIR '/cfel/rawdata/LCLS/LCLS-201102/xtc'
 setenv H5DIR '/cfel/tempdata/LCLS/LCLS-201102/cleaned_hdf5'
 setenv LOGDIR '/cfel/tempdata/LCLS/LCLS-201102/cleaned_hdf5/logs'
 setenv INIDIR '/cfel/tempdata/LCLS/LCLS-201102/scripts'
-setenv COMMAND '/cfel/common/bin/cspad_cryst'
+setenv COMMAND '/cfel/common/bin/cheetah'
 
 
 # All OK?
