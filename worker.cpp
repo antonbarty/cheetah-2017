@@ -129,7 +129,6 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
 		calculateHotPixelMask(global);
-		printf("hit test at %li\n",threadInfo->threadNum);
 	}
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	
