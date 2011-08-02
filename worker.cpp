@@ -114,13 +114,6 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Use all data from the first set of frames to build up running estimate of background...
-	 */
-	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory) {
-		updateBackgroundBuffer(threadInfo, global); 
-	}
-	
-	/*
 	 *	Recalculate running background from time to time
 	 */
 	pthread_mutex_lock(&global->bgbuffer_mutex);
@@ -136,6 +129,7 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
 		calculateHotPixelMask(global);
+		printf("hit test at %li\n",threadInfo->threadNum);
 	}
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	
@@ -174,12 +168,13 @@ void *worker(void *threadarg) {
 	if(global->useBadPixelMask) {
 		applyBadPixelMask(threadInfo, global);
 	} 
-	
+		
 
 	/*
 	 *	Skip first set of frames to build up running estimate of background...
 	 */
-	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory) {
+	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory || global->hotpixCounter < global->hotpixRecalc) {
+		updateBackgroundBuffer(threadInfo, global); 
 		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
 		goto cleanup;
 	}
