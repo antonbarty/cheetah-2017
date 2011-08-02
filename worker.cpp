@@ -172,10 +172,12 @@ void *worker(void *threadarg) {
 	/*
 	 *	Skip first set of frames to build up running estimate of background...
 	 */
-	if (threadInfo->threadNum < global->startFrames || global->bgCounter < global->bgMemory || global->hotpixCounter < global->hotpixRecalc) {
-		updateBackgroundBuffer(threadInfo, global); 
-		printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
-		goto cleanup;
+	if (threadInfo->threadNum < global->startFrames || 
+		(global->useSubtractPersistentBackground && global->bgCounter < global->bgMemory) || 
+		(global->useAutoHotpixel && global->hotpixCounter < global->hotpixRecalc) ) {
+			updateBackgroundBuffer(threadInfo, global); 
+			printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
+			goto cleanup;
 	}
 	
 	/*
