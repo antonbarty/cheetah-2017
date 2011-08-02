@@ -38,7 +38,7 @@
 void cGlobal::defaultConfiguration(void) {
 
 	// ini file to use
-	strcpy(configFile, "cspad-cryst.ini");
+	strcpy(configFile, "cheetah.ini");
 
 	// Geometry
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");

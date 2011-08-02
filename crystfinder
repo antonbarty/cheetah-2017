@@ -21,7 +21,7 @@ echo $2
 if ($2 != '') then
 	setenv INIFILE $2
 else
-	setenv INIFILE 'cspad-cryst.ini'
+	setenv INIFILE 'cheetah.ini'
 endif
 
 
@@ -41,7 +41,7 @@ rm -f *.h5
 
 # Create configuration files
 echo 'Creating configuration files'
-cp $INIDIR/$INIFILE cspad-cryst.ini
+cp $INIDIR/$INIFILE cheetah.ini
 ls $XTCDIR/*$1* > files.txt
 
 # make everything group editable!
