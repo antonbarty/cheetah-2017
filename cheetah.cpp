@@ -100,9 +100,7 @@ void beginjob() {
 	/*
 	 * Get time information
 	 */
-	int fail = 0;
 	int seconds, nanoSeconds;
-	const char* time;
 
 	getTime( seconds, nanoSeconds );	
 	// fail = getLocalTime( time );
@@ -122,6 +120,7 @@ void beginjob() {
 	 *	Stuff for worker thread management
 	 */
 	global.defaultConfiguration();
+	global.parseConfigFile("cspad-cryst.ini");
 	global.parseConfigFile(global.configFile);
 	global.readDetectorGeometry(global.geometryFile);
 	global.setup();
@@ -191,8 +190,8 @@ void event() {
 	// Variables
 	frameNumber++;
 	//printf("Processing event %i\n", frameNumber);
-	FILE* fp;
-	char filename[1024];
+	//FILE* fp;
+	//char filename[1024];
 	int fail = 0;
 
 	
@@ -226,7 +225,7 @@ void event() {
 	time_t	tnow;
 	double	dt, datarate1;
 	double	dtime, datarate2;
-	int		hrs, mins, secs; 
+	//int		hrs, mins, secs; 
 
 	time(&tnow);
 	dtime = difftime(tnow, global.tlast);
@@ -247,11 +246,11 @@ void event() {
 	 *	Skip frames if we only want a part of the data set
 	 */
 	if(global.startAtFrame != 0 && frameNumber < global.startAtFrame) {
-		printf("r%04u:%i (%3.1fHz): Skipping to frames\n", global.runNumber, frameNumber, global.datarate);		
+		printf("r%04u:%li (%3.1fHz): Skipping to start frame $li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
 		return;
 	}
 	if(global.stopAtFrame != 0 && frameNumber > global.stopAtFrame) {
-		printf("r%04u:%i (%3.1fHz): Skipping to frames\n", global.runNumber, frameNumber, global.datarate);		
+		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", global.runNumber, frameNumber, global.datarate, global.stopAtFrame);		
 		return;
 	}
 
@@ -261,7 +260,7 @@ void event() {
 	 * Get event time information
 	 */
 	int seconds, nanoSeconds;
-	const char* timestring;
+	//const char* timestring;
 	getTime( seconds, nanoSeconds );
 	//fail = getLocalTime( timestring );
 	//printf("%s\n",timestring);
@@ -436,7 +435,7 @@ void event() {
 				// Which quadrant is this?
 				int quadrant = element->quad();
 				
-				// Have we jumped to a new fiducial (event??)
+				// Have we accidentally jumped to a new fiducial (ie: a different event??)
 				//if (fiducial != element->fiducials())
 				//	printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
 				
@@ -464,7 +463,7 @@ void event() {
 	 *	I/O speed test?
 	 */
 	if(global.ioSpeedTest) {
-		printf("r%04u:%i (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
+		printf("r%04u:%li (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
 		for(int quadrant=0; quadrant<4; quadrant++) {
 			free(threadInfo->quad_data[quadrant]);
 		}
@@ -488,7 +487,7 @@ void event() {
 	// On cfelsgi we seem to get mutex-lockup on some threads if we don't do this
 	if( global.threadPurge && (global.nprocessedframes%global.threadPurge)==0 ){
 		while(global.nActiveThreads > 0) {
-			printf("Pausing to let remaining %i worker threads to terminate\n", global.nActiveThreads);
+			printf("Pausing to let remaining %li worker threads to terminate\n", global.nActiveThreads);
 			usleep(10000);
 		}
 	}
@@ -554,7 +553,7 @@ void endjob()
 
 	// Wait for threads to finish
 	while(global.nActiveThreads > 0) {
-		printf("Waiting for %i worker threads to terminate\n", global.nActiveThreads);
+		printf("Waiting for %li worker threads to terminate\n", global.nActiveThreads);
 		usleep(100000);
 	}
 	
@@ -564,7 +563,7 @@ void endjob()
 	global.writeFinalLog();
 	
 	// Hitrate?
-	printf("%i files processed, %i hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
+	printf("%li files processed, %li hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
 
 	
 	// Cleanup

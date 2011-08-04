@@ -605,7 +605,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	// Sanity check that size matches what we expect for cspad (!)
 	if (detector_x.nx != 8*ROWS || detector_x.ny != 8*COLS) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ix%i != %ix%i\n", 8*ROWS, 8*COLS, detector_x.nx, detector_x.ny);
+		printf("%ux%u != %lix%li\n", 8*ROWS, 8*COLS, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
@@ -672,7 +672,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	if(fabs(ymin) > max) max = fabs(ymin);
 	image_nx = 2*(unsigned)max;
 	image_nn = image_nx*image_nx;
-	printf("\tImage output array will be %i x %i\n",image_nx,image_nx);
+	printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
 	
 }
 
@@ -709,7 +709,7 @@ void cGlobal::readDarkcal(char *filename){
 	
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
 		printf("\tDefaulting to all-zero darkcal\n");
 		return;
 	} 
@@ -754,7 +754,7 @@ void cGlobal::readGaincal(char *filename){
 
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
 		printf("\tDefaulting to uniform gaincal\n");
 		return;
 	} 
@@ -812,7 +812,7 @@ void cGlobal::readPeakmask(char *filename){
 	
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
 		printf("\tDefaulting to uniform peak search mask\n");
 		return;
 	} 
@@ -857,7 +857,7 @@ void cGlobal::readBadpixelMask(char *filename){
 	
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %ix%x != %ix%i\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
 		printf("\tDefaulting to uniform peak search mask\n");
 		return;
 	} 
@@ -899,7 +899,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "start time: %s\n",timestr);
 
 	fprintf(fp, "\nIni parameters:\n");
-	fprintf(fp, "nthreads=%d\n",nThreads);
+	fprintf(fp, "nthreads=%ld\n",nThreads);
 	fprintf(fp, "geometry=%s\n",geometryFile);
 	fprintf(fp, "darkcal=%s\n",darkcalFile);
 	fprintf(fp, "gaincal=%s\n",gaincalFile);
@@ -943,8 +943,8 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderminpixcount=%d\n",hitfinderMinPixCount);
 	fprintf(fp, "hitfindermaxpixcount=%d\n",hitfinderMaxPixCount);
 	fprintf(fp, "hitfinderusepeakmask=%d\n",hitfinderUsePeakmask);
-	fprintf(fp, "selfdarkmemory=%f\n",bgMemory);
-	fprintf(fp, "bgmemory=%f\n",bgMemory);
+	fprintf(fp, "selfdarkmemory=%li\n",bgMemory);
+	fprintf(fp, "bgmemory=%li\n",bgMemory);
 	fprintf(fp, "scaleBackground=%d\n",scaleBackground);
 	fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
 	fprintf(fp, "startframes=%d\n",startFrames);
@@ -1020,7 +1020,7 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
-	fprintf(fp, "nFrames: %i,  nHits: %i (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
+	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
 	fclose (fp);
 	
 	
@@ -1090,10 +1090,10 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, ">-------- End of job --------<\n");
 	fprintf(fp, "End time: %s\n",timestr);
 	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
-	fprintf(fp, "Frames processed: %i\n",nprocessedframes);
-	fprintf(fp, "nFrames in hits powder pattern: %i\n",npowderHits);
-	fprintf(fp, "nFrames in blanks powder pattern: %i\n",npowderBlanks);
-	fprintf(fp, "Number of hits: %i\n",nhits);
+	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
+	fprintf(fp, "nFrames in hits powder pattern: %li\n",npowderHits);
+	fprintf(fp, "nFrames in blanks powder pattern: %li\n",npowderBlanks);
+	fprintf(fp, "Number of hits: %li\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);

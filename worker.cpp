@@ -178,7 +178,7 @@ void *worker(void *threadarg) {
 		(global->useSubtractPersistentBackground && global->bgCounter < global->bgMemory) || 
 		(global->useAutoHotpixel && global->hotpixCounter < global->hotpixRecalc) ) {
 			updateBackgroundBuffer(threadInfo, global); 
-			printf("r%04u:%i (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
+			printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
 			goto cleanup;
 	}
 	
@@ -254,7 +254,7 @@ void *worker(void *threadarg) {
 	else if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))
 		writeHDF5(threadInfo, global);
 	else
-		printf("r%04u:%i (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
+		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
 
 	
 	/*
@@ -272,7 +272,7 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%i, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
+	fprintf(global->framefp, "%li, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
@@ -334,7 +334,6 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
  */
 void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	
-	long	nhot = 0;
 	
 	// First update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
@@ -363,7 +362,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 void calculateHotPixelMask(cGlobal *global){
 
 	long	cutoff = lrint((global->hotpixMemory*global->hotpixFreq));
-	printf("Recalculating hot pixel mask at %li/%li\n",cutoff,global->hotpixMemory);	
+	printf("Recalculating hot pixel mask at %li/%i\n",cutoff,global->hotpixMemory);	
 	
 	// Loop over all pixels 
 	long	counter;
@@ -533,7 +532,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long		e;
 	long		counter;
-	uint16_t	value;
+	//uint16_t	value;
 	uint16_t	median;
 	
 	// Create histogram array
@@ -695,7 +694,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	long	nat, lastnat;
 	long	counter;
 	int		hit=0;
-	long	ii,jj,nn;
+	long	ii,nn;
 
 	nat = 0;
 	counter = 0;
@@ -1160,7 +1159,7 @@ void nameEvent(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
-	char outfile[1024];
+	//char outfile[1024];
 	char buffer1[80];
 	char buffer2[80];	
 	time_t eventTime = info->seconds;
@@ -1195,7 +1194,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	//sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
 
 	strcpy(outfile, info->eventname);
-	printf("r%04u:%i (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
+	printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
 	pthread_mutex_lock(&global->framefp_mutex);
 	fprintf(global->cleanedfp, "r%04u/%s, %i\n",global->runNumber, info->eventname, info->nPeaks);
@@ -1212,7 +1211,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	hsize_t 	size[2],max_size[2];
 	herr_t		hdf_error;
 	hid_t   	gid, gid2;
-	char 		fieldname[100]; 
+	//char 		fieldname[100]; 
 	
 	
 	/*
@@ -1229,7 +1228,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 */
 	gid = H5Gcreate(hdf_fileID, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%i: Couldn't create group\n", info->threadNum);
+		ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
@@ -1243,13 +1242,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "assembleddata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
 		if ( hdf_error < 0 ) {
-			ERROR("%i: Couldn't write data\n", info->threadNum);
+			ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -1267,13 +1266,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data_int16);
 		if ( hdf_error < 0 ) {
-			ERROR("%i: Couldn't write data\n", info->threadNum);
+			ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -1302,14 +1301,14 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 */
 	gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%i: Couldn't create group\n", info->threadNum);
+		ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
 
 	gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%i: Couldn't create group\n", info->threadNum);
+		ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
@@ -1329,13 +1328,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%i: Couldn't create dataset\n", info->threadNum);
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
 		if ( hdf_error < 0 ) {
-			 ERROR("%i: Couldn't write data\n", info->threadNum);
+			 ERROR("%li: Couldn't write data\n", info->threadNum);
 			 H5Dclose(dataspace_id);
 			 H5Fclose(hdf_fileID);
 			 return;
@@ -1351,10 +1350,10 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 
 	
 	
-	double		phaseCavityTime1;
-	double		phaseCavityTime2;
-	double		phaseCavityCharge1;
-	double		phaseCavityCharge2;
+	//double		phaseCavityTime1;
+	//double		phaseCavityTime2;
+	//double		phaseCavityCharge1;
+	//double		phaseCavityCharge2;
 	
 	/*
 	 *	Write LCLS event information
@@ -1523,7 +1522,7 @@ void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", threadInfo->photonEnergyeV);
 	fprintf(global->peaksfp, "wavelength_A=%f\n", threadInfo->wavelengthA);
 	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(threadInfo->gmd21+threadInfo->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%li\n", threadInfo->nPeaks);
+	fprintf(global->peaksfp, "npeaks=%i\n", threadInfo->nPeaks);
 	for(long i=0; i<threadInfo->nPeaks; i++) {
 		fprintf(global->peaksfp, "%f, %f, %f, %f\n", threadInfo->peak_com_x[i], threadInfo->peak_com_y[i], threadInfo->peak_npix[i], threadInfo->peak_intensity[i]);
 	}
@@ -1610,6 +1609,7 @@ void saveRunningSums(cGlobal *global) {
 
 		/*
 		 *	Save assembled powder patterns
+		 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
 		 */		
 		// Hits
 		printf("Saving summed hits assembled sum data to file\n");
@@ -1634,6 +1634,7 @@ void saveRunningSums(cGlobal *global) {
 
 		/*
 		 *	Save powder patterns in raw layout
+		 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
 		 */		
 		// Hits
 		printf("Saving summed hits raw to file\n");
