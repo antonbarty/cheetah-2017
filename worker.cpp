@@ -1619,14 +1619,19 @@ void saveRunningSums(cGlobal *global) {
 		float	offset;
 		offset = kth_smallest(buffer1, global->pix_nn, median_element);
 		free(buffer1);
-
+		if(offset == 0){
+			printf("Error calculating gain, offset = %f\n",offset);
+			return;
+		}
 		double *buffer2 = (double*) calloc(global->pix_nn, sizeof(double));
 		for(long i=0; i<global->pix_nn; i++)
 			buffer2[i] = (global->powderHitsRaw[i]/global->npowderHits);
 		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
 		for(long i=0; i<global->pix_nn; i++)
 			buffer2[i] /= offset;
-		
+		for(long i=0; i<global->pix_nn; i++)
+			if(buffer2[i] < 0.1 || buffer2[i] > 10)
+				buffer2[i]=0;
 		printf("Saving gaincal to file\n");
 		writeSimpleHDF5(filename, buffer2, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer2);
