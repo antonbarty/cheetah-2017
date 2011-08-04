@@ -445,7 +445,7 @@ void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global) {
 
 
 /*
- *	Subtract persistent background (scaled)
+ *	Subtract persistent background 
  */
 void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
@@ -1604,6 +1604,37 @@ void saveRunningSums(cGlobal *global) {
 		free(buffer);
 	}
 
+	/*
+	 *	Compute and save gain calibration
+	 */
+	else if(global->generateGaincal) {
+		printf("Processing gaincal\n");
+		sprintf(filename,"r%04u-gaincal.h5",global->runNumber);
+		int16_t *buffer1 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+		pthread_mutex_lock(&global->powderHitsRaw_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer1[i] = (int16_t) lrint((global->powderHitsRaw[i]/global->npowderHits));
+		long median_element = lrint(0.5*global->pix_nn);
+		printf("Finding %lith smallest element of %li pixels\n",median_element,global->pix_nn);	
+		float	offset;
+		offset = kth_smallest(buffer1, global->pix_nn, median_element);
+		free(buffer1);
+
+		double *buffer2 = (double*) calloc(global->pix_nn, sizeof(double));
+		for(long i=0; i<global->pix_nn; i++)
+			buffer2[i] = (global->powderHitsRaw[i]/global->npowderHits);
+		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer2[i] /= offset;
+		
+		printf("Saving gaincal to file\n");
+		writeSimpleHDF5(filename, buffer2, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer2);
+		
+		
+	}
+
+	
 	else {
 		double *buffer;
 

@@ -47,6 +47,7 @@ public:
 	int			useGaincal;
 	int			invertGain;
 	char		gaincalFile[1024];
+	int			generateGaincal;		// Flip this on to generate a gaincal (auto-turns-on appropriate other options)
 	
 	// Running background subtraction
 	int			useSubtractPersistentBackground;

@@ -66,6 +66,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(gaincalFile, "gaincal.h5");
 	useGaincal = 0;
 	invertGain = 0;
+	generateGaincal = 0;
 	
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
@@ -211,11 +212,30 @@ void cGlobal::setup() {
 		saveDetectorRaw = 1;
 		powderSumHits = 1;
 		powderSumBlanks = 1;
-		powderthresh = -20000;
+		powderthresh = -32000;
 		useAutoHotpixel = 0;
 		startFrames = 0;
-		powderthresh = 0;
+		saveDetectorCorrectedOnly = 1;
 	}
+
+	if(generateGaincal) {
+		cmModule = 1;
+		subtractBg = 1;
+		useDarkcalSubtraction = 1;
+		useSubtractPersistentBackground = 0;
+		hitfinder = 0;
+		savehits = 0;
+		hdf5dump = 0;
+		saveRaw = 0;
+		saveDetectorRaw = 1;
+		powderSumHits = 1;
+		powderSumBlanks = 1;
+		powderthresh = -32000;
+		useAutoHotpixel = 0;
+		startFrames = 0;
+		saveDetectorCorrectedOnly = 1;
+	}
+
 	
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
@@ -399,6 +419,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "generatedarkcal")) {
 		generateDarkcal = atoi(value);
+	}
+	else if (!strcmp(tag, "generategaincal")) {
+		generateGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		subtractBg = atoi(value);
