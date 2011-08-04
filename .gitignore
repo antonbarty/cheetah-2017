@@ -1,7 +1,6 @@
-cspad_cryst
-myana_morefeatures
+geometry
+build
 *.o
-CVS
 ./example/CVS
 ./release/pdstools/CVS
 ./release/pdstools/procmgr/CVS

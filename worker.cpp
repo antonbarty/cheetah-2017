@@ -27,6 +27,8 @@
 
 #include "setup.h"
 #include "worker.h"
+#include "median.h"
+
 
 
 
@@ -337,7 +339,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	// First update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++){
-		buffer[i] = (abs(threadInfo->corrected_data[i])>global->hotpixADC)?(1.0):(0.0);
+		buffer[i] = (fabs(threadInfo->corrected_data[i])>global->hotpixADC)?(1.0):(0.0);
 	}
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	long frameID = global->hotpixCounter%global->hotpixMemory;	
@@ -386,38 +388,6 @@ void calculateHotPixelMask(cGlobal *global){
 	global->last_hotpix_update = global->hotpixCounter;
 }
 
-
-/*
- *	Find kth smallest element of a data array
- *	Algorithm from Wirth "Algorithms + data structures = programs" 
- *	Englewood Cliffs: Prentice-Hall, 1976, p. 366
- *	See: http://ndevilla.free.fr/median/median.pdf
- */
-#define SWAP(a,b) { int16_t t=(a);(a)=(b);(b)=t; }
-int16_t kth_smallest(int16_t *a, long n, long k) {
-	register long i,j,l,m;
-	register int16_t x;
-	l=0; 
-	m=n-1; 
-	while (l<m) {
-		x=a[k]; 
-		i=l; 
-		j=m; 
-		do {
-			while (a[i]<x) i++ ;
-			while (x<a[j]) j-- ;
-			if (i<=j) {
-				SWAP(a[i],a[j]); 
-				i++; 
-				j--;
-			} 
-		} while (i<=j);
-		if (j<k) l=i; 
-		if (k<i) m=j ;
-	} 			
-	return a[k] ;
-}
-#undef SWAP
 
 
 /*

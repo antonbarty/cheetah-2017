@@ -29,6 +29,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <limits>
+#include <stdint.h>
 
 #include "setup.h"
 #include "worker.h"
