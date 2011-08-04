@@ -571,8 +571,10 @@ void endjob()
 	free(global.darkcal);
 	free(global.powderHitsAssembled);
 	free(global.powderHitsRaw);
+	free(global.powderHitsRawSquared);
 	free(global.powderBlanksAssembled);
 	free(global.powderBlanksRaw);
+	free(global.powderBlanksRawSquared);
 	free(global.hotpixelmask);
 	free(global.selfdark);
 	free(global.gaincal);
@@ -581,8 +583,10 @@ void endjob()
 	free(global.hotpix_buffer);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.powderHitsRaw_mutex);
+	pthread_mutex_destroy(&global.powderHitsRawSquared_mutex);
 	pthread_mutex_destroy(&global.powderHitsAssembled_mutex);
 	pthread_mutex_destroy(&global.powderBlanksRaw_mutex);
+	pthread_mutex_destroy(&global.powderBlanksRawSquared_mutex);
 	pthread_mutex_destroy(&global.powderBlanksAssembled_mutex);
 	pthread_mutex_destroy(&global.selfdark_mutex);
 	pthread_mutex_destroy(&global.hotpixel_mutex);

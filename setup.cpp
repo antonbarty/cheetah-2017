@@ -153,7 +153,9 @@ void cGlobal::setup() {
 	 */
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
 	powderHitsRaw = (double*) calloc(pix_nn, sizeof(double));
+	powderHitsRawSquared = (double*) calloc(pix_nn, sizeof(double));
 	powderBlanksRaw = (double*) calloc(pix_nn, sizeof(double));
+	powderBlanksRawSquared = (double*) calloc(pix_nn, sizeof(double));
 	powderHitsAssembled = (double*) calloc(image_nn, sizeof(double));
 	powderBlanksAssembled = (double*) calloc(image_nn, sizeof(double));
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
@@ -162,7 +164,9 @@ void cGlobal::setup() {
 	for(long i=0; i<pix_nn; i++) {
 		selfdark[i] = 0;
 		powderHitsRaw[i] = 0;
+		powderHitsRawSquared[i] = 0;
 		powderBlanksRaw[i] = 0;
+		powderBlanksRawSquared[i] = 0;
 		hotpixelmask[i] = 1;
 	}
 	for(long i=0; i<image_nn; i++) {
@@ -182,7 +186,9 @@ void cGlobal::setup() {
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
 	pthread_mutex_init(&powderHitsRaw_mutex, NULL);
 	pthread_mutex_init(&powderHitsAssembled_mutex, NULL);
+	pthread_mutex_init(&powderHitsRawSquared_mutex, NULL);
 	pthread_mutex_init(&powderBlanksRaw_mutex, NULL);
+	pthread_mutex_init(&powderBlanksRawSquared_mutex, NULL);
 	pthread_mutex_init(&powderBlanksAssembled_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);

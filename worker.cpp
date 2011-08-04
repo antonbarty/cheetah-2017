@@ -933,6 +933,20 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 					global->powderHitsRaw[i] += threadInfo->corrected_data[i];
 			}
 			pthread_mutex_unlock(&global->powderHitsRaw_mutex);			
+
+			// Raw data squared (for calculating variance)
+			buffer = (double*) calloc(global->pix_nn, sizeof(double));
+			for(long i=0; i<global->pix_nn; i++) {
+				if(threadInfo->corrected_data[i] > global->powderthresh)
+					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+				else 
+					buffer[i] = 0;
+			}
+			pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
+			for(long i=0; i<global->pix_nn; i++) 
+				global->powderHitsRawSquared[i] += buffer[i];
+			pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);			
+			free(buffer);
 		}
 		else {
 			// Assembled data
@@ -951,11 +965,26 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 					global->powderBlanksRaw[i] += threadInfo->corrected_data[i];
 			}
 			pthread_mutex_unlock(&global->powderBlanksRaw_mutex);			
+		
+			// Raw data squared (for calculating variance)
+			buffer = (double*) calloc(global->pix_nn, sizeof(double));
+			for(long i=0; i<global->pix_nn; i++) {
+				if(threadInfo->corrected_data[i] > global->powderthresh)
+					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+				else 
+					buffer[i] = 0;
+			}
+			pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+			for(long i=0; i<global->pix_nn; i++) 
+				global->powderBlanksRawSquared[i] += buffer[i];
+			pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);			
+			free(buffer);
 		}
 	}
 	
 	/*
 	 *	Version with comparison and type conversion outside mutex block
+	 * 
 	 */
 	else {
 		if(hit == 1) {
@@ -1616,6 +1645,16 @@ void saveRunningSums(cGlobal *global) {
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer);
 
+		// Hits squared (for calculation of variance)
+		sprintf(filename,"r%04u-sumHitsRawSquared.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
+		memcpy(buffer, global->powderHitsRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+		
+		
 		// Blanks
 		printf("Saving summed hits raw to file\n");
 		sprintf(filename,"r%04u-sumBlanksRaw.h5",global->runNumber);
@@ -1623,6 +1662,15 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
 		memcpy(buffer, global->powderBlanksRaw, global->pix_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+
+		// Blanks squared (for calculation of variance)
+		sprintf(filename,"r%04u-sumBlanksRawSquared.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+		memcpy(buffer, global->powderBlanksRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
