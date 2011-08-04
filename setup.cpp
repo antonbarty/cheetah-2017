@@ -39,6 +39,11 @@ void cGlobal::defaultConfiguration(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
+	
+	// Start and stop frames
+	startAtFrame = 0;
+	stopAtFrame = 0;
+
 
 	// Geometry
 	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
@@ -339,7 +344,14 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 *	Parse known tags
 	 */
-	if (!strcmp(tag, "nthreads")) {
+	
+	if (!strcmp(tag, "startatframe")) {
+		startAtFrame = atoi(value);
+	}
+	else if (!strcmp(tag, "stopatframe")) {
+		stopAtFrame = atoi(value);
+	}
+	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
 	else if (!strcmp(tag, "usehelperthreads")) {
@@ -502,7 +514,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 
 	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
-		bgMemory = atof(value);
+		bgMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "bgmemory")) {
 		bgMemory = atoi(value);

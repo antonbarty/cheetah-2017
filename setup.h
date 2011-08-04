@@ -22,6 +22,10 @@ public:
 	// ini file to read
 	char		configFile[1024];
 	
+	// Start and stop frames
+	long	startAtFrame;
+	long	stopAtFrame;
+	
 	// Real-space geometry
 	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;

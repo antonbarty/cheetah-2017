@@ -339,7 +339,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 	// First update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
 	for(long i=0;i<global->pix_nn;i++){
-		buffer[i] = (fabs(threadInfo->corrected_data[i])>global->hotpixADC)?(1.0):(0.0);
+		buffer[i] = (fabs(threadInfo->corrected_data[i])>global->hotpixADC)?(1):(0);
 	}
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	long frameID = global->hotpixCounter%global->hotpixMemory;	

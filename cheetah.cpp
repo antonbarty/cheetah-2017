@@ -243,7 +243,18 @@ void event() {
 		//global.datarate = (datarate+9*global.datarate)/10.;
 	}
 	
-	
+	/*
+	 *	Skip frames if we only want a part of the data set
+	 */
+	if(global.startAtFrame != 0 && frameNumber < global.startAtFrame) {
+		printf("r%04u:%i (%3.1fHz): Skipping to frames\n", global.runNumber, frameNumber, global.datarate);		
+		return;
+	}
+	if(global.stopAtFrame != 0 && frameNumber > global.stopAtFrame) {
+		printf("r%04u:%i (%3.1fHz): Skipping to frames\n", global.runNumber, frameNumber, global.datarate);		
+		return;
+	}
+
 	
 
 	/*
