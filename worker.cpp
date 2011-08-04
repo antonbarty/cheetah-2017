@@ -531,21 +531,26 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
 	long		e;
-	long		counter;
+	//long		counter;
 	//uint16_t	value;
+	int			mval = lrint(global->cmFloor*ROWS*COLS);
 	uint16_t	median;
 	
 	// Create histogram array
-	int			nhist = 65535;
-	uint16_t	*histogram;
-	histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+
+	//int			nhist = 65535;
+	//uint16_t	*histogram; 
+	//histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+
+	int16_t	*buffer; 
+	buffer = (int16_t*) calloc(COLS*ROWS, sizeof(int16_t));
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
 		for(long mj=0; mj<8; mj++){
 
 			// Zero histogram
-			memset(histogram, 0, nhist*sizeof(uint16_t));
+			//memset(histogram, 0, nhist*sizeof(uint16_t));
 			
 			
 			// Loop over pixels within a module
@@ -553,19 +558,21 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				for(long j=0; j<COLS; j++){
 					e = (j + mj*COLS) * (8*ROWS);
 					e += i + mi*ROWS;
-					histogram[lrint(threadInfo->corrected_data[e])] += 1;
+					//histogram[lrint(threadInfo->corrected_data[e])] += 1;
+					buffer[i] = lrint(threadInfo->corrected_data[e]);
 				}
 			}
 			
+			median = kth_smallest(buffer, COLS*ROWS, global->cmFloor*ROWS*COLS);
 			// Find median value
-			counter = 0;
-			for(long i=0; i<nhist; i++){
-				counter += histogram[i];
-				if(counter > (global->cmFloor*ROWS*COLS)) {
-					median = i;
-					break;
-				}
-			}
+			//counter = 0;
+			//for(long i=0; i<nhist; i++){
+			//	counter += histogram[i];
+			//	if(counter > (global->cmFloor*ROWS*COLS)) {
+			//		median = i;
+			//		break;
+			//	}
+			//}
 			//DEBUGL2_ONLY printf("Median of module (%i,%i) = %i\n",mi,mj,median);
 
 			// Subtract median value
@@ -585,7 +592,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			}
 		}
 	}
-	free(histogram);
+	//free(histogram);
 }
 
 /*
