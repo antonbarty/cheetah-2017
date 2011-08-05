@@ -90,6 +90,7 @@ using namespace std;
 static CspadCorrector*      corrector;
 static Pds::CsPad::ConfigV1 configV1;
 static Pds::CsPad::ConfigV2 configV2;
+static Pds::CsPad::ConfigV3 configV3;
 static unsigned             configVsn;
 static unsigned             quadMask;
 static unsigned             asicMask;

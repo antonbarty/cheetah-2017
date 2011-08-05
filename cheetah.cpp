@@ -15,6 +15,7 @@
 #include "myana/XtcRun.hh"
 #include "release/pdsdata/cspad/ConfigV1.hh"
 #include "release/pdsdata/cspad/ConfigV2.hh"
+#include "release/pdsdata/cspad/ConfigV3.hh"
 #include "release/pdsdata/cspad/ElementHeader.hh"
 #include "release/pdsdata/cspad/ElementIterator.hh"
 #include "cspad-gjw/CspadTemp.hh"
@@ -148,6 +149,13 @@ void fetchConfig()
 		asicMask = configV2.asicMask();
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV2.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
+	}
+	else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV3 )==0) {
+		configVsn= 3;
+		quadMask = configV3.quadMask();
+		asicMask = configV3.asicMask();
+		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV3.runDelay());
+		printf("\tintTime %d/%d/%d/%d\n", configV3.quads()[0].intTime(), configV3.quads()[1].intTime(), configV3.quads()[2].intTime(), configV3.quads()[3].intTime());
 	}
 	else {
 		configVsn= 0;
