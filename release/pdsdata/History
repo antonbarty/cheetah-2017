@@ -1,3 +1,8 @@
+2011-July-20	weaver	Tag V02-12-00	Added XRT BLD cameras.
+2011-May-31	weaver	Tag V02-11-01	Added BldDataEbeamV2.
+2011-May-12	weaver			Added Lusi Config V2s to match Ipimb upgrade.
+2011-Apr-04	weaver			Added postmarks to mq_send calls from XtcMonitorServer to allow
+					recovery of shared memory buffers lost to non-responsive clients.
 2010-Dec-17	weaver	Tag V02-10-02	Added new acqiris/Tdc data types.
 2010-Dec-09	tomy		Modified xtc/Detinfo.hh and xtc/src/DetInfo.cc to add CXI detector IDs.
 2010-Nov-30	weaver	Tag V02-10-00.  Added evr/ConfigV5 and evr/SequencerConfigV1.

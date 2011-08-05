@@ -1,5 +1,5 @@
-#ifndef IPIMBDATADESC_HH
-#define IPIMBDATADESC_HH
+#ifndef IPIMBDATAV1_HH
+#define IPIMBDATAV1_HH
 
 #include <stdint.h>
 

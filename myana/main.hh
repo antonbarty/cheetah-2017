@@ -70,9 +70,10 @@ int getIpmFexConfig   (Pds::DetInfo::Detector det, int iDevId,
            float* base3, float* scale3,
            float& xscale, float& yscale);
 
-namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; }}
+namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; class ConfigV3; }}
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV1& cfg);
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV2& cfg);
+int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV3& cfg);
 
 /* Note: Shared BLD Ipimb Config available on L1Accept Data Event */
 int getBldIpimbConfig(Pds::BldInfo::Type bldType, uint64_t& serialID, int& chargeAmpRange0,

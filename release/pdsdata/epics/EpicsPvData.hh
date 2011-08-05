@@ -80,7 +80,13 @@ public:
     EpicsPvCtrlHeader( short int iPvId1, short int iDbrType1, short int iNumElements1, const char sPvName1[] ) :
       EpicsPvHeader( iPvId1, iDbrType1, iNumElements1)
     {
-        strcpy( sPvName, sPvName1 );        
+        strncpy( sPvName, sPvName1, _iMaxPvNameLength );        
+        if ( sPvName[_iMaxPvNameLength-1] != 0 )
+	{
+          printf("EpicsPvCtrlHeader::EpicsPvCtrlHeader(): Pv Name %s\n" 
+            "  is too long for buffer size %d\n", sPvName1, _iMaxPvNameLength );
+          sPvName[_iMaxPvNameLength-1] = 0;
+	}
     }
 };
     

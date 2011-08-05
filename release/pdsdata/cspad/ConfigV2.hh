@@ -32,14 +32,16 @@ namespace Pds
             uint32_t badAsicMask1,
             uint32_t AsicMask,
             uint32_t quadMask,
-	    uint32_t roiMask);
+	        uint32_t roiMask);
 
         ConfigV1QuadReg*       quads        ()       { return _quads; }
         const ConfigV1QuadReg* quads        () const { return _quads; }
         uint32_t               tdi          () const { return _testDataIndex; }
         uint32_t               quadMask     () const { return _quadMask; }
         uint32_t               runDelay     () const { return _runDelay; }
+        void                   runDelay     (uint32_t rd) { _runDelay = rd; }
         uint32_t               eventCode    () const { return _eventCode; }
+        void                   eventCode    (uint32_t ec) { _eventCode = ec; }
         uint32_t               inactiveRunMode()const{ return _inactiveRunMode; }
         uint32_t               activeRunMode() const { return _activeRunMode; }
         uint32_t               payloadSize  () const { return _payloadPerQuad; }

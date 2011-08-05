@@ -9,7 +9,7 @@
 #include "pdsdata/xtc/XtcIterator.hh"
 #include "pdsdata/xtc/XtcFileIterator.hh"
 #include "pdsdata/acqiris/ConfigV1.hh"
-#include "pdsdata/ipimb/ConfigV1.hh"
+#include "pdsdata/ipimb/ConfigV2.hh"
 #include "pdsdata/encoder/ConfigV1.hh"
 #include "pdsdata/camera/FrameFexConfigV1.hh"
 #include "pdsdata/camera/FrameFccdConfigV1.hh"
@@ -41,7 +41,7 @@ public:
   void process(const DetInfo&, const Acqiris::ConfigV1&) {
     printf("*** Processing Acqiris config object\n");
   }
-  void process(const DetInfo&, const Ipimb::ConfigV1&) {
+  void process(const DetInfo&, const Ipimb::ConfigV2&) {
     printf("*** Processing Ipimb config object\n");
   }
   void process(const DetInfo&, const Encoder::ConfigV1&) {
@@ -149,11 +149,19 @@ public:
     bldData.print();
     printf( "\n" );    
   }
-  void process(const DetInfo&, const BldDataIpimb& bldData) {
-    printf("*** Processing Bld-Ipimb object\n");
+  void process(const DetInfo&, const BldDataIpimbV0& bldData) {
+    printf("*** Processing Bld-Ipimb V0 object\n");
     bldData.print();
     printf( "\n" );    
-  }    
+  } 
+
+  void process(const DetInfo&, const BldDataIpimb& bldData) {
+    printf("*** Processing Bld-Ipimb V1 object\n");
+    bldData.print();
+    printf( "\n" );    
+  } 
+
+   
   void process(const DetInfo&, const EvrData::IOConfigV1&) {
     printf("*** Processing EVR IOconfig V1 object\n");
   }
@@ -216,7 +224,7 @@ public:
       unsigned version = xtc->contains.version();
       switch (version) {
       case 1:
-        process(info,*(const Ipimb::ConfigV1*)(xtc->payload()));
+        process(info,*(const Ipimb::ConfigV2*)(xtc->payload()));
         break;
       default:
         printf("Unsupported ipimb configuration version %d\n",version);
@@ -327,8 +335,19 @@ public:
     }
     case (TypeId::Id_SharedIpimb) :
     {
-      process(info, *(const BldDataIpimb*) xtc->payload() );
-      break;        
+
+     switch(xtc->contains.version()) {
+      case 0:
+        process(info, *(const BldDataIpimbV0*) xtc->payload() );
+        break; 
+      case 1:
+        process(info, *(const BldDataIpimb*) xtc->payload() );
+        break; 
+      default:
+        break;
+      }   
+      break; 
+       
     }
     case (TypeId::Id_PrincetonConfig) :
     {

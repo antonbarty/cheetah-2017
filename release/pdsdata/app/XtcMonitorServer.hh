@@ -39,6 +39,8 @@ namespace Pds {
     void _moveQueue        (mqd_t iq, mqd_t oq);
     void _push_transition  (int ibuffer);
     bool _send_sequence    ();
+    void _claim            (unsigned);
+    bool _claimOutputQueues(unsigned);
   protected:
     void _pop_transition   ();
   private:
@@ -66,6 +68,10 @@ namespace Pds {
     timespec        _tmo;
     pthread_t       _threadID;
     EventSequence*  _sequence;
+    timespec*       _postmarks;
+    unsigned        _freelist;
+    unsigned        _nfree;
+    unsigned        _lastSent;
   };
 };
 

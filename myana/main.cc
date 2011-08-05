@@ -65,6 +65,7 @@
 #include "pdsdata/lusi/IpmFexV1.hh"
 #include "pdsdata/cspad/ConfigV1.hh"
 #include "pdsdata/cspad/ConfigV2.hh"
+#include "pdsdata/cspad/ConfigV3.hh"
 #include "pdsdata/cspad/ElementIterator.hh"
 
 #include "main.hh"
@@ -574,27 +575,34 @@ int getIpmFexConfig   (DetInfo::Detector det, int iDevId,
 
 int getCspadConfig (DetInfo::Detector det, CsPad::ConfigV1& cfg)
 {
-  const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
-                                        TypeId(TypeId::Id_CspadConfig,1) );
-  if (xtc) {
-    cfg = *reinterpret_cast<const CsPad::ConfigV1*>(xtc->payload());
-    return 0;
-  }
-  else
-    return 2;
+	const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
+										 TypeId(TypeId::Id_CspadConfig,1) );
+	if (xtc && xtc->damage.value()==0) {
+		cfg = *reinterpret_cast<const CsPad::ConfigV1*>(xtc->payload());
+	}
+	return xtc ? xtc->damage.value() : 2;
 }
 
 
 int getCspadConfig (DetInfo::Detector det, CsPad::ConfigV2& cfg)
 {
-  const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
-                                        TypeId(TypeId::Id_CspadConfig,2) );
-  if (xtc) {
-    cfg = *reinterpret_cast<const CsPad::ConfigV2*>(xtc->payload());
-    return 0;
-  }
-  else
-    return 2;
+	const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
+										 TypeId(TypeId::Id_CspadConfig,2) );
+	if (xtc && xtc->damage.value()==0) {
+		cfg = *reinterpret_cast<const CsPad::ConfigV2*>(xtc->payload());
+	}
+	return xtc ? xtc->damage.value() : 2;
+}
+
+
+int getCspadConfig (DetInfo::Detector det, CsPad::ConfigV3& cfg)
+{
+	const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
+										 TypeId(TypeId::Id_CspadConfig,3) );
+	if (xtc && xtc->damage.value()==0) {
+		cfg = *reinterpret_cast<const CsPad::ConfigV3*>(xtc->payload());
+	}
+	return xtc ? xtc->damage.value() : 2;
 }
 
 
@@ -922,31 +930,46 @@ int getIpmFexValue   (DetInfo::Detector det, int iDevId,
 
 int getCspadData  (DetInfo::Detector det, CsPad::ElementIterator& iter)
 {
-  const Xtc* xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad,0),
-                                        TypeId(TypeId::Id_CspadElement,2) );
-  if (!xtc)
-    return 2;
-
-  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
-                                          TypeId(TypeId::Id_CspadConfig,1) );
-    if (cfg) {
-      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV1*>(cfg->payload()),
-                                    *xtc);
-      return 0;
-    }
-  }
-
-  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
-                                          TypeId(TypeId::Id_CspadConfig,2) );
-    if (cfg) {
-      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV2*>(cfg->payload()),
-                                    *xtc);
-      return 0;
-    }
-  }
-
-  return 2;
+	const Xtc* xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad,0),
+										 TypeId(TypeId::Id_CspadElement,2) ); // should be 3 at some point
+	if (!xtc)
+		xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad,0),
+								  TypeId(TypeId::Id_CspadElement,1) );
+	
+	if (!xtc || xtc->damage.value())
+		return 2;
+	
+	{ const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
+										   TypeId(TypeId::Id_CspadConfig,1) );
+		if (cfg && cfg->damage.value()==0) {
+			iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV1*>(cfg->payload()),
+										  *xtc);
+			return 0;
+		}
+	}
+	
+	{ const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
+										   TypeId(TypeId::Id_CspadConfig,2) );
+		if (cfg && cfg->damage.value()==0) {
+			iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV2*>(cfg->payload()),
+										  *xtc);
+			return 0;
+		}
+	}
+	
+	
+	{ const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
+										   TypeId(TypeId::Id_CspadConfig,3) );
+		if (cfg && cfg->damage.value()==0) {
+			iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV3*>(cfg->payload()),
+										  *xtc);
+			return 0;
+		}
+	}
+	
+	return 2;
 }
+
 
 int getFeeGasDet(double* shotEnergy)
 {
@@ -1545,11 +1568,13 @@ int main(int argc, char *argv[])
     makeoutfilename(xtcname, outfile);
   if (filelist)
     makeoutfilename(filelist, outfile);
-
+  
+/*
   printf("Opening output file %s\n", outfile);
-/*  TFile *out;
+  TFile *out;
   out = new TFile(outfile, "RECREATE");
 */
+  
   if (caliblist) {
     printf("Opening caliblist %s\n", caliblist);
     FILE *flist = fopen(caliblist, "r");

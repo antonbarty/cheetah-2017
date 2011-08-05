@@ -2,6 +2,7 @@
 
 #include "pdsdata/xtc/Dgram.hh"
 
+#include <unistd.h>
 #ifdef _POSIX_MESSAGE_PASSING
 #include <mqueue.h>
 #endif
@@ -13,11 +14,14 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
 using std::queue;
 using std::stack;
+
+//
+//  Recover any shared memory buffer older than 10 seconds
+//
+static const unsigned TMO_SEC = 10;
 
 #define PERMS (S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR|S_IWGRP|S_IWOTH)
 #define OFLAGS (O_CREAT|O_RDWR)
@@ -107,28 +111,91 @@ XtcMonitorServer::~XtcMonitorServer()
   }
   XtcMonitorMsg::eventInputQueue     (_tag,_numberOfClients,qname); mq_unlink(qname);
   sprintf(qname, "/PdsShuffleQueue_%s",_tag);  mq_unlink(qname);
+
+  delete[] _postmarks;
+}
+
+void XtcMonitorServer::_claim(unsigned index)
+{
+  unsigned ibit =  (1<<index);
+  if (!(_freelist & ibit)) {
+    _freelist |= ibit;
+    _nfree++;
+  }
+}
+
+bool XtcMonitorServer::_claimOutputQueues(unsigned depth)
+{
+  for(unsigned j=0; j<_numberOfClients; j++) {
+    while (mq_timedreceive(_myOutputEvQueue[_numberOfClients-1-j], 
+                           (char*)&_myMsg, sizeof(_myMsg), NULL, &_tmo) != -1) {
+      _claim(_myMsg.bufferIndex());
+      if (_nfree >= depth)
+        return true;
+    }
+  }
+  return false;
 }
 
 bool XtcMonitorServer::_send_sequence()
 {
-  struct mq_attr attr;
-  mq_getattr(_myInputEvQueue, &attr);
   unsigned depth = _sequence->depth();
-  if (attr.mq_curmsgs >= int(depth)) {
-    for(unsigned i=0; i<depth; i++) {
+
+  if (_nfree < depth) {
+
+    struct mq_attr attr;
+    mq_getattr(_myInputEvQueue, &attr);
+
+    unsigned curmsg = attr.mq_curmsgs;
+    for (unsigned i=0; i<curmsg; i++) {
       if (mq_receive(_myInputEvQueue, (char*)&_myMsg, sizeof(_myMsg), NULL) < 0) 
         perror("mq_receive");
+      _claim(_myMsg.bufferIndex());
+    }
+    
+    timespec tv;
+    clock_gettime(CLOCK_REALTIME,&tv);
+    timespec tmo = tv; tmo.tv_sec -= TMO_SEC;
 
-      ShMsg m(_myMsg, _sequence->dgram(i));
-      if (mq_timedsend(_shuffleQueue, (const char*)&m, sizeof(m), 0, &_tmo)) {
-        printf("ShuffleQ timedout\n");
-        _deleteDatagram(_sequence->dgram(i));
+    if (_nfree < depth) {
+      if (tmo.tv_sec > _postmarks[_lastSent].tv_sec) {
+        if (!_claimOutputQueues(depth)) {
+          for(unsigned i=0; i<_numberOfEvBuffers; i++) {
+            if ((_freelist &(1<<i))==0 && tmo.tv_sec > _postmarks[i].tv_sec) {
+              char buff[128];
+              time_t t = _postmarks[i].tv_sec;
+              strftime(buff,128,"%H:%M:%S",localtime(&t));
+              printf("recover shmem buffer %d : %s.%09u\n",
+                     i, buff, (unsigned)_postmarks[i].tv_nsec);
+              _claim(i);
+            }
+          }
+        }
       }
     }
-    _sequence->clear();
-    return true;
   }
-  return false;
+
+  if (_nfree < depth)
+    return false;
+  
+  for(unsigned i=0; i<depth; i++) {
+
+    unsigned j=0;
+    while( (_freelist&(1<<j))==0 )
+      j++;
+
+    _myMsg.bufferIndex(j);
+    _freelist ^= (1<<j);
+    _nfree--;
+        
+    ShMsg m(_myMsg, _sequence->dgram(i));
+    if (mq_timedsend(_shuffleQueue, (const char*)&m, sizeof(m), 0, &_tmo)) {
+      printf("ShuffleQ timedout\n");
+      _deleteDatagram(_sequence->dgram(i));
+    }
+  }
+  _sequence->clear();
+  return true;
 }
 
 XtcMonitorServer::Result XtcMonitorServer::events(Dgram* dg) 
@@ -137,7 +204,8 @@ XtcMonitorServer::Result XtcMonitorServer::events(Dgram* dg)
   if (sizeof(dgrm)+dgrm.xtc.sizeofPayload() > _sizeOfBuffers) {
     printf("XtcMonitorServer skipping %s with payload size %d - too large\n",
 	   TransitionId::name(dgrm.seq.service()), dgrm.xtc.sizeofPayload());
-    return Handled;
+    //    return Handled;
+    exit(1);
   }
 
   if (dgrm.seq.service() == TransitionId::L1Accept) {
@@ -237,8 +305,11 @@ void XtcMonitorServer::routine()
 	for(unsigned i=0; i<=_numberOfClients; i++)
 	  if (mq_timedsend(_myOutputEvQueue[i], (const char*)&m.msg(), sizeof(m.msg()), 0, &_tmo))
 	    ; //	    printf("outputEv timedout to client %d\n",i);
-	  else
+	  else {
+            clock_gettime(CLOCK_REALTIME,&_postmarks[m.msg().bufferIndex()]);
+            _lastSent = m.msg().bufferIndex();
 	    break;
+          }
       }
     }
   }
@@ -331,14 +402,10 @@ int XtcMonitorServer::_init()
   pthread_create(&_threadID,NULL,TaskRoutine,this);
 
   // prestuff the input queue which doubles as the free list
-  for (unsigned i=0; i<_numberOfEvBuffers; i++) {
-    if (mq_send(_myInputEvQueue, (const char *)_myMsg.bufferIndex(i),
-        sizeof(XtcMonitorMsg), 0)) {
-      perror("mq_send inQueueStuffing");
-      delete this;
-      exit(EXIT_FAILURE);
-    }
-  }
+  _postmarks = new timespec[_numberOfEvBuffers];
+  _freelist  = (1<<_numberOfEvBuffers)-1;
+  _nfree     = _numberOfEvBuffers;
+  _lastSent  = 0;
 
   for(int i=0; i<numberofTrBuffers; i++)
     _freeTr.push(i+_numberOfEvBuffers);
