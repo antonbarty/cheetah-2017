@@ -92,7 +92,7 @@ public:
 	char		peaksearchFile[1024];
 	
 	// Powder pattern generation
-	int			powdersum;
+	//int			powdersum;
 	int			powderSumHits;
 	int			powderSumBlanks;
 	int			powderthresh;

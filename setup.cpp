@@ -105,7 +105,7 @@ void cGlobal::defaultConfiguration(void) {
 	savePeakInfo = 1;
 
 	// Powder pattern generation
-	powdersum = 1;
+	//powdersum = 1;
 	powderthresh = -20000;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
@@ -205,34 +205,36 @@ void cGlobal::setup() {
 		cmModule = 0;
 		subtractBg = 0;
 		useDarkcalSubtraction = 0;
+		useGaincal=0;
+		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
 		hitfinder = 0;
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
 		saveDetectorRaw = 1;
-		powderSumHits = 1;
-		powderSumBlanks = 1;
-		powderthresh = -32000;
-		useAutoHotpixel = 0;
+		powderSumHits = 0;
+		powderSumBlanks = 0;
+		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
 	}
 
 	if(generateGaincal) {
-		cmModule = 1;
-		subtractBg = 1;
+		cmModule = 0;
+		subtractBg = 0;
 		useDarkcalSubtraction = 1;
+		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
+		useGaincal=0;
 		hitfinder = 0;
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
 		saveDetectorRaw = 1;
-		powderSumHits = 1;
-		powderSumBlanks = 1;
-		powderthresh = -32000;
-		useAutoHotpixel = 0;
+		powderSumHits = 0;
+		powderSumBlanks = 0;
+		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
 	}
@@ -442,9 +444,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savepeakinfo")) {
 		savePeakInfo = atoi(value);
 	}
-	else if (!strcmp(tag, "powdersum")) {
-		powdersum = atoi(value);
-	}
+	//else if (!strcmp(tag, "powdersum")) {
+	//	powdersum = atoi(value);
+	//}
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
@@ -868,8 +870,8 @@ void cGlobal::readBadpixelMask(char *filename){
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("\tPeak search mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform search mask\n");
+		printf("\tBad pixel mask does not exist: %s\n",filename);
+		printf("\tDefaulting to uniform bad pixel mask\n");
 		return;
 	}
 	
@@ -882,7 +884,7 @@ void cGlobal::readBadpixelMask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform peak search mask\n");
+		printf("\tDefaulting to uniform bad pixel mask\n");
 		return;
 	} 
 	
@@ -942,7 +944,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "savepeakinfo=%d\n",savePeakInfo);
 	fprintf(fp, "savehits=%d\n",savehits);
-	fprintf(fp, "powdersum=%d\n",powdersum);
+	//fprintf(fp, "powdersum=%d\n",powdersum);
 	fprintf(fp, "saveraw=%d\n",saveRaw);
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveinterval=%d\n",saveInterval);
