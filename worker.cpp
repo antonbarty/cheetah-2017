@@ -564,7 +564,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				}
 			}
 			
-			median = kth_smallest(buffer, COLS*ROWS, global->cmFloor*ROWS*COLS);
+			median = kth_smallest(buffer, COLS*ROWS, mval);
 			// Find median value
 			//counter = 0;
 			//for(long i=0; i<nhist; i++){
