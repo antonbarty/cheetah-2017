@@ -4,6 +4,6 @@
 switch ($1)
 
 	case psexport:
-	rsync -av --exclude 'release' --exclude Makefile --exclude "*.tar" --exclude ".ini" --exclude '.git' --exclude '*.o' --exclude 'cheetah.xcworkspace' . duaneloh@psexport.slac.stanford.edu:/reg/neh/home/duaneloh/working_dir/cheetah_hitfinder/cheetah/
+	rsync -av --exclude 'release' --exclude Makefile --exclude "*.tar" --exclude "*.ini" --exclude '.git' --exclude "*.o" --exclude 'cheetah.xcworkspace' --exclude 'crystfinder' --exclude 'upload' . duaneloh@psexport.slac.stanford.edu:/reg/neh/home/duaneloh/working_dir/cheetah_hitfinder/cheetah/
 	breaksw
 endsw

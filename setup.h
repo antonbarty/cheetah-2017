@@ -98,7 +98,7 @@ public:
 	
 	//	TOF
 	int			TOFchannel;
-	bool		TOFPresent;
+	int			TOFPresent;
 	int			AcqNumChannels;
 	int			AcqNumSamples;
 	double		AcqSampleInterval;

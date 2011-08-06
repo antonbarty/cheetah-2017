@@ -305,13 +305,14 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_com_y);
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
-	free(threadInfo);
-
 	//TOF stuff.
-	if(threadInfo->TOFPresent){
+	if(threadInfo->TOFPresent==1){
 		free(threadInfo->TOFTime);
 		free(threadInfo->TOFVoltage); 
 	}
+
+	free(threadInfo);
+
 	// Exit thread
 	pthread_exit(NULL);
 }
@@ -799,7 +800,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		
 		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
 			//Continues to CsPad if TOF signal within sample limits exceeds threshold
-			if ((global->hitfinderUseTOF==1) && (global->TOFPresent==true)){
+			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
 				double total_tof = 0.;
 				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
 					total_tof += threadInfo->TOFVoltage[i];
@@ -1365,7 +1366,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 
 	// TOF
-	if(global->TOFPresent) {
+	if(info->TOFPresent==1) {
 		size[0] = 2;	
 		size[1] = global->AcqNumSamples;	
 		max_size[0] = 2;
