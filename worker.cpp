@@ -1763,6 +1763,19 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer);
+
+		// Sigma
+		sprintf(filename,"r%04u-sumHitsRawSigma.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderHitsRaw_mutex);
+		pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer[i] = sqrt(global->powderHitsRawSquared[i] - global->powderHitsRaw[i]*global->powderHitsRaw[i]);
+		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
+		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+		
 	}
 	
 	if(global->powderSumBlanks) {
@@ -1781,6 +1794,18 @@ void saveRunningSums(cGlobal *global) {
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 		memcpy(buffer, global->powderBlanksRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+
+		// Sigma
+		sprintf(filename,"r%04u-sumBlanksRawSigma.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
+		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer[i] = sqrt(global->powderBlanksRawSquared[i] - global->powderBlanksRaw[i]*global->powderBlanksRaw[i]);
+		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
 		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer);
