@@ -798,6 +798,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	switch(global->hitfinderAlgorithm) {
 		
 		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
+			//Continues to CsPad if TOF signal within sample limits exceeds threshold
+			if ((global->hitfinderUseTOF==1) && (global->hasAcqiris==true)){
+				double total_tof = 0.;
+				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+					total_tof += threadInfo->TOFVoltage[i];
+				}
+				if (total_tof < global->hitfinderTOFThresh)
+					break;
+			}
+
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
 					nat++;
@@ -1354,7 +1364,34 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Sclose(dataspace_id);
 	}
 
-	
+	// TOF
+	if(global->hasAcqiris) {
+		size[0] = 2;	
+		size[1] = global->AcqNumSamples;	
+		max_size[0] = 2;
+		max_size[1] = global->AcqNumSamples;
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		double tempData[2][global->AcqNumSamples];
+		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
+		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
+		
+		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
+		if ( hdf_error < 0 ) {
+			ERROR("%li: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}	
+
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
