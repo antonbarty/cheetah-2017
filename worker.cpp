@@ -99,6 +99,9 @@ void *worker(void *threadarg) {
 	if(global->cmModule) {
 		cmModuleSubtract(threadInfo, global);
 	}
+	if(global->cmSubtractUnbondedPixels) {
+		cmSubtractUnbondedPixels(threadInfo, global);
+	}
 	
 	
 	/*
@@ -528,7 +531,7 @@ void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global){
 
 /*
  *	Subtract common mode on each module
- *	This is done in a very slow way now - speed up later once we know it works!
+ *	Common mode is the kth lowest pixel value in the ASIC (similar to a median calculation)
  */
 void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 
@@ -558,12 +561,12 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			
 			
 			// Loop over pixels within a module
-			for(long i=0; i<ROWS; i++){
-				for(long j=0; j<COLS; j++){
+			for(long j=0; j<COLS; j++){
+				for(long i=0; i<ROWS; i++){
 					e = (j + mj*COLS) * (8*ROWS);
 					e += i + mi*ROWS;
 					//histogram[lrint(threadInfo->corrected_data[e])] += 1;
-					buffer[i] = lrint(threadInfo->corrected_data[e]);
+					buffer[j+i*COLS] = lrint(threadInfo->corrected_data[e]);
 				}
 			}
 			
@@ -596,8 +599,64 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			}
 		}
 	}
+	free(buffer);
 	//free(histogram);
 }
+
+
+/*
+ *	Subtract offset estimated from unbonded pixels
+ *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
+ *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
+ */
+void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
+	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+	
+	long		e;
+	double		counter;
+	double		background;
+	
+	
+	// Loop over modules (8x8 array)
+	for(long mi=0; mi<8; mi++){
+		for(long mj=0; mj<8; mj++){
+						
+			// Only asics in Q0:0-3 and Q2:4-5 are unbonded
+			if( ! ((mi<=1 && mj<=3) || (mi >= 4 && mi<=5 && mj >= 4 && mj<=5)) )
+				continue;
+
+			
+			// Loop over unbonded pixels within each ASIC
+			background = 0.0;
+			counter = 0.0;
+			for(long j=0; j<COLS-1; j+=10){
+				long i=j;
+				e = (j + mj*COLS) * (8*ROWS);
+				e += i + mi*ROWS;
+				background += threadInfo->corrected_data[e];
+				counter += 1;
+			}
+			background /= counter;
+			
+			//printf("%f ",background);
+						
+			// Subtract background from entire ASIC
+			for(long j=0; j<COLS; j++){
+				for(long i=0; i<ROWS; i++){
+					e = (j + mj*COLS) * (8*ROWS);
+					e += i + mi*ROWS;
+					threadInfo->corrected_data[e] -= background;
+					
+				}
+			}
+		}
+	}
+	//printf("\n");
+	
+}
+
+
+
 
 /*
  *	Local background subtraction
@@ -946,12 +1005,11 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 
 			// Raw data squared (for calculating variance)
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			for(long i=0; i<global->pix_nn; i++) {
+			for(long i=0; i<global->pix_nn; i++) 
+				buffer[i] = 0;
+			for(long i=0; i<global->pix_nn; i++) 
 				if(threadInfo->corrected_data[i] > global->powderthresh)
 					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
-				else 
-					buffer[i] = 0;
-			}
 			pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderHitsRawSquared[i] += buffer[i];
@@ -978,12 +1036,11 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 		
 			// Raw data squared (for calculating variance)
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			for(long i=0; i<global->pix_nn; i++) {
+			for(long i=0; i<global->pix_nn; i++) 
+				buffer[i] = 0;
+			for(long i=0; i<global->pix_nn; i++) 
 				if(threadInfo->corrected_data[i] > global->powderthresh)
 					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
-				else 
-					buffer[i] = 0;
-			}
 			pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderBlanksRawSquared[i] += buffer[i];
@@ -1635,7 +1692,7 @@ void saveRunningSums(cGlobal *global) {
 		long median_element = lrint(0.5*global->pix_nn);
 		printf("Finding %lith smallest element of %li pixels\n",median_element,global->pix_nn);	
 		int16_t	offset;
-		offset = kth_smallest(buffer1, global->pix_nn, median_element);
+		offset = kth_smallest(buffer2, global->pix_nn, median_element);
 		printf("offset=%i\n",offset);
 		free(buffer2);
 		if(offset <= 0){

@@ -62,6 +62,8 @@ void cGlobal::defaultConfiguration(void) {
 	// Common mode subtraction from each ASIC
 	cmModule = 0;
 	cmFloor = 0.1;
+	cmSubtractUnbondedPixels = 0;
+
 
 	// Gain calibration correction
 	strcpy(gaincalFile, "gaincal.h5");
@@ -203,6 +205,7 @@ void cGlobal::setup() {
 	 */
 	if(generateDarkcal) {
 		cmModule = 0;
+		cmSubtractUnbondedPixels = 0;
 		subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useGaincal=0;
@@ -222,6 +225,7 @@ void cGlobal::setup() {
 
 	if(generateGaincal) {
 		cmModule = 0;
+		cmSubtractUnbondedPixels = 0;
 		subtractBg = 0;
 		useDarkcalSubtraction = 1;
 		useAutoHotpixel = 0;
@@ -413,6 +417,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractunbondedpixels")) {
+		cmSubtractUnbondedPixels = atoi(value);
 	}
 	else if (!strcmp(tag, "usegaincal")) {
 		useGaincal = atoi(value);
