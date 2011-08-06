@@ -799,7 +799,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		
 		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
 			//Continues to CsPad if TOF signal within sample limits exceeds threshold
-			if ((global->hitfinderUseTOF==1) && (global->hasAcqiris==true)){
+			if ((global->hitfinderUseTOF==1) && (global->TOFPresent==true)){
 				double total_tof = 0.;
 				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
 					total_tof += threadInfo->TOFVoltage[i];
@@ -1365,7 +1365,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 
 	// TOF
-	if(global->hasAcqiris) {
+	if(global->TOFPresent) {
 		size[0] = 2;	
 		size[1] = global->AcqNumSamples;	
 		max_size[0] = 2;
