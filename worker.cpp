@@ -242,10 +242,7 @@ void *worker(void *threadarg) {
 	if(global->powderSumBlanks==1 && hit==0){
 		addToPowder(threadInfo, global, hit);
 	} 
-	if(global->generateDarkcal==1){
-		addToPowder(threadInfo, global, 1);
-	} 
-	if(global->generateGaincal==1){
+	if(global->generateDarkcal==1 || global->generateGaincal==1){
 		addToPowder(threadInfo, global, 1);
 	} 
 	
@@ -1713,83 +1710,80 @@ void saveRunningSums(cGlobal *global) {
 	}
 
 	
-	else {
-		double *buffer;
 
-		/*
-		 *	Save assembled powder patterns
-		 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
-		 */		
-		if(global->powderSumHits) {
-			// Hits
-			printf("Saving summed hits assembled to file\n");
-			sprintf(filename,"r%04u-sumHitsAssembled.h5",global->runNumber);
-			buffer = (double*) calloc(global->image_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderHitsAssembled_mutex);
-			memcpy(buffer, global->powderHitsAssembled, global->image_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
-			writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-		}
+	/*
+	 *	Save assembled powder patterns
+	 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
+	 */		
+	double *buffer;
+	if(global->powderSumHits || global->generateGaincal || global->generateDarkcal) {
+		// Hits
+		printf("Saving summed hits assembled to file\n");
+		sprintf(filename,"r%04u-sumHitsAssembled.h5",global->runNumber);
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderHitsAssembled_mutex);
+		memcpy(buffer, global->powderHitsAssembled, global->image_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
+		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+	}
 
-		if(global->powderSumBlanks) {
-			// Blanks
-			printf("Saving summed blanks assembled to file\n");
-			sprintf(filename,"r%04u-sumBlanksAssembled.h5",global->runNumber);
-			buffer = (double*) calloc(global->image_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
-			memcpy(buffer, global->powderBlanksAssembled, global->image_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
-			writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-		}		
+	if(global->powderSumBlanks) {
+		// Blanks
+		printf("Saving summed blanks assembled to file\n");
+		sprintf(filename,"r%04u-sumBlanksAssembled.h5",global->runNumber);
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
+		memcpy(buffer, global->powderBlanksAssembled, global->image_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
+		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+	}		
 
-		/*
-		 *	Save powder patterns in raw layout
-		 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
-		 */		
-		if(global->powderSumHits) {
-			// Hits
-			printf("Saving summed hits raw to file\n");
-			sprintf(filename,"r%04u-sumHitsRaw.h5",global->runNumber);
-			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderHitsRaw_mutex);
-			memcpy(buffer, global->powderHitsRaw, global->pix_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderHitsRaw_mutex);
-			writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-			
-			// Hits squared (for calculation of variance)
-			sprintf(filename,"r%04u-sumHitsRawSquared.h5",global->runNumber);
-			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
-			memcpy(buffer, global->powderHitsRawSquared, global->pix_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
-			writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-		}
+	/*
+	 *	Save powder patterns in raw layout
+	 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
+	 */		
+	if(global->powderSumHits || global->generateGaincal || global->generateDarkcal) {
+		// Hits
+		printf("Saving summed hits raw to file\n");
+		sprintf(filename,"r%04u-sumHitsRaw.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderHitsRaw_mutex);
+		memcpy(buffer, global->powderHitsRaw, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 		
-		if(global->powderSumBlanks) {
-			// Blanks
-			printf("Saving summed blanks raw to file\n");
-			sprintf(filename,"r%04u-sumBlanksRaw.h5",global->runNumber);
-			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderBlanksRaw_mutex);
-			memcpy(buffer, global->powderBlanksRaw, global->pix_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
-			writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-			
-			// Blanks squared (for calculation of variance)
-			sprintf(filename,"r%04u-sumBlanksRawSquared.h5",global->runNumber);
-			buffer = (double*) calloc(global->pix_nn, sizeof(double));
-			pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
-			memcpy(buffer, global->powderBlanksRawSquared, global->pix_nn*sizeof(double));
-			pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
-			writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
-			free(buffer);
-		}
+		// Hits squared (for calculation of variance)
+		sprintf(filename,"r%04u-sumHitsRawSquared.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
+		memcpy(buffer, global->powderHitsRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+	}
+	
+	if(global->powderSumBlanks) {
+		// Blanks
+		printf("Saving summed blanks raw to file\n");
+		sprintf(filename,"r%04u-sumBlanksRaw.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
+		memcpy(buffer, global->powderBlanksRaw, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 		
+		// Blanks squared (for calculation of variance)
+		sprintf(filename,"r%04u-sumBlanksRawSquared.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+		memcpy(buffer, global->powderBlanksRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 	}
 
 	
