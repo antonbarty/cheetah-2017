@@ -1,6 +1,12 @@
 geometry
 build
+*.tar
 *.o
+upload
+Makefile
+cheetah.ini
+./cheetah.xcworkspace
+./pythonscripts
 ./example/CVS
 ./release/pdstools/CVS
 ./release/pdstools/procmgr/CVS
