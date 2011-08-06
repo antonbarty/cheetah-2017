@@ -2,6 +2,7 @@ geometry
 build
 *.tar
 *.o
+crystfinder
 upload
 Makefile
 cheetah.ini

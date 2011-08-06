@@ -307,6 +307,11 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_npix);
 	free(threadInfo);
 
+	//TOF stuff.
+	if(threadInfo->TOFPresent){
+		free(threadInfo->TOFTime);
+		free(threadInfo->TOFVoltage); 
+	}
 	// Exit thread
 	pthread_exit(NULL);
 }

@@ -161,6 +161,21 @@ void fetchConfig()
 		configVsn= 0;
 		printf("Failed to get CspadConfig\n");
 	}
+	
+	if(getAcqConfig(AmoIms , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval)){
+		global.TOFPresent = true;
+		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
+		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
+			printf("hitfinderTOFMaxSample greater than number of TOF samples. hitfinderUseTOF turned off\n");
+			global.hitfinderUseTOF = 0;
+		}
+	}
+	else {
+		global.TOFPresent = false;
+		printf("Failed to get AcqirisConfig.\n");
+		global.hitfinderUseTOF = 0 ;
+	}
+
 }
 
 
@@ -463,6 +478,18 @@ void event() {
 					memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}
 			}
+		}
+	}
+	
+	if (global.TOFPresent){
+		threadInfo->TOFPresent = global.TOFPresent ;
+		threadInfo->TOFTime = (double*) calloc(global.AcqNumSamples, sizeof(double));
+		threadInfo->TOFVoltage = (double*) calloc(global.AcqNumSamples , sizeof(double));
+		
+		fail = getAcqValue(AmoIms, global.TOFchannel, threadInfo->TOFTime, threadInfo->TOFVoltage, threadInfo->TOFtrigtime);
+		if (fail){
+			printf("getAcqValue fail %d (%x)\n",fail,fiducial);
+			return ;
 		}
 	}
 

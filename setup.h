@@ -91,6 +91,18 @@ public:
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	char		peaksearchFile[1024];
+	int			hitfinderUseTOF;
+	int			hitfinderTOFMinSample;
+	int			hitfinderTOFMaxSample;
+	double		hitfinderTOFThresh;
+	
+	//	TOF
+	int			TOFchannel;
+	bool		TOFPresent;
+	int			AcqNumChannels;
+	int			AcqNumSamples;
+	double		AcqSampleInterval;
+
 	
 	// Powder pattern generation
 	//int			powdersum;

@@ -34,6 +34,12 @@ typedef struct {
 	int			nPeaks;
 	int			nHot;
 	
+	// TOF data
+	int			TOFPresent;
+	double		*TOFTime;
+	double		*TOFVoltage;
+	double		TOFtrigtime ;
+	
 	// Peak info
 	float		*peak_com_x;		// peak center of mass x
 	float		*peak_com_y;		// peak center of mass y
