@@ -163,7 +163,7 @@ void fetchConfig()
 		printf("Failed to get CspadConfig\n");
 	}
 	
-	if((fail=getAcqConfig(AmoIms , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
+	if((fail=getAcqConfig(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
 		global.TOFPresent = 1;
 		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
 		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
@@ -484,10 +484,16 @@ void event() {
 	
 	threadInfo->TOFPresent = global.TOFPresent ;	
 	if (global.TOFPresent==1){
-		threadInfo->TOFTime = (double*) calloc(global.AcqNumSamples, sizeof(double));
-		threadInfo->TOFVoltage = (double*) calloc(global.AcqNumSamples , sizeof(double));
-		
-		fail = getAcqValue(AmoIms, global.TOFchannel, threadInfo->TOFTime, threadInfo->TOFVoltage, threadInfo->TOFtrigtime);
+		double *tempTOFTime;
+		double *tempTOFVoltage;
+		double tempTrigTime;
+		threadInfo->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		threadInfo->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		fail = getAcqValue(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
+		threadInfo->TOFtrigtime = tempTrigTime;
+		//Memcopy is necessary for thread safety.
+		memcpy(threadInfo->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
+		memcpy(threadInfo->TOFVoltage, tempTOFVoltage, global.AcqNumSamples*sizeof(double));
 		if (fail){
 			printf("getAcqValue fail %d (%x)\n",fail,fiducial);
 			return ;

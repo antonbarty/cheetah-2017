@@ -43,6 +43,7 @@ enum FrameDetector
  * Configuration retrieval functions
  */
 int getAcqConfig      (AcqDetector det, int& numChannels, int& numSamples, double& sampleInterval);
+int getAcqConfig      (Pds::DetInfo det, int& numChannels, int& numSamples, double& sampleInterval);
 #define getOpal1kConfig(x)  getFrameConfig(x)
 #define getTm6740Config(x)  getFrameConfig(x)
 int getFrameConfig   (FrameDetector det);
@@ -85,6 +86,7 @@ int getBldIpimbConfig(Pds::BldInfo::Type bldType, uint64_t& serialID, int& charg
  */
 int getAcqValue   (AcqDetector det, int channel, double*& time, double*& voltage);
 int getAcqValue   (AcqDetector det, int channel, double*& time, double*& voltage, double& trigtime);
+int getAcqValue   (Pds::DetInfo det, int channel, double*& time, double*& voltage, double& trigtime);
 #define getOpal1kValue(w, x, y, z) getFrameValue(w, x, y, z)
 #define getTm6740Value(w, x, y, z) getFrameValue(w, x, y, z)
 int getFrameValue(FrameDetector det, int& frameWidth, int& frameHeight, unsigned short*& image );
