@@ -102,6 +102,9 @@ void *worker(void *threadarg) {
 	if(global->cmSubtractUnbondedPixels) {
 		cmSubtractUnbondedPixels(threadInfo, global);
 	}
+	if(global->cmSubtractBehindWires) {
+		cmSubtractBehindWires(threadInfo, global);
+	}
 	
 	
 	/*
@@ -528,7 +531,7 @@ void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global){
 
 /*
  *	Subtract common mode on each module
- *	Common mode is the kth lowest pixel value in the ASIC (similar to a median calculation)
+ *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
 void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 
@@ -650,6 +653,62 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 	}
 	//printf("\n");
 	
+}
+
+/*
+ *	Subtract common mode estimated from signal behind wires
+ *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
+ */
+void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
+	
+	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+	
+	long		p;
+	long		counter;
+	long		mval;
+	uint16_t	median;
+	
+	int16_t	*buffer; 
+	buffer = (int16_t*) calloc(COLS*ROWS, sizeof(int16_t));
+	
+	// Loop over modules (8x8 array)
+	for(long mi=0; mi<8; mi++){
+		for(long mj=0; mj<8; mj++){
+			
+			
+			// Loop over pixels within a module, remembering signal behind wires
+			counter = 0;
+			for(long j=0; j<COLS; j++){
+				for(long i=0; i<ROWS; i++){
+					p = (j + mj*COLS) * (8*ROWS);
+					p += i + mi*ROWS;
+					if(global->wiremask[i]) {
+						buffer[counter] = lrint(threadInfo->corrected_data[p]);
+						counter++;
+					}
+				}
+			}
+			
+			// Median value of pixels behind wires
+			if(counter>0) {
+				mval = lrint(counter*global->cmFloor);
+				median = kth_smallest(buffer, counter, mval);
+			}
+			else 
+				median = 0;
+
+
+			// Subtract median value
+			for(long i=0; i<ROWS; i++){
+				for(long j=0; j<COLS; j++){
+					p = (j + mj*COLS) * (8*ROWS);
+					p += i + mi*ROWS;
+					threadInfo->corrected_data[p] -= median;
+				}
+			}
+		}
+	}
+	free(buffer);
 }
 
 

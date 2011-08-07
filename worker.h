@@ -115,6 +115,7 @@ static uint32_t nevents = 0;
 void *worker(void *);
 void cmModuleSubtract(tThreadInfo*, cGlobal*);
 void cmSubtractUnbondedPixels(tThreadInfo*, cGlobal*);
+void cmSubtractBehindWires(tThreadInfo*, cGlobal*);
 void subtractDarkcal(tThreadInfo*, cGlobal*);
 void applyGainCorrection(tThreadInfo*, cGlobal*);
 void applyBadPixelMask(tThreadInfo*, cGlobal*);

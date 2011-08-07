@@ -60,9 +60,11 @@ void cGlobal::defaultConfiguration(void) {
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
+	strcpy(wireMaskFile, "wiremask.h5");
 	cmModule = 0;
 	cmFloor = 0.1;
 	cmSubtractUnbondedPixels = 0;
+	cmSubtractBehindWires = 0;
 
 
 	// Gain calibration correction
@@ -144,6 +146,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(peaksfile, "peaks.txt");
 	
 	
+	
 }
 
 
@@ -165,6 +168,7 @@ void cGlobal::setup() {
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
 	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
 		selfdark[i] = 0;
 		powderHitsRaw[i] = 0;
@@ -172,6 +176,7 @@ void cGlobal::setup() {
 		powderBlanksRaw[i] = 0;
 		powderBlanksRawSquared[i] = 0;
 		hotpixelmask[i] = 1;
+		wiremask[i] = 1;
 	}
 	for(long i=0; i<image_nn; i++) {
 		powderHitsAssembled[i] = 0;
@@ -420,6 +425,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "subtractunbondedpixels")) {
 		cmSubtractUnbondedPixels = atoi(value);
+	}
+	else if (!strcmp(tag, "wiremaskfile")) {
+		strcpy(wireMaskFile, value);
+	}
+	else if (!strcmp(tag, "subtractBehindWires")) {
+		cmSubtractBehindWires = atoi(value);
 	}
 	else if (!strcmp(tag, "usegaincal")) {
 		useGaincal = atoi(value);
@@ -899,6 +910,50 @@ void cGlobal::readBadpixelMask(char *filename){
 	// Copy back into array
 	for(long i=0;i<pix_nn;i++)
 		badpixelmask[i] = (int16_t) temp2d.data[i];
+}
+
+/*
+ *	Read in peaksearch mask
+ */
+void cGlobal::readWireMask(char *filename){
+	
+	printf("Reading wire mask:\n");
+	printf("\t%s\n",filename);
+	
+	
+	// Create memory space and default to searching for peaks everywhere
+	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	for(long i=0;i<pix_nn;i++)
+		wiremask[i] = 1;
+	
+	
+	// Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tWire mask does not exist: %s\n",filename);
+		printf("\tDefaulting to uniform mask\n");
+		return;
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+	
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tDefaulting to uniform wire mask\n");
+		return;
+	} 
+	
+	
+	// Copy into darkcal array
+	for(long i=0;i<pix_nn;i++)
+		wiremask[i] = (int16_t) temp2d.data[i];
 }
 
 

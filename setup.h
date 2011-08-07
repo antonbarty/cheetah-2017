@@ -40,9 +40,11 @@ public:
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
 	
 	// Common mode and pedastal subtraction
+	char		wireMaskFile[1024];		// File containing mask of area behind wires
 	int			cmModule;				// Subtract common mode from each ASIC
-	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
 	int			cmSubtractUnbondedPixels;
+	int			cmSubtractBehindWires;
+	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
 
 	// Gain correction
 	int			useGaincal;
@@ -178,6 +180,7 @@ public:
 	int16_t			*bg_buffer;
 	int16_t			*hotpix_buffer;
 	int16_t			*hotpixelmask;
+	int16_t			*wiremask;
 	double			*powderHitsRaw;
 	double			*powderHitsAssembled;
 	double			*powderHitsRawSquared;
@@ -211,6 +214,8 @@ public:
 	void readGaincal(char *);
 	void readPeakmask(char *);
 	void readBadpixelMask(char *);
+	void readWireMask(char *);
+	
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);

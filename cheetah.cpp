@@ -129,6 +129,7 @@ void beginjob() {
 	global.readGaincal(global.gaincalFile);
 	global.readPeakmask(global.peaksearchFile);
 	global.readBadpixelMask(global.badpixelFile);
+	global.readWireMask(global.wireMaskFile);
 	global.writeInitialLog();
 }
 
@@ -583,6 +584,7 @@ void endjob()
 	free(global.powderBlanksRaw);
 	free(global.powderBlanksRawSquared);
 	free(global.hotpixelmask);
+	free(global.wiremask);
 	free(global.selfdark);
 	free(global.gaincal);
 	free(global.peakmask);
