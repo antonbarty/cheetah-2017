@@ -290,7 +290,32 @@ void event() {
   
 	
 	/*
-	 * Get electron beam parameters from beamline data
+	 * Get electron beam parameters from beamline data and calculate resonant photon energy
+	 *
+	 * To first order, photon energy is given by the standard undulator equation. 
+	 *	This is the energy at which SASE lasing initiates.  Calculation requires such stuff 
+	 *	as undulator K-factors (known from the undulator design and calibrations).  
+	 *	A summary of undulator radiation formulae can be found here (in section B.2 - undulator radiation)
+	 *	http://xdb.lbl.gov/Section2/Sec_2-1.html
+	 * The other terms are corrections to the electron energy due to wakefield losses and the like and 
+	 *	make for relatively small corrections (<1%) to the undulator energy. 
+	 *
+	 * Here's an e-mail description:
+	 * Marc,
+	 * The formula calculates the resonant photon energy based on an estimate of the electron beam 
+	 *	energy at the first in-line undulator segment, and the K of that segment.
+	 * The energy estimate for the first in-line segment starts with the DL2 bend energy, 
+	 *	and on a shot by shot basis, adds a correction based on the DL2 bpms for the incoming energy, 
+	 *	a correction for the wakefield energy loss which depends on the measured peak bunch current 
+	 *	(averaged over 10 shots), and a correction for the spontaneous energy loss due to emission 
+	 *	from the undulator segments.
+	 * We still have some problems coming up with good values for wakeloss, especially if beam 
+	 *	conditions are unusual. Also there may be a slight shift between the resonant photon energy
+	 *	and the FEL peak of the spectrum. Another factor that is uncertain is what exact value to use
+	 *	for the K in the resonance formula. Any suggestions would be appreciated.
+	 * The matlab code is below (* not included here *). 
+	 *	-- Jim
+	 *
 	 */     
 	double fEbeamCharge;    // in nC
 	double fEbeamL3Energy;  // in MeV
