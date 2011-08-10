@@ -508,6 +508,9 @@ void event() {
 		}
 	}
 	
+	/*
+	 *	Copy TOF (aqiris) channel into worker thread for processing
+	 */
 	threadInfo->TOFPresent = global.TOFPresent ;	
 	if (global.TOFPresent==1){
 		double *tempTOFTime;

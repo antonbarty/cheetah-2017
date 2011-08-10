@@ -855,17 +855,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	 */
 	switch(global->hitfinderAlgorithm) {
 		
-		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
-			//Continues to CsPad if TOF signal within sample limits exceeds threshold
-			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
-				double total_tof = 0.;
-				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-					total_tof += threadInfo->TOFVoltage[i];
-				}
-				if (total_tof < global->hitfinderTOFThresh)
-					break;
-			}
-
+		case 1 :	// Count the number of pixels above ADC threshold
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
 					nat++;
@@ -877,7 +867,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 	
 		case 2 :	//	integrated intensity above threshold
-
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
 					total += temp[i];
@@ -1000,6 +989,28 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			free(inx);
 			free(iny);
 			break;
+			
+		case 4 :	// Use TOF signal to find hits
+			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
+				double total_tof = 0.;
+				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+					total_tof += threadInfo->TOFVoltage[i];
+				}
+				if (total_tof > global->hitfinderTOFThresh)
+					hit = 1;
+			}
+			// Use cspad threshold if TOF is not present 
+			else {
+				for(long i=0;i<global->pix_nn;i++){
+					if(temp[i] > global->hitfinderADC){
+						nat++;
+					}
+				}
+				if(nat >= global->hitfinderNAT)
+					hit = 1;
+			}
+			break;
+			
 	}
 		
 	
