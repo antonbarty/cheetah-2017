@@ -1077,9 +1077,10 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
 			for(long i=0; i<global->pix_nn; i++) 
 				buffer[i] = 0;
-			for(long i=0; i<global->pix_nn; i++) 
+			for(long i=0; i<global->pix_nn; i++){
 				if(threadInfo->corrected_data[i] > global->powderthresh)
-					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+					buffer[i] = (threadInfo->corrected_data[i])*(threadInfo->corrected_data[i]);
+				}
 			pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderHitsRawSquared[i] += buffer[i];
@@ -1110,7 +1111,7 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 				buffer[i] = 0;
 			for(long i=0; i<global->pix_nn; i++) 
 				if(threadInfo->corrected_data[i] > global->powderthresh)
-					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+					buffer[i] = (threadInfo->corrected_data[i])*(threadInfo->corrected_data[i]);
 			pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderBlanksRawSquared[i] += buffer[i];
@@ -1870,7 +1871,7 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderHitsRaw_mutex);
 		pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = sqrt(global->powderHitsRawSquared[i] - global->powderHitsRaw[i]*global->powderHitsRaw[i]);
+			buffer[i] = sqrt(global->powderHitsRawSquared[i]/global->npowderHits - (global->powderHitsRaw[i]*global->powderHitsRaw[i]/(global->npowderHits*global->npowderHits)));
 		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
 		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
@@ -1904,7 +1905,7 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
 		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = sqrt(global->powderBlanksRawSquared[i] - global->powderBlanksRaw[i]*global->powderBlanksRaw[i]);
+			buffer[i] = sqrt((global->powderBlanksRawSquared[i]/global->npowderHits) - (global->powderBlanksRaw[i]*global->powderBlanksRaw[i]/(global->npowderHits*global->npowderHits)));
 		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
 		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
