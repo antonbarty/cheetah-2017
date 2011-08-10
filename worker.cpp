@@ -125,12 +125,13 @@ void *worker(void *threadarg) {
 	/*
 	 *	Recalculate running background from time to time
 	 */
-	pthread_mutex_lock(&global->bgbuffer_mutex);
-	if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
-		calculatePersistentBackground(global);
+	if(global->useSubtractPersistentBackground){
+		pthread_mutex_lock(&global->bgbuffer_mutex);
+		if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
+			calculatePersistentBackground(global);
+		}
+		pthread_mutex_unlock(&global->bgbuffer_mutex);
 	}
-	pthread_mutex_unlock(&global->bgbuffer_mutex);
-
 	
 	/*
 	 *	Recalculate hot pixel maskfrom time to time
