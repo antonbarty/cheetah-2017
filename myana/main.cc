@@ -710,7 +710,7 @@ int getEvrData( int id, unsigned int& eventCode, unsigned int& fiducial, unsigne
 int getAcqValue(DetInfo info, int channel, double*& time, double*& voltage, double& trigtime)
 {
   const Xtc* xtc = _estore->lookup_evt( info, TypeId(TypeId::Id_AcqWaveform,1) );
-  if (xtc) {
+  if (xtc && (xtc->damage.value()&~(1<<Damage::OutOfOrder))==0) {
 
     const Acqiris::ConfigV1& acqCfg = 
       *reinterpret_cast<const Acqiris::ConfigV1*>
@@ -751,10 +751,9 @@ int getAcqValue(DetInfo info, int channel, double*& time, double*& voltage, doub
     time     = &waveForm.vfTime[0];
     voltage  = &waveForm.vfVoltage[0];
     trigtime =  waveForm.vfTrig;
-    return 0;
+    
   }
-  else
-    return 2;
+  return xtc ? xtc->damage.value() : 2;
 }
 
 int getAcqValue(AcqDetector det, int channel, double*& time, double*& voltage, double& trigtime)

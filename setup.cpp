@@ -108,6 +108,14 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderUsePeakmask = 0;
 	strcpy(peaksearchFile, "peakmask.h5");
 	savePeakInfo = 1;
+	hitfinderUseTOF = 0;
+	hitfinderTOFMinSample = 0;
+	hitfinderTOFMaxSample = 1000;
+	hitfinderTOFThresh = 100;
+	
+	// TOF default configuration
+	TOFchannel = 1;
+
 
 	// Powder pattern generation
 	//powdersum = 1;
@@ -502,8 +510,20 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		localBackgroundRadius = atoi(value);
 	}
 	
-	
-	
+	//TOF
+	else if (!strcmp(tag, "hitfinderusetof")) {
+		hitfinderUseTOF = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindertofminsample")) {
+		hitfinderTOFMinSample = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindertofmaxsample")) {
+		hitfinderTOFMaxSample = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindertofthresh")) {
+		hitfinderTOFThresh = atof(value);
+	}	
+
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);

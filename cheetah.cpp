@@ -137,6 +137,7 @@ void beginjob() {
 
 void fetchConfig()
 {
+	int fail = 0;
 	if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
@@ -162,6 +163,21 @@ void fetchConfig()
 		configVsn= 0;
 		printf("Failed to get CspadConfig\n");
 	}
+	
+	if((fail=getAcqConfig(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
+		global.TOFPresent = 1;
+		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
+		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
+			printf("hitfinderTOFMaxSample greater than number of TOF samples. hitfinderUseTOF turned off\n");
+			global.hitfinderUseTOF = 0;
+		}
+	}
+	else {
+		global.TOFPresent = 0;
+		printf("Failed to get AcqirisConfig with fail code %d.\n", fail);
+		global.hitfinderUseTOF = 0 ;
+	}
+
 }
 
 
@@ -489,6 +505,24 @@ void event() {
 					memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
 				}
 			}
+		}
+	}
+	
+	threadInfo->TOFPresent = global.TOFPresent ;	
+	if (global.TOFPresent==1){
+		double *tempTOFTime;
+		double *tempTOFVoltage;
+		double tempTrigTime;
+		threadInfo->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		threadInfo->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		fail = getAcqValue(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
+		threadInfo->TOFtrigtime = tempTrigTime;
+		//Memcopy is necessary for thread safety.
+		memcpy(threadInfo->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
+		memcpy(threadInfo->TOFVoltage, tempTOFVoltage, global.AcqNumSamples*sizeof(double));
+		if (fail){
+			printf("getAcqValue fail %d (%x)\n",fail,fiducial);
+			return ;
 		}
 	}
 

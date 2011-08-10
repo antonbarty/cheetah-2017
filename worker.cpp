@@ -106,7 +106,6 @@ void *worker(void *threadarg) {
 		cmSubtractBehindWires(threadInfo, global);
 	}
 	
-	
 	/*
 	 *	Apply gain correction
 	 */
@@ -125,12 +124,13 @@ void *worker(void *threadarg) {
 	/*
 	 *	Recalculate running background from time to time
 	 */
-	pthread_mutex_lock(&global->bgbuffer_mutex);
-	if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
-		calculatePersistentBackground(global);
+	if(global->useSubtractPersistentBackground){
+		pthread_mutex_lock(&global->bgbuffer_mutex);
+		if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
+			calculatePersistentBackground(global);
+		}
+		pthread_mutex_unlock(&global->bgbuffer_mutex);
 	}
-	pthread_mutex_unlock(&global->bgbuffer_mutex);
-
 	
 	/*
 	 *	Recalculate hot pixel maskfrom time to time
@@ -248,7 +248,6 @@ void *worker(void *threadarg) {
 	if(global->generateDarkcal==1 || global->generateGaincal==1){
 		addToPowder(threadInfo, global, 1);
 	} 
-	
 		
 	
 	
@@ -305,6 +304,12 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_com_y);
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
+	//TOF stuff.
+	if(threadInfo->TOFPresent==1){
+		free(threadInfo->TOFTime);
+		free(threadInfo->TOFVoltage); 
+	}
+
 	free(threadInfo);
 
 	// Exit thread
@@ -851,6 +856,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	switch(global->hitfinderAlgorithm) {
 		
 		case 1 :	// Simply count the number of pixels above ADC threshold (very basic)
+			//Continues to CsPad if TOF signal within sample limits exceeds threshold
+			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
+				double total_tof = 0.;
+				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+					total_tof += threadInfo->TOFVoltage[i];
+				}
+				if (total_tof < global->hitfinderTOFThresh)
+					break;
+			}
+
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
 					nat++;
@@ -1043,9 +1058,10 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
 			for(long i=0; i<global->pix_nn; i++) 
 				buffer[i] = 0;
-			for(long i=0; i<global->pix_nn; i++) 
+			for(long i=0; i<global->pix_nn; i++){
 				if(threadInfo->corrected_data[i] > global->powderthresh)
-					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+					buffer[i] = (threadInfo->corrected_data[i])*(threadInfo->corrected_data[i]);
+				}
 			pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderHitsRawSquared[i] += buffer[i];
@@ -1076,7 +1092,7 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 				buffer[i] = 0;
 			for(long i=0; i<global->pix_nn; i++) 
 				if(threadInfo->corrected_data[i] > global->powderthresh)
-					buffer[i] = (threadInfo->corrected_data[i]*threadInfo->corrected_data[i]);
+					buffer[i] = (threadInfo->corrected_data[i])*(threadInfo->corrected_data[i]);
 			pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 			for(long i=0; i<global->pix_nn; i++) 
 				global->powderBlanksRawSquared[i] += buffer[i];
@@ -1385,7 +1401,34 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Sclose(dataspace_id);
 	}
 
-	
+	// TOF
+	if(info->TOFPresent==1) {
+		size[0] = 2;	
+		size[1] = global->AcqNumSamples;	
+		max_size[0] = 2;
+		max_size[1] = global->AcqNumSamples;
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		double tempData[2][global->AcqNumSamples];
+		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
+		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
+		
+		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
+		if ( hdf_error < 0 ) {
+			ERROR("%li: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}	
+
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
@@ -1809,12 +1852,45 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderHitsRaw_mutex);
 		pthread_mutex_lock(&global->powderHitsRawSquared_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = sqrt(global->powderHitsRawSquared[i] - global->powderHitsRaw[i]*global->powderHitsRaw[i]);
+			buffer[i] = sqrt(global->powderHitsRawSquared[i]/global->npowderHits - (global->powderHitsRaw[i]*global->powderHitsRaw[i]/(global->npowderHits*global->npowderHits)));
 		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
 		pthread_mutex_unlock(&global->powderHitsRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
+	}
+	
+	if(global->powderSumBlanks) {
+		// Blanks
+		printf("Saving summed blanks raw to file\n");
+		sprintf(filename,"r%04u-sumBlanksRaw.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
+		memcpy(buffer, global->powderBlanksRaw, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+
+		// Blanks squared (for calculation of variance)
+		sprintf(filename,"r%04u-sumBlanksRawSquared.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+		memcpy(buffer, global->powderBlanksRawSquared, global->pix_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
+
+		// Sigma
+		sprintf(filename,"r%04u-sumBlanksRawSigma.h5",global->runNumber);
+		buffer = (double*) calloc(global->pix_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
+		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
+		for(long i=0; i<global->pix_nn; i++)
+			buffer[i] = sqrt(global->powderBlanksRawSquared[i]/global->npowderBlanks - (global->powderBlanksRaw[i]*global->powderBlanksRaw[i]/(global->npowderBlanks*global->npowderBlanks)));
+		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
+		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
+		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		free(buffer);
 	}
 	
 	if(global->powderSumBlanks) {
@@ -1843,7 +1919,7 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderBlanksRaw_mutex);
 		pthread_mutex_lock(&global->powderBlanksRawSquared_mutex);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = sqrt(global->powderBlanksRawSquared[i] - global->powderBlanksRaw[i]*global->powderBlanksRaw[i]);
+			buffer[i] = sqrt((global->powderBlanksRawSquared[i]/global->npowderHits) - (global->powderBlanksRaw[i]*global->powderBlanksRaw[i]/(global->npowderHits*global->npowderHits)));
 		pthread_mutex_unlock(&global->powderBlanksRaw_mutex);
 		pthread_mutex_unlock(&global->powderBlanksRawSquared_mutex);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
