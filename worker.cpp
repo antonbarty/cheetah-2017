@@ -821,9 +821,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	long	counter;
 	int		hit=0;
 	long	ii,nn;
+	float	total;
 
 	nat = 0;
 	counter = 0;
+	total = 0.0;
 
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
@@ -859,41 +861,19 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			break;
 
 	
-		case 2 :	//	Count clusters of pixels above threshold
-			for(long j=1; j<8*COLS-1; j++){
-				for(long i=1; i<8*ROWS-1; i++) {
-					nn = 0;
-					ii = i+(8*ROWS)*j;
-					if(temp[i+(8*ROWS)*j] > global->hitfinderADC) {
-						nn += 1;
-						if(temp[i+1+(8*ROWS)*j] > global->hitfinderADC) nn++;
-						if(temp[i-1+(8*ROWS)*j] > global->hitfinderADC) nn++;
-						if(temp[i+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
-						if(temp[i+1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
-						if(temp[i-1+(8*ROWS)*(j+1)] > global->hitfinderADC) nn++;
-						if(temp[i+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
-						if(temp[i+1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
-						if(temp[i-1+(8*ROWS)*(j-1)] > global->hitfinderADC) nn++;
-					}
-					if(nn >= global->hitfinderCluster) {
-						nat++;
-						temp[i+(8*ROWS)*j] = 0;
-						temp[i+1+(8*ROWS)*j] = 0;
-						temp[i-1+(8*ROWS)*j] = 0;
-						temp[i+(8*ROWS)*(j+1)] = 0;
-						temp[i+1+(8*ROWS)*(j+1)] = 0;
-						temp[i-1+(8*ROWS)*(j+1)] = 0;
-						temp[i+(8*ROWS)*(j-1)] = 0;
-						temp[i+1+(8*ROWS)*(j-1)] = 0;
-						temp[i-1+(8*ROWS)*(j-1)] = 0;
-					}
+		case 2 :	//	integrated intensity above threshold
+
+			for(long i=0;i<global->pix_nn;i++){
+				if(temp[i] > global->hitfinderADC){
+					total += temp[i];
+					nat++;
 				}
 			}
 			threadInfo->nPeaks = nat;
-			if(nat >= global->hitfinderMinPixCount)
+			if(total >= global->hitfinderTAT) 
 				hit = 1;
 			break;
-
+			
 
 	
 	

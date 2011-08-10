@@ -99,6 +99,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinder = 0;
 	hitfinderADC = 100;
 	hitfinderNAT = 100;
+	hitfinderTAT = 1e3;
 	hitfinderNpeaks = 50;
 	hitfinderNpeaksMax = 100000;
 	hitfinderAlgorithm = 3;
@@ -536,6 +537,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindernat")) {
 		hitfinderNAT = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindertit")) {
+		hitfinderTAT = atof(value);
 	}
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);

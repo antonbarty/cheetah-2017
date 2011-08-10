@@ -85,7 +85,8 @@ public:
 	int			hitfinder;
 	int			hitfinderAlgorithm;
 	int			hitfinderADC;
-	int			hitfinderNAT;
+	long		hitfinderNAT;
+	float		hitfinderTAT;
 	int			hitfinderNpeaks;
 	int			hitfinderNpeaksMax;
 	int			hitfinderMinPixCount;
