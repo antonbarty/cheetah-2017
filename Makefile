@@ -16,10 +16,10 @@ ARCH 			= x86_64-linux
 
 MYANADIR		= myana
 CSPADDIR		= cspad-gjw
-LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
-HDF5DIR 		= /reg/neh/home/barty/hdf5
-#LCLSDIR 		= /cfel/user/barty/c/cheetah/release
-#HDF5DIR 		= /cfel/common
+#LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
+#HDF5DIR 		= /reg/neh/home/barty/hdf5
+LCLSDIR 		= /cfel/user/barty/c/cheetah/release
+HDF5DIR 		= /cfel/common
 ROOTSYS			= /reg/g/pcds/package/root
 OBJFILES		= main.o XtcRun.o
 
