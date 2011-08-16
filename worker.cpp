@@ -879,7 +879,28 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			break;
 			
 
-	
+		case 4 :	// Use TOF signal to find hits
+			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
+				double total_tof = 0.;
+				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+					total_tof += threadInfo->TOFVoltage[i];
+				}
+				if (total_tof > global->hitfinderTOFThresh)
+					hit = 1;
+			}
+			// Use cspad threshold if TOF is not present 
+			else {
+				for(long i=0;i<global->pix_nn;i++){
+					if(temp[i] > global->hitfinderADC){
+						nat++;
+					}
+				}
+				if(nat >= global->hitfinderNAT)
+					hit = 1;
+			}
+			break;
+
+			
 	
 		case 3 : 	// Real peak counter
 		default:
@@ -990,26 +1011,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			free(iny);
 			break;
 			
-		case 4 :	// Use TOF signal to find hits
-			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
-				double total_tof = 0.;
-				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-					total_tof += threadInfo->TOFVoltage[i];
-				}
-				if (total_tof > global->hitfinderTOFThresh)
-					hit = 1;
-			}
-			// Use cspad threshold if TOF is not present 
-			else {
-				for(long i=0;i<global->pix_nn;i++){
-					if(temp[i] > global->hitfinderADC){
-						nat++;
-					}
-				}
-				if(nat >= global->hitfinderNAT)
-					hit = 1;
-			}
-			break;
 			
 	}
 		
