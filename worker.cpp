@@ -901,6 +901,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			break;
 
 			
+			
 	
 		case 3 : 	// Real peak counter
 		default:
