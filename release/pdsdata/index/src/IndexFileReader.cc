@@ -1,6 +1,15 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <cstdlib>
+#include <cstring>
+#include <sys/types.h>
+#include <unistd.h>
+
+
 #include "pdsdata/index/IndexFileReader.hh"
 
 namespace Pds

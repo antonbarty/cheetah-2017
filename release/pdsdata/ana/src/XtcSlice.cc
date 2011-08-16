@@ -2,6 +2,12 @@
 #include <errno.h>
 
 #include "pdsdata/ana/XtcSlice.hh"
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
 
 namespace Pds
 {  

@@ -17,6 +17,17 @@
 #include "pdsdata/index/IndexChunkReader.hh"
 #include "pdsdata/ana/XtcRun.hh"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <cstdlib>
+#include <cstring>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
+
 using std::vector;
 using std::string;
 using namespace Pds;

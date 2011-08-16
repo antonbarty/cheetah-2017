@@ -5,6 +5,13 @@
 #include "pdsdata/xtc/BldInfo.hh"
 #include "pdsdata/index/IndexList.hh"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+
+
 namespace Pds
 {  
 namespace Index

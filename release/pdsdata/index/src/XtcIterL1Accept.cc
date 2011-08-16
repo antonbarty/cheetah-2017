@@ -4,6 +4,8 @@
 
 #include "pdsdata/index/XtcIterL1Accept.hh"
 
+#include <stdio.h>
+
 namespace Pds
 {  
 namespace Index 

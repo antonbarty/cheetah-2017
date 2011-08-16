@@ -1,5 +1,9 @@
 #include "pdsdata/ana/XtcPool.hh"
 #include "pdsdata/xtc/Dgram.hh"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 
 using std::queue;
 
