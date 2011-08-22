@@ -41,10 +41,12 @@ typedef struct {
 	double		TOFtrigtime ;
 	
 	// Peak info
-	float		*peak_com_x;		// peak center of mass x
-	float		*peak_com_y;		// peak center of mass y
-	float		*peak_intensity;	// integrated peak intensities
-	float		*peak_npix;			// Number of pixels in peak
+	float		*peak_com_x;			// peak center of mass x (in raw layout)
+	float		*peak_com_y;			// peak center of mass y (in raw layout)
+	float		*peak_com_x_assembled;	// peak center of mass x (in assembled layout)
+	float		*peak_com_y_assembled;	// peak center of mass y (in assembled layout)
+	float		*peak_intensity;		// integrated peak intensities
+	float		*peak_npix;				// Number of pixels in peak
 	
 	// Beamline data, etc
 	int			seconds;
@@ -101,8 +103,8 @@ static unsigned             configVsn;
 static unsigned             quadMask;
 static unsigned             asicMask;
 
-static const unsigned  ROWS = 194;
-static const unsigned  COLS = 185;
+static const unsigned  CSPAD_ASIC_ROWS = 194;
+static const unsigned  CSPAD_ASIC_COLS = 185;
 
 static const unsigned int cbufsize = 1024;
 

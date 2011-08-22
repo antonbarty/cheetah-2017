@@ -52,13 +52,13 @@ void *worker(void *threadarg) {
 	/*
 	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
-	threadInfo->raw_data = (uint16_t*) calloc(8*ROWS*8*COLS,sizeof(uint16_t));
+	threadInfo->raw_data = (uint16_t*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(uint16_t));
 	for(int quadrant=0; quadrant<4; quadrant++) {
 		long	i,j,ii;
-		for(long k=0; k<2*ROWS*8*COLS; k++) {
-			i = k % (2*ROWS) + quadrant*(2*ROWS);
-			j = k / (2*ROWS);
-			ii  = i+(8*ROWS)*j;
+		for(long k=0; k<2*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS; k++) {
+			i = k % (2*CSPAD_ASIC_ROWS) + quadrant*(2*CSPAD_ASIC_ROWS);
+			j = k / (2*CSPAD_ASIC_ROWS);
+			ii  = i+(8*CSPAD_ASIC_ROWS)*j;
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
@@ -66,12 +66,14 @@ void *worker(void *threadarg) {
 	/*
 	 *	Create additional arrays for corrected data, etc
 	 */
-	threadInfo->corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
-	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*ROWS*8*COLS,sizeof(int16_t));
-	threadInfo->detector_corrected_data = (float*) calloc(8*ROWS*8*COLS,sizeof(float));
+	threadInfo->corrected_data = (float*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(float));
+	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(int16_t));
+	threadInfo->detector_corrected_data = (float*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	threadInfo->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	for(long i=0;i<global->pix_nn;i++)
@@ -302,6 +304,8 @@ void *worker(void *threadarg) {
 	free(threadInfo->image);
 	free(threadInfo->peak_com_x);
 	free(threadInfo->peak_com_y);
+	free(threadInfo->peak_com_x_assembled);
+	free(threadInfo->peak_com_y_assembled);
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
 	//TOF stuff.
@@ -545,7 +549,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	long		e;
 	//long		counter;
 	//uint16_t	value;
-	int			mval = lrint(global->cmFloor*ROWS*COLS);
+	int			mval = lrint(global->cmFloor*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS);
 	uint16_t	median;
 	
 	// Create histogram array
@@ -555,7 +559,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	//histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
 
 	int16_t	*buffer; 
-	buffer = (int16_t*) calloc(COLS*ROWS, sizeof(int16_t));
+	buffer = (int16_t*) calloc(CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS, sizeof(int16_t));
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
@@ -566,21 +570,21 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			
 			
 			// Loop over pixels within a module
-			for(long j=0; j<COLS; j++){
-				for(long i=0; i<ROWS; i++){
-					e = (j + mj*COLS) * (8*ROWS);
-					e += i + mi*ROWS;
+			for(long j=0; j<CSPAD_ASIC_COLS; j++){
+				for(long i=0; i<CSPAD_ASIC_ROWS; i++){
+					e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+					e += i + mi*CSPAD_ASIC_ROWS;
 					//histogram[lrint(threadInfo->corrected_data[e])] += 1;
-					buffer[j+i*COLS] = lrint(threadInfo->corrected_data[e]);
+					buffer[j+i*CSPAD_ASIC_COLS] = lrint(threadInfo->corrected_data[e]);
 				}
 			}
 			
-			median = kth_smallest(buffer, COLS*ROWS, mval);
+			median = kth_smallest(buffer, CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS, mval);
 			// Find median value
 			//counter = 0;
 			//for(long i=0; i<nhist; i++){
 			//	counter += histogram[i];
-			//	if(counter > (global->cmFloor*ROWS*COLS)) {
+			//	if(counter > (global->cmFloor*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS)) {
 			//		median = i;
 			//		break;
 			//	}
@@ -588,10 +592,10 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			//DEBUGL2_ONLY printf("Median of module (%i,%i) = %i\n",mi,mj,median);
 
 			// Subtract median value
-			for(long i=0; i<ROWS; i++){
-				for(long j=0; j<COLS; j++){
-					e = (j + mj*COLS) * (8*ROWS);
-					e += i + mi*ROWS;
+			for(long i=0; i<CSPAD_ASIC_ROWS; i++){
+				for(long j=0; j<CSPAD_ASIC_COLS; j++){
+					e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+					e += i + mi*CSPAD_ASIC_ROWS;
 					threadInfo->corrected_data[e] -= median;
 
 					// Zero checking only needed if corrected data is uint16
@@ -634,10 +638,10 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			// Loop over unbonded pixels within each ASIC
 			background = 0.0;
 			counter = 0.0;
-			for(long j=0; j<COLS-1; j+=10){
+			for(long j=0; j<CSPAD_ASIC_COLS-1; j+=10){
 				long i=j;
-				e = (j + mj*COLS) * (8*ROWS);
-				e += i + mi*ROWS;
+				e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+				e += i + mi*CSPAD_ASIC_ROWS;
 				background += threadInfo->corrected_data[e];
 				counter += 1;
 			}
@@ -646,10 +650,10 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			//printf("%f ",background);
 						
 			// Subtract background from entire ASIC
-			for(long j=0; j<COLS; j++){
-				for(long i=0; i<ROWS; i++){
-					e = (j + mj*COLS) * (8*ROWS);
-					e += i + mi*ROWS;
+			for(long j=0; j<CSPAD_ASIC_COLS; j++){
+				for(long i=0; i<CSPAD_ASIC_ROWS; i++){
+					e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+					e += i + mi*CSPAD_ASIC_ROWS;
 					threadInfo->corrected_data[e] -= background;
 					
 				}
@@ -674,7 +678,7 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 	uint16_t	median;
 	
 	int16_t	*buffer; 
-	buffer = (int16_t*) calloc(COLS*ROWS, sizeof(int16_t));
+	buffer = (int16_t*) calloc(CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS, sizeof(int16_t));
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
@@ -683,10 +687,10 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 			
 			// Loop over pixels within a module, remembering signal behind wires
 			counter = 0;
-			for(long j=0; j<COLS; j++){
-				for(long i=0; i<ROWS; i++){
-					p = (j + mj*COLS) * (8*ROWS);
-					p += i + mi*ROWS;
+			for(long j=0; j<CSPAD_ASIC_COLS; j++){
+				for(long i=0; i<CSPAD_ASIC_ROWS; i++){
+					p = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+					p += i + mi*CSPAD_ASIC_ROWS;
 					if(global->wiremask[i]) {
 						buffer[counter] = lrint(threadInfo->corrected_data[p]);
 						counter++;
@@ -704,10 +708,10 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 
 
 			// Subtract median value
-			for(long i=0; i<ROWS; i++){
-				for(long j=0; j<COLS; j++){
-					p = (j + mj*COLS) * (8*ROWS);
-					p += i + mi*ROWS;
+			for(long i=0; i<CSPAD_ASIC_ROWS; i++){
+				for(long j=0; j<CSPAD_ASIC_COLS; j++){
+					p = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
+					p += i + mi*CSPAD_ASIC_ROWS;
 					threadInfo->corrected_data[p] -= median;
 				}
 			}
@@ -724,15 +728,15 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
-	// ROWS = 194;
-	// COLS = 185;
+	// CSPAD_ASIC_ROWS = 194;
+	// CSPAD_ASIC_COLS = 185;
 	
 	long		e,ee;
 	long		counter;
 	
 	
 	// Search subunits
-	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= COLS/2 )
+	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= CSPAD_ASIC_COLS/2 )
 		return;
 	long nn = (2*global->localBackgroundRadius+1);
 	nn=nn*nn;
@@ -749,12 +753,12 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 		for(long mj=0; mj<8; mj++){
 			
 			// Loop over pixels within a module
-			for(long j=0; j<COLS; j++){
-				for(long i=0; i<ROWS; i++){
+			for(long j=0; j<CSPAD_ASIC_COLS; j++){
+				for(long i=0; i<CSPAD_ASIC_ROWS; i++){
 
 					counter = 0;
-					e = (j+mj*COLS)*global->pix_nx;
-					e += i+mi*ROWS;
+					e = (j+mj*CSPAD_ASIC_COLS)*global->pix_nx;
+					e += i+mi*CSPAD_ASIC_ROWS;
 					
 					// Loop over median window
 					for(long jj=-global->localBackgroundRadius; jj<=global->localBackgroundRadius; jj++){
@@ -763,15 +767,15 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 							// Quick array bounds check
 							if((i+ii) < 0)
 								continue;
-							if((i+ii) >= ROWS)
+							if((i+ii) >= CSPAD_ASIC_ROWS)
 								continue;
 							if((j+jj) < 0)
 								continue;
-							if((j+jj) >= COLS)
+							if((j+jj) >= CSPAD_ASIC_COLS)
 								continue;
 
-							ee = (j+jj+mj*COLS)*global->pix_nx;
-							ee += i+ii+mi*ROWS;
+							ee = (j+jj+mj*CSPAD_ASIC_COLS)*global->pix_nx;
+							ee += i+ii+mi*CSPAD_ASIC_ROWS;
 
 							if(ee < 0 || ee >= global->pix_nn){
 								printf("Error: Array bounds error: e = %li > %li\n",e,global->pix_nn);
@@ -901,7 +905,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			break;
 
 			
-			
 	
 		case 3 : 	// Real peak counter
 		default:
@@ -922,11 +925,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				for(long mi=0; mi<8; mi++){
 					
 					// Loop over pixels within a module
-					for(long j=1; j<COLS-1; j++){
-						for(long i=1; i<ROWS-1; i++){
+					for(long j=1; j<CSPAD_ASIC_COLS-1; j++){
+						for(long i=1; i<CSPAD_ASIC_ROWS-1; i++){
 
-							e = (j+mj*COLS)*global->pix_nx;
-							e += i+mi*ROWS;
+							e = (j+mj*CSPAD_ASIC_COLS)*global->pix_nx;
+							e += i+mi*CSPAD_ASIC_ROWS;
 
 							//if(e >= global->pix_nn)
 							//	printf("Array bounds error: e=%i\n");
@@ -940,7 +943,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								peak_com_x = 0; 
 								peak_com_y = 0; 
 								
-								// Keep looping until the pixel count within this peak does not change (!)
+								// Keep looping until the pixel count within this peak does not change
 								do {
 									lastnat = nat;
 									// Loop through points known to be within this peak
@@ -950,16 +953,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 											// Array bounds check
 											if((inx[p]+search_x[k]) < 0)
 												continue;
-											if((inx[p]+search_x[k]) >= ROWS)
+											if((inx[p]+search_x[k]) >= CSPAD_ASIC_ROWS)
 												continue;
 											if((iny[p]+search_y[k]) < 0)
 												continue;
-											if((iny[p]+search_y[k]) >= COLS)
+											if((iny[p]+search_y[k]) >= CSPAD_ASIC_COLS)
 												continue;
 											
 											// Neighbour point 
-											thisx = (iny[p]+search_y[k]+mj*COLS);
-											thisy = inx[p]+search_x[k]+mi*ROWS;
+											thisx = (iny[p]+search_y[k]+mj*CSPAD_ASIC_COLS);
+											thisy = inx[p]+search_x[k]+mi*CSPAD_ASIC_ROWS;
 											e = thisx*global->pix_nx + thisy;
 											
 											//if(e < 0 || e >= global->pix_nn){
@@ -989,9 +992,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								// Peak or junk?
 								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
 									
-									if ( counter > global->hitfinderNpeaksMax ) 
+									if ( counter > global->hitfinderNpeaksMax ) {
+										counter++;
 										continue;
+									}
 									
+									// Only space to save the first NpeaksMax peaks
 									threadInfo->peak_intensity[counter] = totI;
 									threadInfo->peak_com_x[counter] = peak_com_x/totI;
 									threadInfo->peak_com_y[counter] = peak_com_y/totI;
@@ -1392,10 +1398,10 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 
 	// Save raw data
 	if(global->saveRaw) {
-		size[0] = 8*COLS;	// size[0] = height
-		size[1] = 8*ROWS;	// size[1] = width
-		max_size[0] = 8*COLS;
-		max_size[1] = 8*ROWS;
+		size[0] = 8*CSPAD_ASIC_COLS;	// size[0] = height
+		size[1] = 8*CSPAD_ASIC_ROWS;	// size[1] = width
+		max_size[0] = 8*CSPAD_ASIC_COLS;
+		max_size[1] = 8*CSPAD_ASIC_ROWS;
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {

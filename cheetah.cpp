@@ -55,8 +55,8 @@ class MyQuad {
     	unsigned section_id;
     	const Pds::CsPad::Section* s;
     	while((s=iter.next(section_id))) {
-      		for(unsigned col=0; col<COLS; col++)
-				for(unsigned row=0; row<ROWS; row++) {	
+      		for(unsigned col=0; col<CSPAD_ASIC_COLS; col++)
+				for(unsigned row=0; row<CSPAD_ASIC_ROWS; row++) {	
 				}
     	}
   	}    
@@ -457,8 +457,8 @@ void event() {
 	threadInfo->pGlobal = &global;
 	
 	for(int quadrant=0; quadrant<4; quadrant++) {
-		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(ROWS*COLS*16, sizeof(uint16_t));
-		memset(threadInfo->quad_data[quadrant], 0, ROWS*COLS*16*sizeof(uint16_t));
+		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS*16, sizeof(uint16_t));
+		memset(threadInfo->quad_data[quadrant], 0, CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS*16*sizeof(uint16_t));
 	}
 	
 
@@ -502,7 +502,7 @@ void event() {
 				unsigned section_id;
 				while(( s=iter.next(section_id) )) {  
 					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
-					memcpy(&threadInfo->quad_data[quadrant][section_id*2*ROWS*COLS],s->pixel[0],2*ROWS*COLS*sizeof(uint16_t));
+					memcpy(&threadInfo->quad_data[quadrant][section_id*2*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS],s->pixel[0],2*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS*sizeof(uint16_t));
 				}
 			}
 		}
