@@ -15,9 +15,9 @@
 #include "release/pdsdata/cspad/ConfigV3.hh"
 #include "release/pdsdata/cspad/ElementHeader.hh"
 #include "release/pdsdata/cspad/ElementIterator.hh"
-#include "cspad-gjw/CspadTemp.hh"
-#include "cspad-gjw/CspadCorrector.hh"
-#include "cspad-gjw/CspadGeometry.hh"
+#include "cspad/CspadTemp.hh"
+#include "cspad/CspadCorrector.hh"
+#include "cspad/CspadGeometry.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -635,8 +635,8 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Pixel size (measurements in geometry file are in m)
-	module_rows = ROWS;
-	module_cols = COLS;	
+	module_rows = CSPAD_ASIC_ROWS;
+	module_cols = CSPAD_ASIC_COLS;	
 	pix_dx = pixelSize;
 
 	
@@ -671,16 +671,16 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*ROWS || detector_x.ny != 8*COLS) {
+	if (detector_x.nx != 8*CSPAD_ASIC_ROWS || detector_x.ny != 8*CSPAD_ASIC_COLS) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*ROWS, 8*COLS, detector_x.nx, detector_x.ny);
+		printf("%ux%u != %lix%li\n", 8*CSPAD_ASIC_ROWS, 8*CSPAD_ASIC_COLS, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
 	
 	// Create local arrays for detector pixel locations
-	long	nx = 8*ROWS;
-	long	ny = 8*COLS;
+	long	nx = 8*CSPAD_ASIC_ROWS;
+	long	ny = 8*CSPAD_ASIC_COLS;
 	long	nn = nx*ny;
 	pix_nx = nx;
 	pix_ny = ny;
