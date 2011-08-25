@@ -39,6 +39,7 @@
 static cGlobal		global;
 static long			frameNumber;
 
+/*
 
 // Quad class definition
 class MyQuad {
@@ -72,8 +73,9 @@ class MyQuad {
 };
 
 static MyQuad* quads[4];    
-using namespace Pds;
 
+*/
+using namespace Pds;
 
 
 /*
@@ -113,8 +115,8 @@ void beginjob() {
 	corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
 
 				 
-	for(unsigned i=0; i<4; i++)
-		quads[i] = new MyQuad(i);
+//	for(unsigned i=0; i<4; i++)
+//		quads[i] = new MyQuad(i);
 	
 	
 	/*
