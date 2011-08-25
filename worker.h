@@ -41,12 +41,19 @@ typedef struct {
 	double		TOFtrigtime ;
 	
 	// Peak info
+	long		*peak_com_index;		// closest pixel corresponding to peak center of mass
 	float		*peak_com_x;			// peak center of mass x (in raw layout)
 	float		*peak_com_y;			// peak center of mass y (in raw layout)
 	float		*peak_com_x_assembled;	// peak center of mass x (in assembled layout)
 	float		*peak_com_y_assembled;	// peak center of mass y (in assembled layout)
+	float		*peak_com_r_assembled;	// peak center of mass r (in assembled layout)
 	float		*peak_intensity;		// integrated peak intensities
 	float		*peak_npix;				// Number of pixels in peak
+	float		peakResolution;			// Radius of 80% of peaks
+	float		peakDensity;			// Density of peaks within this 80% figure
+	float		peakNpix;				// Number of pixels in peaks
+	float		peakTotal;				// Total integrated intensity in peaks
+	
 	
 	// Beamline data, etc
 	int			seconds;

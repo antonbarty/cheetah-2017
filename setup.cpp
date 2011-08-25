@@ -742,6 +742,11 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	image_nn = image_nx*image_nx;
 	printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
 	
+	// Compute radial distances
+	pix_r = (float *) calloc(nn, sizeof(float));
+	for(long i=0;i<nn;i++){
+		pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
+	}	
 }
 
 
@@ -1076,7 +1081,9 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks\n");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");
+	
+
 	
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
@@ -1085,7 +1092,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks\n");	
+	fprintf(cleanedfp, "# Filename, npeaks,, nPixels, totalIntensity, peakResolution, peakDensity\n");	
 	pthread_mutex_unlock(&framefp_mutex);
 	
 	

@@ -64,18 +64,22 @@ void *worker(void *threadarg) {
 	}
 	
 	/*
-	 *	Create additional arrays for corrected data, etc
+	 *	Create arrays for corrected data, etc needed by this thread
 	 */
 	threadInfo->corrected_data = (float*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(float));
 	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(int16_t));
 	threadInfo->detector_corrected_data = (float*) calloc(8*CSPAD_ASIC_ROWS*8*CSPAD_ASIC_COLS,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
+
+	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
+	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
-	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	threadInfo->peak_com_r_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+
 	for(long i=0;i<global->pix_nn;i++)
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 
@@ -280,7 +284,7 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%li, %i, %s, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks);
+	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
@@ -302,10 +306,12 @@ void *worker(void *threadarg) {
 	free(threadInfo->detector_corrected_data);
 	free(threadInfo->corrected_data_int16);
 	free(threadInfo->image);
+	free(threadInfo->peak_com_index);
 	free(threadInfo->peak_com_x);
 	free(threadInfo->peak_com_y);
 	free(threadInfo->peak_com_x_assembled);
 	free(threadInfo->peak_com_y_assembled);
+	free(threadInfo->peak_com_r_assembled);
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
 	//TOF stuff.
@@ -822,19 +828,32 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 
 
 /*
- *	A basic hitfinder
+ *	Various flavours of hitfinder
+ *		1 - Number of pixels above ADC threshold
+ *		2 - Total intensity above ADC threshold
+ *		3 - Count Bragg peaks
+ *		4 - Use TOF
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 	long	nat, lastnat;
 	long	counter;
 	int		hit=0;
-	long	ii,nn;
 	float	total;
 
 	nat = 0;
 	counter = 0;
 	total = 0.0;
+	
+	
+	/*
+	 *	Default values for some metrics
+	 */
+	threadInfo->peakNpix = 0;
+	threadInfo->peakTotal = 0;
+	threadInfo->peakResolution = 0;
+	threadInfo->peakDensity = 0;
+	
 
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
@@ -862,11 +881,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		case 1 :	// Count the number of pixels above ADC threshold
 			for(long i=0;i<global->pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){
+					total += temp[i];
 					nat++;
 				}
 			}
 			if(nat >= global->hitfinderNAT)
 				hit = 1;
+
+			threadInfo->peakNpix = nat;
+			threadInfo->nPeaks = nat;
+			threadInfo->peakTotal = total;
 			break;
 
 	
@@ -877,9 +901,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 					nat++;
 				}
 			}
-			threadInfo->nPeaks = nat;
 			if(total >= global->hitfinderTAT) 
 				hit = 1;
+
+			threadInfo->peakNpix = nat;
+			threadInfo->nPeaks = nat;
+			threadInfo->peakTotal = total;
 			break;
 			
 
@@ -906,7 +933,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 			
 	
-		case 3 : 	// Real peak counter
+		case 3 : 	// Count number of peaks (and do other statistics)
 		default:
 			int search_x[] = {-1,0,1,-1,1,-1,0,1};
 			int search_y[] = {-1,-1,-1,0,0,1,1,1};
@@ -917,8 +944,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			float totI;
 			float peak_com_x;
 			float peak_com_y;
-			int thisx;
-			int thisy;
+			long thisx;
+			long thisy;
+			
+			threadInfo->peakResolution = 0;
+			threadInfo->peakDensity = 0;
 
 			// Loop over modules (8x8 array)
 			for(long mj=0; mj<8; mj++){
@@ -992,16 +1022,28 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								// Peak or junk?
 								if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
 									
+									threadInfo->peakNpix += nat;
+									threadInfo->peakTotal += totI;
+									
+
+									// Only space to save the first NpeaksMax peaks
+									// (more than this and the pattern is probably junk)
 									if ( counter > global->hitfinderNpeaksMax ) {
 										counter++;
 										continue;
 									}
 									
-									// Only space to save the first NpeaksMax peaks
+									// Remember peak information
 									threadInfo->peak_intensity[counter] = totI;
 									threadInfo->peak_com_x[counter] = peak_com_x/totI;
 									threadInfo->peak_com_y[counter] = peak_com_y/totI;
 									threadInfo->peak_npix[counter] = nat;
+
+									e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*global->pix_nx;
+									threadInfo->peak_com_index[counter] = e;
+									threadInfo->peak_com_x_assembled[counter] = global->pix_x[e];
+									threadInfo->peak_com_y_assembled[counter] = global->pix_y[e];
+									threadInfo->peak_com_r_assembled[counter] = global->pix_r[e];
 									counter++;
 								}
 							}
@@ -1009,13 +1051,37 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 					}
 				}
 			}	
-			// Hit?
 			threadInfo->nPeaks = counter;
+			free(inx);
+			free(iny);
+			
+			
+			// Statistics on the peaks
+			if(counter > 1) {
+				long	np;
+				long	median_element;
+				float	resolution;
+				
+				if(counter < global->hitfinderNpeaksMax) np = counter;
+					else np = global->hitfinderNpeaksMax; 
+				
+				median_element = lrint(0.8*np);
+				
+				int16_t *buffer = (int16_t*) calloc(np, sizeof(int16_t));
+				for(long i=0; i<np; i++)
+					buffer[i] = lrint(threadInfo->peak_com_r_assembled[counter]);
+				resolution = kth_smallest(buffer, np, median_element);
+				free(temp);
+				
+				threadInfo->peakResolution = resolution;
+				threadInfo->peakDensity = median_element / resolution;
+			} 
+			
+			
+			// Now figure out whether this is a hit
 			if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
 				hit = 1;
 			
-			free(inx);
-			free(iny);
 			break;
 			
 			
@@ -1336,7 +1402,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->cleanedfp, "r%04u/%s, %i\n",global->runNumber, info->eventname, info->nPeaks);
+	fprintf(global->cleanedfp, "r%04u/%s, %i, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 		
@@ -1689,8 +1755,13 @@ void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 	fprintf(global->peaksfp, "wavelength_A=%f\n", threadInfo->wavelengthA);
 	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(threadInfo->gmd21+threadInfo->gmd21)/2);
 	fprintf(global->peaksfp, "npeaks=%i\n", threadInfo->nPeaks);
+	fprintf(global->peaksfp, "peakResolution=%g\n", threadInfo->peakResolution);
+	fprintf(global->peaksfp, "peakDensity=%g\n", threadInfo->peakDensity);
+	fprintf(global->peaksfp, "peakNpix=%g\n", threadInfo->peakNpix);
+	fprintf(global->peaksfp, "peakTotal=%g\n", threadInfo->peakTotal);
+	
 	for(long i=0; i<threadInfo->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f\n", threadInfo->peak_com_x[i], threadInfo->peak_com_y[i], threadInfo->peak_npix[i], threadInfo->peak_intensity[i]);
+		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", threadInfo->peak_com_x_assembled[i], threadInfo->peak_com_y_assembled[i], threadInfo->peak_com_x[i], threadInfo->peak_com_y[i], threadInfo->peak_npix[i], threadInfo->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
 	

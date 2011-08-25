@@ -177,6 +177,7 @@ public:
 	float			*pix_x;
 	float			*pix_y;
 	float			*pix_z;
+	float			*pix_r;
 	float			pix_dx;
 	unsigned		module_rows;
 	unsigned		module_cols;
