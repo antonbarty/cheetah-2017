@@ -587,6 +587,7 @@ void event() {
 	pthread_attr_destroy(&threadAttribute);
 	//pthread_detach(thread);
 	global.nprocessedframes += 1;
+	global.nrecentprocessedframes += 1;
 	
 
 	

@@ -208,6 +208,8 @@ public:
 	long			npowderBlanks;
 	long			nprocessedframes;
 	long			nhits;
+	long			nrecentprocessedframes;
+	long			nrecenthits;
 	double			detectorZ;
 	
 	time_t			tstart, tend;

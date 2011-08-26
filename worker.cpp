@@ -1097,6 +1097,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	if(hit) {
 		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;
+		global->nrecenthits++;
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 	

@@ -272,8 +272,10 @@ void cGlobal::setup() {
 	 */
 	npowderHits = 0;
 	npowderBlanks = 0;
-	nprocessedframes = 0;
 	nhits = 0;
+	nrecenthits = 0;
+	nprocessedframes = 0;
+	nrecentprocessedframes = 0;
 	lastclock = clock()-10;
 	datarate = 1;
 	detectorZ = 0;
@@ -1123,9 +1125,15 @@ void cGlobal::writeInitialLog(void){
 void cGlobal::updateLogfile(void){
 	FILE *fp;
 	
-	// Calculate hit rate
+	// Calculate overall hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);
+	
+	// Calculate recent hit rate
+	float recenthitrate=0;
+	if(nrecentprocessedframes != 0)
+		recenthitrate = 100.*( nrecenthits / (float) nrecentprocessedframes);
+
 	
 	// Elapsed processing time
 	double	dtime;
@@ -1144,9 +1152,12 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
-	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, hrs, mins, secs, fps);
+	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
 	
+	nrecenthits = 0;
+	nrecentprocessedframes = 0;
+
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
