@@ -1486,7 +1486,77 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Sclose(dataspace_id);
 	}
 
-	// TOF
+	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
+	if(global->saveAssembled) {
+		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
+	}
+	else {
+		hdf_error = H5Lcreate_soft( "/data/rawdata", hdf_fileID, "/data/data",0,0);
+	}
+	
+	
+	// Done with thie /data group
+	H5Gclose(gid);
+
+
+
+	/*
+	 * save peak info
+	 */
+
+	// Create sub-groups
+	gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gid < 0 ) {
+		ERROR("%li: Couldn't create group\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+	gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gid < 0 ) {
+		ERROR("%li: Couldn't create group\n", info->threadNum);
+		H5Fclose(hdf_fileID);
+		return;
+	}
+
+	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
+		size[0] = info->nPeaks;			// size[0] = height
+		size[1] = 4;					// size[1] = width
+		max_size[0] = info->nPeaks;
+		max_size[1] = 4;
+		double *peak_info = (double *) calloc(4*info->nPeaks, sizeof(double));
+		for (int i=0; i<info->nPeaks;i++){
+			peak_info[i*4] = info->peak_com_y[i];
+			peak_info[i*4+1] = info->peak_com_x[i];
+			peak_info[i*4+2] = info->peak_intensity[i];
+			peak_info[i*4+3] = info->peak_npix[i];
+		}
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
+		if ( hdf_error < 0 ) {
+			 ERROR("%li: Couldn't write data\n", info->threadNum);
+			 H5Dclose(dataspace_id);
+			 H5Fclose(hdf_fileID);
+			 return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+		free(peak_info);
+	}
+
+   // Done with this group
+   H5Gclose(gid);
+   H5Gclose(gid2);
+
+	
+	/*
+	 *	Save TOF data (Aqiris)
+	 */
 	if(info->TOFPresent==1) {
 		size[0] = 2;	
 		size[1] = global->AcqNumSamples;	
@@ -1513,73 +1583,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}	
-
-	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
-	if(global->saveAssembled) {
-		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
-	}
-	else {
-		hdf_error = H5Lcreate_soft( "/data/rawdata", hdf_fileID, "/data/data",0,0);
-	}
-	
-	
-	// Done with thie /data group
-	H5Gclose(gid);
-
-
-
-	/*
-	 * save peak info
-	 */
-	gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( gid < 0 ) {
-		ERROR("%li: Couldn't create group\n", info->threadNum);
-		H5Fclose(hdf_fileID);
-		return;
-	}
-
-	gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( gid < 0 ) {
-		ERROR("%li: Couldn't create group\n", info->threadNum);
-		H5Fclose(hdf_fileID);
-		return;
-	}
-
-   if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
-
-		size[0] = info->nPeaks;		// size[0] = height
-		size[1] = 3;					// size[1] = width
-		max_size[0] = info->nPeaks;
-		max_size[1] = 3;
-		double * peak_info = (double *) calloc(3*info->nPeaks, sizeof(double));
-		for (int i=0; i<info->nPeaks;i++){
-			peak_info[i*3] = info->peak_com_y[i];
-			peak_info[i*3+1] = info->peak_com_x[i];
-			peak_info[i*3+2] = info->peak_intensity[i];
-		}
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
-		if ( hdf_error < 0 ) {
-			 ERROR("%li: Couldn't write data\n", info->threadNum);
-			 H5Dclose(dataspace_id);
-			 H5Fclose(hdf_fileID);
-			 return;
-		}
-		H5Dclose(dataset_id);
-		H5Sclose(dataspace_id);
-	   free(peak_info);
-   }
-
-   // Done with this group
-   H5Gclose(gid);
-   H5Gclose(gid2);
-
 	
 	
 	//double		phaseCavityTime1;
