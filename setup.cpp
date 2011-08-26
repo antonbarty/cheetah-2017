@@ -108,12 +108,14 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderUsePeakmask = 0;
 	strcpy(peaksearchFile, "peakmask.h5");
 	savePeakInfo = 1;
+	
 	hitfinderUseTOF = 0;
 	hitfinderTOFMinSample = 0;
 	hitfinderTOFMaxSample = 1000;
 	hitfinderTOFThresh = 100;
 	
 	// TOF default configuration
+	TOFPresent = 0;
 	TOFchannel = 1;
 
 
@@ -511,6 +513,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	
 	//TOF
+	else if (!strcmp(tag, "tofpresent")) {
+		TOFPresent = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
 	}

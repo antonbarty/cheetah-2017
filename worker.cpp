@@ -1528,7 +1528,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		max_size[0] = info->nPeaks;
 		max_size[1] = 4;
 		double *peak_info = (double *) calloc(4*info->nPeaks, sizeof(double));
-		dataspace_id = H5Screate_simple(2, size, max_size);
 		
 		// Save peak info in Assembled layout
 		for (int i=0; i<info->nPeaks;i++){
@@ -1538,6 +1537,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			peak_info[i*4+3] = info->peak_npix[i];
 		}
 		
+		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid2, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
@@ -1552,6 +1552,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			return;
 		}
 		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
 		
 
 		// Save peak info in Raw layout
@@ -1562,6 +1563,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			peak_info[i*4+3] = info->peak_npix[i];
 		}
 
+		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid2, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
@@ -1576,9 +1578,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			 return;
 		}
 		H5Dclose(dataset_id);
-		
 		H5Sclose(dataspace_id);
-		free(peak_info);
 		
 		
 		// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set 
@@ -1589,17 +1589,19 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
 		}
 		
-		
+		free(peak_info);
 	}
 
-   // Done with this group
-   H5Gclose(gid);
-   H5Gclose(gid2);
+	// Done with this group
+	H5Gclose(gid);
+	H5Gclose(gid2);
+	
 
 	
 	/*
 	 *	Save TOF data (Aqiris)
 	 */
+	/*
 	if(info->TOFPresent==1) {
 		size[0] = 2;	
 		size[1] = global->AcqNumSamples;	
@@ -1626,7 +1628,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}	
-	
+	*/
 	
 	//double		phaseCavityTime1;
 	//double		phaseCavityTime2;
