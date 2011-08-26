@@ -991,8 +991,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												continue;
 											
 											// Neighbour point 
-											thisy = iny[p]+search_y[k]+mj*CSPAD_ASIC_COLS;
 											thisx = inx[p]+search_x[k]+mi*CSPAD_ASIC_ROWS;
+											thisy = iny[p]+search_y[k]+mj*CSPAD_ASIC_COLS;
 											e = thisx + thisy*global->pix_nx;
 											
 											//if(e < 0 || e >= global->pix_nn){
@@ -1039,7 +1039,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									threadInfo->peak_com_y[counter] = peak_com_y/totI;
 									threadInfo->peak_npix[counter] = nat;
 
-									e = lrint(peak_com_x/totI)*global->pix_nx + lrint(peak_com_y/totI);
+									e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*global->pix_nx;
 									threadInfo->peak_com_index[counter] = e;
 									threadInfo->peak_com_x_assembled[counter] = global->pix_x[e];
 									threadInfo->peak_com_y_assembled[counter] = global->pix_y[e];
@@ -1059,24 +1059,26 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			// Statistics on the peaks
 			if(counter > 1) {
 				long	np;
-				long	median_element;
 				float	resolution;
+				float	cutoff = 0.8;
 				
-				if(counter < global->hitfinderNpeaksMax) np = counter;
-					else np = global->hitfinderNpeaksMax; 
+				np = counter;
+				if(counter >= global->hitfinderNpeaksMax) 
+					np = global->hitfinderNpeaksMax; 
 				
-				median_element = lrint(0.8*(float)np);
-				
-				int16_t *buffer = (int16_t*) calloc(np, sizeof(int16_t));
-				for(long i=0; i<np; i++)
-					buffer[i] = lrint(threadInfo->peak_com_r_assembled[i]);
-				resolution = kth_smallest(buffer, np, median_element);
-				free(buffer);
+				int16_t *buffer1 = (int16_t*) calloc(global->hitfinderNpeaksMax, sizeof(int16_t));
+				for(long k=0; k<np; k++) {
+					buffer1[k] = lrint(threadInfo->peak_com_r_assembled[k]);
+					if(buffer1[k] < 0) buffer1[k] = 0;
+					if(buffer1[k] > 30000) buffer1[k] = 30000;
+				}
+				resolution = kth_smallest(buffer1, np, cutoff*np);
 				
 				threadInfo->peakResolution = resolution;
 				if(resolution > 0) 
-					threadInfo->peakDensity = median_element / resolution;
+					threadInfo->peakDensity = (cutoff*np)/resolution;
 					
+				free(buffer1);
 			} 
 			
 			
