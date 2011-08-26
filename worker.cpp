@@ -1065,11 +1065,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				if(counter < global->hitfinderNpeaksMax) np = counter;
 					else np = global->hitfinderNpeaksMax; 
 				
-				median_element = lrint(0.8*np);
+				median_element = lrint(0.8*(float)np);
 				
 				int16_t *buffer = (int16_t*) calloc(np, sizeof(int16_t));
 				for(long i=0; i<np; i++)
-					buffer[i] = lrint(threadInfo->peak_com_r_assembled[counter]);
+					buffer[i] = lrint(threadInfo->peak_com_r_assembled[i]);
 				resolution = kth_smallest(buffer, np, median_element);
 				free(buffer);
 				
