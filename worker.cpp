@@ -991,9 +991,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 												continue;
 											
 											// Neighbour point 
-											thisx = (iny[p]+search_y[k]+mj*CSPAD_ASIC_COLS);
-											thisy = inx[p]+search_x[k]+mi*CSPAD_ASIC_ROWS;
-											e = thisx*global->pix_nx + thisy;
+											thisy = iny[p]+search_y[k]+mj*CSPAD_ASIC_COLS;
+											thisx = inx[p]+search_x[k]+mi*CSPAD_ASIC_ROWS;
+											e = thisx + thisy*global->pix_nx;
 											
 											//if(e < 0 || e >= global->pix_nn){
 											//	printf("Array bounds error: e=%i\n",e);
@@ -1039,7 +1039,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									threadInfo->peak_com_y[counter] = peak_com_y/totI;
 									threadInfo->peak_npix[counter] = nat;
 
-									e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*global->pix_nx;
+									e = lrint(peak_com_x/totI)*global->pix_nx + lrint(peak_com_y/totI);
 									threadInfo->peak_com_index[counter] = e;
 									threadInfo->peak_com_x_assembled[counter] = global->pix_x[e];
 									threadInfo->peak_com_y_assembled[counter] = global->pix_y[e];
@@ -1071,10 +1071,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				for(long i=0; i<np; i++)
 					buffer[i] = lrint(threadInfo->peak_com_r_assembled[counter]);
 				resolution = kth_smallest(buffer, np, median_element);
-				free(temp);
+				free(buffer);
 				
 				threadInfo->peakResolution = resolution;
-				threadInfo->peakDensity = median_element / resolution;
+				if(resolution > 0) 
+					threadInfo->peakDensity = median_element / resolution;
+					
 			} 
 			
 			
@@ -1524,14 +1526,41 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		max_size[0] = info->nPeaks;
 		max_size[1] = 4;
 		double *peak_info = (double *) calloc(4*info->nPeaks, sizeof(double));
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		
+		// Save peak info in Assembled layout
 		for (int i=0; i<info->nPeaks;i++){
-			peak_info[i*4] = info->peak_com_y[i];
-			peak_info[i*4+1] = info->peak_com_x[i];
+			peak_info[i*4] = info->peak_com_x_assembled[i];
+			peak_info[i*4+1] = info->peak_com_y_assembled[i];
 			peak_info[i*4+2] = info->peak_intensity[i];
 			peak_info[i*4+3] = info->peak_npix[i];
 		}
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid2, "peakinfo", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		
+		dataset_id = H5Dcreate(gid2, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
+		if ( hdf_error < 0 ) {
+			ERROR("%li: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		
+
+		// Save peak info in Raw layout
+		for (int i=0; i<info->nPeaks;i++){
+			peak_info[i*4] = info->peak_com_x[i];
+			peak_info[i*4+1] = info->peak_com_y[i];
+			peak_info[i*4+2] = info->peak_intensity[i];
+			peak_info[i*4+3] = info->peak_npix[i];
+		}
+
+		dataset_id = H5Dcreate(gid2, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -1545,8 +1574,20 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			 return;
 		}
 		H5Dclose(dataset_id);
+		
 		H5Sclose(dataspace_id);
 		free(peak_info);
+		
+		
+		// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set 
+		if(global->saveAssembled) {
+			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-assembled", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
+		}
+		else {
+			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
+		}
+		
+		
 	}
 
    // Done with this group
