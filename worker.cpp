@@ -1075,8 +1075,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				resolution = kth_smallest(buffer1, np, cutoff*np);
 				
 				threadInfo->peakResolution = resolution;
-				if(resolution > 0) 
-					threadInfo->peakDensity = (cutoff*np)/resolution;
+				if(resolution > 0) {
+					float	area = (3.141*resolution*resolution)/(CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS);
+					threadInfo->peakDensity = (cutoff*np)/area;
+					
+				}
 					
 				free(buffer1);
 			} 
