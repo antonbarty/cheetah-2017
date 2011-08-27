@@ -8,7 +8,6 @@
  */
 
 
-
 /*
  *	Global variables
  */
@@ -21,6 +20,13 @@ public:
 	 */
 	// ini file to read
 	char		configFile[1024];
+	
+	
+	// Detector info
+	char					detectorName[1024];
+	char					detectorTypeName[1024];
+	Pds::DetInfo::Device	detectorType;
+	Pds::DetInfo::Detector	detectorPdsDetInfo;
 	
 	// Start and stop frames
 	long	startAtFrame;

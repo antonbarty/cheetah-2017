@@ -41,6 +41,14 @@ void cGlobal::defaultConfiguration(void) {
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
 	
+	
+	// Detector info
+	strcpy(detectorTypeName, "cspad");
+	strcpy(detectorName, "CxiDs1");
+	detectorType = Pds::DetInfo::Cspad;
+	detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+	
+	
 	// Start and stop frames
 	startAtFrame = 0;
 	stopAtFrame = 0;
@@ -166,6 +174,49 @@ void cGlobal::defaultConfiguration(void) {
  *	Setup stuff to do with thread management, settings, etc.
  */
 void cGlobal::setup() {
+	
+	/*
+	 *	Determine detector type
+	 *	This section of code possibly redundant if we know detector type from the address 
+	 *	(eg: CxiDs1 is always a cspad)
+	 */
+	if(!strcmp(detectorTypeName, "cspad"))
+		detectorType = Pds::DetInfo::Cspad;
+	else if(!strcmp(detectorTypeName, "pnccd")) {
+		detectorType = Pds::DetInfo::Cspad;
+	}
+	else {
+		printf("Error: unknown detector type %s\n", detectorTypeName);
+		printf("Quitting\n");
+		exit(1);
+	}
+	
+	/*
+	 *	Determine detector address
+	 *	A list of addresses can be found in:
+	 *		release/pdsdata/xtc/Detinfo.hh
+	 *		release/pdsdata/xtc/src/Detinfo.cc
+	 */
+	if(!strcmp(detectorName, "CxiDs1")) {
+		detectorType = Pds::DetInfo::Cspad;
+		detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+	}
+	else if (!strcmp(detectorName, "CxiDs2")) {
+		detectorType = Pds::DetInfo::Cspad;
+		detectorPdsDetInfo = Pds::DetInfo::CxiDs2;
+	}
+	else if (!strcmp(detectorName, "CxiDsd")) {
+		detectorType = Pds::DetInfo::Cspad;
+		detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
+	}
+	else {
+		printf("Error: unknown detector %s\n", detectorName);
+		printf("Quitting\n");
+		exit(1);
+	}
+
+	
+	
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
@@ -396,7 +447,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	 *	Parse known tags
 	 */
 	
-	if (!strcmp(tag, "startatframe")) {
+	if (!strcmp(tag, "detectortype")) {
+		strcpy(detectorTypeName, value);
+	}
+	else if (!strcmp(tag, "detectorname")) {
+		strcpy(detectorName, value);
+	}
+	else if (!strcmp(tag, "startatframe")) {
 		startAtFrame = atoi(value);
 	}
 	else if (!strcmp(tag, "stopatframe")) {
@@ -1059,7 +1116,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hotpixmemory=%d\n",hotpixMemory);
 	fprintf(fp, "powderthresh=%d\n",powderthresh);
 	fprintf(fp, "hitfinderadc=%d\n",hitfinderADC);
-	fprintf(fp, "hitfindernat=%d\n",hitfinderNAT);
+	fprintf(fp, "hitfindernat=%ld\n",hitfinderNAT);
 	fprintf(fp, "hitfindercluster=%d\n",hitfinderCluster);
 	fprintf(fp, "hitfindernpeaks=%d\n",hitfinderNpeaks);
 	fprintf(fp, "hitfindernpeaksmax=%d\n",hitfinderNpeaksMax);

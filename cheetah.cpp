@@ -112,7 +112,8 @@ void beginjob() {
 	/*
 	 *	New csPad corrector
 	 */
-	corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
+	//corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
+	corrector = new CspadCorrector(global.detectorPdsDetInfo,0,CspadCorrector::DarkFrameOffset);
 
 				 
 //	for(unsigned i=0; i<4; i++)
@@ -140,21 +141,24 @@ void beginjob() {
 void fetchConfig()
 {
 	int fail = 0;
-	if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
+	//if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
+	if (getCspadConfig( global.detectorPdsDetInfo, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
 		asicMask = configV1.asicMask();
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV1.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 	}
-	else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV2 )==0) {
+	//else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV2 )==0) {
+	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
 		configVsn= 2;
 		quadMask = configV2.quadMask();
 		asicMask = configV2.asicMask();
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV2.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
 	}
-	else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV3 )==0) {
+	//else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV3 )==0) {
+	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
 		configVsn= 3;
 		quadMask = configV3.quadMask();
 		asicMask = configV3.asicMask();
@@ -469,7 +473,9 @@ void event() {
 	 *	Copy raw cspad image data into worker thread structure for processing
 	 */
 	Pds::CsPad::ElementIterator iter;
-	fail=getCspadData(DetInfo::CxiDs1, iter);
+	
+	//fail=getCspadData(DetInfo::CxiDs1, iter);
+	fail=getCspadData(global.detectorPdsDetInfo, iter);
 
 
 	if (fail) {
