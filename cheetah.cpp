@@ -39,42 +39,6 @@
 static cGlobal		global;
 static long			frameNumber;
 
-/*
-
-// Quad class definition
-class MyQuad {
-	public:
-	MyQuad(unsigned q) : _quad(q) {
-		char buff[64];
-		for(unsigned i=0; i<16; i++) {
-	  		sprintf(buff,"Q%d_ASIC%d_values",q,i);
-	  		sprintf(buff,"Q%d_ASIC%d_map",q,i);
-		}
-	}
-	
-  	void Fill(Pds::CsPad::ElementIterator& iter) {
-    	unsigned section_id;
-    	const Pds::CsPad::Section* s;
-    	while((s=iter.next(section_id))) {
-      		for(unsigned col=0; col<CSPAD_ASIC_COLS; col++)
-				for(unsigned row=0; row<CSPAD_ASIC_ROWS; row++) {	
-				}
-    	}
-  	}    
-  
-  	void write() {
-    	for(unsigned i=0; i<16; i++) {
-    	}
-  	}
-
-	private:
-  		unsigned _quad;
-  		CspadSection _s;
-};
-
-static MyQuad* quads[4];    
-
-*/
 using namespace Pds;
 
 
@@ -112,14 +76,9 @@ void beginjob() {
 	/*
 	 *	New csPad corrector
 	 */
-	//corrector = new CspadCorrector(Pds::DetInfo::CxiDs1,0,CspadCorrector::DarkFrameOffset);
 	corrector = new CspadCorrector(global.detectorPdsDetInfo,0,CspadCorrector::DarkFrameOffset);
 
 				 
-//	for(unsigned i=0; i<4; i++)
-//		quads[i] = new MyQuad(i);
-	
-	
 	/*
 	 *	Stuff for worker thread management
 	 */
@@ -141,7 +100,6 @@ void beginjob() {
 void fetchConfig()
 {
 	int fail = 0;
-	//if (getCspadConfig( Pds::DetInfo::CxiDs1, configV1 )==0) {
 	if (getCspadConfig( global.detectorPdsDetInfo, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
@@ -149,7 +107,6 @@ void fetchConfig()
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV1.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 	}
-	//else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV2 )==0) {
 	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
 		configVsn= 2;
 		quadMask = configV2.quadMask();
@@ -157,7 +114,6 @@ void fetchConfig()
 		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV2.runDelay());
 		printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
 	}
-	//else if (getCspadConfig( Pds::DetInfo::CxiDs1, configV3 )==0) {
 	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
 		configVsn= 3;
 		quadMask = configV3.quadMask();
@@ -220,9 +176,6 @@ void event() {
 	
 	// Variables
 	frameNumber++;
-	//printf("Processing event %i\n", frameNumber);
-	//FILE* fp;
-	//char filename[1024];
 	int fail = 0;
 
 	
@@ -246,7 +199,6 @@ void event() {
 	for (long i=0; i<numEvrData; i++) {
 		fail = getEvrData( i, eventCode, fiducial, timeStamp );
 	}
-	// EventCode==140 = Beam On
 	
 	
 	
@@ -270,7 +222,6 @@ void event() {
 		time(&global.tlast);
 
 		global.datarate = datarate2;
-		//global.datarate = (datarate+9*global.datarate)/10.;
 	}
 	
 	/*
@@ -291,10 +242,7 @@ void event() {
 	 * Get event time information
 	 */
 	int seconds, nanoSeconds;
-	//const char* timestring;
 	getTime( seconds, nanoSeconds );
-	//fail = getLocalTime( timestring );
-	//printf("%s\n",timestring);
 
 	/*
 	 *	Get event fiducials
@@ -474,7 +422,6 @@ void event() {
 	 */
 	Pds::CsPad::ElementIterator iter;
 	
-	//fail=getCspadData(DetInfo::CxiDs1, iter);
 	fail=getCspadData(global.detectorPdsDetInfo, iter);
 
 
@@ -494,14 +441,9 @@ void event() {
 				int quadrant = element->quad();
 				
 				// Have we accidentally jumped to a new fiducial (ie: a different event??)
-				//if (fiducial != element->fiducials())
-				//	printf("Fiducial jump: %x/%d:%x\n",fiducial,element->quad(),element->fiducials());
 				
 				// Get temperature on strong back 
-				//float	temperature = CspadTemp::instance().getTemp(element->sb_temp(2));
 				float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
-				//printf("Temperature on quadrant %i: %3.1fC\n",quadrant, temperature);
-				//printf("Temperature: %3.1fC\n",CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0)));
 				threadInfo->quad_temperature[quadrant] = temperature;
 				
 				
@@ -509,7 +451,6 @@ void event() {
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
 				while(( s=iter.next(section_id) )) {  
-					//printf("\tQuadrant %d, Section %d  { %04x %04x %04x %04x }\n", quadrant, section_id, s->pixel[0][0], s->pixel[0][1], s->pixel[0][2], s->pixel[0][3]);
 					memcpy(&threadInfo->quad_data[quadrant][section_id*2*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS],s->pixel[0],2*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS*sizeof(uint16_t));
 				}
 			}
@@ -585,13 +526,11 @@ void event() {
 	
 	// Set detached state
 	pthread_attr_init(&threadAttribute);
-	//pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_JOINABLE);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	
 	// Create a new worker thread for this data frame
 	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
 	pthread_attr_destroy(&threadAttribute);
-	//pthread_detach(thread);
 	global.nprocessedframes += 1;
 	global.nrecentprocessedframes += 1;
 	
