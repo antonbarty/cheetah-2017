@@ -106,6 +106,9 @@ public:
 	double		hitfinderTOFThresh;
 	
 	//	TOF
+	Pds::DetInfo::Device	tofType;
+	Pds::DetInfo::Detector	tofPdsDetInfo;
+	char		tofName[1024];
 	int			TOFchannel;
 	int			TOFPresent;
 	int			AcqNumChannels;

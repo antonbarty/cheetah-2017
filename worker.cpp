@@ -1503,7 +1503,40 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 	
 	
-	// Done with thie /data group
+	/*
+	 *	Save TOF data (Aqiris)
+	 */
+	if(info->TOFPresent==1) {
+		size[0] = 2;	
+		size[1] = global->AcqNumSamples;	
+		max_size[0] = 2;
+		max_size[1] = global->AcqNumSamples;
+
+		double tempData[2][global->AcqNumSamples];
+		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
+		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
+
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
+		if ( hdf_error < 0 ) {
+			ERROR("%li: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}	
+
+	
+	
+	// Done with the /data group
 	H5Gclose(gid);
 
 
@@ -1602,37 +1635,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	
 
 	
-	/*
-	 *	Save TOF data (Aqiris)
-	 */
-	/*
-	if(info->TOFPresent==1) {
-		size[0] = 2;	
-		size[1] = global->AcqNumSamples;	
-		max_size[0] = 2;
-		max_size[1] = global->AcqNumSamples;
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		double tempData[2][global->AcqNumSamples];
-		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
-		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
-		
-		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
-		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
-			H5Dclose(dataspace_id);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		H5Dclose(dataset_id);
-		H5Sclose(dataspace_id);
-	}	
-	*/
 	
 	//double		phaseCavityTime1;
 	//double		phaseCavityTime2;

@@ -124,9 +124,13 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderTOFThresh = 100;
 	
 	
-	// TOF default configuration
+	// TOF configuration
 	TOFPresent = 0;
 	TOFchannel = 1;
+	strcpy(tofName, "CxiSc1");
+	tofType = Pds::DetInfo::Acqiris;
+	tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+	
 
 
 	// Powder pattern generation
@@ -217,6 +221,18 @@ void cGlobal::setup() {
 		exit(1);
 	}
 
+	
+	/*
+	 *	Determine TOF (Acqiris) address
+	 *	A list of addresses can be found in:
+	 *		release/pdsdata/xtc/Detinfo.hh
+	 *		release/pdsdata/xtc/src/Detinfo.cc
+	 */
+	if(!strcmp(tofName, "CxiSc1")) {
+		tofType = Pds::DetInfo::Acqiris;
+		tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+	}
+	
 	
 	
 	/*
@@ -574,8 +590,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	
 	//TOF
-	else if (!strcmp(tag, "tofpresent")) {
-		TOFPresent = atoi(value);
+	else if (!strcmp(tag, "tofname")) {
+		strcpy(tofName, value);
+	}	
+	else if (!strcmp(tag, "tofchannel")) {
+		TOFchannel = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);

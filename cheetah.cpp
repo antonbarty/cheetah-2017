@@ -144,7 +144,7 @@ void fetchConfig()
 	}
 	
 	// Acqiris config
-	if((fail=getAcqConfig(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
+	if((fail=getAcqConfig(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
 		global.TOFPresent = 1;
 		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
 		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
@@ -487,7 +487,7 @@ void event() {
 		double tempTrigTime;
 		threadInfo->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
 		threadInfo->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
-		fail = getAcqValue(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
+		fail = getAcqValue(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
 		threadInfo->TOFtrigtime = tempTrigTime;
 		//Memcopy is necessary for thread safety.
 		memcpy(threadInfo->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
