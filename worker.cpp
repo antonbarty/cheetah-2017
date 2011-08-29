@@ -1736,6 +1736,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
 	H5Dclose(dataset_id);
 	
+        // LaserOn event code
+        int LaserOnVal = (info->laserEventCodeOn)?1:0;
+        printf("LaserOnVal %d \n", LaserOnVal);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
+	H5Dclose(dataset_id);
+
 	
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);
