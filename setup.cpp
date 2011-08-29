@@ -117,10 +117,12 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(peaksearchFile, "peakmask.h5");
 	savePeakInfo = 1;
 	
+	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
 	hitfinderTOFMinSample = 0;
 	hitfinderTOFMaxSample = 1000;
 	hitfinderTOFThresh = 100;
+	
 	
 	// TOF default configuration
 	TOFPresent = 0;
@@ -587,6 +589,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertofthresh")) {
 		hitfinderTOFThresh = atof(value);
 	}	
+	
+	
+	
 
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {

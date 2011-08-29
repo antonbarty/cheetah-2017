@@ -43,19 +43,35 @@ using namespace Pds;
 
 
 /*
- *	Beam on or off??
+ *	Return true or false if a given event code is present
  */
-static bool beamOn()
+bool eventCodePresent(int EvrCode)
 {
 	int nfifo = getEvrDataNumber();
 	for(int i=0; i<nfifo; i++) {
 		unsigned eventCode, fiducial, timestamp;
 		if (getEvrData(i,eventCode,fiducial,timestamp)) 
 			printf("Failed to fetch evr fifo data\n");
-		else if (eventCode==140)
+		else if (eventCode==EvrCode)
 			return true;
 	}
 	return false;;
+}
+
+/*
+ *	Beam on or off??
+ */
+static bool beamOn()
+{
+	return eventCodePresent(140);
+}
+
+/*
+ *	Pump laser on or off?? (eventCode 41)
+ */
+static bool laserOn()
+{
+	return eventCodePresent(41);
 }
 
 
@@ -100,6 +116,7 @@ void beginjob() {
 void fetchConfig()
 {
 	int fail = 0;
+	// cspad config
 	if (getCspadConfig( global.detectorPdsDetInfo, configV1 )==0) {
 		configVsn= 1;
 		quadMask = configV1.quadMask();
@@ -126,6 +143,7 @@ void fetchConfig()
 		printf("Failed to get CspadConfig\n");
 	}
 	
+	// Acqiris config
 	if((fail=getAcqConfig(Pds::DetInfo(0,Pds::DetInfo::CxiSc1,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
 		global.TOFPresent = 1;
 		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
@@ -424,7 +442,6 @@ void event() {
 	
 	fail=getCspadData(global.detectorPdsDetInfo, iter);
 
-
 	if (fail) {
 		printf("getCspadData fail %d (%x)\n",fail,fiducial);
 		threadInfo->cspad_fail = fail;
@@ -456,6 +473,7 @@ void event() {
 			}
 		}
 	}
+	
 	
 	/*
 	 *	Copy TOF (aqiris) channel into worker thread for processing
