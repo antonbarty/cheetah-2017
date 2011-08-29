@@ -63,6 +63,8 @@ typedef struct {
 	char		eventname[1024];
 	bool		beamOn;
 	unsigned	runNumber;
+	bool		laserEventCodeOn;
+
 	
 	double		gmd11;
 	double		gmd12;

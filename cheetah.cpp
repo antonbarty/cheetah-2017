@@ -406,6 +406,8 @@ void event() {
 	threadInfo->beamOn = beam;
 	threadInfo->nPeaks = 0;
 	
+	threadInfo->laserEventCodeOn = laserOn();
+	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
 	threadInfo->gmd21 = gasdet[2];
