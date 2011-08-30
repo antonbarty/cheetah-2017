@@ -555,47 +555,32 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	long		e;
 	//long		counter;
 	//uint16_t	value;
-	int			mval = lrint(global->cmFloor*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS);
+	long		mval;
 	uint16_t	median;
 	
-	// Create histogram array
-
-	//int			nhist = 65535;
-	//uint16_t	*histogram; 
-	//histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
-
 	int16_t	*buffer; 
 	buffer = (int16_t*) calloc(CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS, sizeof(int16_t));
+	
+	mval = lrint(global->cmFloor*(CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS));
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
 		for(long mj=0; mj<8; mj++){
 
-			// Zero histogram
-			//memset(histogram, 0, nhist*sizeof(uint16_t));
-			
+			// Zero array
+			memset(buffer, 0, CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS*sizeof(int16_t));
 			
 			// Loop over pixels within a module
 			for(long j=0; j<CSPAD_ASIC_COLS; j++){
 				for(long i=0; i<CSPAD_ASIC_ROWS; i++){
 					e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
 					e += i + mi*CSPAD_ASIC_ROWS;
-					//histogram[lrint(threadInfo->corrected_data[e])] += 1;
-					buffer[j+i*CSPAD_ASIC_COLS] = lrint(threadInfo->corrected_data[e]);
+					buffer[j+i*CSPAD_ASIC_COLS] = (int16_t) lrint(threadInfo->corrected_data[e]);
 				}
 			}
 			
+			// Calculate background using median value
 			median = kth_smallest(buffer, CSPAD_ASIC_COLS*CSPAD_ASIC_ROWS, mval);
-			// Find median value
-			//counter = 0;
-			//for(long i=0; i<nhist; i++){
-			//	counter += histogram[i];
-			//	if(counter > (global->cmFloor*CSPAD_ASIC_ROWS*CSPAD_ASIC_COLS)) {
-			//		median = i;
-			//		break;
-			//	}
-			//}
-			//DEBUGL2_ONLY printf("Median of module (%i,%i) = %i\n",mi,mj,median);
 
 			// Subtract median value
 			for(long i=0; i<CSPAD_ASIC_ROWS; i++){
@@ -603,19 +588,11 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 					e = (j + mj*CSPAD_ASIC_COLS) * (8*CSPAD_ASIC_ROWS);
 					e += i + mi*CSPAD_ASIC_ROWS;
 					threadInfo->corrected_data[e] -= median;
-
-					// Zero checking only needed if corrected data is uint16
-					//value = threadInfo->corrected_data[e];
-					//if(value > median)
-					//	threadInfo->corrected_data[e] -= median;
-					//else
-					//	threadInfo->corrected_data[e] = 0;
 				}
 			}
 		}
 	}
 	free(buffer);
-	//free(histogram);
 }
 
 
@@ -666,7 +643,6 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			}
 		}
 	}
-	//printf("\n");
 	
 }
 
@@ -788,7 +764,7 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 								continue;
 							}
 							
-							buffer[counter] = lrint(threadInfo->corrected_data[ee]);
+							buffer[counter] = (int16_t) lrint(threadInfo->corrected_data[ee]);
 							counter++;
 						}
 					}
@@ -1068,9 +1044,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				
 				int16_t *buffer1 = (int16_t*) calloc(global->hitfinderNpeaksMax, sizeof(int16_t));
 				for(long k=0; k<np; k++) {
-					buffer1[k] = lrint(threadInfo->peak_com_r_assembled[k]);
-					if(buffer1[k] < 0) buffer1[k] = 0;
-					if(buffer1[k] > 30000) buffer1[k] = 30000;
+					if(threadInfo->peak_com_r_assembled[k] < 0) 
+						buffer1[k] = 0;
+					else if(threadInfo->peak_com_r_assembled[k] > 30000) \
+						buffer1[k] = 0;
+					else  
+						buffer1[k] = (int16_t) lrint(threadInfo->peak_com_r_assembled[k]);
 				}
 				resolution = kth_smallest(buffer1, np, cutoff*np);
 				
@@ -1736,9 +1715,9 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
 	H5Dclose(dataset_id);
 	
-        // LaserOn event code
-        int LaserOnVal = (info->laserEventCodeOn)?1:0;
-        printf("LaserOnVal %d \n", LaserOnVal);
+	// LaserOn event code
+	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	//printf("LaserOnVal %d \n", LaserOnVal);
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);

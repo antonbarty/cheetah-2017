@@ -112,8 +112,8 @@ static unsigned             configVsn;
 static unsigned             quadMask;
 static unsigned             asicMask;
 
-static const unsigned  CSPAD_ASIC_ROWS = 194;
-static const unsigned  CSPAD_ASIC_COLS = 185;
+static const unsigned  CSPAD_ASIC_ROWS = 194;		// ASIC nx = extent of ASIC in x
+static const unsigned  CSPAD_ASIC_COLS = 185;		// ASIC ny = extent of ASIC in y
 
 static const unsigned int cbufsize = 1024;
 
