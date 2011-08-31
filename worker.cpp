@@ -1044,7 +1044,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				for(long k=0; k<np; k++) {
 						buffer1[k] = threadInfo->peak_com_r_assembled[k];
 				}
-				resolution = kth_smallest(buffer1, np, lrint(cutoff*np));
+				resolution = kth_smallest(buffer1, np, cutoff*np);
 				
 				threadInfo->peakResolution = resolution;
 				if(resolution > 0) {
