@@ -553,38 +553,39 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
 	long		e;
-	//long		counter;
-	//uint16_t	value;
 	long		mval;
-	uint16_t	median;
+	float		median;
 	
-	int16_t	*buffer; 
-	buffer = (int16_t*) calloc(CSPAD_ASIC_NY*CSPAD_ASIC_NX, sizeof(int16_t));
+	float	*buffer; 
+	buffer = (float*) calloc(CSPAD_ASIC_NX*CSPAD_ASIC_NY, sizeof(float));
 	
-	mval = lrint(global->cmFloor*(CSPAD_ASIC_NX*CSPAD_ASIC_NY));
+	mval = lrint((CSPAD_ASIC_NX*CSPAD_ASIC_NY)*global->cmFloor);
+	if(mval < 0) 
+		mval = 1;
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
 		for(long mj=0; mj<8; mj++){
 
 			// Zero array
-			memset(buffer, 0, CSPAD_ASIC_NY*CSPAD_ASIC_NX*sizeof(int16_t));
+			for(long i=0; i<CSPAD_ASIC_NX*CSPAD_ASIC_NY; i++)
+				buffer[i] = 0;
 			
 			// Loop over pixels within a module
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
 					e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
 					e += i + mi*CSPAD_ASIC_NX;
-					buffer[j+i*CSPAD_ASIC_NY] = (int16_t) lrint(threadInfo->corrected_data[e]);
+					buffer[i+j*CSPAD_ASIC_NX] = threadInfo->corrected_data[e];
 				}
 			}
 			
 			// Calculate background using median value
-			median = kth_smallest(buffer, CSPAD_ASIC_NY*CSPAD_ASIC_NX, mval);
+			median = kth_smallest(buffer, CSPAD_ASIC_NX*CSPAD_ASIC_NY, mval);
 
 			// Subtract median value
-			for(long i=0; i<CSPAD_ASIC_NX; i++){
-				for(long j=0; j<CSPAD_ASIC_NY; j++){
+			for(long j=0; j<CSPAD_ASIC_NY; j++){
+				for(long i=0; i<CSPAD_ASIC_NX; i++){
 					e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
 					e += i + mi*CSPAD_ASIC_NX;
 					threadInfo->corrected_data[e] -= median;
@@ -657,10 +658,10 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 	long		p;
 	long		counter;
 	long		mval;
-	uint16_t	median;
+	float		median;
 	
-	int16_t	*buffer; 
-	buffer = (int16_t*) calloc(CSPAD_ASIC_NY*CSPAD_ASIC_NX, sizeof(int16_t));
+	float	*buffer; 
+	buffer = (float*) calloc(CSPAD_ASIC_NY*CSPAD_ASIC_NX, sizeof(float));
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<8; mi++){
@@ -674,7 +675,7 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 					p = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
 					p += i + mi*CSPAD_ASIC_NX;
 					if(global->wiremask[i]) {
-						buffer[counter] = lrint(threadInfo->corrected_data[p]);
+						buffer[counter] = threadInfo->corrected_data[p];
 						counter++;
 					}
 				}
@@ -710,9 +711,6 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
  */
 void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
-	// CSPAD_ASIC_NX = 194;
-	// CSPAD_ASIC_NY = 185;
-	
 	long		e,ee;
 	long		counter;
 	
@@ -725,8 +723,8 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Create local arrays needed for background subtraction
-	int16_t *localBg = (int16_t*) calloc(global->pix_nn, sizeof(int16_t)); 
-	int16_t	*buffer = (int16_t*) calloc(nn, sizeof(int16_t));
+	float	*localBg = (float*) calloc(global->pix_nn, sizeof(float)); 
+	float	*buffer = (float*) calloc(nn, sizeof(float));
 
 	
 	
@@ -764,7 +762,7 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 								continue;
 							}
 							
-							buffer[counter] = (int16_t) lrint(threadInfo->corrected_data[ee]);
+							buffer[counter] = threadInfo->corrected_data[ee];
 							counter++;
 						}
 					}
@@ -1042,16 +1040,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				if(counter >= global->hitfinderNpeaksMax) 
 					np = global->hitfinderNpeaksMax; 
 				
-				int16_t *buffer1 = (int16_t*) calloc(global->hitfinderNpeaksMax, sizeof(int16_t));
+				float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
 				for(long k=0; k<np; k++) {
-					if(threadInfo->peak_com_r_assembled[k] < 0) 
-						buffer1[k] = 0;
-					else if(threadInfo->peak_com_r_assembled[k] > 30000) \
-						buffer1[k] = 0;
-					else  
-						buffer1[k] = (int16_t) lrint(threadInfo->peak_com_r_assembled[k]);
+						buffer1[k] = threadInfo->peak_com_r_assembled[k];
 				}
-				resolution = kth_smallest(buffer1, np, cutoff*np);
+				resolution = kth_smallest(buffer1, np, lrint(cutoff*np));
 				
 				threadInfo->peakResolution = resolution;
 				if(resolution > 0) {
@@ -1893,24 +1886,23 @@ void saveRunningSums(cGlobal *global) {
 		for(long i=0; i<global->pix_nn; i++)
 			buffer[i] = (global->powderHitsRaw[i]/global->npowderHits);
 		pthread_mutex_unlock(&global->powderHitsRaw_mutex);
+
 		// Find median value (this value will become gain=1)
-		int16_t *buffer2 = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
+		float *buffer2 = (float*) calloc(global->pix_nn, sizeof(float));
 		for(long i=0; i<global->pix_nn; i++) {
-			buffer2[i] = (int16_t) lrint(buffer[i]);
+			buffer2[i] = buffer[i];
 		}
-		long median_element = lrint(0.5*global->pix_nn);
-		printf("Finding %lith smallest element of %li pixels\n",median_element,global->pix_nn);	
-		int16_t	offset;
-		offset = kth_smallest(buffer2, global->pix_nn, median_element);
-		printf("offset=%i\n",offset);
+		float	dc;
+		dc = kth_smallest(buffer2, global->pix_nn, lrint(0.5*global->pix_nn));
+		printf("offset=%f\n",dc);
 		free(buffer2);
-		if(offset <= 0){
-			printf("Error calculating gain, offset = %i\n",offset);
+		if(dc <= 0){
+			printf("Error calculating gain, offset = %i\n",dc);
 			return;
 		}
 		// gain=1 for a median value pixel, and is bounded between a gain of 0.1 and 10
 		for(long i=0; i<global->pix_nn; i++) {
-			buffer[i] /= (double) offset;
+			buffer[i] /= (double) dc;
 			if(buffer[i] < 0.1 || buffer[i] > 10)
 				buffer[i]=0;
 		}

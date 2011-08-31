@@ -223,6 +223,27 @@ void cGlobal::setup() {
 
 	
 	/*
+	 *	Detector parameters
+	 */
+	switch(detectorType) {
+		case Pds::DetInfo::Cspad : 
+			asic_nx = CSPAD_ASIC_NX;
+			asic_ny = CSPAD_ASIC_NY;
+			asic_nn = asic_nx * asic_ny;
+			nasics_x = 8;
+			nasics_y = 8;
+			break;
+			
+		default:
+			printf("Error: unknown detector %s\n", detectorName);
+			printf("Quitting\n");
+			exit(1);
+			break;
+	}
+	
+	
+	
+	/*
 	 *	Determine TOF (Acqiris) address
 	 *	A list of addresses can be found in:
 	 *		release/pdsdata/xtc/Detinfo.hh
@@ -723,8 +744,8 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Pixel size (measurements in geometry file are in m)
-	module_rows = CSPAD_ASIC_ROWS;
-	module_cols = CSPAD_ASIC_COLS;	
+	module_rows = CSPAD_ASIC_NX;
+	module_cols = CSPAD_ASIC_NY;	
 	pix_dx = pixelSize;
 
 	
@@ -759,16 +780,16 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*CSPAD_ASIC_ROWS || detector_x.ny != 8*CSPAD_ASIC_COLS) {
+	if (detector_x.nx != 8*CSPAD_ASIC_NX || detector_x.ny != 8*CSPAD_ASIC_NY) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*CSPAD_ASIC_ROWS, 8*CSPAD_ASIC_COLS, detector_x.nx, detector_x.ny);
+		printf("%ux%u != %lix%li\n", 8*CSPAD_ASIC_NX, 8*CSPAD_ASIC_NY, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
 	
 	// Create local arrays for detector pixel locations
-	long	nx = 8*CSPAD_ASIC_ROWS;
-	long	ny = 8*CSPAD_ASIC_COLS;
+	long	nx = 8*CSPAD_ASIC_NX;
+	long	ny = 8*CSPAD_ASIC_NY;
 	long	nn = nx*ny;
 	pix_nx = nx;
 	pix_ny = ny;

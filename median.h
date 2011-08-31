@@ -8,3 +8,4 @@
  */
 
 int16_t kth_smallest(int16_t *a, long n, long k);
+float kth_smallest(float *a, long n, long k);

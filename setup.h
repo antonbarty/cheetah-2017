@@ -192,6 +192,11 @@ public:
 	unsigned		module_cols;
 	long			image_nx;
 	long			image_nn;
+	long			asic_nx;
+	long			asic_ny;
+	long			asic_nn;
+	long			nasics_x;
+	long			nasics_y;
 	
 	
 	/*
