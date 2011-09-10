@@ -327,6 +327,7 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
+		printf("keyword generatedarkcal set: overriding some keyword values!!!");
 	}
 
 	if(generateGaincal) {
@@ -347,6 +348,7 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
+		printf("keyword generategaincal set: overriding some keyword values!!!");
 	}
 
 	
@@ -538,7 +540,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "wiremaskfile")) {
 		strcpy(wireMaskFile, value);
 	}
-	else if (!strcmp(tag, "subtractBehindWires")) {
+	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
 	}
 	else if (!strcmp(tag, "usegaincal")) {
@@ -1124,8 +1126,8 @@ void cGlobal::writeInitialLog(void){
 	
 	fprintf(fp, "start time: %s\n",timestr);
 
-	fprintf(fp, "\nIni parameters:\n");
-	fprintf(fp, "\n");
+	fprintf(fp,"\n\n");
+	fprintf(fp, ">-------- Start of ini params --------<\n");
 	fprintf(fp, "detectortype=%s\n",detectorTypeName);
 	fprintf(fp, "detectorname=%s\n",detectorName);
 	fprintf(fp, "startatframe=%d\n",startAtFrame);
@@ -1149,7 +1151,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "generatedarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generategaincal=%d\n",generateGaincal);
 	fprintf(fp, "subtractbg=%d\n",subtractBg);
-	fprintf(fp, "usebadpixelmask=%d\n",useBadPixelMask);
+	fprintf(fp, "usebadpixelmap=%d\n",useBadPixelMask);
 	fprintf(fp, "usedarkcalsubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "savehits=%d\n",savehits);
@@ -1157,12 +1159,12 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "saveraw=%d\n",saveRaw);
 	fprintf(fp, "saveassembled=%d\n",saveAssembled);
 	fprintf(fp, "savedetectorcorrectedonly=%d\n",saveDetectorCorrectedOnly);
-	fprintf(fp, "avedetectorraw=%d\n",saveDetectorRaw);
+	fprintf(fp, "savedetectorraw=%d\n",saveDetectorRaw);
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveinterval=%d\n",saveInterval);
 	fprintf(fp, "useautohotpixel=%d\n",useAutoHotpixel);
 	fprintf(fp, "useselfdarkcal=%d\n",useSubtractPersistentBackground);
-	fprintf(fp, "subtractpersistentbackground=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "usesubtractpersistentbackground=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "uselocalbackgroundsubtraction=%d\n",useLocalBackgroundSubtraction);
 	fprintf(fp, "localbackgroundradius=%d\n",localBackgroundRadius);
 	fprintf(fp, "tofname=%s\n",tofName);
@@ -1200,6 +1202,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "scalebackground=%d\n",scaleBackground);
 	fprintf(fp, "scaledarkcal=%d\n",scaleBackground);
 	fprintf(fp, "startframes=%d\n",startFrames);
+	fprintf(fp, ">-------- End of ini params --------<\n");
 	fprintf(fp, "\n\n");	
 	
 	fprintf(fp, ">-------- Start of job --------<\n");
