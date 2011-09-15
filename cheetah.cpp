@@ -99,7 +99,7 @@ void beginjob() {
 	 *	Stuff for worker thread management
 	 */
 	global.defaultConfiguration();
-	global.parseConfigFile("cspad-cryst.ini");
+	//global.parseConfigFile("cspad-cryst.ini");
 	global.parseConfigFile(global.configFile);
 	global.readDetectorGeometry(global.geometryFile);
 	global.setup();
