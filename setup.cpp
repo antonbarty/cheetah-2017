@@ -733,7 +733,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	
 	// Unknown tags
 	else {
-		printf("\tUnknown tag (ignored): %s = %s\n",tag,value);
+		printf("\tUnknown tag: %s = %s\n",tag,value);
+		printf("Aborting...");
+		exit(1);
 	}
 }
 
