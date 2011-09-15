@@ -238,8 +238,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
-	assemble2Dimage(threadInfo, global);
-	
+	if (global->saveAssembled){
+		assemble2Dimage(threadInfo, global);
+	}
 	
 	
 	/*
@@ -1103,14 +1104,16 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 		
 		if(hit == 1) {
 			// Assembled data
-			pthread_mutex_lock(&global->powderHitsAssembled_mutex);
-			global->npowderHits += 1;
-			for(long i=0; i<global->image_nn; i++){
-				if(threadInfo->image[i] > global->powderthresh)
-					global->powderHitsAssembled[i] += threadInfo->image[i];
+			if (global->saveAssembled){
+				pthread_mutex_lock(&global->powderHitsAssembled_mutex);
+				global->npowderHits += 1;
+				for(long i=0; i<global->image_nn; i++){
+					if(threadInfo->image[i] > global->powderthresh)
+						global->powderHitsAssembled[i] += threadInfo->image[i];
+				}
+				pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
 			}
-			pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
-			
+
 			// Raw data
 			pthread_mutex_lock(&global->powderHitsRaw_mutex);
 			for(long i=0; i<global->pix_nn; i++) {
@@ -1135,14 +1138,15 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 		}
 		else {
 			// Assembled data
-			pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
-			global->npowderBlanks += 1;
-			for(long i=0; i<global->image_nn; i++){
-				if(threadInfo->image[i] > global->powderthresh)
-					global->powderBlanksAssembled[i] += threadInfo->image[i];
+			if (global->saveAssembled){
+				pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
+				global->npowderBlanks += 1;
+				for(long i=0; i<global->image_nn; i++){
+					if(threadInfo->image[i] > global->powderthresh)
+						global->powderBlanksAssembled[i] += threadInfo->image[i];
+				}
+				pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
 			}
-			pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
-			
 			// Raw data
 			pthread_mutex_lock(&global->powderBlanksRaw_mutex);
 			for(long i=0; i<global->pix_nn; i++) {
@@ -1173,21 +1177,23 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 	else {
 		if(hit == 1) {
 			// Assembled data
-			buffer = (double*) calloc(global->image_nn, sizeof(double));
-			for(long i=0; i<global->image_nn; i++){
-				if(threadInfo->image[i] > global->powderthresh)
-					buffer[i] = threadInfo->image[i];
-				else
-					buffer[i] = 0;
+			if (global->saveAssembled){
+				buffer = (double*) calloc(global->image_nn, sizeof(double));
+				for(long i=0; i<global->image_nn; i++){
+					if(threadInfo->image[i] > global->powderthresh)
+						buffer[i] = threadInfo->image[i];
+					else
+						buffer[i] = 0;
+				}
+				pthread_mutex_lock(&global->powderHitsAssembled_mutex);
+				global->npowderHits += 1;
+				for(long i=0; i<global->image_nn; i++){
+					global->powderHitsAssembled[i] += buffer[i];
+				}
+				pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
+				free(buffer);
 			}
-			pthread_mutex_lock(&global->powderHitsAssembled_mutex);
-			global->npowderHits += 1;
-			for(long i=0; i<global->image_nn; i++){
-				global->powderHitsAssembled[i] += buffer[i];
-			}
-			pthread_mutex_unlock(&global->powderHitsAssembled_mutex);
-			free(buffer);
-			
+
 			// Raw data
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
 			for(long i=0; i<global->pix_nn; i++){
@@ -1205,21 +1211,22 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
 		}
 		else {
 			// Assembled data
-			buffer = (double*) calloc(global->image_nn, sizeof(double));
-			for(long i=0; i<global->image_nn; i++){
-				if(threadInfo->image[i] > global->powderthresh)
-					buffer[i] = threadInfo->image[i];
-				else
-					buffer[i] = 0;
+			if (global->saveAssembled){
+				buffer = (double*) calloc(global->image_nn, sizeof(double));
+				for(long i=0; i<global->image_nn; i++){
+					if(threadInfo->image[i] > global->powderthresh)
+						buffer[i] = threadInfo->image[i];
+					else
+						buffer[i] = 0;
+				}
+				pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
+				global->npowderBlanks += 1;
+				for(long i=0; i<global->image_nn; i++){
+					global->powderBlanksAssembled[i] += buffer[i];
+				}
+				pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
+				free(buffer);
 			}
-			pthread_mutex_lock(&global->powderBlanksAssembled_mutex);
-			global->npowderBlanks += 1;
-			for(long i=0; i<global->image_nn; i++){
-				global->powderBlanksAssembled[i] += buffer[i];
-			}
-			pthread_mutex_unlock(&global->powderBlanksAssembled_mutex);
-			free(buffer);
-			
 			// Raw data
 			buffer = (double*) calloc(global->pix_nn, sizeof(double));
 			for(long i=0; i<global->pix_nn; i++){
@@ -1920,7 +1927,7 @@ void saveRunningSums(cGlobal *global) {
 	 *	(Use buffer so that mutex does not have to wait for HDF5 writing to complete)
 	 */		
 	double *buffer;
-	if(global->powderSumHits || global->generateGaincal || global->generateDarkcal) {
+	if((global->powderSumHits || global->generateGaincal || global->generateDarkcal) && global->saveAssembled) {
 		// Hits
 		printf("Saving summed hits assembled to file\n");
 		sprintf(filename,"r%04u-sumHitsAssembled.h5",global->runNumber);
@@ -1932,7 +1939,7 @@ void saveRunningSums(cGlobal *global) {
 		free(buffer);
 	}
 
-	if(global->powderSumBlanks) {
+	if(global->powderSumBlanks && global->saveAssembled) {
 		// Blanks
 		printf("Saving summed blanks assembled to file\n");
 		sprintf(filename,"r%04u-sumBlanksAssembled.h5",global->runNumber);
