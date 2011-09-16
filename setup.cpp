@@ -55,20 +55,20 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Geometry
-	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
+	strcpy(geometryFile, "");
 	pixelSize = 110e-6;
 	
 	// Bad pixel mask
-	strcpy(badpixelFile, "badpixels.h5");
+	strcpy(badpixelFile, "");
 	useBadPixelMask = 0;
 
 	// Static dark calibration (electronic offsets)
-	strcpy(darkcalFile, "darkcal.h5");
+	strcpy(darkcalFile, "");
 	useDarkcalSubtraction = 1;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
-	strcpy(wireMaskFile, "wiremask.h5");
+	strcpy(wireMaskFile, "");
 	cmModule = 0;
 	cmFloor = 0.1;
 	cmSubtractUnbondedPixels = 0;
@@ -76,7 +76,7 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Gain calibration correction
-	strcpy(gaincalFile, "gaincal.h5");
+	strcpy(gaincalFile, "");
 	useGaincal = 0;
 	invertGain = 0;
 	generateGaincal = 0;
@@ -866,26 +866,34 @@ void cGlobal::readDetectorGeometry(char* filename) {
 /*
  *	Read in darkcal file
  */
-void cGlobal::readDarkcal(char *filename){
-	
-	printf("Reading darkcal configuration:\n");
-	printf("\t%s\n",filename);
-	
+void cGlobal::readDarkcal(char *filename){	
 	
 	// Create memory space and pad with zeros
 	darkcal = (int32_t*) calloc(pix_nn, sizeof(int32_t));
 	memset(darkcal,0, pix_nn*sizeof(int32_t));
+
+	// Do we need a darkcal file?	
+	if (useDarkcalSubtraction == 0){
+		return;
+	}
 	
-	
-	
+	// Check if a darkcal file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Darkcal file path was not specified.\n");
+		exit(1);
+	}	
+
+	printf("Reading darkcal configuration:\n");
+	printf("\t%s\n",filename);
+
 	// Check whether pixel map file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tDarkcal file does not exist: %s\n",filename);
-		printf("\tDefaulting to all-zero darkcal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -896,8 +904,8 @@ void cGlobal::readDarkcal(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to all-zero darkcal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	// Copy into darkcal array
@@ -912,15 +920,27 @@ void cGlobal::readDarkcal(char *filename){
  */
 void cGlobal::readGaincal(char *filename){
 	
-	printf("Reading detector gain calibration:\n");
-	printf("\t%s\n",filename);
-	
-	
+
 	// Create memory space and set default gain to 1 everywhere
 	gaincal = (float*) calloc(pix_nn, sizeof(float));
 	for(long i=0;i<pix_nn;i++)
 		gaincal[i] = 1;
-	
+
+	// Do we even need a gaincal file?
+	if ( useGaincal == 0 ){
+		return;
+	}
+
+	// Check if a gain calibration file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Gain calibration file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading detector gain calibration:\n");
+	printf("\t%s\n",filename);
+
 		
 	// Check whether gain calibration file exists!
 	FILE* fp = fopen(filename, "r");
@@ -928,8 +948,8 @@ void cGlobal::readGaincal(char *filename){
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tGain calibration file does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform gaincal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -941,8 +961,8 @@ void cGlobal::readGaincal(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform gaincal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -970,15 +990,27 @@ void cGlobal::readGaincal(char *filename){
  */
 void cGlobal::readPeakmask(char *filename){
 	
-	printf("Reading peak search mask:\n");
-	printf("\t%s\n",filename);
-	
+
 	
 	// Create memory space and default to searching for peaks everywhere
 	peakmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0;i<pix_nn;i++)
 		peakmask[i] = 1;
 	
+	// Do we even need a peakmask file?
+	if ( hitfinderUsePeakmask == 0 ){
+		return;
+	}
+
+	// Check if a peakmask file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Peakmask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading peak search mask:\n");
+	printf("\t%s\n",filename);
 	
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
@@ -986,8 +1018,8 @@ void cGlobal::readPeakmask(char *filename){
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tPeak search mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform search mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -999,8 +1031,8 @@ void cGlobal::readPeakmask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform peak search mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -1015,9 +1047,6 @@ void cGlobal::readPeakmask(char *filename){
  */
 void cGlobal::readBadpixelMask(char *filename){
 	
-	printf("Reading bad pixel mask:\n");
-	printf("\t%s\n",filename);
-	
 	
 	// Create memory space and default to searching for peaks everywhere
 	badpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
@@ -1025,14 +1054,29 @@ void cGlobal::readBadpixelMask(char *filename){
 		badpixelmask[i] = 1;
 	
 	
+	// Do we need a bad pixel map?
+	if ( useBadPixelMask == 0 ){
+		return;
+	}
+
+	// Check if a bad pixel mask file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Bad pixel mask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading bad pixel mask:\n");
+	printf("\t%s\n",filename);
+
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tBad pixel mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform bad pixel mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -1044,8 +1088,8 @@ void cGlobal::readBadpixelMask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform bad pixel mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -1055,28 +1099,41 @@ void cGlobal::readBadpixelMask(char *filename){
 }
 
 /*
- *	Read in peaksearch mask
+ *	Read in wire mask
  */
 void cGlobal::readWireMask(char *filename){
 	
-	printf("Reading wire mask:\n");
-	printf("\t%s\n",filename);
-	
-	
+
 	// Create memory space and default to searching for peaks everywhere
 	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0;i<pix_nn;i++)
 		wiremask[i] = 1;
 	
-	
+	// Do we need this file?
+	if ( cmSubtractBehindWires == 0 ){
+		return;
+	}
+
+	printf("Reading wire mask:\n");
+	printf("\t%s\n",filename);
+
+	// Check if a wire mask file has been specified.
+	// We need to exit if this is expected but does not
+	// exist.
+	if ( strcmp(filename,"") == 0 ){
+		printf("Wire mask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tWire mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -1088,8 +1145,8 @@ void cGlobal::readWireMask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform wire mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
