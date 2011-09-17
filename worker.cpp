@@ -906,7 +906,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			}
 			break;
 
-			
 	
 		case 3 : 	// Count number of peaks (and do other statistics)
 		default:
@@ -921,7 +920,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			float peak_com_y;
 			long thisx;
 			long thisy;
-			
+			long fs, ss;
+			double dx1, dx2, dy1, dy2;
+			double dxs, dys;
+			double grad = global->hitfinderMinGradient;
+
+		
 			threadInfo->peakResolution = 0;
 			threadInfo->peakDensity = 0;
 
@@ -933,14 +937,37 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 					for(long j=1; j<CSPAD_ASIC_NY-1; j++){
 						for(long i=1; i<CSPAD_ASIC_NX-1; i++){
 
-							e = (j+mj*CSPAD_ASIC_NY)*global->pix_nx;
-							e += i+mi*CSPAD_ASIC_NX;
+
+							ss = (j+mj*CSPAD_ASIC_NY)*global->pix_nx;
+							fs = i+mi*CSPAD_ASIC_NX;
+							e = ss + fs;
 
 							//if(e >= global->pix_nn)
 							//	printf("Array bounds error: e=%i\n");
 							
 							if(temp[e] > global->hitfinderADC){
-								// This might be the start of a peak - start searching
+							// This might be the start of a peak - start searching
+								
+								if ( global->hitfinderMinGradient > 0 ){
+			
+									/* Get gradients */
+									dx1 = temp[e] - temp[e+1];
+									dx2 = temp[e-1] - temp[e];
+									dy1 = temp[e] - temp[e+global->pix_nx];
+									dy2 = temp[e-global->pix_nx] - temp[e];
+				
+									/* Average gradient measurements from both sides */
+									dxs = ((dx1*dx1) + (dx2*dx2)) / 2;
+									dys = ((dy1*dy1) + (dy2*dy2)) / 2;
+				
+									/* Calculate overall gradient */
+									grad = dxs + dys;
+			
+								}
+								
+								if ( grad < global->hitfinderMinGradient ) continue;
+
+
 								inx[0] = i;
 								iny[0] = j;
 								nat = 1;
@@ -950,6 +977,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 								
 								// Keep looping until the pixel count within this peak does not change
 								do {
+
+									//if ( nat > global->hitfinderNAT ) break;
 									lastnat = nat;
 									// Loop through points known to be within this peak
 									for(long p=0; p<nat; p++){
