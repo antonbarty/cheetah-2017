@@ -115,7 +115,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
 	hitfinderMinGradient = 0;
-	strcpy(peaksearchFile, "peakmask.h5");
+	strcpy(peaksearchFile, "");
 	savePeakInfo = 1;
 	
 	// TOF (Aqiris)
