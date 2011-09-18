@@ -117,6 +117,8 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMinGradient = 0;
 	strcpy(peaksearchFile, "");
 	savePeakInfo = 1;
+	hitfinderCheckPeakSeparation = 0;
+	hitfinderMaxPeakSeparation = 50;
 	
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -694,8 +696,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
-	
-	
+	else if (!strcmp(tag, "hitfindercheckpeakseparation")) {
+		hitfinderCheckPeakSeparation = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxpeakseparation")) {
+		hitfinderMaxPeakSeparation = atof(value);
+	}
 	
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
@@ -1255,6 +1261,8 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
 	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
 	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
+	fprintf(fp, "hitfinderCheckPeakSeparation=%d\n",hitfinderCheckPeakSeparation);
+	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
 	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);

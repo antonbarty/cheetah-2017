@@ -105,6 +105,8 @@ public:
 	int			hitfinderTOFMinSample;
 	int			hitfinderTOFMaxSample;
 	double		hitfinderTOFThresh;
+	int			hitfinderCheckPeakSeparation;
+	float			hitfinderMaxPeakSeparation;
 	
 	//	TOF
 	Pds::DetInfo::Device	tofType;
