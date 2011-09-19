@@ -83,7 +83,7 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	subtractBg = 0;
+	//subtractBg = 0;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -315,7 +315,7 @@ void cGlobal::setup() {
 	if(generateDarkcal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		subtractBg = 0;
+		//subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useGaincal=0;
 		useAutoHotpixel = 0;
@@ -336,7 +336,7 @@ void cGlobal::setup() {
 	if(generateGaincal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		subtractBg = 0;
+		//subtractBg = 0;
 		useDarkcalSubtraction = 1;
 		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
@@ -559,7 +559,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		generateGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
-		subtractBg = atoi(value);
+		printf("The keyword subtractBg has been changed.  It is\n"
+             "now known as useDarkcalSubtraction.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+
+	//	subtractBg = atoi(value);
 	}
 	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
@@ -601,7 +606,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		useAutoHotpixel = atoi(value);
 	}
 	else if (!strcmp(tag, "useselfdarkcal")) {
-		useSubtractPersistentBackground = atoi(value);
+		printf("The keyword useSelfDarkcal has been changed.  It is\n"
+             "now known as useSubtractPersistentBackground.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+	//	useSubtractPersistentBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -733,7 +742,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "scaledarkcal")) {
-		scaleBackground = atoi(value);
+		printf("The keyword scaleDarkcal does the same thing as scaleBackground.\n"
+             "Use scaleBackground instead.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+	//	scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);
@@ -1219,7 +1232,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	fprintf(fp, "subtractBg=%d\n",subtractBg);
+	//fprintf(fp, "subtractBg=%d\n",subtractBg);
 	fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
 	fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
@@ -1272,7 +1285,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
 	fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
 	fprintf(fp, "scaleBackground=%d\n",scaleBackground);
-	fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
+	//fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
 	fprintf(fp, "startFrames=%d\n",startFrames);
 	fprintf(fp, ">-------- End of ini params --------<\n");
 	fprintf(fp, "\n\n");	
