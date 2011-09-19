@@ -1113,6 +1113,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			// Statistics on the peaks
 			if(counter > 1) {
 				long	np;
+				long  kk;
 				float	resolution;
 				float	cutoff = 0.8;
 				
@@ -1124,7 +1125,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				for(long k=0; k<np; k++) {
 						buffer1[k] = threadInfo->peak_com_r_assembled[k];
 				}
-				resolution = kth_smallest(buffer1, np, cutoff*np);
+				kk = (long) floor(cutoff*np);
+				resolution = kth_smallest(buffer1, np, kk);
 				
 				threadInfo->peakResolution = resolution;
 				if(resolution > 0) {
