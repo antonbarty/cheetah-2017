@@ -107,6 +107,8 @@ public:
 	double		hitfinderTOFThresh;
 	int			hitfinderCheckPeakSeparation;
 	float			hitfinderMaxPeakSeparation;
+	int			hitfinderSubtractLocalBG;
+	int			hitfinderLocalBGRadius;
 	
 	//	TOF
 	Pds::DetInfo::Device	tofType;
