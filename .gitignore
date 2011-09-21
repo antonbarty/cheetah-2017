@@ -6,6 +6,7 @@ crystfinder
 upload
 Makefile
 cheetah.ini
+cheetah
 ./cheetah.xcworkspace
 ./pythonscripts
 ./example/CVS
