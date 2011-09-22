@@ -1273,7 +1273,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
 	fprintf(fp, "hitfinderNAT=%ld\n",hitfinderNAT);
-	fprintf(fp, "hitfinderTIT=%d\n",hitfinderTAT);
+	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
 	fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
 	fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
@@ -1289,7 +1289,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);
 	fprintf(fp, "bgRecalc=%d\n",bgRecalc);
-	fprintf(fp, "bgMedian=%d\n",bgMedian);
+	fprintf(fp, "bgMedian=%f\n",bgMedian);
 	fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
 	fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
 	fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
