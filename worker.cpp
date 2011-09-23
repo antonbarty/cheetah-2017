@@ -1328,52 +1328,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			free(iny);
 		
 
-			if ( global->hitfinderCheckPeakSeparation == 1 ) {
-				int peakNum;
-				int peakNum1;
-				int peakNum2;
-				float diffX,diffY;
-				float maxPeakSepSq = global->hitfinderMaxPeakSeparation*global->hitfinderMaxPeakSeparation;
-				float peakSepSq;
-				
-				/* all peaks assumed "good" to start */
-				for ( peakNum = 0; peakNum < threadInfo->nPeaks; peakNum++ ) threadInfo->good_peaks[peakNum] = 1;
-				
-				/* loop through unique peak pairs, checking that they are not too close */
-				for ( peakNum1 = 0; peakNum1 < threadInfo->nPeaks - 1; peakNum1++ ) {
-					if ( threadInfo->good_peaks[peakNum1] == 0 ) continue;
-					for (peakNum2 = peakNum1 + 1; peakNum2 < threadInfo->nPeaks; peakNum2++ ) {
-						if ( threadInfo->good_peaks[peakNum2] == 0 ) continue;
-						/* check the distance between these two peaks */
-						diffX = threadInfo->peak_com_x[peakNum1] - threadInfo->peak_com_x[peakNum2];
-						diffY = threadInfo->peak_com_y[peakNum1] - threadInfo->peak_com_x[peakNum2];
-						peakSepSq = diffX*diffX + diffY*diffY;
-						if ( peakSepSq < maxPeakSepSq ) {
-							threadInfo->good_peaks[peakNum1] = 0;
-							threadInfo->good_peaks[peakNum2] = 0;
-
-						}
-					}
-				}
-				/* now repopulate the peak list with good ones */
-				int goodPeakCounter = 0;
-				for ( peakNum = 0; peakNum < threadInfo->nPeaks; peakNum++ ) {
-					if ( threadInfo->good_peaks[peakNum] == 1 ) {
-						threadInfo->peak_com_x[goodPeakCounter] = threadInfo->peak_com_x[peakNum];
-						threadInfo->peak_com_y[goodPeakCounter] = threadInfo->peak_com_y[peakNum];
-						threadInfo->peak_com_x_assembled[goodPeakCounter] = threadInfo->peak_com_x_assembled[peakNum];
-						threadInfo->peak_com_y_assembled[goodPeakCounter] = threadInfo->peak_com_y_assembled[peakNum];
-						threadInfo->peak_com_r_assembled[goodPeakCounter] = threadInfo->peak_com_r_assembled[peakNum];
-						threadInfo->peak_com_index[goodPeakCounter] = threadInfo->peak_com_index[peakNum];
-						threadInfo->peak_intensity[goodPeakCounter] = threadInfo->peak_intensity[peakNum];
-						threadInfo->peak_npix[goodPeakCounter] =threadInfo->peak_npix[peakNum];
-						goodPeakCounter += 1;
-					}
-				}
-				counter = goodPeakCounter;
-				threadInfo->nPeaks = goodPeakCounter;
-			}	
-		
 			// Statistics on the peaks
 			if(counter > 1) {
 				long	np;
