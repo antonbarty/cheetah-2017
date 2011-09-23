@@ -819,6 +819,24 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	long	counter;
 	int		hit=0;
 	float	total;
+	int search_x[] = {-1,0,1,-1,1,-1,0,1};
+	int search_y[] = {-1,-1,-1,0,0,1,1,1};
+	int	search_n = 8;
+	long e;
+	long *inx = (long *) calloc(global->pix_nn, sizeof(long));
+	long *iny = (long *) calloc(global->pix_nn, sizeof(long));
+	float totI;
+	float peak_com_x;
+	float peak_com_y;
+	long thisx;
+	long thisy;
+	long fs, ss;
+	float grad;
+	float lbg, imbg; /* local background nearby peak */
+	float *lbg_buffer;
+	int fsmin, fsmax, ssmin, ssmax;
+	int lbg_ss, lbg_fs, lbg_e;
+	int lbg_counter, thisfs, thisss;
 
 	nat = 0;
 	counter = 0;
@@ -912,27 +930,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
 
 		case 5 : 	// Count number of peaks (and do other statistics)
-		{
-			int search_x[] = {-1,0,1,-1,1,-1,0,1};
-			int search_y[] = {-1,-1,-1,0,0,1,1,1};
-			int	search_n = 8;
-			long e;
-			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
-			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
-			float totI;
-			float peak_com_x;
-			float peak_com_y;
-			long thisx;
-			long thisy;
-			long fs, ss;
-			double dx1, dx2, dy1, dy2;
-			double dxs, dys;
-			double grad = global->hitfinderMinGradient;
-			float lbg, imbg; /* local background nearby peak */
-			float *lbg_buffer;
-			int fsmin, fsmax, ssmin, ssmax;
-			int lbg_ss, lbg_fs, lbg_e;
-			int lbg_counter, thisfs, thisss;
 
 			threadInfo->peakResolution = 0;
 			threadInfo->peakDensity = 0;
@@ -957,7 +954,17 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							// This might be the start of a peak - start searching
 								
 								if ( global->hitfinderMinGradient > 0 ){
-			
+								
+									float dx1, dx2, dy1, dy2, dxs, dys;
+									
+									/* can't measure gradient where bad pixels present */
+									if ( ( global->badpixelmask[e]                != 1 ) ||
+									     ( global->badpixelmask[e+1]              != 1 ) ||
+									     ( global->badpixelmask[e-1]              != 1 ) ||
+									     ( global->badpixelmask[e+global->pix_nx] != 1 ) ||
+									     ( global->badpixelmask[e-global->pix_nx] != 1 ) ) 
+										continue;
+
 									/* Get gradients */
 									dx1 = temp[e] - temp[e+1];
 									dx2 = temp[e-1] - temp[e];
@@ -970,9 +977,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				
 									/* Calculate overall gradient */
 									grad = dxs + dys;
-			
+												
+									if ( grad < global->hitfinderMinGradient ) continue;
 								}
-								if ( grad < global->hitfinderMinGradient ) continue;
+								
 
 								lbg = 0; /* local background value */
 								lbg_counter = 0;
@@ -1176,21 +1184,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		
 			
 			break;
-		}
 	
 		case 3 : 	// Count number of peaks (and do other statistics)
 		default:
-			int search_x[] = {-1,0,1,-1,1,-1,0,1};
-			int search_y[] = {-1,-1,-1,0,0,1,1,1};
-			int	search_n = 8;
-			long e;
-			long *inx = (long *) calloc(global->pix_nn, sizeof(long));
-			long *iny = (long *) calloc(global->pix_nn, sizeof(long));
-			float totI;
-			float peak_com_x;
-			float peak_com_y;
-			long thisx;
-			long thisy;
 			long fs, ss;
 			double dx1, dx2, dy1, dy2;
 			double dxs, dys;
