@@ -944,9 +944,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 						for(long i=1; i<CSPAD_ASIC_NX-1; i++){
 
 
-							ss = (j+mj*CSPAD_ASIC_NY)*global->pix_nx;
+							ss = (j+mj*CSPAD_ASIC_NY);
 							fs = i+mi*CSPAD_ASIC_NX;
-							e = ss + fs;
+							e = ss*global->pix_nx + fs;
 
 							if(temp[e] > global->hitfinderADC){
 							// This might be the start of a peak - start searching
