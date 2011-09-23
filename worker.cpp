@@ -1118,12 +1118,13 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 						if ( threadInfo->good_peaks[peakNum2] == 0 ) continue;
 						/* check the distance between these two peaks */
 						diffX = threadInfo->peak_com_x[peakNum1] - threadInfo->peak_com_x[peakNum2];
-						diffY = threadInfo->peak_com_y[peakNum1] - threadInfo->peak_com_x[peakNum2];
+						diffY = threadInfo->peak_com_y[peakNum1] - threadInfo->peak_com_y[peakNum2];
 						peakSepSq = diffX*diffX + diffY*diffY;
 						if ( peakSepSq < maxPeakSepSq ) {
-							threadInfo->good_peaks[peakNum1] = 0;
+							if (threadInfo->peak_intensity[peakNum1] > threadInfo->peak_intensity[peakNum2]) 
 							threadInfo->good_peaks[peakNum2] = 0;
-
+							else 
+							threadInfo->good_peaks[peakNum2] = 0;
 						}
 					}
 				}
@@ -1139,11 +1140,11 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 						threadInfo->peak_com_index[goodPeakCounter] = threadInfo->peak_com_index[peakNum];
 						threadInfo->peak_intensity[goodPeakCounter] = threadInfo->peak_intensity[peakNum];
 						threadInfo->peak_npix[goodPeakCounter] =threadInfo->peak_npix[peakNum];
-						goodPeakCounter += 1;
+						goodPeakCounter++;
 					}
 				}
 				counter = goodPeakCounter;
-				threadInfo->nPeaks = goodPeakCounter;
+				threadInfo->nPeaks = counter;
 			}	
 		
 			// Statistics on the peaks
