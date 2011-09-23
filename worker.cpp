@@ -837,6 +837,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	int fsmin, fsmax, ssmin, ssmax;
 	int lbg_ss, lbg_fs, lbg_e;
 	int lbg_counter, thisfs, thisss;
+	float mingrad = sqrt(global->hitfinderMinGradient*4);
 
 	nat = 0;
 	counter = 0;
@@ -972,13 +973,13 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									dy2 = temp[e-global->pix_nx] - temp[e];
 				
 									/* Average gradient measurements from both sides */
-									dxs = ((dx1*dx1) + (dx2*dx2)) / 2;
-									dys = ((dy1*dy1) + (dy2*dy2)) / 2;
+									dxs = ((dx1*dx1) + (dx2*dx2)) ;
+									dys = ((dy1*dy1) + (dy2*dy2)) ;
 				
 									/* Calculate overall gradient */
 									grad = dxs + dys;
 												
-									if ( grad < global->hitfinderMinGradient ) continue;
+									if ( grad < mingrad ) continue;
 								}
 								
 
