@@ -948,9 +948,6 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							fs = i+mi*CSPAD_ASIC_NX;
 							e = ss + fs;
 
-							//if(e >= global->pix_nn)
-							//	printf("Array bounds error: e=%i\n");
-							
 							if(temp[e] > global->hitfinderADC){
 							// This might be the start of a peak - start searching
 								
@@ -1077,8 +1074,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 									// Only space to save the first NpeaksMax peaks
 									// (more than this and the pattern is probably junk)
 									if ( counter > global->hitfinderNpeaksMax ) {
-										counter++;
-										continue;
+										//counter++;
+										threadInfo->nPeaks = counter;
+										hit = 0;
+										goto quitHitfinder5;
 									}
 									
 									// Remember peak information
@@ -1182,7 +1181,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			// Now figure out whether this is a hit
 			if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
 				hit = 1;
-		
+	
+			quitHitfinder5:	
 			
 			break;
 	
