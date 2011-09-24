@@ -246,7 +246,7 @@ void event() {
 	 *	Skip frames if we only want a part of the data set
 	 */
 	if(global.startAtFrame != 0 && frameNumber < global.startAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping to start frame $li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
+		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
 		return;
 	}
 	if(global.stopAtFrame != 0 && frameNumber > global.stopAtFrame) {
