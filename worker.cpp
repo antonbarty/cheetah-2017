@@ -952,7 +952,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							if(temp[e] > global->hitfinderADC){
 							// This might be the start of a peak - start searching
 								
-								if ( global->hitfinderMinGradient > 0 ){
+								if ( global->hitfinderCheckGradient == 1 ){
 								
 									float dx1, dx2, dy1, dy2, dxs, dys;
 									

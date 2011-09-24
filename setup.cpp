@@ -114,6 +114,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMinPixCount = 3;
 	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
+	hitfinderCheckGradient = 0;
 	hitfinderMinGradient = 0;
 	strcpy(peaksearchFile, "");
 	savePeakInfo = 1;
@@ -686,8 +687,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
 	}
+	else if (!strcmp(tag, "hitfindercheckgradient")) {
+		hitfinderCheckGradient = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfindermingradient")) {
-		hitfinderMinGradient = atoi(value);
+		hitfinderMinGradient = atof(value);
 	}
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);
@@ -1274,6 +1278,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
 	fprintf(fp, "hitfinderNAT=%ld\n",hitfinderNAT);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
+	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
 	fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
 	fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);

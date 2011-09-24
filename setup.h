@@ -97,7 +97,8 @@ public:
 	int			hitfinderNpeaksMax;
 	int			hitfinderMinPixCount;
 	int			hitfinderMaxPixCount;
-	double		hitfinderMinGradient;
+	int		hitfinderCheckGradient;
+	float		hitfinderMinGradient;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	char		peaksearchFile[1024];
