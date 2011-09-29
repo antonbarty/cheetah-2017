@@ -37,6 +37,7 @@ public:
 	// Real-space geometry
 	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
+	float		defaultCameraLengthMm;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
@@ -112,6 +113,10 @@ public:
 	float			hitfinderMaxPeakSeparation;
 	int			hitfinderSubtractLocalBG;
 	int			hitfinderLocalBGRadius;
+	int			hitfinderLimitRes;
+	float			hitfinderMinRes;
+	float			hitfinderMaxRes;
+	int			*hitfinderResMask;
 	
 	//	TOF
 	Pds::DetInfo::Device	tofType;
@@ -195,6 +200,11 @@ public:
 	float			*pix_y;
 	float			*pix_z;
 	float			*pix_r;
+	float			*pix_kx; // this is reciprocal space (inverse A, no factor of 2*pi)
+	float			*pix_ky;
+	float			*pix_kz;
+	float			*pix_kr;
+	float			*pix_res;
 	float			pix_dx;
 	unsigned		module_rows;
 	unsigned		module_cols;
@@ -205,6 +215,7 @@ public:
 	long			asic_nn;
 	long			nasics_x;
 	long			nasics_y;
+	float			detectorZprevious;	
 	
 	
 	/*

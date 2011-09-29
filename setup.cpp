@@ -59,6 +59,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Geometry
 	strcpy(geometryFile, "");
 	pixelSize = 110e-6;
+	defaultCameraLengthMm = 0;
 	
 	// Bad pixel mask
 	strcpy(badpixelFile, "");
@@ -124,6 +125,9 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMaxPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
+	hitfinderLimitRes = 0;
+	hitfinderMinRes = 1e20;
+	hitfinderMaxRes = 0;
 	
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -388,6 +392,7 @@ void cGlobal::setup() {
 	last_hotpix_update = 0;
 	hotpixRecalc = bgRecalc;
 	nhot = 0;
+	detectorZprevious = 0;	
 	
 	time(&tlast);
 	lastTimingFrame=0;
@@ -498,6 +503,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
 	} 
+	else if (!strcmp(tag, "defaultcameralengthmm")) {
+		defaultCameraLengthMm = atof(value);
+	}
 	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
 	}
@@ -727,6 +735,15 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderlocalbgradius")) {
 		hitfinderLocalBGRadius = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderlimitres")) {
+		hitfinderLimitRes = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderminres")) {
+		hitfinderMinRes = atof(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxres")) {
+		hitfinderMaxRes = atof(value);
+	}
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
 	}
@@ -833,12 +850,20 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	long	nx = 8*CSPAD_ASIC_NX;
 	long	ny = 8*CSPAD_ASIC_NY;
 	long	nn = nx*ny;
+	long 	i;
 	pix_nx = nx;
 	pix_ny = ny;
 	pix_nn = nn;
 	pix_x = (float *) calloc(nn, sizeof(float));
 	pix_y = (float *) calloc(nn, sizeof(float));
 	pix_z = (float *) calloc(nn, sizeof(float));
+	pix_kx = (float *) calloc(nn, sizeof(float));
+	pix_ky = (float *) calloc(nn, sizeof(float));
+	pix_kz = (float *) calloc(nn, sizeof(float));
+	pix_kr = (float *) calloc(nn, sizeof(float));
+	pix_res = (float *) calloc(nn, sizeof(float));
+	hitfinderResMask = (int *) calloc(nn, sizeof(int)); // is there a better place for this?
+	for (i=0;i<nn;i++) hitfinderResMask[i]=1;
 	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
 	
 	
@@ -851,7 +876,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 	
 	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
-	for(long i=0;i<nn;i++){
+	for(i=0;i<nn;i++){
 		pix_x[i] /= pix_dx;
 		pix_y[i] /= pix_dx;
 		pix_z[i] /= pix_dx;
@@ -1226,6 +1251,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp,"\n\n");
 	fprintf(fp, ">-------- Start of ini params --------<\n");
 	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
+	fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
 	fprintf(fp, "detectorType=%s\n",detectorTypeName);
 	fprintf(fp, "detectorName=%s\n",detectorName);
 	fprintf(fp, "startAtFrame=%d\n",startAtFrame);
@@ -1295,6 +1321,9 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
+	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
+	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
 	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);

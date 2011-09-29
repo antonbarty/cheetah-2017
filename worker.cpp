@@ -949,7 +949,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							fs = i+mi*CSPAD_ASIC_NX;
 							e = ss*global->pix_nx + fs;
 
-							if(temp[e] > global->hitfinderADC){
+							if ( global->hitfinderResMask[e] != 1 ) continue;
+
+							if ( temp[e] > global->hitfinderADC ) {
 							// This might be the start of a peak - start searching
 								
 								if ( global->hitfinderCheckGradient == 1 ){
