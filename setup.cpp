@@ -1270,7 +1270,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
 	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
 	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-	fprintf(fp, "hitfinderTOFThresh=%d\n",hitfinderTOFThresh);
+	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
 	fprintf(fp, "cmFloor=%f\n",cmFloor);
 	fprintf(fp, "pixelSize=%f\n",pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
