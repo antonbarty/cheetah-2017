@@ -1261,7 +1261,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
-	fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
+	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
 	fprintf(fp, "localBackgroundRadius=%d\n",localBackgroundRadius);
