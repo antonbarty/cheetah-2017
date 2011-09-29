@@ -66,7 +66,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Static dark calibration (electronic offsets)
 	strcpy(darkcalFile, "");
-	useDarkcalSubtraction = 1;
+	useDarkcalSubtraction = 0;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
