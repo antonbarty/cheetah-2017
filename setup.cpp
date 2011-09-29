@@ -40,7 +40,9 @@ void cGlobal::defaultConfiguration(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
-	
+
+	// Default experiment info (in case beamline data is missing...)
+	defaultPhotonEnergyeV = 0; 	
 	
 	// Detector info
 	strcpy(detectorTypeName, "cspad");
@@ -493,8 +495,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 *	Parse known tags
 	 */
-	
-	if (!strcmp(tag, "detectortype")) {
+	if (!strcmp(tag, "defaultphotonenergyev")) {
+		defaultPhotonEnergyeV = atof(value);
+	} 
+	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
 	}
 	else if (!strcmp(tag, "detectorname")) {
@@ -1221,6 +1225,7 @@ void cGlobal::writeInitialLog(void){
 
 	fprintf(fp,"\n\n");
 	fprintf(fp, ">-------- Start of ini params --------<\n");
+	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
 	fprintf(fp, "detectorType=%s\n",detectorTypeName);
 	fprintf(fp, "detectorName=%s\n",detectorName);
 	fprintf(fp, "startAtFrame=%d\n",startAtFrame);

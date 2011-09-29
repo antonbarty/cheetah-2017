@@ -21,6 +21,8 @@ public:
 	// ini file to read
 	char		configFile[1024];
 	
+	// Default experiment info (in case beamline data is missing)
+	float	defaultPhotonEnergyeV;
 	
 	// Detector info
 	char					detectorName[1024];
@@ -238,7 +240,7 @@ public:
 	float			datarate;
 	long			lastTimingFrame;
 
-	
+		
 	
 public:
 	void defaultConfiguration(void);

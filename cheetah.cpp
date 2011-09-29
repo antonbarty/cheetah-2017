@@ -318,9 +318,16 @@ void event() {
 	if ( getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
 	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
 		
-		wavelengthA = std::numeric_limits<double>::quiet_NaN();
-		photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
-		
+		// If no beamline data, but default wavelength specified in ini file
+		// then use that, else 
+		if ( global.defaultPhotonEnergyeV != 0 ) {
+			photonEnergyeV = global.defaultPhotonEnergyeV;
+			wavelengthA = 12398.42/photonEnergyeV;
+		} else {
+			wavelengthA = std::numeric_limits<double>::quiet_NaN();
+			photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
+		}
+
 	} else {
 		
 		/* Calculate the resonant photon energy (ie: photon wavelength) */
@@ -384,8 +391,6 @@ void event() {
 		// printf("New detector pos %e\n", detposnew);
 		global.detectorZ = 500.0 + detposnew + 79.0;
 	}
-
-	
 	
 
 	/*
