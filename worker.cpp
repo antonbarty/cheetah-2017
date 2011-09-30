@@ -1377,7 +1377,8 @@ void calculateRadialAverage(tThreadInfo *threadInfo, cGlobal *global){
 
 	// Divide by number of actual pixels in ring to get the average
 	for(long i=0; i<global->radial_nn; i++) {
-		threadInfo->radialAverage[i] /= threadInfo->radialAverageCounter[i];
+		if (threadInfo->radialAverageCounter[i] != 0)
+			threadInfo->radialAverage[i] /= threadInfo->radialAverageCounter[i];
 	}
 	
 }
@@ -1521,9 +1522,11 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 	
 
-	// Save radial average
-	if(global->saveRadialAverage) {
-		
+	/*
+	 *	Save radial average (always, it's not much space)
+	 */
+	//if(global->saveRadialAverage) 
+	{
 		size[0] = global->radial_nn;
 		dataspace_id = H5Screate_simple(1, size, NULL);
 		
@@ -1531,13 +1534,12 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		//dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverage);
 		H5Dclose(dataset_id);
-
+		
 		dataset_id = H5Dcreate(gid, "radialAverageCounter", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverageCounter);
 		H5Dclose(dataset_id);
 		
 		H5Sclose(dataspace_id);
-		
 	}
 	
 	

@@ -132,7 +132,6 @@ public:
 	int			savehits;
 	int			saveRaw;
 	int			saveAssembled;
-	int			saveRadialAverage;
 	int			hdf5dump;
 	
 	// Verbosity

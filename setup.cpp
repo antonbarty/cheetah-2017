@@ -144,7 +144,6 @@ void cGlobal::defaultConfiguration(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
-	saveRadialAverage = 1;
 	hdf5dump = 0;
 	saveDetectorCorrectedOnly = 0;
 	saveDetectorRaw = 0;
@@ -580,9 +579,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
-	}
-	else if (!strcmp(tag, "saveradialaverage")) {
-		saveRadialAverage = atoi(value);
 	}
 	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
 		saveDetectorCorrectedOnly = atoi(value);
