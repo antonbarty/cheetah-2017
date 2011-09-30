@@ -134,7 +134,7 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Powder pattern generation
-	//powdersum = 1;
+	nPowderClasses = 2;
 	powderthresh = -20000;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
@@ -260,16 +260,23 @@ void cGlobal::setup() {
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
+	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	for(long i=0; i<pix_nn; i++) {
+		selfdark[i] = 0;
+		hotpixelmask[i] = 1;
+		wiremask[i] = 1;
+	}
+
+	// Old way of doing powders
 	powderHitsRaw = (double*) calloc(pix_nn, sizeof(double));
 	powderHitsRawSquared = (double*) calloc(pix_nn, sizeof(double));
 	powderBlanksRaw = (double*) calloc(pix_nn, sizeof(double));
 	powderBlanksRawSquared = (double*) calloc(pix_nn, sizeof(double));
 	powderHitsAssembled = (double*) calloc(image_nn, sizeof(double));
 	powderBlanksAssembled = (double*) calloc(image_nn, sizeof(double));
-	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
 		selfdark[i] = 0;
 		powderHitsRaw[i] = 0;
@@ -283,6 +290,26 @@ void cGlobal::setup() {
 		powderHitsAssembled[i] = 0;
 		powderBlanksAssembled[i] = 0;
 	}	
+
+	// New way of doing powders
+	for(long i=0; i<nPowderClasses; i++) {
+		nPowderFrames[i] = 0;
+		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+		for(long j=0; j<pix_nn; j++) {
+			powderRaw[i][j] = 0;
+			powderRawSquared[i][j] = 0;
+		}
+		for(long j=0; j<image_nn; j++) {
+			powderAssembled[i][j] = 0;
+		}
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+	}
+	
+	
 
 	
 	/*

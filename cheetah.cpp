@@ -633,7 +633,15 @@ void endjob()
 	pthread_mutex_destroy(&global.framefp_mutex);
 	pthread_mutex_destroy(&global.peaksfp_mutex);
 	
-
+	for(long i=0; i<global.nPowderClasses; i++) {
+		free(global.powderRaw[i]);
+		free(global.powderRawSquared[i]);
+		free(global.powderAssembled[i]);
+		pthread_mutex_destroy(&global.powderRaw_mutex[i]);
+		pthread_mutex_destroy(&global.powderRawSquared_mutex[i]);
+		pthread_mutex_destroy(&global.powderAssembled_mutex[i]);
+	}
+	
 	
 	
 	printf("Done!\n");
