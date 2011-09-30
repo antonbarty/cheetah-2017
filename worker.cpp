@@ -1357,12 +1357,10 @@ void nameEvent(tThreadInfo *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
-	//char outfile[1024];
 	char buffer1[80];
 	char buffer2[80];	
 	time_t eventTime = info->seconds;
 	
-	//setenv("TZ","US/Pacific",1);		// <--- Dangerous (not thread safe!)
 	struct tm *timestatic, timelocal;
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
@@ -1380,17 +1378,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 *	Create filename based on date, time and fiducial for this image
 	 */
 	char outfile[1024];
-	//char buffer1[80];
-	//char buffer2[80];	
-	//time_t eventTime = info->seconds;
-
-	//setenv("TZ","US/Pacific",1);		// <--- Dangerous (not thread safe!)
-	//struct tm *timestatic, timelocal;
-	//timestatic=localtime_r( &eventTime, &timelocal );	
-	//strftime(buffer1,80,"%Y_%b%d",&timelocal);
-	//strftime(buffer2,80,"%H%M%S",&timelocal);
-	//sprintf(outfile,"LCLS_%s_r%04u_%s_%x_cspad.h5",buffer1,global->runNumber,buffer2,info->fiducial);
-
 	strcpy(outfile, info->eventname);
 	printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 
