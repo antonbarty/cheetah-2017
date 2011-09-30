@@ -71,6 +71,9 @@ void *worker(void *threadarg) {
 	threadInfo->detector_corrected_data = (float*) calloc(8*CSPAD_ASIC_NX*8*CSPAD_ASIC_NY,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
 
+	threadInfo->radialAverage = (float *) calloc(global->radial_nn, sizeof(float));
+	threadInfo->radialAverageCounter = (float *) calloc(global->radial_nn, sizeof(float));
+	
 	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
 	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
@@ -239,6 +242,12 @@ void *worker(void *threadarg) {
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	assemble2Dimage(threadInfo, global);
+
+	
+	/*
+	 *	Calculate radial average
+	 */
+	calculateRadialAverage(threadInfo, global);
 	
 	
 	
@@ -306,6 +315,8 @@ void *worker(void *threadarg) {
 	free(threadInfo->detector_corrected_data);
 	free(threadInfo->corrected_data_int16);
 	free(threadInfo->image);
+	free(threadInfo->radialAverage);
+	free(threadInfo->radialAverageCounter);
 	free(threadInfo->peak_com_index);
 	free(threadInfo->peak_com_x);
 	free(threadInfo->peak_com_y);
@@ -1339,6 +1350,41 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
+/*
+ *	Calculate radial average of data
+ *	(do this based on the raw data and pix_r rather than the assembled image -> to avoid couble interpolation effects)
+ */
+void calculateRadialAverage(tThreadInfo *threadInfo, cGlobal *global){
+	
+	// Zero arrays
+	for(long i=0; i<global->radial_nn; i++) {
+		threadInfo->radialAverage[i] = 0;
+		threadInfo->radialAverageCounter[i] = 0;
+	}
+		
+		
+	// Radial average
+	long	rbin;
+	for(long i=0; i<global->pix_nn; i++){
+		rbin = lrint(global->pix_r[i]);
+		
+		// Array bounds check (paranoia)
+		if(rbin < 0) rbin = 0;
+		
+		threadInfo->radialAverage[rbin] += threadInfo->corrected_data[i];
+		threadInfo->radialAverageCounter[rbin] += 1;
+	}
+
+	// Divide by number of actual pixels in ring to get the average
+	for(long i=0; i<global->radial_nn; i++) {
+		threadInfo->radialAverage[i] /= threadInfo->radialAverageCounter[i];
+	}
+	
+}
+
+	
+	
+	
 
 void nameEvent(tThreadInfo *info, cGlobal *global){
 	/*
@@ -1472,6 +1518,26 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	}
 	else {
 		hdf_error = H5Lcreate_soft( "/data/rawdata", hdf_fileID, "/data/data",0,0);
+	}
+	
+
+	// Save radial average
+	if(global->saveRadialAverage) {
+		
+		size[0] = global->radial_nn;
+		dataspace_id = H5Screate_simple(1, size, NULL);
+		
+		dataset_id = H5Dcreate(gid, "radialAverage", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		//dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
+		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverage);
+		H5Dclose(dataset_id);
+
+		dataset_id = H5Dcreate(gid, "radialAverageCounter", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverageCounter);
+		H5Dclose(dataset_id);
+		
+		H5Sclose(dataspace_id);
+		
 	}
 	
 	

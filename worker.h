@@ -31,6 +31,8 @@ typedef struct {
 	float		*detector_corrected_data;
 	int16_t		*corrected_data_int16;
 	int16_t		*image;
+	float		*radialAverage;
+	float		*radialAverageCounter;
 	int			nPeaks;
 	int			nHot;
 	
@@ -145,6 +147,7 @@ void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*, int);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
+void calculateRadialAverage(tThreadInfo*, cGlobal*);
 void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writePeakFile(tThreadInfo *threadInfo, cGlobal *global);

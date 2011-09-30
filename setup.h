@@ -132,6 +132,7 @@ public:
 	int			savehits;
 	int			saveRaw;
 	int			saveAssembled;
+	int			saveRadialAverage;
 	int			hdf5dump;
 	
 	// Verbosity
@@ -197,6 +198,9 @@ public:
 	long			asic_nn;
 	long			nasics_x;
 	long			nasics_y;
+	float			radial_max;
+	long			radial_nn;
+	
 	
 	
 	/*

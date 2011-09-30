@@ -144,6 +144,7 @@ void cGlobal::defaultConfiguration(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
+	saveRadialAverage = 1;
 	hdf5dump = 0;
 	saveDetectorCorrectedOnly = 0;
 	saveDetectorRaw = 0;
@@ -580,6 +581,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
 	}
+	else if (!strcmp(tag, "saveradialaverage")) {
+		saveRadialAverage = atoi(value);
+	}
 	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
 		saveDetectorCorrectedOnly = atoi(value);
 	}
@@ -853,9 +857,13 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 	// Compute radial distances
 	pix_r = (float *) calloc(nn, sizeof(float));
+	radial_max = 0.0;
 	for(long i=0;i<nn;i++){
 		pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
+		if(pix_r[i] > radial_max)
+			radial_max = pix_r[i];
 	}	
+	radial_nn = ceil(radial_max)+1;
 }
 
 
