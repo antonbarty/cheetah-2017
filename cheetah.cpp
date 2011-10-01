@@ -432,7 +432,10 @@ void event() {
 		
 		printf("MESSAGE: Camera length changed from %gmm to %gmm.\n",
 		                                   global.detectorZprevious,global.detectorZ);
-		
+	
+		if ( isnan(wavelengthA ) ) {
+			printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
+		}	
 		long i;
 		float  x, y, z, r;
 		float kx,ky,kz,kr;
@@ -461,7 +464,9 @@ void event() {
 			if ( global.hitfinderLimitRes == 1 ) {
 				if ( ( res < global.hitfinderMinRes ) && (res > global.hitfinderMaxRes) ) {
 					global.hitfinderResMask[i] = 1;
-				} else global.hitfinderResMask[i] = 0;
+				} else {
+					global.hitfinderResMask[i] = 0;
+				}
 			}
 		}
 		
