@@ -270,27 +270,6 @@ void cGlobal::setup() {
 		wiremask[i] = 1;
 	}
 
-	// Old way of doing powders
-	powderHitsRaw = (double*) calloc(pix_nn, sizeof(double));
-	powderHitsRawSquared = (double*) calloc(pix_nn, sizeof(double));
-	powderBlanksRaw = (double*) calloc(pix_nn, sizeof(double));
-	powderBlanksRawSquared = (double*) calloc(pix_nn, sizeof(double));
-	powderHitsAssembled = (double*) calloc(image_nn, sizeof(double));
-	powderBlanksAssembled = (double*) calloc(image_nn, sizeof(double));
-	for(long i=0; i<pix_nn; i++) {
-		selfdark[i] = 0;
-		powderHitsRaw[i] = 0;
-		powderHitsRawSquared[i] = 0;
-		powderBlanksRaw[i] = 0;
-		powderBlanksRawSquared[i] = 0;
-		hotpixelmask[i] = 1;
-		wiremask[i] = 1;
-	}
-	for(long i=0; i<image_nn; i++) {
-		powderHitsAssembled[i] = 0;
-		powderBlanksAssembled[i] = 0;
-	}	
-
 	// New way of doing powders
 	for(long i=0; i<nPowderClasses; i++) {
 		nPowderFrames[i] = 0;
@@ -321,12 +300,6 @@ void cGlobal::setup() {
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
-	pthread_mutex_init(&powderHitsRaw_mutex, NULL);
-	pthread_mutex_init(&powderHitsAssembled_mutex, NULL);
-	pthread_mutex_init(&powderHitsRawSquared_mutex, NULL);
-	pthread_mutex_init(&powderBlanksRaw_mutex, NULL);
-	pthread_mutex_init(&powderBlanksRawSquared_mutex, NULL);
-	pthread_mutex_init(&powderBlanksAssembled_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
@@ -1385,8 +1358,10 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "End time: %s\n",timestr);
 	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
-	fprintf(fp, "nFrames in hits powder pattern: %li\n",npowderHits);
-	fprintf(fp, "nFrames in blanks powder pattern: %li\n",npowderBlanks);
+	fprintf(fp, "nFrames in powder patterns:\n");
+	for(long i=0; i<nPowderClasses; i++) {
+		fprintf(fp, "\tclass%i: %li\n", i, nPowderFrames[i]);
+	}
 	fprintf(fp, "Number of hits: %li\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
@@ -1395,7 +1370,7 @@ void cGlobal::writeFinalLog(void){
 	fclose (fp);
 
 	
-	// Flush frame file buffer
+	// Close frame buffers
 	pthread_mutex_lock(&framefp_mutex);
 	fclose(framefp);
 	fclose(cleanedfp);

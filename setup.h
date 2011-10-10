@@ -170,12 +170,6 @@ public:
 	pthread_mutex_t	hotpixel_mutex;
 	pthread_mutex_t	selfdark_mutex;
 	pthread_mutex_t	bgbuffer_mutex;
-	pthread_mutex_t	powderHitsRaw_mutex;
-	pthread_mutex_t	powderHitsAssembled_mutex;
-	pthread_mutex_t	powderHitsRawSquared_mutex;
-	pthread_mutex_t	powderBlanksRaw_mutex;
-	pthread_mutex_t	powderBlanksAssembled_mutex;
-	pthread_mutex_t	powderBlanksRawSquared_mutex;
 	pthread_mutex_t	nhits_mutex;
 	pthread_mutex_t	framefp_mutex;
 	pthread_mutex_t	peaksfp_mutex;
@@ -221,13 +215,6 @@ public:
 	/*
 	 *	Powder patterns/sums
 	 */
-	double			*powderHitsRaw;
-	double			*powderHitsAssembled;
-	double			*powderHitsRawSquared;
-	double			*powderBlanksRaw;
-	double			*powderBlanksAssembled;
-	double			*powderBlanksRawSquared;
-	
 	long			nPowderClasses;
 	long			nPowderFrames[MAX_POWDER_CLASSES];
 	double			*powderRaw[MAX_POWDER_CLASSES];
