@@ -172,6 +172,7 @@ public:
 	pthread_mutex_t	bgbuffer_mutex;
 	pthread_mutex_t	nhits_mutex;
 	pthread_mutex_t	framefp_mutex;
+	pthread_mutex_t	powderfp_mutex;
 	pthread_mutex_t	peaksfp_mutex;
 	
 	
@@ -215,6 +216,7 @@ public:
 	/*
 	 *	Powder patterns/sums
 	 */
+	FILE			*powderlogfp[MAX_POWDER_CLASSES];
 	long			nPowderClasses;
 	long			nPowderFrames[MAX_POWDER_CLASSES];
 	double			*powderRaw[MAX_POWDER_CLASSES];

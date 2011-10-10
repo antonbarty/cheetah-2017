@@ -620,6 +620,7 @@ void endjob()
 	pthread_mutex_destroy(&global.bgbuffer_mutex);
 	pthread_mutex_destroy(&global.framefp_mutex);
 	pthread_mutex_destroy(&global.peaksfp_mutex);
+	pthread_mutex_destroy(&global.powderfp_mutex);
 	
 	for(long i=0; i<global.nPowderClasses; i++) {
 		free(global.powderRaw[i]);

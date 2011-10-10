@@ -296,6 +296,9 @@ void *worker(void *threadarg) {
 	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
+	pthread_mutex_lock(&global->powderfp_mutex);
+	fprintf(global->powderlogfp[hit], "r%04u/%s, %i, %g, %g, %g, %g\n",global->runNumber, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
+	pthread_mutex_unlock(&global->powderfp_mutex);
 	
 	
 	/*

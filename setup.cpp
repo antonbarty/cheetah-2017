@@ -286,6 +286,10 @@ void cGlobal::setup() {
 		pthread_mutex_init(&powderRaw_mutex[i], NULL);
 		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
 		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+		
+		char	filename[1024];
+		sprintf(filename,"r%04u-class%i-sumLog.txt",runNumber,i);
+		powderlogfp[i] = fopen(filename, "w");
 	}
 	
 	
@@ -302,6 +306,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
+	pthread_mutex_init(&powderfp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
@@ -1293,13 +1298,15 @@ void cGlobal::updateLogfile(void){
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
-	//fclose(framefp);
-	//framefp = fopen (framefile,"a");
-	//fclose(cleanedfp);
-	//cleanedfp = fopen (cleanedfile,"a");
 	fflush(framefp);
 	fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+
+	pthread_mutex_lock(&powderfp_mutex);
+	for(long i=0; i<nPowderClasses; i++) {
+		fflush(powderlogfp[i]);
+	}
+	pthread_mutex_unlock(&powderfp_mutex);
 	
 	pthread_mutex_lock(&peaksfp_mutex);
 	fflush(peaksfp);
@@ -1375,6 +1382,12 @@ void cGlobal::writeFinalLog(void){
 	fclose(framefp);
 	fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+	
+	pthread_mutex_lock(&powderfp_mutex);
+	for(long i=0; i<nPowderClasses; i++) {
+		fclose(powderlogfp[i]);
+	}
+	pthread_mutex_unlock(&powderfp_mutex);
 	
 	pthread_mutex_lock(&peaksfp_mutex);
 	fclose(peaksfp);
