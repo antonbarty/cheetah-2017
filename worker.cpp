@@ -70,6 +70,7 @@ void *worker(void *threadarg) {
 	threadInfo->corrected_data_int16 = (int16_t*) calloc(8*CSPAD_ASIC_NX*8*CSPAD_ASIC_NY,sizeof(int16_t));
 	threadInfo->detector_corrected_data = (float*) calloc(8*CSPAD_ASIC_NX*8*CSPAD_ASIC_NY,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
+	threadInfo->saturatedPixelMask = (int16_t *) calloc(8*CSPAD_ASIC_NX*8*CSPAD_ASIC_NY,sizeof(int16_t));
 
 	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
 	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
@@ -83,10 +84,10 @@ void *worker(void *threadarg) {
 
 
 
-	for(long i=0;i<global->pix_nn;i++)
+	for(long i=0;i<global->pix_nn;i++){
+		threadInfo->saturatedPixelMask[i] = 0;
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
-
-	
+	}
 	
 	/*
 	 *	Create a unique name for this event
@@ -551,8 +552,6 @@ void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
  */
 void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global){
 
-	threadInfo->saturatedPixelMask = (int16_t *) calloc(global->pix_nn,sizeof(int16_t *));	
-	
 	for(long i=0;i<global->pix_nn;i++) { 
 		if ( threadInfo->raw_data[i] >= global->pixelSaturationADC) 
 			threadInfo->saturatedPixelMask[i] = 0;
@@ -1726,7 +1725,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	hid_t		datatype;
 	hsize_t 	size[2],max_size[2];
 	herr_t		hdf_error;
-	hid_t   	gid, gid2;
+	hid_t   	gid, gidHitfinder;
 	//char 		fieldname[100]; 
 	
 	
@@ -1837,15 +1836,14 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Sclose(dataspace_id);
 	}	
 
-	
-	
+
 	// Done with the /data group
 	H5Gclose(gid);
 
 
 
 	/*
-	 * save peak info
+	 * save processing info
 	 */
 
 	// Create sub-groups
@@ -1855,7 +1853,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		H5Fclose(hdf_fileID);
 		return;
 	}
-	gid2 = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	gidHitfinder = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
 		ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
@@ -1878,7 +1876,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		}
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid2, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -1904,7 +1902,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		}
 
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid2, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -1929,12 +1927,65 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
 		}
 		
+		
+
+		/*
+		 * Save pixelmaps
+		 * Here's the plan so far:
+		 *    Pixelmaps are saved as an 8-bit unsigned int array in the hdf5 file
+		 *    All bits set to 0 by default.  A pixel is flagged by setting the bit to 1.
+		 *    Bit 0: if equal to 1, this is a "bad pixel".
+		 *    Bit 1: if equal to 1, this is a "hot pixel".
+		 *    Bit 2: if equal to 1, this is a "saturated pixel".
+		 *    Bit 3: unused
+		 *    Bit 4: unused
+		 *    Bit 5: unused
+		 *    Bit 6: unused
+		 *    Bit 7: if equal to 1, this pixel is bad for miscellaneous reasions (e.g. ice rings).  
+		 */	
+		
+		long i;
+		char * pixelmasks = (char *) calloc(global->pix_nn,sizeof(char));
+		for (i=0; i<global->pix_nn; i++) {
+			pixelmasks[i] = 0; // default: all bits are equal to 1
+			if ( global->badpixelmask[i] == 0 )
+				pixelmasks[i] |= (1 << 0);
+			if ( global->hotpixelmask[i] == 0 ) // Should use a mutex lock here...
+				pixelmasks[i] |= (1 << 1);
+			if ( info->saturatedPixelMask[i] == 0 )
+				pixelmasks[i] |= (1 << 2);		
+		}
+
+		size[0] = 8*CSPAD_ASIC_NY;	// size[0] = height
+		size[1] = 8*CSPAD_ASIC_NX;	// size[1] = width
+		max_size[0] = 8*CSPAD_ASIC_NY;
+		max_size[1] = 8*CSPAD_ASIC_NX;
+		dataspace_id = H5Screate_simple(2, size, max_size);
+		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if ( dataset_id < 0 ) {
+			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixelmasks);
+		if ( hdf_error < 0 ) {
+			ERROR("%li: Couldn't write data\n", info->threadNum);
+			H5Dclose(dataspace_id);
+			H5Fclose(hdf_fileID);
+			return;
+		}
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	
+
+
+		free(pixelmasks);
 		free(peak_info);
 	}
 
 	// Done with this group
 	H5Gclose(gid);
-	H5Gclose(gid2);
+	H5Gclose(gidHitfinder);
 	
 
 	
