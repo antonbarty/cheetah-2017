@@ -33,6 +33,8 @@ typedef struct {
 	int16_t		*image;
 	int			nPeaks;
 	int			nHot;
+	int16_t *   saturatedPixelMask;
+	
 	
 	// TOF data
 	int			TOFPresent;
@@ -150,6 +152,7 @@ void writeHDF5(tThreadInfo*, cGlobal*);
 void writePeakFile(tThreadInfo *threadInfo, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void saveRunningSums(cGlobal*);
+void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
 int16_t kth_smallest(int16_t*, long, long);
 
 

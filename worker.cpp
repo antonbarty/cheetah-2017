@@ -92,7 +92,14 @@ void *worker(void *threadarg) {
 	 *	Create a unique name for this event
 	 */
 	nameEvent(threadInfo, global);
-		
+	
+
+	/*
+	 * Check for saturated pixels, before any other corrections
+	 */
+	if ( global->maskSaturatedPixels == 1 ) {
+		checkSaturatedPixels(threadInfo, global);
+	}
 	
 	/*
 	 *	Subtract darkcal image (static electronic offsets)
@@ -319,6 +326,7 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
 	free(threadInfo->good_peaks);
+	free(threadInfo->saturatedPixelMask);
 	//TOF stuff.
 	if(threadInfo->TOFPresent==1){
 		free(threadInfo->TOFTime);
@@ -536,6 +544,23 @@ void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
 	
 }
 
+
+
+/*
+ * Make a saturated pixel mask
+ */
+void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global){
+
+	threadInfo->saturatedPixelMask = (int16_t *) calloc(global->pix_nn,sizeof(int16_t *));	
+	
+	for(long i=0;i<global->pix_nn;i++) { 
+		if ( threadInfo->raw_data[i] >= global->pixelSaturationADC) 
+			threadInfo->saturatedPixelMask[i] = 0;
+		else
+			threadInfo->saturatedPixelMask[i] = 1;
+	}
+
+}
 
 /*
  *	Apply bad pixel mask

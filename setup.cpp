@@ -65,6 +65,10 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(badpixelFile, "");
 	useBadPixelMask = 0;
 
+	// Saturated pixels
+	maskSaturatedPixels = 0;
+	pixelSaturationADC = 15564;  // 95% of 2^14 ??
+
 	// Static dark calibration (electronic offsets)
 	strcpy(darkcalFile, "");
 	useDarkcalSubtraction = 0;
@@ -619,6 +623,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "useautohotpixel")) {
 		useAutoHotpixel = atoi(value);
+	}
+	else if (!strcmp(tag, "masksaturatedpixels")) {
+		maskSaturatedPixels = atoi(value);
+	}
+	else if (!strcmp(tag, "pixelsaturationadc")) {
+		pixelSaturationADC = atoi(value);
 	}
 	else if (!strcmp(tag, "useselfdarkcal")) {
 		printf("The keyword useSelfDarkcal has been changed.  It is\n"
@@ -1287,6 +1297,8 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
+	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
 	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);

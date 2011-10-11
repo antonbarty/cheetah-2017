@@ -77,7 +77,10 @@ public:
 	// Local background subtraction
 	int			useLocalBackgroundSubtraction;
 	long		localBackgroundRadius;
-	
+
+	// Saturated pixels
+	int         maskSaturatedPixels;
+	long        pixelSaturationADC;	
 	
 	// Kill persistently hot pixels
 	int			useAutoHotpixel;
