@@ -7,6 +7,8 @@
  *
  */
 
+#define	MAX_POWDER_CLASSES 16
+#define	MAX_FILENAME_LENGTH 1024
 
 /*
  *	Global variables
@@ -19,14 +21,14 @@ public:
 	 *	Various switches and processing options
 	 */
 	// ini file to read
-	char		configFile[1024];
+	char		configFile[MAX_FILENAME_LENGTH];
 	
 	// Default experiment info (in case beamline data is missing)
 	float	defaultPhotonEnergyeV;
 	
 	// Detector info
-	char					detectorName[1024];
-	char					detectorTypeName[1024];
+	char					detectorName[MAX_FILENAME_LENGTH];
+	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
 	
@@ -35,21 +37,21 @@ public:
 	long	stopAtFrame;
 	
 	// Real-space geometry
-	char		geometryFile[1024];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
+	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
 	float		defaultCameraLengthMm;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
-	char		badpixelFile[1024];
+	char		badpixelFile[MAX_FILENAME_LENGTH];
 	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
-	char		darkcalFile[1024];		// File containing dark calibration
+	char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
 	int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
 	
 	// Common mode and pedastal subtraction
-	char		wireMaskFile[1024];		// File containing mask of area behind wires
+	char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
 	int			cmModule;				// Subtract common mode from each ASIC
 	int			cmSubtractUnbondedPixels;
 	int			cmSubtractBehindWires;
@@ -58,7 +60,7 @@ public:
 	// Gain correction
 	int			useGaincal;
 	int			invertGain;
-	char		gaincalFile[1024];
+	char		gaincalFile[MAX_FILENAME_LENGTH];
 	int			generateGaincal;		// Flip this on to generate a gaincal (auto-turns-on appropriate other options)
 	
 	// Running background subtraction
@@ -107,7 +109,7 @@ public:
 	float		hitfinderMinGradient;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
-	char		peaksearchFile[1024];
+	char		peaksearchFile[MAX_FILENAME_LENGTH];
 	int			hitfinderUseTOF;
 	int			hitfinderTOFMinSample;
 	int			hitfinderTOFMaxSample;
@@ -124,7 +126,7 @@ public:
 	//	TOF
 	Pds::DetInfo::Device	tofType;
 	Pds::DetInfo::Detector	tofPdsDetInfo;
-	char		tofName[1024];
+	char		tofName[MAX_FILENAME_LENGTH];
 	int			TOFchannel;
 	int			TOFPresent;
 	int			AcqNumChannels;
@@ -154,10 +156,10 @@ public:
 	int			debugLevel;
 	
 	// Log files
-	char		logfile[1024];
-	char		framefile[1024];
-	char		cleanedfile[1024];
-	char		peaksfile[1024];
+	char		logfile[MAX_FILENAME_LENGTH];
+	char		framefile[MAX_FILENAME_LENGTH];
+	char		cleanedfile[MAX_FILENAME_LENGTH];
+	char		peaksfile[MAX_FILENAME_LENGTH];
 	
 	// I/O speed test
 	int			ioSpeedTest;
@@ -184,14 +186,9 @@ public:
 	pthread_mutex_t	hotpixel_mutex;
 	pthread_mutex_t	selfdark_mutex;
 	pthread_mutex_t	bgbuffer_mutex;
-	pthread_mutex_t	powderHitsRaw_mutex;
-	pthread_mutex_t	powderHitsAssembled_mutex;
-	pthread_mutex_t	powderHitsRawSquared_mutex;
-	pthread_mutex_t	powderBlanksRaw_mutex;
-	pthread_mutex_t	powderBlanksAssembled_mutex;
-	pthread_mutex_t	powderBlanksRawSquared_mutex;
 	pthread_mutex_t	nhits_mutex;
 	pthread_mutex_t	framefp_mutex;
+	pthread_mutex_t	powderfp_mutex;
 	pthread_mutex_t	peaksfp_mutex;
 	
 	
@@ -219,6 +216,9 @@ public:
 	long			nasics_x;
 	long			nasics_y;
 	float			detectorZprevious;	
+	float			radial_max;
+	long			radial_nn;
+	
 	
 	
 	/*
@@ -231,17 +231,27 @@ public:
 	int16_t			*hotpix_buffer;
 	int16_t			*hotpixelmask;
 	int16_t			*wiremask;
-	double			*powderHitsRaw;
-	double			*powderHitsAssembled;
-	double			*powderHitsRawSquared;
-	double			*powderBlanksRaw;
-	double			*powderBlanksAssembled;
-	double			*powderBlanksRawSquared;
 	float			*selfdark;
 	float			*gaincal;
 	float			avgGMD;
+	
+	/*
+	 *	Powder patterns/sums
+	 */
+	FILE			*powderlogfp[MAX_POWDER_CLASSES];
+	long			nPowderClasses;
+	long			nPowderFrames[MAX_POWDER_CLASSES];
+	double			*powderRaw[MAX_POWDER_CLASSES];
+	double			*powderRawSquared[MAX_POWDER_CLASSES];
+	double			*powderAssembled[MAX_POWDER_CLASSES];
+	pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
+	
+
 	long			npowderHits;
 	long			npowderBlanks;
+
 	long			nprocessedframes;
 	long			nhits;
 	long			nrecentprocessedframes;

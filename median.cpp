@@ -1,21 +1,32 @@
 /*
- *  median.cpp
- *  cheetah
- *
- *  Created by Anton Barty on 4/8/11.
- *  Copyright 2011 CFEL. All rights reserved.
- *
+ * Algorithm from N. Wirth's book, implementation by N. Devillard.
+ * This code in public domain.
+ *	See: http://ndevilla.free.fr/median/median.pdf
+ *	http://ndevilla.free.fr/median/median/src/wirth.c
  */
+
+/*---------------------------------------------------------------------------
+ Function :   kth_smallest()
+ In       :   array of elements, # of elements in the array, rank k
+ Out      :   one element
+ Job      :   find the kth smallest element in the array
+ Notice   :   use the median() macro defined below to get the median. 
+ 
+ Reference:
+ 
+ Author: Wirth, Niklaus 
+ Title: Algorithms + data structures = programs 
+ Publisher: Englewood Cliffs: Prentice-Hall, 1976 
+ Physical description: 366 p. 
+ Series: Prentice-Hall Series in Automatic Computation 
+ 
+ ---------------------------------------------------------------------------*/
 
 #include <stdint.h>
 #include "median.h"
 
-/*
- *	Find kth smallest element of a data array
- *	Algorithm from Wirth "Algorithms + data structures = programs" 
- *	Englewood Cliffs: Prentice-Hall, 1976, p. 366
- *	See: http://ndevilla.free.fr/median/median.pdf
- */
+#define median(a,n) kth_smallest(a,n,(((n)&1)?((n)/2):(((n)/2)-1)))
+
 
 // overloaded to int16_t
 #define SWAP(a,b) { int16_t t=(a);(a)=(b);(b)=t; }

@@ -174,6 +174,14 @@ void beginrun()
 	global.runNumber = getRunNumber();
 	frameNumber = 0;
 
+	// Reset the powder log files
+	for(long i=0; i<nPowderClasses; i++) {
+		char	filename[1024];
+		fclose(global.powderlogfp[i]);
+		sprintf(filename,"r%04u-class%i-sumLog.txt",global.runNumber,i);
+		global.powderlogfp[i] = fopen(filename, "w");
+	}
+	
 }
 
 /*
@@ -694,12 +702,6 @@ void endjob()
 	
 	// Cleanup
 	free(global.darkcal);
-	free(global.powderHitsAssembled);
-	free(global.powderHitsRaw);
-	free(global.powderHitsRawSquared);
-	free(global.powderBlanksAssembled);
-	free(global.powderBlanksRaw);
-	free(global.powderBlanksRawSquared);
 	free(global.hotpixelmask);
 	free(global.wiremask);
 	free(global.selfdark);
@@ -708,19 +710,22 @@ void endjob()
 	free(global.bg_buffer);
 	free(global.hotpix_buffer);
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
-	pthread_mutex_destroy(&global.powderHitsRaw_mutex);
-	pthread_mutex_destroy(&global.powderHitsRawSquared_mutex);
-	pthread_mutex_destroy(&global.powderHitsAssembled_mutex);
-	pthread_mutex_destroy(&global.powderBlanksRaw_mutex);
-	pthread_mutex_destroy(&global.powderBlanksRawSquared_mutex);
-	pthread_mutex_destroy(&global.powderBlanksAssembled_mutex);
 	pthread_mutex_destroy(&global.selfdark_mutex);
 	pthread_mutex_destroy(&global.hotpixel_mutex);
 	pthread_mutex_destroy(&global.bgbuffer_mutex);
 	pthread_mutex_destroy(&global.framefp_mutex);
 	pthread_mutex_destroy(&global.peaksfp_mutex);
+	pthread_mutex_destroy(&global.powderfp_mutex);
 	
-
+	for(long i=0; i<global.nPowderClasses; i++) {
+		free(global.powderRaw[i]);
+		free(global.powderRawSquared[i]);
+		free(global.powderAssembled[i]);
+		pthread_mutex_destroy(&global.powderRaw_mutex[i]);
+		pthread_mutex_destroy(&global.powderRawSquared_mutex[i]);
+		pthread_mutex_destroy(&global.powderAssembled_mutex[i]);
+	}
+	
 	
 	
 	printf("Done!\n");

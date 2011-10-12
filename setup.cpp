@@ -150,7 +150,7 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Powder pattern generation
-	//powdersum = 1;
+	nPowderClasses = 2;
 	powderthresh = -20000;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
@@ -276,29 +276,39 @@ void cGlobal::setup() {
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
 	selfdark = (float*) calloc(pix_nn, sizeof(float));
-	powderHitsRaw = (double*) calloc(pix_nn, sizeof(double));
-	powderHitsRawSquared = (double*) calloc(pix_nn, sizeof(double));
-	powderBlanksRaw = (double*) calloc(pix_nn, sizeof(double));
-	powderBlanksRawSquared = (double*) calloc(pix_nn, sizeof(double));
-	powderHitsAssembled = (double*) calloc(image_nn, sizeof(double));
-	powderBlanksAssembled = (double*) calloc(image_nn, sizeof(double));
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
 	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0; i<pix_nn; i++) {
 		selfdark[i] = 0;
-		powderHitsRaw[i] = 0;
-		powderHitsRawSquared[i] = 0;
-		powderBlanksRaw[i] = 0;
-		powderBlanksRawSquared[i] = 0;
 		hotpixelmask[i] = 1;
 		wiremask[i] = 1;
 	}
-	for(long i=0; i<image_nn; i++) {
-		powderHitsAssembled[i] = 0;
-		powderBlanksAssembled[i] = 0;
-	}	
+
+	// New way of doing powders
+	for(long i=0; i<nPowderClasses; i++) {
+		nPowderFrames[i] = 0;
+		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+		for(long j=0; j<pix_nn; j++) {
+			powderRaw[i][j] = 0;
+			powderRawSquared[i][j] = 0;
+		}
+		for(long j=0; j<image_nn; j++) {
+			powderAssembled[i][j] = 0;
+		}
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+		
+		char	filename[1024];
+		sprintf(filename,"r%04u-class%i-sumLog.txt",runNumber,i);
+		powderlogfp[i] = fopen(filename, "w");
+	}
+	
+	
 
 	
 	/*
@@ -310,14 +320,9 @@ void cGlobal::setup() {
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
-	pthread_mutex_init(&powderHitsRaw_mutex, NULL);
-	pthread_mutex_init(&powderHitsAssembled_mutex, NULL);
-	pthread_mutex_init(&powderHitsRawSquared_mutex, NULL);
-	pthread_mutex_init(&powderBlanksRaw_mutex, NULL);
-	pthread_mutex_init(&powderBlanksRawSquared_mutex, NULL);
-	pthread_mutex_init(&powderBlanksAssembled_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
+	pthread_mutex_init(&powderfp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
@@ -930,9 +935,13 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 	// Compute radial distances
 	pix_r = (float *) calloc(nn, sizeof(float));
+	radial_max = 0.0;
 	for(long i=0;i<nn;i++){
 		pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
+		if(pix_r[i] > radial_max)
+			radial_max = pix_r[i];
 	}	
+	radial_nn = ceil(radial_max)+1;
 }
 
 
@@ -1437,13 +1446,15 @@ void cGlobal::updateLogfile(void){
 	
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
-	//fclose(framefp);
-	//framefp = fopen (framefile,"a");
-	//fclose(cleanedfp);
-	//cleanedfp = fopen (cleanedfile,"a");
 	fflush(framefp);
 	fflush(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+
+	pthread_mutex_lock(&powderfp_mutex);
+	for(long i=0; i<nPowderClasses; i++) {
+		fflush(powderlogfp[i]);
+	}
+	pthread_mutex_unlock(&powderfp_mutex);
 	
 	pthread_mutex_lock(&peaksfp_mutex);
 	fflush(peaksfp);
@@ -1502,8 +1513,10 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "End time: %s\n",timestr);
 	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
-	fprintf(fp, "nFrames in hits powder pattern: %li\n",npowderHits);
-	fprintf(fp, "nFrames in blanks powder pattern: %li\n",npowderBlanks);
+	fprintf(fp, "nFrames in powder patterns:\n");
+	for(long i=0; i<nPowderClasses; i++) {
+		fprintf(fp, "\tclass%i: %li\n", i, nPowderFrames[i]);
+	}
 	fprintf(fp, "Number of hits: %li\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
@@ -1512,11 +1525,17 @@ void cGlobal::writeFinalLog(void){
 	fclose (fp);
 
 	
-	// Flush frame file buffer
+	// Close frame buffers
 	pthread_mutex_lock(&framefp_mutex);
 	fclose(framefp);
 	fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
+	
+	pthread_mutex_lock(&powderfp_mutex);
+	for(long i=0; i<nPowderClasses; i++) {
+		fclose(powderlogfp[i]);
+	}
+	pthread_mutex_unlock(&powderfp_mutex);
 	
 	pthread_mutex_lock(&peaksfp_mutex);
 	fclose(peaksfp);
