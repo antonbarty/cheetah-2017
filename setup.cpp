@@ -941,7 +941,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 		if(pix_r[i] > radial_max)
 			radial_max = pix_r[i];
 	}	
-	radial_nn = ceil(radial_max)+1;
+	radial_nn = (long int) ceil(radial_max)+1;
 }
 
 
