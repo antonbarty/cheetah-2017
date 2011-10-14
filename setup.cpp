@@ -60,6 +60,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(geometryFile, "");
 	pixelSize = 110e-6;
 	defaultCameraLengthMm = 0;
+	detposprev = 0;
 	
 	// Bad pixel mask
 	strcpy(badpixelFile, "");

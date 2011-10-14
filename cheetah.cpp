@@ -398,6 +398,12 @@ void event() {
 		 * 8" flange where the injector is mounted.  The injector itself is
 		 * about 4mm further away from the detector than this. */
 		// printf("New detector pos %e\n", detposnew);
+		if ( detposnew == 0 ) {
+			detposnew = global.detposprev;
+			printf("WARNING: detector position is zero, which could be an error\n"
+			       "         will use previous position (%f) instead...\n",detposnew);
+		}
+		global.detposprev = detposnew;
 		global.detectorZ = 500.0 + detposnew + 79.0;
 		update_camera_length = 1;
 		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
@@ -407,7 +413,7 @@ void event() {
 		 * occasionally gives a bogus value of detposnew=0, without a fail
 		 * message.  Hardware problem? 
 		 */
-	} 
+	}	 
 
 	if ( global.detectorZ == 0 ) {
 		/* What to do if there is no camera length information?  Keep skipping

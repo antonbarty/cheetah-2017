@@ -218,7 +218,7 @@ public:
 	float			detectorZprevious;	
 	float			radial_max;
 	long			radial_nn;
-	
+	float			detposprev;	
 	
 	
 	/*
