@@ -405,6 +405,9 @@ void event() {
 		}
 		global.detposprev = detposnew;
 		global.detectorZ = 500.0 + detposnew + 79.0;
+		/* Let's round to the nearest two decimal places 
+       * (10 micron, much less than a pixel size) */
+		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
 		update_camera_length = 1;
 		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
 		 * skip the first few XTC datagrams, you will likely get error messages
