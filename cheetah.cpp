@@ -175,7 +175,7 @@ void beginrun()
 	frameNumber = 0;
 
 	// Reset the powder log files
-	for(long i=0; i<nPowderClasses; i++) {
+	for(long i=0; i<global.nPowderClasses; i++) {
 		char	filename[1024];
 		fclose(global.powderlogfp[i]);
 		sprintf(filename,"r%04u-class%i-sumLog.txt",global.runNumber,i);
