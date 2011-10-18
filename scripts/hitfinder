@@ -145,7 +145,6 @@ fi
 # sanity checks
 [ -d $H5DIR ]   || UERROR "The hdf5 file path $H5DIR does not exist"
 [ -d $XTCDIR ]  || UERROR "The xtc file path $XTCDIR does not exist"
-[ -f $CHEETAH ] || UERROR "Can't find the cheetah program"
 hash $CHEETAH 2>&- || UERROR "$CHEETAH is not executable"
 [ $RUNDIR ]     || UERROR "You did not specify a run number"
 [ -d $CONFDIR ] || UERROR "Can't find the config directory $CONFDIR"
