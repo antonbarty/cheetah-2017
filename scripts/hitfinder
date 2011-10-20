@@ -4,7 +4,10 @@ echo ""
 SCRIPTNAME=$(basename $0)
 HELP="Need help?  Try $SCRIPTNAME -h"
 UERROR () {
-echo -e "$1\n$HELP\n"
+echo "================================================================"
+echo -e "$1\n$HELP"
+echo "================================================================"
+echo ""
 exit 1
 } 
 
@@ -140,59 +143,56 @@ EOF
 exit 0
 fi
 
-
-
 # sanity checks
 [ -d $H5DIR ]   || UERROR "The hdf5 file path $H5DIR does not exist"
 [ -d $XTCDIR ]  || UERROR "The xtc file path $XTCDIR does not exist"
 hash $CHEETAH 2>&- || UERROR "$CHEETAH is not executable"
 [ $RUNDIR ]     || UERROR "You did not specify a run number"
-[ -d $CONFDIR ] || UERROR "Can't find the config directory $CONFDIR"
 [ -f $(ls $XTCDIR/*$RUNDIR* | head -n 1 ) ] || \
 	UERROR "There are no xtc files named \*$RUNDIR\*.xtc in \n$XTCDIR"
+
+echo "This is run number $RUNNUMBER"
+
+# if darkcal override everything
+if [ $DARKCAL ]; then
+	TAG="dark"
+	INIFILE="darkcal.ini"
+fi
 
 # set the save directory if not specified
 SAVEDIR=$H5DIR/$RUNDIR
 [ $TAG ] && SAVEDIR=$SAVEDIR-$TAG
 
+# no ini file name specified? take a guess:
+[ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
+
 # full path to ini file not specified?  look for it:
-if [ "$INIFILE" = "" ]; then
-	# no ini file name specified? take a guess:
-	[ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini	
-	# if darkcal, override ini file
-	if [ $DARKCAL ]; then
-		TAG="dark"
-		SAVEDIR=$H5DIR/$RUNDIR-$TAG
-		INIFILE="darkcal.ini"
-	fi
+if [ ! -f $INIFILE ]; then
 	echo "Searching for an ini file named $INIFILE"
 	INIFILE=$(find $CONFIGDIR -name $INIFILE | head -n 1)	
-
 fi
+
 # any luck finding the ini file?
-[ $INIFILE ] || UERROR "Can't find an ini file"
-[ -f $INIFILE ] || UERROR "Could not find the ini file $INIFILE"
+[ $INIFILE ] || UERROR "Can't find the right ini file"
+[ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
+echo "Using this ini file: $INIFILE"
 
 # output from cheetah will go here
 LOGFILE=$SAVEDIR/cheetah.log
 
 # let me know what's about to happen
-echo "This is run number $RUNNUMBER"
-echo "The xtc directory is: $XTCDIR"
-echo "Results will be saved here: $SAVEDIR"
-echo "Using this ini file: $INIFILE"
-
+echo "Will search for xtc data here: $XTCDIR"
+echo "Will save hdf5 data here: $SAVEDIR"
 
 # Make it group friendly
 umask 002
 
-
 # Create directory for this data set
 if [ ! -d $SAVEDIR ]; then
 
-	echo "Creating data directory $SAVEDIR"
+	echo "Creating hdf5 data directory"
 	mkdir $SAVEDIR
-	echo "Moving to data directory"
+	echo "Moving to hdf5 data directory"
 	cd $SAVEDIR
 
 else
@@ -202,7 +202,7 @@ else
 	elif [ "$OVERWRITE" = "CHECK" ]; then
 		# check that the previous cheetah job has completed
 		if ! grep -Fxq ">-------- End of job --------<" $SAVEDIR/log.txt; then
-			UERROR "Previous job has not finished\nTo force the overwrite, use the -F flag"
+			UERROR "Previous job has not finished\nTo force the overwrite, use the -O option"
 		fi
 	fi
 	
@@ -219,9 +219,6 @@ else
 	      xtcfiles.txt \
 	      &> /dev/null
 fi
-
-
-
 
 # Create configuration files
 # silly, but let's expand environment variables within ini files...
