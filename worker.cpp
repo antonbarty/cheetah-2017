@@ -88,7 +88,7 @@ void *worker(void *threadarg) {
 
 
 	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->saturatedPixelMask[i] = 0;
+		threadInfo->saturatedPixelMask[i] = 1;
 		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
 	}
 	
