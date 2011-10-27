@@ -1045,16 +1045,24 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 					if ( (temp[e]-lbg) > global->hitfinderADC ) continue;								
 				}
 
+
 				inx[0] = i;
 				iny[0] = j;
 				nat = 1;
 				totI = 0; 
 				peak_com_x = 0; 
 				peak_com_y = 0; 
-
+				int badpix = 0;
+	
+				// start counting bad pixels
+				if ( global->hotpixelmask[e] == 0 ||
+					  global->badpixelmask[e] == 0 || 
+					  threadInfo->saturatedPixelMask[e] == 0 )
+					badpix += 1;
+		
 				// Keep looping until the pixel count within this peak does not change
 				do {
-
+					
 					lastnat = nat;
 					// Loop through points known to be within this peak
 					for(long p=0; p<nat; p++){
@@ -1072,6 +1080,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 							thisy = iny[p]+search_y[k]+mj*CSPAD_ASIC_NY;
 							e = thisx + thisy*global->pix_nx;
 							
+							// count bad pixels within or neighboring this peak
+							if ( global->hotpixelmask[e] == 0 ||
+								  global->badpixelmask[e] == 0 || 
+								  threadInfo->saturatedPixelMask[e] == 0 )
+								badpix += 1;
+
 							// Above threshold?
 							imbg = temp[e] - lbg; /* "intensitiy minus background" */
 							if(imbg > global->hitfinderADC){
@@ -1088,7 +1102,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 				} while(lastnat != nat);
 
 	 			// Peak or junk?
-				if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
+				if( nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount 
+				     && badpix==0 ) {
 					
 					threadInfo->peakNpix += nat;
 					threadInfo->peakTotal += totI;
