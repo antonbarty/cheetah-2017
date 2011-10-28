@@ -212,6 +212,7 @@ elif [ $# -eq 0 ]; then
 		NFILES=$(wc -l $FILELIST | awk '{print $1}')
 		echo "Data directory 1: $SAVEDIR1 ($(cat $FILELIST1 | wc -l) files)"
 		echo "Data directory 2: $SAVEDIR2 ($(cat $FILELIST2 | wc -l) files)"
+		[ $NFILES ] || NFILES="0"
 		echo "Found $NFILES files in directory 2 that are not in directory 1"
 	
 	fi
@@ -229,7 +230,8 @@ fi
 
 # check that there are files to look at
 if [ ! "$NFILES" -gt 0 ]; then
-	UERROR "Nothing to look at"
+	echo -e "Nothing to look at\n"
+	exit 0
 else
 	echo "Scanning through $NFILES files"
 fi
