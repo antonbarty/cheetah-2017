@@ -304,7 +304,7 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
+	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %i, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	pthread_mutex_lock(&global->powderfp_mutex);
