@@ -125,8 +125,9 @@ fi
 [ -d $TMPDIR ] || TMPDIR="."
 
 
-# pick off the header 
-HEADER=$(head -n 1 $FRAMESFILE)
+# pick off the header
+HEADEROG="$(head -n 1 $FRAMESFILE)"
+HEADER="$HEADEROG,"
 awk '{if (NR!=1) {print}}' $FRAMESFILE > $TMPDIR/framesorter.list
 FRAMESFILE=$TMPDIR/framesorter.list
 
@@ -157,7 +158,7 @@ if [ $SORTTAG ]; then
 fi
 
 # now put the header back in place
-[ $WRITEHEADER ] && echo $HEADER | cat - $FRAMESFILE > \
+[ $WRITEHEADER ] && echo $HEADEROG | cat - $FRAMESFILE > \
 	$TMPDIR/framesorter4.list && mv $TMPDIR/framesorter4.list $FRAMESFILE
 
 # pick off the columns of interest
