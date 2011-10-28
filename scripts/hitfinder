@@ -16,7 +16,7 @@ OVERWRITE="NO"
 [ $CHEETAH ] || CHEETAH="cheetah"
 [ $H5DIR ] || H5DIR="."
 [ $XTCDIR ] || XTCDIR="."
-[ $CONFDIR ] || CONFDIR="."
+[ $CONFIGDIR ] || CONFIGDIR="."
 
 # this is where the documentation is for hitfinder
 DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
