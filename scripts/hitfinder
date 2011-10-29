@@ -166,21 +166,20 @@ SAVEDIR=$H5DIR/$RUNDIR
 [ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
 
 # full path to ini file not specified?  look for it:
-if [ ! -f $INIFILE ]; then
-	echo "Searching for an ini file named $INIFILE"
-	INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
-	if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
-		echo "Found too many files:"
-		echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
-		exit 1
-	fi
+echo "Searching for an ini file named $INIFILE"
+INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
+# check if multiple files found
+if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
+	echo "Found too many files:"
+	echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
+	exit 1
 fi
 
 # any luck finding the ini file?
 [ $INIFILE ] || UERROR "Can't find the right ini file"
 [ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
 echo "Using this ini file: $INIFILE"
-
+pwd
 # output from cheetah will go here
 LOGFILE=$SAVEDIR/cheetah.log
 
