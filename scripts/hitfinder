@@ -3,6 +3,8 @@
 echo ""
 SCRIPTNAME=$(basename $0)
 HELP="Need help?  Try $SCRIPTNAME -h"
+
+# what to do if the user makes a mistake
 UERROR () {
 echo "================================================================"
 echo -e "$1\n$HELP"
@@ -17,9 +19,6 @@ OVERWRITE="NO"
 [ $H5DIR ] || H5DIR="."
 [ $XTCDIR ] || XTCDIR="."
 [ $CONFIGDIR ] || CONFIGDIR="."
-
-# this is where the documentation is for hitfinder
-DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
 
 # get options:
 while getopts "r:i:t:s:n:j:qdoOh" OPTION; do
@@ -69,16 +68,16 @@ Brief summary of options:
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
 
-Best to explain by example.  Firstly, you will need to set up some environment
-variables for hitfinder to work properly.  Sorry, but this seems to be the 
-easiest way to go without verbose input, or editing of the script itself.  Here
+Best to explain by example.  Firstly, you will probably want to set up some 
+environment variables for ease of use.  This seems to be the easiest way to 
+do things without verbose input, or editing of the script itself.  Here
 are the variables:
 
-XTCDIR:    Path to where the xtc data is
-H5DIR:     Path to where the results of cheetah will be written
-CONFIGDIR: Optionally specify a search path for ini files (./ is default)
-TMPDIR:    Optionally specify a place to put temporary files (/tmp is default)
-CHEETAH:   Optionally specify the path to cheetah (useful for developers)
+XTCDIR:    Path to where the xtc data is (default: ./)
+H5DIR:     Path to where the results of cheetah will be written (default: ./)
+CONFIGDIR: Search path for ini files (default: ./)
+TMPDIR:    A place to put temporary files (default: /tmp)
+CHEETAH:   The path to cheetah (default: cheetah)
 
 The simples thing to do is this:
 
@@ -169,7 +168,12 @@ SAVEDIR=$H5DIR/$RUNDIR
 # full path to ini file not specified?  look for it:
 if [ ! -f $INIFILE ]; then
 	echo "Searching for an ini file named $INIFILE"
-	INIFILE=$(find $CONFIGDIR -name $INIFILE | head -n 1)	
+	INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
+	if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
+		echo "Found too many files:"
+		echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
+		exit 1
+	fi
 fi
 
 # any luck finding the ini file?
@@ -232,10 +236,8 @@ if [ $NTHREADS ]; then
 	mv tmp.ini cheetah.ini
 fi
 
-
 # keep a copy of these in the save directory, just in case they change elsewhere
 echo "Copying hdf5 files into the data directory"
-#for $i in {geometry darkcal peakmask badpixelmap}
 cp $(awk -F '=' '/^geometry/ {print $2}' $INIFILE) $SAVEDIR/geometry.h5 &> /dev/null
 cp $(awk -F '=' '/^darkcal/ {print $2}' $INIFILE) $SAVEDIR/darkcal.h5 &> /dev/null
 cp $(awk -F '=' '/^gaincal/ {print $2}' $INIFILE) $SAVEDIR/gaincal.h5 &> /dev/null
