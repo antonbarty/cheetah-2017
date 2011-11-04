@@ -1166,7 +1166,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "saveraw=%d\n",saveRaw);
 	fprintf(fp, "saveassembled=%d\n",saveAssembled);
 	fprintf(fp, "savedetectorcorrectedonly=%d\n",saveDetectorCorrectedOnly);
-	fprintf(fp, "avedetectorraw=%d\n",saveDetectorRaw);
+	fprintf(fp, "savedetectorraw=%d\n",saveDetectorRaw);
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveinterval=%d\n",saveInterval);
 	fprintf(fp, "useautohotpixel=%d\n",useAutoHotpixel);
