@@ -1,0 +1,201 @@
+#!/bin/bash
+
+
+SCRIPTNAME=$(basename $0)
+HELP="Need help?  Try $SCRIPTNAME -h"
+UERROR () {
+echo -e "$1\n$HELP\n"
+exit 1
+} 
+DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
+WRITEHEADER="YES"
+
+# check optional inputs
+while getopts "r:t:s:p:c:f:RhPHE" OPTION; do
+	case $OPTION in
+	r)
+		if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
+			RUNDIR=$(printf 'r%04d' $OPTARG)
+			RUNNUMBER=$(printf '%d' $OPTARG)
+		else
+			UERROR "Specify a numerical value for the run number"
+		fi
+		;;	
+	f) FRAMESFILE=$OPTARG;;
+	t) TAG=$OPTARG;;
+	s) SORTTAG=$OPTARG;;
+	R) REVERSE="YES";;
+	p) PICKTAGS=$OPTARG;;
+	P) FIXPATH="YES";;
+	h) SHOWHELP="YES";;
+	c) CONDITIONS=$OPTARG
+		USECONDITIONS="YES";;
+	H) WRITEHEADER="";;
+	E) CHECKEXISTS="YES";;
+	?) UERROR "Unrecognized flag: $OPTION";;
+	esac
+done
+shift `expr $OPTIND - 1`
+
+if [ $SHOWHELP ]; then
+cat << EOF
+This is framesorter, a bash script for parsing the output of cheetah.
+
+Rick Kirian, Oct. 2011
+
+A brief summary of the options:
+
+   -h       Print this help document
+   -r xxx   Run number
+   -t xxx   Tag name
+   -f xxx   Path to frames file
+   -s xxx   Name of the column to sort by
+   -R xxx   Sort in reverse order
+   -p xxx   Pick the tags you want
+   -P xxx   Expand path to hdf5 files
+   -c xxx   Set conditions on values within columns
+   -H       Don't print the header
+   -E       Check that files exist
+
+Best to explain by example.  Say you just ran cheetah, which has written some
+interesting stuff into the file /some/path/frames.txt.  In the simplest case, 
+you can run framesorter like this:
+
+> framesorter -f /some/path/frames.txt
+
+This does nothing except dump the contents of frames.txt to the terminal.  Note
+that frames.txt is a comma-separated values (csv) file.  The first row is the
+"header", which has some names like "EventName", "npeaks", "nPixels" and so on.
+Things get interesting when you use the "condition" flag like this:
+
+> framesorter -f /some/path/frames.txt -c 'npeaks > 100 && nPixels < 1000'
+
+The result in this case is again to dump frames.txt to the terminal, but this
+time only the rows for which the npeaks value is greater than 100, and the
+nPixels value is less than 1000.  You might also want to sort the files by some
+interesting value- try using the "sort" flag:
+
+> framesorter -f /some/path/frames.txt -s 'npeaks'
+
+Again, frames.txt is dumped, but this time it is listed in order by the values
+in the "npeaks" column.  If you'd like it to be in the reverse order, use the 
+-R flag along with -s.
+
+Sometimes we only want particular columns to print out.  You can do this with 
+the "pick" flag, like this:
+
+> framesorter -f /some/path/frames.txt -p 'npeaks,EventName'
+
+Now only the two columns with the names "npeaks" and "EventName" will be 
+dumped.  You can of course use a combination of the various flags above.
+
+A few other useful things.  The -H flag will omit the header.  The -P flag will
+expand the "EventName" column to include the full path to the file, which is 
+handy when making a file list for input to indexamajig, quickview, or whatever.
+The -E flag will check that the files actually exists.
+
+Finally, if you define the environment variable H5DIR to point to your data 
+directory, and you name your sub-directories with names like "r0054-sometag",
+you can run framesorter like this:
+
+> framesorter -r 54 -t sometag
+
+which make's use of Rick's "tag" convention.
+
+Hope this helps.  Have fun.  And please let me know if this is broken in some 
+way- send an email to rkirian@asu.edu.
+
+EOF
+exit 0
+fi
+
+
+# frames.txt file to parse
+if [ "$FRAMESFILE" = "" ]; then
+	SAVEDIR=$H5DIR/$RUNDIR
+	[ $TAG ] && SAVEDIR=$SAVEDIR-$TAG
+	FRAMESFILE=$SAVEDIR/frames.txt
+else
+	SAVEDIR=$(dirname $FRAMESFILE)
+fi
+[ -f $FRAMESFILE ] || UERROR "Can't find $FRAMESFILE"
+
+# If no tmpdir environment variable, take a guess
+[ -d $TMPDIR ] || TMPDIR="/tmp"
+[ -d $TMPDIR ] || TMPDIR="."
+
+
+# pick off the header
+HEADEROG="$(head -n 1 $FRAMESFILE)"
+HEADER="$HEADEROG,"
+awk '{if (NR!=1) {print}}' $FRAMESFILE > $TMPDIR/framesorter.list
+FRAMESFILE=$TMPDIR/framesorter.list
+
+# narrow down the list by provided conditions
+if [ "$USECONDITIONS" = "YES" ]; then
+	POS=0
+	while read -d ',' LABEL; do
+		POS=$((POS + 1))
+		LABEL=$(echo $LABEL | sed "s/^ //g")
+		CONDITIONS=$(echo $CONDITIONS | sed "s/$LABEL/\$${POS}/g")
+	done < <(echo $HEADER)
+	IFS=$IFS0
+	awk -F "," "$CONDITIONS {print}" $FRAMESFILE > $TMPDIR/framesorter1.list
+	FRAMESFILE=$TMPDIR/framesorter1.list
+fi
+
+# sort by the specified tag
+if [ $SORTTAG ]; then
+	POS=0
+	while read -d ',' LABEL; do
+		POS=$(($POS + 1))
+		LABEL=$(echo $LABEL | sed "s/^ //g")
+		[ "$LABEL" = "$SORTTAG" ] && break
+	done < <(echo $HEADER)
+	[ $REVERSE ] && EXTRA="-r"
+	awk -F "," "{print \$$POS, \"\t\", \$0}" $FRAMESFILE | sort -n $EXTRA | cut -f 2- > $TMPDIR/framesorter2.list
+	FRAMESFILE=$TMPDIR/framesorter2.list
+fi
+
+# now put the header back in place
+[ $WRITEHEADER ] && echo $HEADEROG | cat - $FRAMESFILE > \
+	$TMPDIR/framesorter4.list && mv $TMPDIR/framesorter4.list $FRAMESFILE
+
+# pick off the columns of interest
+if [ $PICKTAGS ]; then
+	POS=0
+	while read -d ',' LABEL; do
+		POS=$((POS + 1))
+		LABEL=$(echo $LABEL | sed "s/^ //g")
+		PICKTAGS=$(echo $PICKTAGS | sed "s/$LABEL/\$${POS},\",\"/g")
+	done < <(echo $HEADER)
+	awk -F "," "{print $PICKTAGS}" $FRAMESFILE | \
+		sed "s/^ //g" | \
+		sed "s/ , /,/g" | \
+		sed "s/ ,$//g" > $TMPDIR/framesorter3.list
+	FRAMESFILE=$TMPDIR/framesorter3.list	
+fi
+
+# silly, but convenient: swap file name with full path to file
+if [ $FIXPATH ]; then
+	sed 's/LCLS_/'$(echo $SAVEDIR | sed 's/\//\\\//g')'\/LCLS_/g' $FRAMESFILE > $TMPDIR/framesorter5.list
+	FRAMESFILE=$TMPDIR/framesorter5.list
+fi
+
+# finally, get rid of files that don't exist
+# this is actually broken - it only works if you use the full path, 
+# and pick only the filenames
+if [ $CHECKEXISTS ]; then
+	TF=$TMPDIR/framesorter6.list
+	[ -f $TF ] && rm $TF
+	touch $TF
+	while read line; do
+		filename=$line #`expr match "$line" '.*\([ ,]*h5\)'`
+		[ -e $filename ] && echo $filename >> $TF
+	done < <(cat $FRAMESFILE)
+	FRAMESFILE=$TF
+fi
+
+# dump the result to terminal
+cat $FRAMESFILE
+

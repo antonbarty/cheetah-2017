@@ -35,6 +35,8 @@ typedef struct {
 	float		*radialAverageCounter;
 	int			nPeaks;
 	int			nHot;
+	int16_t *   saturatedPixelMask;
+	
 	
 	// TOF data
 	int			TOFPresent;
@@ -55,7 +57,7 @@ typedef struct {
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
-	
+	int		*good_peaks;           // Good peaks, after post peak-finding criteria	
 	
 	// Beamline data, etc
 	int			seconds;
@@ -153,6 +155,7 @@ void writeHDF5(tThreadInfo*, cGlobal*);
 void writePeakFile(tThreadInfo *threadInfo, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void saveRunningSums(cGlobal*);
+void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
 int16_t kth_smallest(int16_t*, long, long);
 
 

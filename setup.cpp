@@ -40,7 +40,9 @@ void cGlobal::defaultConfiguration(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
-	
+
+	// Default experiment info (in case beamline data is missing...)
+	defaultPhotonEnergyeV = 0; 	
 	
 	// Detector info
 	strcpy(detectorTypeName, "cspad");
@@ -55,20 +57,26 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Geometry
-	strcpy(geometryFile, "geometry/cspad_pixelmap.h5");
+	strcpy(geometryFile, "");
 	pixelSize = 110e-6;
+	defaultCameraLengthMm = 0;
+	detposprev = 0;
 	
 	// Bad pixel mask
-	strcpy(badpixelFile, "badpixels.h5");
+	strcpy(badpixelFile, "");
 	useBadPixelMask = 0;
 
+	// Saturated pixels
+	maskSaturatedPixels = 0;
+	pixelSaturationADC = 15564;  // 95% of 2^14 ??
+
 	// Static dark calibration (electronic offsets)
-	strcpy(darkcalFile, "darkcal.h5");
-	useDarkcalSubtraction = 1;
+	strcpy(darkcalFile, "");
+	useDarkcalSubtraction = 0;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
-	strcpy(wireMaskFile, "wiremask.h5");
+	strcpy(wireMaskFile, "");
 	cmModule = 0;
 	cmFloor = 0.1;
 	cmSubtractUnbondedPixels = 0;
@@ -76,14 +84,14 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Gain calibration correction
-	strcpy(gaincalFile, "gaincal.h5");
+	strcpy(gaincalFile, "");
 	useGaincal = 0;
 	invertGain = 0;
 	generateGaincal = 0;
 	
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	subtractBg = 0;
+	//subtractBg = 0;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -114,8 +122,17 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMinPixCount = 3;
 	hitfinderMaxPixCount = 20;
 	hitfinderUsePeakmask = 0;
-	strcpy(peaksearchFile, "peakmask.h5");
+	hitfinderCheckGradient = 0;
+	hitfinderMinGradient = 0;
+	strcpy(peaksearchFile, "");
 	savePeakInfo = 1;
+	hitfinderCheckPeakSeparation = 0;
+	hitfinderMaxPeakSeparation = 50;
+	hitfinderSubtractLocalBG = 0;
+	hitfinderLocalBGRadius = 4;
+	hitfinderLimitRes = 0;
+	hitfinderMinRes = 1e20;
+	hitfinderMaxRes = 0;
 	
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -317,7 +334,7 @@ void cGlobal::setup() {
 	if(generateDarkcal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		subtractBg = 0;
+		//subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useGaincal=0;
 		useAutoHotpixel = 0;
@@ -332,12 +349,13 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
+		printf("keyword generatedarkcal set: overriding some keyword values!!!");
 	}
 
 	if(generateGaincal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		subtractBg = 0;
+		//subtractBg = 0;
 		useDarkcalSubtraction = 1;
 		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
@@ -352,6 +370,7 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		startFrames = 0;
 		saveDetectorCorrectedOnly = 1;
+		printf("keyword generategaincal set: overriding some keyword values!!!");
 	}
 
 	
@@ -383,6 +402,7 @@ void cGlobal::setup() {
 	last_hotpix_update = 0;
 	hotpixRecalc = bgRecalc;
 	nhot = 0;
+	detectorZprevious = 0;	
 	
 	time(&tlast);
 	lastTimingFrame=0;
@@ -490,8 +510,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 *	Parse known tags
 	 */
-	
-	if (!strcmp(tag, "detectortype")) {
+	if (!strcmp(tag, "defaultphotonenergyev")) {
+		defaultPhotonEnergyeV = atof(value);
+	} 
+	else if (!strcmp(tag, "defaultcameralengthmm")) {
+		defaultCameraLengthMm = atof(value);
+	}
+	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
 	}
 	else if (!strcmp(tag, "detectorname")) {
@@ -543,7 +568,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "wiremaskfile")) {
 		strcpy(wireMaskFile, value);
 	}
-	else if (!strcmp(tag, "subtractBehindWires")) {
+	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
 	}
 	else if (!strcmp(tag, "usegaincal")) {
@@ -559,7 +584,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		generateGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
-		subtractBg = atoi(value);
+		printf("The keyword subtractBg has been changed.  It is\n"
+             "now known as useDarkcalSubtraction.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+
+	//	subtractBg = atoi(value);
 	}
 	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
@@ -600,8 +630,18 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "useautohotpixel")) {
 		useAutoHotpixel = atoi(value);
 	}
+	else if (!strcmp(tag, "masksaturatedpixels")) {
+		maskSaturatedPixels = atoi(value);
+	}
+	else if (!strcmp(tag, "pixelsaturationadc")) {
+		pixelSaturationADC = atoi(value);
+	}
 	else if (!strcmp(tag, "useselfdarkcal")) {
-		useSubtractPersistentBackground = atoi(value);
+		printf("The keyword useSelfDarkcal has been changed.  It is\n"
+             "now known as useSubtractPersistentBackground.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+	//	useSubtractPersistentBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -675,6 +715,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
 	}
+	else if (!strcmp(tag, "hitfindercheckgradient")) {
+		hitfinderCheckGradient = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindermingradient")) {
+		hitfinderMinGradient = atof(value);
+	}
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);
 	}
@@ -693,9 +739,27 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
-	
-	
-	
+	else if (!strcmp(tag, "hitfindercheckpeakseparation")) {
+		hitfinderCheckPeakSeparation = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxpeakseparation")) {
+		hitfinderMaxPeakSeparation = atof(value);
+	}
+	else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
+		hitfinderSubtractLocalBG = atoi(value);
+	}	
+	else if (!strcmp(tag, "hitfinderlocalbgradius")) {
+		hitfinderLocalBGRadius = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderlimitres")) {
+		hitfinderLimitRes = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderminres")) {
+		hitfinderMinRes = atof(value);
+	}
+	else if (!strcmp(tag, "hitfindermaxres")) {
+		hitfinderMaxRes = atof(value);
+	}
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
 	}
@@ -726,7 +790,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "scaledarkcal")) {
-		scaleBackground = atoi(value);
+		printf("The keyword scaleDarkcal does the same thing as scaleBackground.\n"
+             "Use scaleBackground instead.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
+	//	scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);
@@ -736,7 +804,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	
 	// Unknown tags
 	else {
-		printf("\tUnknown tag (ignored): %s = %s\n",tag,value);
+		printf("\tUnknown tag: %s = %s\n",tag,value);
+		printf("Aborting...\n");
+		exit(1);
 	}
 }
 
@@ -796,12 +866,20 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	long	nx = 8*CSPAD_ASIC_NX;
 	long	ny = 8*CSPAD_ASIC_NY;
 	long	nn = nx*ny;
+	long 	i;
 	pix_nx = nx;
 	pix_ny = ny;
 	pix_nn = nn;
 	pix_x = (float *) calloc(nn, sizeof(float));
 	pix_y = (float *) calloc(nn, sizeof(float));
 	pix_z = (float *) calloc(nn, sizeof(float));
+	pix_kx = (float *) calloc(nn, sizeof(float));
+	pix_ky = (float *) calloc(nn, sizeof(float));
+	pix_kz = (float *) calloc(nn, sizeof(float));
+	pix_kr = (float *) calloc(nn, sizeof(float));
+	pix_res = (float *) calloc(nn, sizeof(float));
+	hitfinderResMask = (int *) calloc(nn, sizeof(int)); // is there a better place for this?
+	for (i=0;i<nn;i++) hitfinderResMask[i]=1;
 	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
 	
 	
@@ -814,7 +892,7 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 	
 	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
-	for(long i=0;i<nn;i++){
+	for(i=0;i<nn;i++){
 		pix_x[i] /= pix_dx;
 		pix_y[i] /= pix_dx;
 		pix_z[i] /= pix_dx;
@@ -864,33 +942,41 @@ void cGlobal::readDetectorGeometry(char* filename) {
 		if(pix_r[i] > radial_max)
 			radial_max = pix_r[i];
 	}	
-	radial_nn = ceil(radial_max)+1;
+	radial_nn = (long int) ceil(radial_max)+1;
 }
 
 
 /*
  *	Read in darkcal file
  */
-void cGlobal::readDarkcal(char *filename){
-	
-	printf("Reading darkcal configuration:\n");
-	printf("\t%s\n",filename);
-	
+void cGlobal::readDarkcal(char *filename){	
 	
 	// Create memory space and pad with zeros
 	darkcal = (int32_t*) calloc(pix_nn, sizeof(int32_t));
 	memset(darkcal,0, pix_nn*sizeof(int32_t));
+
+	// Do we need a darkcal file?	
+	if (useDarkcalSubtraction == 0){
+		return;
+	}
 	
-	
-	
+	// Check if a darkcal file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Darkcal file path was not specified.\n");
+		exit(1);
+	}	
+
+	printf("Reading darkcal configuration:\n");
+	printf("\t%s\n",filename);
+
 	// Check whether pixel map file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tDarkcal file does not exist: %s\n",filename);
-		printf("\tDefaulting to all-zero darkcal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -901,8 +987,8 @@ void cGlobal::readDarkcal(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to all-zero darkcal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	// Copy into darkcal array
@@ -917,15 +1003,27 @@ void cGlobal::readDarkcal(char *filename){
  */
 void cGlobal::readGaincal(char *filename){
 	
-	printf("Reading detector gain calibration:\n");
-	printf("\t%s\n",filename);
-	
-	
+
 	// Create memory space and set default gain to 1 everywhere
 	gaincal = (float*) calloc(pix_nn, sizeof(float));
 	for(long i=0;i<pix_nn;i++)
 		gaincal[i] = 1;
-	
+
+	// Do we even need a gaincal file?
+	if ( useGaincal == 0 ){
+		return;
+	}
+
+	// Check if a gain calibration file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Gain calibration file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading detector gain calibration:\n");
+	printf("\t%s\n",filename);
+
 		
 	// Check whether gain calibration file exists!
 	FILE* fp = fopen(filename, "r");
@@ -933,8 +1031,8 @@ void cGlobal::readGaincal(char *filename){
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tGain calibration file does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform gaincal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -946,8 +1044,8 @@ void cGlobal::readGaincal(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform gaincal\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -975,15 +1073,27 @@ void cGlobal::readGaincal(char *filename){
  */
 void cGlobal::readPeakmask(char *filename){
 	
-	printf("Reading peak search mask:\n");
-	printf("\t%s\n",filename);
-	
+
 	
 	// Create memory space and default to searching for peaks everywhere
 	peakmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0;i<pix_nn;i++)
 		peakmask[i] = 1;
 	
+	// Do we even need a peakmask file?
+	if ( hitfinderUsePeakmask == 0 ){
+		return;
+	}
+
+	// Check if a peakmask file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Peakmask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading peak search mask:\n");
+	printf("\t%s\n",filename);
 	
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
@@ -991,8 +1101,8 @@ void cGlobal::readPeakmask(char *filename){
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tPeak search mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform search mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -1004,8 +1114,8 @@ void cGlobal::readPeakmask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform peak search mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -1020,9 +1130,6 @@ void cGlobal::readPeakmask(char *filename){
  */
 void cGlobal::readBadpixelMask(char *filename){
 	
-	printf("Reading bad pixel mask:\n");
-	printf("\t%s\n",filename);
-	
 	
 	// Create memory space and default to searching for peaks everywhere
 	badpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
@@ -1030,14 +1137,29 @@ void cGlobal::readBadpixelMask(char *filename){
 		badpixelmask[i] = 1;
 	
 	
+	// Do we need a bad pixel map?
+	if ( useBadPixelMask == 0 ){
+		return;
+	}
+
+	// Check if a bad pixel mask file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Bad pixel mask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading bad pixel mask:\n");
+	printf("\t%s\n",filename);
+
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tBad pixel mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform bad pixel mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -1049,8 +1171,8 @@ void cGlobal::readBadpixelMask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform bad pixel mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -1060,28 +1182,41 @@ void cGlobal::readBadpixelMask(char *filename){
 }
 
 /*
- *	Read in peaksearch mask
+ *	Read in wire mask
  */
 void cGlobal::readWireMask(char *filename){
 	
-	printf("Reading wire mask:\n");
-	printf("\t%s\n",filename);
-	
-	
+
 	// Create memory space and default to searching for peaks everywhere
 	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
 	for(long i=0;i<pix_nn;i++)
 		wiremask[i] = 1;
 	
-	
+	// Do we need this file?
+	if ( cmSubtractBehindWires == 0 ){
+		return;
+	}
+
+	printf("Reading wire mask:\n");
+	printf("\t%s\n",filename);
+
+	// Check if a wire mask file has been specified.
+	// We need to exit if this is expected but does not
+	// exist.
+	if ( strcmp(filename,"") == 0 ){
+		printf("Wire mask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
 		printf("\tWire mask does not exist: %s\n",filename);
-		printf("\tDefaulting to uniform mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	}
 	
 	
@@ -1093,8 +1228,8 @@ void cGlobal::readWireMask(char *filename){
 	// Correct geometry?
 	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
 		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tDefaulting to uniform wire mask\n");
-		return;
+		printf("\tAborting...\n");
+		exit(1);
 	} 
 	
 	
@@ -1133,82 +1268,105 @@ void cGlobal::writeInitialLog(void){
 	
 	fprintf(fp, "start time: %s\n",timestr);
 
-	fprintf(fp, "\nIni parameters:\n");
-	fprintf(fp, "\n");
-	fprintf(fp, "detectortype=%s\n",detectorTypeName);
-	fprintf(fp, "detectorname=%s\n",detectorName);
-	fprintf(fp, "startatframe=%d\n",startAtFrame);
-	fprintf(fp, "stopatframe=%d\n",stopAtFrame);
-	fprintf(fp, "nthreads=%ld\n",nThreads);
-	fprintf(fp, "usehelperthreads=%d\n",useHelperThreads);
-	fprintf(fp, "iospeedtest=%d\n",ioSpeedTest);
-	fprintf(fp, "threadpurge=%d\n",threadPurge);
+	fprintf(fp,"\n\n");
+	fprintf(fp, ">-------- Start of ini params --------<\n");
+	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
+	fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
+	fprintf(fp, "detectorType=%s\n",detectorTypeName);
+	fprintf(fp, "detectorName=%s\n",detectorName);
+	fprintf(fp, "startAtFrame=%d\n",startAtFrame);
+	fprintf(fp, "stopAtFrame=%d\n",stopAtFrame);
+	fprintf(fp, "nThreads=%ld\n",nThreads);
+	fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
+	fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
+	fprintf(fp, "threadPurge=%d\n",threadPurge);
 	fprintf(fp, "geometry=%s\n",geometryFile);
 	fprintf(fp, "darkcal=%s\n",darkcalFile);
 	fprintf(fp, "gaincal=%s\n",gaincalFile);
 	fprintf(fp, "peakmask=%s\n",peaksearchFile);
-	fprintf(fp, "badpixelmap=%s\n",badpixelFile);
-	fprintf(fp, "subtractcmmodule=%d\n",cmModule);
-	fprintf(fp, "cmmodule=%d\n",cmModule);
-	fprintf(fp, "subtractunbondedpixels=%d\n",cmSubtractUnbondedPixels);
-	fprintf(fp, "wiremaskfile=%s\n",wireMaskFile);
+	fprintf(fp, "badPixelMap=%s\n",badpixelFile);
+	fprintf(fp, "subtractcmModule=%d\n",cmModule);
+	fprintf(fp, "cmModule=%d\n",cmModule);
+	fprintf(fp, "subtractUnbondedPixels=%d\n",cmSubtractUnbondedPixels);
+	fprintf(fp, "wiremaskFile=%s\n",wireMaskFile);
 	fprintf(fp, "subtractBehindWires=%d\n",cmSubtractBehindWires);
-	fprintf(fp, "usegaincal=%d\n",useGaincal);
-	fprintf(fp, "invertgain=%d\n",invertGain);
-	fprintf(fp, "generatedarkcal=%d\n",generateDarkcal);
-	fprintf(fp, "generategaincal=%d\n",generateGaincal);
-	fprintf(fp, "subtractbg=%d\n",subtractBg);
-	fprintf(fp, "usebadpixelmask=%d\n",useBadPixelMask);
-	fprintf(fp, "usedarkcalsubtraction=%d\n",useDarkcalSubtraction);
+	fprintf(fp, "useGaincal=%d\n",useGaincal);
+	fprintf(fp, "invertGain=%d\n",invertGain);
+	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
+	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
+	//fprintf(fp, "subtractBg=%d\n",subtractBg);
+	fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
+	fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
+<<<<<<< HEAD
 	fprintf(fp, "savehits=%d\n",savehits);
 	fprintf(fp, "savepeakinfo=%d\n",savePeakInfo);
 	fprintf(fp, "saveraw=%d\n",saveRaw);
 	fprintf(fp, "saveassembled=%d\n",saveAssembled);
 	fprintf(fp, "savedetectorcorrectedonly=%d\n",saveDetectorCorrectedOnly);
 	fprintf(fp, "savedetectorraw=%d\n",saveDetectorRaw);
+=======
+	fprintf(fp, "saveHits=%d\n",savehits);
+	fprintf(fp, "savePeakInfo=%d\n",savePeakInfo);
+	fprintf(fp, "saveRaw=%d\n",saveRaw);
+	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
+	fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
+	fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
+>>>>>>> a55db4d0e318c6637e903a23a909221b135db29c
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
-	fprintf(fp, "saveinterval=%d\n",saveInterval);
-	fprintf(fp, "useautohotpixel=%d\n",useAutoHotpixel);
-	fprintf(fp, "useselfdarkcal=%d\n",useSubtractPersistentBackground);
-	fprintf(fp, "subtractpersistentbackground=%d\n",useSubtractPersistentBackground);
-	fprintf(fp, "uselocalbackgroundsubtraction=%d\n",useLocalBackgroundSubtraction);
-	fprintf(fp, "localbackgroundradius=%d\n",localBackgroundRadius);
-	fprintf(fp, "tofname=%s\n",tofName);
-	fprintf(fp, "tofchannel=%d\n",TOFchannel);
-	fprintf(fp, "hitfinderusetof=%d\n",hitfinderUseTOF);
-	fprintf(fp, "hitfindertofminsample=%d\n",hitfinderTOFMinSample);
-	fprintf(fp, "hitfindertofmaxsample=%d\n",hitfinderTOFMaxSample);
-	fprintf(fp, "hitfindertofthresh=%d\n",hitfinderTOFThresh);
-	fprintf(fp, "cmfloor=%f\n",cmFloor);
-	fprintf(fp, "pixelsize=%f\n",pixelSize);
-	fprintf(fp, "debuglevel=%d\n",debugLevel);
-	fprintf(fp, "hotpixfreq=%f\n",hotpixFreq);
-	fprintf(fp, "hotpixadc=%d\n",hotpixADC);
-	fprintf(fp, "hotpixmemory=%d\n",hotpixMemory);
-	fprintf(fp, "powderthresh=%d\n",powderthresh);
-	fprintf(fp, "powdersumhits=%d\n",powderSumHits);
-	fprintf(fp, "powdersumblanks=%d\n",powderSumBlanks);
-	fprintf(fp, "hitfinderadc=%d\n",hitfinderADC);
-	fprintf(fp, "hitfindernat=%ld\n",hitfinderNAT);
-	fprintf(fp, "hitfindertit=%d\n",hitfinderTAT);
-	fprintf(fp, "hitfindercluster=%d\n",hitfinderCluster);
-	fprintf(fp, "hitfindernpeaks=%d\n",hitfinderNpeaks);
-	fprintf(fp, "hitfindernpeaksmax=%d\n",hitfinderNpeaksMax);
-	fprintf(fp, "hitfinderalgorithm=%d\n",hitfinderAlgorithm);
-	fprintf(fp, "hitfinderminpixcount=%d\n",hitfinderMinPixCount);
-	fprintf(fp, "hitfindermaxpixcount=%d\n",hitfinderMaxPixCount);
-	fprintf(fp, "hitfinderusepeakmask=%d\n",hitfinderUsePeakmask);
-	fprintf(fp, "selfdarkmemory=%li\n",bgMemory);
-	fprintf(fp, "bgmemory=%li\n",bgMemory);
-	fprintf(fp, "bgrecalc=%d\n",bgRecalc);
-	fprintf(fp, "bgmedian=%d\n",bgMedian);
-	fprintf(fp, "bgincludehits=%d\n",bgIncludeHits);
-	fprintf(fp, "bgnobeamreset=%d\n",bgNoBeamReset);
-	fprintf(fp, "bgfiducialglitchreset=%d\n",bgFiducialGlitchReset);
-	fprintf(fp, "scalebackground=%d\n",scaleBackground);
-	fprintf(fp, "scaledarkcal=%d\n",scaleBackground);
-	fprintf(fp, "startframes=%d\n",startFrames);
+	fprintf(fp, "saveInterval=%d\n",saveInterval);
+	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
+	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
+	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
+	fprintf(fp, "localBackgroundRadius=%d\n",localBackgroundRadius);
+	fprintf(fp, "tofName=%s\n",tofName);
+	fprintf(fp, "tofChannel=%d\n",TOFchannel);
+	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
+	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
+	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
+	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+	fprintf(fp, "cmFloor=%f\n",cmFloor);
+	fprintf(fp, "pixelSize=%f\n",pixelSize);
+	fprintf(fp, "debugLevel=%d\n",debugLevel);
+	fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
+	fprintf(fp, "hotpixADC=%d\n",hotpixADC);
+	fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
+	fprintf(fp, "powderThresh=%d\n",powderthresh);
+	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
+	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
+	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+	fprintf(fp, "hitfinderNAT=%ld\n",hitfinderNAT);
+	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
+	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
+	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
+	fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
+	fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
+	fprintf(fp, "hitfinderNPeaksMax=%d\n",hitfinderNpeaksMax);
+	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
+	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
+	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
+	fprintf(fp, "hitfinderCheckPeakSeparation=%d\n",hitfinderCheckPeakSeparation);
+	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
+	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
+	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
+	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
+	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
+	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
+	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
+	fprintf(fp, "bgMemory=%li\n",bgMemory);
+	fprintf(fp, "bgRecalc=%d\n",bgRecalc);
+	fprintf(fp, "bgMedian=%f\n",bgMedian);
+	fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
+	fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
+	fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
+	fprintf(fp, "scaleBackground=%d\n",scaleBackground);
+	//fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
+	fprintf(fp, "startFrames=%d\n",startFrames);
+	fprintf(fp, ">-------- End of ini params --------<\n");
 	fprintf(fp, "\n\n");	
 	
 	fprintf(fp, ">-------- Start of job --------<\n");
@@ -1225,7 +1383,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV\n");
 	
 
 	

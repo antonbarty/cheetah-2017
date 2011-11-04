@@ -1,0 +1,283 @@
+#!/bin/bash
+
+echo ""
+
+SCRIPTNAME=$(basename $0)
+HELP="Need help?  Try $SCRIPTNAME -h"
+UERROR () {
+echo -e "$1\n$HELP\n"
+exit 1
+} 
+
+DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
+
+# check optional inputs
+while getopts "r:t:i:b:Rm:e:g:l:h" OPTION; do
+	case $OPTION in
+	r)
+		if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
+			RUNDIR=$(printf 'r%04d' $OPTARG)
+			RUNNUMBER=$(printf '%d' $OPTARG)
+		else
+			UERROR "Specify a numerical value for the run number"
+		fi
+		;;	
+	t) TAG=$OPTARG;;
+	l) UFILELIST=$OPTARG;;
+	i) BOOST=$OPTARG;;
+	b) BINNING=$OPTARG;;
+	R) RANDOMIZE="YES";;
+	m) MINPEAKS=$OPTARG;;
+	e) RAWPATH=$OPTARG;;
+	g) UGEOMFILE=$OPTARG
+		[ ! -e $UGEOMFILE ] || UERROR "Geometry file $UGEOMFILE does not exist"
+		;;
+	h) SHOWHELP="YES";;
+	?) UERROR "Unrecognized flag: $OPTION";;
+	esac
+done
+shift `expr $OPTIND - 1`
+
+if [ $SHOWHELP ]; then
+cat << EOF
+This is quickview, a handy (or just plain confusing?) bash script wrapper 
+for Tom White's hdfsee program.
+
+Rick Kirian, Oct. 2011
+
+Brief summary of options:
+
+   -h       Print this help message.
+   -l xxx   Text file with a list of files to view.
+   -r xxx   Run number.
+   -t xxx   Tag name. 
+   -m xxx   Skip images with fewer than this many peaks.
+   -R       Randomly sort the images before viewing.
+	-b xxx   Same as in hdfsee (set binning).
+   -i xxx   Same as in hdfsee (set "boost").
+   -e xxx   Same as in hdfsee (set hdf5 datapath).
+   -g xxx   Same as in hdfsee (specify geometry file).
+   
+This script is intended to be a handy way of passing lots of files to Tom
+White's "hdfsee" program, a viewer for hdf5 files that have been created by 
+Anton Barty's LCLS data analysis program "cheetah".  For starters, you should 
+look at the documentation for hdfsee:
+
+> hdfsee --help
+
+Here are some examples of what quickview does.  In the simplest case, you can 
+prepare file with a bunch of paths to hdffiles that you would like to view:
+
+> quickview -l /some/path/list.txt
+
+If you don't want to create the file, you can use quickview along with xargs
+like this:
+
+> find /some/path/to/hdf5/data -name *cspad.h5 | xargs quickview
+
+Now you can flip through images - if you close the current window, another
+will open with the next file.  To exit, use control-c at the terminal (yes,
+it's not very graceful).  
+
+You might find the following: if there are peaks in the hdf5 file, they
+will be overlaid on the image.  That is one purpose for the existence of
+quickview: quickly check how peakfinding is going in cheetah.
+
+For added convenience, quickview will attempt to look up an appropriate 
+geometry file for you.  If you want this to happen, first define the
+environment variable CONFIGDIR, which specifies the path where you will put
+crystfel .geom files.  You'll need to make a geom file for each run you 
+want to look at, with names like r0157.geom, and so on.  Most likely, you'll
+want to create symbolic links, and have only a few .geom regular files.  Feel
+free to put the geom files into a subdirectory, such as \$CONFIGDIR/geom - 
+quickview searches recursively for these files.
+
+For a bit more convenience, you can follow Rick's "tag" convention and give
+your directories names like "r0234-rickstag".  Then you can run quickview like
+this
+
+> quickview -r 234 -t rickstag
+
+to see the files in that directory.  This assumes that you have the environment
+variable H5DIR set, which points to where these subdirectories are located.  
+
+For a little bit more convenience, you can compare the results from two cheetah
+sessions - try this:
+
+> quickview -r 234 -t rickstag,nadiastag
+
+In this case, quickview will show you all the files in the directory tagged with
+nadiastag that are not in the one tagged with rickstag.  Sometimes it is nice to
+see only the new results when changing the parameters in cheetah.
+
+Some of the regular hdfsee flags are recognized by quickview.  Easy to add some
+more if they would be helpful.
+
+Finally, you can view only files with more than X peaks with the -m flag.  A
+much better way to do this is to use quickview along with "framesorter" like
+this
+
+> framesorter [ OPTIONS ] | xargs quickview
+
+Have a look at the framesorter help (i.e. type framesorter -h) for more info.
+
+I think that's it.  If this all sounds crazy to you, that's because it is.  
+Spending several months looking at hundreds of terabytes of crystallography
+data does this to people.
+
+One last thing: if you find annoying temporary files being written to your 
+directories, set the environment variable \$TMPDIR - quickview will otherwise
+guess where to write such files.
+
+EOF
+exit 0
+fi
+
+# defaults
+[ -d $H5DIR ]    || H5DIR="."
+[ -d $TMPDIR  ]  || TMPDIR="/tmp"
+[ -d $TMPDIR ]   || TMPDIR="." #UERROR "The temp directory $TMPDIR does not exist"
+[ $HDFSEE ]      || HDFSEE="hdfsee"
+[ $H5DUMP ]      || H5DUMP="h5dump"
+[ $BOOST ]       || BOOST="1"
+[ $BINNING ]     || BINNING="2"
+[ $RANDOMIZE ]   || RANDOMIZE="NO"
+[ $MINPEAKS ]    || MINPEAKS="0"
+[ $RAWPATH ]     || RAWPATH="/data/rawdata"
+
+# check the executables
+[ -x $(which $HDFSEE) ]   || UERROR "Can't find executable $HDFSEE" 
+[ -x $(which $H5DUMP) ]   || UERROR "Can't find executable $H5DUMP"
+
+# set the hdfsee arguments
+ARGS="$ARGS -e $RAWPATH -i $BOOST -b $BINNING"
+
+# dump the list of files here
+FILELIST=$TMPDIR/quickview.list
+[ -f $FILELIST ] && rm $FILELIST
+
+# if no filenames specified, then start looking for them
+if [ $UFILELIST ]; then
+
+	[ -f $UFILELIST ] || UERROR "Can't find file list $UFILELIST"
+	cat $UFILELIST > $FILELIST
+	NFILES=$(wc -l $FILELIST | awk '{print $1}')
+
+elif [ $# -eq 0 ]; then
+
+	[ $RUNNUMBER ] ||  UERROR "You did not specify a run number"
+	echo "Run number: $RUNNUMBER"
+	
+	# sort out which save directories we're looking in
+	SAVEDIR=$H5DIR/$RUNDIR
+	COMPARETWO="NO"
+	if [ $TAG ]; then
+	
+		# check if we are comparing two tags:
+		TAG1=$(echo $TAG | awk -F ',' '{print $1}')
+		TAG2=$(echo $TAG | awk -F ',' '{print $2}')
+	
+		if [ "$TAG2" = "" ]; then
+			SAVEDIR=$SAVEDIR-$TAG
+			[ -d $SAVEDIR ] || UERROR "Data directory does not exist: $SAVEDIR"
+		else
+			COMPARETWO="YES"
+			SAVEDIR1=$SAVEDIR-$TAG1
+			SAVEDIR2=$SAVEDIR-$TAG2
+			[ -d $SAVEDIR1 ] || UERROR "Data directory does not exist: $SAVEDIR1"
+			[ -d $SAVEDIR2 ] || UERROR "Data directory does not exist: $SAVEDIR2"
+		fi
+	
+	fi
+		
+	# write a file list with hdf5 file paths
+	if [ "$COMPARETWO" == "NO" ]; then
+		find $SAVEDIR -name *_cspad.h5 -type f > $FILELIST
+		NFILES=$(wc -l $FILELIST | awk '{print $1}')
+		echo "Data directory: $SAVEDIR ($NFILES files)"
+	else
+	
+		# get the files in tag2, but not in tag1
+		FILELIST1=$TMPDIR/quickview1.list
+		FILELIST2=$TMPDIR/quickview2.list
+		FILELIST3=$TMPDIR/quickview3.list
+		FILELIST4=$TMPDIR/quickview4.list 
+		find $SAVEDIR1 -name '*_cspad.h5' | sed 's_.*/__'  | sort > $FILELIST1
+		find $SAVEDIR2 -name '*_cspad.h5' | sed 's_.*/__'  | sort > $FILELIST2
+		cat $FILELIST1 $FILELIST2 | sort | uniq > $FILELIST3
+		cat $FILELIST3 $FILELIST1 | sort | uniq -u > $FILELIST4
+		rm $FILELIST &> /dev/null
+		for i in $(cat $FILELIST4); do echo $SAVEDIR2/$i >> $FILELIST; done
+	
+		NFILES=$(wc -l $FILELIST | awk '{print $1}')
+		echo "Data directory 1: $SAVEDIR1 ($(cat $FILELIST1 | wc -l) files)"
+		echo "Data directory 2: $SAVEDIR2 ($(cat $FILELIST2 | wc -l) files)"
+		[ $NFILES ] || NFILES="0"
+		echo "Found $NFILES files in directory 2 that are not in directory 1"
+	
+	fi
+	
+else
+
+	# assume file paths have been provided as input
+	for i in $@; do
+		echo $i >> $FILELIST 
+	done
+	NFILES=$(wc -l $FILELIST | awk '{print $1}')
+
+fi
+
+
+# check that there are files to look at
+if [ ! "$NFILES" -gt 0 ]; then
+	echo -e "Nothing to look at\n"
+	exit 0
+else
+	echo "Scanning through $NFILES files"
+fi
+
+
+# randomly sort the list, if requested
+if [ "$RANDOMIZE" = "YES" ]; then
+
+	echo "Randomly sorting file list"
+	awk 'BEGIN {srand()} {print int(rand()*1000000) "\t" $0}' $FILELIST | \
+		sort -n | cut -f 2- > $TMPDIR/quickview-randomized.list
+	FILELIST=$TMPDIR/quickview-randomized.list
+
+fi
+
+
+# dump peaks to a text file, then have a look with hdfsee 
+FILENUM=0
+for FILE in $(cat $FILELIST); do
+
+	FILENUM=$((FILENUM + 1))
+	[ ! -f $FILE ] && continue
+	echo $FILE > $TMPDIR/quickview-h5.list
+	
+	$H5DUMP -d /processing/hitfinder/peakinfo-raw $FILE | \
+		awk '/^   \(/ {print $2 $3}' | awk -F ',' '{print $1, $2}' > \
+		$TMPDIR/quickview-peaks.list
+		
+	NPEAKS=$(cat $TMPDIR/quickview-peaks.list | wc -l)
+
+	printf 'File %d of %d: %s (%d peaks)\n' \
+		$FILENUM $NFILES $(basename $FILE) $NPEAKS
+	
+	ARGSEXTRA=""
+	if [ $UGEOMFILE ]; then
+		ARGSEXTRA="$ARGSEXTRA -g $UGEOMFILE"
+	else
+		GEOMFILE=`expr match "$FILE" '.*\(r[0-9][0-9][0-9][0-9]\)'`.geom
+		GEOMFILE=$(find $CONFIGDIR -name $GEOMFILE)
+		[ $GEOMFILE ] && ARGSEXTRA="$ARGSEXTRA -g $GEOMFILE"
+	fi 
+
+	[ "$NPEAKS" -ge $MINPEAKS ] && \
+		$HDFSEE $FILE $ARGS $ARGSEXTRA -p $TMPDIR/quickview-peaks.list
+
+done
+
+echo "Done"
+echo ""

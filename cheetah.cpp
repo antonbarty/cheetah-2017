@@ -99,7 +99,7 @@ void beginjob() {
 	 *	Stuff for worker thread management
 	 */
 	global.defaultConfiguration();
-	global.parseConfigFile("cspad-cryst.ini");
+	//global.parseConfigFile("cspad-cryst.ini");
 	global.parseConfigFile(global.configFile);
 	global.readDetectorGeometry(global.geometryFile);
 	global.setup();
@@ -254,7 +254,7 @@ void event() {
 	 *	Skip frames if we only want a part of the data set
 	 */
 	if(global.startAtFrame != 0 && frameNumber < global.startAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping to start frame $li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
+		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
 		return;
 	}
 	if(global.stopAtFrame != 0 && frameNumber > global.stopAtFrame) {
@@ -326,9 +326,16 @@ void event() {
 	if ( getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
 	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
 		
-		wavelengthA = std::numeric_limits<double>::quiet_NaN();
-		photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
-		
+		// If no beamline data, but default wavelength specified in ini file
+		// then use that, else 
+		if ( global.defaultPhotonEnergyeV != 0 ) {
+			photonEnergyeV = global.defaultPhotonEnergyeV;
+			wavelengthA = 12398.42/photonEnergyeV;
+		} else {
+			wavelengthA = std::numeric_limits<double>::quiet_NaN();
+			photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
+		}
+
 	} else {
 		
 		/* Calculate the resonant photon energy (ie: photon wavelength) */
@@ -384,17 +391,106 @@ void event() {
 	 *	CXI detector position (Z)
 	 */
 	float detposnew;
+	int update_camera_length;
 	if ( getPvFloat("CXI:DS1:MMS:06", detposnew) == 0 ) {
 		/* When encoder reads -500mm, detector is at its closest possible
 		 * position to the specimen, and is 79mm from the centre of the 
 		 * 8" flange where the injector is mounted.  The injector itself is
 		 * about 4mm further away from the detector than this. */
 		// printf("New detector pos %e\n", detposnew);
+		if ( detposnew == 0 ) {
+			detposnew = global.detposprev;
+			printf("WARNING: detector position is zero, which could be an error\n"
+			       "         will use previous position (%f) instead...\n",detposnew);
+		}
+		global.detposprev = detposnew;
 		global.detectorZ = 500.0 + detposnew + 79.0;
-	}
+		/* Let's round to the nearest two decimal places 
+       * (10 micron, much less than a pixel size) */
+		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
+		update_camera_length = 1;
+		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
+		 * skip the first few XTC datagrams, you will likely get error messages
+		 * telling you that the EPICS PV is invalid.  Seems that this PV is
+		 * updated at only about 1 Hz.  More worrysome is the fact that it
+		 * occasionally gives a bogus value of detposnew=0, without a fail
+		 * message.  Hardware problem? 
+		 */
+	}	 
 
+	if ( global.detectorZ == 0 ) {
+		/* What to do if there is no camera length information?  Keep skipping
+		 * frames until this info is found?  In some cases, our analysis doesn't
+		 * need to know about this, so OK to skip in that case.  For now, the
+		 * solution is for the user to set a (non-zero) default camera length.
+		 */
+		if ( global.defaultCameraLengthMm == 0 ) {
+			printf("======================================================\n");
+			printf("WARNING: Camera length is zero!\n");
+			printf("I'm skipping this frame.  If the problem persists, try\n");
+			printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
+			printf("file.\n");
+			printf("======================================================\n");
+			return;
+		} else {
+			printf("MESSAGE: Setting default camera length (%gmm).\n",global.defaultCameraLengthMm);
+			global.detectorZ = global.defaultCameraLengthMm;	
+			update_camera_length = 1;
+		}
+	}
 	
+	/*
+	 * If the camera length has changed, recalculate reciprocal space geometry.
+	 * Also, skip this frame if it isn't the first one.  Let's not bother with 
+	 * frames collected while the camera is moving...
+	 */
 	
+	if ( update_camera_length && ( global.detectorZprevious != global.detectorZ ) ) {
+		
+		printf("MESSAGE: Camera length changed from %gmm to %gmm.\n",
+		                                   global.detectorZprevious,global.detectorZ);
+	
+		if ( isnan(wavelengthA ) ) {
+			printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
+		}	
+		long i;
+		float  x, y, z, r;
+		float kx,ky,kz,kr;
+		float res;
+		
+		// don't tinker with global geometry while there are active threads...
+		while (global.nActiveThreads > 0) usleep(10000);
+		
+		global.detectorZprevious = global.detectorZ;
+
+		for ( i=0; i<global.pix_nn; i++ ) {
+			x = global.pix_x[i]*global.pixelSize;
+			y = global.pix_y[i]*global.pixelSize;
+			z = global.pix_z[i]*global.pixelSize + global.detectorZ*0.001;
+			r = sqrt(x*x + y*y + z*z);
+			kx = x/r/wavelengthA;
+			ky = y/r/wavelengthA;
+			kz = (z/r - 1)/wavelengthA; // assuming incident beam is along +z direction
+			kr = sqrt(kx*kx + ky*ky + kz*kz);
+			res = 1/kr;
+			global.pix_kx[i] = kx;
+			global.pix_ky[i] = ky;
+			global.pix_kz[i] = kz;
+			global.pix_kr[i] = kr;
+			global.pix_res[i] = res;
+			if ( global.hitfinderLimitRes == 1 ) {
+				if ( ( res < global.hitfinderMinRes ) && (res > global.hitfinderMaxRes) ) {
+					global.hitfinderResMask[i] = 1;
+				} else {
+					global.hitfinderResMask[i] = 0;
+				}
+			}
+		}
+		
+		// if its the first thread then continue, else skip this event
+		if ( frameNumber != 1 ) return;
+	
+	}	
 
 	/*
 	 *	Create a new threadInfo structure in which to place all information

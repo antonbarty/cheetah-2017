@@ -6,6 +6,7 @@ crystfinder
 upload
 Makefile
 cheetah.ini
+cheetah
 ./cheetah.xcworkspace
 ./pythonscripts
 ./example/CVS
@@ -55,3 +56,4 @@ cheetah.ini
 ./release/pdsdata/app/CVS
 ./release/pdsdata/CVS
 ./release/CVS
+myinstall

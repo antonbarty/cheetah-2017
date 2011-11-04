@@ -23,6 +23,8 @@ public:
 	// ini file to read
 	char		configFile[MAX_FILENAME_LENGTH];
 	
+	// Default experiment info (in case beamline data is missing)
+	float	defaultPhotonEnergyeV;
 	
 	// Detector info
 	char					detectorName[MAX_FILENAME_LENGTH];
@@ -37,6 +39,7 @@ public:
 	// Real-space geometry
 	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
+	float		defaultCameraLengthMm;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
@@ -76,7 +79,10 @@ public:
 	// Local background subtraction
 	int			useLocalBackgroundSubtraction;
 	long		localBackgroundRadius;
-	
+
+	// Saturated pixels
+	int         maskSaturatedPixels;
+	long        pixelSaturationADC;	
 	
 	// Kill persistently hot pixels
 	int			useAutoHotpixel;
@@ -99,6 +105,8 @@ public:
 	int			hitfinderNpeaksMax;
 	int			hitfinderMinPixCount;
 	int			hitfinderMaxPixCount;
+	int		hitfinderCheckGradient;
+	float		hitfinderMinGradient;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
 	char		peaksearchFile[MAX_FILENAME_LENGTH];
@@ -106,6 +114,14 @@ public:
 	int			hitfinderTOFMinSample;
 	int			hitfinderTOFMaxSample;
 	double		hitfinderTOFThresh;
+	int			hitfinderCheckPeakSeparation;
+	float			hitfinderMaxPeakSeparation;
+	int			hitfinderSubtractLocalBG;
+	int			hitfinderLocalBGRadius;
+	int			hitfinderLimitRes;
+	float			hitfinderMinRes;
+	float			hitfinderMaxRes;
+	int			*hitfinderResMask;
 	
 	//	TOF
 	Pds::DetInfo::Device	tofType;
@@ -184,6 +200,11 @@ public:
 	float			*pix_y;
 	float			*pix_z;
 	float			*pix_r;
+	float			*pix_kx; // this is reciprocal space (inverse A, no factor of 2*pi)
+	float			*pix_ky;
+	float			*pix_kz;
+	float			*pix_kr;
+	float			*pix_res;
 	float			pix_dx;
 	unsigned		module_rows;
 	unsigned		module_cols;
@@ -194,9 +215,10 @@ public:
 	long			asic_nn;
 	long			nasics_x;
 	long			nasics_y;
+	float			detectorZprevious;	
 	float			radial_max;
 	long			radial_nn;
-	
+	float			detposprev;	
 	
 	
 	/*
@@ -242,7 +264,7 @@ public:
 	float			datarate;
 	long			lastTimingFrame;
 
-	
+		
 	
 public:
 	void defaultConfiguration(void);
