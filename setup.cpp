@@ -1298,21 +1298,12 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
 	fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
-<<<<<<< HEAD
-	fprintf(fp, "savehits=%d\n",savehits);
-	fprintf(fp, "savepeakinfo=%d\n",savePeakInfo);
-	fprintf(fp, "saveraw=%d\n",saveRaw);
-	fprintf(fp, "saveassembled=%d\n",saveAssembled);
-	fprintf(fp, "savedetectorcorrectedonly=%d\n",saveDetectorCorrectedOnly);
-	fprintf(fp, "savedetectorraw=%d\n",saveDetectorRaw);
-=======
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "savePeakInfo=%d\n",savePeakInfo);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
 	fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
->>>>>>> a55db4d0e318c6637e903a23a909221b135db29c
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
