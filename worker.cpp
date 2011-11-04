@@ -2219,7 +2219,8 @@ void saveRunningSums(cGlobal *global) {
 		double *buffer;
 		
 		// Raw data
-		sprintf(filename,"r%04u-class%i-sumRaw-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"r%04u-class%i-sumRaw.h5",global->runNumber, powderType, global->nprocessedframes);
+		//sprintf(filename,"r%04u-class%i-sumRaw-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRaw_mutex[powderType]);
 		memcpy(buffer, global->powderRaw[powderType], global->pix_nn*sizeof(double));
@@ -2228,7 +2229,8 @@ void saveRunningSums(cGlobal *global) {
 		free(buffer);
 		
 		// Blanks squared (for calculation of variance)
-		sprintf(filename,"r%04u-class%i-sumRawSquared-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"r%04u-class%i-sumRawSquared.h5",global->runNumber, powderType, global->nprocessedframes);
+		//sprintf(filename,"r%04u-class%i-sumRawSquared-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
 		memcpy(buffer, global->powderRawSquared[powderType], global->pix_nn*sizeof(double));
@@ -2237,7 +2239,8 @@ void saveRunningSums(cGlobal *global) {
 		free(buffer);
 		
 		// Sigma (variance)
-		sprintf(filename,"r%04u-class%i-sumRawSigma-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"r%04u-class%i-sumRawSigma.h5",global->runNumber, powderType, global->nprocessedframes);
+		//sprintf(filename,"r%04u-class%i-sumRawSigma-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRaw_mutex[powderType]);
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
@@ -2249,7 +2252,8 @@ void saveRunningSums(cGlobal *global) {
 		free(buffer);
 		
 		// Assembled sum
-		sprintf(filename,"r%04u-class%i-sumAssembled-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"r%04u-class%i-sumAssembled.h5",global->runNumber, powderType, global->nprocessedframes);
+		//sprintf(filename,"r%04u-class%i-sumAssembled-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
 		buffer = (double*) calloc(global->image_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderAssembled_mutex[powderType]);
 		memcpy(buffer, global->powderAssembled[powderType], global->image_nn*sizeof(double));
