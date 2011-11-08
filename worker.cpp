@@ -29,7 +29,7 @@
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
-
+#include "peakfinders.h"
 
 
 
@@ -78,6 +78,7 @@ void *worker(void *threadarg) {
 	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
 	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	threadInfo->peak_snr = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
@@ -339,6 +340,7 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_com_r_assembled);
 	free(threadInfo->peak_intensity);
 	free(threadInfo->peak_npix);
+	free(threadInfo->peak_snr);
 	free(threadInfo->good_peaks);
 	free(threadInfo->saturatedPixelMask);
 	//TOF stuff.
@@ -849,6 +851,8 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
  *		2 - Total intensity above ADC threshold
  *		3 - Count Bragg peaks
  *		4 - Use TOF
+ *    5 - Like 3, but with extras
+ *    6 - Experimental - find peaks by SNR criteria
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 
@@ -908,6 +912,26 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		}
 	}
 	
+	// This stuff is used in hitfinder algorithm 6
+	// THings are getting really ugly here with all these different algorithms.
+	// It's about time to clean things up soon.		
+	int stride = global->pix_nx;
+	int npeaks = 0;
+
+	// Shift in linear indices to nearest neighbor
+	int shift[8] = { +1, -1, +stride, -stride,
+	                 +stride - 1, +stride + 1,
+						  -stride - 1, -stride + 1};
+	
+	// Combined mask
+	int * mask = (int *) calloc(global->pix_nn, sizeof(int) );
+	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
+	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
+		global->hotpixelmask[i] *
+		global->badpixelmask[i] *
+		threadInfo->saturatedPixelMask[i];
+
+
 	
 	/*
 	 *	Use one of various hitfinder algorithms
@@ -1221,7 +1245,133 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			free(iny);
 		
 			break;
-	
+
+		case 6 : 	// Peak counter, based on SNR
+
+			threadInfo->peakResolution = 0;
+			threadInfo->peakDensity = 0;
+			hit = peakfinder6(global,threadInfo);
+//
+//			counter = 0;
+//			hit = 0;
+//
+//			// zero out bad pixels in temporary intensity map
+//			for (long i=0; i<global->pix_nn; i++) temp[i] *= mask[i];
+//
+//			// Loop over modules (8x8 array)
+//			for(long mj=0; mj<8; mj++){
+//			for(long mi=0; mi<8; mi++){	
+//			// Loop over pixels within a module
+//			for(long j=1; j<CSPAD_ASIC_NY-1; j++){
+//			for(long i=1; i<CSPAD_ASIC_NX-1; i++){
+//
+//				ss = (j+mj*CSPAD_ASIC_NY);
+//				fs = i+mi*CSPAD_ASIC_NX;
+//				e = ss*global->pix_nx + fs;
+//
+//				if ( temp[e] < global->hitfinderADC ) continue;
+//
+//				// What's the appropriate radius for the background of this
+//				// pixel?  Eventually, this comes from geometry.
+//				int bgrad = 4;
+//
+//				// Check that we can actually calculate a background from 
+//				// concentric ring (or box, really) at this location.
+//				if ( j < bgrad || i < bgrad ||
+//					j >= CSPAD_ASIC_NY-bgrad || i >= CSPAD_ASIC_NX-bgrad ) continue;
+//
+//				// Check if this pixel value is larger than all of its neighbors
+//				for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
+//
+//				// Check SNR (using one-pixel-thick square ring surrounding pixel of interest)
+//				int bgcount = 0;
+//				float bg = 0;
+//				float bgsq = 0;
+//				float thisI,bgsig, snr;
+//				int a,b,c,d;
+//				int topstart = e - bgrad*(1+stride);
+//				int rightstart = e + bgrad*(stride-1);
+//				int bottomstart = e + bgrad*(1+stride);
+//				int leftstart = e + bgrad*(1-stride);
+//				for (int q=0; q < bgrad*2; q++) {
+//					a = topstart + q;
+//					b = rightstart + q;
+//					c = bottomstart + q;
+//					d = leftstart + q;
+//					bgcount += mask[a] + mask[b] + mask[c] + mask[d];
+//					bg += temp[a] + temp[b] + temp[c] + temp[d];
+//					bgsq += temp[a]*temp[a] + temp[b]*temp[b] + 
+//					        temp[c]*temp[c] + temp[d]*temp[d];
+//				}
+//				// skip it if there are less then 3/4 good pixels in the ring
+//				if ( bgcount < 6*bgrad ) continue;
+//				bg = bg/bgcount;
+//				thisI = temp[e] - bg;
+//				if ( thisI < global->hitfinderADC ) continue;
+//				bgsq = bgsq/bgcount;
+//				bgsig = sqrt(bgsq - bg*bg);
+//				snr = thisI/bgsig;
+//				if ( snr < 100 ) continue;
+//
+//				// Have we already found better peak nearby?
+//				int peakindex;
+//				int p;
+//				int anihilate = 0;
+//				int badpeak = 0;
+//				float dist;
+//				float tooclose = 4*bgrad*bgrad;
+//				for ( p=counter-1; p >= 0; p-- ) {
+//					dist = pow(fs - threadInfo->peak_com_x[p],2) + pow(ss - threadInfo->peak_com_y[p], 2);
+//					if ( dist <= tooclose ) {
+//						if ( snr > threadInfo->peak_snr[p]) { 
+//							anihilate = 1;
+//							peakindex = p; 
+//							continue;
+//						} else {
+//							badpeak = 1;
+//							continue;
+//						}
+//					} 
+//				}
+//				
+//				if ( badpeak ) continue;
+//
+//				if ( ! anihilate ) {
+//					peakindex = counter;
+//					counter++;
+//				}
+//
+//				threadInfo->peak_intensity[peakindex] = thisI;
+//				threadInfo->peak_com_x[peakindex] = fs;
+//				threadInfo->peak_com_y[peakindex] = ss;
+//				threadInfo->peak_npix[peakindex] = 1;
+//				threadInfo->peak_snr[peakindex] = snr;
+//				threadInfo->peak_com_index[peakindex] = e;
+//				threadInfo->peak_com_x_assembled[peakindex] = global->pix_x[e];
+//				threadInfo->peak_com_y_assembled[peakindex] = global->pix_y[e];
+//				threadInfo->peak_com_r_assembled[peakindex] = global->pix_r[e];
+//				
+//				if ( counter == global->hitfinderNpeaksMax ) {
+//						threadInfo->nPeaks = counter;
+//						printf("MESSAGE: Found too many peaks - aborting peaksearch early.\n");
+//						hit = 0;
+//						goto quitHitfinder6;
+//				}
+//					
+//			}}}}	
+//
+//			threadInfo->nPeaks = counter;
+//
+//			if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
+//				hit = 1;
+//
+//			quitHitfinder6:
+
+			free(inx); 			
+			free(iny);
+		
+			break;
+
 		case 3 : 	// Count number of peaks (and do other statistics)
 		default:
 			long fs, ss;
@@ -1411,7 +1561,8 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		global->nrecenthits++;
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
-	
+
+	free(mask);	
 	free(temp);
 	return(hit);
 }

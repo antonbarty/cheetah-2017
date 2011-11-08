@@ -83,8 +83,11 @@ data2d.o: data2d.cpp data2d.h
 median.o: median.cpp median.h 
 	$(CPP) $(CFLAGS) $<
 
+peakfinders.o: peakfinders.cpp peakfinders.h
+	$(CPP) $(CFLAGS) $<
 
-cheetah: cheetah.o setup.o median.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+
+cheetah: cheetah.o setup.o median.o peakfinders.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
