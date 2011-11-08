@@ -165,6 +165,7 @@ SAVEDIR=$H5DIR/$RUNDIR
 # no ini file name specified? take a guess:
 [ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
 
+if [ ! -f $INIFILE ]; then
 # full path to ini file not specified?  look for it:
 echo "Searching for an ini file named $INIFILE"
 INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
@@ -174,12 +175,13 @@ if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
 	echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
 	exit 1
 fi
+fi
 
 # any luck finding the ini file?
 [ $INIFILE ] || UERROR "Can't find the right ini file"
 [ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
 echo "Using this ini file: $INIFILE"
-pwd
+
 # output from cheetah will go here
 LOGFILE=$SAVEDIR/cheetah.log
 
