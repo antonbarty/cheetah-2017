@@ -57,24 +57,20 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<8; mj++){
 	for(long mi=0; mi<8; mi++){	
-	// Loop over pixels within a module
-	for(long j=1; j<CSPAD_ASIC_NY-1; j++){
-	for(long i=1; i<CSPAD_ASIC_NX-1; i++){
+	
+	int bgrad = global->hitfinderLocalBGRadius;
+	int asic_min_fs = mi*CSPAD_ASIC_NX;
+	int asic_min_ss = mj*CSPAD_ASIC_NY;
 
-		ss = (j+mj*CSPAD_ASIC_NY);
-		fs = i+mi*CSPAD_ASIC_NX;
-		e = ss*global->pix_nx + fs;
+	// Loop over pixels within a module
+	for(long j=bgrad; j<CSPAD_ASIC_NY-1-bgrad; j++){
+	for(long i=bgrad; i<CSPAD_ASIC_NX-1-bgrad; i++){
+
+		ss = asic_min_ss + j;
+		fs = asic_min_fs + i;
+		e = ss*stride + fs;
 
 		if ( temp[e] < global->hitfinderADC ) continue;
-
-		// What's the appropriate radius for the background of this
-		// pixel?  Eventually, this comes from geometry.
-		int bgrad = 4;
-
-		// Check that we can actually calculate a background from 
-		// concentric ring (or box, really) at this location.
-		if ( j < bgrad || i < bgrad ||
-			j >= CSPAD_ASIC_NY-bgrad || i >= CSPAD_ASIC_NX-bgrad ) continue;
 
 		// Check if this pixel value is larger than all of its neighbors
 		for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
