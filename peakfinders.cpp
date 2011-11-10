@@ -28,14 +28,16 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	int counter = 0;
 	int hit = 0;
 	int stride = global->pix_nx;
-	int fs,ss,e,p,ce;
+	int fs,ss,e,p,ce,ne,nat,lastnat;
 	int peakindex,newpeak;
-	float dist, tooclose;
-	float itot, ftot, stot;	
+	float dist, itot, ftot, stot;	
+	float thisI,bgsig,snr;
+	int a,b,c,d;
 
-	/* Calculate these elsewhere */
-	threadInfo->peakResolution = 0;
-	threadInfo->peakDensity = 0;
+	/* For counting neighbor pixels */
+	int nnexte = 4*global->hitfinderNAT*global->hitfinderNAT +
+	             4*global->hitfinderNAT + 1;
+	int * nexte = (int *) calloc(nnexte,sizeof(int));	
 
 	/* Shift in linear indices to nearest neighbor */
 	int shift[8] = { +1, -1, +stride, -stride,
@@ -49,6 +51,10 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		global->hotpixelmask[i] *
 		global->badpixelmask[i] *
 		threadInfo->saturatedPixelMask[i];
+
+	/* Combined mask for pixel counting */
+	int * natmask = (int *) calloc(global->pix_nn, sizeof(int) );
+	memcpy(natmask,mask,global->pix_nn*sizeof(int));
 
 	// zero out bad pixels in temporary intensity map
 	float * temp = (float *) calloc(global->pix_nn,sizeof(float));
@@ -75,12 +81,11 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		// Check if this pixel value is larger than all of its neighbors
 		for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
 
-		// Check SNR (using one-pixel-thick square ring surrounding pixel of interest)
+		// Check SNR (using one-pixel-thick square ring 
+		// surrounding pixel of interest)
 		int bgcount = 0;
 		float bg = 0;
 		float bgsq = 0;
-		float thisI,bgsig,snr;
-		int a,b,c,d;
 		int topstart = e - bgrad*(1+stride);
 		int rightstart = e + bgrad*(stride-1);
 		int bottomstart = e + bgrad*(1+stride);
@@ -107,18 +112,48 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		// Most importantly, threshold the SNR
 		if ( snr < global->hitfinderMinSNR ) continue;
 
+		// Check that number of connected pixels is satisfied
+		nat = 1;
+		nexte[0] = e;
+		do {	
+			lastnat = nat;
+			for ( int k=0; k<8; k++ ) {
+				// this is the index of a neighboring pixel
+				ne = nexte[nat-1] + shift[k];
+				// Array bounds check
+				if ( ne < 0 || ne >= global->pix_nn ) continue;
+				// Check that we aren't recounting the same pixel
+				if ( natmask[ne] == 0 ) continue;
+				// Check SNR condition
+				if ( (temp[ne]-bg)/bgsig > global->hitfinderMinSNR ) {
+					natmask[ne] = 0;
+					nexte[nat] = ne;
+					nat++;
+					if ( nat >= global->hitfinderNAT ) break;
+				}
+			}
+		} while ( nat != lastnat );
+
+		// Check that we satisfied the connected pixel requirement
+		if ( nat < global->hitfinderNAT ) continue;
+
 		// Have we already found better peak nearby?
 		newpeak = 1;
 		peakindex = counter;
-		tooclose = 4*bgrad*bgrad;
 		for ( p=counter-1; p >= 0; p-- ) {
-			dist = pow(fs - threadInfo->peak_com_x[p],2) + pow(ss - threadInfo->peak_com_y[p], 2);
-			if ( dist <= tooclose ) {
-				if ( snr > threadInfo->peak_snr[p]) { 
+			// Distance to neighbor peak
+			dist = pow(fs - threadInfo->peak_com_x[p],2) + 
+				pow(ss - threadInfo->peak_com_y[p], 2);
+			if ( dist <= global->hitfinderMaxPeakSeparation ) {
+				if ( snr > threadInfo->peak_snr[p]) {
+					// This peak will overtake its neighbor; it has better SNR 
 					newpeak = 0;
 					peakindex = p; 
 					continue;
-				} else { goto skipme; }
+				} else {
+					// There is a better peak nearby; skip this one
+					goto skipme; 
+				}
 			} 
 		}
 		
@@ -127,7 +162,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		for ( int cs=ss-bgrad; cs<=ss+bgrad; cs++) {
 		for ( int cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 			ce = cs*stride + cf;
-			if ( mask[ce] == 0 ) goto skipme;
+			if ( mask[ce] == 0 ) continue;
 			itot += temp[ce];
 			ftot += temp[ce]*(float)cf;
 			stot += temp[ce]*(float)cs;
@@ -153,14 +188,17 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		
 		skipme:;
 	
-	}}}}	
+	}}
+	}}	
 
 	threadInfo->nPeaks = counter;
 
 	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
 		hit = 1;
 
+	free(nexte);
 	free(mask);
+	free(natmask);
 	free(temp);
 
 	return hit;
@@ -288,10 +326,7 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 		int badpix = 0;
 
 		// start counting bad pixels
-		if ( global->hotpixelmask[e] == 0 ||
-			  global->badpixelmask[e] == 0 || 
-			  threadInfo->saturatedPixelMask[e] == 0 )
-			badpix += 1;
+		if ( mask[e] == 0 ) badpix += 1;
 
 		// Keep looping until the pixel count within this peak does not change
 		do {
@@ -314,10 +349,7 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 					e = thisx + thisy*global->pix_nx;
 					
 					// count bad pixels within or neighboring this peak
-					if ( global->hotpixelmask[e] == 0 ||
-						  global->badpixelmask[e] == 0 || 
-						  threadInfo->saturatedPixelMask[e] == 0 )
-						badpix += 1;
+					if ( mask[e] == 0 ) badpix += 1;
 
 					// Above threshold?
 					imbg = temp[e] - lbg; /* "intensitiy minus background" */
