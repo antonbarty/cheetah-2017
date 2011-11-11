@@ -35,11 +35,9 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	int a,b,c,d;
 
 	/* For counting neighbor pixels */
-	int nnexte = 4*global->hitfinderNAT*global->hitfinderNAT +
-	             4*global->hitfinderNAT + 1;
-	int * nexte = (int *) calloc(nnexte,sizeof(int));	
+	int * nexte = (int *) calloc(global->pix_nn,sizeof(int));	
 
-	/* Shift in linear indices to nearest neighbor */
+	/* Shift in linear indices to eight nearest neighbors */
 	int shift[8] = { +1, -1, +stride, -stride,
 	                 +stride - 1, +stride + 1,
 						  -stride - 1, -stride + 1};
@@ -63,8 +61,12 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<8; mj++){
 	for(long mi=0; mi<8; mi++){	
-	
+
+	/* Some day, the local background radius may be different 
+	 * for each panel.  Could even be specified for each pixel
+	 * when detector geometry is determined */	
 	int bgrad = global->hitfinderLocalBGRadius;
+	
 	int asic_min_fs = mi*CSPAD_ASIC_NX;
 	int asic_min_ss = mj*CSPAD_ASIC_NY;
 
@@ -78,11 +80,11 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 
 		if ( temp[e] < global->hitfinderADC ) continue;
 
-		// Check if this pixel value is larger than all of its neighbors
+		/* Check if this pixel value is larger than all of its neighbors */
 		for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
 
-		// Check SNR (using one-pixel-thick square ring 
-		// surrounding pixel of interest)
+		/* Check SNR - first calculate background and variance within a ring 
+		 * surrounding this pixel */
 		int bgcount = 0;
 		float bg = 0;
 		float bgsq = 0;
@@ -100,64 +102,65 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 			bgsq += temp[a]*temp[a] + temp[b]*temp[b] + 
 			        temp[c]*temp[c] + temp[d]*temp[d];
 		}
-		// Skip it if there are less then 7/8 good pixels in the ring
+		/* Skip it if there are less then 7/8 good pixels in the ring */
 		if ( bgcount < 7*bgrad ) continue;
 		bg = bg/bgcount;
 		thisI = temp[e] - bg;
-		// Recheck intensity now that background is known
+		/* Recheck intensity threshold now that background is corrected */
 		if ( thisI < global->hitfinderADC ) continue;
 		bgsq = bgsq/bgcount;
 		bgsig = sqrt(bgsq - bg*bg);
 		snr = thisI/bgsig;
-		// Most importantly, threshold the SNR
+		/* Check SNR threshold */
 		if ( snr < global->hitfinderMinSNR ) continue;
 
 		// Check that number of connected pixels is satisfied
 		nat = 1;
 		nexte[0] = e;
 		do {	
+			if ( nat >= global->hitfinderNAT ) break;
 			lastnat = nat;
 			for ( int k=0; k<8; k++ ) {
-				// this is the index of a neighboring pixel
+				/* this is the index of a neighboring pixel */
 				ne = nexte[nat-1] + shift[k];
-				// Array bounds check
+				/* Array bounds check */
 				if ( ne < 0 || ne >= global->pix_nn ) continue;
 				// Check that we aren't recounting the same pixel
 				if ( natmask[ne] == 0 ) continue;
-				// Check SNR condition
+				/* Check SNR condition */
 				if ( (temp[ne]-bg)/bgsig > global->hitfinderMinSNR ) {
 					natmask[ne] = 0;
 					nexte[nat] = ne;
 					nat++;
-					if ( nat >= global->hitfinderNAT ) break;
 				}
 			}
+		
 		} while ( nat != lastnat );
 
-		// Check that we satisfied the connected pixel requirement
+		/* Check that we satisfied the connected pixel requirement */
 		if ( nat < global->hitfinderNAT ) continue;
 
-		// Have we already found better peak nearby?
+		/* Have we already found better peak nearby? */
 		newpeak = 1;
 		peakindex = counter;
 		for ( p=counter-1; p >= 0; p-- ) {
-			// Distance to neighbor peak
+			/* Distance to neighbor peak */
 			dist = pow(fs - threadInfo->peak_com_x[p],2) + 
 				pow(ss - threadInfo->peak_com_y[p], 2);
 			if ( dist <= global->hitfinderMaxPeakSeparation ) {
 				if ( snr > threadInfo->peak_snr[p]) {
-					// This peak will overtake its neighbor; it has better SNR 
+					/* This peak will overtake its neighbor */ 
 					newpeak = 0;
 					peakindex = p; 
 					continue;
 				} else {
-					// There is a better peak nearby; skip this one
+					/* There is a better peak nearby */
 					goto skipme; 
 				}
 			} 
 		}
 		
-		// Now find proper centroid
+		/* Now find proper centroid */
 		itot = 0; ftot = 0; stot = 0;
 		for ( int cs=ss-bgrad; cs<=ss+bgrad; cs++) {
 		for ( int cf=fs-bgrad; cf<=fs+bgrad; cf++) {
@@ -168,6 +171,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 			stot += temp[ce]*(float)cs;
 		}}	
 
+		/* Dump peak info into thread structure, for writing hdf5 files, etc. */
 		threadInfo->peak_intensity[peakindex] = thisI;
 		threadInfo->peak_com_x[peakindex] = ftot/itot;
 		threadInfo->peak_com_y[peakindex] = stot/itot;
@@ -178,12 +182,15 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		threadInfo->peak_com_y_assembled[peakindex] = global->pix_y[e];
 		threadInfo->peak_com_r_assembled[peakindex] = global->pix_r[e];
 	
+		/* Note that we only increment the peak counter if this is a new one */
 		if ( newpeak ) counter++;
 	
-		if ( counter == global->hitfinderNpeaksMax ) {
-				threadInfo->nPeaks = counter;
+		/* Have we found too many peaks? */
+		if ( counter >= global->hitfinderNpeaksMax ) {
+				threadInfo->nPeaks = global->hitfinderNpeaksMax;
 				printf("MESSAGE: Found too many peaks - aborting peaksearch early.\n");
-				return 0;
+				hit = 0;
+				goto nohit;
 		}
 		
 		skipme:;
@@ -193,8 +200,11 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 
 	threadInfo->nPeaks = counter;
 
-	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
+	if(threadInfo->nPeaks >= global->hitfinderNpeaks && 
+	   threadInfo->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
+
+	nohit:
 
 	free(nexte);
 	free(mask);
