@@ -149,7 +149,7 @@ fi
 [ -d $XTCDIR ]  || UERROR "The xtc file path $XTCDIR does not exist"
 hash $CHEETAH 2>&- || UERROR "$CHEETAH is not executable"
 [ $RUNDIR ]     || UERROR "You did not specify a run number"
-[ $(find $XTCDIR -maxdepth 0 -name "*${RUNDIR}*.xtc" | wc -l | awk '{print $1}') -gt 0 ] || \
+[ $(find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" | wc -l | awk '{print $1}') -gt 0 ] || \
 	UERROR "There are no xtc files named *$RUNDIR*.xtc in $XTCDIR"
 echo "This is run number $RUNNUMBER"
 
@@ -248,7 +248,7 @@ cp $(awk -F '=' '/^peakmask/ {print $2}' $INIFILE) $SAVEDIR/peakmask.h5 &> /dev/
 cp $(awk -F '=' '/^badpixelmap/ {print $2}' $INIFILE) $SAVEDIR/badpixelmap.h5 &> /dev/null
 
 # now run cheetah
-find $XTCDIR -maxdepth 0 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
+find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
 [ "$(wc -l xtcfiles.txt | awk '{print $1}')" -lt 1 ] && UERROR "Found no xtc files for $RUNDIR"
 echo "Running cheetah..."
 ARGS="$ARGS -l xtcfiles.txt"
