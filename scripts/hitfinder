@@ -180,6 +180,7 @@ fi
 # any luck finding the ini file?
 [ $INIFILE ] || UERROR "Can't find the right ini file"
 [ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
+INIFILE=$(readlink -f $INIFILE)
 echo "Using this ini file: $INIFILE"
 
 # output from cheetah will go here
