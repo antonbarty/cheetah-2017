@@ -58,7 +58,7 @@ typedef struct {
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
-	int		*good_peaks;           // Good peaks, after post peak-finding criteria	
+	int			*good_peaks;           // Good peaks, after post peak-finding criteria	
 	
 	// Beamline data, etc
 	int			seconds;
@@ -104,7 +104,7 @@ typedef struct {
 
 
 /*
- *	Stuff from Garth's original code
+ *	Stuff from original LCLS code
  */
 
 // Static variables
@@ -124,6 +124,7 @@ static const unsigned int cbufsize = 1024;
 
 
 static uint32_t nevents = 0;
+
 
 #define ERROR(...) fprintf(stderr, __VA_ARGS__)
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
@@ -150,7 +151,10 @@ void killHotpixels(tThreadInfo*, cGlobal*);
 int  hitfinder(tThreadInfo*, cGlobal*);
 void addToPowder(tThreadInfo*, cGlobal*, int);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
-void calculateRadialAverage(tThreadInfo*, cGlobal*);
+//void calculateRadialAverage(tThreadInfo*, cGlobal*);
+void calculateRadialAverage(float*, float*, float*, cGlobal*);
+void calculateRadialAverage(double*, double*, double*, cGlobal*);
+void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writePeakFile(tThreadInfo *threadInfo, cGlobal *global);

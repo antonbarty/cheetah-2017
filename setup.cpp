@@ -57,13 +57,13 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Geometry
-	strcpy(geometryFile, "");
+	strcpy(geometryFile, "No_file_specified");
 	pixelSize = 110e-6;
 	defaultCameraLengthMm = 0;
 	detposprev = 0;
 	
 	// Bad pixel mask
-	strcpy(badpixelFile, "");
+	strcpy(badpixelFile, "No_file_specified");
 	useBadPixelMask = 0;
 
 	// Saturated pixels
@@ -71,12 +71,12 @@ void cGlobal::defaultConfiguration(void) {
 	pixelSaturationADC = 15564;  // 95% of 2^14 ??
 
 	// Static dark calibration (electronic offsets)
-	strcpy(darkcalFile, "");
+	strcpy(darkcalFile, "No_file_specified");
 	useDarkcalSubtraction = 0;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
-	strcpy(wireMaskFile, "");
+	strcpy(wireMaskFile, "No_file_specified");
 	cmModule = 0;
 	cmFloor = 0.1;
 	cmSubtractUnbondedPixels = 0;
@@ -84,7 +84,7 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Gain calibration correction
-	strcpy(gaincalFile, "");
+	strcpy(gaincalFile, "No_file_specified");
 	useGaincal = 0;
 	invertGain = 0;
 	generateGaincal = 0;
