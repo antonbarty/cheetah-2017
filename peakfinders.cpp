@@ -88,15 +88,18 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		int bgcount = 0;
 		float bg = 0;
 		float bgsq = 0;
+		/* The top, right, bottom, and left starting indices for the box */
 		int topstart = e - bgrad*(1+stride);
 		int rightstart = e + bgrad*(stride-1);
 		int bottomstart = e + bgrad*(1+stride);
 		int leftstart = e + bgrad*(1-stride);
+		/* We could also step through bgrad values here for a ring thickness 
+		 * greater than 1.  Doesn't seem necessary; just slows things down.*/
 		for (int q=0; q < bgrad*2; q++) {
-			a = topstart + q;
+			a = topstart + q*stride;
 			b = rightstart + q;
-			c = bottomstart + q;
-			d = leftstart + q;
+			c = bottomstart - q*stride;
+			d = leftstart - q;
 			bgcount += mask[a] + mask[b] + mask[c] + mask[d];
 			bg += temp[a] + temp[b] + temp[c] + temp[d];
 			bgsq += temp[a]*temp[a] + temp[b]*temp[b] + 
@@ -114,7 +117,8 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		/* Check SNR threshold */
 		if ( snr < global->hitfinderMinSNR ) continue;
 
-		// Check that number of connected pixels is satisfied
+		/* Check that number of connected pixels is satisfied.  Don't
+		 * bother checking for more than the minimum required */
 		nat = 1;
 		nexte[0] = e;
 		do {	
@@ -137,7 +141,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		
 		} while ( nat != lastnat );
 
-		/* Check that we satisfied the connected pixel requirement */
+		/* Final check that we satisfied the connected pixel requirement */
 		if ( nat < global->hitfinderNAT ) continue;
 
 		/* Have we already found better peak nearby? */
