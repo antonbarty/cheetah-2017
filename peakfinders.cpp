@@ -122,7 +122,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		nat = 1;
 		nexte[0] = e;
 		do {	
-			if ( nat >= global->hitfinderNAT ) break;
+			if ( nat >= global->hitfinderMinPixCount ) break;
 			lastnat = nat;
 			for ( int k=0; k<8; k++ ) {
 				/* this is the index of a neighboring pixel */
@@ -142,7 +142,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 		} while ( nat != lastnat );
 
 		/* Final check that we satisfied the connected pixel requirement */
-		if ( nat < global->hitfinderNAT ) continue;
+		if ( nat < global->hitfinderMinPixCount ) continue;
 
 		/* Have we already found better peak nearby? */
 		newpeak = 1;
@@ -571,7 +571,6 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 						// Keep looping until the pixel count within this peak does not change
 						do {
 
-							//if ( nat > global->hitfinderNAT ) break;
 							lastnat = nat;
 							// Loop through points known to be within this peak
 							for(long p=0; p<nat; p++){
