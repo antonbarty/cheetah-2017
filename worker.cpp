@@ -258,7 +258,8 @@ void *worker(void *threadarg) {
 	/*
 	 *	Calculate radial average
 	 */
-	calculateRadialAverage(threadInfo, global);
+	//calculateRadialAverage(threadInfo, global);
+	calculateRadialAverage(threadInfo->corrected_data, threadInfo->radialAverage, threadInfo->radialAverageCounter, global);
 	
 	
 	
@@ -1424,11 +1425,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
  *	Maintain running powder patterns
  *	(currently supports both old and new ways of writing out powder data)
  */
-void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int hit){
+void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
 	
 	
 	double  *buffer;
-	int		powderClass = hit;
 	
 		
 	/*
@@ -1576,8 +1576,9 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 
 /*
  *	Calculate radial average of data
- *	(do this based on the raw data and pix_r rather than the assembled image -> to avoid couble interpolation effects)
+ *	(do this based on the raw data and pix_r rather than the assembled image to avoid interpolation effects)
  */
+/*
 void calculateRadialAverage(tThreadInfo *threadInfo, cGlobal *global){
 	
 	// Zero arrays
@@ -1606,6 +1607,62 @@ void calculateRadialAverage(tThreadInfo *threadInfo, cGlobal *global){
 	}
 	
 }
+ */
+void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global){
+	// Zero arrays
+	for(long i=0; i<global->radial_nn; i++) {
+		radialAverage[i] = 0.;
+		radialAverageCounter[i] = 0.;
+	}
+	
+	// Radial average
+	long	rbin;
+	for(long i=0; i<global->pix_nn; i++){
+		rbin = lrint(global->pix_r[i]);
+		
+		// Array bounds check (paranoia)
+		if(rbin < 0) rbin = 0;
+		
+		radialAverage[rbin] += data[i];
+		radialAverageCounter[rbin] += 1;
+	}
+	
+	// Divide by number of actual pixels in ring to get the average
+	for(long i=0; i<global->radial_nn; i++) {
+		if (radialAverageCounter[i] != 0)
+			radialAverage[i] /= radialAverageCounter[i];
+	}
+	
+}
+
+void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global){	
+	// Zero arrays
+	for(long i=0; i<global->radial_nn; i++) {
+		radialAverage[i] = 0.;
+		radialAverageCounter[i] = 0.;
+	}
+	
+	// Radial average
+	long	rbin;
+	for(long i=0; i<global->pix_nn; i++){
+		rbin = lrint(global->pix_r[i]);
+		
+		// Array bounds check (paranoia)
+		if(rbin < 0) rbin = 0;
+		
+		radialAverage[rbin] += data[i];
+		radialAverageCounter[rbin] += 1;
+	}
+	
+	// Divide by number of actual pixels in ring to get the average
+	for(long i=0; i<global->radial_nn; i++) {
+		if (radialAverageCounter[i] != 0)
+			radialAverage[i] /= radialAverageCounter[i];
+	}
+	
+}
+
+
 
 	
 	
@@ -1742,7 +1799,6 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(1, size, NULL);
 		
 		dataset_id = H5Dcreate(gid, "radialAverage", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		//dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverage);
 		H5Dclose(dataset_id);
 		
@@ -2137,7 +2193,6 @@ void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
 /*
  *	Write test data to a simple HDF5 file
  */
-
 void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type) 
 {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
@@ -2210,6 +2265,10 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 
 void saveRunningSums(cGlobal *global) {
 	char	filename[1024];
+	char	filenamebase[1024];
+	double	*radialAverage = (double*) calloc(global->radial_nn, sizeof(double));
+	double	*radialAverageCounter = (double*) calloc(global->radial_nn, sizeof(double));
+
 
 	/*
 	 *	Save powder patterns from different classes
@@ -2218,49 +2277,55 @@ void saveRunningSums(cGlobal *global) {
 	for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
 		double *buffer;
 		
+		sprintf(filenamebase,"r%04u-class%i", global->runNumber, powderType);
+		//sprintf(filenamebase,"r%04u-class%i-%06i", global->runNumber, powderType, global->nprocessedframes);
+		
 		// Raw data
-		sprintf(filename,"r%04u-class%i-sumRaw.h5",global->runNumber, powderType, global->nprocessedframes);
-		//sprintf(filename,"r%04u-class%i-sumRaw-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"%s-sumRaw.h5",filenamebase);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRaw_mutex[powderType]);
 		memcpy(buffer, global->powderRaw[powderType], global->pix_nn*sizeof(double));
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRaw_mutex[powderType]);
-		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
+		free(buffer);
+
+		// Assembled sum
+		sprintf(filename,"%s-sumAssembled.h5", filenamebase);
+		buffer = (double*) calloc(global->image_nn, sizeof(double));
+		pthread_mutex_lock(&global->powderAssembled_mutex[powderType]);
+		memcpy(buffer, global->powderAssembled[powderType], global->image_nn*sizeof(double));
+		pthread_mutex_unlock(&global->powderAssembled_mutex[powderType]);
+		writePowderData(filename, buffer, global->image_nx, global->image_nx, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
 		// Blanks squared (for calculation of variance)
-		sprintf(filename,"r%04u-class%i-sumRawSquared.h5",global->runNumber, powderType, global->nprocessedframes);
-		//sprintf(filename,"r%04u-class%i-sumRawSquared-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"%s-sumRawSquared.h5",filenamebase);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
 		memcpy(buffer, global->powderRawSquared[powderType], global->pix_nn*sizeof(double));
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRawSquared_mutex[powderType]);
-		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
 		// Sigma (variance)
-		sprintf(filename,"r%04u-class%i-sumRawSigma.h5",global->runNumber, powderType, global->nprocessedframes);
-		//sprintf(filename,"r%04u-class%i-sumRawSigma-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
+		sprintf(filename,"%s-sumRawSigma.h5",filenamebase);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRaw_mutex[powderType]);
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
 		for(long i=0; i<global->pix_nn; i++)
 			buffer[i] = sqrt(global->powderRawSquared[powderType][i]/global->nPowderFrames[powderType] - (global->powderRaw[powderType][i]*global->powderRaw[powderType][i]/(global->nPowderFrames[powderType]*global->nPowderFrames[powderType])));
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRaw_mutex[powderType]);
 		pthread_mutex_unlock(&global->powderRawSquared_mutex[powderType]);
-		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_NATIVE_DOUBLE);	
+		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
-		// Assembled sum
-		sprintf(filename,"r%04u-class%i-sumAssembled.h5",global->runNumber, powderType, global->nprocessedframes);
-		//sprintf(filename,"r%04u-class%i-sumAssembled-%06i.h5",global->runNumber, powderType, global->nprocessedframes);
-		buffer = (double*) calloc(global->image_nn, sizeof(double));
-		pthread_mutex_lock(&global->powderAssembled_mutex[powderType]);
-		memcpy(buffer, global->powderAssembled[powderType], global->image_nn*sizeof(double));
-		pthread_mutex_unlock(&global->powderAssembled_mutex[powderType]);
-		writeSimpleHDF5(filename, buffer, global->image_nx, global->image_nx, H5T_NATIVE_DOUBLE);	
-		free(buffer);
 	}	
+	free(radialAverage);
+	free(radialAverageCounter);
+	
 
 	/*
 	 *	Compute and save darkcal
@@ -2301,7 +2366,7 @@ void saveRunningSums(cGlobal *global) {
 		printf("offset=%f\n",dc);
 		free(buffer2);
 		if(dc <= 0){
-			printf("Error calculating gain, offset = %i\n",dc);
+			printf("Error calculating gain, offset = %f\n",dc);
 			return;
 		}
 		// gain=1 for a median value pixel, and is bounded between a gain of 0.1 and 10
@@ -2316,8 +2381,87 @@ void saveRunningSums(cGlobal *global) {
 		
 		
 	}
+}
 
+
+
+void writePowderData(char *filename, void *data, int width, int height, void *radialAverage, void *radialAverageCounter, long radial_nn, long nFrames, int type) 
+{
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	herr_t r;
+	hsize_t size[2];
+	hsize_t max_size[2];
+	
+	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if ( fh < 0 ) {
+		ERROR("Couldn't create file: %s\n", filename);
+	}
+	
+	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gh < 0 ) {
+		ERROR("Couldn't create group\n");
+		H5Fclose(fh);
+	}
+	
+	// Write image data
+	size[0] = height;
+	size[1] = width;
+	max_size[0] = height;
+	max_size[1] = width;
+	sh = H5Screate_simple(2, size, NULL);
+	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	
+	H5Sget_simple_extent_dims(sh, size, max_size);
+	H5Dwrite(dh, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+	H5Dclose(dh);
 	
 	
+	// Save radial averages
+	size[0] = radial_nn;
+	sh = H5Screate_simple(1, size, NULL);
+	
+	dh = H5Dcreate(gh, "radialAverage", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverage);
+	H5Dclose(dh);
+	
+	dh = H5Dcreate(gh, "radialAverageCounter", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCounter);
+	H5Dclose(dh);	
+	H5Sclose(sh);
+	
+
+	// Save frame count
+	size[0] = 1;
+	sh = H5Screate_simple(1, size, NULL );
+	//sh = H5Screate(H5S_SCALAR);
+	
+	dh = H5Dcreate(gh, "nframes", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &nFrames );
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	
+	// Close group
+	H5Gclose(gh);
+	
+	
+	// Clean up stale HDF5 links
+	int n_ids;
+	hid_t ids[256];
+	n_ids = H5Fget_obj_ids(fh, H5F_OBJ_ALL, 256, ids);
+	for ( int i=0; i<n_ids; i++ ) {
+		hid_t id;
+		H5I_type_t type;
+		id = ids[i];
+		type = H5Iget_type(id);
+		if ( type == H5I_GROUP ) H5Gclose(id);
+		if ( type == H5I_DATASET ) H5Dclose(id);
+		if ( type == H5I_DATATYPE ) H5Tclose(id);
+		if ( type == H5I_DATASPACE ) H5Sclose(id);
+		if ( type == H5I_ATTR ) H5Aclose(id);
+	}
+	
+	
+	H5Fclose(fh);
 }
 
