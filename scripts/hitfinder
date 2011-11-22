@@ -86,7 +86,9 @@ The simples thing to do is this:
 which will run cheetah on run 57 using the specified ini file.  The output will
 go into the directory \$H5DIR/r0057.  If you put the file foobar.ini in your
 CONFIGDIR directory, you can just use "-i foobar.ini", and hitfinder will 
-search recursively for the first file it finds with that name.
+search recursively for a file with that name (it will complain if multiple
+files are found).  Note that it will first search your current working 
+directory before seaching in your CONFIGDIR.
 
 A more convenient way to do things is to create your ini files with names like
 r0057.ini, and put them in your CONFIGDIR.  Then you need only run hitfinder 
@@ -147,9 +149,8 @@ fi
 [ -d $XTCDIR ]  || UERROR "The xtc file path $XTCDIR does not exist"
 hash $CHEETAH 2>&- || UERROR "$CHEETAH is not executable"
 [ $RUNDIR ]     || UERROR "You did not specify a run number"
-[ -f $(ls $XTCDIR/*$RUNDIR* | head -n 1 ) ] || \
-	UERROR "There are no xtc files named \*$RUNDIR\*.xtc in \n$XTCDIR"
-
+[ $(find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" | wc -l | awk '{print $1}') -gt 0 ] || \
+	UERROR "There are no xtc files named *$RUNDIR*.xtc in $XTCDIR"
 echo "This is run number $RUNNUMBER"
 
 # if darkcal override everything
@@ -165,6 +166,7 @@ SAVEDIR=$H5DIR/$RUNDIR
 # no ini file name specified? take a guess:
 [ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
 
+if [ ! -f $INIFILE ]; then
 # full path to ini file not specified?  look for it:
 echo "Searching for an ini file named $INIFILE"
 INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
@@ -174,12 +176,14 @@ if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
 	echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
 	exit 1
 fi
+fi
 
 # any luck finding the ini file?
 [ $INIFILE ] || UERROR "Can't find the right ini file"
 [ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
+INIFILE=$(readlink -f $INIFILE)
 echo "Using this ini file: $INIFILE"
-pwd
+
 # output from cheetah will go here
 LOGFILE=$SAVEDIR/cheetah.log
 
@@ -244,8 +248,9 @@ cp $(awk -F '=' '/^peakmask/ {print $2}' $INIFILE) $SAVEDIR/peakmask.h5 &> /dev/
 cp $(awk -F '=' '/^badpixelmap/ {print $2}' $INIFILE) $SAVEDIR/badpixelmap.h5 &> /dev/null
 
 # now run cheetah
+find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
+[ "$(wc -l xtcfiles.txt | awk '{print $1}')" -lt 1 ] && UERROR "Found no xtc files for $RUNDIR"
 echo "Running cheetah..."
-ls $XTCDIR/*$RUNDIR* > xtcfiles.txt
 ARGS="$ARGS -l xtcfiles.txt"
 if [ $QUE ]; then
 	FULLCOMMAND="bsub -q lclsq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"

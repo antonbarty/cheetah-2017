@@ -122,6 +122,7 @@ public:
 	float			hitfinderMinRes;
 	float			hitfinderMaxRes;
 	int			*hitfinderResMask;
+	float       hitfinderMinSNR;
 	
 	//	TOF
 	Pds::DetInfo::Device	tofType;

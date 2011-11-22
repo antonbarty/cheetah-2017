@@ -133,6 +133,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderLimitRes = 0;
 	hitfinderMinRes = 1e20;
 	hitfinderMaxRes = 0;
+	hitfinderMinSNR = 40;
 	
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -763,7 +764,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderusepeakmask")) {
 		hitfinderUsePeakmask = atoi(value);
 	}
-
+	else if (!strcmp(tag, "hitfinderminsnr")) {
+		hitfinderMinSNR = atof(value);
+	}
 	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		bgMemory = atoi(value);
@@ -1347,6 +1350,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
 	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
+	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);
 	fprintf(fp, "bgRecalc=%d\n",bgRecalc);
