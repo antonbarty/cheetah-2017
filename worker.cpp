@@ -1427,14 +1427,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
  */
 void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
 	
-	
 	double  *buffer;
 	
 		
-	/*
-	 *	New way of summing powder patterns (handles multiple classifications)
-	 */
-
 	// Raw data
 	pthread_mutex_lock(&global->powderRaw_mutex[powderClass]);
 	for(long i=0; i<global->pix_nn; i++) {
