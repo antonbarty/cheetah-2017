@@ -23,6 +23,220 @@
 #include "median.h"
 #include "peakfinders.h"
 
+
+int peakfinder3(cGlobal *global, tThreadInfo *threadInfo);
+int peakfinder5(cGlobal *global, tThreadInfo *threadInfo);
+int peakfinder6(cGlobal *global, tThreadInfo *threadInfo);
+
+
+
+/*
+ *	Various flavours of hitfinder
+ *		1 - Number of pixels above ADC threshold
+ *		2 - Total intensity above ADC threshold
+ *		3 - Count Bragg peaks
+ *		4 - Use TOF
+ *		5 - Like 3, but with extras
+ *		6 - Experimental - find peaks by SNR criteria
+ */
+int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
+	
+	long	nat, lastnat;
+	long	counter;
+	int		hit=0;
+	float	total;
+	int search_x[] = {-1,0,1,-1,1,-1,0,1};
+	int search_y[] = {-1,-1,-1,0,0,1,1,1};
+	int	search_n = 8;
+	long e;
+	long *inx = (long *) calloc(global->pix_nn, sizeof(long));
+	long *iny = (long *) calloc(global->pix_nn, sizeof(long));
+	float totI;
+	float peak_com_x;
+	float peak_com_y;
+	long thisx;
+	long thisy;
+	long fs, ss;
+	float grad;
+	float lbg, imbg; /* local background nearby peak */
+	float *lbg_buffer;
+	int fsmin, fsmax, ssmin, ssmax;
+	int lbg_ss, lbg_fs, lbg_e;
+	int thisfs, thisss;
+	float mingrad = global->hitfinderMinGradient*2;
+	mingrad *= mingrad;
+	
+	nat = 0;
+	counter = 0;
+	total = 0.0;
+	
+	/*
+	 *	Default values for some metrics
+	 */
+	threadInfo->peakNpix = 0;
+	threadInfo->peakTotal = 0;
+	threadInfo->peakResolution = 0;
+	threadInfo->peakDensity = 0;
+	
+	
+	/*
+	 *	Use a data buffer so we can zero out pixels already counted
+	 */
+	float *temp = (float*) calloc(global->pix_nn, sizeof(float));
+	memcpy(temp, threadInfo->corrected_data, global->pix_nn*sizeof(float));
+	
+	/*
+	 *	Apply peak search mask 
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	if(global->hitfinderUsePeakmask) {
+		for(long i=0;i<global->pix_nn;i++){
+			temp[i] *= global->peakmask[i]; 
+		}
+	}
+	
+	// This stuff is used in hitfinder algorithm 6
+	// THings are getting really ugly here with all these different algorithms.
+	// It's about time to clean things up soon.		
+	int stride = global->pix_nx;
+	int npeaks = 0;
+	
+	// Shift in linear indices to nearest neighbor
+	int shift[8] = { +1, -1, +stride, -stride,
+		+stride - 1, +stride + 1,
+		-stride - 1, -stride + 1};
+	
+	// Combined mask
+	int * mask = (int *) calloc(global->pix_nn, sizeof(int) );
+	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
+	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
+		global->hotpixelmask[i] *
+		global->badpixelmask[i] *
+		threadInfo->saturatedPixelMask[i];
+	
+	/*
+	 *	Use one of various hitfinder algorithms
+	 */
+	switch(global->hitfinderAlgorithm) {
+			
+		case 1 :	// Count the number of pixels above ADC threshold
+			for(long i=0;i<global->pix_nn;i++){
+				if(temp[i] > global->hitfinderADC){
+					total += temp[i];
+					nat++;
+				}
+			}
+			if(nat >= global->hitfinderNAT)
+				hit = 1;
+			
+			threadInfo->peakNpix = nat;
+			threadInfo->nPeaks = nat;
+			threadInfo->peakTotal = total;
+			break;
+			
+			
+		case 2 :	//	integrated intensity above threshold
+			for(long i=0;i<global->pix_nn;i++){
+				if(temp[i] > global->hitfinderADC){
+					total += temp[i];
+					nat++;
+				}
+			}
+			if(total >= global->hitfinderTAT) 
+				hit = 1;
+			
+			threadInfo->peakNpix = nat;
+			threadInfo->nPeaks = nat;
+			threadInfo->peakTotal = total;
+			break;
+			
+			
+		case 4 :	// Use TOF signal to find hits
+			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
+				double total_tof = 0.;
+				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+					total_tof += threadInfo->TOFVoltage[i];
+				}
+				if (total_tof > global->hitfinderTOFThresh)
+					hit = 1;
+			}
+			// Use cspad threshold if TOF is not present 
+			else {
+				for(long i=0;i<global->pix_nn;i++){
+					if(temp[i] > global->hitfinderADC){
+						nat++;
+					}
+				}
+				if(nat >= global->hitfinderNAT)
+					hit = 1;
+			}
+			break;
+			
+		case 5 : 	// Count number of Bragg peaks
+			hit = peakfinder5(global,threadInfo);
+			break;
+			
+		case 6 : 	// Count number of Bragg peaks
+			hit = peakfinder6(global,threadInfo);
+			break;
+			
+		case 3 : 	// Count number of Bragg peaks
+		default:
+			hit = peakfinder3(global, threadInfo);			
+			break;	
+	}
+	
+	// Statistics on the peaks, for certain hitfinders
+	if( threadInfo->nPeaks > 1 &&
+	   ( global->hitfinderAlgorithm == 3 || 
+		global->hitfinderAlgorithm == 5 ||
+		global->hitfinderAlgorithm == 6 ) ) {
+		   
+		   long	np;
+		   long  kk;
+		   float	resolution;
+		   float	cutoff = 0.8;
+		   
+		   np = threadInfo->nPeaks;
+		   if(np >= global->hitfinderNpeaksMax) 
+			   np = global->hitfinderNpeaksMax; 
+		   
+		   float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
+		   for(long k=0; k<np; k++) {
+			   buffer1[k] = threadInfo->peak_com_r_assembled[k];
+		   }
+		   kk = (long) floor(cutoff*np);
+		   resolution = kth_smallest(buffer1, np, kk);
+		   
+		   threadInfo->peakResolution = resolution;
+		   if(resolution > 0) {
+			   float	area = (3.141*resolution*resolution)/(CSPAD_ASIC_NY*CSPAD_ASIC_NX);
+			   threadInfo->peakDensity = (cutoff*np)/area;
+		   }
+		   
+		   free(buffer1);
+	   } 
+	
+	// Update central hit counter
+	if(hit) {
+		pthread_mutex_lock(&global->nhits_mutex);
+		global->nhits++;
+		global->nrecenthits++;
+		pthread_mutex_unlock(&global->nhits_mutex);
+	}
+	
+	free(inx); 			
+	free(iny);	
+	free(mask);	
+	free(temp);
+	
+	return(hit);
+	
+}
+
+
+
+
 int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 
 	int counter = 0;

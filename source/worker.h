@@ -136,32 +136,48 @@ static uint32_t nevents = 0;
  *	Function prototypes
  */
 void *worker(void *);
-void cmModuleSubtract(tThreadInfo*, cGlobal*);
-void cmSubtractUnbondedPixels(tThreadInfo*, cGlobal*);
-void cmSubtractBehindWires(tThreadInfo*, cGlobal*);
-void subtractDarkcal(tThreadInfo*, cGlobal*);
-void applyGainCorrection(tThreadInfo*, cGlobal*);
-void applyBadPixelMask(tThreadInfo*, cGlobal*);
-void subtractPersistentBackground(tThreadInfo*, cGlobal*);
-void calculatePersistentBackground(cGlobal*);
-void subtractLocalBackground(tThreadInfo*, cGlobal*);
-void calculateHotPixelMask(cGlobal*);
-void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
-void killHotpixels(tThreadInfo*, cGlobal*);
-int  hitfinder(tThreadInfo*, cGlobal*);
-void addToPowder(tThreadInfo*, cGlobal*, int);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 //void calculateRadialAverage(tThreadInfo*, cGlobal*);
 void calculateRadialAverage(float*, float*, float*, cGlobal*);
 void calculateRadialAverage(double*, double*, double*, cGlobal*);
-void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
+void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
+
+// detectorCorrection.cpp
+void subtractDarkcal(tThreadInfo*, cGlobal*);
+void cmModuleSubtract(tThreadInfo*, cGlobal*);
+void cmSubtractUnbondedPixels(tThreadInfo*, cGlobal*);
+void cmSubtractBehindWires(tThreadInfo*, cGlobal*);
+void applyGainCorrection(tThreadInfo*, cGlobal*);
+void applyBadPixelMask(tThreadInfo*, cGlobal*);
+void calculateHotPixelMask(cGlobal*);
+void killHotpixels(tThreadInfo*, cGlobal*);
+
+
+// backgroundCorrection.cpp
+void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
+void calculatePersistentBackground(cGlobal*);
+void subtractPersistentBackground(tThreadInfo*, cGlobal*);
+void subtractLocalBackground(tThreadInfo*, cGlobal*);
+
+// saveFrame.cpp
 void nameEvent(tThreadInfo*, cGlobal*);
 void writeHDF5(tThreadInfo*, cGlobal*);
 void writePeakFile(tThreadInfo *threadInfo, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
+
+
+// hitfinders.cpp
+int  hitfinder(tThreadInfo*, cGlobal*);
+
+// powder.cpp
+void addToPowder(tThreadInfo*, cGlobal*, int);
+void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 void saveRunningSums(cGlobal*);
-void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
+
+
+// median.cpp
 int16_t kth_smallest(int16_t*, long, long);
+
 
 
 

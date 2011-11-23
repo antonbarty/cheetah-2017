@@ -49,9 +49,9 @@ $(MYANADIR)/XtcRun.o: $(MYANADIR)/XtcRun.cc $(MYANADIR)/XtcRun.hh $(MYANADIR)/ma
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
 
 
-# csPAD libraries
-$(CSPADDIR)/myana_cspad-gjw.o: $(CSPADDIR)/myana_cspad-gjw.cc 
-	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad-gjw.o $<
+# CSPAD libraries
+$(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
+	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
 
 $(CSPADDIR)/CspadTemp.o: $(CSPADDIR)/CspadTemp.cc $(CSPADDIR)/CspadTemp.hh
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadTemp.o $<
@@ -62,50 +62,44 @@ $(CSPADDIR)/CspadGeometry.o: $(CSPADDIR)/CspadGeometry.cc $(CSPADDIR)/CspadGeome
 $(CSPADDIR)/CspadCorrector.o: $(CSPADDIR)/CspadCorrector.cc $(CSPADDIR)/CspadCorrector.hh
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadCorrector.o $<
 
-$(CSPADDIR)/myana_cspad-gjw: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad-gjw.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad-gjw.o
+$(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 
-# csPAD cleaner
-cheetah.o: cheetah.cpp 
+# Cheetah processing 
+cheetah.o: cheetah.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
-worker.o: worker.cpp worker.h 
+worker.o: worker.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
-setup.o: setup.cpp setup.h 
+setup.o: setup.cpp setup.h worker.h 
 	$(CPP) $(CFLAGS) $<
 
-data2d.o: data2d.cpp data2d.h 
+data2d.o: data2d.cpp data2d.h worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
-median.o: median.cpp median.h 
+median.o: median.cpp median.h worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
-peakfinders.o: peakfinders.cpp peakfinders.h
+hitfinders.o: hitfinders.cpp hitfinders.h worker.h setup.h
+	$(CPP) $(CFLAGS) $<
+
+detectorCorrection.o: detectorCorrection.cpp worker.h setup.h
+	$(CPP) $(CFLAGS) $<
+
+backgroundCorrection.o: backgroundCorrection.cpp worker.h setup.h
+	$(CPP) $(CFLAGS) $<
+
+powder.o: powder.cpp worker.h setup.h
+	$(CPP) $(CFLAGS) $<
+
+saveFrame.o: saveFrame.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
 
-cheetah: cheetah.o setup.o median.o peakfinders.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o setup.o median.o hitfinders.o powder.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-
-
-# test data
-test: cheetah
-	#./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
-
-gdb: cheetah
-	#gdb ./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#gdb ./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	gdb ./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
-
-valgrind: cheetah
-	#valgrind ./cheetah -f ~gjwillms/cfel-cspad/e40-r0549-s00-c00.xtc -n 2
-	#valgrind ./cheetah -f ~gjwillms/cfel-cspad/e55-r0435-s00-c00.xtc -n 2
-	valgrind ./cheetah -f ~gjwillms/cfel-cspad/e55-r0461-s00-c00.xtc -n 2
 
 	
