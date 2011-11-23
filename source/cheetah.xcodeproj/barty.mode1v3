@@ -204,7 +204,7 @@
 				<key>PBXProjectModuleGUID</key>
 				<string>4D4B1695147CFF7B00BC8065</string>
 				<key>PBXProjectModuleLabel</key>
-				<string>worker.h</string>
+				<string>worker.cpp</string>
 				<key>PBXSplitModuleInNavigatorKey</key>
 				<dict>
 					<key>Split0</key>
@@ -212,19 +212,22 @@
 						<key>PBXProjectModuleGUID</key>
 						<string>4D4B16A3147D016500BC8065</string>
 						<key>PBXProjectModuleLabel</key>
-						<string>worker.h</string>
+						<string>worker.cpp</string>
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>4D4B16AF147D019E00BC8065</string>
+						<string>4D4B16C5147D08B600BC8065</string>
 						<key>history</key>
 						<array>
-							<string>4D4B16A4147D016500BC8065</string>
 							<string>4D4B16A5147D016500BC8065</string>
-							<string>4D4B16A7147D016500BC8065</string>
-							<string>4D4B16AA147D016500BC8065</string>
-							<string>4D4B16AE147D019E00BC8065</string>
-							<string>4D4B16A8147D016500BC8065</string>
+							<string>4D4B16BD147D08B600BC8065</string>
+							<string>4D4B16BE147D08B600BC8065</string>
+							<string>4D4B16BF147D08B600BC8065</string>
+							<string>4D4B16C0147D08B600BC8065</string>
+							<string>4D4B16C1147D08B600BC8065</string>
+							<string>4D4B16C2147D08B600BC8065</string>
+							<string>4D4B16C3147D08B600BC8065</string>
+							<string>4D4B16C4147D08B600BC8065</string>
 						</array>
 					</dict>
 					<key>SplitCount</key>
@@ -277,8 +280,6 @@
 			<key>Layout</key>
 			<array>
 				<dict>
-					<key>BecomeActive</key>
-					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -360,7 +361,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>saveFrame.cpp</string>
+								<string>powder.cpp</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -368,17 +369,19 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>saveFrame.cpp</string>
+										<string>powder.cpp</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>4D4B16AD147D019E00BC8065</string>
+										<string>4D4B16BC147D08B600BC8065</string>
 										<key>history</key>
 										<array>
 											<string>4D4B169E147D016500BC8065</string>
 											<string>4D4B169F147D016500BC8065</string>
-											<string>4D4B16A0147D016500BC8065</string>
-											<string>4D4B16A1147D016500BC8065</string>
+											<string>4D4B16B8147D08B600BC8065</string>
+											<string>4D4B16B9147D08B600BC8065</string>
+											<string>4D4B16BA147D08B600BC8065</string>
+											<string>4D4B16BB147D08B600BC8065</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -400,6 +403,8 @@
 							<string>102pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
