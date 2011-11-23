@@ -37,21 +37,10 @@
  */
 void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
 	
-	
 	// Do darkcal subtraction
 	for(long i=0;i<global->pix_nn;i++) {
 		threadInfo->corrected_data[i] -= global->darkcal[i]; 
 	}
-	
-	// If corrected_data is int16 we need to watch for int16 wraparound
-	/*int32_t diff;
-	 for(long i=0;i<global->pix_nn;i++) {
-	 diff = (int32_t) threadInfo->corrected_data[i] - (int32_t) global->darkcal[i];	
-	 if(diff < -32766) diff = -32767;
-	 if(diff > 32766) diff = 32767;
-	 threadInfo->corrected_data[i] = (int16_t) diff;
-	 }
-	 */
 	
 }
 
@@ -102,8 +91,8 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 		mval = 1;
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<8; mi++){
-		for(long mj=0; mj<8; mj++){
+	for(long mi=0; mi<CSPAD_nASICS_X; mi++){
+		for(long mj=0; mj<CSPAD_nASICS_Y; mj++){
 			
 			// Zero array
 			for(long i=0; i<CSPAD_ASIC_NX*CSPAD_ASIC_NY; i++)
@@ -112,7 +101,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			// Loop over pixels within a module
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
-					e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+					e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					e += i + mi*CSPAD_ASIC_NX;
 					buffer[i+j*CSPAD_ASIC_NX] = threadInfo->corrected_data[e];
 				}
@@ -150,8 +139,8 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<8; mi++){
-		for(long mj=0; mj<8; mj++){
+	for(long mi=0; mi<CSPAD_nASICS_X; mi++){
+		for(long mj=0; mj<CSPAD_nASICS_Y; mj++){
 			
 			// Only asics in Q0:0-3 and Q2:4-5 are unbonded
 			if( ! ((mi<=1 && mj<=3) || (mi >= 4 && mi<=5 && mj >= 4 && mj<=5)) )
@@ -163,7 +152,7 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			counter = 0.0;
 			for(long j=0; j<CSPAD_ASIC_NY-1; j+=10){
 				long i=j;
-				e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+				e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 				e += i + mi*CSPAD_ASIC_NX;
 				background += threadInfo->corrected_data[e];
 				counter += 1;
@@ -175,7 +164,7 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			// Subtract background from entire ASIC
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
-					e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+					e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					e += i + mi*CSPAD_ASIC_NX;
 					threadInfo->corrected_data[e] -= background;
 					
@@ -203,15 +192,15 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 	buffer = (float*) calloc(CSPAD_ASIC_NY*CSPAD_ASIC_NX, sizeof(float));
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<8; mi++){
-		for(long mj=0; mj<8; mj++){
+	for(long mi=0; mi<CSPAD_nASICS_X; mi++){
+		for(long mj=0; mj<CSPAD_nASICS_X; mj++){
 			
 			
 			// Loop over pixels within a module, remembering signal behind wires
 			counter = 0;
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
-					p = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+					p = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					p += i + mi*CSPAD_ASIC_NX;
 					if(global->wiremask[i]) {
 						buffer[counter] = threadInfo->corrected_data[p];
@@ -232,7 +221,7 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 			// Subtract median value
 			for(long i=0; i<CSPAD_ASIC_NX; i++){
 				for(long j=0; j<CSPAD_ASIC_NY; j++){
-					p = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+					p = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					p += i + mi*CSPAD_ASIC_NX;
 					threadInfo->corrected_data[p] -= median;
 				}

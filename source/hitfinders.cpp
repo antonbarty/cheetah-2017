@@ -151,7 +151,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			threadInfo->peakTotal = total;
 			break;
 			
-			
+		case 3 : 	// Count number of Bragg peaks
+			hit = peakfinder3(global, threadInfo);			
+			break;	
+
 		case 4 :	// Use TOF signal to find hits
 			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
 				double total_tof = 0.;
@@ -181,10 +184,12 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			hit = peakfinder6(global,threadInfo);
 			break;
 			
-		case 3 : 	// Count number of Bragg peaks
-		default:
-			hit = peakfinder3(global, threadInfo);			
-			break;	
+		default :
+			printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
+			printf("Stopping in confusion.\n");
+			exit(1);
+			break;
+			
 	}
 	
 	// Statistics on the peaks, for certain hitfinders

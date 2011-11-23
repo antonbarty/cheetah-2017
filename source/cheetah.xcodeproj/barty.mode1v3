@@ -204,7 +204,7 @@
 				<key>PBXProjectModuleGUID</key>
 				<string>4D4B1695147CFF7B00BC8065</string>
 				<key>PBXProjectModuleLabel</key>
-				<string>worker.cpp</string>
+				<string>hitfinders.cpp</string>
 				<key>PBXSplitModuleInNavigatorKey</key>
 				<dict>
 					<key>Split0</key>
@@ -212,22 +212,22 @@
 						<key>PBXProjectModuleGUID</key>
 						<string>4D4B16A3147D016500BC8065</string>
 						<key>PBXProjectModuleLabel</key>
-						<string>worker.cpp</string>
+						<string>hitfinders.cpp</string>
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>4D4B16C5147D08B600BC8065</string>
+						<string>4D4B16CE147D0D1500BC8065</string>
 						<key>history</key>
 						<array>
 							<string>4D4B16A5147D016500BC8065</string>
-							<string>4D4B16BD147D08B600BC8065</string>
 							<string>4D4B16BE147D08B600BC8065</string>
 							<string>4D4B16BF147D08B600BC8065</string>
-							<string>4D4B16C0147D08B600BC8065</string>
 							<string>4D4B16C1147D08B600BC8065</string>
 							<string>4D4B16C2147D08B600BC8065</string>
+							<string>4D4B16C9147D0CF900BC8065</string>
+							<string>4D4B16CA147D0CF900BC8065</string>
+							<string>4D4B16CB147D0CF900BC8065</string>
 							<string>4D4B16C3147D08B600BC8065</string>
-							<string>4D4B16C4147D08B600BC8065</string>
 						</array>
 					</dict>
 					<key>SplitCount</key>
@@ -373,7 +373,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>4D4B16BC147D08B600BC8065</string>
+										<string>4D4B16CD147D0D1500BC8065</string>
 										<key>history</key>
 										<array>
 											<string>4D4B169E147D016500BC8065</string>
