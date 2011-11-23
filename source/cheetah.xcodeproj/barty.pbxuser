@@ -1,0 +1,187 @@
+// !$*UTF8*$!
+{
+	08FB7793FE84155DC02AAC07 /* Project object */ = {
+		activeBuildConfigurationName = Release;
+		activeExecutable = 4D3B881E12FF41A500B7ABD9 /* cheetah */;
+		activeTarget = 8DD76F620486A84900D96B5E /* cheetah */;
+		addToTargets = (
+			8DD76F620486A84900D96B5E /* cheetah */,
+		);
+		breakpoints = (
+		);
+		codeSenseManager = 4D3B882912FF41AC00B7ABD9 /* Code sense */;
+		executables = (
+			4D3B881E12FF41A500B7ABD9 /* cheetah */,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					240,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.XCSCMDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					20,
+					203,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_SCM_ColumnID,
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 343661398;
+			PBXWorkspaceStateSaveDate = 343661398;
+		};
+		sourceControlManager = 4D3B882812FF41AC00B7ABD9 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	4D3B881E12FF41A500B7ABD9 /* cheetah */ = {
+		isa = PBXExecutable;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		breakpointsEnabled = 0;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = cheetah;
+		showTypeColumn = 0;
+		sourceDirectories = (
+		);
+	};
+	4D3B882812FF41AC00B7ABD9 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+			repositoryNamesForRoots = {
+				"" = "";
+			};
+		};
+	};
+	4D3B882912FF41AC00B7ABD9 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	4D3B883D12FF425900B7ABD9 /* worker.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {2049, 27248}}";
+			sepNavSelRange = "{39639, 0}";
+			sepNavVisRange = "{0, 3458}";
+			sepNavWindowFrame = "{{75, 0}, {1177, 878}}";
+		};
+	};
+	4D3B885012FF49F500B7ABD9 /* Makefile */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1475, 1313}}";
+			sepNavSelRange = "{647, 0}";
+			sepNavVisRange = "{0, 2132}";
+			sepNavWindowFrame = "{{458, 701}, {1003, 877}}";
+		};
+	};
+	4D3B88651300B24700B7ABD9 /* setup.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1468, 20228}}";
+			sepNavSelRange = "{1936, 0}";
+			sepNavVisRange = "{36457, 2223}";
+			sepNavWindowFrame = "{{15, 0}, {1062, 878}}";
+		};
+	};
+	4D3B88681300B56300B7ABD9 /* cheetah.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1146, 9646}}";
+			sepNavSelRange = "{19564, 0}";
+			sepNavVisRange = "{19107, 2581}";
+			sepNavWindowFrame = "{{555, 484}, {1177, 878}}";
+		};
+	};
+	4D51241613038E3F0094D8E9 /* data2d.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1003, 3393}}";
+			sepNavSelRange = "{4906, 0}";
+			sepNavVisRange = "{4495, 1209}";
+		};
+	};
+	4D51241813038E490094D8E9 /* data2d.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {852, 750}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRange = "{0, 403}";
+		};
+	};
+	4D5125671305CF080094D8E9 /* cheetah.ini */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {944, 1274}}";
+			sepNavSelRange = "{503, 0}";
+			sepNavVisRange = "{0, 1406}";
+			sepNavVisRect = "{{0, 0}, {872, 750}}";
+		};
+	};
+	4D7412C613EB1B5D0090C7C3 /* median.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {846, 1105}}";
+			sepNavSelRange = "{1280, 0}";
+			sepNavVisRange = "{0, 1418}";
+			sepNavWindowFrame = "{{15, 0}, {905, 878}}";
+		};
+	};
+	4DB242D5147BDBD000BCEDBB /* peakfinders.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1292, 8567}}";
+			sepNavSelRange = "{616, 0}";
+			sepNavVisRange = "{0, 3359}";
+			sepNavWindowFrame = "{{531, 104}, {1351, 1474}}";
+		};
+	};
+	8DD76F620486A84900D96B5E /* cheetah */ = {
+		activeExec = 0;
+		executables = (
+			4D3B881E12FF41A500B7ABD9 /* cheetah */,
+		);
+	};
+}

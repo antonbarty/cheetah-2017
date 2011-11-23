@@ -1,0 +1,254 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4D3B883E12FF425900B7ABD9 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B883D12FF425900B7ABD9 /* worker.cpp */; };
+		4D3B885112FF49F500B7ABD9 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B885012FF49F500B7ABD9 /* Makefile */; };
+		4D3B88661300B24700B7ABD9 /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B88651300B24700B7ABD9 /* setup.cpp */; };
+		4D3B88691300B56300B7ABD9 /* cheetah.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B88681300B56300B7ABD9 /* cheetah.cpp */; };
+		4D51241713038E3F0094D8E9 /* data2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D51241613038E3F0094D8E9 /* data2d.cpp */; };
+		4D7412C713EB1B5D0090C7C3 /* median.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7412C613EB1B5D0090C7C3 /* median.cpp */; };
+		4DB242D6147BDBD000BCEDBB /* peakfinders.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB242D5147BDBD000BCEDBB /* peakfinders.cpp */; };
+		8DD76F6A0486A84900D96B5E /* cspad_cryst.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* cspad_cryst.1 */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8DD76F690486A84900D96B5E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				8DD76F6A0486A84900D96B5E /* cspad_cryst.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4D3B883D12FF425900B7ABD9 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
+		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		4D3B88651300B24700B7ABD9 /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
+		4D3B88681300B56300B7ABD9 /* cheetah.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cheetah.cpp; sourceTree = "<group>"; };
+		4D51241613038E3F0094D8E9 /* data2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = data2d.cpp; sourceTree = "<group>"; };
+		4D51241813038E490094D8E9 /* data2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = data2d.h; sourceTree = "<group>"; };
+		4D5125671305CF080094D8E9 /* cheetah.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cheetah.ini; sourceTree = "<group>"; };
+		4D7412C613EB1B5D0090C7C3 /* median.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = median.cpp; sourceTree = "<group>"; };
+		4DB242D5147BDBD000BCEDBB /* peakfinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = peakfinders.cpp; sourceTree = "<group>"; };
+		8DD76F6C0486A84900D96B5E /* cheetah */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cheetah; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6859E8B029090EE04C91782 /* cspad_cryst.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = cspad_cryst.1; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8DD76F660486A84900D96B5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* cspad_cryst */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6859E8C029090F304C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+			);
+			name = cspad_cryst;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				4DB242D5147BDBD000BCEDBB /* peakfinders.cpp */,
+				4D3B885012FF49F500B7ABD9 /* Makefile */,
+				4D5125671305CF080094D8E9 /* cheetah.ini */,
+				4D3B883D12FF425900B7ABD9 /* worker.cpp */,
+				4D3B88681300B56300B7ABD9 /* cheetah.cpp */,
+				4D3B88651300B24700B7ABD9 /* setup.cpp */,
+				4D51241813038E490094D8E9 /* data2d.h */,
+				4D51241613038E3F0094D8E9 /* data2d.cpp */,
+				4D7412C613EB1B5D0090C7C3 /* median.cpp */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD76F6C0486A84900D96B5E /* cheetah */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C6859E8C029090F304C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				C6859E8B029090EE04C91782 /* cspad_cryst.1 */,
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8DD76F620486A84900D96B5E /* cheetah */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "cheetah" */;
+			buildPhases = (
+				8DD76F640486A84900D96B5E /* Sources */,
+				8DD76F660486A84900D96B5E /* Frameworks */,
+				8DD76F690486A84900D96B5E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = cheetah;
+			productInstallPath = "$(HOME)/bin";
+			productName = cspad_cryst;
+			productReference = 8DD76F6C0486A84900D96B5E /* cheetah */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "cheetah" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 08FB7794FE84155DC02AAC07 /* cspad_cryst */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8DD76F620486A84900D96B5E /* cheetah */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8DD76F640486A84900D96B5E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D3B883E12FF425900B7ABD9 /* worker.cpp in Sources */,
+				4D3B885112FF49F500B7ABD9 /* Makefile in Sources */,
+				4D3B88661300B24700B7ABD9 /* setup.cpp in Sources */,
+				4D3B88691300B56300B7ABD9 /* cheetah.cpp in Sources */,
+				4D51241713038E3F0094D8E9 /* data2d.cpp in Sources */,
+				4D7412C713EB1B5D0090C7C3 /* median.cpp in Sources */,
+				4DB242D6147BDBD000BCEDBB /* peakfinders.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB923208733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = cheetah;
+			};
+			name = Debug;
+		};
+		1DEB923308733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = cheetah;
+			};
+			name = Release;
+		};
+		1DEB923608733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SSE42_EXTENSIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					"release/**",
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-lhdf5";
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Debug;
+		};
+		1DEB923708733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SSE42_EXTENSIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					"release/**",
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				OTHER_LDFLAGS = "-lhdf5";
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "cheetah" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923208733DC60010E9CD /* Debug */,
+				1DEB923308733DC60010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "cheetah" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923608733DC60010E9CD /* Debug */,
+				1DEB923708733DC60010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
