@@ -21,7 +21,7 @@
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
-#include "peakfinders.h"
+#include "hitfinders.h"
 
 
 // Peakfinders local to this routine
