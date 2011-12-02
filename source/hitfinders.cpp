@@ -835,13 +835,15 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 						for ( int cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 							ce = cs*stride + cf;
 							if ( mask[ce] == 0 ) continue;
-							itot += temp[ce];
-							ftot += temp[ce]*(float)cf;
-							stot += temp[ce]*(float)cs;
-						}}	
-					
+							thisI = temp[ce] - bg;
+							itot += thisI;
+							ftot += thisI*(float)cf;
+							stot += thisI*(float)cs;
+						}
+					}		
+
 					/* Dump peak info into thread structure, for writing hdf5 files, etc. */
-					threadInfo->peak_intensity[peakindex] = thisI;
+					threadInfo->peak_intensity[peakindex] = itot;
 					threadInfo->peak_com_x[peakindex] = ftot/itot;
 					threadInfo->peak_com_y[peakindex] = stot/itot;
 					threadInfo->peak_npix[peakindex] = 1;
