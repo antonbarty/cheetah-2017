@@ -21,7 +21,7 @@
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
-#include "peakfinders.h"
+#include "hitfinders.h"
 
 
 // Peakfinders local to this routine
@@ -428,7 +428,8 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 }
 
 
-/*	peakfinder 5
+/*	
+ *	peakfinder 5
  *	Rick Kirian
  */
 int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
@@ -687,7 +688,10 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 	
 }
 
-
+/*
+ *	Peak finder 6
+ *	Rick Kirian
+ */
 int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	
 	int counter = 0;
