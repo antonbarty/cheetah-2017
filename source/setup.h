@@ -31,7 +31,10 @@ public:
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
-	
+
+    char					detectorZname[MAX_FILENAME_LENGTH];
+    
+
 	// Start and stop frames
 	long	startAtFrame;
 	long	stopAtFrame;
@@ -40,6 +43,8 @@ public:
 	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
 	float		defaultCameraLengthMm;
+    float       cameraLengthOffset;
+    float       cameraLengthScale;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
@@ -216,9 +221,10 @@ public:
 	long			asic_nn;
 	long			nasics_x;
 	long			nasics_y;
-	float			detectorZprevious;	
-	float			radial_max;
+    float			radial_max;
 	long			radial_nn;
+
+	float			detectorZprevious;	
 	float			detposprev;	
 	
 	
@@ -273,6 +279,7 @@ public:
 	void parseCommandLineArguments(int, char**);
 	void setup(void);
 	void readDetectorGeometry(char *);
+    void updateKspace(float);
 	void readDarkcal(char *);
 	void readGaincal(char *);
 	void readPeakmask(char *);

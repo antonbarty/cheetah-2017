@@ -459,7 +459,10 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 }
 
-
+/*
+ *  Calculate radial averages
+ *  To do: Replace this with a templated function
+ */
 
 void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global){
 	// Zero arrays

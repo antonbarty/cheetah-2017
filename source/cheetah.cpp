@@ -388,34 +388,32 @@ void event() {
 	
 	
 	/*
-	 *	CXI detector position (Z)
+	 *	Detector position (Z)
 	 */
 	float detposnew;
 	int update_camera_length;
-	if ( getPvFloat("CXI:DS1:MMS:06", detposnew) == 0 ) {
-		/* When encoder reads -500mm, detector is at its closest possible
-		 * position to the specimen, and is 79mm from the centre of the 
-		 * 8" flange where the injector is mounted.  The injector itself is
-		 * about 4mm further away from the detector than this. */
-		// printf("New detector pos %e\n", detposnew);
-		if ( detposnew == 0 ) {
-			detposnew = global.detposprev;
-			printf("WARNING: detector position is zero, which could be an error\n"
-			       "         will use previous position (%f) instead...\n",detposnew);
-		}
-		global.detposprev = detposnew;
-		global.detectorZ = 500.0 + detposnew + 79.0;
-		/* Let's round to the nearest two decimal places 
-		 * (10 micron, much less than a pixel size) */
-		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
-		update_camera_length = 1;
+	if ( getPvFloat(global.detectorZname, detposnew) == 0 ) {
 		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
 		 * skip the first few XTC datagrams, you will likely get error messages
 		 * telling you that the EPICS PV is invalid.  Seems that this PV is
 		 * updated at only about 1 Hz.  More worrysome is the fact that it
 		 * occasionally gives a bogus value of detposnew=0, without a fail
-		 * message.  Hardware problem? 
-		 */
+		 * message.  Hardware problem? */
+		if ( detposnew == 0 ) {
+			detposnew = global.detposprev;
+			printf("WARNING: detector position is zero, which could be an error\n"
+			       "         will use previous position (%s=%f) instead...\n",global.detectorZname, detposnew);
+		}
+		/* When encoder reads -500mm, detector is at its closest possible
+		 * position to the specimen, and is 79mm from the centre of the 
+		 * 8" flange where the injector is mounted.  The injector itself is
+		 * about 4mm further away from the detector than this. */
+		global.detposprev = detposnew;
+		global.detectorZ = detposnew + global.cameraLengthOffset;
+		/* Let's round to the nearest two decimal places 
+		 * (10 micron, much less than a pixel size) */
+		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
+		update_camera_length = 1;
 	}	 
 
 	if ( global.detectorZ == 0 ) {
@@ -426,13 +424,14 @@ void event() {
 		 */
 		if ( global.defaultCameraLengthMm == 0 ) {
 			printf("======================================================\n");
-			printf("WARNING: Camera length is zero!\n");
+			printf("WARNING: Camera length %s is zero!\n", global.detectorZname);
 			printf("I'm skipping this frame.  If the problem persists, try\n");
 			printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
 			printf("file.\n");
 			printf("======================================================\n");
 			return;
-		} else {
+		} 
+        else {
 			printf("MESSAGE: Setting default camera length (%gmm).\n",global.defaultCameraLengthMm);
 			global.detectorZ = global.defaultCameraLengthMm;	
 			update_camera_length = 1;
@@ -440,53 +439,22 @@ void event() {
 	}
 	
 	/*
-	 * If the camera length has changed, recalculate reciprocal space geometry.
-	 * Also, skip this frame if it isn't the first one.  Let's not bother with 
-	 * frames collected while the camera is moving...
+	 * Recalculate reciprocal space geometry if the camera length has changed, 
 	 */
 	if ( update_camera_length && ( global.detectorZprevious != global.detectorZ ) ) {
-		
+		// don't tinker with global geometry while there are active threads...
+        while (global.nActiveThreads > 0) usleep(10000);
+
 		printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global.detectorZprevious,global.detectorZ);
-	
-		if ( isnan(wavelengthA ) ) {
+        if ( isnan(wavelengthA ) ) {
 			printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
 		}	
-		long i;
-		float  x, y, z, r;
-		float kx,ky,kz,kr;
-		float res;
-		
-		// don't tinker with global geometry while there are active threads...
-		while (global.nActiveThreads > 0) usleep(10000);
-		
-		global.detectorZprevious = global.detectorZ;
-
-		for ( i=0; i<global.pix_nn; i++ ) {
-			x = global.pix_x[i]*global.pixelSize;
-			y = global.pix_y[i]*global.pixelSize;
-			z = global.pix_z[i]*global.pixelSize + global.detectorZ*0.001;
-			r = sqrt(x*x + y*y + z*z);
-			kx = x/r/wavelengthA;
-			ky = y/r/wavelengthA;
-			kz = (z/r - 1)/wavelengthA; // assuming incident beam is along +z direction
-			kr = sqrt(kx*kx + ky*ky + kz*kz);
-			res = 1/kr;
-			global.pix_kx[i] = kx;
-			global.pix_ky[i] = ky;
-			global.pix_kz[i] = kz;
-			global.pix_kr[i] = kr;
-			global.pix_res[i] = res;
-			if ( global.hitfinderLimitRes == 1 ) {
-				if ( ( res < global.hitfinderMinRes ) && (res > global.hitfinderMaxRes) ) {
-					global.hitfinderResMask[i] = 1;
-				} else {
-					global.hitfinderResMask[i] = 0;
-				}
-			}
-		}
-		
-		// if its the first thread then continue, else skip this event
-		if ( frameNumber != 1 ) return;
+        global.detectorZprevious = global.detectorZ;
+        global.updateKspace(wavelengthA);
+        
+		// if its the first frame then continue, else skip this event
+		if ( frameNumber != 1 )     
+            return;
 	}	
 
 	

@@ -50,6 +50,14 @@ void cGlobal::defaultConfiguration(void) {
 	detectorType = Pds::DetInfo::Cspad;
 	detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 	
+    
+    // Detector Z position
+	strcpy(detectorZname, "CXI:DS1:MMS:06");
+	defaultCameraLengthMm = 0;
+	detposprev = 0;
+    cameraLengthOffset = 500.0 + 79.0;
+    cameraLengthScale = 1e-3;
+
 	
 	// Start and stop frames
 	startAtFrame = 0;
@@ -59,8 +67,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Geometry
 	strcpy(geometryFile, "No_file_specified");
 	pixelSize = 110e-6;
-	defaultCameraLengthMm = 0;
-	detposprev = 0;
+    
 	
 	// Bad pixel mask
 	strcpy(badpixelFile, "No_file_specified");
@@ -233,6 +240,10 @@ void cGlobal::setup() {
 		detectorType = Pds::DetInfo::Cspad;
 		detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
 	}
+	else if (!strcmp(detectorName, "XppGon")) {
+		detectorType = Pds::DetInfo::Cspad;
+		detectorPdsDetInfo = Pds::DetInfo::XppGon;
+	}
 	else {
 		printf("Error: unknown detector %s\n", detectorName);
 		printf("Quitting\n");
@@ -306,7 +317,7 @@ void cGlobal::setup() {
 		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
 		
 		char	filename[1024];
-		sprintf(filename,"r%04u-class%i-sumLog.txt",runNumber,i);
+		sprintf(filename,"r%04u-class%ld-sumLog.txt",runNumber,i);
 		powderlogfp[i] = fopen(filename, "w");
 	}
 	
@@ -458,7 +469,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	/*
 	 *	Open configuration file for reading
 	 */
-	printf("Parsing input configuration file:\n",filename);
+	printf("Parsing input configuration file: %s\n",filename);
 	printf("\t%s\n",filename);
 	
 	fp = fopen(filename,"r");
@@ -516,6 +527,15 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	} 
 	else if (!strcmp(tag, "defaultcameralengthmm")) {
 		defaultCameraLengthMm = atof(value);
+	}
+	else if (!strcmp(tag, "detectorzname")) {
+		strcpy(detectorZname, value);
+	}
+	else if (!strcmp(tag, "cameralengthoffset")) {
+		cameraLengthOffset = atof(value);
+	}
+	else if (!strcmp(tag, "cameraLengthScale")) {
+		cameraLengthScale  = atof(value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
@@ -946,6 +966,49 @@ void cGlobal::readDetectorGeometry(char* filename) {
 			radial_max = pix_r[i];
 	}	
 	radial_nn = (long int) ceil(radial_max)+1;
+}
+
+/*
+ *  Update K-space variables
+ *  (called whenever detector has moved)
+ */
+void cGlobal::updateKspace(float wavelengthA) {
+    long i;
+    float   x, y, z, r;
+    float   kx,ky,kz,kr;
+    float   res;
+
+    printf("Recalculating K-space coordinates\n");
+
+    for ( i=0; i<pix_nn; i++ ) {
+        x = pix_x[i]*pixelSize;
+        y = pix_y[i]*pixelSize;
+        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
+        
+        r = sqrt(x*x + y*y + z*z);
+        kx = x/r/wavelengthA;
+        ky = y/r/wavelengthA;
+        kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
+        kr = sqrt(kx*kx + ky*ky + kz*kz);
+        res = 1/kr;
+        
+        pix_kx[i] = kx;
+        pix_ky[i] = ky;
+        pix_kz[i] = kz;
+        pix_kr[i] = kr;
+        pix_res[i] = res;
+        
+        
+        // Check whether resolution limits still make sense.
+        if ( hitfinderLimitRes == 1 ) {
+            if ( ( res < hitfinderMinRes ) && (res > hitfinderMaxRes) ) {
+                hitfinderResMask[i] = 1;
+            } 
+            else {
+                hitfinderResMask[i] = 0;
+            }
+        }
+    }
 }
 
 
