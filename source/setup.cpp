@@ -52,7 +52,7 @@ void cGlobal::defaultConfiguration(void) {
 	
     
     // Detector Z position
-	strcpy(detectorZname, "CXI:DS1:MMS:06");
+	strcpy(detectorZpvname, "CXI:DS1:MMS:06");
 	defaultCameraLengthMm = 0;
 	detposprev = 0;
     cameraLengthOffset = 500.0 + 79.0;
@@ -529,7 +529,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		defaultCameraLengthMm = atof(value);
 	}
 	else if (!strcmp(tag, "detectorzname")) {
-		strcpy(detectorZname, value);
+		strcpy(detectorZpvname, value);
 	}
 	else if (!strcmp(tag, "cameralengthoffset")) {
 		cameraLengthOffset = atof(value);
@@ -1035,7 +1035,7 @@ void cGlobal::readDarkcal(char *filename){
 	printf("Reading darkcal configuration:\n");
 	printf("\t%s\n",filename);
 
-	// Check whether pixel map file exists!
+	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
@@ -1374,11 +1374,11 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
 	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
+	fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
 	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
-	fprintf(fp, "localBackgroundRadius=%d\n",localBackgroundRadius);
+	fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
 	fprintf(fp, "tofName=%s\n",tofName);
 	fprintf(fp, "tofChannel=%d\n",TOFchannel);
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
@@ -1416,7 +1416,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);
-	fprintf(fp, "bgRecalc=%d\n",bgRecalc);
+	fprintf(fp, "bgRecalc=%ld\n",bgRecalc);
 	fprintf(fp, "bgMedian=%f\n",bgMedian);
 	fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
 	fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
@@ -1583,7 +1583,7 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
 	fprintf(fp, "nFrames in powder patterns:\n");
 	for(long i=0; i<nPowderClasses; i++) {
-		fprintf(fp, "\tclass%i: %li\n", i, nPowderFrames[i]);
+		fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
 	}
 	fprintf(fp, "Number of hits: %li\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);

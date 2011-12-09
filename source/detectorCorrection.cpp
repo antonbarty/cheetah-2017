@@ -81,14 +81,13 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	
 	long		e;
 	long		mval;
+    long		counter;
 	float		median;
 	
 	float	*buffer; 
 	buffer = (float*) calloc(CSPAD_ASIC_NX*CSPAD_ASIC_NY, sizeof(float));
 	
 	mval = lrint((CSPAD_ASIC_NX*CSPAD_ASIC_NY)*global->cmFloor);
-	if(mval < 0) 
-		mval = 1;
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<CSPAD_nASICS_X; mi++){
@@ -99,17 +98,30 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				buffer[i] = 0;
 			
 			// Loop over pixels within a module
+            counter = 0;
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
 					e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					e += i + mi*CSPAD_ASIC_NX;
-					buffer[i+j*CSPAD_ASIC_NX] = threadInfo->corrected_data[e];
+                    if(global->badpixelmask[i]) {           // badpixelmask[e]==0 are the bad pixels
+						buffer[counter] = threadInfo->corrected_data[e];
+						counter++;
+					}
 				}
 			}
 			
-			// Calculate background using median value
-			median = kth_smallest(buffer, CSPAD_ASIC_NX*CSPAD_ASIC_NY, mval);
 			
+            // Calculate background using median value 
+			//median = kth_smallest(buffer, CSPAD_ASIC_NX*CSPAD_ASIC_NY, mval);
+			if(counter>0) {
+				mval = lrint(counter*global->cmFloor);
+                if(mval < 0) 
+                    mval = 1;
+				median = kth_smallest(buffer, counter, mval);
+			}
+			else 
+				median = 0;
+
 			// Subtract median value
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){

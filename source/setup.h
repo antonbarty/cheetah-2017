@@ -31,8 +31,7 @@ public:
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
-
-    char					detectorZname[MAX_FILENAME_LENGTH];
+    char					detectorZpvname[MAX_FILENAME_LENGTH];
     
 
 	// Start and stop frames

@@ -178,7 +178,7 @@ void beginrun()
 	for(long i=0; i<global.nPowderClasses; i++) {
 		char	filename[1024];
 		fclose(global.powderlogfp[i]);
-		sprintf(filename,"r%04u-class%i-sumLog.txt",global.runNumber,i);
+		sprintf(filename,"r%04u-class%ld-sumLog.txt",global.runNumber,i);
 		global.powderlogfp[i] = fopen(filename, "w");
 	}
 	
@@ -392,7 +392,7 @@ void event() {
 	 */
 	float detposnew;
 	int update_camera_length;
-	if ( getPvFloat(global.detectorZname, detposnew) == 0 ) {
+	if ( getPvFloat(global.detectorZpvname, detposnew) == 0 ) {
 		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
 		 * skip the first few XTC datagrams, you will likely get error messages
 		 * telling you that the EPICS PV is invalid.  Seems that this PV is
@@ -402,7 +402,7 @@ void event() {
 		if ( detposnew == 0 ) {
 			detposnew = global.detposprev;
 			printf("WARNING: detector position is zero, which could be an error\n"
-			       "         will use previous position (%s=%f) instead...\n",global.detectorZname, detposnew);
+			       "         will use previous position (%s=%f) instead...\n",global.detectorZpvname, detposnew);
 		}
 		/* When encoder reads -500mm, detector is at its closest possible
 		 * position to the specimen, and is 79mm from the centre of the 
@@ -424,7 +424,7 @@ void event() {
 		 */
 		if ( global.defaultCameraLengthMm == 0 ) {
 			printf("======================================================\n");
-			printf("WARNING: Camera length %s is zero!\n", global.detectorZname);
+			printf("WARNING: Camera length %s is zero!\n", global.detectorZpvname);
 			printf("I'm skipping this frame.  If the problem persists, try\n");
 			printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
 			printf("file.\n");
@@ -453,8 +453,8 @@ void event() {
         global.updateKspace(wavelengthA);
         
 		// if its the first frame then continue, else skip this event
-		if ( frameNumber != 1 )     
-            return;
+		//if ( frameNumber != 1 )     
+        //    return;
 	}	
 
 	

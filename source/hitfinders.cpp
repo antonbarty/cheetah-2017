@@ -42,28 +42,12 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo);
  */
 int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	
-	long	nat, lastnat;
+	long	nat;
 	long	counter;
 	int		hit=0;
 	float	total;
-	int search_x[] = {-1,0,1,-1,1,-1,0,1};
-	int search_y[] = {-1,-1,-1,0,0,1,1,1};
-	int	search_n = 8;
-	long e;
 	long *inx = (long *) calloc(global->pix_nn, sizeof(long));
 	long *iny = (long *) calloc(global->pix_nn, sizeof(long));
-	float totI;
-	float peak_com_x;
-	float peak_com_y;
-	long thisx;
-	long thisy;
-	long fs, ss;
-	float grad;
-	float lbg, imbg; /* local background nearby peak */
-	float *lbg_buffer;
-	int fsmin, fsmax, ssmin, ssmax;
-	int lbg_ss, lbg_fs, lbg_e;
-	int thisfs, thisss;
 	float mingrad = global->hitfinderMinGradient*2;
 	mingrad *= mingrad;
 	
