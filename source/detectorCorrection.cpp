@@ -86,8 +86,8 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 	
 	float	*buffer; 
 	buffer = (float*) calloc(CSPAD_ASIC_NX*CSPAD_ASIC_NY, sizeof(float));
-	
-	mval = lrint((CSPAD_ASIC_NX*CSPAD_ASIC_NY)*global->cmFloor);
+    
+	//mval = lrint((CSPAD_ASIC_NX*CSPAD_ASIC_NY)*global->cmFloor);
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<CSPAD_nASICS_X; mi++){
@@ -103,9 +103,8 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
 					e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					e += i + mi*CSPAD_ASIC_NX;
-                    if(global->badpixelmask[i]) {           // badpixelmask[e]==0 are the bad pixels
-						buffer[counter] = threadInfo->corrected_data[e];
-						counter++;
+                    if(global->badpixelmask[e] != 0) {           // badpixelmask[e]==0 are the bad pixels
+						buffer[counter++] = threadInfo->corrected_data[e];
 					}
 				}
 			}
@@ -125,7 +124,7 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 			// Subtract median value
 			for(long j=0; j<CSPAD_ASIC_NY; j++){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
-					e = (j + mj*CSPAD_ASIC_NY) * (8*CSPAD_ASIC_NX);
+					e = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					e += i + mi*CSPAD_ASIC_NX;
 					threadInfo->corrected_data[e] -= median;
 				}
@@ -214,7 +213,7 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 				for(long i=0; i<CSPAD_ASIC_NX; i++){
 					p = (j + mj*CSPAD_ASIC_NY) * (CSPAD_ASIC_NX*CSPAD_nASICS_X);
 					p += i + mi*CSPAD_ASIC_NX;
-					if(global->wiremask[i]) {
+					if(global->wiremask[i] && global->badpixelmask[p] != 0) {
 						buffer[counter] = threadInfo->corrected_data[p];
 						counter++;
 					}

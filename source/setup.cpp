@@ -283,7 +283,17 @@ void cGlobal::setup() {
 		tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 	}
 	
-	
+	/*
+     * How many types of powder pattern do we need?
+     */
+    if(hitfinder==0)
+        nPowderClasses=1;
+    else
+        nPowderClasses=2;
+
+    if(generateDarkcal || generateGaincal)
+        nPowderClasses=1;
+    
 	
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.

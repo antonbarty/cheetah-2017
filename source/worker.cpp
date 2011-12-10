@@ -272,7 +272,7 @@ void *worker(void *threadarg) {
 		addToPowder(threadInfo, global, hit);
 	} 
 	if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(threadInfo, global, 1);
+		addToPowder(threadInfo, global, 0);
 	} 
 		
 	
