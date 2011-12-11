@@ -296,3 +296,27 @@ private:
 	
 };
 
+
+/*
+ *	Stuff from original LCLS code
+ */
+
+// Static variables
+using namespace std;
+static CspadCorrector*      corrector;
+static Pds::CsPad::ConfigV1 configV1;
+static Pds::CsPad::ConfigV2 configV2;
+static Pds::CsPad::ConfigV3 configV3;
+static unsigned             configVsn;
+static unsigned             quadMask;
+static unsigned             asicMask;
+
+static const unsigned  CSPAD_ASIC_NX = 194;		// ASIC nx = extent of one ASIC in x
+static const unsigned  CSPAD_ASIC_NY = 185;		// ASIC ny = extent of one ASIC in y
+static const unsigned  CSPAD_nASICS_X = 8;		// 8 ASICs across in raw data stream
+static const unsigned  CSPAD_nASICS_Y = 8;		// 8 ASICs down in raw data stresm
+
+static const unsigned int cbufsize = 1024;
+
+
+

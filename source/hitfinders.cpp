@@ -205,7 +205,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		   }
 		   
 		   free(buffer1);
-	   } 
+    } 
 	
 	// Update central hit counter
 	if(hit) {
@@ -215,6 +215,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 	
+
 	free(inx); 			
 	free(iny);	
 	free(mask);	
