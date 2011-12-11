@@ -501,8 +501,8 @@ void event() {
 	threadInfo->pGlobal = &global;
 	
 	for(int quadrant=0; quadrant<4; quadrant++) {
-		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(CSPAD_ASIC_NX*CSPAD_ASIC_NY*16, sizeof(uint16_t));
-		memset(threadInfo->quad_data[quadrant], 0, CSPAD_ASIC_NX*CSPAD_ASIC_NY*16*sizeof(uint16_t));
+		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(global.asic_nx*global.asic_ny*16, sizeof(uint16_t));
+		memset(threadInfo->quad_data[quadrant], 0, global.asic_nx*global.asic_ny*16*sizeof(uint16_t));
 	}
 	
 
@@ -540,7 +540,7 @@ void event() {
 				const Pds::CsPad::Section* s;
 				unsigned section_id;
 				while(( s=iter.next(section_id) )) {  
-					memcpy(&threadInfo->quad_data[quadrant][section_id*2*CSPAD_ASIC_NX*CSPAD_ASIC_NY],s->pixel[0],2*CSPAD_ASIC_NX*CSPAD_ASIC_NY*sizeof(uint16_t));
+					memcpy(&threadInfo->quad_data[quadrant][section_id*2*global.asic_nx*global.asic_ny],s->pixel[0],2*global.asic_nx*global.asic_ny*sizeof(uint16_t));
 				}
 			}
 		}

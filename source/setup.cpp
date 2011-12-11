@@ -183,6 +183,13 @@ void cGlobal::defaultConfiguration(void) {
 	// I/O speed test?
 	ioSpeedTest = 0;
 
+    // cspad default parameters
+    asic_nx = CSPAD_ASIC_NX;
+    asic_ny = CSPAD_ASIC_NY;
+    asic_nn = asic_nx * asic_ny;
+    nasics_x = CSPAD_nASICS_X;
+    nasics_y = CSPAD_nASICS_Y;
+
 	
 	// Default to only a few threads
 	nThreads = 16;
@@ -259,8 +266,8 @@ void cGlobal::setup() {
 			asic_nx = CSPAD_ASIC_NX;
 			asic_ny = CSPAD_ASIC_NY;
 			asic_nn = asic_nx * asic_ny;
-			nasics_x = 8;
-			nasics_y = 8;
+			nasics_x = CSPAD_nASICS_X;
+			nasics_y = CSPAD_nASICS_Y;
 			break;
 			
 		default:
@@ -852,8 +859,8 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Pixel size (measurements in geometry file are in m)
-	module_rows = CSPAD_ASIC_NX;
-	module_cols = CSPAD_ASIC_NY;	
+	module_rows = asic_nx;
+	module_cols = asic_ny;	
 	pix_dx = pixelSize;
 
 	
@@ -888,16 +895,16 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*CSPAD_ASIC_NX || detector_x.ny != 8*CSPAD_ASIC_NY) {
+	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*CSPAD_ASIC_NX, 8*CSPAD_ASIC_NY, detector_x.nx, detector_x.ny);
+		printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
 	
 	// Create local arrays for detector pixel locations
-	long	nx = 8*CSPAD_ASIC_NX;
-	long	ny = 8*CSPAD_ASIC_NY;
+	long	nx = 8*asic_nx;
+	long	ny = 8*asic_ny;
 	long	nn = nx*ny;
 	long 	i;
 	pix_nx = nx;
