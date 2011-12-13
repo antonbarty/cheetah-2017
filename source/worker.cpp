@@ -51,13 +51,13 @@ void *worker(void *threadarg) {
 	/*
 	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
-	threadInfo->raw_data = (uint16_t*) calloc(CSPAD_nASICS_X*CSPAD_ASIC_NX*CSPAD_nASICS_Y*CSPAD_ASIC_NY,sizeof(uint16_t));
+	threadInfo->raw_data = (uint16_t*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(uint16_t));
 	for(int quadrant=0; quadrant<4; quadrant++) {
 		long	i,j,ii;
-		for(long k=0; k<2*CSPAD_ASIC_NX*8*CSPAD_ASIC_NY; k++) {
-			i = k % (2*CSPAD_ASIC_NX) + quadrant*(2*CSPAD_ASIC_NX);
-			j = k / (2*CSPAD_ASIC_NX);
-			ii  = i+(CSPAD_nASICS_X*CSPAD_ASIC_NX)*j;
+		for(long k=0; k<2*global->asic_nx*8*global->asic_ny; k++) {
+			i = k % (2*global->asic_nx) + quadrant*(2*global->asic_nx);
+			j = k / (2*global->asic_nx);
+			ii  = i+(global->nasics_x*global->asic_nx)*j;
 			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
 		}
 	}
@@ -65,11 +65,11 @@ void *worker(void *threadarg) {
 	/*
 	 *	Create arrays for corrected data, etc needed by this thread
 	 */
-	threadInfo->corrected_data = (float*) calloc(CSPAD_nASICS_X*CSPAD_ASIC_NX*CSPAD_nASICS_Y*CSPAD_ASIC_NY,sizeof(float));
-	threadInfo->corrected_data_int16 = (int16_t*) calloc(CSPAD_nASICS_X*CSPAD_ASIC_NX*CSPAD_nASICS_Y*CSPAD_ASIC_NY,sizeof(int16_t));
-	threadInfo->detector_corrected_data = (float*) calloc(CSPAD_nASICS_X*CSPAD_ASIC_NX*CSPAD_nASICS_Y*CSPAD_ASIC_NY,sizeof(float));
+	threadInfo->corrected_data = (float*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(float));
+	threadInfo->corrected_data_int16 = (int16_t*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(int16_t));
+	threadInfo->detector_corrected_data = (float*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(float));
 	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
-	threadInfo->saturatedPixelMask = (int16_t *) calloc(CSPAD_nASICS_X*CSPAD_ASIC_NX*CSPAD_nASICS_Y*CSPAD_ASIC_NY,sizeof(int16_t));
+	threadInfo->saturatedPixelMask = (int16_t *) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(int16_t));
 
 	threadInfo->radialAverage = (float *) calloc(global->radial_nn, sizeof(float));
 	threadInfo->radialAverageCounter = (float *) calloc(global->radial_nn, sizeof(float));
@@ -272,7 +272,7 @@ void *worker(void *threadarg) {
 		addToPowder(threadInfo, global, hit);
 	} 
 	if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(threadInfo, global, 1);
+		addToPowder(threadInfo, global, 0);
 	} 
 		
 	
@@ -459,7 +459,10 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 }
 
-
+/*
+ *  Calculate radial averages
+ *  To do: Replace this with a templated function
+ */
 
 void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global){
 	// Zero arrays

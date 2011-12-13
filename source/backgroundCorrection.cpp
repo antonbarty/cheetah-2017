@@ -164,9 +164,9 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	
-	// Loop over ASIC modules (8x8 array)
-	for(long mi=0; mi<8; mi++){
-		for(long mj=0; mj<8; mj++){
+	// Loop over ASIC modules 
+	for(long mi=0; mi<global->nasics_x; mi++){
+		for(long mj=0; mj<global->nasics_y; mj++){
 			
 			// Loop over pixels within a module
 			for(long j=0; j<CSPAD_ASIC_NY; j++){

@@ -126,10 +126,10 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	
 	// Save raw data
 	if(global->saveRaw) {
-		size[0] = 8*CSPAD_ASIC_NY;	// size[0] = height
-		size[1] = 8*CSPAD_ASIC_NX;	// size[1] = width
-		max_size[0] = 8*CSPAD_ASIC_NY;
-		max_size[1] = 8*CSPAD_ASIC_NX;
+		size[0] = global->nasics_y*global->asic_ny;	// size[0] = height
+		size[1] = global->nasics_x*global->asic_nx;	// size[1] = width
+		max_size[0] = global->nasics_y*global->asic_ny;
+		max_size[1] = global->nasics_x*global->asic_nx;
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
@@ -328,10 +328,10 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 				pixelmasks[i] |= (1 << 2);		
 		}
 		
-		size[0] = 8*CSPAD_ASIC_NY;	// size[0] = height
-		size[1] = 8*CSPAD_ASIC_NX;	// size[1] = width
-		max_size[0] = 8*CSPAD_ASIC_NY;
-		max_size[1] = 8*CSPAD_ASIC_NX;
+		size[0] = global->nasics_y*global->asic_ny;	// size[0] = height
+		size[1] = global->nasics_x*global->asic_nx;	// size[1] = width
+		max_size[0] = global->nasics_y*global->asic_ny;
+		max_size[1] = global->nasics_x*global->asic_nx;
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {

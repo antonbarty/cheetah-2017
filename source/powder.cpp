@@ -151,10 +151,10 @@ void saveRunningSums(cGlobal *global) {
 		printf("Processing darkcal\n");
 		sprintf(filename,"r%04u-darkcal.h5",global->runNumber);
 		int16_t *buffer = (int16_t*) calloc(global->pix_nn, sizeof(int16_t));
-		pthread_mutex_lock(&global->powderRaw_mutex[1]);
+		pthread_mutex_lock(&global->powderRaw_mutex[0]);
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = (int16_t) lrint(global->powderRaw[1][i]/global->nPowderFrames[1]);
-		pthread_mutex_unlock(&global->powderRaw_mutex[1]);
+			buffer[i] = (int16_t) lrint(global->powderRaw[0][i]/global->nPowderFrames[0]);
+		pthread_mutex_unlock(&global->powderRaw_mutex[0]);
 		printf("Saving darkcal to file: %s\n", filename);
 		writeSimpleHDF5(filename, buffer, global->pix_nx, global->pix_ny, H5T_STD_I16LE);	
 		free(buffer);
@@ -167,11 +167,11 @@ void saveRunningSums(cGlobal *global) {
 		printf("Processing gaincal\n");
 		sprintf(filename,"r%04u-gaincal.h5",global->runNumber);
 		// Calculate average intensity per frame
-		pthread_mutex_lock(&global->powderRaw_mutex[1]);
+		pthread_mutex_lock(&global->powderRaw_mutex[0]);
 		double *buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		for(long i=0; i<global->pix_nn; i++)
-			buffer[i] = (global->powderRaw[1][i]/global->nPowderFrames[1]);
-		pthread_mutex_unlock(&global->powderRaw_mutex[1]);
+			buffer[i] = (global->powderRaw[0][i]/global->nPowderFrames[0]);
+		pthread_mutex_unlock(&global->powderRaw_mutex[0]);
 		
 		// Find median value (this value will become gain=1)
 		float *buffer2 = (float*) calloc(global->pix_nn, sizeof(float));

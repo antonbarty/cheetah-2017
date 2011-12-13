@@ -31,7 +31,9 @@ public:
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
-	
+    char					detectorZpvname[MAX_FILENAME_LENGTH];
+    
+
 	// Start and stop frames
 	long	startAtFrame;
 	long	stopAtFrame;
@@ -40,6 +42,8 @@ public:
 	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	float		pixelSize;
 	float		defaultCameraLengthMm;
+    float       cameraLengthOffset;
+    float       cameraLengthScale;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
@@ -216,9 +220,10 @@ public:
 	long			asic_nn;
 	long			nasics_x;
 	long			nasics_y;
-	float			detectorZprevious;	
-	float			radial_max;
+    float			radial_max;
 	long			radial_nn;
+
+	float			detectorZprevious;	
 	float			detposprev;	
 	
 	
@@ -273,6 +278,7 @@ public:
 	void parseCommandLineArguments(int, char**);
 	void setup(void);
 	void readDetectorGeometry(char *);
+    void updateKspace(float);
 	void readDarkcal(char *);
 	void readGaincal(char *);
 	void readPeakmask(char *);
@@ -289,4 +295,28 @@ private:
 
 	
 };
+
+
+/*
+ *	Stuff from original LCLS code
+ */
+
+// Static variables
+using namespace std;
+static CspadCorrector*      corrector;
+static Pds::CsPad::ConfigV1 configV1;
+static Pds::CsPad::ConfigV2 configV2;
+static Pds::CsPad::ConfigV3 configV3;
+static unsigned             configVsn;
+static unsigned             quadMask;
+static unsigned             asicMask;
+
+static const unsigned  CSPAD_ASIC_NX = 194;		// ASIC nx = extent of one ASIC in x
+static const unsigned  CSPAD_ASIC_NY = 185;		// ASIC ny = extent of one ASIC in y
+static const unsigned  CSPAD_nASICS_X = 8;		// 8 ASICs across in raw data stream
+static const unsigned  CSPAD_nASICS_Y = 8;		// 8 ASICs down in raw data stresm
+
+static const unsigned int cbufsize = 1024;
+
+
 

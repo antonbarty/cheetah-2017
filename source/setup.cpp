@@ -50,6 +50,14 @@ void cGlobal::defaultConfiguration(void) {
 	detectorType = Pds::DetInfo::Cspad;
 	detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 	
+    
+    // Detector Z position
+	strcpy(detectorZpvname, "CXI:DS1:MMS:06");
+	defaultCameraLengthMm = 0;
+	detposprev = 0;
+    cameraLengthOffset = 500.0 + 79.0;
+    cameraLengthScale = 1e-3;
+
 	
 	// Start and stop frames
 	startAtFrame = 0;
@@ -59,8 +67,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Geometry
 	strcpy(geometryFile, "No_file_specified");
 	pixelSize = 110e-6;
-	defaultCameraLengthMm = 0;
-	detposprev = 0;
+    
 	
 	// Bad pixel mask
 	strcpy(badpixelFile, "No_file_specified");
@@ -176,6 +183,13 @@ void cGlobal::defaultConfiguration(void) {
 	// I/O speed test?
 	ioSpeedTest = 0;
 
+    // cspad default parameters
+    asic_nx = CSPAD_ASIC_NX;
+    asic_ny = CSPAD_ASIC_NY;
+    asic_nn = asic_nx * asic_ny;
+    nasics_x = CSPAD_nASICS_X;
+    nasics_y = CSPAD_nASICS_Y;
+
 	
 	// Default to only a few threads
 	nThreads = 16;
@@ -233,6 +247,10 @@ void cGlobal::setup() {
 		detectorType = Pds::DetInfo::Cspad;
 		detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
 	}
+	else if (!strcmp(detectorName, "XppGon")) {
+		detectorType = Pds::DetInfo::Cspad;
+		detectorPdsDetInfo = Pds::DetInfo::XppGon;
+	}
 	else {
 		printf("Error: unknown detector %s\n", detectorName);
 		printf("Quitting\n");
@@ -248,8 +266,8 @@ void cGlobal::setup() {
 			asic_nx = CSPAD_ASIC_NX;
 			asic_ny = CSPAD_ASIC_NY;
 			asic_nn = asic_nx * asic_ny;
-			nasics_x = 8;
-			nasics_y = 8;
+			nasics_x = CSPAD_nASICS_X;
+			nasics_y = CSPAD_nASICS_Y;
 			break;
 			
 		default:
@@ -272,7 +290,17 @@ void cGlobal::setup() {
 		tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 	}
 	
-	
+	/*
+     * How many types of powder pattern do we need?
+     */
+    if(hitfinder==0)
+        nPowderClasses=1;
+    else
+        nPowderClasses=2;
+
+    if(generateDarkcal || generateGaincal)
+        nPowderClasses=1;
+    
 	
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.
@@ -306,7 +334,7 @@ void cGlobal::setup() {
 		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
 		
 		char	filename[1024];
-		sprintf(filename,"r%04u-class%i-sumLog.txt",runNumber,i);
+		sprintf(filename,"r%04u-class%ld-sumLog.txt",runNumber,i);
 		powderlogfp[i] = fopen(filename, "w");
 	}
 	
@@ -458,7 +486,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	/*
 	 *	Open configuration file for reading
 	 */
-	printf("Parsing input configuration file:\n",filename);
+	printf("Parsing input configuration file: %s\n",filename);
 	printf("\t%s\n",filename);
 	
 	fp = fopen(filename,"r");
@@ -516,6 +544,15 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	} 
 	else if (!strcmp(tag, "defaultcameralengthmm")) {
 		defaultCameraLengthMm = atof(value);
+	}
+	else if (!strcmp(tag, "detectorzname")) {
+		strcpy(detectorZpvname, value);
+	}
+	else if (!strcmp(tag, "cameralengthoffset")) {
+		cameraLengthOffset = atof(value);
+	}
+	else if (!strcmp(tag, "cameraLengthScale")) {
+		cameraLengthScale  = atof(value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
@@ -822,8 +859,8 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Pixel size (measurements in geometry file are in m)
-	module_rows = CSPAD_ASIC_NX;
-	module_cols = CSPAD_ASIC_NY;	
+	module_rows = asic_nx;
+	module_cols = asic_ny;	
 	pix_dx = pixelSize;
 
 	
@@ -858,16 +895,16 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	
 
 	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*CSPAD_ASIC_NX || detector_x.ny != 8*CSPAD_ASIC_NY) {
+	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*CSPAD_ASIC_NX, 8*CSPAD_ASIC_NY, detector_x.nx, detector_x.ny);
+		printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
 	
 	// Create local arrays for detector pixel locations
-	long	nx = 8*CSPAD_ASIC_NX;
-	long	ny = 8*CSPAD_ASIC_NY;
+	long	nx = 8*asic_nx;
+	long	ny = 8*asic_ny;
 	long	nn = nx*ny;
 	long 	i;
 	pix_nx = nx;
@@ -948,6 +985,49 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	radial_nn = (long int) ceil(radial_max)+1;
 }
 
+/*
+ *  Update K-space variables
+ *  (called whenever detector has moved)
+ */
+void cGlobal::updateKspace(float wavelengthA) {
+    long i;
+    float   x, y, z, r;
+    float   kx,ky,kz,kr;
+    float   res;
+
+    printf("Recalculating K-space coordinates\n");
+
+    for ( i=0; i<pix_nn; i++ ) {
+        x = pix_x[i]*pixelSize;
+        y = pix_y[i]*pixelSize;
+        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
+        
+        r = sqrt(x*x + y*y + z*z);
+        kx = x/r/wavelengthA;
+        ky = y/r/wavelengthA;
+        kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
+        kr = sqrt(kx*kx + ky*ky + kz*kz);
+        res = 1/kr;
+        
+        pix_kx[i] = kx;
+        pix_ky[i] = ky;
+        pix_kz[i] = kz;
+        pix_kr[i] = kr;
+        pix_res[i] = res;
+        
+        
+        // Check whether resolution limits still make sense.
+        if ( hitfinderLimitRes == 1 ) {
+            if ( ( res < hitfinderMinRes ) && (res > hitfinderMaxRes) ) {
+                hitfinderResMask[i] = 1;
+            } 
+            else {
+                hitfinderResMask[i] = 0;
+            }
+        }
+    }
+}
+
 
 /*
  *	Read in darkcal file
@@ -972,7 +1052,7 @@ void cGlobal::readDarkcal(char *filename){
 	printf("Reading darkcal configuration:\n");
 	printf("\t%s\n",filename);
 
-	// Check whether pixel map file exists!
+	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
 		fclose(fp);
@@ -1311,11 +1391,11 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
 	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
+	fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
 	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
-	fprintf(fp, "localBackgroundRadius=%d\n",localBackgroundRadius);
+	fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
 	fprintf(fp, "tofName=%s\n",tofName);
 	fprintf(fp, "tofChannel=%d\n",TOFchannel);
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
@@ -1353,7 +1433,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	fprintf(fp, "bgMemory=%li\n",bgMemory);
-	fprintf(fp, "bgRecalc=%d\n",bgRecalc);
+	fprintf(fp, "bgRecalc=%ld\n",bgRecalc);
 	fprintf(fp, "bgMedian=%f\n",bgMedian);
 	fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
 	fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
@@ -1520,7 +1600,7 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
 	fprintf(fp, "nFrames in powder patterns:\n");
 	for(long i=0; i<nPowderClasses; i++) {
-		fprintf(fp, "\tclass%i: %li\n", i, nPowderFrames[i]);
+		fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
 	}
 	fprintf(fp, "Number of hits: %li\n",nhits);
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);

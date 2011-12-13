@@ -197,56 +197,7 @@
 	<key>Notifications</key>
 	<array/>
 	<key>OpenEditors</key>
-	<array>
-		<dict>
-			<key>Content</key>
-			<dict>
-				<key>PBXProjectModuleGUID</key>
-				<string>4D4B1695147CFF7B00BC8065</string>
-				<key>PBXProjectModuleLabel</key>
-				<string>hitfinders.cpp</string>
-				<key>PBXSplitModuleInNavigatorKey</key>
-				<dict>
-					<key>Split0</key>
-					<dict>
-						<key>PBXProjectModuleGUID</key>
-						<string>4D4B16A3147D016500BC8065</string>
-						<key>PBXProjectModuleLabel</key>
-						<string>hitfinders.cpp</string>
-						<key>_historyCapacity</key>
-						<integer>0</integer>
-						<key>bookmark</key>
-						<string>4D4B16CE147D0D1500BC8065</string>
-						<key>history</key>
-						<array>
-							<string>4D4B16A5147D016500BC8065</string>
-							<string>4D4B16BE147D08B600BC8065</string>
-							<string>4D4B16BF147D08B600BC8065</string>
-							<string>4D4B16C1147D08B600BC8065</string>
-							<string>4D4B16C2147D08B600BC8065</string>
-							<string>4D4B16C9147D0CF900BC8065</string>
-							<string>4D4B16CA147D0CF900BC8065</string>
-							<string>4D4B16CB147D0CF900BC8065</string>
-							<string>4D4B16C3147D08B600BC8065</string>
-						</array>
-					</dict>
-					<key>SplitCount</key>
-					<string>1</string>
-				</dict>
-				<key>StatusBarVisibility</key>
-				<true/>
-			</dict>
-			<key>Geometry</key>
-			<dict>
-				<key>Frame</key>
-				<string>{{0, 20}, {1421, 1447}}</string>
-				<key>PBXModuleWindowStatusBarHidden2</key>
-				<false/>
-				<key>RubberWindowFrame</key>
-				<string>419 90 1421 1488 0 0 2560 1578 </string>
-			</dict>
-		</dict>
-	</array>
+	<array/>
 	<key>PerspectiveWidths</key>
 	<array>
 		<integer>-1</integer>
@@ -373,7 +324,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>4D4B16CD147D0D1500BC8065</string>
+										<string>4D4B16D0147D25F700BC8065</string>
 										<key>history</key>
 										<array>
 											<string>4D4B169E147D016500BC8065</string>
@@ -583,9 +534,9 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>4D4B1695147CFF7B00BC8065</string>
 		<string>4DC9FA8F1330C191001C95AF</string>
 		<string>/Volumes/Anton/FEL/c/lcls/cheetah/source/cheetah.xcodeproj</string>
-		<string>4D4B1695147CFF7B00BC8065</string>
 	</array>
 	<key>WindowString</key>
 	<string>1795 984 673 594 0 0 2560 1578 </string>
