@@ -644,9 +644,12 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savepeakinfo")) {
 		savePeakInfo = atoi(value);
 	}
-	//else if (!strcmp(tag, "powdersum")) {
-	//	powdersum = atoi(value);
-	//}
+	else if (!strcmp(tag, "powdersum")) {
+		printf("The keyword powdersum has been changed.  It is\n"
+               "now known as powderSumHits and powderSumBlanks.\n"
+               "Modify your ini file and try again...\n");
+		exit(1);
+    }
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
