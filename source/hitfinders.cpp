@@ -411,7 +411,7 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 	// Now figure out whether this is a hit
 	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
 		hit = 1;	
-
+    
 	
 	free(temp);
 	free(mask);
