@@ -461,6 +461,11 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorPosition", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
 	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorEncoderValue", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorEncoderValue );	
+	H5Dclose(dataset_id);
+
 	
 	// LaserOn event code
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;

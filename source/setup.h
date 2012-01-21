@@ -264,6 +264,7 @@ public:
 	long			nrecentprocessedframes;
 	long			nrecenthits;
 	double			detectorZ;
+	double			detectorEncoderValue;	
 	
 	time_t			tstart, tend;
 	time_t			tlast, tnow;

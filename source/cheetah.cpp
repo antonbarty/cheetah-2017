@@ -410,12 +410,13 @@ void event() {
 		 * about 4mm further away from the detector than this. */
 		global.detposprev = detposnew;
 		global.detectorZ = detposnew + global.cameraLengthOffset;
+		global.detectorEncoderValue = detposnew;
 		/* Let's round to the nearest two decimal places 
 		 * (10 micron, much less than a pixel size) */
 		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
 		update_camera_length = 1;
 	}	 
-
+	
 	if ( global.detectorZ == 0 ) {
 		/* What to do if there is no camera length information?  Keep skipping
 		 * frames until this info is found?  In some cases, our analysis doesn't
