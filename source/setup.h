@@ -110,7 +110,7 @@ public:
 	int			hitfinderNpeaksMax;
 	int			hitfinderMinPixCount;
 	int			hitfinderMaxPixCount;
-	int		hitfinderCheckGradient;
+	int         hitfinderCheckGradient;
 	float		hitfinderMinGradient;
 	int			hitfinderCluster;
 	int			hitfinderUsePeakmask;
@@ -120,12 +120,12 @@ public:
 	int			hitfinderTOFMaxSample;
 	double		hitfinderTOFThresh;
 	int			hitfinderCheckPeakSeparation;
-	float			hitfinderMaxPeakSeparation;
+	float		hitfinderMaxPeakSeparation;
 	int			hitfinderSubtractLocalBG;
 	int			hitfinderLocalBGRadius;
 	int			hitfinderLimitRes;
-	float			hitfinderMinRes;
-	float			hitfinderMaxRes;
+	float		hitfinderMinRes;
+	float		hitfinderMaxRes;
 	int			*hitfinderResMask;
 	float       hitfinderMinSNR;
 	
@@ -151,7 +151,10 @@ public:
 	int			saveDetectorCorrectedOnly;
 	int			saveDetectorRaw;
 
-	
+	// Radial stacks
+    int         saveRadialStacks;
+    long        radialStackSize;
+    
 	// Saving options
 	int			savehits;
 	int			saveRaw;
@@ -254,7 +257,15 @@ public:
 	pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
+    
+    /*
+     *  Radial stacks
+     */
+	long			radialStackCounter[MAX_POWDER_CLASSES];
+	float			*radialAverageStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
 	
+
 
 	long			npowderHits;
 	long			npowderBlanks;

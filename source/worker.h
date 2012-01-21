@@ -119,8 +119,6 @@ static uint32_t nevents = 0;
 void *worker(void *);
 void assemble2Dimage(tThreadInfo*, cGlobal*);
 //void calculateRadialAverage(tThreadInfo*, cGlobal*);
-void calculateRadialAverage(float*, float*, float*, cGlobal*);
-void calculateRadialAverage(double*, double*, double*, cGlobal*);
 void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
 
 // detectorCorrection.cpp
@@ -155,6 +153,13 @@ void addToPowder(tThreadInfo*, cGlobal*, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 void saveRunningSums(cGlobal*);
 
+// RadialAverage.cpp
+void addToRadialAverageStack(tThreadInfo*, cGlobal*, int);
+void saveRadialAverageStack(cGlobal*, int);
+void saveRadialStacks(cGlobal*);
+
+void calculateRadialAverage(float*, float*, float*, cGlobal*);
+void calculateRadialAverage(double*, double*, double*, cGlobal*);
 
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);

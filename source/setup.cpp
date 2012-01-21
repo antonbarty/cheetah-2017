@@ -165,6 +165,9 @@ void cGlobal::defaultConfiguration(void) {
 	powderSumHits = 1;
 	powderSumBlanks = 0;
 
+    // Radial average stacks
+    saveRadialStacks=0;
+    radialStackSize=10000;
 	
 	// Saving options
 	savehits = 0;
@@ -317,12 +320,23 @@ void cGlobal::setup() {
 		wiremask[i] = 1;
 	}
 
-	// New way of doing powders
+	/*
+     *  Set up arrays for powder classes and radial stacks
+     */
 	for(long i=0; i<nPowderClasses; i++) {
 		nPowderFrames[i] = 0;
 		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
 		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
 		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+
+        radialStackCounter[i] = 0;
+        radialAverageStack[i] = (float *) calloc(radial_nn*radialStackSize, sizeof(float));
+        
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+        pthread_mutex_init(&radialStack_mutex[i], NULL);
+		
 		for(long j=0; j<pix_nn; j++) {
 			powderRaw[i][j] = 0;
 			powderRawSquared[i][j] = 0;
@@ -330,13 +344,15 @@ void cGlobal::setup() {
 		for(long j=0; j<image_nn; j++) {
 			powderAssembled[i][j] = 0;
 		}
-		pthread_mutex_init(&powderRaw_mutex[i], NULL);
-		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-		
+        
+        for(long j=0; j<radial_nn*radialStackSize; j++) {
+            radialAverageStack[i][j] = 0;
+        }
+
 		char	filename[1024];
 		sprintf(filename,"r%04u-class%ld-sumLog.txt",runNumber,i);
 		powderlogfp[i] = fopen(filename, "w");
+        
 	}
 	
 	
@@ -721,7 +737,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}	
 	
 	
-	
+	// Radial average stacks
+	else if (!strcmp(tag, "saveradialstacks")) {
+		saveRadialStacks = atoi(value);
+	}
+	else if (!strcmp(tag, "radialstacksize")) {
+		radialStackSize = atoi(value);
+	}
 
 	// Power user settings
 	else if (!strcmp(tag, "cmfloor")) {

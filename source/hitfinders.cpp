@@ -170,6 +170,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
             
 		case 7 : 	// Return laser on event code
             hit = threadInfo->laserEventCodeOn;
+            threadInfo->nPeaks = threadInfo->laserEventCodeOn;
 			break;
 			
 		default :
@@ -182,9 +183,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 	
 	// Statistics on the peaks, for certain hitfinders
 	if( threadInfo->nPeaks > 1 &&
-	   ( global->hitfinderAlgorithm == 3 || 
-		global->hitfinderAlgorithm == 5 ||
-		global->hitfinderAlgorithm == 6 ) ) {
+	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
 		   
 		   long	np;
 		   long  kk;

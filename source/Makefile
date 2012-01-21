@@ -94,12 +94,15 @@ backgroundCorrection.o: backgroundCorrection.cpp worker.h setup.h
 
 powder.o: powder.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
+    
+radialAverage.o: radialAverage.cpp worker.h setup.h
+    $(CPP) $(CFLAGS) $<
 
 saveFrame.o: saveFrame.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
 
-cheetah: cheetah.o setup.o median.o hitfinders.o powder.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o setup.o median.o hitfinders.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	
