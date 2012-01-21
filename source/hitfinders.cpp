@@ -92,7 +92,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
     //	-stride - 1, -stride + 1};
 	
 	// Combined mask
-	int * mask = (int *) calloc(global->pix_nn, sizeof(int) );
+	int* mask = (int *) calloc(global->pix_nn, sizeof(int) );
 	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
 	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
 		global->hotpixelmask[i] *
@@ -166,6 +166,10 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			
 		case 6 : 	// Count number of Bragg peaks
 			hit = peakfinder6(global,threadInfo);
+			break;
+            
+		case 7 : 	// Return laser on event code
+            hit = threadInfo->laserEventCodeOn;
 			break;
 			
 		default :
@@ -269,15 +273,14 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 	int *mask = (int *) calloc(global->pix_nn, sizeof(int) );
 	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
 	for (long i=0; i<global->pix_nn; i++) 
-        mask[i] *= 
-		global->hotpixelmask[i] *
-		global->badpixelmask[i] *
-		threadInfo->saturatedPixelMask[i];
+        mask[i] *= global->hotpixelmask[i] * global->badpixelmask[i] * threadInfo->saturatedPixelMask[i] * global->peakmask[i];
 	
 	// zero out bad pixels in temporary intensity map
-	float * temp = (float *) calloc(global->pix_nn,sizeof(float));
-	for (long i=0; i<global->pix_nn; i++) temp[i] = threadInfo->corrected_data[i]*mask[i];
+	float* temp = (float *) calloc(global->pix_nn,sizeof(float));
+	for (long i=0; i<global->pix_nn; i++) 
+        temp[i] = threadInfo->corrected_data[i]*mask[i];
 	
+    
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<global->nasics_y; mj++){
 		for(long mi=0; mi<global->nasics_x; mi++){

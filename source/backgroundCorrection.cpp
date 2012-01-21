@@ -38,16 +38,18 @@
  */
 void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global) {
 	
-	pthread_mutex_lock(&global->bgbuffer_mutex);
+    if(global->useBackgroundBufferMutex)
+        pthread_mutex_lock(&global->bgbuffer_mutex);
+
 	long frameID = global->bgCounter%global->bgMemory;	
-	
+	global->bgCounter += 1;
 	memcpy(global->bg_buffer+global->pix_nn*frameID, threadInfo->corrected_data_int16, global->pix_nn*sizeof(int16_t));
 	
 	//for(long i=0;i<global->pix_nn;i++)
 	//	global->bg_buffer[global->pix_nn*frameID + i] = threadInfo->corrected_data_int16[i];
 	
-	global->bgCounter += 1;
-	pthread_mutex_unlock(&global->bgbuffer_mutex);
+    if(global->useBackgroundBufferMutex)
+        pthread_mutex_unlock(&global->bgbuffer_mutex);
 	
 }
 
@@ -65,8 +67,10 @@ void calculatePersistentBackground(cGlobal *global) {
 	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->bgMemory);	
 	
 	// Lock the global variables
-	//pthread_mutex_lock(&global->bgbuffer_mutex);
-	pthread_mutex_lock(&global->selfdark_mutex);
+    if(global->useBackgroundBufferMutex){
+        //pthread_mutex_lock(&global->bgbuffer_mutex);
+        pthread_mutex_lock(&global->selfdark_mutex);
+    }
 	
 	// Loop over all pixels 
 	for(long i=0; i<global->pix_nn; i++) {
@@ -78,11 +82,13 @@ void calculatePersistentBackground(cGlobal *global) {
 		
 		// Find median value of the temporary array
 		global->selfdark[i] = kth_smallest(buffer, global->bgMemory, median_element);
-	}
-	
+	}	
 	global->last_bg_update = global->bgCounter;
-	//pthread_mutex_unlock(&global->bgbuffer_mutex);
-	pthread_mutex_unlock(&global->selfdark_mutex);
+
+    if(global->useBackgroundBufferMutex){
+        //pthread_mutex_unlock(&global->bgbuffer_mutex);
+        pthread_mutex_unlock(&global->selfdark_mutex);
+    }
 	
 	free (buffer);
 }
@@ -152,7 +158,7 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Search subunits
-	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= CSPAD_ASIC_NY/2 )
+	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= global->asic_ny/2 )
 		return;
 	long nn = (2*global->localBackgroundRadius+1);
 	nn=nn*nn;
@@ -169,12 +175,12 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 		for(long mj=0; mj<global->nasics_y; mj++){
 			
 			// Loop over pixels within a module
-			for(long j=0; j<CSPAD_ASIC_NY; j++){
-				for(long i=0; i<CSPAD_ASIC_NX; i++){
+			for(long j=0; j<global->asic_ny; j++){
+				for(long i=0; i<global->asic_nx; i++){
 					
 					counter = 0;
-					e = (j+mj*CSPAD_ASIC_NY)*global->pix_nx;
-					e += i+mi*CSPAD_ASIC_NX;
+					e = (j+mj*global->asic_ny)*global->pix_nx;
+					e += i+mi*global->asic_nx;
 					
 					// Loop over median window
 					for(long jj=-global->localBackgroundRadius; jj<=global->localBackgroundRadius; jj++){
@@ -183,15 +189,15 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global){
 							// Quick array bounds check
 							if((i+ii) < 0)
 								continue;
-							if((i+ii) >= CSPAD_ASIC_NX)
+							if((i+ii) >= global->asic_nx)
 								continue;
 							if((j+jj) < 0)
 								continue;
-							if((j+jj) >= CSPAD_ASIC_NY)
+							if((j+jj) >= global->asic_ny)
 								continue;
 							
-							ee = (j+jj+mj*CSPAD_ASIC_NY)*global->pix_nx;
-							ee += i+ii+mi*CSPAD_ASIC_NX;
+							ee = (j+jj+mj*global->asic_ny)*global->pix_nx;
+							ee += i+ii+mi*global->asic_nx;
 							
 							if(ee < 0 || ee >= global->pix_nn){
 								printf("Error: Array bounds error: e = %li > %li\n",e,global->pix_nn);

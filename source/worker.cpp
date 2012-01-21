@@ -257,7 +257,6 @@ void *worker(void *threadarg) {
 	/*
 	 *	Calculate radial average
 	 */
-	//calculateRadialAverage(threadInfo, global);
 	calculateRadialAverage(threadInfo->corrected_data, threadInfo->radialAverage, threadInfo->radialAverageCounter, global);
 	
 	

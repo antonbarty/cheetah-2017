@@ -102,6 +102,7 @@ void cGlobal::defaultConfiguration(void) {
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
+    useBackgroundBufferMutex = 1;
 	bgMedian = 0.5;
 	bgRecalc = bgMemory;
 	bgIncludeHits = 0;
@@ -686,6 +687,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
+		useBackgroundBufferMutex = atoi(value);
 	}
 	
 	// Local background subtraction
