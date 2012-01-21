@@ -96,7 +96,7 @@ powder.o: powder.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
     
 radialAverage.o: radialAverage.cpp worker.h setup.h
-    $(CPP) $(CFLAGS) $<
+	$(CPP) $(CFLAGS) $<
 
 saveFrame.o: saveFrame.cpp worker.h setup.h
 	$(CPP) $(CFLAGS) $<
