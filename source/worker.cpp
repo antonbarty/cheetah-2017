@@ -274,6 +274,13 @@ void *worker(void *threadarg) {
 		addToPowder(threadInfo, global, 0);
 	} 
 		
+    
+    /*
+     *  Maintain radial average stack
+     */
+    if(global->saveRadialStacks) {
+        addToRadialAverageStack(threadInfo, global, hit);
+    }
 	
 	
 	/*
@@ -457,66 +464,3 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	free(weight);
 	
 }
-
-/*
- *  Calculate radial averages
- *  To do: Replace this with a templated function
- */
-
-void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global){
-	// Zero arrays
-	for(long i=0; i<global->radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
-	}
-	
-	// Radial average
-	long	rbin;
-	for(long i=0; i<global->pix_nn; i++){
-		rbin = lrint(global->pix_r[i]);
-		
-		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
-		
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
-	}
-	
-	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<global->radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
-	}
-	
-}
-
-void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global){	
-	// Zero arrays
-	for(long i=0; i<global->radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
-	}
-	
-	// Radial average
-	long	rbin;
-	for(long i=0; i<global->pix_nn; i++){
-		rbin = lrint(global->pix_r[i]);
-		
-		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
-		
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
-	}
-	
-	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<global->radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
-	}
-	
-}
-
-
-
-	

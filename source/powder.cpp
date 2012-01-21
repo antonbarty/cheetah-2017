@@ -43,6 +43,7 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
 	
 	// Raw data
 	pthread_mutex_lock(&global->powderRaw_mutex[powderClass]);
+    global->nPowderFrames[powderClass] += 1;
 	for(long i=0; i<global->pix_nn; i++) {
 		if(threadInfo->corrected_data[i] > global->powderthresh)
 			global->powderRaw[powderClass][i] += threadInfo->corrected_data[i];
@@ -73,8 +74,6 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
 	}
 	pthread_mutex_unlock(&global->powderAssembled_mutex[powderClass]);
 	
-	// Update frame counter
-	global->nPowderFrames[powderClass] += 1;
 	
 	
 }

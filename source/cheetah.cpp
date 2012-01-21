@@ -670,6 +670,7 @@ void endjob()
 	
 	// Save powder patterns
 	saveRunningSums(&global);
+    saveRadialStacks(&global);
 	global.writeFinalLog();
 	
 	// Hitrate?
@@ -697,9 +698,11 @@ void endjob()
 		free(global.powderRaw[i]);
 		free(global.powderRawSquared[i]);
 		free(global.powderAssembled[i]);
+		free(global.radialAverageStack[i]);
 		pthread_mutex_destroy(&global.powderRaw_mutex[i]);
 		pthread_mutex_destroy(&global.powderRawSquared_mutex[i]);
 		pthread_mutex_destroy(&global.powderAssembled_mutex[i]);
+		pthread_mutex_destroy(&global.radialStack_mutex[i]);
 	}
 	
 	
