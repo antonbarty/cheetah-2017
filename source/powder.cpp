@@ -102,8 +102,9 @@ void saveRunningSums(cGlobal *global) {
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRaw_mutex[powderType]);
 		memcpy(buffer, global->powderRaw[powderType], global->pix_nn*sizeof(double));
-		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRaw_mutex[powderType]);
+
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
@@ -113,16 +114,18 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderAssembled_mutex[powderType]);
 		memcpy(buffer, global->powderAssembled[powderType], global->image_nn*sizeof(double));
 		pthread_mutex_unlock(&global->powderAssembled_mutex[powderType]);
+
 		writePowderData(filename, buffer, global->image_nx, global->image_nx, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
-		// Blanks squared (for calculation of variance)
+		// Data squared (for calculation of variance)
 		sprintf(filename,"%s-sumRawSquared.h5",filenamebase);
 		buffer = (double*) calloc(global->pix_nn, sizeof(double));
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
 		memcpy(buffer, global->powderRawSquared[powderType], global->pix_nn*sizeof(double));
-		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRawSquared_mutex[powderType]);
+
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		
@@ -133,9 +136,10 @@ void saveRunningSums(cGlobal *global) {
 		pthread_mutex_lock(&global->powderRawSquared_mutex[powderType]);
 		for(long i=0; i<global->pix_nn; i++)
 			buffer[i] = sqrt(global->powderRawSquared[powderType][i]/global->nPowderFrames[powderType] - (global->powderRaw[powderType][i]*global->powderRaw[powderType][i]/(global->nPowderFrames[powderType]*global->nPowderFrames[powderType])));
-		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		pthread_mutex_unlock(&global->powderRaw_mutex[powderType]);
 		pthread_mutex_unlock(&global->powderRawSquared_mutex[powderType]);
+
+		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
 		

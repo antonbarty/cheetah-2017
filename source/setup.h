@@ -71,6 +71,7 @@ public:
 	int			useSubtractPersistentBackground;
 	int			subtractBg;
 	int			scaleBackground;
+    int         useBackgroundBufferMutex;
 	float		bgMedian;
 	long		bgMemory;
 	long		bgRecalc;
