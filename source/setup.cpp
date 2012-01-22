@@ -52,7 +52,7 @@ void cGlobal::defaultConfiguration(void) {
 	
     
     // Detector Z position
-	strcpy(detectorZpvname, "CXI:DS1:MMS:06");
+	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
 	defaultCameraLengthMm = 0;
 	detposprev = 0;
     cameraLengthOffset = 500.0 + 79.0;
@@ -439,6 +439,7 @@ void cGlobal::setup() {
 	lastclock = clock()-10;
 	datarate = 1;
 	detectorZ = 0;
+	detectorEncoderValue = 0;
 	runNumber = getRunNumber();
 	time(&tstart);
 	avgGMD = 0;
