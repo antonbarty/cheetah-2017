@@ -42,12 +42,12 @@
      pthread_mutex_lock(&global->radialStack_mutex[powderClass]);
 
      // Offset to current position in stack
-     long stackoffset = global->radialStackCounter[powderClass]%global->radialStackSize;
-     long dataoffset = global->radial_nn*stackoffset;
+     long stackoffset = global->radialStackCounter[powderClass] % global->radialStackSize;
+     long dataoffset = stackoffset*global->radial_nn;
      
      // Copy data and increment counter
      for(long i=0; i<global->radial_nn; i++) {
-         global->radialAverageStack[powderClass][dataoffset+i] = threadInfo->radialAverage[i];
+         global->radialAverageStack[powderClass][dataoffset+i] = (float) threadInfo->radialAverage[i];
      }
      global->radialStackCounter[powderClass] += 1;
      
@@ -74,9 +74,10 @@ void saveRadialAverageStack(cGlobal *global, int powderClass) {
     // Create filename
     char	filename[1024];
     int     frameNum = global->radialStackCounter[powderClass];
-    sprintf(filename,"r%04u-radialstack-class%i-%i", global->runNumber, powderClass, frameNum);
+    sprintf(filename,"r%04u-radialstack-class%i-%i.h5", global->runNumber, powderClass, frameNum);
+    printf("Saving radial stack: %s\n", filename);
 
-    writeSimpleHDF5(filename, global->radialAverageStack, global->radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);	
+    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);	
 }
 
 
