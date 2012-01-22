@@ -681,6 +681,7 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 	free(mask);
 	free(temp);
 
+	return(hit);
 	
 }
 
@@ -882,6 +883,7 @@ nohit:
 	free(natmask);
 	free(temp);
 	
+	return(hit);
 	
 }
 
