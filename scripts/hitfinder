@@ -253,7 +253,7 @@ find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
 echo "Running cheetah..."
 ARGS="$ARGS -l xtcfiles.txt"
 if [ $QUE ]; then
-	FULLCOMMAND="bsub -q lclsq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	echo $FULLCOMMAND
 	$FULLCOMMAND
 	echo "$SCRIPTNAME job sent to queue"
