@@ -143,18 +143,31 @@ void fetchConfig()
 		printf("Failed to get CspadConfig\n");
 	}
 	
-	// Acqiris config
+    
+    /*
+     *  Get Acqiris config
+     */
 	if((fail=getAcqConfig(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
 		global.TOFPresent = 1;
 		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
 		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
 			printf("hitfinderTOFMaxSample greater than number of TOF samples. hitfinderUseTOF turned off\n");
+            if(global.hitfinderUseTOF){
+                printf("HitfinderUseTOF=%i needs Acqiris data to work\n",global.hitfinderUseTOF);
+                printf("*** Cheetah quitting ***\n\n");
+                exit(1);
+            }
 			global.hitfinderUseTOF = 0;
 		}
 	}
 	else {
 		global.TOFPresent = 0;
 		printf("Failed to get AcqirisConfig with fail code %d.\n", fail);
+        if(global.hitfinderUseTOF){
+            printf("HitfinderUseTOF=%i needs Acqiris data to work\n",global.hitfinderUseTOF);
+            printf("*** Cheetah quitting ***\n\n");
+            exit(1);
+        }
 		global.hitfinderUseTOF = 0 ;
 	}
 
