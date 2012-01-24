@@ -283,7 +283,8 @@ public:
 	float			datarate;
 	long			lastTimingFrame;
 
-		
+	// This is nasty, but must be done...
+	int			fudgeevr41;		
 	
 public:
 	void defaultConfiguration(void);
