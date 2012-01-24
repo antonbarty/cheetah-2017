@@ -405,7 +405,7 @@ void evr41fudge(tThreadInfo *t, cGlobal *g){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
 		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
-		printf("%f\n",Vtof[i]);
+		//printf("%f\n",Vtof[i]);
 	}
 	
 	//printf("================================================================\n"); 
