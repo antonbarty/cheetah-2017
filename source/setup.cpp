@@ -49,7 +49,10 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(detectorName, "CxiDs1");
 	detectorType = Pds::DetInfo::Cspad;
 	detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
-	
+
+	// Statistics 
+	summedPhotonEnergyeV = 0;
+	meanPhotonEnergyeV = 0;	
     
     // Detector Z position
 	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");

@@ -373,6 +373,8 @@ void event() {
 		wavelengthA = 12398.42/photonEnergyeV;
 	}
 	
+	global.summedPhotonEnergyeV += photonEnergyeV;
+	global.summedPhotonEnergyeVSquared += photonEnergyeV*photonEnergyeV;
 	
 	/*
 	 * 	FEE gas detectors (pulse energy in mJ)
@@ -672,7 +674,7 @@ void endrun()
 void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
-
+	
 
 	// Wait for threads to finish
 	while(global.nActiveThreads > 0) {
@@ -689,6 +691,10 @@ void endjob()
 	// Hitrate?
 	printf("%li files processed, %li hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
 
+	global.meanPhotonEnergyeV = global.summedPhotonEnergyeV/global.nprocessedframes;
+	global.photonEnergyeVSigma = sqrt(global.summedPhotonEnergyeVSquared/global.nprocessedframes - global.meanPhotonEnergyeV*global.meanPhotonEnergyeV);
+	printf("Mean photon energy: %f eV\n", global.meanPhotonEnergyeV);
+	printf("Sigma of photon energy: %f eV\n", global.photonEnergyeVSigma);
 	
 	// Cleanup
 	free(global.darkcal);

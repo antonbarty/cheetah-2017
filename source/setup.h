@@ -32,7 +32,12 @@ public:
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
     char					detectorZpvname[MAX_FILENAME_LENGTH];
-    
+   
+	// Track some statistics for the log file
+	double summedPhotonEnergyeV;
+	double summedPhotonEnergyeVSquared;
+	double meanPhotonEnergyeV;
+	double photonEnergyeVSigma; 
 
 	// Start and stop frames
 	long	startAtFrame;
@@ -283,7 +288,7 @@ public:
 	float			datarate;
 	long			lastTimingFrame;
 
-	// This is nasty, but must be done...
+	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int			fudgeevr41;		
 	
 public:
