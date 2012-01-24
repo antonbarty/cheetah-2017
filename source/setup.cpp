@@ -206,7 +206,8 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(cleanedfile, "cleaned.txt");
 	strcpy(peaksfile, "peaks.txt");
 	
-	
+	// Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
+	fudgeevr41 = 0; // this means no fudge by default	
 	
 }
 
@@ -865,6 +866,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "Modify your ini file and try again...\n");
 		exit(1);
 	//	scaleBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "fudgeevr41")) {
+		fudgeevr41 = atoi(value);
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);

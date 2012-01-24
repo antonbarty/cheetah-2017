@@ -46,8 +46,16 @@ void *worker(void *threadarg) {
 	global = threadInfo->pGlobal;
 	int	hit = 0;
 
-	
-	
+
+	/*
+	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
+	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
+	 * Hopefully this never happens again... 
+	 */
+	if ( global->fudgeevr41 == 1 ) {
+		evr41fudge(threadInfo,global);	
+	}
+
 	/*
 	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
@@ -329,7 +337,7 @@ void *worker(void *threadarg) {
 	
 	// Free memory
 	for(int quadrant=0; quadrant<4; quadrant++) 
-		free(threadInfo->quad_data[quadrant]);	
+	free(threadInfo->quad_data[quadrant]);	
 	free(threadInfo->raw_data);
 	free(threadInfo->corrected_data);
 	free(threadInfo->detector_corrected_data);
@@ -361,8 +369,69 @@ void *worker(void *threadarg) {
 }
 
 
-
-
+/*
+ * Nasty little bit of code that aims to toggle the evr41 signal based on the Acqiris
+ * signal.  Very simple: scan along the Acqiris trace (starting from the ini keyword 
+ * hitfinderTOFMinSample and ending at hitfinderTOFMaxSample) and check that there is 
+ * at least one sample above the threshold set by the hitfinderTOFThresh keyword. Oh,
+ * and don't forget to specify the Acqiris channel with:
+ * tofChannel=0
+ * And you'll need to do this as well:
+ * fudgeevr41=1
+ * tofName=CxiSc1
+ *
+ * Agreed - doesn't sound very robust.  As far as I can tell at the moment, only a single
+ * sample rises above threshold when the laser trigger is on... maybe bad sampling interval?
+ * Or, I could be wrong...
+ * 
+ * -Rick  
+ */
+void evr41fudge(tThreadInfo *t, cGlobal *g){
+	
+	if ( g->TOFPresent == 0 ) {
+		printf("Acqiris not present; can't fudge EVR41...\n");
+		return;
+	}
+ 
+	int nCh = g->AcqNumChannels;
+	int nSamp = g->AcqNumSamples;
+	double * Vtof = t->TOFVoltage;
+	int i;
+	double Vtot = 0;
+	double Vmax = 0;
+	int tCounts = 0;
+	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
+	//for ( i=0; i<nSamp; i++){
+		Vtot += Vtof[i];
+		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
+		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
+		printf("%f\n",Vtof[i]);
+	}
+	
+	//printf("================================================================\n"); 
+	//printf("tCounts = %d\n",tCounts);
+	if ( t->laserEventCodeOn ) {
+		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 1\n",nCh,nSamp,Vtot,Vmax);
+	} else {
+		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 0\n",nCh,nSamp,Vtot,Vmax);
+	}
+	
+	bool acqLaserOn = false;
+	if ( tCounts >= 1 ) {
+		acqLaserOn = true;
+	}
+	if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
+	if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
+	if ( acqLaserOn != t->laserEventCodeOn ) {
+		if ( acqLaserOn ) {
+			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");
+		} else {
+			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 0 )\n");
+		}
+		t->laserEventCodeOn = acqLaserOn;
+	}
+	//printf("================================================================\n");
+}
 
 
 	
