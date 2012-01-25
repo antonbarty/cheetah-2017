@@ -80,25 +80,14 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 		}
 	}
 	
-	// This stuff is used in hitfinder algorithm 6
-	// THings are getting really ugly here with all these different algorithms.
-	// It's about time to clean things up soon.		
-	int stride = global->pix_nx;
-	//int npeaks = 0;
-	
-	// Shift in linear indices to nearest neighbor
-	//int shift[8] = { +1, -1, +stride, -stride,
-    //	+stride - 1, +stride + 1,
-    //	-stride - 1, -stride + 1};
 	
 	// Combined mask
 	int* mask = (int *) calloc(global->pix_nn, sizeof(int) );
 	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
-	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
-		global->hotpixelmask[i] *
-		global->badpixelmask[i] *
-		threadInfo->saturatedPixelMask[i];
+	for (long i=0; i<global->pix_nn; i++) 
+        mask[i] *= global->hotpixelmask[i] * global->badpixelmask[i] * threadInfo->saturatedPixelMask[i];
 	
+    
 	/*
 	 *	Use one of various hitfinder algorithms
 	 */
@@ -139,6 +128,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global){
 			hit = peakfinder3(global, threadInfo);			
 			break;	
 
+            
 		case 4 :	// Use TOF signal to find hits
 			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
 				double total_tof = 0.;
@@ -268,7 +258,7 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 	counter = 0;
 	total = 0.0;
 	
-	/* Combined mask */
+	// Combined mask of all areas to ignore
 	int *mask = (int *) calloc(global->pix_nn, sizeof(int) );
 	memcpy(mask,global->hitfinderResMask,global->pix_nn*sizeof(int));
 	for (long i=0; i<global->pix_nn; i++) 
@@ -297,29 +287,31 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 					//	printf("Array bounds error: e=%i\n");
 					
 					if(temp[e] > global->hitfinderADC){
-						// This might be the start of a peak - start searching
 						
+                        // Rick's gradient test (if minGradient>0)
+                        /*
 						if ( global->hitfinderMinGradient > 0 ){
 							
-							/* Get gradients */
+							// Get gradients 
 							dx1 = temp[e] - temp[e+1];
 							dx2 = temp[e-1] - temp[e];
 							dy1 = temp[e] - temp[e+global->pix_nx];
 							dy2 = temp[e-global->pix_nx] - temp[e];
 							
-							/* Average gradient measurements from both sides */
+							// Average gradient measurements from both sides 
 							dxs = ((dx1*dx1) + (dx2*dx2)) / 2;
 							dys = ((dy1*dy1) + (dy2*dy2)) / 2;
 							
-							/* Calculate overall gradient */
+							// Calculate overall gradient 
 							grad = dxs + dys;
 							
+                            if ( grad < global->hitfinderMinGradient ) 
+                               continue;
 						}
-						
-						if ( grad < global->hitfinderMinGradient ) 
-                            continue;
+                        */	
 						
 						
+						// This might be the start of a peak - start searching
 						inx[0] = i;
 						iny[0] = j;
 						nat = 1;
@@ -368,7 +360,6 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 										inx[nat] = inx[p]+search_x[k];
 										iny[nat] = iny[p]+search_y[k];
 										nat++;
-										
 									}
 								}
 							}

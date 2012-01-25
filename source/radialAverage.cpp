@@ -103,11 +103,19 @@ void calculateRadialAverage(float *data, float *radialAverage, float *radialAver
 	// Radial average
 	long	rbin;
 	for(long i=0; i<global->pix_nn; i++){
+        
+        // Don't count bad pixels in radial average
+        if(global->badpixelmask[i] == 0)
+            continue;
+
+        // Radius of this pixel
 		rbin = lrint(global->pix_r[i]);
 		
 		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
+		if(rbin < 0) 
+            rbin = 0;
 		
+        // Add to average
 		radialAverage[rbin] += data[i];
 		radialAverageCounter[rbin] += 1;
 	}
