@@ -34,8 +34,7 @@
 
 
 /*
- *	Maintain running powder patterns
- *	(currently supports both old and new ways of writing out powder data)
+ *	Add radial average to stack
  */
  void addToRadialAverageStack(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
  
@@ -77,7 +76,8 @@ void saveRadialAverageStack(cGlobal *global, int powderClass) {
     sprintf(filename,"r%04u-radialstack-class%i-%i.h5", global->runNumber, powderClass, frameNum);
     printf("Saving radial stack: %s\n", filename);
 
-    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);	
+    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);
+	fflush(global->powderlogfp[powderClass]);
 }
 
 

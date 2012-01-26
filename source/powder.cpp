@@ -141,6 +141,10 @@ void saveRunningSums(cGlobal *global) {
 		calculateRadialAverage(buffer, radialAverage, radialAverageCounter, global);
 		writePowderData(filename, buffer, global->pix_nx, global->pix_ny, radialAverage, radialAverageCounter, global->radial_nn, global->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 		free(buffer);
+
+        // Flush log file buffer
+        fflush(global->powderlogfp[powderType]);
+
 		
 	}	
 	free(radialAverage);

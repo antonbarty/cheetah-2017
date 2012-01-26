@@ -318,11 +318,12 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %i, %g, %i\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, threadInfo->laserEventCodeOn);
+	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %i, %g, %g, %i, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, (threadInfo->gmd21+threadInfo->gmd22)/2, threadInfo->laserEventCodeOn, threadInfo->laserDelay);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
+    // Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "r%04u/%s, %i, %g, %g, %g, %g\n",global->runNumber, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
+	fprintf(global->powderlogfp[hit], "%li, r%04u/%s, %g, %g, %i, %g, %i, %g, %g, %g, %g\n",threadInfo->threadNum, global->runNumber, threadInfo->eventname, threadInfo->photonEnergyeV, (threadInfo->gmd11+threadInfo->gmd12)/2., threadInfo->laserEventCodeOn, threadInfo->laserDelay, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
 	pthread_mutex_unlock(&global->powderfp_mutex);
 	
 	

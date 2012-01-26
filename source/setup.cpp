@@ -61,6 +61,9 @@ void cGlobal::defaultConfiguration(void) {
     cameraLengthOffset = 500.0 + 79.0;
     cameraLengthScale = 1e-3;
 
+    // Pv values
+    strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+    laserDelay = 0;
 	
 	// Start and stop frames
 	startAtFrame = 0;
@@ -354,7 +357,7 @@ void cGlobal::setup() {
         }
 
 		char	filename[1024];
-		sprintf(filename,"r%04u-class%ld-sumLog.txt",runNumber,i);
+		sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
 		powderlogfp[i] = fopen(filename, "w");
         
 	}
@@ -1495,9 +1498,8 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, EVR41\n");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, GMD2, EVR41, laserDelay\n");
 	
-
 	
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
@@ -1506,7 +1508,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks,, nPixels, totalIntensity, peakResolution, peakDensity\n");	
+	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");	
 	pthread_mutex_unlock(&framefp_mutex);
 	
 	

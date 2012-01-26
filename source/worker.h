@@ -53,7 +53,7 @@ typedef struct {
 	float		*peak_com_r_assembled;	// peak center of mass r (in assembled layout)
 	float		*peak_intensity;		// integrated peak intensities
 	float		*peak_npix;				// Number of pixels in peak
-	float    *peak_snr;           // Signal-to-noise of peak
+	float       *peak_snr;           // Signal-to-noise of peak
 	float		peakResolution;			// Radius of 80% of peaks
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
@@ -75,6 +75,8 @@ typedef struct {
 	double		gmd12;
 	double		gmd21;
 	double		gmd22;
+    
+    double      laserDelay;
 	
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV

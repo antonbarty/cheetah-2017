@@ -191,8 +191,10 @@ void beginrun()
 	for(long i=0; i<global.nPowderClasses; i++) {
 		char	filename[1024];
 		fclose(global.powderlogfp[i]);
-		sprintf(filename,"r%04u-class%ld-sumLog.txt",global.runNumber,i);
-		global.powderlogfp[i] = fopen(filename, "w");
+		sprintf(filename,"r%04u-class%ld-log.txt",global.runNumber,i);
+		global.powderlogfp[i] = fopen(filename, "w");        
+        fprintf(global.powderlogfp[i], "Frame#, eventName, PhotonEnergyEv, GMD2, laserOn, laserDelay, npeaks, peakNpix, peakTotal, peakResolution, peakDensity\n");
+
 	}
 	
 }
@@ -401,7 +403,18 @@ void event() {
 	double	phaseCavityCharge2;
 	fail = getPhaseCavity(phaseCavityTime1, phaseCavityTime2, phaseCavityCharge1, phaseCavityCharge2);
 	
-	
+    
+	/*
+     *  Laser delay setting
+     */
+    float laserDelay;
+    if( getPvFloat(global.laserDelayPV, laserDelay) == 0 ) {
+        printf("New laser delay: %f\n",laserDelay);
+        if(laserDelay != 0)
+            global.laserDelay = laserDelay;
+    }
+    
+    
 	/*
 	 *	Detector position (Z)
 	 */
@@ -459,7 +472,8 @@ void event() {
 	 */
 	if ( update_camera_length && ( global.detectorZprevious != global.detectorZ ) ) {
 		// don't tinker with global geometry while there are active threads...
-        while (global.nActiveThreads > 0) usleep(10000);
+        while (global.nActiveThreads > 0) 
+            usleep(10000);
 
 		printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global.detectorZprevious,global.detectorZ);
         if ( isnan(wavelengthA ) ) {
@@ -493,6 +507,7 @@ void event() {
 	threadInfo->nPeaks = 0;
 	
 	threadInfo->laserEventCodeOn = laserOn();
+    threadInfo->laserDelay = global.laserDelay;
 	
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];

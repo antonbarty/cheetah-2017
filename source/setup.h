@@ -160,6 +160,11 @@ public:
     int         saveRadialStacks;
     long        radialStackSize;
     
+    // Pv values
+    char        laserDelayPV[MAX_FILENAME_LENGTH];
+    float       laserDelay;
+    
+    
 	// Saving options
 	int			savehits;
 	int			saveRaw;
