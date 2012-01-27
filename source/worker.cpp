@@ -390,7 +390,7 @@ void *worker(void *threadarg) {
 void evr41fudge(tThreadInfo *t, cGlobal *g){
 	
 	if ( g->TOFPresent == 0 ) {
-		printf("Acqiris not present; can't fudge EVR41...\n");
+		//printf("Acqiris not present; can't fudge EVR41...\n");
 		return;
 	}
  
@@ -411,18 +411,20 @@ void evr41fudge(tThreadInfo *t, cGlobal *g){
 	
 	//printf("================================================================\n"); 
 	//printf("tCounts = %d\n",tCounts);
+	/*
 	if ( t->laserEventCodeOn ) {
 		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 1\n",nCh,nSamp,Vtot,Vmax);
 	} else {
 		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 0\n",nCh,nSamp,Vtot,Vmax);
 	}
-	
+	*/
+
 	bool acqLaserOn = false;
 	if ( tCounts >= 1 ) {
 		acqLaserOn = true;
 	}
-	if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
-	if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
+	//if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
+	//if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
 	if ( acqLaserOn != t->laserEventCodeOn ) {
 		if ( acqLaserOn ) {
 			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");
