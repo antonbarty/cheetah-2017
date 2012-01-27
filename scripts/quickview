@@ -174,16 +174,24 @@ elif [ $# -eq 0 ]; then
 	if [ $TAG ]; then
 	
 		# check if we are comparing two tags:
+		[ $(echo $TAG | grep ',') ] && COMPARETWO="YES"
 		TAG1=$(echo $TAG | awk -F ',' '{print $1}')
 		TAG2=$(echo $TAG | awk -F ',' '{print $2}')
 	
-		if [ "$TAG2" = "" ]; then
+		if [ "$COMPARETWO" = "NO" ]; then
 			SAVEDIR=$SAVEDIR-$TAG
 			[ -d $SAVEDIR ] || UERROR "Data directory does not exist: $SAVEDIR"
 		else
-			COMPARETWO="YES"
-			SAVEDIR1=$SAVEDIR-$TAG1
-			SAVEDIR2=$SAVEDIR-$TAG2
+			if [ "$TAG1" = "" ]; then
+				SAVEDIR1=$SAVEDIR
+			else
+				SAVEDIR1=$SAVEDIR-$TAG1
+			fi	
+			if [ "$TAG2" = "" ]; then
+				SAVEDIR2=$SAVEDIR
+			else
+				SAVEDIR2=$SAVEDIR-$TAG2
+			fi
 			[ -d $SAVEDIR1 ] || UERROR "Data directory does not exist: $SAVEDIR1"
 			[ -d $SAVEDIR2 ] || UERROR "Data directory does not exist: $SAVEDIR2"
 		fi
