@@ -690,7 +690,11 @@ void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
 	
-
+	global.meanPhotonEnergyeV = global.summedPhotonEnergyeV/global.nprocessedframes;
+	global.photonEnergyeVSigma = sqrt(global.summedPhotonEnergyeVSquared/global.nprocessedframes - global.meanPhotonEnergyeV*global.meanPhotonEnergyeV);
+	printf("Mean photon energy: %f eV\n", global.meanPhotonEnergyeV);
+	printf("Sigma of photon energy: %f eV\n", global.photonEnergyeVSigma);
+	
 	// Wait for threads to finish
 	while(global.nActiveThreads > 0) {
 		printf("Waiting for %li worker threads to terminate\n", global.nActiveThreads);
@@ -706,11 +710,7 @@ void endjob()
 	// Hitrate?
 	printf("%li files processed, %li hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
 
-	global.meanPhotonEnergyeV = global.summedPhotonEnergyeV/global.nprocessedframes;
-	global.photonEnergyeVSigma = sqrt(global.summedPhotonEnergyeVSquared/global.nprocessedframes - global.meanPhotonEnergyeV*global.meanPhotonEnergyeV);
-	printf("Mean photon energy: %f eV\n", global.meanPhotonEnergyeV);
-	printf("Sigma of photon energy: %f eV\n", global.photonEnergyeVSigma);
-	
+
 	// Cleanup
 	free(global.darkcal);
 	free(global.hotpixelmask);
