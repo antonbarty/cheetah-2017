@@ -318,7 +318,11 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
+<<<<<<< HEAD
 	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, threadInfo->gmd1, threadInfo->gmd2, threadInfo->detectorPosition, threadInfo->laserEventCodeOn, threadInfo->laserDelay);
+=======
+	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %i, %g, %g, %i, %g, %022.9f\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, (threadInfo->gmd21+threadInfo->gmd22)/2, threadInfo->laserEventCodeOn, threadInfo->laserDelay, threadInfo->seconds+threadInfo->nanoSeconds*1e-9);
+>>>>>>> 9f786424fad9f52109bf88516a28820a96f31368
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
     // Keep track of what has gone into each image class
@@ -390,7 +394,7 @@ void *worker(void *threadarg) {
 void evr41fudge(tThreadInfo *t, cGlobal *g){
 	
 	if ( g->TOFPresent == 0 ) {
-		printf("Acqiris not present; can't fudge EVR41...\n");
+		//printf("Acqiris not present; can't fudge EVR41...\n");
 		return;
 	}
  
@@ -411,18 +415,20 @@ void evr41fudge(tThreadInfo *t, cGlobal *g){
 	
 	//printf("================================================================\n"); 
 	//printf("tCounts = %d\n",tCounts);
+	/*
 	if ( t->laserEventCodeOn ) {
 		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 1\n",nCh,nSamp,Vtot,Vmax);
 	} else {
 		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 0\n",nCh,nSamp,Vtot,Vmax);
 	}
-	
+	*/
+
 	bool acqLaserOn = false;
 	if ( tCounts >= 1 ) {
 		acqLaserOn = true;
 	}
-	if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
-	if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
+	//if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
+	//if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
 	if ( acqLaserOn != t->laserEventCodeOn ) {
 		if ( acqLaserOn ) {
 			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");

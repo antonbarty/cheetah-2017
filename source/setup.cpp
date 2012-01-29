@@ -1502,7 +1502,11 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
+<<<<<<< HEAD
 	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
+=======
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, GMD2, EVR41, laserDelay, EventTime\n");
+>>>>>>> 9f786424fad9f52109bf88516a28820a96f31368
 	
 	
 	sprintf(cleanedfile,"cleaned.txt");
@@ -1649,7 +1653,9 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
-	
+	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
+	fprintf(fp, "Photon energy sigma: %5.2f eV\n",photonEnergyeVSigma);
+
 	fclose (fp);
 
 	
