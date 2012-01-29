@@ -56,6 +56,7 @@ void cGlobal::defaultConfiguration(void) {
     
     // Detector Z position
 	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+	defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
 	defaultCameraLengthMm = 0;
 	detposprev = 0;
     cameraLengthOffset = 500.0 + 79.0;
@@ -63,6 +64,7 @@ void cGlobal::defaultConfiguration(void) {
 
     // Pv values
     strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+    laserDelay = std::numeric_limits<float>::quiet_NaN();
     laserDelay = 0;
 	
 	// Start and stop frames
@@ -357,9 +359,11 @@ void cGlobal::setup() {
         }
 
 		char	filename[1024];
-		sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
-		powderlogfp[i] = fopen(filename, "w");
-        
+        powderlogfp[i] = NULL;
+        if(runNumber > 0) {
+            sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
+            powderlogfp[i] = fopen(filename, "w");
+        }
 	}
 	
 	
@@ -1498,7 +1502,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, GMD2, EVR41, laserDelay\n");
+	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
 	
 	
 	sprintf(cleanedfile,"cleaned.txt");

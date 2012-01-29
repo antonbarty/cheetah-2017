@@ -188,15 +188,17 @@ void beginrun()
 	frameNumber = 0;
 
 	// Reset the powder log files
-	for(long i=0; i<global.nPowderClasses; i++) {
-		char	filename[1024];
-		fclose(global.powderlogfp[i]);
-		sprintf(filename,"r%04u-class%ld-log.txt",global.runNumber,i);
-		global.powderlogfp[i] = fopen(filename, "w");        
-        fprintf(global.powderlogfp[i], "Frame#, eventName, PhotonEnergyEv, GMD2, laserOn, laserDelay, npeaks, peakNpix, peakTotal, peakResolution, peakDensity\n");
+    if(global.runNumber > 0) {
+        for(long i=0; i<global.nPowderClasses; i++) {
+            char	filename[1024];
+            if(global.powderlogfp[i] != NULL)
+                fclose(global.powderlogfp[i]);
+            sprintf(filename,"r%04u-class%ld-log.txt",global.runNumber,i);
+            global.powderlogfp[i] = fopen(filename, "w");        
+            fprintf(global.powderlogfp[i], "Frame#, eventName, PhotonEnergyEv, gmd1, gmd2, detectorZ, laserOn, laserDelay, npeaks, peakNpix, peakTotal, peakResolution, peakDensity\n");
 
-	}
-	
+        }
+    }
 }
 
 /*
@@ -410,8 +412,14 @@ void event() {
     float laserDelay;
     if( getPvFloat(global.laserDelayPV, laserDelay) == 0 ) {
         printf("New laser delay: %f\n",laserDelay);
-        if(laserDelay != 0)
+        
+        if(laserDelay != 0) {
+            // Don't mess with events currently being processed
+            while (global.nActiveThreads > 0) 
+                usleep(10000);
+            
             global.laserDelay = laserDelay;
+        }
     }
     
     
@@ -505,10 +513,14 @@ void event() {
 	threadInfo->runNumber = getRunNumber();
 	threadInfo->beamOn = beam;
 	threadInfo->nPeaks = 0;
+    
+    threadInfo->detectorPosition = global.detectorZ;
 	
 	threadInfo->laserEventCodeOn = laserOn();
     threadInfo->laserDelay = global.laserDelay;
 	
+    threadInfo->gmd1 = gmd1;
+    threadInfo->gmd2 = gmd2;
 	threadInfo->gmd11 = gasdet[0];
 	threadInfo->gmd12 = gasdet[1];
 	threadInfo->gmd21 = gasdet[2];

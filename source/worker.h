@@ -70,7 +70,8 @@ typedef struct {
 	unsigned	runNumber;
 	bool		laserEventCodeOn;
 
-	
+	double      gmd1;
+    double      gmd2;
 	double		gmd11;
 	double		gmd12;
 	double		gmd21;
