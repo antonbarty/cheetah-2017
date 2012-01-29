@@ -110,7 +110,7 @@ void cGlobal::defaultConfiguration(void) {
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
-    useBackgroundBufferMutex = 1;
+   useBackgroundBufferMutex = 1;
 	bgMedian = 0.5;
 	bgRecalc = bgMemory;
 	bgIncludeHits = 0;
@@ -195,12 +195,12 @@ void cGlobal::defaultConfiguration(void) {
 	// I/O speed test?
 	ioSpeedTest = 0;
 
-    // cspad default parameters
-    asic_nx = CSPAD_ASIC_NX;
-    asic_ny = CSPAD_ASIC_NY;
-    asic_nn = asic_nx * asic_ny;
-    nasics_x = CSPAD_nASICS_X;
-    nasics_y = CSPAD_nASICS_Y;
+	// cspad default parameters
+	asic_nx = CSPAD_ASIC_NX;
+	asic_ny = CSPAD_ASIC_NY;
+	asic_nn = asic_nx * asic_ny;
+	nasics_x = CSPAD_nASICS_X;
+	nasics_y = CSPAD_nASICS_Y;
 
 	
 	// Default to only a few threads

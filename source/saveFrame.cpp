@@ -27,6 +27,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "utils.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -95,7 +96,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 */
 	gid = H5Gcreate(hdf_fileID, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%li: Couldn't create group\n", info->threadNum);
+		CH_ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
@@ -109,13 +110,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "assembleddata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -133,13 +134,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data_int16);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -193,13 +194,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -221,13 +222,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	// Create sub-groups
 	gid = H5Gcreate(hdf_fileID, "processing", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%li: Couldn't create group\n", info->threadNum);
+		CH_ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
 	gidHitfinder = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
-		ERROR("%li: Couldn't create group\n", info->threadNum);
+		CH_ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
@@ -250,13 +251,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -276,13 +277,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, peak_info);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -335,13 +336,13 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			CH_ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
 			return;
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixelmasks);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
+			CH_ERROR("%li: Couldn't write data\n", info->threadNum);
 			H5Dclose(dataspace_id);
 			H5Fclose(hdf_fileID);
 			return;
@@ -574,12 +575,12 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {
-		ERROR("Couldn't create file: %s\n", filename);
+		CH_ERROR("Couldn't create file: %s\n", filename);
 	}
 	
 	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
-		ERROR("Couldn't create group\n");
+		CH_ERROR("Couldn't create group\n");
 		H5Fclose(fh);
 	}
 	
@@ -592,7 +593,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	dh = H5Dcreate(gh, "data", type, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
-		ERROR("Couldn't create dataset\n");
+		CH_ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
 	}
 	
@@ -602,7 +603,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	r = H5Dwrite(dh, type, H5S_ALL,
 	             H5S_ALL, H5P_DEFAULT, data);
 	if ( r < 0 ) {
-		ERROR("Couldn't write data\n");
+		CH_ERROR("Couldn't write data\n");
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}

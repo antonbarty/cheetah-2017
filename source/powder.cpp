@@ -26,6 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "utils.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -218,12 +219,12 @@ void writePowderData(char *filename, void *data, int width, int height, void *ra
 	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {
-		ERROR("Couldn't create file: %s\n", filename);
+		CH_ERROR("Couldn't create file: %s\n", filename);
 	}
 	
 	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
-		ERROR("Couldn't create group\n");
+		CH_ERROR("Couldn't create group\n");
 		H5Fclose(fh);
 	}
 	

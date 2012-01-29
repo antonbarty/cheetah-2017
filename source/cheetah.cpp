@@ -22,6 +22,9 @@
 #include "cspad/CspadCorrector.hh"
 #include "cspad/CspadGeometry.hh"
 
+#include "crystfel/geometry.h"
+#include "crystfel/cell.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -517,7 +520,7 @@ void event() {
     threadInfo->detectorPosition = global.detectorZ;
 	
 	threadInfo->laserEventCodeOn = laserOn();
-    threadInfo->laserDelay = global.laserDelay;
+	threadInfo->laserDelay = global.laserDelay;
 	
     threadInfo->gmd1 = gmd1;
     threadInfo->gmd2 = gmd2;

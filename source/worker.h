@@ -109,10 +109,6 @@ typedef struct {
 
 static uint32_t nevents = 0;
 
-
-#define ERROR(...) fprintf(stderr, __VA_ARGS__)
-#define STATUS(...) fprintf(stderr, __VA_ARGS__)
-
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
