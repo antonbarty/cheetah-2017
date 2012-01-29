@@ -19,6 +19,8 @@
 #include "cspad/CspadCorrector.hh"
 #include "cspad/CspadGeometry.hh"
 
+#include "crystfel/detector.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -73,9 +75,10 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Geometry
-	strcpy(geometryFile, "No_file_specified");
+	strcpy(geometryFile, "No_file_specified"); // if using h5 pixel map
+	strcpy(crystfelGeomFile, "No_file_specified"); // if using crystfel file
 	pixelSize = 110e-6;
-    
+
 	
 	// Bad pixel mask
 	strcpy(badpixelFile, "No_file_specified");
@@ -610,6 +613,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
+	else if (!strcmp(tag, "crystfelgeomfile")) {
+		strcpy(crystfelGeomFile, value);
+	}
 	else if (!strcmp(tag, "darkcal")) {
 		strcpy(darkcalFile, value);
 	}
@@ -900,18 +906,28 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
  *	Read in detector configuration
  */
 void cGlobal::readDetectorGeometry(char* filename) {
-	
 
+	long fs, ss, nx, ny, nn, i;
+	struct detector *det;	
+	int usingCrystfelGeom = 0;
+	cData2d		detector_x;
+	cData2d		detector_y;
+	cData2d		detector_z;
+	
 	// Pixel size (measurements in geometry file are in m)
 	module_rows = asic_nx;
 	module_cols = asic_ny;	
 	pix_dx = pixelSize;
 
-	
+	// Check if we are using a CrystFEL geometry file
+	if ( strcmp(crystfelGeomFile, "No_file_specified") ) {
+		usingCrystfelGeom = 1;
+		strcpy(filename,crystfelGeomFile);
+	}
+
 	// Set filename here 
 	printf("Reading detector configuration:\n");
-	printf("\t%s\n",filename);
-	
+	printf("\t%s\n",filename);	
 	
 	// Check whether pixel map file exists!
 	FILE* fp = fopen(filename, "r");
@@ -922,35 +938,41 @@ void cGlobal::readDetectorGeometry(char* filename) {
 		exit(1);
 	}
 	
+	if ( usingCrystfelGeom ) {
+		
+		usingCrystfelGeom = 1;
+		det = get_detector_geometry(crystfelGeomFile);
+		nx = det->max_fs + 1;
+		ny = det->max_ss + 1;
+		nn = nx*ny;
 	
-	// Read pixel locations from file
-	cData2d		detector_x;
-	cData2d		detector_y;
-	cData2d		detector_z;
-	detector_x.readHDF5(filename, (char *) "x");
-	detector_y.readHDF5(filename, (char *) "y");
-	detector_z.readHDF5(filename, (char *) "z");
-	
-	// Sanity check that all detector arrays are the same size (!)
-	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
-		printf("readDetectorGeometry: array size mismatch\n");
-		exit(1);
-	}
-	
+	} else {	
+		
+		// Read pixel locations from file
+		detector_x.readHDF5(filename, (char *) "x");
+		detector_y.readHDF5(filename, (char *) "y");
+		detector_z.readHDF5(filename, (char *) "z");
+		
+		// Sanity check that all detector arrays are the same size (!)
+		if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
+			printf("readDetectorGeometry: array size mismatch\n");
+			exit(1);
+		}	
+		
+		// Sanity check that size matches what we expect for cspad (!)
+		if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
+			printf("readDetectorGeometry: array size mismatch\n");
+			printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
+			exit(1);
+		}
 
-	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
-		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
-		exit(1);
+		nx = 8*asic_nx;
+		ny = 8*asic_ny;
+		nn = nx*ny;	
+	
 	}
-	
-	
+
 	// Create local arrays for detector pixel locations
-	long	nx = 8*asic_nx;
-	long	ny = 8*asic_ny;
-	long	nn = nx*ny;
-	long 	i;
 	pix_nx = nx;
 	pix_ny = ny;
 	pix_nn = nn;
@@ -966,20 +988,45 @@ void cGlobal::readDetectorGeometry(char* filename) {
 	for (i=0;i<nn;i++) hitfinderResMask[i]=1;
 	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
 	
+
+	if ( usingCrystfelGeom == 1 ) {
+		
+		for ( fs=0; fs<nx; fs++ ) {
+		for ( ss=0; ss<ny; ss++ ) {
+			double rx, ry;
+			struct panel *p;
+			double xs, ys;
+
+			p = find_panel(det, fs, ss);
+
+			xs = (fs-p->min_fs)*p->fsx + (ss-p->min_ss)*p->ssx;
+			ys = (fs-p->min_fs)*p->fsy + (ss-p->min_ss)*p->ssy;
+
+			rx = (xs + p->cnx); // / p->res;
+			ry = (ys + p->cny); // / p->res;
+
+			pix_x[fs + nx*ss] = rx;
+			pix_y[fs + nx*ss] = ry;
+			pix_z[fs + nx*ss] = 0.0;
+		
+		}}
+
+	} else {
 	
-	// Copy values from 2D array
-	for(long i=0;i<nn;i++){
-		pix_x[i] = (float) detector_x.data[i];
-		pix_y[i] = (float) detector_y.data[i];
-		pix_z[i] = (float) detector_z.data[i];
-	}
-	
-	
-	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
-	for(i=0;i<nn;i++){
-		pix_x[i] /= pix_dx;
-		pix_y[i] /= pix_dx;
-		pix_z[i] /= pix_dx;
+		// Copy values from 2D array
+		for(i=0;i<nn;i++){
+			pix_x[i] = (float) detector_x.data[i];
+			pix_y[i] = (float) detector_y.data[i];
+			pix_z[i] = (float) detector_z.data[i];
+		}
+		
+		// Divide array (in m) by pixel size to get pixel location indicies (ijk)
+		for(i=0;i<nn;i++){
+			pix_x[i] /= pix_dx;
+			pix_y[i] /= pix_dx;
+			pix_z[i] /= pix_dx;
+		}
+
 	}
 	
 	

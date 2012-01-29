@@ -31,7 +31,7 @@ public:
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;
 	Pds::DetInfo::Detector	detectorPdsDetInfo;
-    char					detectorZpvname[MAX_FILENAME_LENGTH];
+	char					detectorZpvname[MAX_FILENAME_LENGTH];
    
 	// Track some statistics for the log file
 	double summedPhotonEnergyeV;
@@ -44,11 +44,12 @@ public:
 	long	stopAtFrame;
 	
 	// Real-space geometry
-	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
-	float		pixelSize;
-	float		defaultCameraLengthMm;
-    float       cameraLengthOffset;
-    float       cameraLengthScale;
+	char     geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
+	char     crystfelGeomFile[MAX_FILENAME_LENGTH]; // CrystFEL ".geom" file
+	float    pixelSize;
+	float    defaultCameraLengthMm;
+	float    cameraLengthOffset;
+	float    cameraLengthScale;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
