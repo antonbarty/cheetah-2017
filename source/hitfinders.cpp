@@ -685,7 +685,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	int counter = 0;
 	int hit = 0;
 	int stride = global->pix_nx;
-	int fs,ss,e,p,ce,ne,nat,lastnat;
+	int fs,ss,e,thise,p,ce,ne,nat,lastnat,cs,cf;
 	int peakindex,newpeak;
 	float dist, itot, ftot, stot;	
 	float thisI,bgsig,snr;
@@ -774,16 +774,18 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					/* Check SNR threshold */
 					if ( snr < global->hitfinderMinSNR ) continue;
 					
-					/* Check that number of connected pixels is satisfied.  Don't
-					 * bother checking for more than the minimum required */
+					/* Count the number of connected pixels and centroid. */
 					nat = 1;
 					nexte[0] = e;
-					do {	
-						if ( nat >= global->hitfinderMinPixCount ) break;
+					ce = 0;
+					itot = 0; ftot = 0; stot = 0;
+					do {
 						lastnat = nat;
+						thise = nexte[ce];
+						// if ( natmask[thise] == 0 ) goto skipme;
 						for ( int k=0; k<8; k++ ) {
 							/* this is the index of a neighboring pixel */
-							ne = nexte[nat-1] + shift[k];
+							ne = thise + shift[k];
 							/* Array bounds check */
 							if ( ne < 0 || ne >= global->pix_nn ) continue;
 							// Check that we aren't recounting the same pixel
@@ -793,14 +795,22 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 								natmask[ne] = 0;
 								nexte[nat] = ne;
 								nat++;
+								thisI = temp[ne] - bg;
+								itot += thisI;
+								cf = ne % stride;
+								cs = ne / stride;
+								ftot += thisI*(float)cf;
+								stot += thisI*(float)cs;						
 							}
 						}
-						
+						ce++;
 					} while ( nat != lastnat );
 					
 					/* Final check that we satisfied the connected pixel requirement */
 					if ( nat < global->hitfinderMinPixCount ) continue;
-					
+					fs = lrint(ftot/itot);
+					ss = lrint(stot/itot);
+
 					/* Have we already found better peak nearby? */
 					newpeak = 1;
 					peakindex = counter;
@@ -823,8 +833,8 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					
 					/* Now find proper centroid */
 					itot = 0; ftot = 0; stot = 0;
-					for ( int cs=ss-bgrad; cs<=ss+bgrad; cs++) {
-						for ( int cf=fs-bgrad; cf<=fs+bgrad; cf++) {
+					for ( cs=ss-bgrad; cs<=ss+bgrad; cs++) {
+						for ( cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 							ce = cs*stride + cf;
 							if ( mask[ce] == 0 ) continue;
 							thisI = temp[ce] - bg;
