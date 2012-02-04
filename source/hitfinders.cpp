@@ -742,7 +742,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
 				
 					/* get SNR for this pixel */
-					fail = box_snr(temp, mask, e, bgrad, 1, stride, &snr, &bg, &bgsig);
+					fail = box_snr(temp, mask, e, bgrad, global->hitfinderLocalBGThickness, stride, &snr, &bg, &bgsig);
 					if ( fail ) continue;
 
 					/* Check SNR threshold */

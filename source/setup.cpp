@@ -146,6 +146,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMaxPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
+	hitfinderLocalBGThickness = 1;
 	hitfinderLimitRes = 0;
 	hitfinderMinRes = 1e20;
 	hitfinderMaxRes = 0;
@@ -830,6 +831,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderlocalbgradius")) {
 		hitfinderLocalBGRadius = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
+		hitfinderLocalBGThickness = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderlimitres")) {
 		hitfinderLimitRes = atoi(value);
 	}
@@ -1470,6 +1474,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
 	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
