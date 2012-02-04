@@ -1041,9 +1041,12 @@ void cGlobal::updateKspace(float wavelengthA) {
     long i;
     float   x, y, z, r;
     float   kx,ky,kz,kr;
-    float   res;
+    float   res,minres,maxres;
 
-    printf("Recalculating K-space coordinates\n");
+	minres = 0;
+	maxres = 9999999999999999;
+
+    printf("MESSAGE: Recalculating K-space coordinates\n");
 
     for ( i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
@@ -1063,6 +1066,8 @@ void cGlobal::updateKspace(float wavelengthA) {
         pix_kr[i] = kr;
         pix_res[i] = res;
         
+		if ( res > minres ) minres = res;
+		if ( res < maxres ) maxres = res;
         
         // Check whether resolution limits still make sense.
         if ( hitfinderLimitRes == 1 ) {
@@ -1074,6 +1079,9 @@ void cGlobal::updateKspace(float wavelengthA) {
             }
         }
     }
+
+	printf("MESSAGE: Current resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
+
 }
 
 
