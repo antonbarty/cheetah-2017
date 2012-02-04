@@ -107,32 +107,33 @@ public:
 	int			startFrames;
 	
 	// Hitfinding
-	int			hitfinder;
-	int			hitfinderAlgorithm;
-	int			hitfinderADC;
-	long		hitfinderNAT;
-	float		hitfinderTAT;
-	int			hitfinderNpeaks;
-	int			hitfinderNpeaksMax;
-	int			hitfinderMinPixCount;
-	int			hitfinderMaxPixCount;
+	int         hitfinder;
+	int         hitfinderAlgorithm;
+	int         hitfinderADC;
+	long        hitfinderNAT;
+	float       hitfinderTAT;
+	int         hitfinderNpeaks;
+	int         hitfinderNpeaksMax;
+	int         hitfinderMinPixCount;
+	int         hitfinderMaxPixCount;
 	int         hitfinderCheckGradient;
-	float		hitfinderMinGradient;
-	int			hitfinderCluster;
-	int			hitfinderUsePeakmask;
-	char		peaksearchFile[MAX_FILENAME_LENGTH];
-	int			hitfinderUseTOF;
-	int			hitfinderTOFMinSample;
-	int			hitfinderTOFMaxSample;
-	double		hitfinderTOFThresh;
-	int			hitfinderCheckPeakSeparation;
-	float		hitfinderMaxPeakSeparation;
+	float       hitfinderMinGradient;
+	int         hitfinderCluster;
+	int         hitfinderUsePeakmask;
+	char        peaksearchFile[MAX_FILENAME_LENGTH];
+	int         hitfinderUseTOF;
+	int         hitfinderTOFMinSample;
+	int         hitfinderTOFMaxSample;
+	double      hitfinderTOFThresh;
+	int         hitfinderCheckPeakSeparation;
+	float       hitfinderMaxPeakSeparation;
 	int			hitfinderSubtractLocalBG;
 	int			hitfinderLocalBGRadius;
-	int			hitfinderLimitRes;
-	float		hitfinderMinRes;
-	float		hitfinderMaxRes;
-	int			*hitfinderResMask;
+	int         hitfinderLocalBGThickness;
+	int         hitfinderLimitRes;
+	float       hitfinderMinRes;
+	float       hitfinderMaxRes;
+	int        *hitfinderResMask;
 	float       hitfinderMinSNR;
 	
 	//	TOF
