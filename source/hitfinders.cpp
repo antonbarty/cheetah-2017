@@ -726,10 +726,12 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 			
 			int asic_min_fs = mi*global->asic_nx;
 			int asic_min_ss = mj*global->asic_ny;
+
+			int padding = bgrad + global->hitfinderLocalBGThickness - 1;
 			
 			// Loop over pixels within a module
-			for(long j=bgrad; j<global->asic_ny-1-bgrad; j++){
-				for(long i=bgrad; i<global->asic_nx-1-bgrad; i++){
+			for(long j=padding; j<global->asic_ny-1-padding; j++){
+				for(long i=padding; i<global->asic_nx-1-padding; i++){
 					
 					ss = asic_min_ss + j;
 					fs = asic_min_fs + i;
