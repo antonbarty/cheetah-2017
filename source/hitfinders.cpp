@@ -770,10 +770,11 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 							if ( natmask[ne] == 0 ) continue;
 							/* Check SNR condition */
 							if ( (temp[ne]-bg)/bgsig > global->hitfinderMinSNR ) {
-								natmask[ne] = 0;
-								nexte[nat] = ne;
-								nat++;
-								thisI = temp[ne] - bg;
+								natmask[ne] = 0; /* Mask this pixel (don't count it again) */
+								nexte[nat] = ne; /* Queue this location to search it's neighbors later */
+								nat++; /* Increment the number of connected pixels */
+								/* Track some info needed for rough center of mass: */
+								thisI = temp[ne] - bg; 
 								itot += thisI;
 								cf = ne % stride;
 								cs = ne / stride;
@@ -785,7 +786,9 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					} while ( nat != lastnat );
 					
 					/* Final check that we satisfied the connected pixel requirement */
-					if ( nat < global->hitfinderMinPixCount ) continue;
+					if ( nat < global->hitfinderMinPixCount || nat > global->hitfinderMaxPixCount ) continue;
+
+					/* Approximate center of mass */
 					fs = lrint(ftot/itot);
 					ss = lrint(stot/itot);
 
