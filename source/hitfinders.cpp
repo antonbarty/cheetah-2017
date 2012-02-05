@@ -817,6 +817,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					for ( cs=ss-bgrad; cs<=ss+bgrad; cs++) {
 						for ( cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 							ce = cs*stride + cf;
+							if ( ce < 0 || ce > global->pix_nn ) continue;
 							if ( mask[ce] == 0 ) continue;
 							thisI = temp[ce] - bg;
 							itot += thisI;
