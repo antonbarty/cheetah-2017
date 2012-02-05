@@ -453,6 +453,7 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
 		global->hotpixelmask[i] *
 		global->badpixelmask[i] *
+		global->peakmask[i] *
 		threadInfo->saturatedPixelMask[i];
 
 	// zero out bad pixels in temporary intensity map
@@ -705,6 +706,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
 		global->hotpixelmask[i] *
 		global->badpixelmask[i] *
+		global->peakmask[i] *
 		threadInfo->saturatedPixelMask[i];
 	
 	/* Combined mask for pixel counting */
