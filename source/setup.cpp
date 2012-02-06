@@ -108,11 +108,10 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	//subtractBg = 0;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
-    useBackgroundBufferMutex = 1;
+	useBackgroundBufferMutex = 1;
 	bgMedian = 0.5;
 	bgRecalc = bgMemory;
 	bgIncludeHits = 0;
@@ -148,6 +147,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMaxPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
+	hitfinderLocalBGThickness = 1;
 	hitfinderLimitRes = 0;
 	hitfinderMinRes = 1e20;
 	hitfinderMaxRes = 0;
@@ -393,7 +393,6 @@ void cGlobal::setup() {
 	if(generateDarkcal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		//subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useGaincal=0;
 		useAutoHotpixel = 0;
@@ -414,7 +413,6 @@ void cGlobal::setup() {
 	if(generateGaincal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		//subtractBg = 0;
 		useDarkcalSubtraction = 1;
 		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
@@ -626,7 +624,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
-		cmModule = atoi(value);
+		printf("The keyword subtractcmModule has been changed. It is\n"
+		       "now known as cmModule.\n"
+		       "Modify your ini file and try again...\n");
+		exit(1);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -657,8 +658,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "now known as useDarkcalSubtraction.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-
-	//	subtractBg = atoi(value);
 	}
 	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
@@ -677,8 +676,8 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
-               "now known as powderSumHits and powderSumBlanks.\n"
-               "Modify your ini file and try again...\n");
+		       "now known as powderSumHits and powderSumBlanks.\n"
+		       "Modify your ini file and try again...\n");
 		exit(1);
     }
 	else if (!strcmp(tag, "saveraw")) {
@@ -713,7 +712,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "now known as useSubtractPersistentBackground.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-	//	useSubtractPersistentBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -832,6 +830,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderlocalbgradius")) {
 		hitfinderLocalBGRadius = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
+		hitfinderLocalBGThickness = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderlimitres")) {
 		hitfinderLimitRes = atoi(value);
 	}
@@ -849,7 +850,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
-		bgMemory = atoi(value);
+		printf("The keyword selfDarkMemory has been changed.  It is\n"
+             "now known as bgMemory.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
 	}
 	else if (!strcmp(tag, "bgmemory")) {
 		bgMemory = atoi(value);
@@ -877,7 +881,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "Use scaleBackground instead.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-	//	scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
@@ -1039,9 +1042,12 @@ void cGlobal::updateKspace(float wavelengthA) {
     long i;
     float   x, y, z, r;
     float   kx,ky,kz,kr;
-    float   res;
+    float   res,minres,maxres;
 
-    printf("Recalculating K-space coordinates\n");
+	minres = 0;
+	maxres = 9999999999999999;
+
+    printf("MESSAGE: Recalculating K-space coordinates\n");
 
     for ( i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
@@ -1061,6 +1067,8 @@ void cGlobal::updateKspace(float wavelengthA) {
         pix_kr[i] = kr;
         pix_res[i] = res;
         
+		if ( res > minres ) minres = res;
+		if ( res < maxres ) maxres = res;
         
         // Check whether resolution limits still make sense.
         if ( hitfinderLimitRes == 1 ) {
@@ -1072,6 +1080,9 @@ void cGlobal::updateKspace(float wavelengthA) {
             }
         }
     }
+
+	printf("MESSAGE: Current resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
+
 }
 
 
@@ -1423,7 +1434,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	//fprintf(fp, "subtractBg=%d\n",subtractBg);
 	fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
 	fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
@@ -1438,8 +1448,10 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
 	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
 	fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
-	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
 	fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
 	fprintf(fp, "tofName=%s\n",tofName);
@@ -1448,6 +1460,8 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
 	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
 	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
+	fprintf(fp, "radialStackSize=%d\n",radialStackSize);
 	fprintf(fp, "cmFloor=%f\n",cmFloor);
 	fprintf(fp, "pixelSize=%f\n",pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
@@ -1472,6 +1486,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
 	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);

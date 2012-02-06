@@ -453,6 +453,7 @@ int peakfinder5(cGlobal *global, tThreadInfo	*threadInfo) {
 	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
 		global->hotpixelmask[i] *
 		global->badpixelmask[i] *
+		global->peakmask[i] *
 		threadInfo->saturatedPixelMask[i];
 
 	// zero out bad pixels in temporary intensity map
@@ -684,12 +685,12 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	
 	int counter = 0;
 	int hit = 0;
+	int fail;
 	int stride = global->pix_nx;
-	int fs,ss,e,p,ce,ne,nat,lastnat;
+	int fs,ss,e,thise,p,ce,ne,nat,lastnat,cs,cf;
 	int peakindex,newpeak;
 	float dist, itot, ftot, stot;	
-	float thisI,bgsig,snr;
-	int a,b,c,d;
+	float thisI,snr,bg,bgsig;
 	
 	/* For counting neighbor pixels */
 	int * nexte = (int *) calloc(global->pix_nn,sizeof(int));	
@@ -705,6 +706,7 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 	for (long i=0; i<global->pix_nn; i++) mask[i] *= 
 		global->hotpixelmask[i] *
 		global->badpixelmask[i] *
+		global->peakmask[i] *
 		threadInfo->saturatedPixelMask[i];
 	
 	/* Combined mask for pixel counting */
@@ -726,81 +728,70 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 			
 			int asic_min_fs = mi*global->asic_nx;
 			int asic_min_ss = mj*global->asic_ny;
+
+			int padding = bgrad + global->hitfinderLocalBGThickness - 1;
 			
 			// Loop over pixels within a module
-			for(long j=bgrad; j<global->asic_ny-1-bgrad; j++){
-				for(long i=bgrad; i<global->asic_nx-1-bgrad; i++){
+			for(long j=padding; j<global->asic_ny-1-padding; j++){
+				for(long i=padding; i<global->asic_nx-1-padding; i++){
 					
 					ss = asic_min_ss + j;
 					fs = asic_min_fs + i;
 					e = ss*stride + fs;
 					
+					/* Check simple intensity threshold first */
 					if ( temp[e] < global->hitfinderADC ) continue;
 					
 					/* Check if this pixel value is larger than all of its neighbors */
 					for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
-					
-					/* Check SNR - first calculate background and variance within a ring 
-					 * surrounding this pixel */
-					int bgcount = 0;
-					float bg = 0;
-					float bgsq = 0;
-					/* The top, right, bottom, and left starting indices for the box */
-					int topstart = e - bgrad*(1+stride);
-					int rightstart = e + bgrad*(stride-1);
-					int bottomstart = e + bgrad*(1+stride);
-					int leftstart = e + bgrad*(1-stride);
-					/* We could also step through bgrad values here for a ring thickness 
-					 * greater than 1.  Doesn't seem necessary; just slows things down.*/
-					for (int q=0; q < bgrad*2; q++) {
-						a = topstart + q*stride;
-						b = rightstart + q;
-						c = bottomstart - q*stride;
-						d = leftstart - q;
-						bgcount += mask[a] + mask[b] + mask[c] + mask[d];
-						bg += temp[a] + temp[b] + temp[c] + temp[d];
-						bgsq += temp[a]*temp[a] + temp[b]*temp[b] + 
-						temp[c]*temp[c] + temp[d]*temp[d];
-					}
-					/* Skip it if there are less then 7/8 good pixels in the ring */
-					if ( bgcount < 7*bgrad ) continue;
-					bg = bg/bgcount;
-					thisI = temp[e] - bg;
-					/* Recheck intensity threshold now that background is corrected */
-					if ( thisI < global->hitfinderADC ) continue;
-					bgsq = bgsq/bgcount;
-					bgsig = sqrt(bgsq - bg*bg);
-					snr = thisI/bgsig;
+				
+					/* get SNR for this pixel */
+					fail = box_snr(temp, mask, e, bgrad, global->hitfinderLocalBGThickness, stride, &snr, &bg, &bgsig);
+					if ( fail ) continue;
+
 					/* Check SNR threshold */
 					if ( snr < global->hitfinderMinSNR ) continue;
-					
-					/* Check that number of connected pixels is satisfied.  Don't
-					 * bother checking for more than the minimum required */
+
+					/* Count the number of connected pixels and centroid. */
 					nat = 1;
 					nexte[0] = e;
-					do {	
-						if ( nat >= global->hitfinderMinPixCount ) break;
+					ce = 0;
+					itot = 0; ftot = 0; stot = 0;
+					do {
 						lastnat = nat;
+						thise = nexte[ce];
+						// if ( natmask[thise] == 0 ) goto skipme;
 						for ( int k=0; k<8; k++ ) {
 							/* this is the index of a neighboring pixel */
-							ne = nexte[nat-1] + shift[k];
+							ne = thise + shift[k];
 							/* Array bounds check */
 							if ( ne < 0 || ne >= global->pix_nn ) continue;
 							// Check that we aren't recounting the same pixel
 							if ( natmask[ne] == 0 ) continue;
 							/* Check SNR condition */
 							if ( (temp[ne]-bg)/bgsig > global->hitfinderMinSNR ) {
-								natmask[ne] = 0;
-								nexte[nat] = ne;
-								nat++;
+								natmask[ne] = 0; /* Mask this pixel (don't count it again) */
+								nexte[nat] = ne; /* Queue this location to search it's neighbors later */
+								nat++; /* Increment the number of connected pixels */
+								/* Track some info needed for rough center of mass: */
+								thisI = temp[ne] - bg; 
+								itot += thisI;
+								cf = ne % stride;
+								cs = ne / stride;
+								ftot += thisI*(float)cf;
+								stot += thisI*(float)cs;						
 							}
 						}
-						
+						ce++;
 					} while ( nat != lastnat );
 					
 					/* Final check that we satisfied the connected pixel requirement */
-					if ( nat < global->hitfinderMinPixCount ) continue;
-					
+					if ( nat < global->hitfinderMinPixCount || nat > global->hitfinderMaxPixCount ) continue;
+
+					/* Approximate center of mass */
+					fs = lrint(ftot/itot);
+					ss = lrint(stot/itot);
+
 					/* Have we already found better peak nearby? */
 					newpeak = 1;
 					peakindex = counter;
@@ -823,9 +814,10 @@ int peakfinder6(cGlobal *global, tThreadInfo	*threadInfo) {
 					
 					/* Now find proper centroid */
 					itot = 0; ftot = 0; stot = 0;
-					for ( int cs=ss-bgrad; cs<=ss+bgrad; cs++) {
-						for ( int cf=fs-bgrad; cf<=fs+bgrad; cf++) {
+					for ( cs=ss-bgrad; cs<=ss+bgrad; cs++) {
+						for ( cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 							ce = cs*stride + cf;
+							if ( ce < 0 || ce > global->pix_nn ) continue;
 							if ( mask[ce] == 0 ) continue;
 							thisI = temp[ce] - bg;
 							itot += thisI;
@@ -876,5 +868,72 @@ nohit:
 	
 	return(hit);
 	
+}
+
+
+
+
+/* Calculate signal-to-noise ratio for the central pixel, using a square 
+ * concentric annulus */
+
+int box_snr(float * im, int * mask, int center, int radius, int thickness,
+            int stride, float * SNR, float * background, float * backgroundSigma)
+{
+
+	int i, q, a, b, c, d, bgcount,thisradius;
+	float bg,bgsq,bgsig,snr;	
+	
+	bg = 0;
+	bgsq = 0;
+	bgcount = 0;
+
+	/* Number of pixels in the square annulus */
+	int inpix = 2*(radius-1) + 1;
+	inpix = inpix*inpix;
+	int outpix = 2*(radius+thickness-1) + 1;
+	outpix = outpix*outpix;
+	int maxpix = outpix - inpix;
+
+	/* Loop over pixels in the annulus */
+	for (i=0; i<thickness; i++) {
+
+		thisradius = radius + i;
+	
+		/* The starting indices at each corner of a square ring */
+		int topstart = center - thisradius*(1+stride);
+		int rightstart = center + thisradius*(stride-1);
+		int bottomstart = center + thisradius*(1+stride);
+		int leftstart = center + thisradius*(1-stride);
+
+		/* Loop over pixels in a thin square ring */
+		for (q=0; q < thisradius*2; q++) {
+			a = topstart + q*stride;
+			b = rightstart + q;
+			c = bottomstart - q*stride;
+			d = leftstart - q;
+			bgcount += mask[a] + mask[b] + mask[c] + mask[d];
+			bg += im[a] + im[b] + im[c] + im[d];
+			bgsq += im[a]*im[a] + im[b]*im[b] + 
+			im[c]*im[c] + im[d]*im[d];
+		}
+	}
+
+	/* Assert that 50 % of pixels in the annulus are good */
+	if ( bgcount < 0.5*maxpix ) {
+		return 1;
+	};
+
+	/* Final statistics */
+	bg = bg/bgcount;
+	bgsq = bgsq/bgcount;
+	bgsig = sqrt(bgsq - bg*bg);
+	snr = ( im[center] - bg) / bgsig;
+
+	*SNR = snr;
+	*background = bg;
+	*backgroundSigma = bgsig;
+
+	return 0;
+
 }
 
