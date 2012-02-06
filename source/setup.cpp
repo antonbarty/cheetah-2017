@@ -106,11 +106,10 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	//subtractBg = 0;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
-    useBackgroundBufferMutex = 1;
+	useBackgroundBufferMutex = 1;
 	bgMedian = 0.5;
 	bgRecalc = bgMemory;
 	bgIncludeHits = 0;
@@ -392,7 +391,6 @@ void cGlobal::setup() {
 	if(generateDarkcal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		//subtractBg = 0;
 		useDarkcalSubtraction = 0;
 		useGaincal=0;
 		useAutoHotpixel = 0;
@@ -413,7 +411,6 @@ void cGlobal::setup() {
 	if(generateGaincal) {
 		cmModule = 0;
 		cmSubtractUnbondedPixels = 0;
-		//subtractBg = 0;
 		useDarkcalSubtraction = 1;
 		useAutoHotpixel = 0;
 		useSubtractPersistentBackground = 0;
@@ -625,7 +622,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
-		cmModule = atoi(value);
+		printf("The keyword subtractcmModule has been changed. It is\n"
+		       "now known as cmModule.\n"
+		       "Modify your ini file and try again...\n");
+		exit(1);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -656,8 +656,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "now known as useDarkcalSubtraction.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-
-	//	subtractBg = atoi(value);
 	}
 	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
@@ -676,8 +674,8 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
-               "now known as powderSumHits and powderSumBlanks.\n"
-               "Modify your ini file and try again...\n");
+		       "now known as powderSumHits and powderSumBlanks.\n"
+		       "Modify your ini file and try again...\n");
 		exit(1);
     }
 	else if (!strcmp(tag, "saveraw")) {
@@ -712,7 +710,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "now known as useSubtractPersistentBackground.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-	//	useSubtractPersistentBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -851,7 +848,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
-		bgMemory = atoi(value);
+		printf("The keyword selfDarkMemory has been changed.  It is\n"
+             "now known as bgMemory.\n"
+             "Modify your ini file and try again...\n");
+		exit(1);
 	}
 	else if (!strcmp(tag, "bgmemory")) {
 		bgMemory = atoi(value);
@@ -879,7 +879,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
              "Use scaleBackground instead.\n"
              "Modify your ini file and try again...\n");
 		exit(1);
-	//	scaleBackground = atoi(value);
 	}
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
@@ -1433,7 +1432,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	//fprintf(fp, "subtractBg=%d\n",subtractBg);
 	fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
 	fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
