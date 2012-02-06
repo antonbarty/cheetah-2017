@@ -1448,8 +1448,10 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
 	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
 	fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
-	//fprintf(fp, "useSelfDarkcal=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+	fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
 	fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
+	fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
 	fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
 	fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
 	fprintf(fp, "tofName=%s\n",tofName);
@@ -1458,6 +1460,8 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
 	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
 	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
+	fprintf(fp, "radialStackSize=%d\n",radialStackSize);
 	fprintf(fp, "cmFloor=%f\n",cmFloor);
 	fprintf(fp, "pixelSize=%f\n",pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
