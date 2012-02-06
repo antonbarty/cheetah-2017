@@ -318,11 +318,7 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-<<<<<<< HEAD
 	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, threadInfo->gmd1, threadInfo->gmd2, threadInfo->detectorPosition, threadInfo->laserEventCodeOn, threadInfo->laserDelay);
-=======
-	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %i, %g, %g, %i, %g, %022.9f\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, (threadInfo->gmd21+threadInfo->gmd22)/2, threadInfo->laserEventCodeOn, threadInfo->laserDelay, threadInfo->seconds+threadInfo->nanoSeconds*1e-9);
->>>>>>> 9f786424fad9f52109bf88516a28820a96f31368
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
     // Keep track of what has gone into each image class

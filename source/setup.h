@@ -8,6 +8,7 @@
  */
 
 #define	MAX_POWDER_CLASSES 16
+#define MAX_DETECTORS 2
 #define	MAX_FILENAME_LENGTH 1024
 
 /*
@@ -27,6 +28,7 @@ public:
 	float	defaultPhotonEnergyeV;
 	
 	// Detector info
+    int                     nDetectors;
 	char					detectorName[MAX_FILENAME_LENGTH];
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
 	Pds::DetInfo::Device	detectorType;

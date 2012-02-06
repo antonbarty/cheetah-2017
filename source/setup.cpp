@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <math.h>
+#include <limits>
 #include <hdf5.h>
 #include <fenv.h>
 #include <stdlib.h>
@@ -45,6 +46,7 @@ void cGlobal::defaultConfiguration(void) {
 	defaultPhotonEnergyeV = 0; 	
 	
 	// Detector info
+    nDetectors = 1;
 	strcpy(detectorTypeName, "cspad");
 	strcpy(detectorName, "CxiDs1");
 	detectorType = Pds::DetInfo::Cspad;
@@ -1406,7 +1408,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "nThreads=%ld\n",nThreads);
 	fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
 	fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
-	fprintf(fp, "threadPurge=%d\n",threadPurge);
+	fprintf(fp, "threadPurge=%%dn",threadPurge);
 	fprintf(fp, "geometry=%s\n",geometryFile);
 	fprintf(fp, "darkcal=%s\n",darkcalFile);
 	fprintf(fp, "gaincal=%s\n",gaincalFile);
@@ -1502,12 +1504,9 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-<<<<<<< HEAD
+
 	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
-=======
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, GMD2, EVR41, laserDelay, EventTime\n");
->>>>>>> 9f786424fad9f52109bf88516a28820a96f31368
-	
+
 	
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
