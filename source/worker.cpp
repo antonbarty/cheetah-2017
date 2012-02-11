@@ -26,6 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -59,29 +60,41 @@ void *worker(void *threadarg) {
 	/*
 	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
-	threadInfo->raw_data = (uint16_t*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(uint16_t));
-	for(int quadrant=0; quadrant<4; quadrant++) {
-		long	i,j,ii;
-		for(long k=0; k<2*global->asic_nx*8*global->asic_ny; k++) {
-			i = k % (2*global->asic_nx) + quadrant*(2*global->asic_nx);
-			j = k / (2*global->asic_nx);
-			ii  = i+(global->nasics_x*global->asic_nx)*j;
-			threadInfo->raw_data[ii] = threadInfo->quad_data[quadrant][k];
+	DETECTOR_LOOP {
+		threadInfo->detector[detID].raw_data = (uint16_t*) calloc(global->detector[detID].pix_nn, sizeof(uint16_t));
+		for(int quadrant=0; quadrant<4; quadrant++) {
+			long	i,j,ii;
+			for(long k=0; k<2*global->detector[detID].asic_nx*8*global->detector[detID].asic_ny; k++) {
+				i = k % (2*global->detector[detID].asic_nx) + quadrant*(2*global->detector[detID].asic_nx);
+				j = k / (2*global->detector[detID].asic_nx);
+				ii  = i+(global->detector[detID].nasics_x*global->detector[detID].asic_nx)*j;
+				threadInfo->detector[detID].raw_data[ii] = threadInfo->detector[detID].quad_data[quadrant][k];
+			}
 		}
 	}
 	
 	/*
-	 *	Create arrays for corrected data, etc needed by this thread
+	 *	Create arrays for corrected detector data, etc 
 	 */
-	threadInfo->corrected_data = (float*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(float));
-	threadInfo->corrected_data_int16 = (int16_t*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(int16_t));
-	threadInfo->detector_corrected_data = (float*) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(float));
-	threadInfo->image = (int16_t*) calloc(global->image_nn,sizeof(int16_t));
-	threadInfo->saturatedPixelMask = (int16_t *) calloc(global->nasics_x*global->asic_nx*global->nasics_y*global->asic_ny,sizeof(int16_t));
+	DETECTOR_LOOP {
+		threadInfo->detector[detID].corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
+		threadInfo->detector[detID].corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+		threadInfo->detector[detID].detector_corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
+		threadInfo->detector[detID].saturatedPixelMask = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+		threadInfo->detector[detID].image = (int16_t*) calloc(global->detector[detID].image_nn,sizeof(int16_t));
 
-	threadInfo->radialAverage = (float *) calloc(global->radial_nn, sizeof(float));
-	threadInfo->radialAverageCounter = (float *) calloc(global->radial_nn, sizeof(float));
-	
+		threadInfo->detector[detID].radialAverage = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
+		threadInfo->detector[detID].radialAverageCounter = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
+		
+		for(long i=0;i<global->detector[detID].pix_nn;i++){
+			threadInfo->detector[detID].saturatedPixelMask[i] = 1;
+			threadInfo->detector[detID].corrected_data[i] = threadInfo->detector[detID].raw_data[i];
+		}
+	}	
+
+	/*
+	 *	Create arrays for remembering Bragg peak data
+	 */
 	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
 	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
 	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
@@ -92,13 +105,8 @@ void *worker(void *threadarg) {
 	threadInfo->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->peak_com_r_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
 	threadInfo->good_peaks = (int *) calloc(global->hitfinderNpeaksMax, sizeof(int));
+	
 
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->saturatedPixelMask[i] = 1;
-		threadInfo->corrected_data[i] = threadInfo->raw_data[i];
-	}
-	
-	
 	/*
 	 *	Create a unique name for this event
 	 */
@@ -109,14 +117,16 @@ void *worker(void *threadarg) {
 	 * Check for saturated pixels, before any other corrections
 	 */
 	if ( global->maskSaturatedPixels == 1 ) {
-		checkSaturatedPixels(threadInfo, global);
+		DETECTOR_LOOP
+			checkSaturatedPixels(threadInfo, global, detID);
 	}
 	
 	/*
 	 *	Subtract darkcal image (static electronic offsets)
 	 */
 	if(global->useDarkcalSubtraction) {
-		subtractDarkcal(threadInfo, global);
+		DETECTOR_LOOP
+			subtractDarkcal(threadInfo, global, detID);
 	}
 
 	
@@ -124,27 +134,32 @@ void *worker(void *threadarg) {
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
 	if(global->cmModule) {
-		cmModuleSubtract(threadInfo, global);
+		DETECTOR_LOOP
+			cmModuleSubtract(threadInfo, global, detID);
 	}
 	if(global->cmSubtractUnbondedPixels) {
-		cmSubtractUnbondedPixels(threadInfo, global);
+		DETECTOR_LOOP
+			cmSubtractUnbondedPixels(threadInfo, global, detID);
 	}
 	if(global->cmSubtractBehindWires) {
-		cmSubtractBehindWires(threadInfo, global);
+		DETECTOR_LOOP
+			cmSubtractBehindWires(threadInfo, global, detID);
 	}
 	
 	/*
 	 *	Apply gain correction
 	 */
 	if(global->useGaincal) {
-		applyGainCorrection(threadInfo, global);
+		DETECTOR_LOOP
+			applyGainCorrection(threadInfo, global, detID);
 	}
 
 	/*
 	 *	Apply bad pixel map
 	 */
 	if(global->useBadPixelMask) {
-		applyBadPixelMask(threadInfo, global);
+		DETECTOR_LOOP
+			applyBadPixelMask(threadInfo, global, detID);
 	} 
 	
 	
@@ -154,7 +169,8 @@ void *worker(void *threadarg) {
 	if(global->useSubtractPersistentBackground){
 		pthread_mutex_lock(&global->bgbuffer_mutex);
 		if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
-			calculatePersistentBackground(global);
+			DETECTOR_LOOP
+				calculatePersistentBackground(global, detID);
 		}
 		pthread_mutex_unlock(&global->bgbuffer_mutex);
 	}
@@ -164,7 +180,8 @@ void *worker(void *threadarg) {
 	 */
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
-		calculateHotPixelMask(global);
+		DETECTOR_LOOP
+			calculateHotPixelMask(global, detID);
 	}
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	
@@ -172,17 +189,19 @@ void *worker(void *threadarg) {
 	/* 
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
 	 */
-	memcpy(threadInfo->detector_corrected_data, threadInfo->corrected_data, global->pix_nn*sizeof(float));
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
+	DETECTOR_LOOP {
+		memcpy(threadInfo->detector[detID].detector_corrected_data, threadInfo->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		for(long i=0;i<global->detector[detID].pix_nn;i++){
+			threadInfo->detector[detID].corrected_data_int16[i] = (int16_t) lrint(threadInfo->detector[detID].corrected_data[i]);
+		}
 	}
-	
 
 	/*
 	 *	Subtract running photon background
 	 */
 	if(global->useSubtractPersistentBackground) {
-		subtractPersistentBackground(threadInfo, global);
+		DETECTOR_LOOP
+			subtractPersistentBackground(threadInfo, global, detID);
 	}
 	
 
@@ -190,7 +209,8 @@ void *worker(void *threadarg) {
 	 *	Local background subtraction
 	 */
 	if(global->useLocalBackgroundSubtraction) {
-		subtractLocalBackground(threadInfo, global);
+		DETECTOR_LOOP
+			subtractLocalBackground(threadInfo, global, detID);
 	}
 		
 
@@ -198,10 +218,12 @@ void *worker(void *threadarg) {
 	 *	Identify and remove hot pixels
 	 */
 	if(global->useAutoHotpixel){
-		killHotpixels(threadInfo, global);
+		DETECTOR_LOOP
+			killHotpixels(threadInfo, global, detID);
 	}
 	if(global->useBadPixelMask) {
-		applyBadPixelMask(threadInfo, global);
+		DETECTOR_LOOP
+			applyBadPixelMask(threadInfo, global, detID);
 	} 
 		
 
@@ -211,7 +233,8 @@ void *worker(void *threadarg) {
 	if (threadInfo->threadNum < global->startFrames || 
 		(global->useSubtractPersistentBackground && global->bgCounter < global->bgMemory) || 
 		(global->useAutoHotpixel && global->hotpixCounter < global->hotpixRecalc) ) {
-			updateBackgroundBuffer(threadInfo, global); 
+			DETECTOR_LOOP
+				updateBackgroundBuffer(threadInfo, global, detID); 
 			printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
 			goto cleanup;
 	}
@@ -220,7 +243,7 @@ void *worker(void *threadarg) {
 	 *	Hitfinding
 	 */
 	if(global->hitfinder){
-		hit = hitfinder(threadInfo, global);
+		hit = hitfinder(threadInfo, global, 0);
 	}
 	
 	
@@ -228,7 +251,8 @@ void *worker(void *threadarg) {
 	 *	Update running backround estimate based on non-hits
 	 */
 	if (hit==0 || global->bgIncludeHits) {
-		updateBackgroundBuffer(threadInfo, global); 
+		DETECTOR_LOOP
+			updateBackgroundBuffer(threadInfo, global, detID); 
 	}		
 
 	
@@ -236,36 +260,42 @@ void *worker(void *threadarg) {
 	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted
 	 */
 	if(global->saveDetectorCorrectedOnly) {
-		memcpy(threadInfo->corrected_data, threadInfo->detector_corrected_data, global->pix_nn*sizeof(float));
+		DETECTOR_LOOP
+			memcpy(threadInfo->detector[detID].corrected_data, threadInfo->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	/*
 	 *	If using detector raw, do it here
 	 */
 	if(global->saveDetectorRaw) {
-		for(long i=0;i<global->pix_nn;i++)
-			threadInfo->corrected_data[i] = threadInfo->raw_data[i];
+		DETECTOR_LOOP
+			for(long i=0;i<global->detector[detID].pix_nn;i++)
+				threadInfo->detector[detID].corrected_data[i] = threadInfo->detector[detID].raw_data[i];
 	}
 	
 	
 	/*
 	 *	Keep int16 copy of corrected data (needed for saving images)
 	 */
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data_int16[i] = (int16_t) lrint(threadInfo->corrected_data[i]);
+	DETECTOR_LOOP {
+		for(long i=0;i<global->detector[detID].pix_nn;i++){
+			threadInfo->detector[detID].corrected_data_int16[i] = (int16_t) lrint(threadInfo->detector[detID].corrected_data[i]);
+		}
 	}
-
+	
 	
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
-	assemble2Dimage(threadInfo, global);
+	DETECTOR_LOOP
+		assemble2Dimage(threadInfo, global, detID);
 
 	
 	/*
 	 *	Calculate radial average
 	 */
-	calculateRadialAverage(threadInfo->corrected_data, threadInfo->radialAverage, threadInfo->radialAverageCounter, global);
+	DETECTOR_LOOP
+		calculateRadialAverage(threadInfo->detector[detID].corrected_data, threadInfo->detector[detID].radialAverage, threadInfo->detector[detID].radialAverageCounter, global, detID);
 	
 	
 	
@@ -273,13 +303,13 @@ void *worker(void *threadarg) {
 	 *	Maintain a running sum of data (powder patterns)
 	 */
 	if(hit && global->powderSumHits) {
-		addToPowder(threadInfo, global, hit);
+		addToPowder(threadInfo, global, hit, 0);
 	}
 	if(!hit && global->powderSumBlanks){
-		addToPowder(threadInfo, global, hit);
+		addToPowder(threadInfo, global, hit, 0);
 	} 
 	if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(threadInfo, global, 0);
+		addToPowder(threadInfo, global, 0, 0);
 	} 
 		
     
@@ -287,7 +317,7 @@ void *worker(void *threadarg) {
      *  Maintain radial average stack
      */
     if(global->saveRadialStacks) {
-        addToRadialAverageStack(threadInfo, global, hit);
+        addToRadialAverageStack(threadInfo, global, hit, 0);
     }
 	
 	
@@ -337,15 +367,18 @@ void *worker(void *threadarg) {
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
 	// Free memory
-	for(int quadrant=0; quadrant<4; quadrant++) 
-	free(threadInfo->quad_data[quadrant]);	
-	free(threadInfo->raw_data);
-	free(threadInfo->corrected_data);
-	free(threadInfo->detector_corrected_data);
-	free(threadInfo->corrected_data_int16);
-	free(threadInfo->image);
-	free(threadInfo->radialAverage);
-	free(threadInfo->radialAverageCounter);
+	DETECTOR_LOOP {
+		for(int quadrant=0; quadrant<4; quadrant++) 
+			free(threadInfo->detector[detID].quad_data[quadrant]);	
+		free(threadInfo->detector[detID].raw_data);
+		free(threadInfo->detector[detID].corrected_data);
+		free(threadInfo->detector[detID].detector_corrected_data);
+		free(threadInfo->detector[detID].corrected_data_int16);
+		free(threadInfo->detector[detID].image);
+		free(threadInfo->detector[detID].radialAverage);
+		free(threadInfo->detector[detID].radialAverageCounter);
+		free(threadInfo->detector[detID].saturatedPixelMask);
+	}
 	free(threadInfo->peak_com_index);
 	free(threadInfo->peak_com_x);
 	free(threadInfo->peak_com_y);
@@ -356,7 +389,6 @@ void *worker(void *threadarg) {
 	free(threadInfo->peak_npix);
 	free(threadInfo->peak_snr);
 	free(threadInfo->good_peaks);
-	free(threadInfo->saturatedPixelMask);
 	//TOF stuff.
 	if(threadInfo->TOFPresent==1){
 		free(threadInfo->TOFTime);
@@ -443,13 +475,22 @@ void evr41fudge(tThreadInfo *t, cGlobal *g){
  *	Interpolate raw (corrected) cspad data into a physical 2D image
  *	using pre-defined pixel mapping (as loaded from .h5 file)
  */
-void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
+void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
+	// Dereference datector arrays
+	long		pix_nn = global->detector[detID].pix_nn;
+	long		image_nx = global->detector[detID].image_nx;
+	long		image_nn = global->detector[detID].image_nn;
+	float		*pix_x = global->detector[detID].pix_x;
+	float		*pix_y = global->detector[detID].pix_y;
+	float		*corrected_data = threadInfo->detector[detID].corrected_data;
+	int16_t		*image = threadInfo->detector[detID].image;
+
 	
 	// Allocate temporary arrays for pixel interpolation (needs to be floating point)
-	float	*data = (float*) calloc(global->image_nn,sizeof(float));
-	float	*weight = (float*) calloc(global->image_nn,sizeof(float));
-	for(long i=0; i<global->image_nn; i++){
+	float	*data = (float*) calloc(image_nn,sizeof(float));
+	float	*weight = (float*) calloc(image_nn,sizeof(float));
+	for(long i=0; i<image_nn; i++){
 		data[i] = 0;
 		weight[i]= 0;
 	}
@@ -462,11 +503,11 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	float	fx, fy;
 	long	image_index;
 
-	for(long i=0;i<global->pix_nn;i++){
+	for(long i=0;i<pix_nn;i++){
 		// Pixel location with (0,0) at array element (0,0) in bottom left corner
-		x = global->pix_x[i] + global->image_nx/2;
-		y = global->pix_y[i] + global->image_nx/2;
-		pixel_value = threadInfo->corrected_data[i];
+		x = pix_x[i] + image_nx/2;
+		y = pix_y[i] + image_nx/2;
+		pixel_value = corrected_data[i];
 		
 		// Split coordinate into integer and fractional parts
 		ix = (long) floor(x);
@@ -476,30 +517,30 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 		
 		// Interpolate intensity over adjacent 4 pixels using fractional overlap as the weighting factor
 		// (0,0)
-		if(ix>=0 && iy>=0 && ix<global->image_nx && iy<global->image_nx) {
+		if(ix>=0 && iy>=0 && ix<image_nx && iy<image_nx) {
 			w = (1-fx)*(1-fy);
-			image_index = ix + global->image_nx*iy;
+			image_index = ix + image_nx*iy;
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (+1,0)
-		if((ix+1)>=0 && iy>=0 && (ix+1)<global->image_nx && iy<global->image_nx) {
+		if((ix+1)>=0 && iy>=0 && (ix+1)<image_nx && iy<image_nx) {
 			w = (fx)*(1-fy);
-			image_index = (ix+1) + global->image_nx*iy;
+			image_index = (ix+1) + image_nx*iy;
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (0,+1)
-		if(ix>=0 && (iy+1)>=0 && ix<global->image_nx && (iy+1)<global->image_nx) {
+		if(ix>=0 && (iy+1)>=0 && ix<image_nx && (iy+1)<image_nx) {
 			w = (1-fx)*(fy);
-			image_index = ix + global->image_nx*(iy+1);
+			image_index = ix + image_nx*(iy+1);
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
 		// (+1,+1)
-		if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<global->image_nx && (iy+1)<global->image_nx) {
+		if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<image_nx && (iy+1)<image_nx) {
 			w = (fx)*(fy);
-			image_index = (ix+1) + global->image_nx*(iy+1);
+			image_index = (ix+1) + image_nx*(iy+1);
 			data[image_index] += w*pixel_value;
 			weight[image_index] += w;
 		}
@@ -507,7 +548,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Reweight pixel interpolation
-	for(long i=0; i<global->image_nn; i++){
+	for(long i=0; i<image_nn; i++){
 		if(weight[i] < 0.05)
 			data[i] = 0;
 		else
@@ -517,7 +558,7 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 
 	// Check for int16 overflow
-	for(long i=0;i<global->image_nn;i++){
+	for(long i=0;i<image_nn;i++){
 		if(lrint(data[i]) > 32767) 
 			data[i]=32767;
 		if(lrint(data[i]) < -32767) 
@@ -526,8 +567,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global){
 	
 	
 	// Copy interpolated image across into int_16 image array
-	for(long i=0;i<global->image_nn;i++){
-		threadInfo->image[i] = (int16_t) lrint(data[i]);
+	for(long i=0;i<image_nn;i++){
+		image[i] = (int16_t) lrint(data[i]);
 	}
 	
 	

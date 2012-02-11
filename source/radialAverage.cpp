@@ -26,6 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -36,17 +37,19 @@
 /*
  *	Add radial average to stack
  */
- void addToRadialAverageStack(tThreadInfo *threadInfo, cGlobal *global, int powderClass){
+ void addToRadialAverageStack(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int detID){
  
+	 long	radial_nn = global->detector[detID].radial_nn;
+	 
      pthread_mutex_lock(&global->radialStack_mutex[powderClass]);
 
      // Offset to current position in stack
      long stackoffset = global->radialStackCounter[powderClass] % global->radialStackSize;
-     long dataoffset = stackoffset*global->radial_nn;
+     long dataoffset = stackoffset*radial_nn;
      
      // Copy data and increment counter
-     for(long i=0; i<global->radial_nn; i++) {
-         global->radialAverageStack[powderClass][dataoffset+i] = (float) threadInfo->radialAverage[i];
+     for(long i=0; i<radial_nn; i++) {
+         global->radialAverageStack[powderClass][dataoffset+i] = (float) threadInfo->detector[detID].radialAverage[i];
      }
      global->radialStackCounter[powderClass] += 1;
      
@@ -55,7 +58,7 @@
          saveRadialAverageStack(global, powderClass);
          
          // Zero array
-         for(long j=0; j<global->radial_nn*global->radialStackSize; j++) {
+         for(long j=0; j<radial_nn*global->radialStackSize; j++) {
              global->radialAverageStack[powderClass][j] = 0;
          }
      }
@@ -76,7 +79,7 @@ void saveRadialAverageStack(cGlobal *global, int powderClass) {
     sprintf(filename,"r%04u-radialstack-class%i-%06i.h5", global->runNumber, powderClass, frameNum);
     printf("Saving radial stack: %s\n", filename);
 
-    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);
+    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->detector[0].radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);
 	fflush(global->powderlogfp[powderClass]);
 }
 
@@ -93,23 +96,29 @@ void saveRadialStacks(cGlobal *global) {
  *  (repeated once for each different data type)
  */
 //template <class tData>
-void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global){
+void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global, int detID){
+
+	
+	long	radial_nn = global->detector[detID].radial_nn;
+	long	pix_nn = global->detector[detID].pix_nn;
+
+	
 	// Zero arrays
-	for(long i=0; i<global->radial_nn; i++) {
+	for(long i=0; i<radial_nn; i++) {
 		radialAverage[i] = 0.;
 		radialAverageCounter[i] = 0.;
 	}
 	
 	// Radial average
 	long	rbin;
-	for(long i=0; i<global->pix_nn; i++){
+	for(long i=0; i<pix_nn; i++){
         
         // Don't count bad pixels in radial average
-        if(global->badpixelmask[i] == 0)
+        if(global->detector[detID].badpixelmask[i] == 0)
             continue;
 
         // Radius of this pixel
-		rbin = lrint(global->pix_r[i]);
+		rbin = lrint(global->detector[detID].pix_r[i]);
 		
 		// Array bounds check (paranoia)
 		if(rbin < 0) 
@@ -121,7 +130,7 @@ void calculateRadialAverage(float *data, float *radialAverage, float *radialAver
 	}
 	
 	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<global->radial_nn; i++) {
+	for(long i=0; i<radial_nn; i++) {
 		if (radialAverageCounter[i] != 0)
 			radialAverage[i] /= radialAverageCounter[i];
 	}
@@ -129,17 +138,22 @@ void calculateRadialAverage(float *data, float *radialAverage, float *radialAver
 }
 
 
-void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global){	
+void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detID){	
+	
+	long	radial_nn = global->detector[detID].radial_nn;
+	long	pix_nn = global->detector[detID].pix_nn;
+
+	
 	// Zero arrays
-	for(long i=0; i<global->radial_nn; i++) {
+	for(long i=0; i<radial_nn; i++) {
 		radialAverage[i] = 0.;
 		radialAverageCounter[i] = 0.;
 	}
 	
 	// Radial average
 	long	rbin;
-	for(long i=0; i<global->pix_nn; i++){
-		rbin = lrint(global->pix_r[i]);
+	for(long i=0; i<pix_nn; i++){
+		rbin = lrint(global->detector[detID].pix_r[i]);
 		
 		// Array bounds check (paranoia)
 		if(rbin < 0) rbin = 0;
@@ -149,7 +163,7 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	}
 	
 	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<global->radial_nn; i++) {
+	for(long i=0; i<radial_nn; i++) {
 		if (radialAverageCounter[i] != 0)
 			radialAverage[i] /= radialAverageCounter[i];
 	}

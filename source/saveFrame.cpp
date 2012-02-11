@@ -27,6 +27,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -102,58 +103,65 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	
 	// Assembled image
 	if(global->saveAssembled) {
-		size[0] = global->image_nx;	// size[0] = height
-		size[1] = global->image_nx;	// size[1] = width
-		max_size[0] = global->image_nx;
-		max_size[1] = global->image_nx;
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "assembleddata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->image);
-		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
-			H5Dclose(dataspace_id);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		H5Dclose(dataset_id);
-		H5Sclose(dataspace_id);
-	}	
-	
+		char fieldID[1023];
+		DETECTOR_LOOP {
+			size[0] = global->detector[detID].image_nx;	// size[0] = height
+			size[1] = global->detector[detID].image_nx;	// size[1] = width
+			max_size[0] = global->detector[detID].image_nx;
+			max_size[1] = global->detector[detID].image_nx;
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			sprintf(fieldID, "det%li-assembleddata", detID);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			if ( dataset_id < 0 ) {
+				ERROR("%li: Couldn't create dataset\n", info->threadNum);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+			if ( hdf_error < 0 ) {
+				ERROR("%li: Couldn't write data\n", info->threadNum);
+				H5Dclose(dataspace_id);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			H5Dclose(dataset_id);
+			H5Sclose(dataspace_id);
+		}	
+	}
 	// Save raw data
 	if(global->saveRaw) {
-		size[0] = global->nasics_y*global->asic_ny;	// size[0] = height
-		size[1] = global->nasics_x*global->asic_nx;	// size[1] = width
-		max_size[0] = global->nasics_y*global->asic_ny;
-		max_size[1] = global->nasics_x*global->asic_nx;
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "rawdata", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
+		char fieldID[1023];
+		DETECTOR_LOOP {
+			size[0] = global->detector[detID].pix_ny;	// size[0] = height
+			size[1] = global->detector[detID].pix_nx;	// size[1] = width
+			max_size[0] = global->detector[detID].pix_ny;
+			max_size[1] = global->detector[detID].pix_nx;
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			sprintf(fieldID, "det%li-rawdata", detID);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			if ( dataset_id < 0 ) {
+				ERROR("%li: Couldn't create dataset\n", info->threadNum);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].corrected_data_int16);
+			if ( hdf_error < 0 ) {
+				ERROR("%li: Couldn't write data\n", info->threadNum);
+				H5Dclose(dataspace_id);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			H5Dclose(dataset_id);
+			H5Sclose(dataspace_id);
 		}
-		hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->corrected_data_int16);
-		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
-			H5Dclose(dataspace_id);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		H5Dclose(dataset_id);
-		H5Sclose(dataspace_id);
 	}
-	
+		
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
-		hdf_error = H5Lcreate_soft( "/data/assembleddata", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/det0-assembleddata", hdf_fileID, "/data/data",0,0);
 	}
 	else {
-		hdf_error = H5Lcreate_soft( "/data/rawdata", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/det0-rawdata", hdf_fileID, "/data/data",0,0);
 	}
 	
 	
@@ -162,18 +170,23 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	 */
 	//if(global->saveRadialAverage) 
 	{
-		size[0] = global->radial_nn;
-		dataspace_id = H5Screate_simple(1, size, NULL);
-		
-		dataset_id = H5Dcreate(gid, "radialAverage", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverage);
-		H5Dclose(dataset_id);
-		
-		dataset_id = H5Dcreate(gid, "radialAverageCounter", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->radialAverageCounter);
-		H5Dclose(dataset_id);
-		
-		H5Sclose(dataspace_id);
+		char fieldID[1023];
+		DETECTOR_LOOP {
+			size[0] = global->detector[detID].radial_nn;
+			dataspace_id = H5Screate_simple(1, size, NULL);
+			
+			sprintf(fieldID, "det%li-radialAverage", detID);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverage);
+			H5Dclose(dataset_id);
+			
+			sprintf(fieldID, "det%li-radialAverageCounter", detID);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverageCounter);
+			H5Dclose(dataset_id);
+			
+			H5Sclose(dataspace_id);
+		}
 	}
 	
 	
@@ -317,21 +330,21 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 		 */	
 		
 		long i;
-		char * pixelmasks = (char *) calloc(global->pix_nn,sizeof(char));
-		for (i=0; i<global->pix_nn; i++) {
+		char * pixelmasks = (char *) calloc(global->detector[0].pix_nn,sizeof(char));
+		for (i=0; i<global->detector[0].pix_nn; i++) {
 			pixelmasks[i] = 0; // default: all bits are equal to 1
-			if ( global->badpixelmask[i] == 0 )
+			if ( global->detector[0].badpixelmask[i] == 0 )
 				pixelmasks[i] |= (1 << 0);
-			if ( global->hotpixelmask[i] == 0 ) // Should use a mutex lock here...
+			if ( global->detector[0].hotpixelmask[i] == 0 ) // Should use a mutex lock here...
 				pixelmasks[i] |= (1 << 1);
-			if ( info->saturatedPixelMask[i] == 0 )
+			if ( info->detector[0].saturatedPixelMask[i] == 0 )
 				pixelmasks[i] |= (1 << 2);		
 		}
 		
-		size[0] = global->nasics_y*global->asic_ny;	// size[0] = height
-		size[1] = global->nasics_x*global->asic_nx;	// size[1] = width
-		max_size[0] = global->nasics_y*global->asic_ny;
-		max_size[1] = global->nasics_x*global->asic_nx;
+		size[0] = global->detector[0].pix_ny;	// size[0] = height
+		size[1] = global->detector[0].pix_nx;	// size[1] = width
+		max_size[0] = global->detector[0].pix_ny;
+		max_size[1] = global->detector[0].pix_nx;
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
@@ -483,7 +496,7 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 	size[0] = 4;
 	dataspace_id = H5Screate_simple(1, size, NULL);
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->quad_temperature[0]);
+	H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->detector[0].quad_temperature[0]);
 	H5Dclose(dataset_id);
 	H5Sclose(dataspace_id);
 	

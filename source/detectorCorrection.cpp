@@ -26,6 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
@@ -35,11 +36,11 @@
 /*
  *	Subtract pre-loaded darkcal file
  */
-void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
+void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
 	// Do darkcal subtraction
-	for(long i=0;i<global->pix_nn;i++) {
-		threadInfo->corrected_data[i] -= global->darkcal[i]; 
+	for(long i=0;i<global->detector[detID].pix_nn;i++) {
+		threadInfo->detector[detID].corrected_data[i] -= global->detector[detID].darkcal[i]; 
 	}
 	
 }
@@ -50,10 +51,10 @@ void subtractDarkcal(tThreadInfo *threadInfo, cGlobal *global){
  *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
  *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
  */
-void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
+void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
-	for(long i=0;i<global->pix_nn;i++) 
-		threadInfo->corrected_data[i] *= global->gaincal[i];
+	for(long i=0;i<global->detector[detID].pix_nn;i++) 
+		threadInfo->detector[detID].corrected_data[i] *= global->detector[detID].gaincal[i];
 	
 }
 
@@ -62,10 +63,10 @@ void applyGainCorrection(tThreadInfo *threadInfo, cGlobal *global){
  *	Apply bad pixel mask
  *	Assumes that all we have to do here is a multiplication.
  */
-void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global){
+void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
-	for(long i=0;i<global->pix_nn;i++) 
-		threadInfo->corrected_data[i] *= global->badpixelmask[i];
+	for(long i=0;i<global->detector[detID].pix_nn;i++) 
+		threadInfo->detector[detID].corrected_data[i] *= global->detector[detID].badpixelmask[i];
 	
 }
 
@@ -75,7 +76,7 @@ void applyBadPixelMask(tThreadInfo *threadInfo, cGlobal *global){
  *	Subtract common mode on each module
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
+void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
@@ -84,27 +85,35 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
     long		counter;
 	float		median;
 	
+	// Dereference datector arrays
+	long		asic_nx = global->detector[detID].asic_nx;
+	long		asic_ny = global->detector[detID].asic_ny;
+	long		nasics_x = global->detector[detID].nasics_x;
+	long		nasics_y = global->detector[detID].nasics_y;
+	float		*corrected_data = threadInfo->detector[detID].corrected_data;
+	
+	
+	// Create median buffer
 	float	*buffer; 
-	buffer = (float*) calloc(global->asic_nx*global->asic_ny, sizeof(float));
-    
-	//mval = lrint((global->asic_nx*global->asic_ny)*global->cmFloor);
+	buffer = (float*) calloc(asic_nx*asic_ny, sizeof(float));
+	
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<global->nasics_x; mi++){
-		for(long mj=0; mj<global->nasics_y; mj++){
+	for(long mi=0; mi<nasics_x; mi++){
+		for(long mj=0; mj<nasics_y; mj++){
 			
 			// Zero array
-			for(long i=0; i<global->asic_nx*global->asic_ny; i++)
+			for(long i=0; i<asic_nx*asic_ny; i++)
 				buffer[i] = 0;
 			
 			// Loop over pixels within a module
             counter = 0;
-			for(long j=0; j<global->asic_ny; j++){
-				for(long i=0; i<global->asic_nx; i++){
-					e = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-					e += i + mi*global->asic_nx;
-                    if(global->badpixelmask[e] != 0) {           // badpixelmask[e]==0 are the bad pixels
-						buffer[counter++] = threadInfo->corrected_data[e];
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					e += i + mi*asic_nx;
+                    if(global->detector[detID].badpixelmask[e] != 0) {           // badpixelmask[e]==0 are the bad pixels
+						buffer[counter++] = corrected_data[e];
 					}
 				}
 			}
@@ -122,11 +131,11 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
 				median = 0;
 
 			// Subtract median value
-			for(long j=0; j<global->asic_ny; j++){
-				for(long i=0; i<global->asic_nx; i++){
-					e = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-					e += i + mi*global->asic_nx;
-					threadInfo->corrected_data[e] -= median;
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					e += i + mi*asic_nx;
+					corrected_data[e] -= median;
 				}
 			}
 		}
@@ -141,17 +150,24 @@ void cmModuleSubtract(tThreadInfo *threadInfo, cGlobal *global){
  *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
  *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
  */
-void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
+void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
 	long		e;
 	double		counter;
 	double		background;
 	
+	// Dereference datector arrays
+	long		asic_nx = global->detector[detID].asic_nx;
+	long		asic_ny = global->detector[detID].asic_ny;
+	long		nasics_x = global->detector[detID].nasics_x;
+	long		nasics_y = global->detector[detID].nasics_y;
+	float		*corrected_data = threadInfo->detector[detID].corrected_data;
+
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<global->nasics_x; mi++){
-		for(long mj=0; mj<global->nasics_y; mj++){
+	for(long mi=0; mi<nasics_x; mi++){
+		for(long mj=0; mj<nasics_y; mj++){
 			
 			// Only asics in Q0:0-3 and Q2:4-5 are unbonded
 			if( ! ((mi<=1 && mj<=3) || (mi >= 4 && mi<=5 && mj >= 4 && mj<=5)) )
@@ -161,23 +177,22 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
 			// Loop over unbonded pixels within each ASIC
 			background = 0.0;
 			counter = 0.0;
-			for(long j=0; j<global->asic_ny-1; j+=10){
+			for(long j=0; j<asic_ny-1; j+=10){
 				long i=j;
-				e = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-				e += i + mi*global->asic_nx;
-				background += threadInfo->corrected_data[e];
+				e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+				e += i + mi*asic_nx;
+				background += corrected_data[e];
 				counter += 1;
 			}
 			background /= counter;
 			
-			//printf("%f ",background);
 			
 			// Subtract background from entire ASIC
-			for(long j=0; j<global->asic_ny; j++){
-				for(long i=0; i<global->asic_nx; i++){
-					e = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-					e += i + mi*global->asic_nx;
-					threadInfo->corrected_data[e] -= background;
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					e += i + mi*asic_nx;
+					corrected_data[e] -= background;
 					
 				}
 			}
@@ -190,7 +205,7 @@ void cmSubtractUnbondedPixels(tThreadInfo *threadInfo, cGlobal *global){
  *	Subtract common mode estimated from signal behind wires
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
+void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
@@ -199,22 +214,29 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 	long		mval;
 	float		median;
 	
+	// Dereference datector arrays
+	long		asic_nx = global->detector[detID].asic_nx;
+	long		asic_ny = global->detector[detID].asic_ny;
+	long		nasics_x = global->detector[detID].nasics_x;
+	long		nasics_y = global->detector[detID].nasics_y;
+	float		*corrected_data = threadInfo->detector[detID].corrected_data;
+	
 	float	*buffer; 
-	buffer = (float*) calloc(global->asic_ny*global->asic_nx, sizeof(float));
+	buffer = (float*) calloc(asic_ny*asic_nx, sizeof(float));
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<global->nasics_x; mi++){
-		for(long mj=0; mj<global->nasics_x; mj++){
+	for(long mi=0; mi<nasics_x; mi++){
+		for(long mj=0; mj<nasics_x; mj++){
 			
 			
 			// Loop over pixels within a module, remembering signal behind wires
 			counter = 0;
-			for(long j=0; j<global->asic_ny; j++){
-				for(long i=0; i<global->asic_nx; i++){
-					p = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-					p += i + mi*global->asic_nx;
-					if(global->wiremask[i] && global->badpixelmask[p] != 0) {
-						buffer[counter] = threadInfo->corrected_data[p];
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					p += i + mi*asic_nx;
+					if(global->detector[detID].wiremask[i] && global->detector[detID].badpixelmask[p] != 0) {
+						buffer[counter] = corrected_data[p];
 						counter++;
 					}
 				}
@@ -230,11 +252,11 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 			
 			
 			// Subtract median value
-			for(long i=0; i<global->asic_nx; i++){
-				for(long j=0; j<global->asic_ny; j++){
-					p = (j + mj*global->asic_ny) * (global->asic_nx*global->nasics_x);
-					p += i + mi*global->asic_nx;
-					threadInfo->corrected_data[p] -= median;
+			for(long i=0; i<asic_nx; i++){
+				for(long j=0; j<asic_ny; j++){
+					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					p += i + mi*asic_nx;
+					corrected_data[p] -= median;
 				}
 			}
 		}
@@ -246,25 +268,25 @@ void cmSubtractBehindWires(tThreadInfo *threadInfo, cGlobal *global){
 /*
  *	Identify and kill hot pixels
  */
-void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
+void killHotpixels(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
 	
 	// First update global hot pixel buffer
-	int16_t	*buffer = (int16_t *) calloc(global->pix_nn,sizeof(int16_t));
-	for(long i=0;i<global->pix_nn;i++){
-		buffer[i] = (fabs(threadInfo->corrected_data[i])>global->hotpixADC)?(1):(0);
+	int16_t	*buffer = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+	for(long i=0;i<global->detector[detID].pix_nn;i++){
+		buffer[i] = (fabs(threadInfo->detector[detID].corrected_data[i])>global->hotpixADC)?(1):(0);
 	}
 	pthread_mutex_lock(&global->hotpixel_mutex);
 	long frameID = global->hotpixCounter%global->hotpixMemory;	
-	memcpy(global->hotpix_buffer+global->pix_nn*frameID, buffer, global->pix_nn*sizeof(int16_t));
+	memcpy(global->detector[detID].hotpix_buffer+global->detector[detID].pix_nn*frameID, buffer, global->detector[detID].pix_nn*sizeof(int16_t));
 	global->hotpixCounter += 1;
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	free(buffer);
 	
 	
 	// Apply the current hot pixel mask 
-	for(long i=0;i<global->pix_nn;i++){
-		threadInfo->corrected_data[i] *= global->hotpixelmask[i];
+	for(long i=0;i<global->detector[detID].pix_nn;i++){
+		threadInfo->detector[detID].corrected_data[i] *= global->detector[detID].hotpixelmask[i];
 	}
 	threadInfo->nHot = global->nhot;
 	
@@ -273,7 +295,7 @@ void killHotpixels(tThreadInfo *threadInfo, cGlobal *global){
 }
 
 
-void calculateHotPixelMask(cGlobal *global){
+void calculateHotPixelMask(cGlobal *global, int detID){
 	
 	long	cutoff = lrint((global->hotpixMemory*global->hotpixFreq));
 	printf("Recalculating hot pixel mask at %li/%i\n",cutoff,global->hotpixMemory);	
@@ -281,19 +303,19 @@ void calculateHotPixelMask(cGlobal *global){
 	// Loop over all pixels 
 	long	counter;
 	long	nhot;
-	for(long i=0; i<global->pix_nn; i++) {
+	for(long i=0; i<global->detector[detID].pix_nn; i++) {
 		
 		counter = 0;
 		for(long j=0; j< global->hotpixMemory; j++) {
-			counter += global->hotpix_buffer[j*global->pix_nn+i]; 
+			counter += global->detector[detID].hotpix_buffer[j*global->detector[detID].pix_nn+i]; 
 		}
 		
 		// Apply threshold
 		if(counter < cutoff) {
-			global->hotpixelmask[i] = 1;
+			global->detector[detID].hotpixelmask[i] = 1;
 		}
 		else{
-			global->hotpixelmask[i] = 0;
+			global->detector[detID].hotpixelmask[i] = 0;
 			nhot++;				
 		}		
 	}	

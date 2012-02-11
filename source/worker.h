@@ -23,19 +23,23 @@ typedef struct {
 	long		threadNum;
 	
 	// cspad data
-	int			cspad_fail;
-	float		quad_temperature[4];
-	uint16_t	*quad_data[4];
-	uint16_t	*raw_data;
-	float		*corrected_data;
-	float		*detector_corrected_data;
-	int16_t		*corrected_data_int16;
-	int16_t		*image;
-	float		*radialAverage;
-	float		*radialAverageCounter;
+	
+	cPixelDetectorEvent		detector[MAX_DETECTORS];
+	
+	//int			cspad_fail;
+	//float		quad_temperature[4];
+	//uint16_t	*quad_data[4];
+	//uint16_t	*raw_data;
+	//float		*corrected_data;
+	//float		*detector_corrected_data;
+	//int16_t		*corrected_data_int16;
+	//int16_t		*image;
+	//float		*radialAverage;
+	//float		*radialAverageCounter;
+	//int16_t *   saturatedPixelMask;
+
 	int			nPeaks;
 	int			nHot;
-	int16_t *   saturatedPixelMask;
 	
 	
 	// TOF data
@@ -120,26 +124,25 @@ static uint32_t nevents = 0;
  *	Function prototypes
  */
 void *worker(void *);
-void assemble2Dimage(tThreadInfo*, cGlobal*);
-//void calculateRadialAverage(tThreadInfo*, cGlobal*);
-void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global);
+void assemble2Dimage(tThreadInfo*, cGlobal*, int);
+void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global, int);
 
 // detectorCorrection.cpp
-void subtractDarkcal(tThreadInfo*, cGlobal*);
-void cmModuleSubtract(tThreadInfo*, cGlobal*);
-void cmSubtractUnbondedPixels(tThreadInfo*, cGlobal*);
-void cmSubtractBehindWires(tThreadInfo*, cGlobal*);
-void applyGainCorrection(tThreadInfo*, cGlobal*);
-void applyBadPixelMask(tThreadInfo*, cGlobal*);
-void calculateHotPixelMask(cGlobal*);
-void killHotpixels(tThreadInfo*, cGlobal*);
+void subtractDarkcal(tThreadInfo*, cGlobal*, int);
+void cmModuleSubtract(tThreadInfo*, cGlobal*, int);
+void cmSubtractUnbondedPixels(tThreadInfo*, cGlobal*, int);
+void cmSubtractBehindWires(tThreadInfo*, cGlobal*, int);
+void applyGainCorrection(tThreadInfo*, cGlobal*, int);
+void applyBadPixelMask(tThreadInfo*, cGlobal*, int);
+void calculateHotPixelMask(cGlobal*, int);
+void killHotpixels(tThreadInfo*, cGlobal*, int);
 
 
 // backgroundCorrection.cpp
-void updateBackgroundBuffer(tThreadInfo*, cGlobal*);
-void calculatePersistentBackground(cGlobal*);
-void subtractPersistentBackground(tThreadInfo*, cGlobal*);
-void subtractLocalBackground(tThreadInfo*, cGlobal*);
+void updateBackgroundBuffer(tThreadInfo*, cGlobal*, int);
+void calculatePersistentBackground(cGlobal*, int);
+void subtractPersistentBackground(tThreadInfo*, cGlobal*, int);
+void subtractLocalBackground(tThreadInfo*, cGlobal*, int);
 
 // saveFrame.cpp
 void nameEvent(tThreadInfo*, cGlobal*);
@@ -149,20 +152,20 @@ void writeSimpleHDF5(const char*, const void*, int, int, int);
 
 
 // hitfinders.cpp
-int  hitfinder(tThreadInfo*, cGlobal*);
+int  hitfinder(tThreadInfo*, cGlobal*, int);
 
 // powder.cpp
-void addToPowder(tThreadInfo*, cGlobal*, int);
+void addToPowder(tThreadInfo*, cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
-void saveRunningSums(cGlobal*);
+void saveRunningSums(cGlobal*, int);
 
 // RadialAverage.cpp
-void addToRadialAverageStack(tThreadInfo*, cGlobal*, int);
+void addToRadialAverageStack(tThreadInfo*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int);
 void saveRadialStacks(cGlobal*);
 
-void calculateRadialAverage(float*, float*, float*, cGlobal*);
-void calculateRadialAverage(double*, double*, double*, cGlobal*);
+void calculateRadialAverage(float*, float*, float*, cGlobal*, int);
+void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
 
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);

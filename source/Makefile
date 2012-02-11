@@ -68,41 +68,44 @@ $(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/mya
 
 
 # Cheetah processing 
-cheetah.o: cheetah.cpp worker.h setup.h
+cheetah.o: cheetah.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-worker.o: worker.cpp worker.h setup.h
+worker.o: worker.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-setup.o: setup.cpp setup.h worker.h 
+setup.o: setup.cpp setup.h worker.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
 data2d.o: data2d.cpp data2d.h worker.h setup.h
 	$(CPP) $(CFLAGS) $<
 
-median.o: median.cpp median.h worker.h setup.h
+median.o: median.cpp median.h worker.h setup.h 
 	$(CPP) $(CFLAGS) $<
 
-hitfinders.o: hitfinders.cpp hitfinders.h worker.h setup.h
+hitfinders.o: hitfinders.cpp hitfinders.h worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-detectorCorrection.o: detectorCorrection.cpp worker.h setup.h
+pixelDetector.o: pixelDetector.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-backgroundCorrection.o: backgroundCorrection.cpp worker.h setup.h
+detectorCorrection.o: detectorCorrection.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-powder.o: powder.cpp worker.h setup.h
+backgroundCorrection.o: backgroundCorrection.cpp worker.h setup.h pixelDetector.h
+	$(CPP) $(CFLAGS) $<
+
+powder.o: powder.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
     
-radialAverage.o: radialAverage.cpp worker.h setup.h
+radialAverage.o: radialAverage.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
-saveFrame.o: saveFrame.cpp worker.h setup.h
+saveFrame.o: saveFrame.cpp worker.h setup.h pixelDetector.h
 	$(CPP) $(CFLAGS) $<
 
 
-cheetah: cheetah.o setup.o median.o hitfinders.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o setup.o median.o hitfinders.o pixelDetector.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	

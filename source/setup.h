@@ -27,14 +27,19 @@ public:
 	// Default experiment info (in case beamline data is missing)
 	float	defaultPhotonEnergyeV;
 	
-	// Detector info
+	// Pixel detector readout
     int                     nDetectors;
-	char					detectorName[MAX_FILENAME_LENGTH];
-	char					detectorTypeName[MAX_FILENAME_LENGTH];
-	Pds::DetInfo::Device	detectorType;
-	Pds::DetInfo::Detector	detectorPdsDetInfo;
-    char					detectorZpvname[MAX_FILENAME_LENGTH];
+	cPixelDetectorCommon	detector[MAX_DETECTORS];
+
+	//char					detectorName[MAX_FILENAME_LENGTH];
+	//char					detectorTypeName[MAX_FILENAME_LENGTH];
+	//Pds::DetInfo::Device	detectorType;
+	//Pds::DetInfo::Detector	detectorPdsDetInfo;
    
+	
+	// Detector position
+    char					detectorZpvname[MAX_FILENAME_LENGTH];
+	
 	// Track some statistics for the log file
 	double summedPhotonEnergyeV;
 	double summedPhotonEnergyeVSquared;
@@ -46,23 +51,23 @@ public:
 	long	stopAtFrame;
 	
 	// Real-space geometry
-	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
-	float		pixelSize;
+	//char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
+	//float		pixelSize;
 	float		defaultCameraLengthMm;
     float       cameraLengthOffset;
     float       cameraLengthScale;
 	
 	// Bad pixel masks
 	int			useBadPixelMask;
-	char		badpixelFile[MAX_FILENAME_LENGTH];
+	//char		badpixelFile[MAX_FILENAME_LENGTH];
 	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
-	char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
+	//char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
 	int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
 	
 	// Common mode and pedastal subtraction
-	char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
+	//char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
 	int			cmModule;				// Subtract common mode from each ASIC
 	int			cmSubtractUnbondedPixels;
 	int			cmSubtractBehindWires;
@@ -71,7 +76,7 @@ public:
 	// Gain correction
 	int			useGaincal;
 	int			invertGain;
-	char		gaincalFile[MAX_FILENAME_LENGTH];
+	//char		gaincalFile[MAX_FILENAME_LENGTH];
 	int			generateGaincal;		// Flip this on to generate a gaincal (auto-turns-on appropriate other options)
 	
 	// Running background subtraction
@@ -215,30 +220,30 @@ public:
 	
 	
 	// Detector geometry
-	long			pix_nx;
-	long			pix_ny;
-	long			pix_nn;
-	float			*pix_x;
-	float			*pix_y;
-	float			*pix_z;
-	float			*pix_r;
-	float			*pix_kx; // this is reciprocal space (inverse A, no factor of 2*pi)
-	float			*pix_ky;
-	float			*pix_kz;
-	float			*pix_kr;
-	float			*pix_res;
-	float			pix_dx;
-	unsigned		module_rows;
-	unsigned		module_cols;
-	long			image_nx;
-	long			image_nn;
-	long			asic_nx;
-	long			asic_ny;
-	long			asic_nn;
-	long			nasics_x;
-	long			nasics_y;
-    float			radial_max;
-	long			radial_nn;
+	//long			pix_nx;
+	//long			pix_ny;
+	//long			pix_nn;
+	//float			*pix_x;
+	//float			*pix_y;
+	//float			*pix_z;
+	//float			*pix_r;
+	//float			*pix_kx; // this is reciprocal space (inverse A, no factor of 2*pi)
+	//float			*pix_ky;
+	//float			*pix_kz;
+	//float			*pix_kr;
+	//float			*pix_res;
+	//float			pix_dx;
+	//unsigned		module_rows;
+	//unsigned		module_cols;
+	//long			image_nx;
+	//long			image_nn;
+	//long			asic_nx;
+	//long			asic_ny;
+	//long			asic_nn;
+	//long			nasics_x;
+	//long			nasics_y;
+    //float			radial_max;
+	//long			radial_nn;
 
 	float			detectorZprevious;	
 	float			detposprev;	
@@ -247,15 +252,15 @@ public:
 	/*
 	 *	Common variables
 	 */
-	int32_t			*darkcal;
-	int16_t			*peakmask;
-	int16_t			*badpixelmask;
-	int16_t			*bg_buffer;
-	int16_t			*hotpix_buffer;
-	int16_t			*hotpixelmask;
-	int16_t			*wiremask;
-	float			*selfdark;
-	float			*gaincal;
+	//int32_t			*darkcal;
+	//int16_t			*peakmask;
+	//int16_t			*badpixelmask;
+	//int16_t			*bg_buffer;
+	//int16_t			*hotpix_buffer;
+	//int16_t			*hotpixelmask;
+	//int16_t			*wiremask;
+	//float			*selfdark;
+	//float			*gaincal;
 	float			avgGMD;
 	
 	/*
@@ -304,13 +309,13 @@ public:
 	void parseConfigFile(char *);
 	void parseCommandLineArguments(int, char**);
 	void setup(void);
-	void readDetectorGeometry(char *);
-    void updateKspace(float);
-	void readDarkcal(char *);
-	void readGaincal(char *);
-	void readPeakmask(char *);
-	void readBadpixelMask(char *);
-	void readWireMask(char *);
+	//void readDetectorGeometry(char *);
+    //void updateKspace(float);
+	//void readDarkcal(char *);
+	//void readGaincal(char *);
+	//void readPeakmask(char *);
+	//void readBadpixelMask(char *);
+	//void readWireMask(char *);
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);
@@ -322,28 +327,3 @@ private:
 
 	
 };
-
-
-/*
- *	Stuff from original LCLS code
- */
-
-// Static variables
-using namespace std;
-static CspadCorrector*      corrector;
-static Pds::CsPad::ConfigV1 configV1;
-static Pds::CsPad::ConfigV2 configV2;
-static Pds::CsPad::ConfigV3 configV3;
-static unsigned             configVsn;
-static unsigned             quadMask;
-static unsigned             asicMask;
-
-static const unsigned  CSPAD_ASIC_NX = 194;		// ASIC nx = extent of one ASIC in x
-static const unsigned  CSPAD_ASIC_NY = 185;		// ASIC ny = extent of one ASIC in y
-static const unsigned  CSPAD_nASICS_X = 8;		// 8 ASICs across in raw data stream
-static const unsigned  CSPAD_nASICS_Y = 8;		// 8 ASICs down in raw data stresm
-
-static const unsigned int cbufsize = 1024;
-
-
-

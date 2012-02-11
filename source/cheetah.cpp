@@ -32,6 +32,7 @@
 #include <limits>
 #include <stdint.h>
 
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
 
@@ -92,22 +93,23 @@ void beginjob() {
 	/*
 	 *	New csPad corrector
 	 */
-	corrector = new CspadCorrector(global.detectorPdsDetInfo,0,CspadCorrector::DarkFrameOffset);
+	corrector = new CspadCorrector(global.detector[0].detectorPdsDetInfo,0,CspadCorrector::DarkFrameOffset);
 
 				 
 	/*
 	 *	Stuff for worker thread management
 	 */
 	global.defaultConfiguration();
-	//global.parseConfigFile("cspad-cryst.ini");
 	global.parseConfigFile(global.configFile);
-	global.readDetectorGeometry(global.geometryFile);
+	for(long i=0; i<global.nDetectors; i++) {
+		global.detector[i].readDetectorGeometry(global.detector[i].geometryFile);
+		global.detector[i].readDarkcal(&global, global.detector[i].darkcalFile);
+		global.detector[i].readGaincal(&global, global.detector[i].gaincalFile);
+		global.detector[i].readPeakmask(&global, global.peaksearchFile);
+		global.detector[i].readBadpixelMask(&global, global.detector[i].badpixelFile);
+		global.detector[i].readWireMask(&global, global.detector[i].wireMaskFile);
+	}
 	global.setup();
-	global.readDarkcal(global.darkcalFile);
-	global.readGaincal(global.gaincalFile);
-	global.readPeakmask(global.peaksearchFile);
-	global.readBadpixelMask(global.badpixelFile);
-	global.readWireMask(global.wireMaskFile);
 	global.writeInitialLog();
 }
 
@@ -117,30 +119,32 @@ void fetchConfig()
 {
 	int fail = 0;
 	// cspad config
-	if (getCspadConfig( global.detectorPdsDetInfo, configV1 )==0) {
-		configVsn= 1;
-		quadMask = configV1.quadMask();
-		asicMask = configV1.asicMask();
-		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV1.runDelay());
-		printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
-	}
-	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
-		configVsn= 2;
-		quadMask = configV2.quadMask();
-		asicMask = configV2.asicMask();
-		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV2.runDelay());
-		printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
-	}
-	else if (getCspadConfig( global.detectorPdsDetInfo, configV3 )==0) {
-		configVsn= 3;
-		quadMask = configV3.quadMask();
-		asicMask = configV3.asicMask();
-		printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask,asicMask,configV3.runDelay());
-		printf("\tintTime %d/%d/%d/%d\n", configV3.quads()[0].intTime(), configV3.quads()[1].intTime(), configV3.quads()[2].intTime(), configV3.quads()[3].intTime());
-	}
-	else {
-		configVsn= 0;
-		printf("Failed to get CspadConfig\n");
+	for(long detID=0; detID < global.nDetectors; detID++)  {
+		if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV1 )==0) {
+			global.detector[detID].configVsn= 1;
+			global.detector[detID].quadMask = configV1.quadMask();
+			global.detector[detID].asicMask = configV1.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask,global.detector[detID].asicMask,configV1.runDelay());
+			printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
+		}
+		else if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV3 )==0) {
+			global.detector[detID].configVsn= 2;
+			global.detector[detID].quadMask = configV2.quadMask();
+			global.detector[detID].asicMask = configV2.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask ,global.detector[detID].asicMask, configV2.runDelay());
+			printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
+		}
+		else if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV3 )==0) {
+			global.detector[detID].configVsn= 3;
+			global.detector[detID].quadMask = configV3.quadMask();
+			global.detector[detID].asicMask = configV3.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask,global.detector[detID].asicMask,configV3.runDelay());
+			printf("\tintTime %d/%d/%d/%d\n", configV3.quads()[0].intTime(), configV3.quads()[1].intTime(), configV3.quads()[2].intTime(), configV3.quads()[3].intTime());
+		}
+		else {
+			global.detector[detID].configVsn= 0;
+			printf("Failed to get CspadConfig\n");
+		}
 	}
 	
     
@@ -488,7 +492,8 @@ void event() {
 			printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
 		}	
         global.detectorZprevious = global.detectorZ;
-        global.updateKspace(wavelengthA);
+		for(long i=0; i<global.nDetectors; i++) 
+			global.detector[i].updateKspace(&global, wavelengthA);
         
 		// if its the first frame then continue, else skip this event
 		//if ( frameNumber != 1 )     
@@ -543,11 +548,14 @@ void event() {
 	
 	threadInfo->pGlobal = &global;
 	
-	for(int quadrant=0; quadrant<4; quadrant++) {
-		threadInfo->quad_data[quadrant] = (uint16_t*) calloc(global.asic_nx*global.asic_ny*16, sizeof(uint16_t));
-		memset(threadInfo->quad_data[quadrant], 0, global.asic_nx*global.asic_ny*16*sizeof(uint16_t));
-	}
 	
+	// Allocate memory for detector data and set to zero
+	for(long i=0; i<global.nDetectors; i++) {
+		for(int quadrant=0; quadrant<4; quadrant++) {
+			threadInfo->detector[i].quad_data[quadrant] = (uint16_t*) calloc(global.detector[i].pix_nn, sizeof(uint16_t));
+			memset(threadInfo->detector[i].quad_data[quadrant], 0, global.detector[i].pix_nn*sizeof(uint16_t));
+		}
+	}	
 
 
 	/*
@@ -555,39 +563,41 @@ void event() {
 	 */
 	Pds::CsPad::ElementIterator iter;
 	
-	fail=getCspadData(global.detectorPdsDetInfo, iter);
+	for(long i=0; i<global.nDetectors; i++) {
+		fail=getCspadData(global.detector[i].detectorPdsDetInfo, iter);
 
-	if (fail) {
-		printf("getCspadData fail %d (%x)\n",fail,fiducial);
-		threadInfo->cspad_fail = fail;
-		return;
-	}
-	else {
-		nevents++;
-		const Pds::CsPad::ElementHeader* element;
+		if (fail) {
+			printf("getCspadData fail %d (%x)\n",fail,fiducial);
+			threadInfo->detector[i].cspad_fail = fail;
+			return;
+		}
+		else {
+			nevents++;
+			const Pds::CsPad::ElementHeader* element;
 
-		// loop over elements (quadrants)
-		while(( element=iter.next() )) {  
-			if(element->quad() < 4) {
-				// Which quadrant is this?
-				int quadrant = element->quad();
-				
-				// Have we accidentally jumped to a new fiducial (ie: a different event??)
-				
-				// Get temperature on strong back 
-				float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
-				threadInfo->quad_temperature[quadrant] = temperature;
-				
-				
-				// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-				const Pds::CsPad::Section* s;
-				unsigned section_id;
-				while(( s=iter.next(section_id) )) {  
-					memcpy(&threadInfo->quad_data[quadrant][section_id*2*global.asic_nx*global.asic_ny],s->pixel[0],2*global.asic_nx*global.asic_ny*sizeof(uint16_t));
+			// loop over elements (quadrants)
+			while(( element=iter.next() )) {  
+				if(element->quad() < 4) {
+					// Which quadrant is this?
+					int quadrant = element->quad();
+					
+					// Have we accidentally jumped to a new fiducial (ie: a different event??)
+					
+					// Get temperature on strong back 
+					float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
+					threadInfo->detector[i].quad_temperature[quadrant] = temperature;
+					
+					
+					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+					const Pds::CsPad::Section* s;
+					unsigned section_id;
+					while(( s=iter.next(section_id) )) {  
+						memcpy(&threadInfo->detector[i].quad_data[quadrant][section_id*2*global.detector[i].asic_nx*global.detector[i].asic_ny],s->pixel[0],2*global.detector[i].asic_nx*global.detector[i].asic_ny*sizeof(uint16_t));
+					}
 				}
 			}
 		}
-	}
+	}	
 	
 	
 	/*
@@ -617,8 +627,10 @@ void event() {
 	 */
 	if(global.ioSpeedTest) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
-		for(int quadrant=0; quadrant<4; quadrant++) {
-			free(threadInfo->quad_data[quadrant]);
+		for(long i=0; i<global.nDetectors; i++) {
+			for(int quadrant=0; quadrant<4; quadrant++) {
+				free(threadInfo->detector[i].quad_data[quadrant]);
+			}
 		}
 		free(threadInfo);
 		return;
@@ -673,7 +685,7 @@ void event() {
 	 *	Save periodic powder patterns
 	 */
 	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.startFrames+50) ){
-		saveRunningSums(&global);
+		saveRunningSums(&global, 0);
 		global.updateLogfile();
 	}
 	
@@ -715,7 +727,7 @@ void endjob()
 	
 	
 	// Save powder patterns
-	saveRunningSums(&global);
+	saveRunningSums(&global, 0);
     saveRadialStacks(&global);
 	global.writeFinalLog();
 	
@@ -724,14 +736,16 @@ void endjob()
 
 
 	// Cleanup
-	free(global.darkcal);
-	free(global.hotpixelmask);
-	free(global.wiremask);
-	free(global.selfdark);
-	free(global.gaincal);
-	free(global.peakmask);
-	free(global.bg_buffer);
-	free(global.hotpix_buffer);
+	for(long i=0; i<global.nDetectors; i++) {
+		free(global.detector[i].darkcal);
+		free(global.detector[i].hotpixelmask);
+		free(global.detector[i].wiremask);
+		free(global.detector[i].selfdark);
+		free(global.detector[i].gaincal);
+		free(global.detector[i].peakmask);
+		free(global.detector[i].bg_buffer);
+		free(global.detector[i].hotpix_buffer);
+	}
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.selfdark_mutex);
 	pthread_mutex_destroy(&global.hotpixel_mutex);

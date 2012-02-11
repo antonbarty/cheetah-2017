@@ -29,9 +29,10 @@
 #include <fenv.h>
 #include <stdlib.h>
 
+#include "data2d.h"
+#include "pixelDetector.h"
 #include "setup.h"
 #include "worker.h"
-#include "data2d.h"
 
 
 /*
@@ -47,15 +48,33 @@ void cGlobal::defaultConfiguration(void) {
 	
 	// Detector info
     nDetectors = 1;
-	strcpy(detectorTypeName, "cspad");
-	strcpy(detectorName, "CxiDs1");
-	detectorType = Pds::DetInfo::Cspad;
-	detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+	for(long i=0; i<MAX_DETECTORS; i++) {
+		// pdsinfo
+		strcpy(detector[i].detectorTypeName, "cspad");
+		strcpy(detector[i].detectorName, "CxiDs1");
+		detector[i].detectorType = Pds::DetInfo::Cspad;
+		detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+
+		// Calibration files
+		strcpy(detector[i].geometryFile, "No_file_specified");
+		strcpy(detector[i].badpixelFile, "No_file_specified");
+		strcpy(detector[i].darkcalFile, "No_file_specified");
+		strcpy(detector[i].wireMaskFile, "No_file_specified");
+		strcpy(detector[i].gaincalFile, "No_file_specified");
+		
+		detector[i].asic_nx = CSPAD_ASIC_NX;
+		detector[i].asic_ny = CSPAD_ASIC_NY;
+		detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+		detector[i].nasics_x = CSPAD_nASICS_X;
+		detector[i].nasics_y = CSPAD_nASICS_Y;
+		detector[i].pixelSize = 110e-6;
+	}
 
 	// Statistics 
 	summedPhotonEnergyeV = 0;
 	meanPhotonEnergyeV = 0;	
     
+	
     // Detector Z position
 	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
 	defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
@@ -72,15 +91,8 @@ void cGlobal::defaultConfiguration(void) {
 	// Start and stop frames
 	startAtFrame = 0;
 	stopAtFrame = 0;
-
-
-	// Geometry
-	strcpy(geometryFile, "No_file_specified");
-	pixelSize = 110e-6;
-    
 	
 	// Bad pixel mask
-	strcpy(badpixelFile, "No_file_specified");
 	useBadPixelMask = 0;
 
 	// Saturated pixels
@@ -88,12 +100,10 @@ void cGlobal::defaultConfiguration(void) {
 	pixelSaturationADC = 15564;  // 95% of 2^14 ??
 
 	// Static dark calibration (electronic offsets)
-	strcpy(darkcalFile, "No_file_specified");
 	useDarkcalSubtraction = 0;
 	generateDarkcal = 0;
 	
 	// Common mode subtraction from each ASIC
-	strcpy(wireMaskFile, "No_file_specified");
 	cmModule = 0;
 	cmFloor = 0.1;
 	cmSubtractUnbondedPixels = 0;
@@ -101,7 +111,6 @@ void cGlobal::defaultConfiguration(void) {
 
 
 	// Gain calibration correction
-	strcpy(gaincalFile, "No_file_specified");
 	useGaincal = 0;
 	invertGain = 0;
 	generateGaincal = 0;
@@ -198,11 +207,6 @@ void cGlobal::defaultConfiguration(void) {
 	ioSpeedTest = 0;
 
     // cspad default parameters
-    asic_nx = CSPAD_ASIC_NX;
-    asic_ny = CSPAD_ASIC_NY;
-    asic_nn = asic_nx * asic_ny;
-    nasics_x = CSPAD_nASICS_X;
-    nasics_y = CSPAD_nASICS_Y;
 
 	
 	// Default to only a few threads
@@ -233,15 +237,17 @@ void cGlobal::setup() {
 	 *	This section of code possibly redundant if we know detector type from the address 
 	 *	(eg: CxiDs1 is always a cspad)
 	 */
-	if(!strcmp(detectorTypeName, "cspad"))
-		detectorType = Pds::DetInfo::Cspad;
-	else if(!strcmp(detectorTypeName, "pnccd")) {
-		detectorType = Pds::DetInfo::Cspad;
-	}
-	else {
-		printf("Error: unknown detector type %s\n", detectorTypeName);
-		printf("Quitting\n");
-		exit(1);
+	for(long i=0; i<nDetectors; i++) {
+		if(!strcmp(detector[i].detectorTypeName, "cspad"))
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+		else if(!strcmp(detector[i].detectorTypeName, "pnccd")) {
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+		}
+		else {
+			printf("Error: unknown detector type %s\n", detector[i].detectorTypeName);
+			printf("Quitting\n");
+			exit(1);
+		}
 	}
 	
 	/*
@@ -250,48 +256,50 @@ void cGlobal::setup() {
 	 *		release/pdsdata/xtc/Detinfo.hh
 	 *		release/pdsdata/xtc/src/Detinfo.cc
 	 */
-	if(!strcmp(detectorName, "CxiDs1")) {
-		detectorType = Pds::DetInfo::Cspad;
-		detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+	for(long i=0; i<nDetectors; i++) {
+		if(!strcmp(detector[i].detectorName, "CxiDs1")) {
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+		}
+		else if (!strcmp(detector[i].detectorName, "CxiDs2")) {
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs2;
+		}
+		else if (!strcmp(detector[i].detectorName, "CxiDsd")) {
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
+		}
+		else if (!strcmp(detector[i].detectorName, "XppGon")) {
+			detector[i].detectorType = Pds::DetInfo::Cspad;
+			detector[i].detectorPdsDetInfo = Pds::DetInfo::XppGon;
+		}
+		else {
+			printf("Error: unknown detector %s\n", detector[i].detectorName);
+			printf("Quitting\n");
+			exit(1);
+		}
 	}
-	else if (!strcmp(detectorName, "CxiDs2")) {
-		detectorType = Pds::DetInfo::Cspad;
-		detectorPdsDetInfo = Pds::DetInfo::CxiDs2;
-	}
-	else if (!strcmp(detectorName, "CxiDsd")) {
-		detectorType = Pds::DetInfo::Cspad;
-		detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
-	}
-	else if (!strcmp(detectorName, "XppGon")) {
-		detectorType = Pds::DetInfo::Cspad;
-		detectorPdsDetInfo = Pds::DetInfo::XppGon;
-	}
-	else {
-		printf("Error: unknown detector %s\n", detectorName);
-		printf("Quitting\n");
-		exit(1);
-	}
-
 	
 	/*
 	 *	Detector parameters
 	 */
-	switch(detectorType) {
-		case Pds::DetInfo::Cspad : 
-			asic_nx = CSPAD_ASIC_NX;
-			asic_ny = CSPAD_ASIC_NY;
-			asic_nn = asic_nx * asic_ny;
-			nasics_x = CSPAD_nASICS_X;
-			nasics_y = CSPAD_nASICS_Y;
-			break;
-			
-		default:
-			printf("Error: unknown detector %s\n", detectorName);
-			printf("Quitting\n");
-			exit(1);
-			break;
-	}
-	
+	for(long i=0; i<nDetectors; i++) {
+		switch(detector[i].detectorType) {
+			case Pds::DetInfo::Cspad : 
+				detector[i].asic_nx = CSPAD_ASIC_NX;
+				detector[i].asic_ny = CSPAD_ASIC_NY;
+				detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+				detector[i].nasics_x = CSPAD_nASICS_X;
+				detector[i].nasics_y = CSPAD_nASICS_Y;
+				break;
+				
+			default:
+				printf("Error: unknown detector %s\n", detector[i].detectorName);
+				printf("Quitting\n");
+				exit(1);
+				break;
+		}
+	}	
 	
 	
 	/*
@@ -320,43 +328,46 @@ void cGlobal::setup() {
 	/*
 	 *	Set up arrays for remembering powder data, background, etc.
 	 */
-	selfdark = (float*) calloc(pix_nn, sizeof(float));
-	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-	hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0; i<pix_nn; i++) {
-		selfdark[i] = 0;
-		hotpixelmask[i] = 1;
-		wiremask[i] = 1;
+	for(long i=0; i<nDetectors; i++) {
+		detector[i].selfdark = (float*) calloc(detector[i].pix_nn, sizeof(float));
+		detector[i].bg_buffer = (int16_t*) calloc(bgMemory*detector[i].pix_nn, sizeof(int16_t)); 
+		detector[i].hotpix_buffer = (int16_t*) calloc(hotpixMemory*detector[i].pix_nn, sizeof(int16_t)); 
+		detector[i].hotpixelmask = (int16_t*) calloc(detector[i].pix_nn, sizeof(int16_t));
+		detector[i].wiremask = (int16_t*) calloc(detector[i].pix_nn, sizeof(int16_t));
+		for(long j=0; j<detector[i].pix_nn; j++) {
+			detector[i].selfdark[j] = 0;
+			detector[i].hotpixelmask[j] = 1;
+			detector[i].wiremask[j] = 1;
+		}
 	}
-
+	
 	/*
      *  Set up arrays for powder classes and radial stacks
+	 *	Currently only tracked for detector[0]  (generalise this later)
      */
 	for(long i=0; i<nPowderClasses; i++) {
 		nPowderFrames[i] = 0;
-		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+		powderRaw[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
+		powderRawSquared[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(detector[0].image_nn, sizeof(double));
 
         radialStackCounter[i] = 0;
-        radialAverageStack[i] = (float *) calloc(radial_nn*radialStackSize, sizeof(float));
+        radialAverageStack[i] = (float *) calloc(detector[0].radial_nn*radialStackSize, sizeof(float));
         
 		pthread_mutex_init(&powderRaw_mutex[i], NULL);
 		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
 		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
         pthread_mutex_init(&radialStack_mutex[i], NULL);
 		
-		for(long j=0; j<pix_nn; j++) {
+		for(long j=0; j<detector[0].pix_nn; j++) {
 			powderRaw[i][j] = 0;
 			powderRawSquared[i][j] = 0;
 		}
-		for(long j=0; j<image_nn; j++) {
+		for(long j=0; j<detector[0].image_nn; j++) {
 			powderAssembled[i][j] = 0;
 		}
         
-        for(long j=0; j<radial_nn*radialStackSize; j++) {
+        for(long j=0; j<detector[0].radial_nn*radialStackSize; j++) {
             radialAverageStack[i][j] = 0;
         }
 
@@ -584,10 +595,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		cameraLengthScale  = atof(value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
-		strcpy(detectorTypeName, value);
+		strcpy(detector[0].detectorTypeName, value);
 	}
 	else if (!strcmp(tag, "detectorname")) {
-		strcpy(detectorName, value);
+		strcpy(detector[0].detectorName, value);
 	}
 	else if (!strcmp(tag, "startatframe")) {
 		startAtFrame = atoi(value);
@@ -608,19 +619,19 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		threadPurge = atoi(value);
 	}
 	else if (!strcmp(tag, "geometry")) {
-		strcpy(geometryFile, value);
+		strcpy(detector[0].geometryFile, value);
 	}
 	else if (!strcmp(tag, "darkcal")) {
-		strcpy(darkcalFile, value);
+		strcpy(detector[0].darkcalFile, value);
 	}
 	else if (!strcmp(tag, "gaincal")) {
-		strcpy(gaincalFile, value);
+		strcpy(detector[0].gaincalFile, value);
 	}
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
 	}
 	else if (!strcmp(tag, "badpixelmap")) {
-		strcpy(badpixelFile, value);
+		strcpy(detector[0].badpixelFile, value);
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
@@ -636,7 +647,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		cmSubtractUnbondedPixels = atoi(value);
 	}
 	else if (!strcmp(tag, "wiremaskfile")) {
-		strcpy(wireMaskFile, value);
+		strcpy(detector[0].wireMaskFile, value);
 	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
@@ -762,7 +773,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		cmFloor = atof(value);
 	}
 	else if (!strcmp(tag, "pixelsize")) {
-		pixelSize = atof(value);
+		detector[0].pixelSize = atof(value);
 	}
 	else if (!strcmp(tag, "debuglevel")) {
 		debugLevel = atoi(value);
@@ -901,482 +912,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 
 
 
-/*
- *	Read in detector configuration
- */
-void cGlobal::readDetectorGeometry(char* filename) {
-	
-
-	// Pixel size (measurements in geometry file are in m)
-	module_rows = asic_nx;
-	module_cols = asic_ny;	
-	pix_dx = pixelSize;
-
-	
-	// Set filename here 
-	printf("Reading detector configuration:\n");
-	printf("\t%s\n",filename);
-	
-	
-	// Check whether pixel map file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("Error: Detector configuration file does not exist: %s\n",filename);
-		exit(1);
-	}
-	
-	
-	// Read pixel locations from file
-	cData2d		detector_x;
-	cData2d		detector_y;
-	cData2d		detector_z;
-	detector_x.readHDF5(filename, (char *) "x");
-	detector_y.readHDF5(filename, (char *) "y");
-	detector_z.readHDF5(filename, (char *) "z");
-	
-	// Sanity check that all detector arrays are the same size (!)
-	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
-		printf("readDetectorGeometry: array size mismatch\n");
-		exit(1);
-	}
-	
-
-	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
-		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
-		exit(1);
-	}
-	
-	
-	// Create local arrays for detector pixel locations
-	long	nx = 8*asic_nx;
-	long	ny = 8*asic_ny;
-	long	nn = nx*ny;
-	long 	i;
-	pix_nx = nx;
-	pix_ny = ny;
-	pix_nn = nn;
-	pix_x = (float *) calloc(nn, sizeof(float));
-	pix_y = (float *) calloc(nn, sizeof(float));
-	pix_z = (float *) calloc(nn, sizeof(float));
-	pix_kx = (float *) calloc(nn, sizeof(float));
-	pix_ky = (float *) calloc(nn, sizeof(float));
-	pix_kz = (float *) calloc(nn, sizeof(float));
-	pix_kr = (float *) calloc(nn, sizeof(float));
-	pix_res = (float *) calloc(nn, sizeof(float));
-	hitfinderResMask = (int *) calloc(nn, sizeof(int)); // is there a better place for this?
-	for (i=0;i<nn;i++) hitfinderResMask[i]=1;
-	printf("\tPixel map is %li x %li pixel array\n",nx,ny);
-	
-	
-	// Copy values from 2D array
-	for(long i=0;i<nn;i++){
-		pix_x[i] = (float) detector_x.data[i];
-		pix_y[i] = (float) detector_y.data[i];
-		pix_z[i] = (float) detector_z.data[i];
-	}
-	
-	
-	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
-	for(i=0;i<nn;i++){
-		pix_x[i] /= pix_dx;
-		pix_y[i] /= pix_dx;
-		pix_z[i] /= pix_dx;
-	}
-	
-	
-	// Find bounds of image array
-	float	xmax = -1e9;
-	float	xmin =  1e9;
-	float	ymax = -1e9;
-	float	ymin =  1e9;
-	for(long i=0;i<nn;i++){
-		if (pix_x[i] > xmax) xmax = pix_x[i];
-		if (pix_x[i] < xmin) xmin = pix_x[i];
-		if (pix_y[i] > ymax) ymax = pix_y[i];
-		if (pix_y[i] < ymin) ymin = pix_y[i];
-	}
-	//xmax = ceil(xmax);
-	//xmin = floor(xmin);
-	//ymax = ceil(ymax);
-	//ymin = floor(ymin);
-
-	fesetround(1);
-	xmax = lrint(xmax);
-	xmin = lrint(xmin);
-	ymax = lrint(ymax);
-	ymin = lrint(ymin);
-	printf("\tImage bounds:\n");
-	printf("\tx range %f to %f\n",xmin,xmax);
-	printf("\ty range %f to %f\n",ymin,ymax);
-	
-	
-	// How big must the output image be?
-	float max = xmax;
-	if(ymax > max) max = ymax;
-	if(fabs(xmin) > max) max = fabs(xmin);
-	if(fabs(ymin) > max) max = fabs(ymin);
-	image_nx = 2*(unsigned)max;
-	image_nn = image_nx*image_nx;
-	printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
-	
-	// Compute radial distances
-	pix_r = (float *) calloc(nn, sizeof(float));
-	radial_max = 0.0;
-	for(long i=0;i<nn;i++){
-		pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
-		if(pix_r[i] > radial_max)
-			radial_max = pix_r[i];
-	}	
-	radial_nn = (long int) ceil(radial_max)+1;
-}
-
-/*
- *  Update K-space variables
- *  (called whenever detector has moved)
- */
-void cGlobal::updateKspace(float wavelengthA) {
-    long i;
-    float   x, y, z, r;
-    float   kx,ky,kz,kr;
-    float   res,minres,maxres;
-
-	minres = 0;
-	maxres = 9999999999999999;
-
-    printf("MESSAGE: Recalculating K-space coordinates\n");
-
-    for ( i=0; i<pix_nn; i++ ) {
-        x = pix_x[i]*pixelSize;
-        y = pix_y[i]*pixelSize;
-        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
-        
-        r = sqrt(x*x + y*y + z*z);
-        kx = x/r/wavelengthA;
-        ky = y/r/wavelengthA;
-        kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
-        kr = sqrt(kx*kx + ky*ky + kz*kz);
-        res = 1/kr;
-        
-        pix_kx[i] = kx;
-        pix_ky[i] = ky;
-        pix_kz[i] = kz;
-        pix_kr[i] = kr;
-        pix_res[i] = res;
-        
-		if ( res > minres ) minres = res;
-		if ( res < maxres ) maxres = res;
-        
-        // Check whether resolution limits still make sense.
-        if ( hitfinderLimitRes == 1 ) {
-            if ( ( res < hitfinderMinRes ) && (res > hitfinderMaxRes) ) {
-                hitfinderResMask[i] = 1;
-            } 
-            else {
-                hitfinderResMask[i] = 0;
-            }
-        }
-    }
-
-	printf("MESSAGE: Current resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
-
-}
-
-
-/*
- *	Read in darkcal file
- */
-void cGlobal::readDarkcal(char *filename){	
-	
-	// Create memory space and pad with zeros
-	darkcal = (int32_t*) calloc(pix_nn, sizeof(int32_t));
-	memset(darkcal,0, pix_nn*sizeof(int32_t));
-
-	// Do we need a darkcal file?	
-	if (useDarkcalSubtraction == 0){
-		return;
-	}
-	
-	// Check if a darkcal file has been specified
-	if ( strcmp(filename,"") == 0 ){
-		printf("Darkcal file path was not specified.\n");
-		exit(1);
-	}	
-
-	printf("Reading darkcal configuration:\n");
-	printf("\t%s\n",filename);
-
-	// Check whether file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("\tDarkcal file does not exist: %s\n",filename);
-		printf("\tAborting...\n");
-		exit(1);
-	}
-	
-	
-	// Read darkcal data from file
-	cData2d		temp2d;
-	temp2d.readHDF5(filename);
-	
-	// Correct geometry?
-	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tAborting...\n");
-		exit(1);
-	} 
-	
-	// Copy into darkcal array
-	for(long i=0;i<pix_nn;i++)
-		darkcal[i] = (int32_t) temp2d.data[i];
-	
-}
-
-
-/*
- *	Read in gaincal file
- */
-void cGlobal::readGaincal(char *filename){
-	
-
-	// Create memory space and set default gain to 1 everywhere
-	gaincal = (float*) calloc(pix_nn, sizeof(float));
-	for(long i=0;i<pix_nn;i++)
-		gaincal[i] = 1;
-
-	// Do we even need a gaincal file?
-	if ( useGaincal == 0 ){
-		return;
-	}
-
-	// Check if a gain calibration file has been specified
-	if ( strcmp(filename,"") == 0 ){
-		printf("Gain calibration file path was not specified.\n");
-		printf("Aborting...\n");
-		exit(1);
-	}	
-
-	printf("Reading detector gain calibration:\n");
-	printf("\t%s\n",filename);
-
-		
-	// Check whether gain calibration file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("\tGain calibration file does not exist: %s\n",filename);
-		printf("\tAborting...\n");
-		exit(1);
-	}
-	
-	
-	// Read darkcal data from file
-	cData2d		temp2d;
-	temp2d.readHDF5(filename);
-	
-
-	// Correct geometry?
-	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tAborting...\n");
-		exit(1);
-	} 
-	
-	
-	// Copy into gaincal array
-	for(long i=0;i<pix_nn;i++)
-		gaincal[i] = (float) temp2d.data[i];
-
-
-	// Invert the gain so we have an array that all we need to do is simple multiplication
-	// Pixels with zero gain become dead pixels
-	if(invertGain) {
-		for(long i=0;i<pix_nn;i++) {
-			if(gaincal[i] != 0)
-				gaincal[i] = 1.0/gaincal[i];
-			else 
-				gaincal[i] = 0;
-		}
-	}
-	
-}
-
-
-/*
- *	Read in peaksearch mask
- */
-void cGlobal::readPeakmask(char *filename){
-	
-
-	
-	// Create memory space and default to searching for peaks everywhere
-	peakmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		peakmask[i] = 1;
-	
-	// Do we even need a peakmask file?
-	if ( hitfinderUsePeakmask == 0 ){
-		return;
-	}
-
-	// Check if a peakmask file has been specified
-	if ( strcmp(filename,"") == 0 ){
-		printf("Peakmask file path was not specified.\n");
-		printf("Aborting...\n");
-		exit(1);
-	}	
-
-	printf("Reading peak search mask:\n");
-	printf("\t%s\n",filename);
-	
-	// Check whether file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("\tPeak search mask does not exist: %s\n",filename);
-		printf("\tAborting...\n");
-		exit(1);
-	}
-	
-	
-	// Read darkcal data from file
-	cData2d		temp2d;
-	temp2d.readHDF5(filename);
-	
-	
-	// Correct geometry?
-	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tAborting...\n");
-		exit(1);
-	} 
-	
-	
-	// Copy into darkcal array
-	for(long i=0;i<pix_nn;i++)
-		peakmask[i] = (int16_t) temp2d.data[i];
-}
-
-
-/*
- *	Read in bad pixel mask
- */
-void cGlobal::readBadpixelMask(char *filename){
-	
-	
-	// Create memory space and default to searching for peaks everywhere
-	badpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		badpixelmask[i] = 1;
-	
-	
-	// Do we need a bad pixel map?
-	if ( useBadPixelMask == 0 ){
-		return;
-	}
-
-	// Check if a bad pixel mask file has been specified
-	if ( strcmp(filename,"") == 0 ){
-		printf("Bad pixel mask file path was not specified.\n");
-		printf("Aborting...\n");
-		exit(1);
-	}	
-
-	printf("Reading bad pixel mask:\n");
-	printf("\t%s\n",filename);
-
-	// Check whether file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("\tBad pixel mask does not exist: %s\n",filename);
-		printf("\tAborting...\n");
-		exit(1);
-	}
-	
-	
-	// Read darkcal data from file
-	cData2d		temp2d;
-	temp2d.readHDF5(filename);
-	
-	
-	// Correct geometry?
-	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tAborting...\n");
-		exit(1);
-	} 
-	
-	
-	// Copy back into array
-	for(long i=0;i<pix_nn;i++)
-		badpixelmask[i] = (int16_t) temp2d.data[i];
-}
-
-/*
- *	Read in wire mask
- */
-void cGlobal::readWireMask(char *filename){
-	
-
-	// Create memory space and default to searching for peaks everywhere
-	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		wiremask[i] = 1;
-	
-	// Do we need this file?
-	if ( cmSubtractBehindWires == 0 ){
-		return;
-	}
-
-	printf("Reading wire mask:\n");
-	printf("\t%s\n",filename);
-
-	// Check if a wire mask file has been specified.
-	// We need to exit if this is expected but does not
-	// exist.
-	if ( strcmp(filename,"") == 0 ){
-		printf("Wire mask file path was not specified.\n");
-		printf("Aborting...\n");
-		exit(1);
-	}	
-
-	// Check whether file exists!
-	FILE* fp = fopen(filename, "r");
-	if (fp) 	// file exists
-		fclose(fp);
-	else {		// file doesn't exist
-		printf("\tWire mask does not exist: %s\n",filename);
-		printf("\tAborting...\n");
-		exit(1);
-	}
-	
-	
-	// Read darkcal data from file
-	cData2d		temp2d;
-	temp2d.readHDF5(filename);
-	
-	
-	// Correct geometry?
-	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-		printf("\tAborting...\n");
-		exit(1);
-	} 
-	
-	
-	// Copy into darkcal array
-	for(long i=0;i<pix_nn;i++)
-		wiremask[i] = (int16_t) temp2d.data[i];
-}
 
 
 /*
@@ -1412,23 +947,23 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, ">-------- Start of ini params --------<\n");
 	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
 	fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
-	fprintf(fp, "detectorType=%s\n",detectorTypeName);
-	fprintf(fp, "detectorName=%s\n",detectorName);
+	fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
+	fprintf(fp, "detectorName=%s\n",detector[0].detectorName);
 	fprintf(fp, "startAtFrame=%d\n",startAtFrame);
 	fprintf(fp, "stopAtFrame=%d\n",stopAtFrame);
 	fprintf(fp, "nThreads=%ld\n",nThreads);
 	fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
 	fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
-	fprintf(fp, "threadPurge=%%dn",threadPurge);
-	fprintf(fp, "geometry=%s\n",geometryFile);
-	fprintf(fp, "darkcal=%s\n",darkcalFile);
-	fprintf(fp, "gaincal=%s\n",gaincalFile);
+	fprintf(fp, "threadPurge=%d\n",threadPurge);
+	fprintf(fp, "geometry=%s\n",detector[0].geometryFile);
+	fprintf(fp, "darkcal=%s\n",detector[0].darkcalFile);
+	fprintf(fp, "gaincal=%s\n",detector[0].gaincalFile);
 	fprintf(fp, "peakmask=%s\n",peaksearchFile);
-	fprintf(fp, "badPixelMap=%s\n",badpixelFile);
+	fprintf(fp, "badPixelMap=%s\n",detector[0].badpixelFile);
 	fprintf(fp, "subtractcmModule=%d\n",cmModule);
 	fprintf(fp, "cmModule=%d\n",cmModule);
 	fprintf(fp, "subtractUnbondedPixels=%d\n",cmSubtractUnbondedPixels);
-	fprintf(fp, "wiremaskFile=%s\n",wireMaskFile);
+	fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
 	fprintf(fp, "subtractBehindWires=%d\n",cmSubtractBehindWires);
 	fprintf(fp, "useGaincal=%d\n",useGaincal);
 	fprintf(fp, "invertGain=%d\n",invertGain);
@@ -1463,7 +998,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%d\n",radialStackSize);
 	fprintf(fp, "cmFloor=%f\n",cmFloor);
-	fprintf(fp, "pixelSize=%f\n",pixelSize);
+	fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
 	fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
 	fprintf(fp, "hotpixADC=%d\n",hotpixADC);
@@ -1649,7 +1184,7 @@ void cGlobal::writeFinalLog(void){
 	// Average data rate
 	float	fps, mbs;
 	fps = nprocessedframes / dtime;
-	mbs = fps*pix_nn*sizeof(uint16_t);
+	mbs = fps*detector[0].pix_nn*nDetectors*sizeof(uint16_t);
 	mbs /= (1024.*1024.);
 				 
 				 

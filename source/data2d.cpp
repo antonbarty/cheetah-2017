@@ -1,6 +1,5 @@
 /*
  *  data2d.cpp
- *  wombat3d
  *
  *  Created by Anton Barty on 4/9/10.
  *  Copyright 2010 all rights reserved.
@@ -12,7 +11,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-//#include "/usr/local/include/hdf5.h"
 #include <hdf5.h>
 
 
