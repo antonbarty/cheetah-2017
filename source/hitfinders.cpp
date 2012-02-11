@@ -365,15 +365,81 @@ int peakfinder3(cGlobal *global, tThreadInfo	*threadInfo) {
 							}
 						} while(lastnat != nat);
 						
-						// Peak or junk?
-						if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount) {
+                        // Too many or too few pixels means ignore this 'peak'
+						if(nat<global->hitfinderMinPixCount || nat>global->hitfinderMaxPixCount) {
+                            continue;
+                        }
+
+                            
+                        // Peak above acceptable SNR ratio? (turn off check by setting hitfinderMinSNR = 0)
+                        float   localSigma=0;
+                        if(global->hitfinderMinSNR > 0) {
+                            long   com_x = lrint(peak_com_x/totI) - mi*global->asic_nx;
+                            long   com_y = lrint(peak_com_y/totI) - mj*global->asic_ny;
+                            
+                            // Calculate standard deviation sigma in an annulus around this peak
+                            long    ringWidth = global->hitfinderLocalBGRadius+global->hitfinderLocalBGThickness;
+                            float   thisr;
+                            
+                            float   sum = 0;
+                            float   sumsquared = 0;
+                            long    np_sigma = 0;
+                            for(long bj=-ringWidth; bj<ringWidth; bj++){
+                                for(long bi=-ringWidth; bi<ringWidth; bi++){
+                                    
+                                    // Within annulus?
+                                    thisr = sqrt( bi*bi + bj*bj );
+                                    if(thisr < global->hitfinderLocalBGRadius || thisr > global->hitfinderLocalBGRadius+global->hitfinderLocalBGThickness )
+                                        continue;
+
+                                    // Within-ASIC check
+                                    if((com_x+bi) < 0)
+										continue;
+									if((com_x+bi) >= global->asic_nx)
+										continue;
+									if((com_y+bj) < 0)
+										continue;
+									if((com_y+bj) >= global->asic_ny)
+										continue;
+                                    
+                                    // Position of this point in data stream
+									thisx = com_x + bi + mi*global->asic_nx;
+									thisy = com_y + bj + mj*global->asic_ny;
+									e = thisx + thisy*global->pix_nx;
+                                    
+                                    // If over ADC threshold, this might be another peak (ignore)
+                                    if (temp[e] > global->hitfinderADC)
+                                        continue;
+                                    
+                                    // Use this point to estimate standard deviation of local background signal 
+                                    np_sigma++;
+                                    sum += temp[e];
+                                    sumsquared += temp[e]*temp[e];
+                                }
+                            }
+                            
+                            // Standard deviation
+                            if (counter == 0)
+                                localSigma = 0;
+                            else 
+                                localSigma = sqrt(sumsquared/np_sigma - (sum*sum/(np_sigma*np_sigma)));
+                            
+                            
+                            // Skip this 'peak' if signal to noise criterion is not met 
+                            if( localSigma*global->hitfinderMinSNR > totI)
+                                continue;
+                        }
+                        
+
+                        // This is a peak? If so, add info to peak list
+						if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount && totI > localSigma*global->hitfinderMinSNR ) {
 							
 							threadInfo->peakNpix += nat;
 							threadInfo->peakTotal += totI;
 							
 							
 							// Only space to save the first NpeaksMax peaks
-							// (more than this and the pattern is probably junk)
+							// Make sure we don't overflow this buffer whilst also retaining peak count
 							if ( counter > global->hitfinderNpeaksMax ) {
 								counter++;
 								continue;

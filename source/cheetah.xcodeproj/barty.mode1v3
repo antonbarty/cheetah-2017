@@ -204,7 +204,7 @@
 				<key>PBXProjectModuleGUID</key>
 				<string>4D39D86D14DFC75900541CAC</string>
 				<key>PBXProjectModuleLabel</key>
-				<string>worker.cpp</string>
+				<string>setup.cpp</string>
 				<key>PBXSplitModuleInNavigatorKey</key>
 				<dict>
 					<key>Split0</key>
@@ -212,14 +212,15 @@
 						<key>PBXProjectModuleGUID</key>
 						<string>4D39D87114DFC77200541CAC</string>
 						<key>PBXProjectModuleLabel</key>
-						<string>worker.cpp</string>
+						<string>setup.cpp</string>
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>4D39D87214DFC77200541CAC</string>
+						<string>4D39D87914E116B200541CAC</string>
 						<key>history</key>
 						<array>
-							<string>4D39D86C14DFC75900541CAC</string>
+							<string>4D39D87814E116B200541CAC</string>
+							<string>4D39D87414DFC79600541CAC</string>
 						</array>
 					</dict>
 					<key>SplitCount</key>
@@ -353,7 +354,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>powder.cpp</string>
+								<string>setup.cpp</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -361,11 +362,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>powder.cpp</string>
+										<string>setup.cpp</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>4D39D86E14DFC77200541CAC</string>
+										<string>4D39D87714E116B200541CAC</string>
 										<key>history</key>
 										<array>
 											<string>4D4B169E147D016500BC8065</string>
@@ -373,7 +374,8 @@
 											<string>4D4B16B8147D08B600BC8065</string>
 											<string>4D4B16B9147D08B600BC8065</string>
 											<string>4D4B16BA147D08B600BC8065</string>
-											<string>4D4B16D0147D25F700BC8065</string>
+											<string>4D39D87514E116B200541CAC</string>
+											<string>4D39D87614E116B200541CAC</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -575,9 +577,9 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>4D39D86D14DFC75900541CAC</string>
 		<string>4DC9FA8F1330C191001C95AF</string>
 		<string>/Volumes/Anton/FEL/c/lcls/cheetah/source/cheetah.xcodeproj</string>
-		<string>4D39D86D14DFC75900541CAC</string>
 	</array>
 	<key>WindowString</key>
 	<string>1795 984 673 594 0 0 2560 1578 </string>
