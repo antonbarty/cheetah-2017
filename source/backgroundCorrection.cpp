@@ -37,17 +37,17 @@
 /*
  *	Update background buffer
  */
-void updateBackgroundBuffer(tThreadInfo *threadInfo, cGlobal *global, int detID) {
+void updateBackgroundBuffer(tEventData *eventData, cGlobal *global, int detID) {
 	
     if(global->useBackgroundBufferMutex)
         pthread_mutex_lock(&global->bgbuffer_mutex);
 
 	long frameID = global->bgCounter%global->bgMemory;	
 	global->bgCounter += 1;
-	memcpy(global->detector[detID].bg_buffer+global->detector[detID].pix_nn*frameID, threadInfo->detector[detID].corrected_data_int16, global->detector[detID].pix_nn*sizeof(int16_t));
+	memcpy(global->detector[detID].bg_buffer+global->detector[detID].pix_nn*frameID, eventData->detector[detID].corrected_data_int16, global->detector[detID].pix_nn*sizeof(int16_t));
 	
 	//for(long i=0;i<global->pix_nn;i++)
-	//	global->bg_buffer[global->pix_nn*frameID + i] = threadInfo->corrected_data_int16[i];
+	//	global->bg_buffer[global->pix_nn*frameID + i] = eventData->corrected_data_int16[i];
 	
     if(global->useBackgroundBufferMutex)
         pthread_mutex_unlock(&global->bgbuffer_mutex);
@@ -100,7 +100,7 @@ void calculatePersistentBackground(cGlobal *global, int detID) {
 /*
  *	Subtract persistent background 
  */
-void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global, int detID){
+void subtractPersistentBackground(tEventData *eventData, cGlobal *global, int detID){
 	
 	float	top = 0;
 	float	s1 = 0;
@@ -113,9 +113,9 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global, int 
 	// Add current (uncorrected) image to self darkcal
 	pthread_mutex_lock(&global->selfdark_mutex);
 	//for(long i=0;i<global->pix_nn;i++){
-	//	global->selfdark[i] = ( threadInfo->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
+	//	global->selfdark[i] = ( eventData->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
 	//}
-	gmd = (threadInfo->gmd21+threadInfo->gmd22)/2;
+	gmd = (eventData->gmd21+eventData->gmd22)/2;
 	global->avgGMD = ( gmd + (global->bgMemory-1)*global->avgGMD) / global->bgMemory;
 	pthread_mutex_unlock(&global->selfdark_mutex);
 	
@@ -124,9 +124,9 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global, int 
 	if(global->scaleBackground) {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			//v1 = pow(global->selfdark[i], 0.25);
-			//v2 = pow(threadInfo->corrected_data[i], 0.25);
+			//v2 = pow(eventData->corrected_data[i], 0.25);
 			v1 = global->detector[detID].selfdark[i];
-			v2 = threadInfo->detector[detID].corrected_data[i];
+			v2 = eventData->detector[detID].corrected_data[i];
 			if(v2 > global->hitfinderADC)
 				continue;
 			
@@ -144,7 +144,7 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global, int 
 	
 	// Do the weighted subtraction
 	for(long i=0;i<global->detector[detID].pix_nn;i++) {
-		threadInfo->detector[detID].corrected_data[i] -= (factor*global->detector[detID].selfdark[i]);	
+		eventData->detector[detID].corrected_data[i] -= (factor*global->detector[detID].selfdark[i]);	
 	}	
 	
 }
@@ -152,7 +152,7 @@ void subtractPersistentBackground(tThreadInfo *threadInfo, cGlobal *global, int 
 /*
  *	Local background subtraction
  */
-void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global, int detID){
+void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
 	
 	long		e,ee;
 	long		counter;
@@ -165,7 +165,7 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global, int detID
 	long		asic_ny = global->detector[detID].asic_ny;
 	long		nasics_x = global->detector[detID].nasics_x;
 	long		nasics_y = global->detector[detID].nasics_y;
-	float		*corrected_data = threadInfo->detector[detID].corrected_data;
+	float		*corrected_data = eventData->detector[detID].corrected_data;
 
 	
 	// Search subunits
@@ -255,13 +255,13 @@ void subtractLocalBackground(tThreadInfo *threadInfo, cGlobal *global, int detID
 /*
  * Make a saturated pixel mask
  */
-void checkSaturatedPixels(tThreadInfo *threadInfo, cGlobal *global, int detID){
+void checkSaturatedPixels(tEventData *eventData, cGlobal *global, int detID){
 	
 	for(long i=0;i<global->detector[i].pix_nn;i++) { 
-		if ( threadInfo->detector[detID].raw_data[i] >= global->pixelSaturationADC) 
-			threadInfo->detector[detID].saturatedPixelMask[i] = 0;
+		if ( eventData->detector[detID].raw_data[i] >= global->pixelSaturationADC) 
+			eventData->detector[detID].saturatedPixelMask[i] = 0;
 		else
-			threadInfo->detector[detID].saturatedPixelMask[i] = 1;
+			eventData->detector[detID].saturatedPixelMask[i] = 1;
 	}
 	
 }

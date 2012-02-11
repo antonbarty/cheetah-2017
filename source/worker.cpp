@@ -42,9 +42,9 @@ void *worker(void *threadarg) {
 	 *	Turn threadarg into a more useful form
 	 */
 	cGlobal			*global;
-	tThreadInfo		*threadInfo;
-	threadInfo = (tThreadInfo*) threadarg;
-	global = threadInfo->pGlobal;
+	tEventData		*eventData;
+	eventData = (tEventData*) threadarg;
+	global = eventData->pGlobal;
 	int	hit = 0;
 
 
@@ -54,21 +54,21 @@ void *worker(void *threadarg) {
 	 * Hopefully this never happens again... 
 	 */
 	if ( global->fudgeevr41 == 1 ) {
-		evr41fudge(threadInfo,global);	
+		evr41fudge(eventData,global);	
 	}
 
 	/*
 	 *	Assemble data from all four quadrants into one large array (rawdata format)
 	 */
 	DETECTOR_LOOP {
-		threadInfo->detector[detID].raw_data = (uint16_t*) calloc(global->detector[detID].pix_nn, sizeof(uint16_t));
+		eventData->detector[detID].raw_data = (uint16_t*) calloc(global->detector[detID].pix_nn, sizeof(uint16_t));
 		for(int quadrant=0; quadrant<4; quadrant++) {
 			long	i,j,ii;
 			for(long k=0; k<2*global->detector[detID].asic_nx*8*global->detector[detID].asic_ny; k++) {
 				i = k % (2*global->detector[detID].asic_nx) + quadrant*(2*global->detector[detID].asic_nx);
 				j = k / (2*global->detector[detID].asic_nx);
 				ii  = i+(global->detector[detID].nasics_x*global->detector[detID].asic_nx)*j;
-				threadInfo->detector[detID].raw_data[ii] = threadInfo->detector[detID].quad_data[quadrant][k];
+				eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
 			}
 		}
 	}
@@ -77,40 +77,40 @@ void *worker(void *threadarg) {
 	 *	Create arrays for corrected detector data, etc 
 	 */
 	DETECTOR_LOOP {
-		threadInfo->detector[detID].corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
-		threadInfo->detector[detID].corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-		threadInfo->detector[detID].detector_corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
-		threadInfo->detector[detID].saturatedPixelMask = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-		threadInfo->detector[detID].image = (int16_t*) calloc(global->detector[detID].image_nn,sizeof(int16_t));
+		eventData->detector[detID].corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
+		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+		eventData->detector[detID].detector_corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
+		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+		eventData->detector[detID].image = (int16_t*) calloc(global->detector[detID].image_nn,sizeof(int16_t));
 
-		threadInfo->detector[detID].radialAverage = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
-		threadInfo->detector[detID].radialAverageCounter = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
+		eventData->detector[detID].radialAverage = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
+		eventData->detector[detID].radialAverageCounter = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
 		
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			threadInfo->detector[detID].saturatedPixelMask[i] = 1;
-			threadInfo->detector[detID].corrected_data[i] = threadInfo->detector[detID].raw_data[i];
+			eventData->detector[detID].saturatedPixelMask[i] = 1;
+			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
 		}
 	}	
 
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	threadInfo->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
-	threadInfo->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
-	threadInfo->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
-	threadInfo->peak_snr = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->peak_com_r_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	threadInfo->good_peaks = (int *) calloc(global->hitfinderNpeaksMax, sizeof(int));
+	eventData->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
+	eventData->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	eventData->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
+	eventData->peak_snr = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->peak_com_r_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
+	eventData->good_peaks = (int *) calloc(global->hitfinderNpeaksMax, sizeof(int));
 	
 
 	/*
 	 *	Create a unique name for this event
 	 */
-	nameEvent(threadInfo, global);
+	nameEvent(eventData, global);
 	
 
 	/*
@@ -118,7 +118,7 @@ void *worker(void *threadarg) {
 	 */
 	if ( global->maskSaturatedPixels == 1 ) {
 		DETECTOR_LOOP
-			checkSaturatedPixels(threadInfo, global, detID);
+			checkSaturatedPixels(eventData, global, detID);
 	}
 	
 	/*
@@ -126,7 +126,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useDarkcalSubtraction) {
 		DETECTOR_LOOP
-			subtractDarkcal(threadInfo, global, detID);
+			subtractDarkcal(eventData, global, detID);
 	}
 
 	
@@ -135,15 +135,15 @@ void *worker(void *threadarg) {
 	 */
 	if(global->cmModule) {
 		DETECTOR_LOOP
-			cmModuleSubtract(threadInfo, global, detID);
+			cmModuleSubtract(eventData, global, detID);
 	}
 	if(global->cmSubtractUnbondedPixels) {
 		DETECTOR_LOOP
-			cmSubtractUnbondedPixels(threadInfo, global, detID);
+			cmSubtractUnbondedPixels(eventData, global, detID);
 	}
 	if(global->cmSubtractBehindWires) {
 		DETECTOR_LOOP
-			cmSubtractBehindWires(threadInfo, global, detID);
+			cmSubtractBehindWires(eventData, global, detID);
 	}
 	
 	/*
@@ -151,7 +151,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useGaincal) {
 		DETECTOR_LOOP
-			applyGainCorrection(threadInfo, global, detID);
+			applyGainCorrection(eventData, global, detID);
 	}
 
 	/*
@@ -159,7 +159,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useBadPixelMask) {
 		DETECTOR_LOOP
-			applyBadPixelMask(threadInfo, global, detID);
+			applyBadPixelMask(eventData, global, detID);
 	} 
 	
 	
@@ -190,9 +190,9 @@ void *worker(void *threadarg) {
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
 	 */
 	DETECTOR_LOOP {
-		memcpy(threadInfo->detector[detID].detector_corrected_data, threadInfo->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			threadInfo->detector[detID].corrected_data_int16[i] = (int16_t) lrint(threadInfo->detector[detID].corrected_data[i]);
+			eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
 		}
 	}
 
@@ -201,7 +201,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useSubtractPersistentBackground) {
 		DETECTOR_LOOP
-			subtractPersistentBackground(threadInfo, global, detID);
+			subtractPersistentBackground(eventData, global, detID);
 	}
 	
 
@@ -210,7 +210,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useLocalBackgroundSubtraction) {
 		DETECTOR_LOOP
-			subtractLocalBackground(threadInfo, global, detID);
+			subtractLocalBackground(eventData, global, detID);
 	}
 		
 
@@ -219,23 +219,23 @@ void *worker(void *threadarg) {
 	 */
 	if(global->useAutoHotpixel){
 		DETECTOR_LOOP
-			killHotpixels(threadInfo, global, detID);
+			killHotpixels(eventData, global, detID);
 	}
 	if(global->useBadPixelMask) {
 		DETECTOR_LOOP
-			applyBadPixelMask(threadInfo, global, detID);
+			applyBadPixelMask(eventData, global, detID);
 	} 
 		
 
 	/*
 	 *	Skip first set of frames to build up running estimate of background...
 	 */
-	if (threadInfo->threadNum < global->startFrames || 
+	if (eventData->threadNum < global->startFrames || 
 		(global->useSubtractPersistentBackground && global->bgCounter < global->bgMemory) || 
 		(global->useAutoHotpixel && global->hotpixCounter < global->hotpixRecalc) ) {
 			DETECTOR_LOOP
-				updateBackgroundBuffer(threadInfo, global, detID); 
-			printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, threadInfo->threadNum,global->datarate);
+				updateBackgroundBuffer(eventData, global, detID); 
+			printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarate);
 			goto cleanup;
 	}
 	
@@ -243,7 +243,7 @@ void *worker(void *threadarg) {
 	 *	Hitfinding
 	 */
 	if(global->hitfinder){
-		hit = hitfinder(threadInfo, global, 0);
+		hit = hitfinder(eventData, global, 0);
 	}
 	
 	
@@ -252,7 +252,7 @@ void *worker(void *threadarg) {
 	 */
 	if (hit==0 || global->bgIncludeHits) {
 		DETECTOR_LOOP
-			updateBackgroundBuffer(threadInfo, global, detID); 
+			updateBackgroundBuffer(eventData, global, detID); 
 	}		
 
 	
@@ -261,7 +261,7 @@ void *worker(void *threadarg) {
 	 */
 	if(global->saveDetectorCorrectedOnly) {
 		DETECTOR_LOOP
-			memcpy(threadInfo->detector[detID].corrected_data, threadInfo->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	/*
@@ -270,7 +270,7 @@ void *worker(void *threadarg) {
 	if(global->saveDetectorRaw) {
 		DETECTOR_LOOP
 			for(long i=0;i<global->detector[detID].pix_nn;i++)
-				threadInfo->detector[detID].corrected_data[i] = threadInfo->detector[detID].raw_data[i];
+				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
 	}
 	
 	
@@ -279,7 +279,7 @@ void *worker(void *threadarg) {
 	 */
 	DETECTOR_LOOP {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			threadInfo->detector[detID].corrected_data_int16[i] = (int16_t) lrint(threadInfo->detector[detID].corrected_data[i]);
+			eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
 		}
 	}
 	
@@ -288,14 +288,14 @@ void *worker(void *threadarg) {
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
 	DETECTOR_LOOP
-		assemble2Dimage(threadInfo, global, detID);
+		assemble2Dimage(eventData, global, detID);
 
 	
 	/*
 	 *	Calculate radial average
 	 */
 	DETECTOR_LOOP
-		calculateRadialAverage(threadInfo->detector[detID].corrected_data, threadInfo->detector[detID].radialAverage, threadInfo->detector[detID].radialAverageCounter, global, detID);
+		calculateRadialAverage(eventData->detector[detID].corrected_data, eventData->detector[detID].radialAverage, eventData->detector[detID].radialAverageCounter, global, detID);
 	
 	
 	
@@ -303,13 +303,13 @@ void *worker(void *threadarg) {
 	 *	Maintain a running sum of data (powder patterns)
 	 */
 	if(hit && global->powderSumHits) {
-		addToPowder(threadInfo, global, hit, 0);
+		addToPowder(eventData, global, hit, 0);
 	}
 	if(!hit && global->powderSumBlanks){
-		addToPowder(threadInfo, global, hit, 0);
+		addToPowder(eventData, global, hit, 0);
 	} 
 	if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(threadInfo, global, 0, 0);
+		addToPowder(eventData, global, 0, 0);
 	} 
 		
     
@@ -317,7 +317,7 @@ void *worker(void *threadarg) {
      *  Maintain radial average stack
      */
     if(global->saveRadialStacks) {
-        addToRadialAverageStack(threadInfo, global, hit, 0);
+        addToRadialAverageStack(eventData, global, hit, 0);
     }
 	
 	
@@ -326,11 +326,11 @@ void *worker(void *threadarg) {
 	 */
 	save:
 	if(hit && global->savehits)
-		writeHDF5(threadInfo, global);
-	else if((global->hdf5dump > 0) && ((threadInfo->threadNum % global->hdf5dump) == 0))
-		writeHDF5(threadInfo, global);
+		writeHDF5(eventData, global);
+	else if((global->hdf5dump > 0) && ((eventData->threadNum % global->hdf5dump) == 0))
+		writeHDF5(eventData, global);
 	else
-		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,threadInfo->threadNum,global->datarate, threadInfo->nPeaks);
+		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
 	
 	/*
@@ -338,7 +338,7 @@ void *worker(void *threadarg) {
 	 */
 	//if(hit && global->savePeakList) {
 	if(hit && global->savePeakInfo) {
-		writePeakFile(threadInfo, global);
+		writePeakFile(eventData, global);
 	}
 
 	
@@ -348,12 +348,12 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",threadInfo->threadNum, threadInfo->seconds, threadInfo->eventname, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity, hit, threadInfo->photonEnergyeV, threadInfo->gmd1, threadInfo->gmd2, threadInfo->detectorPosition, threadInfo->laserEventCodeOn, threadInfo->laserDelay);
+	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",eventData->threadNum, eventData->seconds, eventData->eventname, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, hit, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
     // Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "%li, r%04u/%s, %g, %g, %g, %g, %i, %g, %i, %g, %g, %g, %g\n",threadInfo->threadNum, global->runNumber, threadInfo->eventname, threadInfo->photonEnergyeV, threadInfo->gmd1, threadInfo->gmd2, threadInfo->detectorPosition, threadInfo->laserEventCodeOn, threadInfo->laserDelay, threadInfo->nPeaks, threadInfo->peakNpix, threadInfo->peakTotal, threadInfo->peakResolution, threadInfo->peakDensity);
+	fprintf(global->powderlogfp[hit], "%li, r%04u/%s, %g, %g, %g, %g, %i, %g, %i, %g, %g, %g, %g\n",eventData->threadNum, global->runNumber, eventData->eventname, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity);
 	pthread_mutex_unlock(&global->powderfp_mutex);
 	
 	
@@ -369,33 +369,33 @@ void *worker(void *threadarg) {
 	// Free memory
 	DETECTOR_LOOP {
 		for(int quadrant=0; quadrant<4; quadrant++) 
-			free(threadInfo->detector[detID].quad_data[quadrant]);	
-		free(threadInfo->detector[detID].raw_data);
-		free(threadInfo->detector[detID].corrected_data);
-		free(threadInfo->detector[detID].detector_corrected_data);
-		free(threadInfo->detector[detID].corrected_data_int16);
-		free(threadInfo->detector[detID].image);
-		free(threadInfo->detector[detID].radialAverage);
-		free(threadInfo->detector[detID].radialAverageCounter);
-		free(threadInfo->detector[detID].saturatedPixelMask);
+			free(eventData->detector[detID].quad_data[quadrant]);	
+		free(eventData->detector[detID].raw_data);
+		free(eventData->detector[detID].corrected_data);
+		free(eventData->detector[detID].detector_corrected_data);
+		free(eventData->detector[detID].corrected_data_int16);
+		free(eventData->detector[detID].image);
+		free(eventData->detector[detID].radialAverage);
+		free(eventData->detector[detID].radialAverageCounter);
+		free(eventData->detector[detID].saturatedPixelMask);
 	}
-	free(threadInfo->peak_com_index);
-	free(threadInfo->peak_com_x);
-	free(threadInfo->peak_com_y);
-	free(threadInfo->peak_com_x_assembled);
-	free(threadInfo->peak_com_y_assembled);
-	free(threadInfo->peak_com_r_assembled);
-	free(threadInfo->peak_intensity);
-	free(threadInfo->peak_npix);
-	free(threadInfo->peak_snr);
-	free(threadInfo->good_peaks);
+	free(eventData->peak_com_index);
+	free(eventData->peak_com_x);
+	free(eventData->peak_com_y);
+	free(eventData->peak_com_x_assembled);
+	free(eventData->peak_com_y_assembled);
+	free(eventData->peak_com_r_assembled);
+	free(eventData->peak_intensity);
+	free(eventData->peak_npix);
+	free(eventData->peak_snr);
+	free(eventData->good_peaks);
 	//TOF stuff.
-	if(threadInfo->TOFPresent==1){
-		free(threadInfo->TOFTime);
-		free(threadInfo->TOFVoltage); 
+	if(eventData->TOFPresent==1){
+		free(eventData->TOFTime);
+		free(eventData->TOFVoltage); 
 	}
 
-	free(threadInfo);
+	free(eventData);
 
 	// Exit thread
 	pthread_exit(NULL);
@@ -419,7 +419,7 @@ void *worker(void *threadarg) {
  * 
  * -Rick  
  */
-void evr41fudge(tThreadInfo *t, cGlobal *g){
+void evr41fudge(tEventData *t, cGlobal *g){
 	
 	if ( g->TOFPresent == 0 ) {
 		//printf("Acqiris not present; can't fudge EVR41...\n");
@@ -475,7 +475,7 @@ void evr41fudge(tThreadInfo *t, cGlobal *g){
  *	Interpolate raw (corrected) cspad data into a physical 2D image
  *	using pre-defined pixel mapping (as loaded from .h5 file)
  */
-void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global, int detID){
+void assemble2Dimage(tEventData *eventData, cGlobal *global, int detID){
 	
 	// Dereference datector arrays
 	long		pix_nn = global->detector[detID].pix_nn;
@@ -483,8 +483,8 @@ void assemble2Dimage(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	long		image_nn = global->detector[detID].image_nn;
 	float		*pix_x = global->detector[detID].pix_x;
 	float		*pix_y = global->detector[detID].pix_y;
-	float		*corrected_data = threadInfo->detector[detID].corrected_data;
-	int16_t		*image = threadInfo->detector[detID].image;
+	float		*corrected_data = eventData->detector[detID].corrected_data;
+	int16_t		*image = eventData->detector[detID].image;
 
 	
 	// Allocate temporary arrays for pixel interpolation (needs to be floating point)

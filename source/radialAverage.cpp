@@ -37,7 +37,7 @@
 /*
  *	Add radial average to stack
  */
- void addToRadialAverageStack(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int detID){
+ void addToRadialAverageStack(tEventData *eventData, cGlobal *global, int powderClass, int detID){
  
 	 long	radial_nn = global->detector[detID].radial_nn;
 	 
@@ -49,7 +49,7 @@
      
      // Copy data and increment counter
      for(long i=0; i<radial_nn; i++) {
-         global->radialAverageStack[powderClass][dataoffset+i] = (float) threadInfo->detector[detID].radialAverage[i];
+         global->radialAverageStack[powderClass][dataoffset+i] = (float) eventData->detector[detID].radialAverage[i];
      }
      global->radialStackCounter[powderClass] += 1;
      

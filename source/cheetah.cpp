@@ -502,58 +502,58 @@ void event() {
 
 	
 	/*
-	 *	Create a new threadInfo structure in which to place all information
+	 *	Create a new eventData structure in which to place all information
 	 */
-	tThreadInfo	*threadInfo;
-	threadInfo = (tThreadInfo*) malloc(sizeof(tThreadInfo));
+	tEventData	*eventData;
+	eventData = (tEventData*) malloc(sizeof(tEventData));
 		
 	
 	/*
 	 *	Copy all interesting information into worker thread structure if we got this far.
 	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
 	 */
-	threadInfo->seconds = seconds;
-	threadInfo->nanoSeconds = nanoSeconds;
-	threadInfo->fiducial = fiducial;
-	threadInfo->runNumber = getRunNumber();
-	threadInfo->beamOn = beam;
-	threadInfo->nPeaks = 0;
+	eventData->seconds = seconds;
+	eventData->nanoSeconds = nanoSeconds;
+	eventData->fiducial = fiducial;
+	eventData->runNumber = getRunNumber();
+	eventData->beamOn = beam;
+	eventData->nPeaks = 0;
     
-    threadInfo->detectorPosition = global.detectorZ;
+    eventData->detectorPosition = global.detectorZ;
 	
-	threadInfo->laserEventCodeOn = laserOn();
-    threadInfo->laserDelay = global.laserDelay;
+	eventData->laserEventCodeOn = laserOn();
+    eventData->laserDelay = global.laserDelay;
 	
-    threadInfo->gmd1 = gmd1;
-    threadInfo->gmd2 = gmd2;
-	threadInfo->gmd11 = gasdet[0];
-	threadInfo->gmd12 = gasdet[1];
-	threadInfo->gmd21 = gasdet[2];
-	threadInfo->gmd22 = gasdet[3];
+    eventData->gmd1 = gmd1;
+    eventData->gmd2 = gmd2;
+	eventData->gmd11 = gasdet[0];
+	eventData->gmd12 = gasdet[1];
+	eventData->gmd21 = gasdet[2];
+	eventData->gmd22 = gasdet[3];
 	
-	threadInfo->fEbeamCharge = fEbeamCharge;		// in nC
-	threadInfo->fEbeamL3Energy = fEbeamL3Energy;	// in MeV
-	threadInfo->fEbeamLTUPosX = fEbeamLTUPosX;		// in mm
-	threadInfo->fEbeamLTUPosY = fEbeamLTUPosY;		// in mm
-	threadInfo->fEbeamLTUAngX = fEbeamLTUAngX;		// in mrad
-	threadInfo->fEbeamLTUAngY = fEbeamLTUAngY;		// in mrad
-	threadInfo->fEbeamPkCurrBC2 = fEbeamPkCurrBC2;	// in Amps
-	threadInfo->photonEnergyeV = photonEnergyeV;	// in eV
-	threadInfo->wavelengthA = wavelengthA;			// in Angstrom
+	eventData->fEbeamCharge = fEbeamCharge;		// in nC
+	eventData->fEbeamL3Energy = fEbeamL3Energy;	// in MeV
+	eventData->fEbeamLTUPosX = fEbeamLTUPosX;		// in mm
+	eventData->fEbeamLTUPosY = fEbeamLTUPosY;		// in mm
+	eventData->fEbeamLTUAngX = fEbeamLTUAngX;		// in mrad
+	eventData->fEbeamLTUAngY = fEbeamLTUAngY;		// in mrad
+	eventData->fEbeamPkCurrBC2 = fEbeamPkCurrBC2;	// in Amps
+	eventData->photonEnergyeV = photonEnergyeV;	// in eV
+	eventData->wavelengthA = wavelengthA;			// in Angstrom
 	
-	threadInfo->phaseCavityTime1 = phaseCavityTime1;
-	threadInfo->phaseCavityTime2 = phaseCavityTime2;
-	threadInfo->phaseCavityCharge1 = phaseCavityCharge1;
-	threadInfo->phaseCavityCharge1 = phaseCavityCharge2;
+	eventData->phaseCavityTime1 = phaseCavityTime1;
+	eventData->phaseCavityTime2 = phaseCavityTime2;
+	eventData->phaseCavityCharge1 = phaseCavityCharge1;
+	eventData->phaseCavityCharge1 = phaseCavityCharge2;
 	
-	threadInfo->pGlobal = &global;
+	eventData->pGlobal = &global;
 	
 	
 	// Allocate memory for detector data and set to zero
 	for(long i=0; i<global.nDetectors; i++) {
 		for(int quadrant=0; quadrant<4; quadrant++) {
-			threadInfo->detector[i].quad_data[quadrant] = (uint16_t*) calloc(global.detector[i].pix_nn, sizeof(uint16_t));
-			memset(threadInfo->detector[i].quad_data[quadrant], 0, global.detector[i].pix_nn*sizeof(uint16_t));
+			eventData->detector[i].quad_data[quadrant] = (uint16_t*) calloc(global.detector[i].pix_nn, sizeof(uint16_t));
+			memset(eventData->detector[i].quad_data[quadrant], 0, global.detector[i].pix_nn*sizeof(uint16_t));
 		}
 	}	
 
@@ -568,7 +568,7 @@ void event() {
 
 		if (fail) {
 			printf("getCspadData fail %d (%x)\n",fail,fiducial);
-			threadInfo->detector[i].cspad_fail = fail;
+			eventData->detector[i].cspad_fail = fail;
 			return;
 		}
 		else {
@@ -585,14 +585,14 @@ void event() {
 					
 					// Get temperature on strong back 
 					float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
-					threadInfo->detector[i].quad_temperature[quadrant] = temperature;
+					eventData->detector[i].quad_temperature[quadrant] = temperature;
 					
 					
 					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 					while(( s=iter.next(section_id) )) {  
-						memcpy(&threadInfo->detector[i].quad_data[quadrant][section_id*2*global.detector[i].asic_nx*global.detector[i].asic_ny],s->pixel[0],2*global.detector[i].asic_nx*global.detector[i].asic_ny*sizeof(uint16_t));
+						memcpy(&eventData->detector[i].quad_data[quadrant][section_id*2*global.detector[i].asic_nx*global.detector[i].asic_ny],s->pixel[0],2*global.detector[i].asic_nx*global.detector[i].asic_ny*sizeof(uint16_t));
 					}
 				}
 			}
@@ -603,18 +603,18 @@ void event() {
 	/*
 	 *	Copy TOF (aqiris) channel into worker thread for processing
 	 */
-	threadInfo->TOFPresent = global.TOFPresent ;	
+	eventData->TOFPresent = global.TOFPresent ;	
 	if (global.TOFPresent==1){
 		double *tempTOFTime;
 		double *tempTOFVoltage;
 		double tempTrigTime;
-		threadInfo->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
-		threadInfo->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		eventData->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
+		eventData->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
 		fail = getAcqValue(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
-		threadInfo->TOFtrigtime = tempTrigTime;
+		eventData->TOFtrigtime = tempTrigTime;
 		//Memcopy is necessary for thread safety.
-		memcpy(threadInfo->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
-		memcpy(threadInfo->TOFVoltage, tempTOFVoltage, global.AcqNumSamples*sizeof(double));
+		memcpy(eventData->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
+		memcpy(eventData->TOFVoltage, tempTOFVoltage, global.AcqNumSamples*sizeof(double));
 		if (fail){
 			printf("getAcqValue fail %d (%x)\n",fail,fiducial);
 			return ;
@@ -629,10 +629,10 @@ void event() {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
 		for(long i=0; i<global.nDetectors; i++) {
 			for(int quadrant=0; quadrant<4; quadrant++) {
-				free(threadInfo->detector[i].quad_data[quadrant]);
+				free(eventData->detector[i].quad_data[quadrant]);
 			}
 		}
-		free(threadInfo);
+		free(eventData);
 		return;
 	}
 	
@@ -640,7 +640,7 @@ void event() {
 	/*
 	 *	Spawn worker thread to process this frame
 	 *	Threads are created detached so we don't have to wait for anything to happen before returning
-	 *		(each thread is responsible for cleaning up its own threadInfo structure when done)
+	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
 	pthread_t		thread;
 	pthread_attr_t	threadAttribute;
@@ -666,7 +666,7 @@ void event() {
 	// Increment threadpool counter
 	pthread_mutex_lock(&global.nActiveThreads_mutex);
 	global.nActiveThreads += 1;
-	threadInfo->threadNum = ++global.threadCounter;
+	eventData->threadNum = ++global.threadCounter;
 	pthread_mutex_unlock(&global.nActiveThreads_mutex);
 	
 	// Set detached state
@@ -674,7 +674,7 @@ void event() {
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	
 	// Create a new worker thread for this data frame
-	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)threadInfo); 
+	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
 	pthread_attr_destroy(&threadAttribute);
 	global.nprocessedframes += 1;
 	global.nrecentprocessedframes += 1;

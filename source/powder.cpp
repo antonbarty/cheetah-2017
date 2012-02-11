@@ -37,7 +37,7 @@
  *	Maintain running powder patterns
  *	(currently supports both old and new ways of writing out powder data)
  */
-void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int detID){
+void addToPowder(tEventData *eventData, cGlobal *global, int powderClass, int detID){
 	
 	// Dereference common variable
 	long	radial_nn = global->detector[detID].radial_nn;
@@ -51,8 +51,8 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int 
 	pthread_mutex_lock(&global->powderRaw_mutex[powderClass]);
     global->nPowderFrames[powderClass] += 1;
 	for(long i=0; i<pix_nn; i++) {
-		if(threadInfo->detector[detID].corrected_data[i] > global->powderthresh)
-			global->powderRaw[powderClass][i] += threadInfo->detector[detID].corrected_data[i];
+		if(eventData->detector[detID].corrected_data[i] > global->powderthresh)
+			global->powderRaw[powderClass][i] += eventData->detector[detID].corrected_data[i];
 	}
 	pthread_mutex_unlock(&global->powderRaw_mutex[powderClass]);			
 	
@@ -62,8 +62,8 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int 
 	for(long i=0; i<pix_nn; i++) 
 		buffer[i] = 0;
 	for(long i=0; i<pix_nn; i++){
-		if(threadInfo->detector[detID].corrected_data[i] > global->powderthresh)
-			buffer[i] = (threadInfo->detector[detID].corrected_data[i])*(threadInfo->detector[detID].corrected_data[i]);
+		if(eventData->detector[detID].corrected_data[i] > global->powderthresh)
+			buffer[i] = (eventData->detector[detID].corrected_data[i])*(eventData->detector[detID].corrected_data[i]);
 	}
 	pthread_mutex_lock(&global->powderRawSquared_mutex[powderClass]);
 	for(long i=0; i<pix_nn; i++) 
@@ -75,8 +75,8 @@ void addToPowder(tThreadInfo *threadInfo, cGlobal *global, int powderClass, int 
 	// Assembled data
 	pthread_mutex_lock(&global->powderAssembled_mutex[powderClass]);
 	for(long i=0; i<image_nn; i++){
-		if(threadInfo->detector[detID].image[i] > global->powderthresh)
-			global->powderAssembled[powderClass][i] += threadInfo->detector[detID].image[i];
+		if(eventData->detector[detID].image[i] > global->powderthresh)
+			global->powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
 	}
 	pthread_mutex_unlock(&global->powderAssembled_mutex[powderClass]);
 	

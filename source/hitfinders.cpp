@@ -26,9 +26,9 @@
 
 
 // Peakfinders local to this routine
-int peakfinder3(cGlobal*, tThreadInfo*, int);
-int peakfinder5(cGlobal*, tThreadInfo*, int);
-int peakfinder6(cGlobal*, tThreadInfo*, int);
+int peakfinder3(cGlobal*, tEventData*, int);
+int peakfinder5(cGlobal*, tEventData*, int);
+int peakfinder6(cGlobal*, tEventData*, int);
 
 
 
@@ -41,7 +41,7 @@ int peakfinder6(cGlobal*, tThreadInfo*, int);
  *		5 - Like 3, but with extras
  *		6 - Experimental - find peaks by SNR criteria
  */
-int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
+int  hitfinder(tEventData *eventData, cGlobal *global, int detID){
 	
 	// Dereference stuff
 	long		pix_nn = global->detector[detID].pix_nn;
@@ -65,17 +65,17 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	/*
 	 *	Default values for some metrics
 	 */
-	threadInfo->peakNpix = 0;
-	threadInfo->peakTotal = 0;
-	threadInfo->peakResolution = 0;
-	threadInfo->peakDensity = 0;
+	eventData->peakNpix = 0;
+	eventData->peakTotal = 0;
+	eventData->peakResolution = 0;
+	eventData->peakDensity = 0;
 	
 	
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
 	 */
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
-	memcpy(temp, threadInfo->detector[detID].corrected_data, pix_nn*sizeof(float));
+	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	/*
 	 *	Apply peak search mask 
@@ -92,7 +92,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	int* mask = (int *) calloc(pix_nn, sizeof(int) );
 	memcpy(mask, global->hitfinderResMask, pix_nn*sizeof(int));
 	for (long i=0; i<pix_nn; i++) 
-        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * threadInfo->detector[detID].saturatedPixelMask[i];
+        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * eventData->detector[detID].saturatedPixelMask[i];
 	
     
 	/*
@@ -110,9 +110,9 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 			if(nat >= global->hitfinderNAT)
 				hit = 1;
 			
-			threadInfo->peakNpix = nat;
-			threadInfo->nPeaks = nat;
-			threadInfo->peakTotal = total;
+			eventData->peakNpix = nat;
+			eventData->nPeaks = nat;
+			eventData->peakTotal = total;
 			break;
 			
 			
@@ -126,21 +126,21 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 			if(total >= global->hitfinderTAT) 
 				hit = 1;
 			
-			threadInfo->peakNpix = nat;
-			threadInfo->nPeaks = nat;
-			threadInfo->peakTotal = total;
+			eventData->peakNpix = nat;
+			eventData->nPeaks = nat;
+			eventData->peakTotal = total;
 			break;
 			
 		case 3 : 	// Count number of Bragg peaks
-			hit = peakfinder3(global, threadInfo, detID);			
+			hit = peakfinder3(global, eventData, detID);			
 			break;	
 
             
 		case 4 :	// Use TOF signal to find hits
-			if ((global->hitfinderUseTOF==1) && (threadInfo->TOFPresent==1)){
+			if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 				double total_tof = 0.;
 				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-					total_tof += threadInfo->TOFVoltage[i];
+					total_tof += eventData->TOFVoltage[i];
 				}
 				if (total_tof > global->hitfinderTOFThresh)
 					hit = 1;
@@ -158,16 +158,16 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 			break;
 			
 		case 5 : 	// Count number of Bragg peaks
-			hit = peakfinder5(global,threadInfo, detID);
+			hit = peakfinder5(global,eventData, detID);
 			break;
 			
 		case 6 : 	// Count number of Bragg peaks
-			hit = peakfinder6(global,threadInfo, detID);
+			hit = peakfinder6(global,eventData, detID);
 			break;
             
 		case 7 : 	// Return laser on event code
-            hit = threadInfo->laserEventCodeOn;
-            threadInfo->nPeaks = threadInfo->laserEventCodeOn;
+            hit = eventData->laserEventCodeOn;
+            eventData->nPeaks = eventData->laserEventCodeOn;
 			break;
 			
 		default :
@@ -179,7 +179,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	}
 	
 	// Statistics on the peaks, for certain hitfinders
-	if( threadInfo->nPeaks > 1 &&
+	if( eventData->nPeaks > 1 &&
 	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
 		   
 		   long	np;
@@ -187,21 +187,21 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 		   float	resolution;
 		   float	cutoff = 0.8;
 		   
-		   np = threadInfo->nPeaks;
+		   np = eventData->nPeaks;
 		   if(np >= global->hitfinderNpeaksMax) 
 			   np = global->hitfinderNpeaksMax; 
 		   
 		   float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
 		   for(long k=0; k<np; k++) {
-			   buffer1[k] = threadInfo->peak_com_r_assembled[k];
+			   buffer1[k] = eventData->peak_com_r_assembled[k];
 		   }
 		   kk = (long) floor(cutoff*np);
 		   resolution = kth_smallest(buffer1, np, kk);
 		   
-		   threadInfo->peakResolution = resolution;
+		   eventData->peakResolution = resolution;
 		   if(resolution > 0) {
 			   float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
-			   threadInfo->peakDensity = (cutoff*np)/area;
+			   eventData->peakDensity = (cutoff*np)/area;
 		   }
 		   
 		   free(buffer1);
@@ -232,7 +232,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
  *	Search of connected pixels above threshold
  *	Anton Barty
  */
-int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
+int peakfinder3(cGlobal *global, tEventData *eventData, int detID) {
 	
 	// Dereference stuff
 	long		pix_nx = global->detector[detID].pix_nx;
@@ -279,12 +279,12 @@ int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 	int *mask = (int *) calloc(pix_nn, sizeof(int) );
 	memcpy(mask,global->hitfinderResMask,pix_nn*sizeof(int));
 	for (long i=0; i<pix_nn; i++) 
-        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * threadInfo->detector[detID].saturatedPixelMask[i] * global->detector[detID].peakmask[i];
+        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * eventData->detector[detID].saturatedPixelMask[i] * global->detector[detID].peakmask[i];
 	
 	// zero out bad pixels in temporary intensity map
 	float* temp = (float *) calloc(pix_nn,sizeof(float));
 	for (long i=0; i<pix_nn; i++) 
-        temp[i] = threadInfo->detector[detID].corrected_data[i]*mask[i];
+        temp[i] = eventData->detector[detID].corrected_data[i]*mask[i];
 	
     
 	// Loop over modules (8x8 array)
@@ -451,8 +451,8 @@ int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
                         // This is a peak? If so, add info to peak list
 						if(nat>=global->hitfinderMinPixCount && nat<=global->hitfinderMaxPixCount && totI > localSigma*global->hitfinderMinSNR ) {
 							
-							threadInfo->peakNpix += nat;
-							threadInfo->peakTotal += totI;
+							eventData->peakNpix += nat;
+							eventData->peakTotal += totI;
 							
 							
 							// Only space to save the first NpeaksMax peaks
@@ -463,16 +463,16 @@ int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 							}
 							
 							// Remember peak information
-							threadInfo->peak_intensity[counter] = totI;
-							threadInfo->peak_com_x[counter] = peak_com_x/totI;
-							threadInfo->peak_com_y[counter] = peak_com_y/totI;
-							threadInfo->peak_npix[counter] = nat;
+							eventData->peak_intensity[counter] = totI;
+							eventData->peak_com_x[counter] = peak_com_x/totI;
+							eventData->peak_com_y[counter] = peak_com_y/totI;
+							eventData->peak_npix[counter] = nat;
 							
 							e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*pix_nx;
-							threadInfo->peak_com_index[counter] = e;
-							threadInfo->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
-							threadInfo->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
-							threadInfo->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
+							eventData->peak_com_index[counter] = e;
+							eventData->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
+							eventData->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
+							eventData->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
 							counter++;
 						}
 					}
@@ -482,7 +482,7 @@ int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 	}	
 	
 
-    threadInfo->nPeaks = counter;
+    eventData->nPeaks = counter;
     
 	// Now figure out whether this is a hit
 	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
@@ -503,7 +503,7 @@ int peakfinder3(cGlobal *global, tThreadInfo *threadInfo, int detID) {
  *	peakfinder 5
  *	Rick Kirian
  */
-int peakfinder5(cGlobal *global, tThreadInfo *threadInfo, int detID) {
+int peakfinder5(cGlobal *global, tEventData *eventData, int detID) {
 
 	long  nat;
 	long  lastnat;
@@ -537,11 +537,11 @@ int peakfinder5(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 		global->detector[detID].hotpixelmask[i] *
 		global->detector[detID].badpixelmask[i] *
 		global->detector[detID].peakmask[i] *
-		threadInfo->detector[detID].saturatedPixelMask[i];
+		eventData->detector[detID].saturatedPixelMask[i];
 
 	// zero out bad pixels in temporary intensity map
 	float * temp = (float *) calloc(global->detector[detID].pix_nn,sizeof(float));
-	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = threadInfo->detector[detID].corrected_data[i]*mask[i];
+	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = eventData->detector[detID].corrected_data[i]*mask[i];
 
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<global->detector[detID].nasics_y; mj++){
@@ -669,32 +669,32 @@ int peakfinder5(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 			  && nat<=global->hitfinderMaxPixCount 
 		     && badpix==0 ) {
 			
-			threadInfo->peakNpix += nat;
-			threadInfo->peakTotal += totI;
+			eventData->peakNpix += nat;
+			eventData->peakTotal += totI;
 			
 			// Only space to save the first NpeaksMax peaks
 			// (more than this and the pattern is probably junk)
 			if ( counter > global->hitfinderNpeaksMax ) {
-				threadInfo->nPeaks = counter;
+				eventData->nPeaks = counter;
 				return 0;
 			}
 			
 			// Remember peak information
-			threadInfo->peak_intensity[counter] = totI;
-			threadInfo->peak_com_x[counter] = peak_com_x/totI;
-			threadInfo->peak_com_y[counter] = peak_com_y/totI;
-			threadInfo->peak_npix[counter] = nat;
+			eventData->peak_intensity[counter] = totI;
+			eventData->peak_com_x[counter] = peak_com_x/totI;
+			eventData->peak_com_y[counter] = peak_com_y/totI;
+			eventData->peak_npix[counter] = nat;
 
 			e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*global->detector[detID].pix_nx;
-			threadInfo->peak_com_index[counter] = e;
-			threadInfo->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
-			threadInfo->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
-			threadInfo->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
+			eventData->peak_com_index[counter] = e;
+			eventData->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
+			eventData->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
+			eventData->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
 			counter++;
 			
 		}
 	}}}}	
-	threadInfo->nPeaks = counter;
+	eventData->nPeaks = counter;
 
 	/* check peak separations?  get rid of clusters? */
 	if ( global->hitfinderCheckPeakSeparation == 1 ) {
@@ -707,45 +707,45 @@ int peakfinder5(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 		float peakSepSq;
 		
 		/* all peaks assumed "good" to start */
-		for ( peakNum = 0; peakNum < threadInfo->nPeaks; peakNum++ )
-			threadInfo->good_peaks[peakNum] = 1;
+		for ( peakNum = 0; peakNum < eventData->nPeaks; peakNum++ )
+			eventData->good_peaks[peakNum] = 1;
 		
 		/* loop through unique peak pairs, checking that they are not too close */
-		for ( peakNum1 = 0; peakNum1 < threadInfo->nPeaks - 1; peakNum1++ ) {
-			if ( threadInfo->good_peaks[peakNum1] == 0 ) continue;
-			for (peakNum2 = peakNum1 + 1; peakNum2 < threadInfo->nPeaks; peakNum2++ ) {
-				if ( threadInfo->good_peaks[peakNum2] == 0 ) continue;
+		for ( peakNum1 = 0; peakNum1 < eventData->nPeaks - 1; peakNum1++ ) {
+			if ( eventData->good_peaks[peakNum1] == 0 ) continue;
+			for (peakNum2 = peakNum1 + 1; peakNum2 < eventData->nPeaks; peakNum2++ ) {
+				if ( eventData->good_peaks[peakNum2] == 0 ) continue;
 				/* check the distance between these two peaks */
-				diffX = threadInfo->peak_com_x[peakNum1] - threadInfo->peak_com_x[peakNum2];
-				diffY = threadInfo->peak_com_y[peakNum1] - threadInfo->peak_com_y[peakNum2];
+				diffX = eventData->peak_com_x[peakNum1] - eventData->peak_com_x[peakNum2];
+				diffY = eventData->peak_com_y[peakNum1] - eventData->peak_com_y[peakNum2];
 				peakSepSq = diffX*diffX + diffY*diffY;
 				if ( peakSepSq < maxPeakSepSq ) {
-					if (threadInfo->peak_intensity[peakNum1] > threadInfo->peak_intensity[peakNum2]) 
-					threadInfo->good_peaks[peakNum2] = 0;
+					if (eventData->peak_intensity[peakNum1] > eventData->peak_intensity[peakNum2]) 
+					eventData->good_peaks[peakNum2] = 0;
 					else 
-					threadInfo->good_peaks[peakNum2] = 0;
+					eventData->good_peaks[peakNum2] = 0;
 				}
 			}
 		}
 		/* now repopulate the peak list with good ones */
 		int gpc = 0;
-		for ( peakNum = 0; peakNum < threadInfo->nPeaks; peakNum++ ) {
-			if ( threadInfo->good_peaks[peakNum] == 1 ) {
-				threadInfo->peak_com_x[gpc] = threadInfo->peak_com_x[peakNum];
-				threadInfo->peak_com_y[gpc] = threadInfo->peak_com_y[peakNum];
-				threadInfo->peak_com_x_assembled[gpc] = threadInfo->peak_com_x_assembled[peakNum];
-				threadInfo->peak_com_y_assembled[gpc] = threadInfo->peak_com_y_assembled[peakNum];
-				threadInfo->peak_com_r_assembled[gpc] = threadInfo->peak_com_r_assembled[peakNum];
-				threadInfo->peak_com_index[gpc] = threadInfo->peak_com_index[peakNum];
-				threadInfo->peak_intensity[gpc] = threadInfo->peak_intensity[peakNum];
-				threadInfo->peak_npix[gpc] =threadInfo->peak_npix[peakNum];
+		for ( peakNum = 0; peakNum < eventData->nPeaks; peakNum++ ) {
+			if ( eventData->good_peaks[peakNum] == 1 ) {
+				eventData->peak_com_x[gpc] = eventData->peak_com_x[peakNum];
+				eventData->peak_com_y[gpc] = eventData->peak_com_y[peakNum];
+				eventData->peak_com_x_assembled[gpc] = eventData->peak_com_x_assembled[peakNum];
+				eventData->peak_com_y_assembled[gpc] = eventData->peak_com_y_assembled[peakNum];
+				eventData->peak_com_r_assembled[gpc] = eventData->peak_com_r_assembled[peakNum];
+				eventData->peak_com_index[gpc] = eventData->peak_com_index[peakNum];
+				eventData->peak_intensity[gpc] = eventData->peak_intensity[peakNum];
+				eventData->peak_npix[gpc] =eventData->peak_npix[peakNum];
 				gpc++;
 			}
 		}
 		counter = gpc;
 	}	
 	
-	threadInfo->nPeaks = counter;
+	eventData->nPeaks = counter;
 
 	// Now figure out whether this is a hit
 	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
@@ -764,7 +764,7 @@ int peakfinder5(cGlobal *global, tThreadInfo *threadInfo, int detID) {
  *	Peak finder 6
  *	Rick Kirian
  */
-int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
+int peakfinder6(cGlobal *global, tEventData *eventData, int detID) {
 	
 	int counter = 0;
 	int hit = 0;
@@ -790,7 +790,7 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 		global->detector[detID].hotpixelmask[i] *
 		global->detector[detID].badpixelmask[i] *
 		global->detector[detID].peakmask[i] *
-		threadInfo->detector[detID].saturatedPixelMask[i];
+		eventData->detector[detID].saturatedPixelMask[i];
 	
 	/* Combined mask for pixel counting */
 	int * natmask = (int *) calloc(global->detector[detID].pix_nn, sizeof(int) );
@@ -798,7 +798,7 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 	
 	// zero out bad pixels in temporary intensity map
 	float * temp = (float *) calloc(global->detector[detID].pix_nn,sizeof(float));
-	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = threadInfo->detector[detID].corrected_data[i]*mask[i];
+	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = eventData->detector[detID].corrected_data[i]*mask[i];
 	
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<global->detector[detID].nasics_y; mj++){
@@ -880,10 +880,10 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 					peakindex = counter;
 					for ( p=counter-1; p >= 0; p-- ) {
 						/* Distance to neighbor peak */
-						dist = pow(fs - threadInfo->peak_com_x[p],2) + 
-						pow(ss - threadInfo->peak_com_y[p], 2);
+						dist = pow(fs - eventData->peak_com_x[p],2) + 
+						pow(ss - eventData->peak_com_y[p], 2);
 						if ( dist <= global->hitfinderMaxPeakSeparation ) {
-							if ( snr > threadInfo->peak_snr[p]) {
+							if ( snr > eventData->peak_snr[p]) {
 								/* This peak will overtake its neighbor */ 
 								newpeak = 0;
 								peakindex = p; 
@@ -910,22 +910,22 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 					}		
 
 					/* Dump peak info into thread structure, for writing hdf5 files, etc. */
-					threadInfo->peak_intensity[peakindex] = itot;
-					threadInfo->peak_com_x[peakindex] = ftot/itot;
-					threadInfo->peak_com_y[peakindex] = stot/itot;
-					threadInfo->peak_npix[peakindex] = 1;
-					threadInfo->peak_snr[peakindex] = snr;
-					threadInfo->peak_com_index[peakindex] = e;
-					threadInfo->peak_com_x_assembled[peakindex] = global->detector[detID].pix_x[e];
-					threadInfo->peak_com_y_assembled[peakindex] = global->detector[detID].pix_y[e];
-					threadInfo->peak_com_r_assembled[peakindex] = global->detector[detID].pix_r[e];
+					eventData->peak_intensity[peakindex] = itot;
+					eventData->peak_com_x[peakindex] = ftot/itot;
+					eventData->peak_com_y[peakindex] = stot/itot;
+					eventData->peak_npix[peakindex] = 1;
+					eventData->peak_snr[peakindex] = snr;
+					eventData->peak_com_index[peakindex] = e;
+					eventData->peak_com_x_assembled[peakindex] = global->detector[detID].pix_x[e];
+					eventData->peak_com_y_assembled[peakindex] = global->detector[detID].pix_y[e];
+					eventData->peak_com_r_assembled[peakindex] = global->detector[detID].pix_r[e];
 					
 					/* Note that we only increment the peak counter if this is a new one */
 					if ( newpeak ) counter++;
 					
 					/* Have we found too many peaks? */
 					if ( counter >= global->hitfinderNpeaksMax ) {
-						threadInfo->nPeaks = global->hitfinderNpeaksMax;
+						eventData->nPeaks = global->hitfinderNpeaksMax;
 						printf("MESSAGE: Found too many peaks - aborting peaksearch early.\n");
 						hit = 0;
 						goto nohit;
@@ -936,10 +936,10 @@ int peakfinder6(cGlobal *global, tThreadInfo *threadInfo, int detID) {
 				}}
 		}}	
 	
-	threadInfo->nPeaks = counter;
+	eventData->nPeaks = counter;
 	
-	if(threadInfo->nPeaks >= global->hitfinderNpeaks && 
-	   threadInfo->nPeaks <= global->hitfinderNpeaksMax)
+	if(eventData->nPeaks >= global->hitfinderNpeaks && 
+	   eventData->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
 	
 nohit:

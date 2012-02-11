@@ -36,7 +36,7 @@
 
 
 
-void nameEvent(tThreadInfo *info, cGlobal *global){
+void nameEvent(tEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -56,7 +56,7 @@ void nameEvent(tThreadInfo *info, cGlobal *global){
 /*
  *	Write out processed data to our 'standard' HDF5 format
  */
-void writeHDF5(tThreadInfo *info, cGlobal *global){
+void writeHDF5(tEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -546,27 +546,27 @@ void writeHDF5(tThreadInfo *info, cGlobal *global){
 }
 
 
-void writePeakFile(tThreadInfo *threadInfo, cGlobal *global){
+void writePeakFile(tEventData *eventData, cGlobal *global){
 	
 	// No peaks --> go home
-	if(threadInfo->nPeaks <= 0) {
+	if(eventData->nPeaks <= 0) {
 		return;
 	}
 	
 	// Dump peak info to file
 	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", threadInfo->eventname);
-	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", threadInfo->photonEnergyeV);
-	fprintf(global->peaksfp, "wavelength_A=%f\n", threadInfo->wavelengthA);
-	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(threadInfo->gmd21+threadInfo->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%i\n", threadInfo->nPeaks);
-	fprintf(global->peaksfp, "peakResolution=%g\n", threadInfo->peakResolution);
-	fprintf(global->peaksfp, "peakDensity=%g\n", threadInfo->peakDensity);
-	fprintf(global->peaksfp, "peakNpix=%g\n", threadInfo->peakNpix);
-	fprintf(global->peaksfp, "peakTotal=%g\n", threadInfo->peakTotal);
+	fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
-	for(long i=0; i<threadInfo->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", threadInfo->peak_com_x_assembled[i], threadInfo->peak_com_y_assembled[i], threadInfo->peak_com_x[i], threadInfo->peak_com_y[i], threadInfo->peak_npix[i], threadInfo->peak_intensity[i]);
+	for(long i=0; i<eventData->nPeaks; i++) {
+		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
 	
