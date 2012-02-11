@@ -341,6 +341,12 @@ void cGlobal::setup() {
 		}
 	}
 	
+	hitfinderResMask = (int	*) calloc(detector[0].pix_nn, sizeof(int));
+	for(long j=0; j<detector[0].pix_nn; j++) {
+		hitfinderResMask[j] = 1;
+	}	
+	
+	
 	/*
      *  Set up arrays for powder classes and radial stacks
 	 *	Currently only tracked for detector[0]  (generalise this later)

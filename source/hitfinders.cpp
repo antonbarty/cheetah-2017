@@ -90,7 +90,7 @@ int  hitfinder(tThreadInfo *threadInfo, cGlobal *global, int detID){
 	
 	// Combined mask
 	int* mask = (int *) calloc(pix_nn, sizeof(int) );
-	memcpy(mask,global->hitfinderResMask, pix_nn*sizeof(int));
+	memcpy(mask, global->hitfinderResMask, pix_nn*sizeof(int));
 	for (long i=0; i<pix_nn; i++) 
         mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * threadInfo->detector[detID].saturatedPixelMask[i];
 	

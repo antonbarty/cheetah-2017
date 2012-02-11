@@ -469,10 +469,10 @@ void cPixelDetectorCommon::readWireMask(cGlobal *global, char *filename){
 		wiremask[i] = 1;
 	
 	// Do we need this file?
-	if ( cmSubtractBehindWires == 0 ){
+	if ( global->cmSubtractBehindWires == 0 ){
 		return;
 	}
-
+	
 	printf("Reading wire mask:\n");
 	printf("\t%s\n",filename);
 
