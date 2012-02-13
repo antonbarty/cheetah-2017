@@ -348,12 +348,15 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%li, %i, %s, %i, %g, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",eventData->threadNum, eventData->seconds, eventData->eventname, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, hit, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
+	fprintf(global->framefp, "%s, %i, %li, %ld, %i, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",eventData->eventname, hit, 
+			eventData->seconds, eventData->threadNum, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, 
+			eventData->peakResolution, eventData->peakDensity, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, 
+			eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
     // Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "%li, r%04u/%s, %g, %g, %g, %g, %i, %g, %i, %g, %g, %g, %g\n",eventData->threadNum, global->runNumber, eventData->eventname, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity);
+	fprintf(global->powderlogfp[hit], "r%04u/%s, %li, %i, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",global->runNumber, eventData->eventname, eventData->threadNum, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
 	
 	

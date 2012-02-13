@@ -1061,7 +1061,8 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# FrameNumber, UnixTime, EventName, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, hit, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
+	
+	fprintf(framefp, "# EventName, hit, UnixTime, FrameNumber, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
 
 	
 	sprintf(cleanedfile,"cleaned.txt");
