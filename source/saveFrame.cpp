@@ -110,7 +110,7 @@ void writeHDF5(tEventData *info, cGlobal *global){
 			max_size[0] = global->detector[detID].image_nx;
 			max_size[1] = global->detector[detID].image_nx;
 			dataspace_id = H5Screate_simple(2, size, max_size);
-			sprintf(fieldID, "det%li-assembleddata", detID);
+			sprintf(fieldID, "assembleddata%li", detID);
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 			if ( dataset_id < 0 ) {
 				ERROR("%li: Couldn't create dataset\n", info->threadNum);
@@ -137,7 +137,7 @@ void writeHDF5(tEventData *info, cGlobal *global){
 			max_size[0] = global->detector[detID].pix_ny;
 			max_size[1] = global->detector[detID].pix_nx;
 			dataspace_id = H5Screate_simple(2, size, max_size);
-			sprintf(fieldID, "det%li-rawdata", detID);
+			sprintf(fieldID, "rawdata%li", detID);
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 			if ( dataset_id < 0 ) {
 				ERROR("%li: Couldn't create dataset\n", info->threadNum);
@@ -158,10 +158,10 @@ void writeHDF5(tEventData *info, cGlobal *global){
 		
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
-		hdf_error = H5Lcreate_soft( "/data/det0-assembleddata", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
 	}
 	else {
-		hdf_error = H5Lcreate_soft( "/data/det0-rawdata", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/rawdata0", hdf_fileID, "/data/data",0,0);
 	}
 	
 	
