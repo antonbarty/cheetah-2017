@@ -159,9 +159,12 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/assembleddata",0,0);
+		hdf_error = H5Lcreate_soft( "/data/rawdata0", hdf_fileID, "/data/rawdata",0,0);
 	}
 	else {
 		hdf_error = H5Lcreate_soft( "/data/rawdata0", hdf_fileID, "/data/data",0,0);
+		hdf_error = H5Lcreate_soft( "/data/rawdata0", hdf_fileID, "/data/rawdata",0,0);
 	}
 	
 	
