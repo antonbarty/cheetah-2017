@@ -177,7 +177,7 @@ struct CalibNode
 typedef IndexFileHeaderV1 IndexFileHeaderType;
 typedef IndexFileL1NodeV1 IndexFileL1NodeType;
 
-int convertTimeStringToSeconds(const char* sTime, uint32_t& uSeconds, uint32_t& uNanoseconds);
+int convertTimeStringToSeconds(char* sTime, uint32_t& uSeconds, uint32_t& uNanoseconds);
 
 #pragma pack()
 

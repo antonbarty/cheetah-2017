@@ -1,5 +1,10 @@
 #include <errno.h>
 #include <libgen.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "pdsdata/evr/DataV3.hh"
 #include "pdsdata/xtc/BldInfo.hh"
