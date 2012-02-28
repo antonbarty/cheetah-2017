@@ -125,7 +125,7 @@ void TM6740Handler::_configure(Pds::TypeId tid,
     unsigned ppb     = (pixels-1)/640 + 1;
     columns = (columns+ppb-1)/ppb;
     rows    = (rows   +ppb-1)/ppb;
-    DescImage desc(det, 0, ChannelID::name(det),
+    DescImage desc(det, (unsigned)0, ChannelID::name(det),
 		   //		 columns, rows, ppb, ppb);
 		   rows, columns, ppb, ppb); // rotated size
     desc.set_scale(_scale.xscale,_scale.yscale);

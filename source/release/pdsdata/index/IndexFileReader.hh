@@ -30,16 +30,22 @@ public:
   int typeList          (int iDetector, int& iNumType, const TypeId*& lType) const;
   int numCalibCycle     (int& iNumCalib) const;
   int calibCycleList    (const CalibNode*& lCalib) const;
-  int numL1EventInCalib (int iCalib       , int& iNumL1Event) const;
+  int numL1EventInCalib (int iCalib, int& iNumL1Event) const;
+  
   int eventCalibToGlobal(int iCalib, int iEvent, int& iGlobalEvent) const;
   int eventGlobalToCalib(int iGlobalEvent, int& iCalib, int& iEvent) const;
   int eventTimeToGlobal (uint32_t uSeconds, uint32_t uNanoseconds, int& iGlobalEvent, bool& bExactMatch, bool& bOvertime);
   int eventTimeToCalib  (uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime);
   
+  int eventNextFiducialToGlobal (uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent);
+  int eventNextFiducialToCalib  (uint32_t uFiducial, int iFromGlobalEvent, int& iCalib, int& iEvent);
+  
   int gotoEvent         (int iCalib, int iEvent, int64_t& i64Offset, int& iGlobalEvent);
   int gotoEventInXtc    (int iCalib, int iEvent, int fdXtc, int& iGlobalEvent);
   int gotoTimeInXtc     (uint32_t uSeconds, uint32_t uNanoseconds, int fdXtc, int& iGlobalEvent, bool& bExactMatch, bool& bOvertime);
-    
+  int gotoNextFiducialInXtc  
+                        (uint32_t uFiducial, int iFromGlobalEvent, int fdXtc, int& iGlobalEvent);
+  
   int time            (int iGlobalEvent, uint32_t& uSeconds, uint32_t& uNanoseconds);
   int fiducial        (int iGlobalEvent, uint32_t& uFiducial);
   int offset          (int iGlobalEvent, int64_t&  i64Offset);
@@ -50,6 +56,8 @@ public:
 
 private:
   int gotoL1Node      (int iL1Node);
+  int eventNextFiducialToGlobalLinearSearch 
+                      (uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent);
   
   typedef std::vector<TypeId>     TTypeList;
   typedef std::vector<Src>        TSrcList;

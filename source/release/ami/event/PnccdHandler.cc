@@ -59,7 +59,7 @@ PnccdHandler::PnccdHandler(const Pds::DetInfo& info,
 			   const FeatureCache& cache) : 
   EventHandler(info, Pds::TypeId::Id_pnCCDframe, Pds::TypeId::Id_pnCCDconfig),
   _cache   (cache),
-  _correct (new EntryImage(DescImage(Pds::DetInfo(), 0, "PNCCD",
+  _correct (new EntryImage(DescImage(Pds::DetInfo(), (unsigned)0, "PNCCD",
 				     cols / PixelsPerBin,
 				     rows / PixelsPerBin,
 				     PixelsPerBin, PixelsPerBin))),
@@ -122,7 +122,7 @@ void PnccdHandler::_configure(const void* payload, const Pds::ClockTime& t)
     _tform = true;
 
   const Pds::DetInfo& det = static_cast<const Pds::DetInfo&>(info());
-  DescImage desc(det, 0, ChannelID::name(det),
+  DescImage desc(det, (unsigned)0, ChannelID::name(det),
 		 cols / PixelsPerBin,
 		 rows / PixelsPerBin,
 		 PixelsPerBin, PixelsPerBin);

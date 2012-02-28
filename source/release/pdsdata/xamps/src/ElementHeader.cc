@@ -1,4 +1,4 @@
-#include "pdsdata/cspad/ElementHeader.hh"
+#include "pdsdata/xamps/ElementHeader.hh"
 
 using namespace Pds::Xamps;
 

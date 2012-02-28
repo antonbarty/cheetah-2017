@@ -17,7 +17,7 @@ namespace Pds {
 
     class ASIC_V1 {
       public:
-        ASIC_V1() {};
+        ASIC_V1();
         ~ASIC_V1() {};
 
         enum {NumberOfChannels=64, NumberOfValues=4};
@@ -56,7 +56,7 @@ namespace Pds {
         uint32_t              get      (ASIC_Entries);
         const uint32_t        get      (ASIC_Entries) const;
         uint32_t              set      (ASIC_Entries, uint32_t);
-        static char*          name     (ASIC_Entries);
+        static char*          name     (ASIC_Entries, bool init=false);
         static uint32_t       rangeHigh(ASIC_Entries);
         static uint32_t       rangeLow (ASIC_Entries);
         static uint32_t       defaultValue(ASIC_Entries);

@@ -20,21 +20,26 @@ class XtcSlice {
 public:
   XtcSlice(std::string fname);
   ~XtcSlice();
-public:
+
   bool add_file(std::string fname);
-public:
+
   void   init();
   Result next(Pds::Dgram*& dg, int64_t* pi64OffsetCur = NULL);
   Result skip();
   Result jump(int calib, int jump, int& eventNum, bool bOverJump = false);
-
   Result findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime);  
+  Result findTimeGlobal(uint32_t uSeconds, uint32_t uNanoseconds, int& iSliceEvent, bool& bExactMatch, bool& bOvertime);  
+  Result findNextFiducial(uint32_t uFiducial, int iFromEvent, int& iEvent);  
+
   Result numCalib(int& iNumCalib);
   Result numEventInCalib(int calib, int& iNumEvents);
+  Result numTotalEvent(int& iNumTotalEvents);
   Result getTime(int calib, int event, uint32_t& uSeconds, uint32_t& uNanoseconds);  
-public:
+  Result getTimeGlobal(int iSliceEvent, uint32_t& uSeconds, uint32_t& uNanoseconds);  
+
   const Pds::Dgram& hdr() const { return *_nextdg; }
-private:
+  
+private:  
   bool _open (int64_t i64Offset = 0);
   void _close(bool bForceWait = false);
   Result _openChunk(int iChunk, uint64_t i64Offset);

@@ -24,7 +24,7 @@ Timer::Timer()
   : _service(this)
 {}
 
-Timer::~Timer() {}
+Timer::~Timer() { cancel(); }
 
 unsigned Timer::start() {
   return _service.armTimer();

@@ -1,15 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <unistd.h>
-
-
 #include "pdsdata/index/IndexFileReader.hh"
 
 namespace Pds
@@ -290,7 +281,28 @@ int IndexFileReader::eventTimeToGlobal(uint32_t uSeconds, uint32_t uNanoseconds,
     return 0;
   else if ( _fileHeader.iNumIndex == 1 )
   {
+    int       iEventTest = 0;
+    uint32_t  uSecondsTest, uNanosecondsTest;
+    
+    int iError = time(iEventTest, uSecondsTest, uNanosecondsTest);
+    if (iError != 0)
+    {
+      printf("IndexFileReader::eventTimeToGlobal(): Cannot get time for global event# %d\n", iEventTest);
+      return 2;
+    }
+    
+    int iCompare = compareTime(uSeconds, uNanoseconds, uSecondsTest, uNanosecondsTest);
+    
+    if (iCompare > 0)
+    {
+      bOvertime = true;
+      return 4;
+    }
+    
     iGlobalEvent = 0;
+    if ( iCompare == 0 )
+      bExactMatch = true;
+      
     return 0;
   }
   
@@ -305,7 +317,7 @@ int IndexFileReader::eventTimeToGlobal(uint32_t uSeconds, uint32_t uNanoseconds,
     int iError = time(iEventLowerBound, uSecondsTest, uNanosecondsTest);
     if (iError != 0)
     {
-      printf("IndexFileReader::gotoTime(): Cannot get time for global event# %d\n", iEventLowerBound);
+      printf("IndexFileReader::eventTimeToGlobal(): Cannot get time for global event# %d\n", iEventLowerBound);
       return 2;
     }
     
@@ -322,7 +334,7 @@ int IndexFileReader::eventTimeToGlobal(uint32_t uSeconds, uint32_t uNanoseconds,
       iError = time(iEventUpperBound, uSecondsTest, uNanosecondsTest);
       if (iError != 0)
       {
-        printf("IndexFileReader::gotoTime(): Cannot get time for global event# %d\n", iEventUpperBound);
+        printf("IndexFileReader::eventTimeToGlobal(): Cannot get time for global event# %d\n", iEventUpperBound);
         return 3;
       }
       
@@ -351,7 +363,7 @@ int IndexFileReader::eventTimeToGlobal(uint32_t uSeconds, uint32_t uNanoseconds,
     int iError = time(iEventTest, uSecondsTest, uNanosecondsTest);
     if (iError != 0)
     {
-      printf("IndexFileReader::gotoTime(): Cannot get time for global event# %d\n", iEventTest);
+      printf("IndexFileReader::eventTimeToGlobal(): Cannot get time for global event# %d\n", iEventTest);
       return 4;
     }
     
@@ -389,6 +401,163 @@ int IndexFileReader::eventTimeToCalib(uint32_t uSeconds, uint32_t uNanoseconds, 
     return 2;
   
   return 0;
+}
+
+int IndexFileReader::eventNextFiducialToGlobal(uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent)
+{
+  const int MAX_NUM_FOR_LINEAR_SEARCH     = 10;
+  const int NUM_FIDUCIAL_SAMPLES          = 4;
+  const int MAX_MANAGEABLE_FIDUCIAL_DIFF  = 360*30;
+  const uint32_t FIDUCIAL_WRAP_AROUND     = 0x1ffe0;
+  const uint32_t FIDUCIAL_ERROR           = 0x1ffff;
+  
+  //printf("IndexFileReader::eventNextFiducialToGlobal(): fiducial 0x%x  eventFrom %d\n", uFiducial, iFromGlobalEvent); //!!debug
+  
+  iGlobalEvent  = -1;
+  if (_fdXtcIndex == -1)
+    return 1;  
+  
+  if ( _fileHeader.iNumIndex < iFromGlobalEvent )
+    return 2;
+
+  if ( uFiducial == FIDUCIAL_ERROR )
+    return eventNextFiducialToGlobalLinearSearch(uFiducial, iFromGlobalEvent, iGlobalEvent);
+    
+  if ( _fileHeader.iNumIndex <= iFromGlobalEvent + MAX_NUM_FOR_LINEAR_SEARCH )
+    return eventNextFiducialToGlobalLinearSearch(uFiducial, iFromGlobalEvent, iGlobalEvent);
+    
+  uint32_t  uFiducialSample [NUM_FIDUCIAL_SAMPLES];
+  int32_t   iFiducialDiff   [NUM_FIDUCIAL_SAMPLES-1];
+  
+  int32_t   iFiducialDiffAvg = 0;   
+  for (int iEvent = 0; iEvent < NUM_FIDUCIAL_SAMPLES; ++iEvent)
+  {
+    int iError = fiducial( iFromGlobalEvent + iEvent, uFiducialSample[iEvent] );
+    if (iError != 0)
+    {
+      printf("IndexFileReader::eventNextFiducialToGlobal(): Cannot get fiducial for global event# %d\n", iFromGlobalEvent + iEvent);
+      return 3;
+    }
+    
+    //printf("IndexFileReader::eventNextFiducialToGlobal(): fiducial[%d] 0x%x\n", iFromGlobalEvent + iEvent, uFiducialSample[iEvent]); //!!debug
+    
+    if (iEvent == 0)
+    {
+      if (uFiducial == uFiducialSample[0])
+      {
+        iGlobalEvent = iFromGlobalEvent;
+        return 0;        
+      }
+    }
+    else
+    { // iEvent > 0
+      int32_t iFiducialDiffCur =  uFiducialSample[iEvent] - uFiducialSample[iEvent-1]; 
+      iFiducialDiff[iEvent-1]  =  iFiducialDiffCur;
+      iFiducialDiffAvg         += iFiducialDiffCur;
+      
+      //printf("IndexFileReader::eventNextFiducialToGlobal(): fiducialDiff[%d] 0x%x\n", iEvent-1, iFiducialDiff[iEvent-1]); //!!debug      
+      
+      if (iFiducialDiffCur <= 0 || iFiducialDiffCur > MAX_MANAGEABLE_FIDUCIAL_DIFF)
+        return eventNextFiducialToGlobalLinearSearch(uFiducial, iFromGlobalEvent, iGlobalEvent);
+    }
+  }
+  iFiducialDiffAvg =  (iFiducialDiffAvg + NUM_FIDUCIAL_SAMPLES - 2) / (NUM_FIDUCIAL_SAMPLES-1);
+  
+  int iEventDiffPredictOrg;
+  if (uFiducial > uFiducialSample[0])
+    iEventDiffPredictOrg = (uFiducial - uFiducialSample[0]) / iFiducialDiffAvg;
+  else
+    iEventDiffPredictOrg = (uFiducial + FIDUCIAL_WRAP_AROUND - uFiducialSample[0]) / iFiducialDiffAvg;
+    
+  //printf("IndexFileReader::eventNextFiducialToGlobal(): FiducialFrom 0x%x  diffAvg %d  To 0x%x  eventPredict %d\n", 
+  //  uFiducialSample[0], iFiducialDiffAvg, uFiducial, iEventDiffPredictOrg); //!!debug
+    
+  /* over-estimation: reduce the search range to fit the remaining data
+   *
+   *  Note: scan data usually causes over-etsimations
+   */
+  if ( _fileHeader.iNumIndex <= iFromGlobalEvent + iEventDiffPredictOrg + 1)
+    iEventDiffPredictOrg = _fileHeader.iNumIndex - iFromGlobalEvent - 1;  
+    
+  int32_t iEventDiffPredict = iEventDiffPredictOrg;
+  while (iEventDiffPredict >= 1)
+  {
+    uint32_t uFiducialTest;
+    int iError = fiducial(iFromGlobalEvent + iEventDiffPredict, uFiducialTest);
+    if (iError != 0)
+    {
+      printf("IndexFileReader::eventNextFiducialToGlobal(): Cannot get fiducial for global event# %d\n", iFromGlobalEvent + iEventDiffPredict);
+      return 5;
+    }
+      
+    if (uFiducialTest == uFiducial)
+    {
+      iGlobalEvent = iFromGlobalEvent + iEventDiffPredict;
+      return 0;
+    }
+    
+    // under-shoot case: start from the predicted index to do new search
+    if( uFiducialTest < uFiducial ||
+        (uFiducial + FIDUCIAL_WRAP_AROUND <= uFiducialTest + iFiducialDiffAvg) // fiducial wrap-around case
+      )
+      return eventNextFiducialToGlobal(uFiducial, iFromGlobalEvent + iEventDiffPredict, iGlobalEvent);
+      
+    // over-shoot case, with small prediction error: move predicted index to one index earlier
+    if( uFiducialTest < uFiducial + iFiducialDiffAvg  ||
+        (uFiducial + FIDUCIAL_WRAP_AROUND <= uFiducialTest + 2*iFiducialDiffAvg ) // fiducial wrap-around case
+      )
+        --iEventDiffPredict;
+    else
+      // over-shoot case, with large prediction error: cut predicted index to a half
+        iEventDiffPredict /= 2;     
+        
+    //printf("IndexFileReader::eventNextFiducialToGlobal(): new eventPredict %d\n", iEventDiffPredict); //!!debug 
+  }
+  
+  return eventNextFiducialToGlobal(uFiducial, iFromGlobalEvent + iEventDiffPredictOrg + 1, iGlobalEvent);
+}
+
+int IndexFileReader::eventNextFiducialToCalib(uint32_t uFiducial, int iFromGlobalEvent, int& iCalib, int& iEvent)
+{
+  iCalib      = -1;
+  iEvent      = -1;
+  
+  int iGlobalEvent = -1;
+  int iError = eventNextFiducialToGlobal(uFiducial, iFromGlobalEvent, iGlobalEvent);
+  if (iError != 0)
+    return 1;
+    
+  iError = eventGlobalToCalib(iGlobalEvent, iCalib, iEvent);
+  if (iError != 0)
+    return 2;
+  
+  return 0;  
+}
+
+int IndexFileReader::eventNextFiducialToGlobalLinearSearch (uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent)
+{
+  iGlobalEvent  = -1;
+  if (_fdXtcIndex == -1)
+    return 1;  
+      
+  for (int iEvent = iFromGlobalEvent; iEvent < _fileHeader.iNumIndex; ++iEvent)
+  {
+    uint32_t uFiducialTest;
+    int iError = fiducial(iEvent, uFiducialTest);
+    if (iError != 0)
+    {
+      printf("IndexFileReader::eventNextFiducialToGlobalLinearSearch(): Cannot get fiducial for global event# %d\n", iEvent);
+      return 2;
+    }
+
+    if (uFiducialTest == uFiducial)
+    {
+      iGlobalEvent = iEvent;
+      return 0;
+    }
+  }
+    
+  return 2;
 }
 
 int IndexFileReader::detectorList(int& iNumDetector, const ProcInfo*& lDetector) const
@@ -537,6 +706,33 @@ int IndexFileReader::gotoTimeInXtc(uint32_t uSeconds, uint32_t uNanoseconds, int
   iGlobalEvent = -1;
 
   int iError = eventTimeToGlobal(uSeconds, uNanoseconds, iGlobalEvent, bExactMatch, bOvertime);
+  if (iError != 0)
+    return 1;
+    
+  iError = gotoL1Node(iGlobalEvent);
+  if (iError != 0)
+  {
+    printf("IndexFileReader::gotoTime(): cannot move index to L1 event 0x%x (%d)\n",
+      iGlobalEvent, iGlobalEvent);
+    return 2;
+  }        
+  
+  int64_t i64OffsetSeek = lseek64(fdXtc, _curL1Node.i64OffsetXtc, SEEK_SET);
+  if (i64OffsetSeek != _curL1Node.i64OffsetXtc)
+  {
+    printf( "IndexFileReader::gotoEvent(): seek xtc failed (expected 0x%Lx, get 0x%Lx), error = %s\n",
+      _curL1Node.i64OffsetXtc, i64OffsetSeek, strerror(errno) );
+    return 3;
+  }    
+  
+  return 0;
+}
+
+int IndexFileReader::gotoNextFiducialInXtc(uint32_t uFiducial, int iFromGlobalEvent, int fdXtc, int& iGlobalEvent)
+{
+  iGlobalEvent = -1;
+
+  int iError = eventNextFiducialToGlobal(uFiducial, iFromGlobalEvent, iGlobalEvent);
   if (iError != 0)
     return 1;
     

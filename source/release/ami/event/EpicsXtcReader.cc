@@ -18,11 +18,10 @@ namespace Ami {
 
 using namespace Ami;
 
-EpicsXtcReader::EpicsXtcReader(FeatureCache& f)  : 
-  EventHandler(Pds::DetInfo(0, Pds::DetInfo::EpicsArch, 0, DetInfo::NoDevice, 0),
-    //  EventHandler(EpicsInfo(),
-	       Pds::TypeId::Id_Epics,
-	       Pds::TypeId::Id_Epics),
+EpicsXtcReader::EpicsXtcReader(const Pds::Src& info, FeatureCache& f)  : 
+  EventHandler(info,
+               Pds::TypeId::Id_Epics,
+               Pds::TypeId::Id_Epics),
   _cache(f)
 {
 }

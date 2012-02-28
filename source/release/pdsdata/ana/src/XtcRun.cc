@@ -1,5 +1,4 @@
 #include "pdsdata/ana/XtcRun.hh"
-#include <stdlib.h>
 
 namespace Pds
 {  
@@ -165,10 +164,10 @@ int XtcRun::jump(int calib, int jump, int& eventNum)
       return 2;
     }
     
-    infoList[iSlice].iUpperBound      = infoList[iSlice].iNumEvent;
-    infoList[iSlice].iCurrentCalib    = -1;
-    infoList[iSlice].iCurrentIndex    = -1;
-    iNumEventTotal                 += infoList[iSlice].iNumEvent;
+    infoList[iSlice].iUpperBound    = infoList[iSlice].iNumEvent;
+    infoList[iSlice].iCurrentCalib  = -1;
+    infoList[iSlice].iCurrentIndex  = -1;
+    iNumEventTotal                  += infoList[iSlice].iNumEvent;
   }
   if (jump < 0 || jump > iNumEventTotal)
   {
@@ -224,7 +223,7 @@ int XtcRun::jump(int calib, int jump, int& eventNum)
             iCalibQuery = calib;
             iEventQuery = infoList[iSliceQuery].iNumEvent+1;
           }
-          else
+          else // Abnormal error
             continue;
         }
         
@@ -267,7 +266,7 @@ int XtcRun::jump(int calib, int jump, int& eventNum)
             infoList[iSliceUpdate].iUpperBound = infoList[iSliceUpdate].iCurrentIndex-1;
         }
       }
-      else // (iLocalEventSum == jump)
+      else // (iLocalEventSum == jump) : we have found the correct event
       {  
         int iErrorAll = 0;
         
@@ -406,6 +405,14 @@ int XtcRun::findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int&
     return 2;
   }
   
+  /*
+   * Special case:
+   *   The event with the input timestamp may become the last event of some slice, 
+   *   so it will not be found in other slices. In those slices, the returned calib# = real calib# + 1
+   *
+   *   Also in those slices, all events in the real calib# are earlier than the timestamp,
+   *   so we add up all these slice-based event# to compute the real event#
+   */
   int iEventSum = 0;
   iSlice = 0;
   for(std::list<XtcSlice*>::iterator 
@@ -430,6 +437,207 @@ int XtcRun::findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int&
   
   iCalib = iCalibMin;
   iEvent = iEventSum + 1;
+  return 0;
+}
+
+int XtcRun::eventGlobalToSlice( int iGlobalEvent, std::vector<int>& lSliceEvent )
+{
+  lSliceEvent.assign(_slices.size(), 0);
+  struct TSliceJumpInfo
+  {
+    int iNumEvent;
+    int iLowerBound;
+    int iUpperBound;
+    int iCurrentIndex;
+  } infoList[ _slices.size() ];
+  
+  int iNumEventTotal = 0;
+  int iSlice         = 0;
+  for(std::list<XtcSlice*>::iterator 
+    it =  _slices.begin();
+    it != _slices.end();
+    it++, iSlice++) 
+  {
+    infoList[iSlice].iLowerBound = 1;
+    
+    int iError = (*it)->numTotalEvent(infoList[iSlice].iNumEvent);
+    if (iError != 0)
+    {
+      printf("XtcRun::jump(): Cannot get Event# for Slice %d\n", iSlice);
+      return 1;
+    }
+        
+    infoList[iSlice].iUpperBound   = infoList[iSlice].iNumEvent;
+    infoList[iSlice].iCurrentIndex = -1;
+    iNumEventTotal                 += infoList[iSlice].iNumEvent;
+  }
+  if (iGlobalEvent < 0 || iGlobalEvent > iNumEventTotal)
+  {
+    printf("XtcRun::eventGlobalToSlice(): Invalid Event# %d (Max # = %d)\n", iGlobalEvent, iNumEventTotal);
+    return 2;
+  }
+  
+  int iEventAvg  = (int) ( (iGlobalEvent+_slices.size()-1) / _slices.size());   
+  if (iEventAvg < 1)  
+    iEventAvg = 1;
+  else if (iEventAvg > infoList[0].iUpperBound )
+    iEventAvg = infoList[0].iUpperBound;
+  
+  //printf("XtcRun::eventGlobalToSlice(): Input global event# %d iEventAvg %d\n", iGlobalEvent, iEventAvg); //!!debug
+  
+  iSlice = 0;
+  for(std::list<XtcSlice*>::iterator 
+    it =  _slices.begin();
+    it != _slices.end();
+    it++, iSlice++) 
+  {    
+    int iTestIndex = ( ( iSlice == 0 ) ? iEventAvg :
+      (infoList[iSlice].iLowerBound + infoList[iSlice].iUpperBound)/2 );
+    
+    for (; infoList[iSlice].iLowerBound <= infoList[iSlice].iUpperBound;
+      iTestIndex = (infoList[iSlice].iLowerBound + infoList[iSlice].iUpperBound)/2)
+    {
+      infoList[iSlice].iCurrentIndex = iTestIndex;
+      
+      //printf("XtcRun::eventGlobalToSlice(): Testing slice %d index %d\n", iSlice, iTestIndex); //!!debug
+      
+      uint32_t uSeconds, uNanoseconds;
+      int iError = (*it)->getTimeGlobal(iTestIndex, uSeconds, uNanoseconds);
+      if (iError != 0)
+      {
+        printf("XtcRun::eventGlobalToSlice(): Cannot get time for Slice# %d Event# %d\n", iSlice, iTestIndex);
+        return 3;
+      }
+      
+      int iLocalEventSum  = 0;
+      int iSliceQuery     = 0;
+      for(std::list<XtcSlice*>::iterator 
+        itQuery =  _slices.begin();
+        itQuery != _slices.end();
+        itQuery++, iSliceQuery++) 
+      {
+        if (iSliceQuery == iSlice)
+        {
+          iLocalEventSum += iTestIndex-1;
+          continue;
+        }
+        
+        int   iSliceEventQuery  = -1;
+        bool  bExactMatchQuery  = false;
+        bool  bOvertimeSlice    = false;
+        int iError = (*itQuery)->findTimeGlobal(uSeconds, uNanoseconds, iSliceEventQuery, bExactMatchQuery, bOvertimeSlice);
+        if (iError != 0)
+        {
+          if (bOvertimeSlice)
+          {
+            iSliceEventQuery = infoList[iSliceQuery].iNumEvent+1;
+          }
+          else // Abnormal error
+            continue;
+        }        
+        
+        //printf("XtcRun::eventGlobalToSlice(): slice %d has %d earlier L1s\n", iSliceQuery, iSliceEventQuery); //!!debug
+        infoList[iSliceQuery].iCurrentIndex = iSliceEventQuery;        
+        iLocalEventSum += iSliceEventQuery-1;
+      } // itQuery loop
+      
+      ++iLocalEventSum;
+      
+      //printf("XtcRun::eventGlobalToSlice(): resultant global event# %d\n", iLocalEventSum); //!!debug
+      if (iLocalEventSum < iGlobalEvent)
+      {
+        infoList[iSlice].iLowerBound = infoList[iSlice].iCurrentIndex+1;
+        for (int iSliceUpdate = iSlice+1; iSliceUpdate < (int) _slices.size(); iSliceUpdate++ )
+        {
+          if (infoList[iSliceUpdate].iCurrentIndex>infoList[iSliceUpdate].iLowerBound)
+            infoList[iSliceUpdate].iLowerBound = infoList[iSliceUpdate].iCurrentIndex;
+        }
+      }
+      else if (iLocalEventSum > iGlobalEvent)
+      {
+        infoList[iSlice].iUpperBound = infoList[iSlice].iCurrentIndex-1;
+        for (int iSliceUpdate = iSlice+1; iSliceUpdate < (int) _slices.size(); iSliceUpdate++ )
+        {
+          if (infoList[iSliceUpdate].iCurrentIndex-1<infoList[iSliceUpdate].iUpperBound)
+            infoList[iSliceUpdate].iUpperBound = infoList[iSliceUpdate].iCurrentIndex-1;
+        }
+      }
+      else // (iLocalEventSum == iGlobalEvent) : we have found the correct event
+      {  
+        for(int iSliceUpdate = 0;
+            iSliceUpdate < (int) _slices.size();
+            ++iSliceUpdate)
+        {
+          lSliceEvent[iSliceUpdate] = infoList[iSliceUpdate].iCurrentIndex;
+          //printf("XtcRun::eventGlobalToSlice(): Convert Global Event# %d to Slice# %d Event# %d\n",
+          //  iGlobalEvent, iSliceUpdate, lSliceEvent[iSliceUpdate]); //!!debug            
+        }        
+        return 0;        
+      } 
+      
+    } // binary search loop
+  } // for each slice
+  
+  return 4;  
+}
+
+int XtcRun::findNextFiducial(uint32_t uFiducialSearch, int iFidFromEvent, int& iCalib, int& iEvent)
+{
+  std::vector<int> lSliceEvent;
+  int iError = eventGlobalToSlice(iFidFromEvent, lSliceEvent);
+  if (iError != 0)
+  {
+    printf("XtcRun::findNextFiducial(): Failed to convert Global Event# %d to slice events\n", iFidFromEvent);
+    return 1;
+  }
+  
+  int      iSlice       = 0;
+  uint32_t uSeconds     = 0;
+  uint32_t uNanoseconds = 0;
+  for(std::list<XtcSlice*>::iterator 
+    it =  _slices.begin();
+    it != _slices.end();
+    it++, iSlice++) 
+  {
+    XtcSlice* pSlice      = *it;
+    int       iSliceEvent = -1;
+    int iError            = pSlice->findNextFiducial(uFiducialSearch, lSliceEvent[iSlice], iSliceEvent);
+    
+    if (iError == 0) // The event with the input timestamp has been found
+    {
+      uint32_t  uSecondsCur     = 0;
+      uint32_t  uNanosecondsCur = 0;
+      int iError = pSlice->getTimeGlobal(iSliceEvent, uSecondsCur, uNanosecondsCur);
+      if (iError != 0)
+      {
+        printf("XtcRun::findNextFiducial(): Cannot get time for Slice# %d\n", iSlice);
+        return 2;
+      }
+
+      if 
+      ( 
+        (uSeconds == 0 && uNanoseconds == 0) || 
+         uSecondsCur < uSeconds || 
+        (uSecondsCur == uSeconds && uNanosecondsCur < uNanoseconds)
+      )
+      {
+        uSeconds     = uSecondsCur;
+        uNanoseconds = uNanosecondsCur;
+      }      
+    }
+  }
+  
+  if (uSeconds == 0 && uNanoseconds == 0)
+    return 3;
+    
+  bool bExactMatch = false;
+  bool bOvertime   = false;
+  iError = findTime(uSeconds, uNanoseconds, iCalib, iEvent, bExactMatch, bOvertime);
+  if (iError != 0)
+  {
+    printf("XtcRun::findNextFiducial(): Failed to find event with the searched timestamp of input fiducial\n");
+    return 4;
+  }      
   return 0;
 }
 

@@ -1,6 +1,7 @@
 #include "AcqWaveformHandler.hh"
 
 #include "ami/data/EntryWaveform.hh"
+#include "ami/data/EntryRef.hh"
 #include "ami/data/ChannelID.hh"
 #include "pdsdata/acqiris/ConfigV1.hh"
 #include "pdsdata/acqiris/DataDescV1.hh"
@@ -38,9 +39,15 @@ AcqWaveformHandler::~AcqWaveformHandler()
 {
 }
 
-unsigned AcqWaveformHandler::nentries() const { return _nentries; }
+unsigned AcqWaveformHandler::nentries() const { return _nentries>1 ? _nentries+1 : 1; }
 
-const Entry* AcqWaveformHandler::entry(unsigned i) const { return _entry[i]; }
+const Entry* AcqWaveformHandler::entry(unsigned i) const 
+{
+  if (i<_nentries)
+    return _entry[i];
+  else
+    return _ref; 
+}
 
 void AcqWaveformHandler::reset() { _nentries = 0; }
 
@@ -52,9 +59,9 @@ void AcqWaveformHandler::_configure(const void* payload, const Pds::ClockTime& t
   const Pds::Acqiris::HorizV1& h = c.horiz();
   unsigned channelMask = c.channelMask();
   unsigned channelNumber = 0;
+  const Pds::DetInfo& det = static_cast<const Pds::DetInfo&>(info());
   for(unsigned k=0; channelMask!=0; k++) {
     if (channelMask&1) {
-      const Pds::DetInfo& det = static_cast<const Pds::DetInfo&>(info());
       DescWaveform desc(det, channelNumber,
 			ChannelID::name(det,channelNumber),
 			"Time [s]","Voltage [V]",
@@ -64,6 +71,16 @@ void AcqWaveformHandler::_configure(const void* payload, const Pds::ClockTime& t
     }
     channelMask >>= 1;
   }
+
+  channelMask = c.channelMask() << 16;
+  if (channelMask & (channelMask-1)) {
+    char buff[32];
+    sprintf(buff,"%p",_entry);
+    _ref = new EntryRef(DescRef(det,channelMask,
+                                ChannelID::name(det,channelMask),buff));
+    _ref->set(_entry);
+  }
+
   _config = c;
 }
 
@@ -91,6 +108,9 @@ void AcqWaveformHandler::_event    (const void* payload, const Pds::ClockTime& t
     entry->valid(t);
     d = d->nextChannel(h);
   }
+
+  if (_nentries>1)
+    _ref->valid(t);
 }
 
 void AcqWaveformHandler::_damaged() 
@@ -100,4 +120,7 @@ void AcqWaveformHandler::_damaged()
     EntryWaveform* entry = _entry[i];
     entry->invalid();
   }
+
+  if (_nentries>1)
+    _ref->invalid();
 }

@@ -7,6 +7,9 @@
 #include "pdsdata/ipimb/ConfigV2.hh"
 #include "pdsdata/ipimb/DataV2.hh"
 #include "pdsdata/lusi/IpmFexV1.hh"
+#include "pdsdata/lusi/PimImageConfigV1.hh"
+#include "pdsdata/pulnix/TM6740ConfigV2.hh"
+#include "pdsdata/camera/FrameV1.hh"
 #include "pdsdata/xtc/DetInfo.hh"
 
 typedef Pds::Ipimb::DataV1   IpimbDataV1;
@@ -124,6 +127,15 @@ public:
 };
 
 typedef BldDataIpimbV1 BldDataIpimb;
+
+class BldDataPimV1
+{
+public:
+  enum { version=1 };
+  Pulnix::TM6740ConfigV2   camConfig;
+  Lusi::PimImageConfigV1   pimConfig;
+  Camera::FrameV1          frame;
+};
 
 #pragma pack()
 }

@@ -19,6 +19,7 @@ VSocket::VSocket() :
 
 VSocket::~VSocket()
 {
+  delete[] _iovs;
 }
 
 int VSocket::readv(const iovec* iov, int iovcnt)
@@ -36,7 +37,7 @@ int VSocket::readv(const iovec* iov, int iovcnt)
     _rhdr.msg_iov    = _iovs;
     _rhdr.msg_iovlen = iovcnt+1;
     _peeked = false;
-    bytes = -sizeof(Message);
+    bytes = -int(sizeof(Message));
   }
   else {
     _rhdr.msg_iov    = const_cast<iovec*>(iov);

@@ -6,9 +6,10 @@
  */
 
 #include "pdsdata/xamps/ChannelV1.hh"
+#include <stdio.h>
+#include <string.h>
 
 using namespace Pds::Xamps;
-#include <stdio.h>
 
 class BitFieldV1 {
   public:
@@ -29,6 +30,18 @@ static uint32_t _chfoo[][3] = {
 };
 
 static BitFieldV1* _chs = (BitFieldV1*) _chfoo;
+
+static bool           namesAreInitialized = false;
+
+ChannelV1::ChannelV1() {
+  if (!namesAreInitialized){
+    int e;
+    for (e=0; e< (int)ChannelV1::NumberOfChannelBitFields; e++) {
+      name((ChannelV1::ChannelBitFields)e, true);
+    }
+    namesAreInitialized = true;
+  }
+}
 
 uint32_t        ChannelV1::get      (ChannelBitFields e) {
   if (e >= ChannelV1::NumberOfChannelBitFields) {
@@ -76,13 +89,20 @@ uint32_t            ChannelV1::defaultValue(ChannelBitFields e) {
   return _chs[e].defaultValue & _chs[e].mask;
 }
 
-char*      ChannelV1::name     (ChannelBitFields e) {
-  static char* _chNames[ChannelV1::NumberOfChannelBitFields + 1] = {
-      "TrimBits             ",              //    TrimBits,
-      "EnableTest           ",            //    EnableTest,
-      "ChannelMask          ",           //    ChannelMask,
-      "ChannelSelectorEnable", //    ChannelSelectorEnable
-      "------INVALID--------"            //    NumberOfChannelBitFields
+char*      ChannelV1::name     (ChannelBitFields e, bool init) {
+  static char _chNames[ChannelV1::NumberOfChannelBitFields + 1][120] = {
+      {"TrimBits             "},              //    TrimBits,
+      {"EnableTest           "},            //    EnableTest,
+      {"ChannelMask          "},           //    ChannelMask,
+      {"ChannelSelectorEnable"}, //    ChannelSelectorEnable
+      {"------INVALID--------"}            //    NumberOfChannelBitFields
   };
+  static char range[60];
+
+  if (init && (e < ChannelV1::NumberOfChannelBitFields)) {
+    sprintf(range, "  (%u..%u)    ", 0, _chs[e].mask);
+    strncat(_chNames[e], range, 40);
+  }
+
   return e < ChannelV1::NumberOfChannelBitFields ? _chNames[e] : _chNames[ChannelV1::NumberOfChannelBitFields];
 }

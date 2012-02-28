@@ -56,7 +56,14 @@ const char* TypeId::name(Type type)
     "AcqTDCData",
     "Index",
     "XampsConfig",
-    "XampsElement"
+    "XampsElement",
+    "Cspad2x2Element",
+    "SharedPIM",
+    "Cspad2x2Config",
+    "FexampConfig",
+    "FexampElement",
+    "Gsc16aiConfig",
+    "Gsc16aiData"
   };
   return (type < NumberOf ? _names[type] : "-Invalid-");
 }

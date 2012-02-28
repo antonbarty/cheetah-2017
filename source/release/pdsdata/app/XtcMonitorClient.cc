@@ -26,19 +26,25 @@ enum {PERMS_IN  = S_IRUSR|S_IRGRP|S_IROTH};
 enum {PERMS_OUT  = S_IWUSR|S_IWGRP|S_IWOTH};
 enum {OFLAGS = O_RDONLY};
 
-static mqd_t _openQueue(const char* name, unsigned flags, unsigned perms)
+static mqd_t _openQueue(const char* name, unsigned flags, unsigned perms,
+                        bool lwait=true)
 {
   struct mq_attr mymq_attr;
-  mqd_t queue = mq_open(name, flags, perms, &mymq_attr);
-  if (queue == (mqd_t)-1) {
-    char b[128];
-    sprintf(b,"mq_open %s",name);
-    perror(b);
-    sleep(1);
+  mqd_t queue;
+  while(1) {
+    queue = mq_open(name, flags, perms, &mymq_attr);
+    if (queue == (mqd_t)-1) {
+      char b[128];
+      sprintf(b,"mq_open %s",name);
+      perror(b);
+      sleep(1);
+      if (!lwait) break;
+    }
+    else {
+      printf("Opened queue %s (%d)\n",name,queue);
+      break;
+    }
   }
-  else
-    printf("Opened queue %s (%d)\n",name,queue);
-
   return queue;
 }
 
@@ -92,7 +98,7 @@ namespace Pds {
 	      if (oq[++ioq]==-1) {
 		char qname[128];
 		XtcMonitorMsg::eventOutputQueue(_tag, ioq, qname);
-		oq[ioq] = _openQueue(qname, O_WRONLY, PERMS_OUT);
+		oq[ioq] = _openQueue(qname, O_WRONLY, PERMS_OUT, false);
 	      }
 	    }
 	}
@@ -137,13 +143,9 @@ int XtcMonitorClient::run(const char * tag, int tr_index, int ev_index) {
   memset(myOutputEvQueues, -1, sizeof(myOutputEvQueues));
 
   XtcMonitorMsg::eventOutputQueue(tag,ev_index,qname);
-  do {  // make a few tries to open the first queue
-    myOutputEvQueues[ev_index] = _openQueue(qname, O_WRONLY, PERMS_OUT);
-    if (myOutputEvQueues[ev_index] == (mqd_t)-1) 
-      error++;
-    else
-      error = 0;
-  } while (error && (error < 4));
+  myOutputEvQueues[ev_index] = _openQueue(qname, O_WRONLY, PERMS_OUT);
+  if (myOutputEvQueues[ev_index] == (mqd_t)-1)
+    error++;
 
   XtcMonitorMsg::eventInputQueue(tag,ev_index,qname);
   mqd_t myInputEvQueue = _openQueue(qname, O_RDONLY, PERMS_IN);

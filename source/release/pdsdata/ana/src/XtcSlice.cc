@@ -2,12 +2,6 @@
 #include <errno.h>
 
 #include "pdsdata/ana/XtcSlice.hh"
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-
 
 namespace Pds
 {  
@@ -36,6 +30,8 @@ XtcSlice::~XtcSlice()
   _close();
   
   _index.close();      
+
+  delete _pool;
 }
 
 bool XtcSlice::add_file(std::string fname) 
@@ -120,7 +116,7 @@ void XtcSlice::_close(bool bForceWait)
     
     pthread_join(_threadID,NULL);
     
-    delete _lastdg; _lastdg = NULL;    
+    delete[] _lastdg; _lastdg = NULL;    
     delete _nextdg; _nextdg = NULL;
     
     delete _pool;
@@ -143,7 +139,7 @@ Result XtcSlice::_openChunk(int iChunk, uint64_t i64Offset)
     itChunk != _chunks.end();
     ++itChunk)
   {
-    unsigned int uFind = itChunk->find(sChunk);
+    size_t uFind = itChunk->find(sChunk);
     if (uFind == std::string::npos)
       continue;
       
@@ -193,8 +189,12 @@ Result XtcSlice::_next()
           std::string fname = _current->substr(0,chunkPosition) + std::string(chunkBuff) +
             _current->substr(chunkPosition+2);
 
-          struct stat _stat;
-          if (stat(fname.c_str(),&_stat)==0) {
+          //  Can't use stat here since it fails on files > 2GB
+          //struct stat _stat;
+          //if (stat(fname.c_str(),&_stat)==0) {
+          int fd = ::open(fname.c_str(),O_LARGEFILE,O_RDONLY);
+          if (fd != -1) {
+            ::close(fd);
             _chunks.push_back(fname);
             _current = _chunks.begin();
             while( *_current != fname )
@@ -315,6 +315,28 @@ Result XtcSlice::numEventInCalib(int calib, int& iNumEvents)
   return OK;
 }
 
+Result XtcSlice::numTotalEvent(int& iNumTotalEvents)
+{
+  iNumTotalEvents = -1;
+  
+  _loadIndex();
+  if ( !_index.isValid() )
+  {
+    printf( "XtcSlice::numTotalEvent(): No index file found for %s.\n", 
+      _current->c_str() );
+    return Error;
+  }
+  
+  int iError    = _index.numL1Event(iNumTotalEvents);    
+  if ( iError != 0 )
+  {
+    printf( "XtcSlice::numTotalEvent(): Query L1 Event# failed\n" );
+    return Error;
+  }
+  
+  return OK;  
+}
+
 Result XtcSlice::getTime(int calib, int event, uint32_t& uSeconds, uint32_t& uNanoseconds)
 {
   uSeconds      = 0;
@@ -338,6 +360,28 @@ Result XtcSlice::getTime(int calib, int event, uint32_t& uSeconds, uint32_t& uNa
     return Error;
     
   iError = _index.time(iGlobalEvent, uSeconds, uNanoseconds);
+  if ( iError != 0 )
+    return Error;    
+  
+  return OK;
+}
+
+Result XtcSlice::getTimeGlobal(int iSliceEvent, uint32_t& uSeconds, uint32_t& uNanoseconds)
+{
+  uSeconds      = 0;
+  uNanoseconds  = 0;
+  
+  _loadIndex();
+  if ( !_index.isValid() )
+  {
+    printf( "XtcSlice::getTimeGlobal(): No index file found for %s. Cannot do the jump\n", 
+      _current->c_str() );
+    return Error;
+  }
+    
+  // adjust indexes: from 1-based index to 0-based index
+  int iSliceEventAdj = iSliceEvent - 1;    
+  int iError = _index.time(iSliceEventAdj, uSeconds, uNanoseconds);
   if ( iError != 0 )
     return Error;    
   
@@ -433,7 +477,7 @@ Result XtcSlice::findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib,
   _loadIndex();
   if ( !_index.isValid() )
   {
-    printf( "XtcSlice::jump(): No index file found for %s. Cannot do the jump\n", 
+    printf( "XtcSlice::findTime(): No index file found for %s.\n", 
       _current->c_str() );
     return Error;
   }
@@ -450,6 +494,53 @@ Result XtcSlice::findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib,
   return OK;
 }
 
+Result XtcSlice::findTimeGlobal(uint32_t uSeconds, uint32_t uNanoseconds, int& iSliceEvent, bool& bExactMatch, bool& bOvertime)
+{
+  iSliceEvent = -1;
+  
+  _loadIndex();
+  if ( !_index.isValid() )
+  {
+    printf( "XtcSlice::findTimeGlobal(): No index file found for %s.\n", 
+      _current->c_str() );
+    return Error;
+  }
+  
+  int iSliceEventAdj = -1;
+  int iError = 
+    _index.eventTimeToGlobal(uSeconds, uNanoseconds, iSliceEventAdj, bExactMatch, bOvertime);
+  if ( iError != 0 )
+    return Error;
+
+  iSliceEvent = iSliceEventAdj + 1;    
+    
+  return OK;
+}
+
+Result XtcSlice::findNextFiducial(uint32_t uFiducial, int iFromEvent, int& iEvent)
+{
+  iEvent = -1;
+  
+  _loadIndex();
+  if ( !_index.isValid() )
+  {
+    printf( "XtcSlice::findNextFiducial(): No index file found for %s. Cannot do the jump\n", 
+      _current->c_str() );
+    return Error;
+  }
+  
+  int iFromEventAdj = iFromEvent - 1;
+  int iEventAdj     = -1;
+  int iError = 
+    _index.eventNextFiducialToGlobal(uFiducial, iFromEventAdj, iEventAdj);
+  if ( iError != 0 )
+    return Error;
+
+  iEvent = iEventAdj + 1;    
+    
+  return OK;
+}
+
 void* readSlice(void* arg)
 {
   XtcSlice* s = (XtcSlice*)arg;
@@ -460,24 +551,29 @@ void* readSlice(void* arg)
 static int genIndexFromXtcFilename( const std::string& strXtcFilename, std::string& strIndexFilename )
 { 
   strIndexFilename.clear();
-  unsigned int iFindPos = strXtcFilename.rfind(".xtc");
+  size_t iFindPos = strXtcFilename.rfind(".xtc");
   
   if (iFindPos == std::string::npos )
     return 1;
     
-  strIndexFilename = strXtcFilename.substr(0, iFindPos) + ".idx";  
-  
-  struct ::stat statFile;
-  int iError = ::stat( strIndexFilename.c_str(), &statFile );
+  strIndexFilename = strXtcFilename.substr(0, iFindPos) + ".xtc.idx";  
+    
+  struct ::stat64 statFile;
+  int iError = ::stat64( strIndexFilename.c_str(), &statFile );
   if ( iError != 0 )
   {
-    std::string strIndexFilenameSubDir = "index/" + strIndexFilename;
-    iError = ::stat( strIndexFilenameSubDir.c_str(), &statFile );    
+    size_t iFindDir = strXtcFilename.rfind("/");
+    if (iFindDir == std::string::npos )
+      strIndexFilename = "index/" + strXtcFilename + ".idx";
+    else
+      strIndexFilename = strXtcFilename.substr(0, iFindDir+1) + "index/" + strXtcFilename.substr(iFindDir+1) + ".idx";    
+    
+    iError = ::stat64( strIndexFilename.c_str(), &statFile );    
     if ( iError != 0 )
     {
       strIndexFilename.clear();
       return 2;
-    }
+    }    
   }
   
   //printf( "Using %s as the index file for analyzing %s\n", 

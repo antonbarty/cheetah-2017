@@ -58,24 +58,27 @@ public:
 void usage(char *progname)
 {
   printf( 
-    "Usage:  %s  [-f <xtc filename>] [-i <index>] [-b <begin L1 event#>] "
-    "[-n <output L1 event#>] [-c <begin calib cycle#>] [-o <offset>] [-t <time>] [-h]\n"
+    "Usage:  %s  [-f <xtc filename>] [-i <index>] [-o <offset>] "
+    "[-n <output L1 event#>] [-j <begin L1 event#>] [-y <begin calib cycle#>] [-t <time>]" 
+    "[-u <fiducial>[,<event>]] [-h]\n"
     "  Options:\n"
     "    -h                       Show usage.\n"
     "    -f <xtc filename>        Set xtc filename\n"
     "    -i <index filename>      Set index filename\n"
-    "    -b <begin L1 event#>     Set begin L1 event#\n"
     "    -n <output L1 event#>    Set L1 event# for ouput\n"
-    "    -c <begin calib cycle#>  Set begin calib cycle#\n"
     "    -o <offset>              Start analysis from offset\n"
-    "    -t <time>                Go to the event at <time>\n",    
+    "    -j <begin L1 event#>     Set begin L1 event#\n"
+    "    -y <begin calib cycle#>  Set begin calib cycle#\n"
+    "    -t <time>                Go to the event at <time>\n"
+    "    -u <fiducial>[,<event>]  Go to the event with fiducial <fiducial>, searching from <event>\n"
+    ,    
     progname
   );
 }
 
 int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename, 
   int iBeginL1Event, int iNumL1Event, int iBeginCalib, 
-  int64_t i64OffsetStart, char* sTime );
+  int64_t i64OffsetStart, char* sTime, uint32_t uFiducialSearch, int iFidFromEvent );
 
 int main(int argc, char *argv[])
 {
@@ -86,9 +89,11 @@ int main(int argc, char *argv[])
   int           iBeginCalib     = 0;
   int64_t       i64OffsetStart  = 0;
   char*         sTime           = NULL;
+  uint32_t      uFiducialSearch = -1;
+  int           iFidFromEvent   = 0;
 
   int c;
-  while ((c = getopt(argc, argv, "hf:i:b:n:c:o:t:")) != -1)
+  while ((c = getopt(argc, argv, "hf:i:n:o:j:y:t:u:")) != -1)
   {
     switch (c)
     {
@@ -101,20 +106,28 @@ int main(int argc, char *argv[])
     case 'i':
       sIndexFilename= optarg;
       break;
-    case 'b':
+    case 'j':
       iBeginL1Event = strtol(optarg, NULL, 0);
+      break;
+    case 'y':
+      iBeginCalib   = strtol(optarg, NULL, 0);
       break;
     case 'n':
       iNumL1Event   = strtol(optarg, NULL, 0);
-      break;
-    case 'c':
-      iBeginCalib   = strtol(optarg, NULL, 0);
       break;
     case 'o':
       i64OffsetStart= strtoll(optarg, NULL, 0);
       break;
     case 't':
       sTime         = optarg;
+      break;
+    case 'u':
+      uFiducialSearch = strtoul(optarg, NULL, 0);
+      {
+      char* sNextParam = strchr(optarg,',');
+      if (sNextParam != NULL)
+        iFidFromEvent = strtoul(sNextParam+1, NULL, 0);
+      }      
       break;
     default:
       printf( "Unknown option: -%c", c );
@@ -133,7 +146,8 @@ int main(int argc, char *argv[])
     return 0;
   }
     
-  return xtcAnalyze( sXtcFilename, sIndexFilename, iBeginL1Event, iNumL1Event, iBeginCalib, i64OffsetStart, sTime );
+  return xtcAnalyze( sXtcFilename, sIndexFilename, iBeginL1Event, iNumL1Event, iBeginCalib, i64OffsetStart, 
+    sTime, uFiducialSearch, iFidFromEvent);
 }
 
 int printIndexSummary(const Index::IndexFileReader& indexFileReader)
@@ -253,7 +267,8 @@ int printEvent(Index::IndexFileReader& indexFileReader, int iEvent)
   return 0;  
 }
 
-int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, char* sTime, int fdXtc, 
+int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, 
+  char* sTime, uint32_t uFiducialSearch, int iFidFromEvent, int fdXtc, 
   int& iGlobalEvent, int& iCalib, int& iCalibEvent)
 {
   iGlobalEvent  = -1;
@@ -330,7 +345,7 @@ int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, ch
   
   printIndexSummary(indexFileReader);
 
-  if ( sTime == NULL )
+  if ( iBeginL1Event != 0 || iBeginCalib != 0 )
   {
     //{//!!debug 
     //  Pds::Index::IndexChunkReader indexChunk;
@@ -353,7 +368,7 @@ int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, ch
       return 5;
     }
   }
-  else
+  else if ( sTime != NULL )
   {        
     bool bExactMatch = false;
     bool bOvertime   = false;
@@ -384,9 +399,20 @@ int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, ch
       else
         printf("Failed to jump to time %s\n", sTime);
       
-      return 6;
+      return 7;
     }    
   }  
+  else if ( uFiducialSearch != (uint32_t) -1 )
+  {
+    printf("Searching for fiducial 0x%x  eventFrom %d\n", uFiducialSearch, iFidFromEvent);
+    iError = 
+      indexFileReader.gotoNextFiducialInXtc( uFiducialSearch, iFidFromEvent, fdXtc, iGlobalEvent);
+    if ( iError != 0 )
+    {
+      printf("Failed to jump to next fiducial %x from event %d\n", uFiducialSearch, iFidFromEvent);
+      return 6;
+    }    
+  }
 
   indexFileReader.eventGlobalToCalib(iGlobalEvent, iCalib, iCalibEvent);    
   printf( "Going to Calib# %d Event# %d (global event# %d)\n", iCalib, iCalibEvent, iGlobalEvent );
@@ -398,15 +424,15 @@ int gotoEvent(const char* sIndexFilename, int iBeginL1Event, int iBeginCalib, ch
 
 int genIndexFromXtcFilename( const string& strXtcFilename, string& strIndexFilename )
 {  
-  unsigned int iFindPos = strXtcFilename.rfind(".xtc");
+  size_t iFindPos = strXtcFilename.rfind(".xtc");
   
   if (iFindPos == string::npos )
     return 1;
     
-  strIndexFilename = strXtcFilename.substr(0, iFindPos) + ".idx";  
+  strIndexFilename = strXtcFilename.substr(0, iFindPos) + ".xtc.idx";  
   
-  struct ::stat statFile;
-  int iError = ::stat( strIndexFilename.c_str(), &statFile );
+  struct ::stat64 statFile;
+  int iError = ::stat64( strIndexFilename.c_str(), &statFile );
   if ( iError != 0 )
   {
     strIndexFilename.clear();
@@ -444,7 +470,7 @@ int updateEvr(const Xtc& xtc)
 
 int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename, 
   int iBeginL1Event, int iNumL1Event, int iBeginCalib, 
-  int64_t i64OffsetStart, char* sTime )
+  int64_t i64OffsetStart, char* sTime, uint32_t uFiducialSearch, int iFidFromEvent )
 {    
   int fdXtc = open(sXtcFilename, O_RDONLY | O_LARGEFILE);
   if (fdXtc < 0)
@@ -457,7 +483,7 @@ int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename,
   int iCalib      = -1;
   int iCalibEvent = 0;
   int iEndL1Event = -1;
-  if ( iBeginL1Event != 0 || iBeginCalib != 0 || sTime != NULL )
+  if (iBeginL1Event != 0 || iBeginCalib != 0 || sTime != NULL || uFiducialSearch != (uint32_t) -1)
   {
     string strIndexFilename;
     
@@ -473,7 +499,8 @@ int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename,
     }
           
     int iGlobalEventUpdate = -1;
-    int iError = gotoEvent(sIndexFilename, iBeginL1Event, iBeginCalib, sTime, fdXtc, iGlobalEventUpdate, iCalib, iCalibEvent);
+    int iError = gotoEvent(sIndexFilename, iBeginL1Event, iBeginCalib, sTime, uFiducialSearch, iFidFromEvent,
+      fdXtc, iGlobalEventUpdate, iCalib, iCalibEvent);
     if ( iError == 0 )
       iGlobalEvent = iGlobalEventUpdate;      
   }  

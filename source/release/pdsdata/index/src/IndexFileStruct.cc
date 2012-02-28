@@ -1,12 +1,5 @@
 #include "pdsdata/index/IndexList.hh"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-
-
 namespace Pds
 {  
 namespace Index
@@ -41,7 +34,7 @@ IndexFileL1NodeV1::IndexFileL1NodeV1(const L1AcceptNode& node) :
 {  
 }
 
-int convertTimeStringToSeconds( char* sTime, uint32_t& uSeconds, uint32_t& uNanoseconds)
+int convertTimeStringToSeconds(const char* sTime, uint32_t& uSeconds, uint32_t& uNanoseconds)
 {  
   uSeconds      = 0;
   uNanoseconds  = 0;

@@ -1,5 +1,6 @@
 #include "pdsdata/xamps/ConfigV1.hh"
 #include <stdio.h>
+#include <string.h>
 
 using namespace Pds::Xamps;
 
@@ -36,6 +37,18 @@ static uint32_t _regsfoo[][2] = {
 };
 
 static RegisterV1* _r = (RegisterV1*) _regsfoo;
+
+static bool           namesAreInitialized = false;
+
+ConfigV1::ConfigV1() {
+  if (!namesAreInitialized){
+    int r;
+    for (r=0; r< (int)ConfigV1::NumberOfRegisters; r++) {
+      name((ConfigV1::Registers)r, true);
+    }
+    namesAreInitialized = true;
+  }
+}
 
 uint32_t            ConfigV1::get      (Registers r) {
   if (r >= ConfigV1::NumberOfRegisters) {
@@ -76,31 +89,38 @@ uint32_t            ConfigV1::defaultValue(Registers r) {
   }
   return _r[r].defaultValue & _r[r].mask;
 }
-char*               ConfigV1::name     (Registers r) {
-  static char* _regsNames[NumberOfRegisters+1] = {
-      // NB if these are to be included they should be uncommented ConfigV1.cc/hh and XampsConfigurator.cc
-    "SC_T0          ",            //      SC_T0,
-    "SC_T1          ",            //      SC_T1,
-    "SC_T2          ",            //      SC_T2,
-    "ROWCLK_T0      ",        //      ROWCLK_T0,
-    "TRANS_GATE_T0  ",    //      TRANS_GATE_T0,
-    "MCLK_T0        ",          //      MCLK_T0,
-    "EXPOSURE_TIME  ",    //      EXPOSURE_TIME,
+char*               ConfigV1::name     (Registers r, bool init) {
+  static char _regsNames[NumberOfRegisters+1][120] = {
+    {"SC_T0          "},  //      SC_T0,
+    {"SC_T1          "},  //      SC_T1,
+    {"SC_T2          "},  //      SC_T2,
+    {"ROWCLK_T0      "},  //      ROWCLK_T0,
+    {"TRANS_GATE_T0  "},  //      TRANS_GATE_T0,
+    {"MCLK_T0        "},  //      MCLK_T0,
+    {"EXPOSURE_TIME  "},  //      EXPOSURE_TIME,
                         ////    RESERVED,
-    "NUM_ROWS",         //      NUM_ROWS,
-    "TESTMODE       ",         //      TESTMODE,
-    "HV_SETPOINT    ",      //      HV_SETPOINT,
-    "DET_READOUT_DLY",  //      DET_READOUT_DLY,
-    "PGP_READOUT_DLY",  //      PGP_READOUT_DLY,
-    "Voff           ",             //      Voff,
-    "ASIC_APS       ",         //      ASIC_APS,
-    "SW_HI          ",            //      SW_HI,
-    "SW_LO          ",            //      SW_LO,
-    "DET_CP         ",           //      DET_CP,
-    "DET_PIX        ",          //      DET_PIX,
-    "DET_SS         ",           //      DET_SS,
-    "----INVALID----",      //      NumberOfRegisters
+    {"NUM_ROWS       "},  //      NUM_ROWS,
+    {"TESTMODE       "},  //      TESTMODE,
+    {"HV_SETPOINT    "},  //      HV_SETPOINT,
+    {"DET_READOUT_DLY"},  //      DET_READOUT_DLY,
+    {"PGP_READOUT_DLY"},  //      PGP_READOUT_DLY,
+    {"Voff           "},  //      Voff,
+    {"ASIC_APS       "},  //      ASIC_APS,
+    {"SW_HI          "},  //      SW_HI,
+    {"SW_LO          "},  //      SW_LO,
+    {"DET_CP         "},  //      DET_CP,
+    {"DET_PIX        "},  //      DET_PIX,
+    {"DET_SS         "},  //      DET_SS,
+    {"----INVALID----"}   //      NumberOfRegisters
   };
+
+  static char range[60];
+
+  if (init && (r < ConfigV1::NumberOfRegisters)) {
+    sprintf(range, "  (%u..%u)    ", 0, _r[r].mask);
+    strncat(_regsNames[r], range, 40);
+  }
+
   return r < ConfigV1::NumberOfRegisters ? _regsNames[r] : _regsNames[ConfigV1::NumberOfRegisters];
 
 };

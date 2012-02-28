@@ -50,7 +50,7 @@ void PrincetonHandler::_configure(const void* payload, const Pds::ClockTime& t)
   columns = (columns+ppb-1)/ppb;
   rows    = (rows   +ppb-1)/ppb;
   const Pds::DetInfo& det = static_cast<const Pds::DetInfo&>(info());
-  DescImage desc(det, 0, ChannelID::name(det),
+  DescImage desc(det, (unsigned)0, ChannelID::name(det),
 		 columns, rows, ppb, ppb);
   _config = c;
   _entry  = new EntryImage(desc);

@@ -36,6 +36,10 @@ public:
   int eventTimeToGlobal (uint32_t uSeconds, uint32_t uNanoseconds, int& iGlobalEvent, bool& bExactMatch, bool& bOvertime) const;
   int eventTimeToCalib  (uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime) const;
   int eventTimeToChunk  (uint32_t uSeconds, uint32_t uNanoseconds, int& iChunk, int& iEvent, bool& bExactMatch, bool& bOvertime) const;
+
+  int eventNextFiducialToChunk (uint32_t uFiducial, int iFromGlobalEvent, int& iChunk, int& iEvent);  
+  int eventNextFiducialToGlobal(uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent);
+  int eventNextFiducialToCalib (uint32_t uFiducial, int iFromGlobalEvent, int& iCalib, int& iEvent);
   
   int gotoEvent         (int iCalib, int iEvent, int& iChunk, int64_t& i64Offset, int& iGlobalEvent);
   

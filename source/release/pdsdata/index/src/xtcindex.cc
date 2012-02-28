@@ -8,16 +8,6 @@
 #include "pdsdata/index/XtcIterL1Accept.hh"
 #include "pdsdata/index/IndexList.hh"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <unistd.h>
-
-
-
 using namespace Pds;
 using Index::XtcIterL1Accept;
 using Index::IndexList;

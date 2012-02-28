@@ -53,6 +53,13 @@ namespace Pds {
       Id_Index,
       Id_XampsConfig,
       Id_XampsElement,
+      Id_Cspad2x2Element,
+      Id_SharedPim,
+      Id_Cspad2x2Config,
+      Id_FexampConfig,
+      Id_FexampElement,
+      Id_Gsc16aiConfig,
+      Id_Gsc16aiData,
       NumberOf};
 
     TypeId() {}

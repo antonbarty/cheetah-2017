@@ -44,6 +44,7 @@
 #include "pdsdata/princeton/ConfigV1.hh"
 #include "pdsdata/princeton/FrameV1.hh"
 #include "pdsdata/princeton/InfoV1.hh"
+#include "pdsdata/cspad/MiniElementV1.hh"
 #include "pdsdata/cspad/ElementV1.hh"
 #include "pdsdata/cspad/ConfigV1.hh"
 #include "pdsdata/lusi/IpmFexConfigV1.hh"
@@ -300,6 +301,9 @@ public:
   }
   void process(const DetInfo&, const Princeton::InfoV1&) {
     printf("*** Processing Princeton InfoV1 object\n");
+  }
+  void process(const DetInfo&, const CsPad::MiniElementV1&) {
+    printf("*** Processing CsPad MiniElementV1 object\n");
   }
   void process(const DetInfo&, const CsPad::ElementV1&) {
     printf("*** Processing CsPad ElementV1 object\n");
@@ -583,6 +587,11 @@ public:
     case (TypeId::Id_PrincetonInfo) :
     {
       process(info, *(const Princeton::InfoV1*)(xtc->payload()));
+      break;
+    }    
+    case (TypeId::Id_Cspad2x2Element) :
+    {
+      process(info, *(const CsPad::MiniElementV1*)(xtc->payload()));
       break;
     }    
     case (TypeId::Id_CspadElement) :

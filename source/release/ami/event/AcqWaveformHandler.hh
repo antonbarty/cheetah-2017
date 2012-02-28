@@ -8,6 +8,7 @@
 
 namespace Ami {
   class EntryWaveform;
+  class EntryRef;
 
   class AcqWaveformHandler : public EventHandler {
   public:
@@ -30,6 +31,7 @@ namespace Ami {
     enum { MaxEntries=32 };
     unsigned       _nentries;    
     EntryWaveform* _entry[MaxEntries];
+    EntryRef*      _ref;
   };
 };
 

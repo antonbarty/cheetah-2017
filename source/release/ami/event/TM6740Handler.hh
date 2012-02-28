@@ -9,7 +9,7 @@ namespace Ami {
   class TM6740Handler : public FrameHandler {
   public:
     TM6740Handler(const Pds::DetInfo& info);
-  private:
+  public:
     void   _configure(Pds::TypeId, 
 		      const void* payload, const Pds::ClockTime& t);
     void   _configure(const void* payload, const Pds::ClockTime& t);

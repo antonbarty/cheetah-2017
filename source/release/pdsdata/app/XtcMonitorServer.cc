@@ -266,11 +266,13 @@ XtcMonitorServer::Result XtcMonitorServer::events(Dgram* dg)
 
     sem_post(&_sem);
 
-    //
-    //  Steal all event buffers from the clients
-    //
-    for(unsigned i=0; i<_numberOfClients; i++)
-      _moveQueue(_myOutputEvQueue[i], _myInputEvQueue);
+    if (dgrm.seq.service() == TransitionId::Enable) {
+      //
+      //  Steal all event buffers from the clients
+      //
+      for(unsigned i=0; i<_numberOfClients; i++)
+        _moveQueue(_myOutputEvQueue[i], _myInputEvQueue);
+    }
 
     //
     //  Broadcast the transition to all listening clients

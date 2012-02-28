@@ -16,7 +16,7 @@ namespace Pds {
 
     class ChannelV1 {
       public:
-        ChannelV1() {};
+        ChannelV1();
         ~ChannelV1() {};
         enum ChannelBitFields {
           TrimBits,
@@ -28,7 +28,7 @@ namespace Pds {
         uint32_t              get      (ChannelBitFields);
         const uint32_t        get      (ChannelBitFields) const;
         uint32_t              set      (ChannelBitFields, uint32_t);
-        static char*          name     (ChannelBitFields);
+        static char*          name     (ChannelBitFields, bool init=false);
         static uint32_t       rangeHigh(ChannelBitFields);
         static uint32_t       rangeLow (ChannelBitFields);
         static uint32_t       defaultValue(ChannelBitFields);

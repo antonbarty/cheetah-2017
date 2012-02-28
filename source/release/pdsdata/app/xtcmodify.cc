@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"
@@ -19,7 +20,9 @@ using namespace Pds;
 class myLevelIter : public XtcIterator {
 public:
   enum {Stop, Continue};
-  myLevelIter(Xtc* xtc, unsigned depth, int fd) : XtcIterator(xtc), _depth(depth), _fd(fd) {}
+  myLevelIter(Xtc* xtc, unsigned depth, int fd) : XtcIterator(xtc), _depth(depth), _fd(fd), _outfd(0), _selectname(0) {}
+  myLevelIter(Xtc* xtc, unsigned depth, int fd, FILE *outfd, char *selectname) :
+    XtcIterator(xtc), _depth(depth), _fd(fd), _outfd(outfd), _selectname(selectname) {}
 
   void process(DetInfo& info, Princeton::ConfigV1& config) {
     info = DetInfo(info.processId(), DetInfo::SxrEndstation, info.detId(), info.device(), info.devId() );
@@ -112,7 +115,7 @@ public:
     }    
     switch (xtc->contains.id()) {
     case (TypeId::Id_Xtc) : {
-      myLevelIter iter(xtc,_depth+1,_fd);
+      myLevelIter iter(xtc,_depth+1,_fd,_outfd,_selectname);
       iter.iterate();
       break;
     }
@@ -135,35 +138,66 @@ public:
     default :
       break;
     }
+    // if payload name matches the selection, append the payload to the output file
+    if (_selectname && (strcmp(TypeId::name(xtc->contains.id()), _selectname) == 0)) {
+      if (xtc->sizeofPayload() > 0) {
+        if (::fwrite(xtc->payload(),xtc->sizeofPayload(),1,_outfd) != 1) {
+          perror("::fwrite");
+        }
+      } else {
+        fprintf(stderr, "Type %s payload not written (size = %d)\n", _selectname, xtc->sizeofPayload());
+      }
+    }
     return Continue;
   }
 private:
   unsigned _depth;
   int _fd;
+  FILE *_outfd;
+  char *_selectname;
 };
 
 void usage(char* progname) {
-  fprintf(stderr,"Usage: %s -f <filename> -o <outfilename> [-i <imagefilename>] [-c count] [-h]\n", progname);
+  fprintf(stderr,"Usage: %s -f <filename> -o <outfilename> [-i <imagefilename>] [-c count] [-s <selectpayloadname>] [-h]\n", progname);
+}
+
+void help(void) {
+  fprintf(stderr,"\nSupported <selectpayloadname> values:\n");
+  for (int ii = (int)TypeId::Id_Frame; ii < (int)TypeId::NumberOf; ii++) {
+    fprintf(stderr,"  %-18s", TypeId::name((TypeId::Type)ii));
+    if ((ii > 1) && !((ii - 1) % 4))  {
+      fprintf(stderr,"\n");
+    }
+  }
+  fprintf(stderr,"\n");
 }
 
 int main(int argc, char* argv[]) {
   int c;
   char* xtcname=0;
   char* outfilename=0;
+  char* selectname=0;
   char* imagefilename=0;
   int copycount=0;
   int parseErr = 0;
 
-  while ((c = getopt(argc, argv, "hf:o:i:c:")) != -1) {
+  while ((c = getopt(argc, argv, "hf:o:i:c:s:")) != -1) {
     switch (c) {
     case 'h':
       usage(argv[0]);
+      help();
       exit(0);
     case 'f':
       xtcname = optarg;
+      printf("xtcmodify file(%s)\n", xtcname);
+      break;
+    case 's':
+      selectname = optarg;
+      printf("xtcmodify select(%s)\n", selectname);
       break;
     case 'o':
       outfilename = optarg;
+      printf("xtcmodify outfile(%s)\n", outfilename);
       break;
     case 'i':
       imagefilename = optarg;
@@ -208,25 +242,30 @@ int main(int argc, char* argv[]) {
   while ((dg = iter.next())) {
     printf("%s transition: time 0x%x/0x%x, payloadSize 0x%x\n",TransitionId::name(dg->seq.service()),
            dg->seq.stamp().fiducials(),dg->seq.stamp().ticks(),dg->xtc.sizeofPayload());
-    myLevelIter iter(&(dg->xtc),0,imagefd);
-    iter.iterate();
-    if (::fwrite(dg,sizeof(*dg)+dg->xtc.sizeofPayload(),1,xtcoutfd) != 1) {
-      perror("::fwrite");
-    }
-    if ((copycount > 0) && (dg->seq.service() == TransitionId::L1Accept)) {
-      int written;
-      for (written = 0; written < copycount;) {
-        myLevelIter iter(&(dg->xtc),0,imagefd);
-        iter.iterate();
-        if (::fwrite(dg,sizeof(*dg)+dg->xtc.sizeofPayload(),1,xtcoutfd) == 1) {
-          written++;
-        } else {
-          perror("::fwrite");
-          break;
-        }
+    if (selectname) {
+      myLevelIter iter(&(dg->xtc),0,imagefd,xtcoutfd,selectname);
+      iter.iterate();
+    } else {
+      myLevelIter iter(&(dg->xtc),0,imagefd);
+      iter.iterate();
+      if (::fwrite(dg,sizeof(*dg)+dg->xtc.sizeofPayload(),1,xtcoutfd) != 1) {
+        perror("::fwrite");
       }
-      printf(">>> wrote %d more copies of L1Accept datagram\n", written);
-      break;
+      if ((copycount > 0) && (dg->seq.service() == TransitionId::L1Accept)) {
+        int written;
+        for (written = 0; written < copycount;) {
+          myLevelIter iter(&(dg->xtc),0,imagefd);
+          iter.iterate();
+          if (::fwrite(dg,sizeof(*dg)+dg->xtc.sizeofPayload(),1,xtcoutfd) == 1) {
+            written++;
+          } else {
+            perror("::fwrite");
+            break;
+          }
+        }
+        printf(">>> wrote %d more copies of L1Accept datagram\n", written);
+        break;
+      }
     }
   }
 

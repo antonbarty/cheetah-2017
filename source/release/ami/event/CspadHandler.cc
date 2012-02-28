@@ -27,6 +27,9 @@
 #define DO_PED_CORR
 
 typedef Pds::CsPad::ElementV2 CspadElement;
+using Pds::CsPad::ElementIterator;
+
+using Pds::CsPad::ElementIterator;
 
 static const unsigned Offset = 0x4000;
 static const double pixel_size = 110e-6;
@@ -316,20 +319,12 @@ namespace CspadGeometry {
 #define BIN_ITER1 {							\
     const unsigned ColBins = CsPad::ColumnsPerASIC;			\
     const unsigned RowBins = CsPad::MaxRowsPerASIC<<1;			\
-    /*  zero the target region  */					\
-    for(unsigned i=0; i<=ColBins; i++) {				\
-      for(unsigned j=0; j<=RowBins; j++) {				\
-	const unsigned x = CALC_X(column,i,j);				\
-	const unsigned y = CALC_Y(row   ,i,j);				\
-	image.content(0,x,y);						\
-      }									\
-    }									\
     /*  fill the target region  */					\
     for(unsigned i=0; i<ColBins; i++) {					\
       for(unsigned j=0; j<RowBins; j++) {				\
 	const unsigned x = CALC_X(column,i,j);				\
 	const unsigned y = CALC_Y(row   ,i,j);				\
-	image.addcontent(F1,x,y);					\
+	image.content(F1,x,y);                                          \
       }									\
     }									\
   }
@@ -418,7 +413,8 @@ namespace CspadGeometry {
     { // load offset-pedestal 
       size_t sz = 8 * 1024;
       char* linep = (char *)malloc(sz);
-      char* pEnd;
+      memset(linep, 0, sz);
+      char* pEnd = linep;
 
       if (ped) {
         uint16_t* off = _off;
@@ -654,7 +650,7 @@ namespace CspadGeometry {
           element[i]->fill(image, mask&3);
     }
     void fill(Ami::EntryImage&             image,
-	      Pds::CsPad::ElementIterator& iter) const
+	      ElementIterator& iter) const
     {
       unsigned id;
       const Pds::CsPad::Section* s;
@@ -718,24 +714,24 @@ namespace CspadGeometry {
     ~ConfigCache() 
     { delete[] _payload; }
   public:
-    Pds::CsPad::ElementIterator* iter(const Xtc& xtc) const
+    ElementIterator* iter(const Xtc& xtc) const
     {
-      Pds::CsPad::ElementIterator* iter;
+      ElementIterator* iter;
       switch(_type.version()) {
       case 1: 
         { const Pds::CsPad::ConfigV1& c = 
             *reinterpret_cast<Pds::CsPad::ConfigV1*>(_payload);
-          iter = new Pds::CsPad::ElementIterator(c,xtc);
+          iter = new ElementIterator(c,xtc);
           break; }
       case 2: 
         { const Pds::CsPad::ConfigV2& c = 
             *reinterpret_cast<Pds::CsPad::ConfigV2*>(_payload);
-          iter = new Pds::CsPad::ElementIterator(c,xtc);
+          iter = new ElementIterator(c,xtc);
           break; }
       default:
         { const CsPadConfigType& c = 
             *reinterpret_cast<CsPadConfigType*>(_payload);
-          iter = new Pds::CsPad::ElementIterator(c,xtc);
+          iter = new ElementIterator(c,xtc);
           break; }
       }
       return iter;
@@ -825,6 +821,9 @@ namespace CspadGeometry {
       quad[1] = new Quad(x,y,_ppb,D90 ,qalign[1],f,s,g);
       quad[2] = new Quad(x,y,_ppb,D180,qalign[2],f,s,g);
       quad[3] = new Quad(x,y,_ppb,D270,qalign[3],f,s,g);
+
+      if (gm)
+        delete[] qalign;
     }
     ~Detector() { for(unsigned i=0; i<4; i++) delete quad[i]; }
 
@@ -851,12 +850,14 @@ namespace CspadGeometry {
 	      const Xtc&       xtc) const
     {
 #ifdef _OPENMP
-      Pds::CsPad::ElementIterator*     iters[5];
+      ElementIterator* iters[5];
       int niters=0;
       {
+	ElementIterator* iter = _config.iter(xtc);
         do {
-          iters[niters++] = _config.iter(xtc);
-        } while( iter.next() );
+          iters[niters++] = new ElementIterator(*iter);
+        } while( iter->next() );
+	delete iter;
       }
       niters--;
 
@@ -865,7 +866,7 @@ namespace CspadGeometry {
       Ami::FeatureCache* cache = _cache;
 #pragma omp parallel shared(iters,quad,cache) private(i) num_threads(4)
       {
-#pragma omp for schedule(dynamic,1) nowait
+#pragma omp for schedule(dynamic,1)
         for(i=0; i<niters; i++) {
           const Pds::CsPad::ElementHeader* hdr = iters[i]->next();
           quad[hdr->quad()]->fill(image,*iters[i]); 
@@ -876,7 +877,7 @@ namespace CspadGeometry {
         }
       }
 #else
-      Pds::CsPad::ElementIterator* iter = _config.iter(xtc);
+      ElementIterator* iter = _config.iter(xtc);
       const Pds::CsPad::ElementHeader* hdr;
       while( (hdr=iter->next()) ) {
 	quad[hdr->quad()]->fill(image,*iter); 
@@ -1021,7 +1022,7 @@ void CspadHandler::_create_entry(const CspadGeometry::ConfigCache& cfg,
 
   const unsigned ppb = detector->ppb();
   const DetInfo& det = static_cast<const DetInfo&>(info());
-  DescImage desc(det, 0, ChannelID::name(det,0),
+  DescImage desc(det, (unsigned)0, ChannelID::name(det,0),
                  detector->xpixels()/ppb, detector->ypixels()/ppb, 
                  ppb, ppb);
   desc.set_scale(pixel_size*1e3,pixel_size*1e3);

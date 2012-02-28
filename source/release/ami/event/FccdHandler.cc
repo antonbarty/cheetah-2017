@@ -34,7 +34,7 @@ void FccdHandler::_configure(const void* payload, const Pds::ClockTime& t)
 {
   const Pds::FCCD::FccdConfigV2& c = *reinterpret_cast<const Pds::FCCD::FccdConfigV2*>(payload);
   const Pds::DetInfo& det = static_cast<const Pds::DetInfo&>(info());
-  DescImage desc(det, 0, ChannelID::name(det),
+  DescImage desc(det, (unsigned)0, ChannelID::name(det),
                   c.trimmedWidth(),
                   c.trimmedHeight()); // FCCD image is 480 x 480 after removing dark pixels
   _entry = new EntryImage(desc);

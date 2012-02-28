@@ -1,5 +1,4 @@
 /#VPoll.hh#/1.1/Tue Sep 15 00:51:14 2009//
-/BSocket.cc/1.3/Tue Oct 12 20:36:33 2010//
 /BSocket.hh/1.1/Mon Feb 22 17:23:21 2010//
 /Exception.cc/1.1/Mon Feb 22 17:23:21 2010//
 /Exception.hh/1.1/Mon Feb 22 17:23:22 2010//
@@ -20,8 +19,6 @@
 /Routine.hh/1.1/Tue Sep 15 00:51:15 2009//
 /Semaphore.hh/1.1/Tue Sep 15 00:51:15 2009//
 /SemaphoreUx.cc/1.1/Tue Sep 15 00:51:15 2009//
-/Sockaddr.hh/1.1/Tue Sep 15 00:51:15 2009//
-/Socket.cc/1.2/Fri Mar 19 19:27:41 2010//
 /Socket.hh/1.2/Fri Mar 19 19:27:41 2010//
 /Src.cc/1.1/Tue Sep 15 00:51:15 2009//
 /Src.hh/1.1/Tue Sep 15 00:51:15 2009//
@@ -35,12 +32,15 @@
 /TaskObjectUx.hh/1.1/Tue Sep 15 00:51:16 2009//
 /TaskUx.cc/1.1/Tue Sep 15 00:51:16 2009//
 /TaskWait.hh/1.1/Tue Sep 15 00:51:16 2009//
-/Timer.cc/1.1/Tue Sep 15 00:51:16 2009//
 /Timer.hh/1.1/Tue Sep 15 00:51:16 2009//
 /VPoll.cc/1.1/Tue Sep 15 00:51:16 2009//
 /VPoll.hh/1.1/Tue Sep 15 00:51:16 2009//
-/VSocket.cc/1.1/Tue Sep 15 00:51:16 2009//
 /VSocket.hh/1.1/Tue Sep 15 00:51:16 2009//
 /constituents.mk/1.2/Tue Oct  5 00:04:34 2010//
 /tcptest.cc/1.2/Tue Nov 23 21:57:27 2010//
+/Sockaddr.hh/1.3/Fri Nov 11 23:36:56 2011//
+/Timer.cc/1.2/Fri Nov 11 23:36:56 2011//
+/BSocket.cc/1.5/Mon Dec  5 21:50:33 2011//
+/VSocket.cc/1.3/Mon Dec  5 21:50:33 2011//
+/Socket.cc/1.4/Mon Dec  5 21:56:28 2011//
 D

@@ -51,8 +51,13 @@ int IndexChunkReader::open(const char* sFnIndex)
     int iError = ::stat64(_strFnBase.c_str(), &statFile);
     if ( iError != 0 )
     {
-      // test if the file is under the "index" sub-dir
-      _strFnBase = "index/" + _strFnBase;
+      // test if the file is under the "index" sub-dir      
+      unsigned int iFindDir = strFnIndex.rfind("/");
+      if (iFindDir == std::string::npos )
+        _strFnBase = "index/" + _strFnBase;
+      else
+        _strFnBase = strFnIndex.substr(0, iFindDir+1) + "index/" + strFnIndex.substr(iFindDir+1);
+            
       iError = ::stat64(_strFnBase.c_str(), &statFile);
       if ( iError != 0 )
       {     
@@ -83,14 +88,23 @@ int IndexChunkReader::open(const char* sFnIndex)
     for (int iFileSerial = 0;;++iFileSerial)
     {
       char sFnBuf[64];
-      sprintf(sFnBuf, "%s%02d.idx", _strFnBase.c_str(), iFileSerial);
+      sprintf(sFnBuf, "%s%02d.xtc.idx", _strFnBase.c_str(), iFileSerial);
       
       struct ::stat64 statFile;
       int iError = ::stat64(sFnBuf, &statFile);
       if ( iError != 0 )
       {
         // test if the file is under the "index" sub-dir
-        sprintf(sFnBuf, "index/%s%02d.idx", _strFnBase.c_str(), iFileSerial);
+        unsigned int iFindDir = strFnIndex.rfind("/");
+        if (iFindDir == std::string::npos )
+          sprintf(sFnBuf, "index/%s%02d.xtc.idx", _strFnBase.c_str(), iFileSerial);
+        else
+        {
+          string strIndexDir    = strFnIndex.substr(0, iFindDir+1);
+          string strIndexFnOnly = strFnIndex.substr(iFindDir+1);
+          sprintf(sFnBuf, "%s/index/%s%02d.xtc.idx", strIndexDir.c_str(), strIndexFnOnly.c_str(), iFileSerial);
+        }
+        
         iError = ::stat64(sFnBuf, &statFile);
         if ( iError != 0 )
           break;            
@@ -423,7 +437,7 @@ int IndexChunkReader::eventTimeToGlobal(uint32_t uSeconds, uint32_t uNanoseconds
   iError = eventChunkToGlobal(iChunk, iEvent, iGlobalEvent);
   if (iError !=0)
   {
-    printf("IndexChunkReader::eventTimeToGlobal(): Failed to convert Event# %d in Chunk %d to glbal Event#\n", 
+    printf("IndexChunkReader::eventTimeToGlobal(): Failed to convert Event# %d in Chunk %d to Global Event#\n", 
       iEvent, iChunk);
     return 3;
   }
@@ -448,7 +462,94 @@ int IndexChunkReader::eventTimeToCalib(uint32_t uSeconds, uint32_t uNanoseconds,
     
   iError = eventGlobalToCalib( iGlobalEvent, iCalib, iEvent );
   if (iError != 0)
+  {
+    printf("IndexChunkReader::eventTimeToCalib(): Failed to convert Global Event# %d to Calib # and Event#\n", 
+      iGlobalEvent);
     return 3;
+  }
+      
+  return 0;
+}
+
+int IndexChunkReader::eventNextFiducialToChunk(uint32_t uFiducial, int iFromGlobalEvent, int& iChunk, int& iEvent)
+{
+  iChunk        = -1;
+  iEvent        = -1;
+  if (!_bValid)
+    return 1;
+    
+  int iFromChunk      = -1;
+  int iFromChunkEvent = -1;
+  int iError = eventGlobalToChunk(iFromGlobalEvent, iFromChunk, iFromChunkEvent); 
+  if (iError != 0)
+  {
+    printf("IndexChunkReader::eventNextFiducialToChunk(): Failed to find correct Chunk for global Event # %d\n", iFromGlobalEvent);
+    return 2;
+  }
+      
+  for (int iChunkTest = iFromChunk; iChunkTest < (int)_lIndex.size(); ++iChunkTest)
+  {
+    IndexFileReader& index = *(_lIndex[iChunkTest]);
+
+    int iChunkEvent = -1;
+    int iError = index.eventNextFiducialToGlobal(uFiducial, iFromChunkEvent, iChunkEvent);
+    if (iError == 0)
+    {
+      iChunk = iChunkTest;
+      iEvent = iChunkEvent;
+      return 0;
+    }
+    
+    iFromChunkEvent = 0;    
+  }
+  
+  return 1;
+}  
+
+int IndexChunkReader::eventNextFiducialToGlobal(uint32_t uFiducial, int iFromGlobalEvent, int& iGlobalEvent)
+{
+  iGlobalEvent  = -1;
+
+  if (!_bValid)
+    return 1;
+    
+  int iChunk = -1;
+  int iEvent = -1;  
+  int iError = eventNextFiducialToChunk( uFiducial, iFromGlobalEvent, iChunk, iEvent);
+  if (iError != 0)
+    return 2;
+  
+  iError = eventChunkToGlobal(iChunk, iEvent, iGlobalEvent);
+  if (iError !=0)
+  {
+    printf("IndexChunkReader::eventNextFiducialToGlobal(): Failed to convert Event# %d in Chunk %d to global Event#\n", 
+      iEvent, iChunk);
+    return 3;
+  }
+  
+  return 0;  
+}
+
+int IndexChunkReader::eventNextFiducialToCalib(uint32_t uFiducial, int iFromGlobalEvent, int& iCalib, int& iEvent)
+{
+  iCalib      = -1;
+  iEvent      = -1;
+  
+  if (!_bValid)
+    return 1;
+      
+  int iGlobalEvent = -1;
+  int iError = eventNextFiducialToGlobal( uFiducial, iFromGlobalEvent, iGlobalEvent );
+  if (iError != 0)
+    return 2;
+    
+  iError = eventGlobalToCalib( iGlobalEvent, iCalib, iEvent );
+  if (iError != 0)
+  {
+    printf("IndexChunkReader::eventNextFiducialToCalib(): Failed to convert Global Event# %d to Calib # and Event#\n", 
+      iGlobalEvent);
+    return 3;
+  }
       
   return 0;
 }
@@ -541,8 +642,7 @@ int IndexChunkReader::offset(int iGlobalEvent, int64_t& i64Offset)
     
   int iChunk = -1;
   int iEvent = -1;
-  int iError = eventGlobalToChunk(iGlobalEvent, iChunk, iEvent);
-  
+  int iError = eventGlobalToChunk(iGlobalEvent, iChunk, iEvent); 
   if (iError != 0)
   {
     printf("IndexChunkReader::offset(): Failed to find correct Chunk for global Event # %d\n", iGlobalEvent);

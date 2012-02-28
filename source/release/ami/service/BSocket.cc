@@ -14,6 +14,7 @@ BSocket::BSocket(unsigned size) :
 
 BSocket::~BSocket()
 {
+  delete[] _buffer;
 }
 
 int BSocket::readv(const iovec* iov, int iovcnt)
@@ -23,7 +24,7 @@ int BSocket::readv(const iovec* iov, int iovcnt)
   for(int i=0; i<iovcnt; i++) {
     if (data + iov[i].iov_len > end) {
       printf("BSocket::readv truncated at %d/%d item %d/%d\n",
-	     data, end, i, iovcnt);
+	     data-_buffer, end-_buffer, i, iovcnt);
       break;
     }
     else {

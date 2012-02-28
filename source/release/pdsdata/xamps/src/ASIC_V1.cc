@@ -7,6 +7,7 @@
 
 #include "pdsdata/xamps/ASIC_V1.hh"
 #include <stdio.h>
+#include <string.h>
 
 using namespace Pds::Xamps;
 
@@ -51,6 +52,17 @@ static uint32_t _ASICfoo[][4] = {
 
 static ASIC_RegistersV1* _Aregs = (ASIC_RegistersV1*) _ASICfoo;
 
+static bool           namesAreInitialized = false;
+
+ASIC_V1::ASIC_V1() {
+  if (!namesAreInitialized){
+    int e;
+    for (e=0; e< (int)ASIC_V1::NumberOfASIC_Entries; e++) {
+      name((ASIC_V1::ASIC_Entries)e, true);
+    }
+    namesAreInitialized = true;
+  }
+}
 
 uint32_t   ASIC_V1::get (ASIC_V1::ASIC_Entries e) {
   if (e >= ASIC_V1::NumberOfASIC_Entries) {
@@ -94,34 +106,41 @@ uint32_t   ASIC_V1::defaultValue(ASIC_V1::ASIC_Entries e) {
   }
   return _Aregs[e].defaultValue & _Aregs[e].mask;
 }
-char* ASIC_V1::name(ASIC_V1::ASIC_Entries e) {
-  static char* _regNames[NumberOfASIC_Entries+1] = {
-     "Manual Pulse DAC        ",               //    ManualPulseDAC,
-     "Threshold DAC           ",                  //    ThresholdDAC,
-     "Baseline Adjust         ",                //    BaselineAdjust,
-     "Reset Time              ",                     //    ResetTime,
-     "Pump Length             ",                    //    PumpLength,
-     "Filter Time To Flat Top ",        //    FilterTimeToFlatTop,
-     "Enable Dac Monitor      ",             //    EnableDacMonitor,
-     "Reset Tweak OP          ",                 //    ResetTweakOP,
-     "Reset Compensation      ",             //    ResetCompensation,
-     "Test Pulse Polarity     ",            //    TestPulsePolarity,
-     "Disable Outputs         ",                //    DisableOutputs,
-     "Auto Test Mode          ",                 //    AutoTestMode,
-     "Enable APS Mon          ",                 //    EnableAPSMon,
-     "Gain                    ",                           //    Gain,
-     "High Res Test Mode      ",             //    HighResTestMode,
-     "Calibration Range       ",              //    CalibrationRange,
-     "Output Buffers Enable   ",          //    OutputBuffersEnable,
-     "Test Pulser Enable      ",             //    TestPulserEnable,
-     "Enable Auxiliary Output ",        //    EnableAuxiliaryOutput,
-     "Disable Multiple Firings",       //    DisableMultipleFirings,
-     "Disable Filter Pump     ",            //    DisableFilterPump,
-     "DAC Monitor Select      ",             //    DACMonitorSelect,
-     "Select CDS Test         ",                //    SelectCDSTest,
-     "Signal Polarity         ",                //    SignalPolarity,
-     "Preamp Current Booster  ",         //    PerampCurrentBooster,
-     "---------INVALID--------"                     //    NumberOfASIC_Entries
+char* ASIC_V1::name(ASIC_V1::ASIC_Entries e, bool init) {
+  static char _regNames[NumberOfASIC_Entries+1][120] = {
+     {"Manual Pulse DAC        "},       //    ManualPulseDAC,
+     {"Threshold DAC           "},       //    ThresholdDAC,
+     {"Baseline Adjust         "},       //    BaselineAdjust,
+     {"Reset Time              "},       //    ResetTime,
+     {"Pump Length             "},       //    PumpLength,
+     {"Filter Time To Flat Top "},       //    FilterTimeToFlatTop,
+     {"Enable Dac Monitor      "},       //    EnableDacMonitor,
+     {"Reset Tweak OP          "},       //    ResetTweakOP,
+     {"Reset Compensation      "},       //    ResetCompensation,
+     {"Test Pulse Polarity     "},       //    TestPulsePolarity,
+     {"Disable Outputs         "},       //    DisableOutputs,
+     {"Auto Test Mode          "},       //    AutoTestMode,
+     {"Enable APS Mon          "},       //    EnableAPSMon,
+     {"Gain                    "},       //    Gain,
+     {"High Res Test Mode      "},       //    HighResTestMode,
+     {"Calibration Range       "},       //    CalibrationRange,
+     {"Output Buffers Enable   "},       //    OutputBuffersEnable,
+     {"Test Pulser Enable      "},       //    TestPulserEnable,
+     {"Enable Auxiliary Output "},       //    EnableAuxiliaryOutput,
+     {"Disable Multiple Firings"},       //    DisableMultipleFirings,
+     {"Disable Filter Pump     "},       //    DisableFilterPump,
+     {"DAC Monitor Select      "},       //    DACMonitorSelect,
+     {"Select CDS Test         "},       //    SelectCDSTest,
+     {"Signal Polarity         "},       //    SignalPolarity,
+     {"Preamp Current Booster  "},       //    PerampCurrentBooster,
+     {"---------INVALID--------"}        //    NumberOfASIC_Entries
   };
+  static char range[60];
+
+  if (init && (e < ASIC_V1::NumberOfASIC_Entries)) {
+    sprintf(range, "  (%u..%u)    ", 0, _Aregs[e].mask);
+    strncat(_regNames[e], range, 40);
+  }
+
   return e < ASIC_V1::NumberOfASIC_Entries ? _regNames[e] : _regNames[ASIC_V1::NumberOfASIC_Entries];
 }

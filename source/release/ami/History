@@ -1,3 +1,9 @@
+2011-11-08	caf     Tag V03-00-01.
+2011-11-02	caf     Tag V03-00-00.
+2011-10-13	caf 			Added support for Gsc16ai ADC.
+2011-09-07	weaver  Tag V02-13-09.	Added normalization for images/waveforms.
+2011-08-09	weaver			Added data/UserModule to replace UserAnalysis and UserFilter.
+					Added support for CspadMini (2x2).
 2011-05-31	weaver	Tag V01-08-00.	
 2011-05-20	weaver			Modified ClientManager to seek an unused port for connection to servers.
 					Changed use of Tuples to Dictionarys in pyami.  Removed unnecessary 

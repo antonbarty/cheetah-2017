@@ -66,7 +66,7 @@ void FrameHandler::_configure(const void* payload, const Pds::ClockTime& t)
   unsigned ppb     = (pixels-1)/640 + 1;
   columns = (columns+ppb-1)/ppb;
   rows    = (rows   +ppb-1)/ppb;
-  DescImage desc(det, 0, ChannelID::name(det),
+  DescImage desc(det, (unsigned)0, ChannelID::name(det),
 		 columns, rows, ppb, ppb);
 
   if (_entry) 

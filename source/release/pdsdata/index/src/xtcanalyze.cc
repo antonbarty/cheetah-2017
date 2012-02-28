@@ -17,17 +17,6 @@
 #include "pdsdata/index/IndexChunkReader.hh"
 #include "pdsdata/ana/XtcRun.hh"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-
-
 using std::vector;
 using std::string;
 using namespace Pds;
@@ -74,17 +63,21 @@ public:
 void usage(char *progname)
 {
   printf( 
-    "Usage:  %s  [-f <xtc filename>] [-i <index>] [-b <begin L1 event#>] "
-    "[-n <output L1 event#>] [-c <begin calib cycle#>] [-o <offset>] [-t <time>] [-h]\n"
+    "Usage:  %s  [-f <xtc filename>] [-i <index>] "
+    "[-n <output L1 event#>] [-o <offset>] "
+    "[-j <begin L1 event#>] [-y <begin calib cycle#>] [-t <time>]\n"
+    "[-u <fiducial>[,<event>]] [-m <from_event>] [-h]\n"
     "  Options:\n"
     "    -h                       Show usage.\n"
     "    -f <xtc filename>        Set xtc filename\n"
     "    -i <index filename>      Set index filename\n"
-    "    -b <begin L1 event#>     Set begin L1 event#\n"
-    "    -n <output L1 event#>    Set L1 event# for ouput\n"
-    "    -c <begin calib cycle#>  Set begin calib cycle#\n"
     "    -o <offset>              Start analysis from offset\n"
-    "    -t <time>                Go to the event at <time>\n",    
+    "    -n <output L1 event#>    Set L1 event# for ouput\n"
+    "    -j <begin L1 event#>     Set begin L1 event#\n"
+    "    -y <begin calib cycle#>  Set begin calib cycle#\n"
+    "    -t <time>                Go to the event at <time>\n"
+    "    -u <fiducial>[,<event>]  Go to the event with fiducial <fiducial>, searching from <event>\n"
+    ,    
     progname
   );
 }
@@ -95,7 +88,7 @@ int genListFromBasename(const char* sXtcFilename, vector<string>& lRunFilename);
 
 int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename, 
   int iBeginL1Event, int iNumL1Event, int iBeginCalib, 
-  int64_t i64OffsetStart, char* sTime );
+  int64_t i64OffsetStart, char* sTime, uint32_t uFiducialSearch, int iFidFromEvent );
 
 int main(int argc, char *argv[])
 {
@@ -106,9 +99,11 @@ int main(int argc, char *argv[])
   int           iBeginCalib     = 0;
   int64_t       i64OffsetStart  = 0;
   char*         sTime           = NULL;
+  uint32_t      uFiducialSearch = (uint32_t) -1;
+  int           iFidFromEvent   = 1;
 
   int c;
-  while ((c = getopt(argc, argv, "hf:i:b:n:c:o:t:")) != -1)
+  while ((c = getopt(argc, argv, "hf:i:n:o:j:y:t:u:")) != -1)
   {
     switch (c)
     {
@@ -121,20 +116,28 @@ int main(int argc, char *argv[])
     case 'i':
       sIndexFilename= optarg;
       break;
-    case 'b':
-      iBeginL1Event = strtol(optarg, NULL, 0);
-      break;
     case 'n':
       iNumL1Event   = strtol(optarg, NULL, 0);
-      break;
-    case 'c':
-      iBeginCalib   = strtol(optarg, NULL, 0);
       break;
     case 'o':
       i64OffsetStart= strtoll(optarg, NULL, 0);
       break;
+    case 'j':
+      iBeginL1Event = strtol(optarg, NULL, 0);
+      break;
+    case 'y':
+      iBeginCalib   = strtol(optarg, NULL, 0);
+      break;
     case 't':
       sTime         = optarg;
+      break;
+    case 'u':
+      uFiducialSearch = strtoul(optarg, NULL, 0);
+      {
+      char* sNextParam = strchr(optarg,',');
+      if (sNextParam != NULL)
+        iFidFromEvent = strtoul(sNextParam+1, NULL, 0);
+      }            
       break;
     default:
       printf( "Unknown option: -%c", c );
@@ -153,7 +156,8 @@ int main(int argc, char *argv[])
     return 0;
   }
     
-  return xtcAnalyze( sXtcFilename, sIndexFilename, iBeginL1Event, iNumL1Event, iBeginCalib, i64OffsetStart, sTime );
+  return xtcAnalyze( sXtcFilename, sIndexFilename, iBeginL1Event, iNumL1Event, iBeginCalib, 
+    i64OffsetStart, sTime, uFiducialSearch, iFidFromEvent );
 }
 
 int printIndexSummary(const Index::IndexFileReader& indexFileReader)
@@ -298,7 +302,7 @@ int updateEvr(const Xtc& xtc)
 
 int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename, 
   int iBeginL1Event, int iNumL1Event, int iBeginCalib, 
-  int64_t i64OffsetStart, char* sTime )
+  int64_t i64OffsetStart, char* sTime, uint32_t uFiducialSearch, int iFidFromEvent )
 {      
   XtcRun run;  
   int iError = openXtcRun(sXtcFilename, run);
@@ -330,10 +334,26 @@ int xtcAnalyze( const char* sXtcFilename, const char* sIndexFilename,
     {      
       iBeginCalib   = iCalib;
       iBeginL1Event = iEvent;
-      printf("Going to event with time %s%s Calib# %d Event# %d\n",
+      printf("Going to event with time %s%s : Calib# %d Event# %d\n",
         sTime, (bExactMatch? " [exact]":""),
         iBeginCalib, iBeginL1Event );
     }
+  }
+  else if (uFiducialSearch != (uint32_t) -1)
+  {
+    int   iCalib = -1, iEvent = -1;
+    int   iError      = run.findNextFiducial(uFiducialSearch, iFidFromEvent, iCalib, iEvent);
+    
+    if (iError != 0)
+      printf("Cannot find event with the fiducial 0x%x , after global event# %d\n", uFiducialSearch, iFidFromEvent);
+    else
+    {      
+      iBeginCalib   = iCalib;
+      iBeginL1Event = iEvent;
+      printf("Going to event with fiducial 0x%x after global event# %d : Calib# %d Event# %d\n",
+        uFiducialSearch, iFidFromEvent,
+        iBeginCalib, iBeginL1Event );
+    }    
   }
   
   //if ( iBeginCalib < 1 && iBeginL1Event < 1 && bLoadNextEvent )
@@ -840,7 +860,7 @@ int genListFromBasename(const char* sXtcFilename, vector<string>& lRunFilename)
    */
   string strFnXtc(sXtcFilename);
   
-  unsigned int uPos = strFnXtc.find("-s");
+  size_t uPos = strFnXtc.find("-s");
   if (uPos == string::npos)
   {
     struct ::stat64 statFile;

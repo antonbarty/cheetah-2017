@@ -13,7 +13,7 @@ namespace Ami {
 
   class EpicsXtcReader : public EventHandler {
   public:
-    EpicsXtcReader(FeatureCache&);
+    EpicsXtcReader(const Pds::Src&, FeatureCache&);
     ~EpicsXtcReader();
   public:
     void   _calibrate(const void* payload, const Pds::ClockTime& t);

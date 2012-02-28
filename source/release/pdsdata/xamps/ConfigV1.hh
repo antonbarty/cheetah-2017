@@ -16,7 +16,7 @@ namespace Pds
     {
       public:
         static const int Version               = 1;
-        ConfigV1() {};
+        ConfigV1();
         ~ConfigV1() {};
 
         enum {
@@ -51,19 +51,18 @@ namespace Pds
         const uint32_t        FPGAversion() const { return _FPGAversion; }
         uint32_t              FPGAversion()       { return _FPGAversion; }
         void                  FPGAVersion(uint32_t v) { _FPGAversion = v; }
-        const ASIC_V1*           ASICs() const {return _asics; }
-        ASIC_V1*                 ASICs() { return _asics; }
+        const ASIC_V1*        ASICs() const {return _asics; }
+        ASIC_V1*              ASICs() { return _asics; }
 
         static const int      version() { return Version; }
 
         uint32_t              get      (Registers);
         const uint32_t        get      (Registers) const;
         uint32_t              set      (Registers, uint32_t);
-        static char*          name     (Registers);
+        static char*          name     (Registers, bool init=false);
         static uint32_t       rangeHigh(Registers);
         static uint32_t       rangeLow (Registers);
         static uint32_t       defaultValue(Registers);
-
 
       private:
         uint32_t          _regs[NumberOfRegisters];
