@@ -227,7 +227,6 @@ void event() {
 
 	
 	
-	
 	/*
 	 *	Get run number
 	 */
@@ -283,8 +282,7 @@ void event() {
 		return;
 	}
 
-	
-
+    
 	/*
 	 * Get event time information
 	 */
@@ -425,7 +423,7 @@ void event() {
             global.laserDelay = laserDelay;
         }
     }
-    
+
     
 	/*
 	 *	Detector position (Z)
@@ -563,6 +561,7 @@ void event() {
 	 */
 	Pds::CsPad::ElementIterator iter;
 	
+    
 	for(long i=0; i<global.nDetectors; i++) {
 		fail=getCspadData(global.detector[i].detectorPdsDetInfo, iter);
 
@@ -598,7 +597,6 @@ void event() {
 			}
 		}
 	}	
-	
 	
 	/*
 	 *	Copy TOF (aqiris) channel into worker thread for processing

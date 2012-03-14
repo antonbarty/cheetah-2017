@@ -178,13 +178,12 @@ void *worker(void *threadarg) {
 	/*
 	 *	Recalculate hot pixel maskfrom time to time
 	 */
-	pthread_mutex_lock(&global->hotpixel_mutex);
-	if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
-		DETECTOR_LOOP
-			calculateHotPixelMask(global, detID);
-	}
-	pthread_mutex_unlock(&global->hotpixel_mutex);
-	
+    if(global->useAutoHotpixel) {
+        if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
+            DETECTOR_LOOP
+                calculateHotPixelMask(global, detID);
+        }
+    }	
 	
 	/* 
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
@@ -250,11 +249,12 @@ void *worker(void *threadarg) {
 	/*
 	 *	Update running backround estimate based on non-hits
 	 */
-	if (hit==0 || global->bgIncludeHits) {
-		DETECTOR_LOOP
-			updateBackgroundBuffer(eventData, global, detID); 
-	}		
-
+	if (global->useSubtractPersistentBackground) {        
+        if (hit==0 || global->bgIncludeHits) {
+            DETECTOR_LOOP
+                updateBackgroundBuffer(eventData, global, detID); 
+        }		
+    }
 	
 	/*
 	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted

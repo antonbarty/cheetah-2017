@@ -299,6 +299,9 @@ void calculateHotPixelMask(cGlobal *global, int detID){
 	
 	long	cutoff = lrint((global->hotpixMemory*global->hotpixFreq));
 	printf("Recalculating hot pixel mask at %li/%i\n",cutoff,global->hotpixMemory);	
+    
+    if(global->useBackgroundBufferMutex)
+        pthread_mutex_lock(&global->hotpixel_mutex);
 	
 	// Loop over all pixels 
 	long	counter;
@@ -321,6 +324,10 @@ void calculateHotPixelMask(cGlobal *global, int detID){
 	}	
 	global->nhot = nhot;
 	global->last_hotpix_update = global->hotpixCounter;
+    
+    if(global->useBackgroundBufferMutex)
+        pthread_mutex_unlock(&global->hotpixel_mutex);
+
 }
 
 
