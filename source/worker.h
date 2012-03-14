@@ -128,12 +128,13 @@ void assemble2Dimage(tEventData*, cGlobal*, int);
 void checkSaturatedPixels(tEventData *eventData, cGlobal *global, int);
 
 // detectorCorrection.cpp
-void subtractDarkcal(tEventData*, cGlobal*, int);
+//void subtractDarkcal(tEventData*, cGlobal*, int);
+void subtractDarkcal(cPixelDetectorEvent, cPixelDetectorCommon);
+void applyGainCorrection(cPixelDetectorEvent, cPixelDetectorCommon);
+void applyBadPixelMask(cPixelDetectorEvent, cPixelDetectorCommon);
 void cmModuleSubtract(tEventData*, cGlobal*, int);
 void cmSubtractUnbondedPixels(tEventData*, cGlobal*, int);
 void cmSubtractBehindWires(tEventData*, cGlobal*, int);
-void applyGainCorrection(tEventData*, cGlobal*, int);
-void applyBadPixelMask(tEventData*, cGlobal*, int);
 void calculateHotPixelMask(cGlobal*, int);
 void killHotpixels(tEventData*, cGlobal*, int);
 

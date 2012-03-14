@@ -30,15 +30,6 @@ public:
 	// Pixel detector readout
     int                     nDetectors;
 	cPixelDetectorCommon	detector[MAX_DETECTORS];
-
-	//char					detectorName[MAX_FILENAME_LENGTH];
-	//char					detectorTypeName[MAX_FILENAME_LENGTH];
-	//Pds::DetInfo::Device	detectorType;
-	//Pds::DetInfo::Detector	detectorPdsDetInfo;
-   
-	
-	// Detector position
-    //char					detectorZpvname[MAX_FILENAME_LENGTH];
 	
 	// Track some statistics for the log file
 	double summedPhotonEnergyeV;
@@ -50,68 +41,9 @@ public:
 	long	startAtFrame;
 	long	stopAtFrame;
 	
-	// Real-space geometry
-	//char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
-	//float		pixelSize;
-	//float		defaultCameraLengthMm;
-    //float       cameraLengthOffset;
-    //float       cameraLengthScale;
-	
-	// Bad pixel masks
-	//int			useBadPixelMask;
-	//char		badpixelFile[MAX_FILENAME_LENGTH];
-	
-	// Static dark calibration (static offsets on each pixel to be subtracted)
-	//char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
-	//int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
-	
-	// Common mode and pedastal subtraction
-	//char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
-	//int			cmModule;				// Subtract common mode from each ASIC
-	//int			cmSubtractUnbondedPixels;
-	//int			cmSubtractBehindWires;
-	//float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
 
-	// Gain correction
-	//int			useGaincal;
-	//int			invertGain;
-	//char		gaincalFile[MAX_FILENAME_LENGTH];
 	int			generateGaincal;		// Flip this on to generate a gaincal (auto-turns-on appropriate other options)
-	
-	// Running background subtraction
-	//int			useSubtractPersistentBackground;
-	//int			subtractBg;
-	//int			scaleBackground;
-    //int         useBackgroundBufferMutex;
-	//float		bgMedian;
-	//long		bgMemory;
-	//long		bgRecalc;
-	//long		bgCounter;
-	//long		last_bg_update;
-	//int			bgIncludeHits;
-	//int			bgNoBeamReset;
-	//int			bgFiducialGlitchReset;
-	
-	// Local background subtraction
-	//int			useLocalBackgroundSubtraction;
-	//long		localBackgroundRadius;
-
-	// Saturated pixels
-	//int         maskSaturatedPixels;
-	//long        pixelSaturationADC;	
-	
-	// Kill persistently hot pixels
-	//int			useAutoHotpixel;
-	//int			hotpixADC;
-	//int			hotpixMemory;
-	//int			hotpixRecalc;
-	//float		hotpixFreq;
-	//long		hotpixCounter;
-	//long		nhot;
-	//long		last_hotpix_update;
-	//int			startFrames;
-	
     
 	// Hitfinding
 	int         hitfinder;
@@ -155,15 +87,12 @@ public:
 
 	
 	// Powder pattern generation
-	//int			powdersum;
 	int			powderSumHits;
 	int			powderSumBlanks;
 	int			powderthresh;
 	int			saveInterval;
 	int			savePeakInfo;
 	int			savePeakList;
-	//int			saveDetectorCorrectedOnly;
-	//int			saveDetectorRaw;
 
 	// Radial stacks
     int         saveRadialStacks;
@@ -220,48 +149,11 @@ public:
 	pthread_mutex_t	peaksfp_mutex;
 	
 	
-	// Detector geometry
-	//long			pix_nx;
-	//long			pix_ny;
-	//long			pix_nn;
-	//float			*pix_x;
-	//float			*pix_y;
-	//float			*pix_z;
-	//float			*pix_r;
-	//float			*pix_kx; // this is reciprocal space (inverse A, no factor of 2*pi)
-	//float			*pix_ky;
-	//float			*pix_kz;
-	//float			*pix_kr;
-	//float			*pix_res;
-	//float			pix_dx;
-	//unsigned		module_rows;
-	//unsigned		module_cols;
-	//long			image_nx;
-	//long			image_nn;
-	//long			asic_nx;
-	//long			asic_ny;
-	//long			asic_nn;
-	//long			nasics_x;
-	//long			nasics_y;
-    //float			radial_max;
-	//long			radial_nn;
-
-	//float			detectorZprevious;	
-	//float			detposprev;	
 	
 	
 	/*
 	 *	Common variables
 	 */
-	//int32_t			*darkcal;
-	//int16_t			*peakmask;
-	//int16_t			*badpixelmask;
-	//int16_t			*bg_buffer;
-	//int16_t			*hotpix_buffer;
-	//int16_t			*hotpixelmask;
-	//int16_t			*wiremask;
-	//float			*selfdark;
-	//float			*gaincal;
 	float			avgGMD;
 	
 	/*
@@ -293,8 +185,6 @@ public:
 	long			nhits;
 	long			nrecentprocessedframes;
 	long			nrecenthits;
-	//double			detectorZ;
-	//double			detectorEncoderValue;	
 	
 	time_t			tstart, tend;
 	time_t			tlast, tnow;
@@ -310,13 +200,6 @@ public:
 	void parseConfigFile(char *);
 	void parseCommandLineArguments(int, char**);
 	void setup(void);
-	//void readDetectorGeometry(char *);
-    //void updateKspace(float);
-	//void readDarkcal(char *);
-	//void readGaincal(char *);
-	//void readPeakmask(char *);
-	//void readBadpixelMask(char *);
-	//void readWireMask(char *);
 	
 	void writeInitialLog(void);
 	void updateLogfile(void);

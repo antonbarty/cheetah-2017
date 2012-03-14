@@ -126,7 +126,7 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useDarkcalSubtraction) 
-			subtractDarkcal(eventData, global, detID);
+			subtractDarkcal(eventData->detector[detID], global->detector[detID]);
 	}
 
 	
@@ -151,7 +151,7 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useGaincal) 
-			applyGainCorrection(eventData, global, detID);
+			applyGainCorrection(eventData->detector[detID], global->detector[detID]);
 	}
 
 	/*
@@ -159,7 +159,7 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useBadPixelMask) 
-			applyBadPixelMask(eventData, global, detID);
+			applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
 	} 
 	
 	
@@ -224,7 +224,7 @@ void *worker(void *threadarg) {
 	}
     DETECTOR_LOOP {
         if(global->detector[detID].useBadPixelMask) 
-			applyBadPixelMask(eventData, global, detID);
+			applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
 	} 
 		
 
