@@ -85,6 +85,9 @@ void saveRadialAverageStack(cGlobal *global, int powderClass) {
 
 
 void saveRadialStacks(cGlobal *global) {
+    if(!global->saveRadialStacks)
+        return;
+        
     for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
         saveRadialAverageStack(global, powderType);
     }

@@ -39,17 +39,17 @@
  */
 void updateBackgroundBuffer(tEventData *eventData, cGlobal *global, int detID) {
 	
-    if(global->useBackgroundBufferMutex)
+    if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_lock(&global->bgbuffer_mutex);
 
-	long frameID = global->bgCounter%global->bgMemory;	
-	global->bgCounter += 1;
+	long frameID = global->detector[detID].bgCounter%global->detector[detID].bgMemory;	
+	global->detector[detID].bgCounter += 1;
 	memcpy(global->detector[detID].bg_buffer+global->detector[detID].pix_nn*frameID, eventData->detector[detID].corrected_data_int16, global->detector[detID].pix_nn*sizeof(int16_t));
 	
 	//for(long i=0;i<global->pix_nn;i++)
 	//	global->bg_buffer[global->pix_nn*frameID + i] = eventData->corrected_data_int16[i];
 	
-    if(global->useBackgroundBufferMutex)
+    if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_unlock(&global->bgbuffer_mutex);
 	
 }
@@ -63,12 +63,12 @@ void updateBackgroundBuffer(tEventData *eventData, cGlobal *global, int detID) {
 void calculatePersistentBackground(cGlobal *global, int detID) {
 	
 	
-	long	median_element = lrint((global->bgMemory*global->bgMedian));
-	int16_t	*buffer = (int16_t*) calloc(global->bgMemory, sizeof(int16_t));
-	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->bgMemory);	
+	long	median_element = lrint((global->detector[detID].bgMemory*global->detector[detID].bgMedian));
+	int16_t	*buffer = (int16_t*) calloc(global->detector[detID].bgMemory, sizeof(int16_t));
+	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->detector[detID].bgMemory);	
 	
 	// Lock the global variables
-    if(global->useBackgroundBufferMutex){
+    if(global->detector[detID].useBackgroundBufferMutex){
         //pthread_mutex_lock(&global->bgbuffer_mutex);
         pthread_mutex_lock(&global->selfdark_mutex);
     }
@@ -77,16 +77,16 @@ void calculatePersistentBackground(cGlobal *global, int detID) {
 	for(long i=0; i<global->detector[detID].pix_nn; i++) {
 		
 		// Create a local array for sorting
-		for(long j=0; j< global->bgMemory; j++) {
+		for(long j=0; j< global->detector[detID].bgMemory; j++) {
 			buffer[j] = global->detector[detID].bg_buffer[j*global->detector[detID].pix_nn+i];
 		}
 		
 		// Find median value of the temporary array
-		global->detector[detID].selfdark[i] = kth_smallest(buffer, global->bgMemory, median_element);
+		global->detector[detID].selfdark[i] = kth_smallest(buffer, global->detector[detID].bgMemory, median_element);
 	}	
-	global->last_bg_update = global->bgCounter;
+	global->detector[detID].last_bg_update = global->detector[detID].bgCounter;
 
-    if(global->useBackgroundBufferMutex){
+    if(global->detector[detID].useBackgroundBufferMutex){
         //pthread_mutex_unlock(&global->bgbuffer_mutex);
         pthread_mutex_unlock(&global->selfdark_mutex);
     }
@@ -116,12 +116,12 @@ void subtractPersistentBackground(tEventData *eventData, cGlobal *global, int de
 	//	global->selfdark[i] = ( eventData->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
 	//}
 	gmd = (eventData->gmd21+eventData->gmd22)/2;
-	global->avgGMD = ( gmd + (global->bgMemory-1)*global->avgGMD) / global->bgMemory;
+	global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
 	pthread_mutex_unlock(&global->selfdark_mutex);
 	
 	
 	// Find appropriate scaling factor 
-	if(global->scaleBackground) {
+	if(global->detector[detID].scaleBackground) {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			//v1 = pow(global->selfdark[i], 0.25);
 			//v2 = pow(eventData->corrected_data[i], 0.25);
@@ -169,9 +169,9 @@ void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
 
 	
 	// Search subunits
-	if(global->localBackgroundRadius <= 0 || global->localBackgroundRadius >= asic_ny/2 )
+	if(global->detector[detID].localBackgroundRadius <= 0 || global->detector[detID].localBackgroundRadius >= asic_ny/2 )
 		return;
-	long nn = (2*global->localBackgroundRadius+1);
+	long nn = (2*global->detector[detID].localBackgroundRadius+1);
 	nn=nn*nn;
 	
 	
@@ -194,8 +194,8 @@ void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
 					e += i+mi*asic_nx;
 					
 					// Loop over median window
-					for(long jj=-global->localBackgroundRadius; jj<=global->localBackgroundRadius; jj++){
-						for(long ii=-global->localBackgroundRadius; ii<=global->localBackgroundRadius; ii++){
+					for(long jj=-global->detector[detID].localBackgroundRadius; jj<=global->detector[detID].localBackgroundRadius; jj++){
+						for(long ii=-global->detector[detID].localBackgroundRadius; ii<=global->detector[detID].localBackgroundRadius; ii++){
 							
 							// Quick array bounds check
 							if((i+ii) < 0)
@@ -258,7 +258,7 @@ void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
 void checkSaturatedPixels(tEventData *eventData, cGlobal *global, int detID){
 	
 	for(long i=0;i<global->detector[i].pix_nn;i++) { 
-		if ( eventData->detector[detID].raw_data[i] >= global->pixelSaturationADC) 
+		if ( eventData->detector[detID].raw_data[i] >= global->detector[detID].pixelSaturationADC) 
 			eventData->detector[detID].saturatedPixelMask[i] = 0;
 		else
 			eventData->detector[detID].saturatedPixelMask[i] = 1;

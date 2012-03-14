@@ -102,6 +102,7 @@ void beginjob() {
 	global.defaultConfiguration();
 	global.parseConfigFile(global.configFile);
 	for(long i=0; i<global.nDetectors; i++) {
+        global.detector[i].parseConfigFile(global.detector[i].detectorConfigFile);
 		global.detector[i].readDetectorGeometry(global.detector[i].geometryFile);
 		global.detector[i].readDarkcal(&global, global.detector[i].darkcalFile);
 		global.detector[i].readGaincal(&global, global.detector[i].gaincalFile);
@@ -426,78 +427,79 @@ void event() {
 
     
 	/*
-	 *	Detector position (Z)
+	 *	Detector position (Z) for each detector
 	 */
-	float detposnew;
-	int update_camera_length;
-	if ( getPvFloat(global.detectorZpvname, detposnew) == 0 ) {
-		/* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
-		 * skip the first few XTC datagrams, you will likely get error messages
-		 * telling you that the EPICS PV is invalid.  Seems that this PV is
-		 * updated at only about 1 Hz.  More worrysome is the fact that it
-		 * occasionally gives a bogus value of detposnew=0, without a fail
-		 * message.  Hardware problem? */
-		if ( detposnew == 0 ) {
-			detposnew = global.detposprev;
-			printf("WARNING: detector position is zero, which could be an error\n"
-			       "         will use previous position (%s=%f) instead...\n",global.detectorZpvname, detposnew);
-		}
-		/* When encoder reads -500mm, detector is at its closest possible
-		 * position to the specimen, and is 79mm from the centre of the 
-		 * 8" flange where the injector is mounted.  The injector itself is
-		 * about 4mm further away from the detector than this. */
-		global.detposprev = detposnew;
-		global.detectorZ = detposnew + global.cameraLengthOffset;
-		global.detectorEncoderValue = detposnew;
-		/* Let's round to the nearest two decimal places 
-		 * (10 micron, much less than a pixel size) */
-		global.detectorZ = floorf(global.detectorZ*100+0.5)/100;
-		update_camera_length = 1;
-	}	 
-	
-	if ( global.detectorZ == 0 ) {
-		/* What to do if there is no camera length information?  Keep skipping
-		 * frames until this info is found?  In some cases, our analysis doesn't
-		 * need to know about this, so OK to skip in that case.  For now, the
-		 * solution is for the user to set a (non-zero) default camera length.
-		 */
-		if ( global.defaultCameraLengthMm == 0 ) {
-			printf("======================================================\n");
-			printf("WARNING: Camera length %s is zero!\n", global.detectorZpvname);
-			printf("I'm skipping this frame.  If the problem persists, try\n");
-			printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
-			printf("file.\n");
-			printf("======================================================\n");
-			return;
-		} 
-        else {
-			printf("MESSAGE: Setting default camera length (%gmm).\n",global.defaultCameraLengthMm);
-			global.detectorZ = global.defaultCameraLengthMm;	
-			update_camera_length = 1;
-		}
-	}
-	
-	/*
-	 * Recalculate reciprocal space geometry if the camera length has changed, 
-	 */
-	if ( update_camera_length && ( global.detectorZprevious != global.detectorZ ) ) {
-		// don't tinker with global geometry while there are active threads...
-        while (global.nActiveThreads > 0) 
-            usleep(10000);
-
-		printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global.detectorZprevious,global.detectorZ);
-        if ( isnan(wavelengthA ) ) {
-			printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
-		}	
-        global.detectorZprevious = global.detectorZ;
-		for(long i=0; i<global.nDetectors; i++) 
-			global.detector[i].updateKspace(&global, wavelengthA);
+    for(long i=0; i<MAX_DETECTORS; i++) {
+        float detposnew;
+        int update_camera_length;
+        if ( getPvFloat(global.detector[i].detectorZpvname, detposnew) == 0 ) {
+            /* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
+             * skip the first few XTC datagrams, you will likely get error messages
+             * telling you that the EPICS PV is invalid.  Seems that this PV is
+             * updated at only about 1 Hz.  More worrysome is the fact that it
+             * occasionally gives a bogus value of detposnew=0, without a fail
+             * message.  Hardware problem? */
+            if ( detposnew == 0 ) {
+                detposnew = global.detector[i].detposprev;
+                printf("WARNING: detector position is zero, which could be an error\n"
+                       "         will use previous position (%s=%f) instead...\n",global.detector[i].detectorZpvname, detposnew);
+            }
+            /* When encoder reads -500mm, detector is at its closest possible
+             * position to the specimen, and is 79mm from the centre of the 
+             * 8" flange where the injector is mounted.  The injector itself is
+             * about 4mm further away from the detector than this. */
+            global.detector[i].detposprev = detposnew;
+            global.detector[i].detectorZ = detposnew + global.detector[i].cameraLengthOffset;
+            global.detector[i].detectorEncoderValue = detposnew;
+            /* Let's round to the nearest two decimal places 
+             * (10 micron, much less than a pixel size) */
+            global.detector[i].detectorZ = floorf(global.detector[i].detectorZ*100+0.5)/100;
+            update_camera_length = 1;
+        }	 
         
-		// if its the first frame then continue, else skip this event
-		//if ( frameNumber != 1 )     
-        //    return;
-	}	
+        if ( global.detector[i].detectorZ == 0 ) {
+            /* What to do if there is no camera length information?  Keep skipping
+             * frames until this info is found?  In some cases, our analysis doesn't
+             * need to know about this, so OK to skip in that case.  For now, the
+             * solution is for the user to set a (non-zero) default camera length.
+             */
+            if ( global.detector[i].defaultCameraLengthMm == 0 ) {
+                printf("======================================================\n");
+                printf("WARNING: Camera length %s is zero!\n", global.detector[i].detectorZpvname);
+                printf("I'm skipping this frame.  If the problem persists, try\n");
+                printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
+                printf("file.\n");
+                printf("======================================================\n");
+                return;
+            } 
+            else {
+                printf("MESSAGE: Setting default camera length (%gmm).\n",global.detector[i].defaultCameraLengthMm);
+                global.detector[i].detectorZ = global.detector[i].defaultCameraLengthMm;	
+                update_camera_length = 1;
+            }
+        }
+        
+        /*
+         * Recalculate reciprocal space geometry if the camera length has changed, 
+         */
+        if ( update_camera_length && ( global.detector[i].detectorZprevious != global.detector[i].detectorZ ) ) {
+            // don't tinker with global geometry while there are active threads...
+            while (global.nActiveThreads > 0) 
+                usleep(10000);
 
+            printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global.detector[i].detectorZprevious,global.detector[i].detectorZ);
+            if ( isnan(wavelengthA ) ) {
+                printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
+            }	
+            global.detector[i].detectorZprevious = global.detector[i].detectorZ;
+            for(long i=0; i<global.nDetectors; i++) 
+                global.detector[i].updateKspace(&global, wavelengthA);
+            
+            // if its the first frame then continue, else skip this event
+            //if ( frameNumber != 1 )     
+            //    return;
+        }	
+    }
 	
 	/*
 	 *	Create a new eventData structure in which to place all information
@@ -517,7 +519,7 @@ void event() {
 	eventData->beamOn = beam;
 	eventData->nPeaks = 0;
     
-    eventData->detectorPosition = global.detectorZ;
+    //eventData->detectorPosition = global.detector[0].detectorZ;
 	
 	eventData->laserEventCodeOn = laserOn();
     eventData->laserDelay = global.laserDelay;
@@ -561,8 +563,9 @@ void event() {
 	 */
 	Pds::CsPad::ElementIterator iter;
 	
-    
 	for(long i=0; i<global.nDetectors; i++) {
+        eventData->detector[i].detectorZ = global.detector[i].detectorZ;
+        
 		fail=getCspadData(global.detector[i].detectorPdsDetInfo, iter);
 
 		if (fail) {
@@ -682,7 +685,7 @@ void event() {
 	/*
 	 *	Save periodic powder patterns
 	 */
-	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.startFrames+50) ){
+	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.detector[0].startFrames+50) ){
 		saveRunningSums(&global, 0);
 		global.updateLogfile();
 	}

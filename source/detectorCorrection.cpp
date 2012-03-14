@@ -122,7 +122,7 @@ void cmModuleSubtract(tEventData *eventData, cGlobal *global, int detID){
             // Calculate background using median value 
 			//median = kth_smallest(buffer, global->asic_nx*global->asic_ny, mval);
 			if(counter>0) {
-				mval = lrint(counter*global->cmFloor);
+				mval = lrint(counter*global->detector[detID].cmFloor);
                 if(mval < 0) 
                     mval = 1;
 				median = kth_smallest(buffer, counter, mval);
@@ -244,7 +244,7 @@ void cmSubtractBehindWires(tEventData *eventData, cGlobal *global, int detID){
 			
 			// Median value of pixels behind wires
 			if(counter>0) {
-				mval = lrint(counter*global->cmFloor);
+				mval = lrint(counter*global->detector[detID].cmFloor);
 				median = kth_smallest(buffer, counter, mval);
 			}
 			else 
@@ -274,12 +274,12 @@ void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
 	// First update global hot pixel buffer
 	int16_t	*buffer = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
 	for(long i=0;i<global->detector[detID].pix_nn;i++){
-		buffer[i] = (fabs(eventData->detector[detID].corrected_data[i])>global->hotpixADC)?(1):(0);
+		buffer[i] = (fabs(eventData->detector[detID].corrected_data[i])>global->detector[detID].hotpixADC)?(1):(0);
 	}
 	pthread_mutex_lock(&global->hotpixel_mutex);
-	long frameID = global->hotpixCounter%global->hotpixMemory;	
+	long frameID = global->detector[detID].hotpixCounter%global->detector[detID].hotpixMemory;	
 	memcpy(global->detector[detID].hotpix_buffer+global->detector[detID].pix_nn*frameID, buffer, global->detector[detID].pix_nn*sizeof(int16_t));
-	global->hotpixCounter += 1;
+	global->detector[detID].hotpixCounter += 1;
 	pthread_mutex_unlock(&global->hotpixel_mutex);
 	free(buffer);
 	
@@ -288,7 +288,7 @@ void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
 	for(long i=0;i<global->detector[detID].pix_nn;i++){
 		eventData->detector[detID].corrected_data[i] *= global->detector[detID].hotpixelmask[i];
 	}
-	eventData->nHot = global->nhot;
+	eventData->nHot = global->detector[detID].nhot;
 	
 	
 	
@@ -297,10 +297,10 @@ void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
 
 void calculateHotPixelMask(cGlobal *global, int detID){
 	
-	long	cutoff = lrint((global->hotpixMemory*global->hotpixFreq));
-	printf("Recalculating hot pixel mask at %li/%i\n",cutoff,global->hotpixMemory);	
+	long	cutoff = lrint((global->detector[detID].hotpixMemory*global->detector[detID].hotpixFreq));
+	printf("Recalculating hot pixel mask at %li/%i\n",cutoff,global->detector[detID].hotpixMemory);	
     
-    if(global->useBackgroundBufferMutex)
+    if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_lock(&global->hotpixel_mutex);
 	
 	// Loop over all pixels 
@@ -309,7 +309,7 @@ void calculateHotPixelMask(cGlobal *global, int detID){
 	for(long i=0; i<global->detector[detID].pix_nn; i++) {
 		
 		counter = 0;
-		for(long j=0; j< global->hotpixMemory; j++) {
+		for(long j=0; j< global->detector[detID].hotpixMemory; j++) {
 			counter += global->detector[detID].hotpix_buffer[j*global->detector[detID].pix_nn+i]; 
 		}
 		
@@ -322,10 +322,10 @@ void calculateHotPixelMask(cGlobal *global, int detID){
 			nhot++;				
 		}		
 	}	
-	global->nhot = nhot;
-	global->last_hotpix_update = global->hotpixCounter;
+	global->detector[detID].nhot = nhot;
+	global->detector[detID].last_hotpix_update = global->detector[detID].hotpixCounter;
     
-    if(global->useBackgroundBufferMutex)
+    if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_unlock(&global->hotpixel_mutex);
 
 }

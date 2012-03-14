@@ -55,6 +55,7 @@ public:
 	
 	
 	// Detector configuration files
+    char        detectorConfigFile[MAX_FILENAME_LENGTH];
 	char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
 	char		gaincalFile[MAX_FILENAME_LENGTH];
@@ -80,12 +81,11 @@ public:
 	float			pix_dx;
 	float			pixelSize;
 
-	//unsigned		module_rows;
-	//unsigned		module_cols;
+    // Assembled image size
 	long			image_nx;
 	long			image_nn;
 
-	// ASIC sizes
+	// ASIC module size
 	long			asic_nx;
 	long			asic_ny;
 	long			asic_nn;
@@ -99,8 +99,67 @@ public:
 	float			*pix_kr;
 	float			*pix_res;
 
+    
+	// Detector position
+    char		detectorZpvname[MAX_FILENAME_LENGTH];
+	float		defaultCameraLengthMm;
+    float       cameraLengthOffset;
+    float       cameraLengthScale;
+	float		detectorZprevious;	
+	float		detposprev;	
+	double		detectorZ;
+	double		detectorEncoderValue;	
 
-	
+    
+    
+    /*
+     *  Flags for detector processing options
+     */
+    int			useBadPixelMask;
+	int			useDarkcalSubtraction;	
+    // Subtract common mode from each ASIC
+	int			cmModule;				
+	int			cmSubtractUnbondedPixels;
+	int			cmSubtractBehindWires;
+	float		cmFloor;				// Use lowest x% of values to estimate DC offset
+    // Gain calibration
+    int			useGaincal;
+	int			invertGain;
+    // Saturated pixels
+	int         maskSaturatedPixels;
+	long        pixelSaturationADC;	
+    // Local background subtraction
+    int			useLocalBackgroundSubtraction;
+	long		localBackgroundRadius;
+    // Running background subtraction
+	int			useSubtractPersistentBackground;
+	int			subtractBg;
+	int			scaleBackground;
+    int         useBackgroundBufferMutex;
+	float		bgMedian;
+	long		bgMemory;
+	long		bgRecalc;
+	long		bgCounter;
+	long		last_bg_update;
+	int			bgIncludeHits;
+	int			bgNoBeamReset;
+	int			bgFiducialGlitchReset;
+	// Kill persistently hot pixels
+	int			useAutoHotpixel;
+	int			hotpixADC;
+	int			hotpixMemory;
+	int			hotpixRecalc;
+	float		hotpixFreq;
+	long		hotpixCounter;
+	long		nhot;
+	long		last_hotpix_update;
+	int			startFrames;
+
+    // Saving options
+    int			saveDetectorCorrectedOnly;
+	int			saveDetectorRaw;
+
+    
 	/*
 	 *	Arrays for all sorts of stuff
 	 */
@@ -139,6 +198,8 @@ public:
 	
 	
 public:
+    cPixelDetectorCommon();
+    void parseConfigFile(char *);
 	void readDetectorGeometry(char *);
     void updateKspace(cGlobal*, float);
 	void readDarkcal(cGlobal*, char *);
@@ -147,7 +208,9 @@ public:
 	void readBadpixelMask(cGlobal*, char *);
 	void readWireMask(cGlobal*, char *);
 	
-	
+private:
+	void parseConfigTag(char*, char*);
+    
 };
 
 
@@ -166,6 +229,7 @@ public:
 	float		*radialAverage;
 	float		*radialAverageCounter;
 	int16_t *   saturatedPixelMask;
+    double      detectorZ;
 
 };
 

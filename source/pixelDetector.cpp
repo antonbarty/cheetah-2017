@@ -35,10 +35,307 @@
 #include "worker.h"
 
 
+cPixelDetectorCommon::cPixelDetectorCommon() {
+    
+    // Defaults to CXI cspad configuration
+    strcpy(detectorTypeName, "cspad");
+    strcpy(detectorName, "CxiDs1");
+    detectorType = Pds::DetInfo::Cspad;
+    detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+    
+    // Calibration files
+    strcpy(detectorConfigFile, "No_file_specified");
+    strcpy(geometryFile, "No_file_specified");
+    strcpy(badpixelFile, "No_file_specified");
+    strcpy(darkcalFile, "No_file_specified");
+    strcpy(wireMaskFile, "No_file_specified");
+    strcpy(gaincalFile, "No_file_specified");
+    
+    // Default ASIC layout (cspad)
+    asic_nx = CSPAD_ASIC_NX;
+    asic_ny = CSPAD_ASIC_NY;
+    asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+    nasics_x = CSPAD_nASICS_X;
+    nasics_y = CSPAD_nASICS_Y;
+    pixelSize = 110e-6;
+
+    
+    // Detector Z position
+	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+	defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
+	defaultCameraLengthMm = 0;
+	detposprev = 0;
+    cameraLengthOffset = 500.0 + 79.0;
+    cameraLengthScale = 1e-3;
+
+    // Bad pixel mask    
+    useBadPixelMask = 0;
+    
+    // Saturated pixels
+	maskSaturatedPixels = 0;
+	pixelSaturationADC = 15564;  // 95% of 2^14 ??
+
+    // Static dark calibration (electronic offsets)
+	useDarkcalSubtraction = 0;
+
+    // Common mode subtraction from each ASIC
+	cmModule = 0;
+	cmFloor = 0.1;
+	cmSubtractUnbondedPixels = 0;
+	cmSubtractBehindWires = 0;
+
+    // Gain calibration correction
+	useGaincal = 0;
+	invertGain = 0;
+	
+	// Subtraction of running background (persistent photon background) 
+	useSubtractPersistentBackground = 0;
+	bgMemory = 50;
+	startFrames = 0;
+	scaleBackground = 0;
+	useBackgroundBufferMutex = 1;
+	bgMedian = 0.5;
+	bgRecalc = bgMemory;
+	bgIncludeHits = 0;
+	bgNoBeamReset = 0;
+	bgFiducialGlitchReset = 0;
+	
+	// Local background subtraction
+	useLocalBackgroundSubtraction = 0;
+	localBackgroundRadius = 3;
+	
+	// Kill persistently hot pixels
+	useAutoHotpixel = 1;
+	hotpixFreq = 0.9;
+	hotpixADC = 1000;
+	hotpixMemory = 50;
+    
+    // Saving options
+    saveDetectorCorrectedOnly = 0;
+	saveDetectorRaw = 0;
+
+
+}
 
 
 /*
- *	Read in detector configuration
+ *	Read and process configuration file
+ */
+void cPixelDetectorCommon::parseConfigFile(char* filename) {
+	char		cbuf[cbufsize];
+	char		tag[cbufsize];
+	char		value[cbufsize];
+	char		*cp;
+	FILE		*fp;
+	
+	
+	/*
+	 *	Open configuration file for reading
+	 */
+	printf("Parsing detector configuration file: %s\n",filename);
+	printf("\t%s\n",filename);
+	
+	fp = fopen(filename,"r");
+	if (fp == NULL) {
+		printf("\tCould not open detector configuration file %s\n",filename);
+		printf("\tExiting in confusion\n");
+		exit(1);
+	}
+	
+	/*
+	 *	Loop through configuration file until EOF 
+	 *	Ignore lines beginning with a '#' (comments)
+	 *	Split each line into tag and value at the '=' sign
+	 */
+	while (feof(fp) == 0) {
+		
+		cp = fgets(cbuf, cbufsize, fp);
+		if (cp == NULL) 
+			break;
+		
+		if (cbuf[0] == '#')
+			continue;
+		
+		cp = strpbrk(cbuf, "=");
+		if (cp == NULL)
+			continue;
+		
+		*(cp) = '\0';
+		sscanf(cp+1,"%s",value);
+		sscanf(cbuf,"%s",tag);
+		
+		parseConfigTag(tag, value);
+	}
+	
+	fclose(fp);
+	
+}
+
+/*
+ *	Process tags for both configuration file and command line options
+ */
+void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
+	
+	/*
+	 *	Convert to lowercase
+	 */
+	for(int i=0; i<strlen(tag); i++) 
+		tag[i] = tolower(tag[i]);
+
+    if (!strcmp(tag, "detectorname")) {
+		strcpy(detectorName, value);
+	}
+    else if (!strcmp(tag, "detectortype")) {
+		strcpy(detectorTypeName, value);
+	}
+
+    else if (!strcmp(tag, "geometry")) {
+		strcpy(geometryFile, value);
+	}
+	else if (!strcmp(tag, "darkcal")) {
+		strcpy(darkcalFile, value);
+	}
+	else if (!strcmp(tag, "gaincal")) {
+		strcpy(gaincalFile, value);
+	}
+	else if (!strcmp(tag, "badpixelmap")) {
+		strcpy(badpixelFile, value);
+	}
+	else if (!strcmp(tag, "wiremaskfile")) {
+		strcpy(wireMaskFile, value);
+	}
+	else if (!strcmp(tag, "pixelsize")) {
+		pixelSize = atof(value);
+	}
+    
+    else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+		saveDetectorCorrectedOnly = atoi(value);
+	}
+	else if (!strcmp(tag, "savedetectorraw")) {
+		saveDetectorRaw = atoi(value);
+	}
+
+    
+	else if (!strcmp(tag, "detectorzname")) {
+		strcpy(detectorZpvname, value);
+	}
+    else if (!strcmp(tag, "defaultcameralengthmm")) {
+		defaultCameraLengthMm = atof(value);
+	}
+	else if (!strcmp(tag, "cameralengthoffset")) {
+		cameraLengthOffset = atof(value);
+	}
+	else if (!strcmp(tag, "cameraLengthScale")) {
+		cameraLengthScale  = atof(value);
+	}
+	else if (!strcmp(tag, "useautohotpixel")) {
+		useAutoHotpixel = atoi(value);
+	}
+	else if (!strcmp(tag, "masksaturatedpixels")) {
+		maskSaturatedPixels = atoi(value);
+	}
+	else if (!strcmp(tag, "bgmemory")) {
+		bgMemory = atoi(value);
+	}
+	else if (!strcmp(tag, "hotpixfreq")) {
+		hotpixFreq = atof(value);
+	}
+	else if (!strcmp(tag, "hotpixadc")) {
+		hotpixADC = atoi(value);
+	}
+	else if (!strcmp(tag, "hotpixmemory")) {
+		hotpixMemory = atoi(value);
+	}
+	else if (!strcmp(tag, "cmfloor")) {
+		cmFloor = atof(value);
+	}
+    
+	// Local background subtraction
+	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
+		useLocalBackgroundSubtraction = atoi(value);
+	}
+	else if (!strcmp(tag, "localbackgroundradius")) {
+		localBackgroundRadius = atoi(value);
+	}
+    
+	else if (!strcmp(tag, "pixelsaturationadc")) {
+		pixelSaturationADC = atoi(value);
+	}
+	else if (!strcmp(tag, "useselfdarkcal")) {
+		printf("The keyword useSelfDarkcal has been changed.  It is\n"
+               "now known as useSubtractPersistentBackground.\n"
+               "Modify your ini file and try again...\n");
+		exit(1);
+	}
+	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
+		useSubtractPersistentBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
+		useBackgroundBufferMutex = atoi(value);
+	}
+	else if (!strcmp(tag, "usebadpixelmap")) {
+		useBadPixelMask = atoi(value);
+	}
+	else if (!strcmp(tag, "usedarkcalsubtraction")) {
+		useDarkcalSubtraction = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractbehindwires")) {
+		cmSubtractBehindWires = atoi(value);
+	}
+	else if (!strcmp(tag, "usegaincal")) {
+		useGaincal = atoi(value);
+	}
+	else if (!strcmp(tag, "invertgain")) {
+		invertGain = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractunbondedpixels")) {
+		cmSubtractUnbondedPixels = atoi(value);
+	}
+	else if (!strcmp(tag, "cmmodule")) {
+		cmModule = atoi(value);
+	}
+	else if (!strcmp(tag, "bgrecalc")) {
+		bgRecalc = atoi(value);
+	}
+	else if (!strcmp(tag, "bgmedian")) {
+		bgMedian = atof(value);
+	}
+	else if (!strcmp(tag, "bgincludehits")) {
+		bgIncludeHits = atoi(value);
+	}
+	else if (!strcmp(tag, "bgnobeamreset")) {
+		bgNoBeamReset = atoi(value);
+	}
+	else if (!strcmp(tag, "bgfiducialglitchreset")) {
+		bgFiducialGlitchReset = atoi(value);
+	}	
+	else if (!strcmp(tag, "scalebackground")) {
+		scaleBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "scaledarkcal")) {
+		printf("The keyword scaleDarkcal does the same thing as scaleBackground.\n"
+               "Use scaleBackground instead.\n"
+               "Modify your ini file and try again...\n");
+		exit(1);
+	}
+	else if (!strcmp(tag, "startframes")) {
+		startFrames = atoi(value);
+	}
+    
+	// Unknown tags
+	else {
+		printf("\tUnknown tag: %s = %s\n",tag,value);
+		printf("Aborting...\n");
+		exit(1);
+	}
+
+}
+
+
+
+
+/*
+ *	Read in detector pixel layout
  */
 void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 
@@ -49,7 +346,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 
 	
 	// Set filename here 
-	printf("Reading detector configuration:\n");
+	printf("Reading detector geometry:\n");
 	printf("\t%s\n",filename);
 	
 	
@@ -58,7 +355,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("Error: Detector configuration file does not exist: %s\n",filename);
+		printf("Error: Detector geometry file does not exist: %s\n",filename);
 		exit(1);
 	}
 	
@@ -81,7 +378,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	// Sanity check that size matches what we expect for cspad (!)
 	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ux%u != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
+		printf("%ldx%ld != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
@@ -190,7 +487,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     for ( i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
         y = pix_y[i]*pixelSize;
-        z = pix_z[i]*pixelSize + global->detectorZ*global->cameraLengthScale;
+        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
         
         r = sqrt(x*x + y*y + z*z);
         kx = x/r/wavelengthA;
@@ -234,7 +531,7 @@ void cPixelDetectorCommon::readDarkcal(cGlobal *global, char *filename){
 	memset(darkcal,0, pix_nn*sizeof(int32_t));
 
 	// Do we need a darkcal file?	
-	if (global->useDarkcalSubtraction == 0){
+	if (useDarkcalSubtraction == 0){
 		return;
 	}
 	
@@ -288,7 +585,7 @@ void cPixelDetectorCommon::readGaincal(cGlobal *global, char *filename){
 		gaincal[i] = 1;
 
 	// Do we even need a gaincal file?
-	if ( global->useGaincal == 0 ){
+	if ( useGaincal == 0 ){
 		return;
 	}
 
@@ -334,7 +631,7 @@ void cPixelDetectorCommon::readGaincal(cGlobal *global, char *filename){
 
 	// Invert the gain so we have an array that all we need to do is simple multiplication
 	// Pixels with zero gain become dead pixels
-	if(global->invertGain) {
+	if(invertGain) {
 		for(long i=0;i<pix_nn;i++) {
 			if(gaincal[i] != 0)
 				gaincal[i] = 1.0/gaincal[i];
@@ -414,7 +711,7 @@ void cPixelDetectorCommon::readBadpixelMask(cGlobal *global, char *filename){
 	
 	
 	// Do we need a bad pixel map?
-	if ( global->useBadPixelMask == 0 ){
+	if ( useBadPixelMask == 0 ){
 		return;
 	}
 
@@ -469,7 +766,7 @@ void cPixelDetectorCommon::readWireMask(cGlobal *global, char *filename){
 		wiremask[i] = 1;
 	
 	// Do we need this file?
-	if ( global->cmSubtractBehindWires == 0 ){
+	if ( cmSubtractBehindWires == 0 ){
 		return;
 	}
 	

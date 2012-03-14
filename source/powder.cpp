@@ -106,7 +106,7 @@ void saveRunningSums(cGlobal *global, int detID) {
 	for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
 		double *buffer;
 		
-		sprintf(filenamebase,"r%04u-class%i", global->runNumber, powderType);
+		sprintf(filenamebase,"r%04u-class%ld", global->runNumber, powderType);
 		//sprintf(filenamebase,"r%04u-class%i-%06i", global->runNumber, powderType, global->nprocessedframes);
 		
 		// Raw data

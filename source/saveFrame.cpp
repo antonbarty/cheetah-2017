@@ -80,7 +80,8 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	herr_t		hdf_error;
 	hid_t   	gid, gidHitfinder;
 	//char 		fieldname[100]; 
-	
+    char        fieldID[1023];
+
 	
 	/*
 	 *	Create the HDF5 file
@@ -171,27 +172,25 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	/*
 	 *	Save radial average (always, it's not much space)
 	 */
-	//if(global->saveRadialAverage) 
-	{
-		char fieldID[1023];
-		DETECTOR_LOOP {
-			size[0] = global->detector[detID].radial_nn;
-			dataspace_id = H5Screate_simple(1, size, NULL);
-			
-			sprintf(fieldID, "det%li-radialAverage", detID);
-			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverage);
-			H5Dclose(dataset_id);
-			
-			sprintf(fieldID, "det%li-radialAverageCounter", detID);
-			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverageCounter);
-			H5Dclose(dataset_id);
-			
-			H5Sclose(dataspace_id);
-		}
-	}
+    DETECTOR_LOOP {
+        size[0] = global->detector[detID].radial_nn;
+        dataspace_id = H5Screate_simple(1, size, NULL);
+        
+        sprintf(fieldID, "radialAverage%li", detID);
+        dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverage);
+        H5Dclose(dataset_id);
+        
+        sprintf(fieldID, "radialAverageCounter%li", detID);
+        dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].radialAverageCounter);
+        H5Dclose(dataset_id);
+        
+        H5Sclose(dataspace_id);
+    }
 	
+    
+
 	
 	/*
 	 *	Save TOF data (Aqiris)
@@ -473,16 +472,6 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	H5Dclose(dataset_id);
 	
 	
-	// Motor positions
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorPosition", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorZ );	
-	H5Dclose(dataset_id);
-
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/detectorEncoderValue", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detectorEncoderValue );	
-	H5Dclose(dataset_id);
-
-	
 	// LaserOn event code
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
 	//printf("LaserOnVal %d \n", LaserOnVal);
@@ -490,6 +479,20 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
 	
+    
+    // Detector motor positions
+    DETECTOR_LOOP {
+        sprintf(fieldID, "/LCLS/detector%li-Position", detID);
+        dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorZ );	
+        H5Dclose(dataset_id);
+        
+        sprintf(fieldID, "/LCLS/detector%li-EncoderValue", detID);
+        dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue );	
+        H5Dclose(dataset_id);
+    }    
+
 	
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);

@@ -116,16 +116,16 @@ void *worker(void *threadarg) {
 	/*
 	 * Check for saturated pixels, before any other corrections
 	 */
-	if ( global->maskSaturatedPixels == 1 ) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if ( global->detector[detID].maskSaturatedPixels == 1 ) 
 			checkSaturatedPixels(eventData, global, detID);
 	}
 	
 	/*
 	 *	Subtract darkcal image (static electronic offsets)
 	 */
-	if(global->useDarkcalSubtraction) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useDarkcalSubtraction) 
 			subtractDarkcal(eventData, global, detID);
 	}
 
@@ -133,32 +133,32 @@ void *worker(void *threadarg) {
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
-	if(global->cmModule) {
-		DETECTOR_LOOP
+	DETECTOR_LOOP {
+        if(global->detector[detID].cmModule) 
 			cmModuleSubtract(eventData, global, detID);
 	}
-	if(global->cmSubtractUnbondedPixels) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].cmSubtractUnbondedPixels) 
 			cmSubtractUnbondedPixels(eventData, global, detID);
 	}
-	if(global->cmSubtractBehindWires) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].cmSubtractBehindWires) 
 			cmSubtractBehindWires(eventData, global, detID);
 	}
 	
 	/*
 	 *	Apply gain correction
 	 */
-	if(global->useGaincal) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useGaincal) 
 			applyGainCorrection(eventData, global, detID);
 	}
 
 	/*
 	 *	Apply bad pixel map
 	 */
-	if(global->useBadPixelMask) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useBadPixelMask) 
 			applyBadPixelMask(eventData, global, detID);
 	} 
 	
@@ -166,25 +166,27 @@ void *worker(void *threadarg) {
 	/*
 	 *	Recalculate running background from time to time
 	 */
-	if(global->useSubtractPersistentBackground){
-		pthread_mutex_lock(&global->bgbuffer_mutex);
-		if( ( (global->bgCounter % global->bgRecalc) == 0 || global->bgCounter == global->bgMemory) && global->bgCounter != global->last_bg_update ) {
-			DETECTOR_LOOP
-				calculatePersistentBackground(global, detID);
-		}
-		pthread_mutex_unlock(&global->bgbuffer_mutex);
-	}
-	
+    DETECTOR_LOOP {
+        if(global->detector[detID].useSubtractPersistentBackground){
+            pthread_mutex_lock(&global->bgbuffer_mutex);
+            if( ( (global->detector[detID].bgCounter % global->detector[detID].bgRecalc) == 0 || global->detector[detID].bgCounter == global->detector[detID].bgMemory) && global->detector[detID].bgCounter != global->detector[detID].last_bg_update ) {
+                    calculatePersistentBackground(global, detID);
+            }
+            pthread_mutex_unlock(&global->bgbuffer_mutex);
+        }
+    }	
+    
 	/*
 	 *	Recalculate hot pixel maskfrom time to time
 	 */
-    if(global->useAutoHotpixel) {
-        if( ( (global->hotpixCounter % global->hotpixRecalc) == 0 || global->hotpixCounter == global->hotpixMemory) && global->hotpixCounter != global->last_hotpix_update ) {
-            DETECTOR_LOOP
-                calculateHotPixelMask(global, detID);
-        }
-    }	
-	
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHotpixel) {
+            if( ( (global->detector[detID].hotpixCounter % global->detector[detID].hotpixRecalc) == 0 || global->detector[detID].hotpixCounter == global->detector[detID].hotpixMemory) && global->detector[detID].hotpixCounter != global->detector[detID].last_hotpix_update ) {
+                    calculateHotPixelMask(global, detID);
+            }
+        }	
+	}
+    
 	/* 
 	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
 	 */
@@ -198,8 +200,8 @@ void *worker(void *threadarg) {
 	/*
 	 *	Subtract running photon background
 	 */
-	if(global->useSubtractPersistentBackground) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useSubtractPersistentBackground) 
 			subtractPersistentBackground(eventData, global, detID);
 	}
 	
@@ -207,8 +209,8 @@ void *worker(void *threadarg) {
 	/*
 	 *	Local background subtraction
 	 */
-	if(global->useLocalBackgroundSubtraction) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useLocalBackgroundSubtraction) 
 			subtractLocalBackground(eventData, global, detID);
 	}
 		
@@ -216,12 +218,12 @@ void *worker(void *threadarg) {
 	/*
 	 *	Identify and remove hot pixels
 	 */
-	if(global->useAutoHotpixel){
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHotpixel)
 			killHotpixels(eventData, global, detID);
 	}
-	if(global->useBadPixelMask) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].useBadPixelMask) 
 			applyBadPixelMask(eventData, global, detID);
 	} 
 		
@@ -229,15 +231,17 @@ void *worker(void *threadarg) {
 	/*
 	 *	Skip first set of frames to build up running estimate of background...
 	 */
-	if (eventData->threadNum < global->startFrames || 
-		(global->useSubtractPersistentBackground && global->bgCounter < global->bgMemory) || 
-		(global->useAutoHotpixel && global->hotpixCounter < global->hotpixRecalc) ) {
-			DETECTOR_LOOP
-				updateBackgroundBuffer(eventData, global, detID); 
-			printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarate);
-			goto cleanup;
+    DETECTOR_LOOP {
+        if (eventData->threadNum < global->detector[detID].startFrames || 
+            (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
+            (global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
+                    updateBackgroundBuffer(eventData, global, detID); 
+                printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarate);
+                goto cleanup;
+        }
 	}
-	
+    
+    
 	/*
 	 *	Hitfinding
 	 */
@@ -249,9 +253,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	Update running backround estimate based on non-hits
 	 */
-	if (global->useSubtractPersistentBackground) {        
-        if (hit==0 || global->bgIncludeHits) {
-            DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if (global->detector[detID].useSubtractPersistentBackground) 
+            if (hit==0 || global->detector[detID].bgIncludeHits) {
                 updateBackgroundBuffer(eventData, global, detID); 
         }		
     }
@@ -259,16 +263,16 @@ void *worker(void *threadarg) {
 	/*
 	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted
 	 */
-	if(global->saveDetectorCorrectedOnly) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].saveDetectorCorrectedOnly) 
 			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	/*
 	 *	If using detector raw, do it here
 	 */
-	if(global->saveDetectorRaw) {
-		DETECTOR_LOOP
+    DETECTOR_LOOP {
+        if(global->detector[detID].saveDetectorRaw) 
 			for(long i=0;i<global->detector[detID].pix_nn;i++)
 				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
 	}
@@ -348,15 +352,15 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%s, %i, %li, %ld, %i, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",eventData->eventname, hit, 
+	fprintf(global->framefp, "%s, %i, %d, %ld, %i, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",eventData->eventname, hit, 
 			eventData->seconds, eventData->threadNum, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, 
 			eventData->peakResolution, eventData->peakDensity, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, 
-			eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
+			eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
     // Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "r%04u/%s, %li, %i, %g, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",global->runNumber, eventData->eventname, eventData->threadNum, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->detectorPosition, eventData->laserEventCodeOn, eventData->laserDelay);
+	fprintf(global->powderlogfp[hit], "r%04u/%s, %li, %i, %g, %g, %g, %g, %g, %g, %g, %i, %g\n",global->runNumber, eventData->eventname, eventData->threadNum, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->photonEnergyeV, eventData->gmd1, eventData->gmd2, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
 	
 	

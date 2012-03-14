@@ -38,7 +38,7 @@ public:
    
 	
 	// Detector position
-    char					detectorZpvname[MAX_FILENAME_LENGTH];
+    //char					detectorZpvname[MAX_FILENAME_LENGTH];
 	
 	// Track some statistics for the log file
 	double summedPhotonEnergyeV;
@@ -53,65 +53,66 @@ public:
 	// Real-space geometry
 	//char		geometryFile[MAX_FILENAME_LENGTH];		// File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
 	//float		pixelSize;
-	float		defaultCameraLengthMm;
-    float       cameraLengthOffset;
-    float       cameraLengthScale;
+	//float		defaultCameraLengthMm;
+    //float       cameraLengthOffset;
+    //float       cameraLengthScale;
 	
 	// Bad pixel masks
-	int			useBadPixelMask;
+	//int			useBadPixelMask;
 	//char		badpixelFile[MAX_FILENAME_LENGTH];
 	
 	// Static dark calibration (static offsets on each pixel to be subtracted)
 	//char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
-	int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
+	//int			useDarkcalSubtraction;	// Subtract the darkcal (or not)?
 	int			generateDarkcal;		// Flip this on to generate a darkcal (auto-turns-on appropriate other options)
 	
 	// Common mode and pedastal subtraction
 	//char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
-	int			cmModule;				// Subtract common mode from each ASIC
-	int			cmSubtractUnbondedPixels;
-	int			cmSubtractBehindWires;
-	float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
+	//int			cmModule;				// Subtract common mode from each ASIC
+	//int			cmSubtractUnbondedPixels;
+	//int			cmSubtractBehindWires;
+	//float		cmFloor;				// Use lowest x% of values as the offset to subtract (typically lowest 2%)
 
 	// Gain correction
-	int			useGaincal;
-	int			invertGain;
+	//int			useGaincal;
+	//int			invertGain;
 	//char		gaincalFile[MAX_FILENAME_LENGTH];
 	int			generateGaincal;		// Flip this on to generate a gaincal (auto-turns-on appropriate other options)
 	
 	// Running background subtraction
-	int			useSubtractPersistentBackground;
-	int			subtractBg;
-	int			scaleBackground;
-    int         useBackgroundBufferMutex;
-	float		bgMedian;
-	long		bgMemory;
-	long		bgRecalc;
-	long		bgCounter;
-	long		last_bg_update;
-	int			bgIncludeHits;
-	int			bgNoBeamReset;
-	int			bgFiducialGlitchReset;
+	//int			useSubtractPersistentBackground;
+	//int			subtractBg;
+	//int			scaleBackground;
+    //int         useBackgroundBufferMutex;
+	//float		bgMedian;
+	//long		bgMemory;
+	//long		bgRecalc;
+	//long		bgCounter;
+	//long		last_bg_update;
+	//int			bgIncludeHits;
+	//int			bgNoBeamReset;
+	//int			bgFiducialGlitchReset;
 	
 	// Local background subtraction
-	int			useLocalBackgroundSubtraction;
-	long		localBackgroundRadius;
+	//int			useLocalBackgroundSubtraction;
+	//long		localBackgroundRadius;
 
 	// Saturated pixels
-	int         maskSaturatedPixels;
-	long        pixelSaturationADC;	
+	//int         maskSaturatedPixels;
+	//long        pixelSaturationADC;	
 	
 	// Kill persistently hot pixels
-	int			useAutoHotpixel;
-	int			hotpixADC;
-	int			hotpixMemory;
-	int			hotpixRecalc;
-	float		hotpixFreq;
-	long		hotpixCounter;
-	long		nhot;
-	long		last_hotpix_update;
-	int			startFrames;
+	//int			useAutoHotpixel;
+	//int			hotpixADC;
+	//int			hotpixMemory;
+	//int			hotpixRecalc;
+	//float		hotpixFreq;
+	//long		hotpixCounter;
+	//long		nhot;
+	//long		last_hotpix_update;
+	//int			startFrames;
 	
+    
 	// Hitfinding
 	int         hitfinder;
 	int         hitfinderAlgorithm;
@@ -161,8 +162,8 @@ public:
 	int			saveInterval;
 	int			savePeakInfo;
 	int			savePeakList;
-	int			saveDetectorCorrectedOnly;
-	int			saveDetectorRaw;
+	//int			saveDetectorCorrectedOnly;
+	//int			saveDetectorRaw;
 
 	// Radial stacks
     int         saveRadialStacks;
@@ -245,8 +246,8 @@ public:
     //float			radial_max;
 	//long			radial_nn;
 
-	float			detectorZprevious;	
-	float			detposprev;	
+	//float			detectorZprevious;	
+	//float			detposprev;	
 	
 	
 	/*
@@ -292,8 +293,8 @@ public:
 	long			nhits;
 	long			nrecentprocessedframes;
 	long			nrecenthits;
-	double			detectorZ;
-	double			detectorEncoderValue;	
+	//double			detectorZ;
+	//double			detectorEncoderValue;	
 	
 	time_t			tstart, tend;
 	time_t			tlast, tnow;
