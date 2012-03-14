@@ -281,7 +281,7 @@ void cGlobal::setup() {
     
 	
 	/*
-	 *	Set up arrays for remembering powder data, background, etc.
+	 *	Set up arrays for hot pixels, running backround, etc.
 	 */
 	for(long i=0; i<nDetectors; i++) {
 		detector[i].selfdark = (float*) calloc(detector[i].pix_nn, sizeof(float));
