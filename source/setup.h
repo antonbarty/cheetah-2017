@@ -173,7 +173,7 @@ public:
     /*
      *  Radial stacks
      */
-	long			radialStackCounter[MAX_POWDER_CLASSES];
+	//long			radialStackCounter[MAX_POWDER_CLASSES];
 	//float			*radialAverageStack[MAX_POWDER_CLASSES];
 	//pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
 	

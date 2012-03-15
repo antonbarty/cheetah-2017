@@ -276,11 +276,16 @@ void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
 	for(long i=0;i<global->detector[detID].pix_nn;i++){
 		buffer[i] = (fabs(eventData->detector[detID].corrected_data[i])>global->detector[detID].hotpixADC)?(1):(0);
 	}
-	pthread_mutex_lock(&global->hotpixel_mutex);
-	long frameID = global->detector[detID].hotpixCounter%global->detector[detID].hotpixMemory;	
+
+    if(global->detector[detID].useBackgroundBufferMutex)
+        pthread_mutex_lock(&global->hotpixel_mutex);
+	
+    long frameID = global->detector[detID].hotpixCounter%global->detector[detID].hotpixMemory;
 	memcpy(global->detector[detID].hotpix_buffer+global->detector[detID].pix_nn*frameID, buffer, global->detector[detID].pix_nn*sizeof(int16_t));
 	global->detector[detID].hotpixCounter += 1;
-	pthread_mutex_unlock(&global->hotpixel_mutex);
+
+    if(global->detector[detID].useBackgroundBufferMutex)
+        pthread_mutex_unlock(&global->hotpixel_mutex);
 	free(buffer);
 	
 	

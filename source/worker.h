@@ -162,7 +162,7 @@ void saveRunningSums(cGlobal*, int);
 
 // RadialAverage.cpp
 void addToRadialAverageStack(tEventData*, cGlobal*, int, int);
-void saveRadialAverageStack(cGlobal*, int);
+void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
 
 void calculateRadialAverage(float*, float*, float*, cGlobal*, int);
