@@ -99,6 +99,7 @@ void beginjob() {
 	/*
 	 *	Stuff for worker thread management
 	 */
+    global.self = &global;
 	global.defaultConfiguration();
 	global.parseConfigFile(global.configFile);
 	for(long i=0; i<global.nDetectors; i++) {
@@ -686,8 +687,10 @@ void event() {
 	 *	Save periodic powder patterns
 	 */
 	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.detector[0].startFrames+50) ){
-		saveRunningSums(&global, 0);
-		global.updateLogfile();
+            for(long i=0; i<global.nDetectors; i++) {
+                saveRunningSums(&global, i);
+                global.updateLogfile();
+            }
 	}
 	
 	
@@ -746,6 +749,17 @@ void endjob()
 		free(global.detector[i].peakmask);
 		free(global.detector[i].bg_buffer);
 		free(global.detector[i].hotpix_buffer);
+
+        for(long j=0; j<global.nPowderClasses; j++) {
+            free(global.detector[i].powderRaw[j]);
+            free(global.detector[i].powderRawSquared[j]);
+            free(global.detector[i].powderAssembled[j]);
+            free(global.detector[i].radialAverageStack[j]);
+            pthread_mutex_destroy(&global.detector[i].powderRaw_mutex[j]);
+            pthread_mutex_destroy(&global.detector[i].powderRawSquared_mutex[j]);
+            pthread_mutex_destroy(&global.detector[i].powderAssembled_mutex[j]);
+            pthread_mutex_destroy(&global.detector[i].radialStack_mutex[j]);
+        }
 	}
 	pthread_mutex_destroy(&global.nActiveThreads_mutex);
 	pthread_mutex_destroy(&global.selfdark_mutex);
@@ -755,16 +769,6 @@ void endjob()
 	pthread_mutex_destroy(&global.peaksfp_mutex);
 	pthread_mutex_destroy(&global.powderfp_mutex);
 	
-	for(long i=0; i<global.nPowderClasses; i++) {
-		free(global.powderRaw[i]);
-		free(global.powderRawSquared[i]);
-		free(global.powderAssembled[i]);
-		free(global.radialAverageStack[i]);
-		pthread_mutex_destroy(&global.powderRaw_mutex[i]);
-		pthread_mutex_destroy(&global.powderRawSquared_mutex[i]);
-		pthread_mutex_destroy(&global.powderAssembled_mutex[i]);
-		pthread_mutex_destroy(&global.radialStack_mutex[i]);
-	}
 	
 	
 	

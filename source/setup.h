@@ -17,7 +17,7 @@
 class cGlobal {
 	
 public:
-	
+	cGlobal     *self;
 	/*
 	 *	Various switches and processing options
 	 */
@@ -159,22 +159,23 @@ public:
 	/*
 	 *	Powder patterns/sums
 	 */
-	FILE			*powderlogfp[MAX_POWDER_CLASSES];
 	long			nPowderClasses;
 	long			nPowderFrames[MAX_POWDER_CLASSES];
-	double			*powderRaw[MAX_POWDER_CLASSES];
-	double			*powderRawSquared[MAX_POWDER_CLASSES];
-	double			*powderAssembled[MAX_POWDER_CLASSES];
-	pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
+	FILE			*powderlogfp[MAX_POWDER_CLASSES];
+    
+	//double			*powderRaw[MAX_POWDER_CLASSES];
+	//double			*powderRawSquared[MAX_POWDER_CLASSES];
+	//double			*powderAssembled[MAX_POWDER_CLASSES];
+	//pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
     
     /*
      *  Radial stacks
      */
 	long			radialStackCounter[MAX_POWDER_CLASSES];
-	float			*radialAverageStack[MAX_POWDER_CLASSES];
-	pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
+	//float			*radialAverageStack[MAX_POWDER_CLASSES];
+	//pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
 	
 
 

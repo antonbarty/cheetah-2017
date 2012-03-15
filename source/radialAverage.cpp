@@ -39,9 +39,10 @@
  */
  void addToRadialAverageStack(tEventData *eventData, cGlobal *global, int powderClass, int detID){
  
+     cPixelDetectorCommon     detector = global->detector[detID];
 	 long	radial_nn = global->detector[detID].radial_nn;
 	 
-     pthread_mutex_lock(&global->radialStack_mutex[powderClass]);
+     pthread_mutex_lock(&detector.radialStack_mutex[powderClass]);
 
      // Offset to current position in stack
      long stackoffset = global->radialStackCounter[powderClass] % global->radialStackSize;
@@ -49,7 +50,7 @@
      
      // Copy data and increment counter
      for(long i=0; i<radial_nn; i++) {
-         global->radialAverageStack[powderClass][dataoffset+i] = (float) eventData->detector[detID].radialAverage[i];
+         detector.radialAverageStack[powderClass][dataoffset+i] = (float) eventData->detector[detID].radialAverage[i];
      }
      global->radialStackCounter[powderClass] += 1;
      
@@ -59,11 +60,11 @@
          
          // Zero array
          for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-             global->radialAverageStack[powderClass][j] = 0;
+             detector.radialAverageStack[powderClass][j] = 0;
          }
      }
      
-     pthread_mutex_unlock(&global->radialStack_mutex[powderClass]);			
+     pthread_mutex_unlock(&detector.radialStack_mutex[powderClass]);			
  
  }
 
@@ -74,13 +75,22 @@
 void saveRadialAverageStack(cGlobal *global, int powderClass) {
 
     // Create filename
+    div_t   divresult;
     char	filename[1024];
-    int     frameNum = global->radialStackCounter[powderClass];
-    sprintf(filename,"r%04u-radialstack-class%i-%06i.h5", global->runNumber, powderClass, frameNum);
-    printf("Saving radial stack: %s\n", filename);
+    long    frameNum = global->radialStackCounter[powderClass];
+    long    nRows = global->radialStackSize;
+    divresult = div(frameNum, nRows);
+    if(divresult.rem != 0)
+        nRows = divresult.rem;
+    
+    DETECTOR_LOOP {
+        sprintf(filename,"r%04u-radialstack-detector%ld-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum);
+        printf("Saving radial stack: %s\n", filename);
 
-    writeSimpleHDF5(filename, global->radialAverageStack[powderClass], global->detector[0].radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);
-	fflush(global->powderlogfp[powderClass]);
+        writeSimpleHDF5(filename, global->detector[detID].radialAverageStack[powderClass], global->detector[detID].radial_nn, nRows, H5T_NATIVE_FLOAT);
+        //writeSimpleHDF5(filename, global->detector[detID].radialAverageStack[powderClass],global->detector[detID].radial_nn, global->radialStackSize, H5T_NATIVE_FLOAT);
+        fflush(global->powderlogfp[powderClass]);
+    }
 }
 
 

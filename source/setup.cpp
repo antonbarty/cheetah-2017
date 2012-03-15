@@ -49,28 +49,7 @@ void cGlobal::defaultConfiguration(void) {
 	// Detector info
     nDetectors = 1;
 	for(long i=0; i<MAX_DETECTORS; i++) {
-        strcpy(detector[i].detectorConfigFile, "No_file_specified");
-        
-		// pdsinfo
-        //	strcpy(detector[i].detectorTypeName, "cspad");
-        //	strcpy(detector[i].detectorName, "CxiDs1");
-        //	detector[i].detectorType = Pds::DetInfo::Cspad;
-        //	detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
-        
-        // Calibration files
-        //	strcpy(detector[i].geometryFile, "No_file_specified");
-        //	strcpy(detector[i].badpixelFile, "No_file_specified");
-        //	strcpy(detector[i].darkcalFile, "No_file_specified");
-        //	strcpy(detector[i].wireMaskFile, "No_file_specified");
-        //	strcpy(detector[i].gaincalFile, "No_file_specified");
-        
-        // ASIC layout
-        //	detector[i].asic_nx = CSPAD_ASIC_NX;
-        //	detector[i].asic_ny = CSPAD_ASIC_NY;
-        //	detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-        //	detector[i].nasics_x = CSPAD_nASICS_X;
-        //	detector[i].nasics_y = CSPAD_nASICS_Y;
-        //	detector[i].pixelSize = 110e-6;
+        strcpy(detector[i].detectorConfigFile, "No_file_specified");        
     }
     
     
@@ -107,7 +86,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderUsePeakmask = 0;
 	hitfinderCheckGradient = 0;
 	hitfinderMinGradient = 0;
-	strcpy(peaksearchFile, "");
+	strcpy(peaksearchFile, "No_file_specified");
 	savePeakInfo = 1;
 	hitfinderCheckPeakSeparation = 0;
 	hitfinderMaxPeakSeparation = 50;
@@ -284,17 +263,8 @@ void cGlobal::setup() {
 	 *	Set up arrays for hot pixels, running backround, etc.
 	 */
 	for(long i=0; i<nDetectors; i++) {
-		detector[i].selfdark = (float*) calloc(detector[i].pix_nn, sizeof(float));
-		detector[i].bg_buffer = (int16_t*) calloc(detector[i].bgMemory*detector[i].pix_nn, sizeof(int16_t)); 
-		detector[i].hotpix_buffer = (int16_t*) calloc(detector[i].hotpixMemory*detector[i].pix_nn, sizeof(int16_t)); 
-		detector[i].hotpixelmask = (int16_t*) calloc(detector[i].pix_nn, sizeof(int16_t));
-		detector[i].wiremask = (int16_t*) calloc(detector[i].pix_nn, sizeof(int16_t));
-		for(long j=0; j<detector[i].pix_nn; j++) {
-			detector[i].selfdark[j] = 0;
-			detector[i].hotpixelmask[j] = 1;
-			detector[i].wiremask[j] = 1;
-		}
-	}
+        detector[i].allocatePowderMemory(self);
+ 	}
 	
 	hitfinderResMask = (int	*) calloc(detector[0].pix_nn, sizeof(int));
 	for(long j=0; j<detector[0].pix_nn; j++) {
@@ -307,30 +277,31 @@ void cGlobal::setup() {
 	 *	Currently only tracked for detector[0]  (generalise this later)
      */
 	for(long i=0; i<nPowderClasses; i++) {
-		nPowderFrames[i] = 0;
-		powderRaw[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
-		powderRawSquared[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
-		powderAssembled[i] = (double*) calloc(detector[0].image_nn, sizeof(double));
+        
+		//nPowderFrames[i] = 0;
+		//powderRaw[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
+		//powderRawSquared[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
+		//powderAssembled[i] = (double*) calloc(detector[0].image_nn, sizeof(double));
 
-        radialStackCounter[i] = 0;
-        radialAverageStack[i] = (float *) calloc(detector[0].radial_nn*radialStackSize, sizeof(float));
+        //radialStackCounter[i] = 0;
+        //radialAverageStack[i] = (float *) calloc(detector[0].radial_nn*radialStackSize, sizeof(float));
         
-		pthread_mutex_init(&powderRaw_mutex[i], NULL);
-		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-        pthread_mutex_init(&radialStack_mutex[i], NULL);
+		//pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		//pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		//pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+        //pthread_mutex_init(&radialStack_mutex[i], NULL);
 		
-		for(long j=0; j<detector[0].pix_nn; j++) {
-			powderRaw[i][j] = 0;
-			powderRawSquared[i][j] = 0;
-		}
-		for(long j=0; j<detector[0].image_nn; j++) {
-			powderAssembled[i][j] = 0;
-		}
-        
-        for(long j=0; j<detector[0].radial_nn*radialStackSize; j++) {
-            radialAverageStack[i][j] = 0;
-        }
+		//for(long j=0; j<detector[0].pix_nn; j++) {
+		//	powderRaw[i][j] = 0;
+		//	powderRawSquared[i][j] = 0;
+		//}
+		//for(long j=0; j<detector[0].image_nn; j++) {
+		//	powderAssembled[i][j] = 0;
+		//}
+
+        //for(long j=0; j<detector[0].radial_nn*radialStackSize; j++) {
+        //    radialAverageStack[i][j] = 0;
+        //}
 
 		char	filename[1024];
         powderlogfp[i] = NULL;
@@ -372,7 +343,7 @@ void cGlobal::setup() {
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
-        for(long i=0; i<MAX_DETECTORS; i++) {
+        for(long i=0; i<nDetectors; i++) {
             detector[i].cmModule = 0;
             detector[i].cmSubtractUnbondedPixels = 0;
             detector[i].useDarkcalSubtraction = 0;
@@ -395,7 +366,7 @@ void cGlobal::setup() {
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
-        for(long i=0; i<MAX_DETECTORS; i++) {
+        for(long i=0; i<nDetectors; i++) {
             detector[i].cmModule = 0;
             detector[i].cmSubtractUnbondedPixels = 0;
             detector[i].useDarkcalSubtraction = 1;

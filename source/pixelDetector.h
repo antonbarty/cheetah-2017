@@ -65,39 +65,39 @@ public:
 
 		
 	// Detector data block size
-	long			pix_nx;
-	long			pix_ny;
-	long			pix_nn;
+	long		pix_nx;
+	long		pix_ny;
+	long		pix_nn;
 	
 	// Real space pixel locations
-	float			*pix_x;
-	float			*pix_y;
-	float			*pix_z;
+	float		*pix_x;
+	float		*pix_y;
+	float		*pix_z;
 	
 	// Reciprocal space pixel coordinates (inverse A, no factor of 2*pi)
-	float			*pix_kx; 
-	float			*pix_ky;
-	float			*pix_kz;
-	float			pix_dx;
-	float			pixelSize;
+	float		*pix_kx; 
+	float		*pix_ky;
+	float		*pix_kz;
+	float		pix_dx;
+	float		pixelSize;
 
     // Assembled image size
-	long			image_nx;
-	long			image_nn;
+	long		image_nx;
+	long		image_nn;
 
 	// ASIC module size
-	long			asic_nx;
-	long			asic_ny;
-	long			asic_nn;
-	long			nasics_x;
-	long			nasics_y;
+	long		asic_nx;
+	long		asic_ny;
+	long		asic_nn;
+	long		nasics_x;
+	long		nasics_y;
 
 	// Radial averages 
-	float			radial_max;
-	long			radial_nn;
-	float			*pix_r;
-	float			*pix_kr;
-	float			*pix_res;
+	float		radial_max;
+	long		radial_nn;
+	float		*pix_r;
+	float		*pix_kr;
+	float		*pix_res;
 
     
 	// Detector position
@@ -191,6 +191,7 @@ public:
     /*
      *  Radial stacks for this detector
      */
+    long            radialStackSize;
 	long			radialStackCounter[MAX_POWDER_CLASSES];
 	float			*radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
@@ -200,6 +201,7 @@ public:
 public:
     cPixelDetectorCommon();
     void parseConfigFile(char *);
+    void allocatePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
     void updateKspace(cGlobal*, float);
 	void readDarkcal(cGlobal*, char *);

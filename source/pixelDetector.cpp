@@ -117,6 +117,62 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 }
 
+/*
+ *  Allocate arrays for memory, etc
+ */
+void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
+    
+    // Constants
+    nPowderClasses = global->nPowderClasses;
+    radialStackSize = global->radialStackSize;
+    
+    
+    // Background buffers and the like
+    selfdark = (float*) calloc(pix_nn, sizeof(float));
+    bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+    hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+    hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+    wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+    for(long j=0; j<pix_nn; j++) {
+        selfdark[j] = 0;
+        hotpixelmask[j] = 1;
+        wiremask[j] = 1;
+    }
+    
+    // Powder sums and mutexes
+    for(long i=0; i<nPowderClasses; i++) {
+		nPowderFrames[i] = 0;
+		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+        
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+        pthread_mutex_init(&radialStack_mutex[i], NULL);
+		
+		for(long j=0; j<pix_nn; j++) {
+			powderRaw[i][j] = 0;
+			powderRawSquared[i][j] = 0;
+		}
+		for(long j=0; j<image_nn; j++) {
+			powderAssembled[i][j] = 0;
+		}
+    }    
+        
+    
+    // Radial stacks
+    for(long i=0; i<nPowderClasses; i++) {
+        radialStackCounter[i] = 0;
+        radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
+        
+        for(long j=0; j<radial_nn*global->radialStackSize; j++) {
+            radialAverageStack[i][j] = 0;
+        }
+	}
+    
+}
+
 
 /*
  *	Read and process configuration file

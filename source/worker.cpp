@@ -306,22 +306,26 @@ void *worker(void *threadarg) {
 	/*
 	 *	Maintain a running sum of data (powder patterns)
 	 */
-	if(hit && global->powderSumHits) {
-		addToPowder(eventData, global, hit, 0);
-	}
-	if(!hit && global->powderSumBlanks){
-		addToPowder(eventData, global, hit, 0);
-	} 
-	if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(eventData, global, 0, 0);
-	} 
-		
+    if(hit && global->powderSumHits) {
+        DETECTOR_LOOP
+            addToPowder(eventData, global, hit, detID);
+    }
+    if(!hit && global->powderSumBlanks){
+        DETECTOR_LOOP
+            addToPowder(eventData, global, hit, detID);
+    } 
+    if(global->generateDarkcal || global->generateGaincal){
+        DETECTOR_LOOP
+            addToPowder(eventData, global, 0, detID);
+    } 
+    
     
     /*
      *  Maintain radial average stack
      */
     if(global->saveRadialStacks) {
-        addToRadialAverageStack(eventData, global, hit, 0);
+        DETECTOR_LOOP
+            addToRadialAverageStack(eventData, global, hit, detID);
     }
 	
 	
