@@ -32,7 +32,7 @@
 #include <limits>
 #include <stdint.h>
 
-#include "pixelDetector.h"
+#include "detectorClass.h"
 #include "setup.h"
 #include "worker.h"
 

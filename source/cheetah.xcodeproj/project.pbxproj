@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4D06096214E6ED5000345581 /* pixelDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D06096114E6ED5000345581 /* pixelDetector.cpp */; };
+		4D06096214E6ED5000345581 /* detectorClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D06096114E6ED5000345581 /* detectorClass.cpp */; };
 		4D3B883E12FF425900B7ABD9 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B883D12FF425900B7ABD9 /* worker.cpp */; };
 		4D3B885112FF49F500B7ABD9 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B885012FF49F500B7ABD9 /* Makefile */; };
 		4D3B88661300B24700B7ABD9 /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B88651300B24700B7ABD9 /* setup.cpp */; };
@@ -37,7 +37,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4D06096114E6ED5000345581 /* pixelDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pixelDetector.cpp; sourceTree = "<group>"; };
+		4D06096114E6ED5000345581 /* detectorClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; path = detectorClass.cpp; sourceTree = "<group>"; };
 		4D3B883D12FF425900B7ABD9 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		4D3B88651300B24700B7ABD9 /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
@@ -83,10 +83,10 @@
 				4D4B16B4147D051F00BC8065 /* backgroundCorrection.cpp */,
 				4D3B88681300B56300B7ABD9 /* cheetah.cpp */,
 				4D51241613038E3F0094D8E9 /* data2d.cpp */,
+				4D06096114E6ED5000345581 /* detectorClass.cpp */,
 				4D4B16B1147D043B00BC8065 /* detectorCorrection.cpp */,
 				4D4B1692147CFF7900BC8065 /* hitfinders.cpp */,
 				4D7412C613EB1B5D0090C7C3 /* median.cpp */,
-				4D06096114E6ED5000345581 /* pixelDetector.cpp */,
 				4D4B1698147D002600BC8065 /* powder.cpp */,
 				4DF5780714CB573600BC473E /* radialAverage.cpp */,
 				4D4B169B147D00FF00BC8065 /* saveFrame.cpp */,
@@ -178,7 +178,7 @@
 				4D4B16B2147D043B00BC8065 /* detectorCorrection.cpp in Sources */,
 				4D4B16B5147D051F00BC8065 /* backgroundCorrection.cpp in Sources */,
 				4DF5780814CB573600BC473E /* radialAverage.cpp in Sources */,
-				4D06096214E6ED5000345581 /* pixelDetector.cpp in Sources */,
+				4D06096214E6ED5000345581 /* detectorClass.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -26,7 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
-#include "pixelDetector.h"
+#include "detectorClass.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
