@@ -622,6 +622,21 @@ void event() {
 			return ;
 		}
 	}
+	
+	/*
+	 *	Questar 120Hz CCD camera on CXI
+	 *	(where the actual camera is CxiSc1)
+	 */
+	unsigned short* xppSb3Image;
+	int xppSb3Width, xppSb3Height;
+	fail = getTm6740Value(XppSb3PimCvd, xppSb3Width, xppSb3Height, xppSb3Image);
+	//fail = getTm6740Value(CxiSc1, xppSb3Width, xppSb3Height, xppSb3Image);
+	if ( fail == 0 )
+	{
+		printf( "Get XppSb3Pim Image %d x %d\n", xppSb3Width, xppSb3Height);
+	}
+	// 
+
 
 	
 	/*
