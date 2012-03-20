@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 #include "data2d.h"
-#include "detectorClass.h"
+#include "detectorObject.h"
 #include "setup.h"
 #include "worker.h"
 

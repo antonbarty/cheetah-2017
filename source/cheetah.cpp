@@ -32,7 +32,7 @@
 #include <limits>
 #include <stdint.h>
 
-#include "detectorClass.h"
+#include "detectorObject.h"
 #include "setup.h"
 #include "worker.h"
 

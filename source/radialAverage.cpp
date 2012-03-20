@@ -26,7 +26,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
-#include "detectorClass.h"
+#include "detectorObject.h"
 #include "setup.h"
 #include "worker.h"
 #include "median.h"
