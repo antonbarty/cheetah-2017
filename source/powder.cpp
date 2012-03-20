@@ -7,18 +7,6 @@
  *
  */
 
-#include "myana/myana.hh"
-#include "myana/main.hh"
-#include "myana/XtcRun.hh"
-#include "release/pdsdata/cspad/ConfigV1.hh"
-#include "release/pdsdata/cspad/ConfigV2.hh"
-#include "release/pdsdata/cspad/ConfigV3.hh"
-#include "release/pdsdata/cspad/ElementHeader.hh"
-#include "release/pdsdata/cspad/ElementIterator.hh"
-#include "cspad/CspadTemp.hh"
-#include "cspad/CspadCorrector.hh"
-#include "cspad/CspadGeometry.hh"
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -111,6 +99,7 @@ void saveRunningSums(cGlobal *global, int detID) {
 	}
 }
 
+
 void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	
 	// Dereference common variables
@@ -118,9 +107,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	long	radial_nn = detector->radial_nn;
 	long	pix_nn = detector->pix_nn;
 	long	image_nn = detector->image_nn;
-    
-	
-
+ 
 	/*	
 	 *	Filename
 	 */

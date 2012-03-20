@@ -1,16 +1,4 @@
 
-#include "myana/myana.hh"
-#include "myana/main.hh"
-#include "myana/XtcRun.hh"
-#include "release/pdsdata/cspad/ConfigV1.hh"
-#include "release/pdsdata/cspad/ConfigV2.hh"
-#include "release/pdsdata/cspad/ConfigV3.hh"
-#include "release/pdsdata/cspad/ElementHeader.hh"
-#include "release/pdsdata/cspad/ElementIterator.hh"
-#include "cspad/CspadTemp.hh"
-#include "cspad/CspadCorrector.hh"
-#include "cspad/CspadGeometry.hh"
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>

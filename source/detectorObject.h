@@ -7,6 +7,14 @@
  *
  */
 
+#include "release/pdsdata/cspad/ConfigV1.hh"
+#include "release/pdsdata/cspad/ConfigV2.hh"
+#include "release/pdsdata/cspad/ConfigV3.hh"
+#include "cspad/CspadTemp.hh"
+#include "cspad/CspadCorrector.hh"
+#include "cspad/CspadGeometry.hh"
+
+
 #define	MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define	MAX_FILENAME_LENGTH 1024

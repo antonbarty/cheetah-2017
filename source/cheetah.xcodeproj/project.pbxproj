@@ -80,11 +80,11 @@
 			isa = PBXGroup;
 			children = (
 				4D3B885012FF49F500B7ABD9 /* Makefile */,
-				4D4B16B4147D051F00BC8065 /* backgroundCorrection.cpp */,
-				4D3B88681300B56300B7ABD9 /* cheetah.cpp */,
 				4D51241613038E3F0094D8E9 /* data2d.cpp */,
+				4D3B88681300B56300B7ABD9 /* cheetah.cpp */,
 				4D06096114E6ED5000345581 /* detectorObject.cpp */,
 				4D4B16B1147D043B00BC8065 /* detectorCorrection.cpp */,
+				4D4B16B4147D051F00BC8065 /* backgroundCorrection.cpp */,
 				4D4B1692147CFF7900BC8065 /* hitfinders.cpp */,
 				4D7412C613EB1B5D0090C7C3 /* median.cpp */,
 				4D4B1698147D002600BC8065 /* powder.cpp */,
