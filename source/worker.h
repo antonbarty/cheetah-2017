@@ -157,8 +157,12 @@ int  hitfinder(tEventData*, cGlobal*, int);
 
 // powder.cpp
 void addToPowder(tEventData*, cGlobal*, int, int);
-void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 void saveRunningSums(cGlobal*, int);
+void saveDarkcal(cGlobal*, int);
+void saveGaincal(cGlobal*, int);
+void savePowderPattern(cGlobal*, int, int);
+void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
+
 
 // RadialAverage.cpp
 void addToRadialAverageStack(tEventData*, cGlobal*, int, int);
