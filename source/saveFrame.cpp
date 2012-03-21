@@ -196,20 +196,30 @@ void writeHDF5(tEventData *info, cGlobal *global){
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
+			
 		}
 		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tempData);
 		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
-			H5Dclose(dataspace_id);
-			H5Fclose(hdf_fileID);
-			return;
+			
 		}
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}	
+	
+	/*
+	 *	Save microscope images (Pulnix CCD)
+	 */
+	if(info->pulnixFail == 0) {
+		size[0] = info->pulnixWidth;	
+		size[1] = info->pulnixHeight;	
+
+		dataspace_id = H5Screate_simple(2, size, size);
+		dataset_id = H5Dcreate(gid, "pulnixCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->pulnixImage);
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}
+	
 	
 	
 	// Done with the /data group
@@ -364,11 +374,6 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	
 	
 	
-	
-	//double		phaseCavityTime1;
-	//double		phaseCavityTime2;
-	//double		phaseCavityCharge1;
-	//double		phaseCavityCharge2;
 	
 	/*
 	 *	Write LCLS event information
