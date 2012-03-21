@@ -86,7 +86,6 @@ public:
 	float		*pix_kx; 
 	float		*pix_ky;
 	float		*pix_kz;
-	float		pix_dx;
 	float		pixelSize;
 
     // Assembled image size

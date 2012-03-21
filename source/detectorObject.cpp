@@ -396,7 +396,6 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	// Pixel size (measurements in geometry file are in m)
 	//module_rows = asic_nx;
 	//module_cols = asic_ny;	
-	pix_dx = pixelSize;
 
 	
 	// Set filename here 
@@ -485,9 +484,9 @@ bounds:
 	if (fabs(xmax-xmin)<1 && fabs(ymax-ymin)<1 ) {
 		printf("\tConverting detector coordinates from meters to pixels\n");
 		for(i=0;i<nn;i++){
-			pix_x[i] /= pix_dx;
-			pix_y[i] /= pix_dx;
-			pix_z[i] /= pix_dx;
+			pix_x[i] /= pixelSize;
+			pix_y[i] /= pixelSize;
+			pix_z[i] /= pixelSize;
 		}
 		goto bounds;
 	}
@@ -510,6 +509,12 @@ bounds:
 	image_nx = 2*(unsigned)max;
 	image_nn = image_nx*image_nx;
 	printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
+	
+	// Apply image center shift
+	for(i=0;i<nn;i++){
+		pix_x[i] -= beamCenterPixX;
+		pix_y[i] -= beamCenterPixY;
+	}
 	
 
 	// Compute radial distances

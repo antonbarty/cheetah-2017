@@ -624,17 +624,23 @@ void event() {
 	}
 	
 	/*
-	 *	Questar 120Hz CCD camera on CXI
+	 *	Pulnix 120Hz CCD camera on CXI Questar micrscope
 	 *	(where the actual camera is CxiSc1 not XppSb3PimCvd)
+	 *	The choice of CxiEndstation is for a particular camera.  
+	 *	Here are some of the possible alternatives:
+	 *		CxiDg1
+	 *		CxiDg2
+	 *		CxiDg4
+	 *		CxiKb1
+	 *		CxiSc1
 	 */
-	//unsigned short* xppSb3Image;
-	//int xppSb3Width, xppSb3Height;
-	eventData->xppSb3Fail = getTm6740Value(XppSb3PimCvd, eventData->xppSb3Width, eventData->xppSb3Height, eventData->xppSb3Image);
-	//fail = getTm6740Value(XppSb3PimCvd, xppSb3Width, xppSb3Height, xppSb3Image);
+	DetInfo pulnixInfo(0,DetInfo::CxiEndstation, 0, DetInfo::TM6740, 0);
+	eventData->pulnixFail = getTm6740Value(pulnixInfo, eventData->pulnixWidth, eventData->pulnixHeight, eventData->pulnixImage);
+	//eventData->pulnixFail = getTm6740Value(XppSb3PimCvd, eventData->pulnixWidth, eventData->pulnixHeight, eventData->pulnixImage);
 	//fail = getTm6740Value(CxiSc1, xppSb3Width, xppSb3Height, xppSb3Image);
-	if ( eventData->xppSb3Fail == 0 )
+	if ( eventData->pulnixFail == 0 )
 	{
-		printf( "Get XppSb3Pim Image %d x %d\n", eventData->xppSb3Width, eventData->xppSb3Height);
+		printf( "Get XppSb3Pim Image %d x %d\n", eventData->pulnixWidth, eventData->pulnixHeight);
 	}
 
 

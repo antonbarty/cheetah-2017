@@ -32,9 +32,9 @@ typedef struct {
 	double		TOFtrigtime ;
 	
 	// 120Hz visible camera
-	int				xppSb3Fail;
-	int				xppSb3Width, xppSb3Height;
-	unsigned short	*xppSb3Image;
+	int				pulnixFail;
+	int				pulnixWidth, pulnixHeight;
+	unsigned short	*pulnixImage;
 
 	
 	
