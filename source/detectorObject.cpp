@@ -57,6 +57,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     cameraLengthOffset = 500.0 + 79.0;
     cameraLengthScale = 1e-3;
 
+	beamCenterPixX = 0;
+	beamCenterPixY = 0;
+	
     // Bad pixel mask    
     useBadPixelMask = 0;
     
@@ -259,6 +262,12 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savedetectorraw")) {
 		saveDetectorRaw = atoi(value);
 	}
+	else if (!strcmp(tag, "beamcenterx")) {
+		beamCenterPixX  = atof(value);
+	}
+	else if (!strcmp(tag, "beamcentery")) {
+		beamCenterPixY  = atof(value);
+	}
 
     
 	else if (!strcmp(tag, "detectorzname")) {
@@ -456,14 +465,8 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 		pix_z[i] = (float) detector_z.data[i];
 	}
 	
-	
-	// Divide array (in m) by pixel size to get pixel location indicies (ijk)
-	for(i=0;i<nn;i++){
-		pix_x[i] /= pix_dx;
-		pix_y[i] /= pix_dx;
-		pix_z[i] /= pix_dx;
-	}
-	
+		
+bounds:
 	
 	// Find bounds of image array
 	float	xmax = -1e9;
@@ -476,10 +479,18 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 		if (pix_y[i] > ymax) ymax = pix_y[i];
 		if (pix_y[i] < ymin) ymin = pix_y[i];
 	}
-	//xmax = ceil(xmax);
-	//xmin = floor(xmin);
-	//ymax = ceil(ymax);
-	//ymin = floor(ymin);
+	
+	// If physical detector size is less than 1 x 1, detector coordinates
+	// must have been specified in physical distance (m) and not in pixels.
+	if (fabs(xmax-xmin)<1 && fabs(ymax-ymin)<1 ) {
+		printf("\tConverting detector coordinates from meters to pixels\n");
+		for(i=0;i<nn;i++){
+			pix_x[i] /= pix_dx;
+			pix_y[i] /= pix_dx;
+			pix_z[i] /= pix_dx;
+		}
+		goto bounds;
+	}
 
 	fesetround(1);
 	xmax = lrint(xmax);
@@ -491,7 +502,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	printf("\ty range %f to %f\n",ymin,ymax);
 	
 	
-	// How big must the output image be?
+	// How big must we make the output image?
 	float max = xmax;
 	if(ymax > max) max = ymax;
 	if(fabs(xmin) > max) max = fabs(xmin);

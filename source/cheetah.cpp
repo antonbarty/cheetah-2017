@@ -625,17 +625,17 @@ void event() {
 	
 	/*
 	 *	Questar 120Hz CCD camera on CXI
-	 *	(where the actual camera is CxiSc1)
+	 *	(where the actual camera is CxiSc1 not XppSb3PimCvd)
 	 */
-	unsigned short* xppSb3Image;
-	int xppSb3Width, xppSb3Height;
-	fail = getTm6740Value(XppSb3PimCvd, xppSb3Width, xppSb3Height, xppSb3Image);
+	//unsigned short* xppSb3Image;
+	//int xppSb3Width, xppSb3Height;
+	eventData->xppSb3Fail = getTm6740Value(XppSb3PimCvd, eventData->xppSb3Width, eventData->xppSb3Height, eventData->xppSb3Image);
+	//fail = getTm6740Value(XppSb3PimCvd, xppSb3Width, xppSb3Height, xppSb3Image);
 	//fail = getTm6740Value(CxiSc1, xppSb3Width, xppSb3Height, xppSb3Image);
-	if ( fail == 0 )
+	if ( eventData->xppSb3Fail == 0 )
 	{
-		printf( "Get XppSb3Pim Image %d x %d\n", xppSb3Width, xppSb3Height);
+		printf( "Get XppSb3Pim Image %d x %d\n", eventData->xppSb3Width, eventData->xppSb3Height);
 	}
-	// 
 
 
 	

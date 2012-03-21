@@ -118,7 +118,9 @@ public:
 	double		detectorZ;
 	double		detectorEncoderValue;	
 
-    
+    // Beam center
+	double		beamCenterPixX;
+	double		beamCenterPixY;
     
     /*
      *  Flags for detector processing options

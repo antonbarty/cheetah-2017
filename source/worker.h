@@ -22,33 +22,26 @@ typedef struct {
 	int			busy;
 	long		threadNum;
 	
-	// cspad data
-	
+	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
 	
-	//int			cspad_fail;
-	//float		quad_temperature[4];
-	//uint16_t	*quad_data[4];
-	//uint16_t	*raw_data;
-	//float		*corrected_data;
-	//float		*detector_corrected_data;
-	//int16_t		*corrected_data_int16;
-	//int16_t		*image;
-	//float		*radialAverage;
-	//float		*radialAverageCounter;
-	//int16_t *   saturatedPixelMask;
-
-	int			nPeaks;
-	int			nHot;
-	
-	
-	// TOF data
+	// Aqiris data
 	int			TOFPresent;
 	double		*TOFTime;
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
 	
+	// 120Hz visible camera
+	int				xppSb3Fail;
+	int				xppSb3Width, xppSb3Height;
+	unsigned short	*xppSb3Image;
+
+	
+	
+	
 	// Peak info
+	int			nPeaks;
+	int			nHot;
 	long		*peak_com_index;		// closest pixel corresponding to peak center of mass
 	float		*peak_com_x;			// peak center of mass x (in raw layout)
 	float		*peak_com_y;			// peak center of mass y (in raw layout)
@@ -72,8 +65,10 @@ typedef struct {
 	char		eventname[1024];
 	bool		beamOn;
 	unsigned	runNumber;
-	bool		laserEventCodeOn;
 
+	double		photonEnergyeV;		// in eV
+	double		wavelengthA;		// in Angstrom
+	
 	double      gmd1;
     double      gmd2;
 	double		gmd11;
@@ -81,6 +76,7 @@ typedef struct {
 	double		gmd21;
 	double		gmd22;
     
+	bool		laserEventCodeOn;
     double      laserDelay;
 	
 	double		fEbeamCharge;		// in nC
@@ -91,11 +87,6 @@ typedef struct {
 	double		fEbeamLTUAngY;		// in mrad
 	double		fEbeamPkCurrBC2;	// in Amps
 	
-	double		photonEnergyeV;		// in eV
-	double		wavelengthA;		// in Angstrom
-	
-	//double		detectorPosition; 
-	
 	double		phaseCavityTime1;
 	double		phaseCavityTime2;
 	double		phaseCavityCharge1;
@@ -103,8 +94,6 @@ typedef struct {
 	
 	// Thread management
 	int		threadID;
-	
-	
 	
 } tEventData;
 

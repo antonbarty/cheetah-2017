@@ -37,7 +37,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		4D06096114E6ED5000345581 /* detectorObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; path = detectorObject.cpp; sourceTree = "<group>"; };
+		4D06096114E6ED5000345581 /* detectorObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = detectorObject.cpp; sourceTree = "<group>"; };
 		4D3B883D12FF425900B7ABD9 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		4D3B88651300B24700B7ABD9 /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
