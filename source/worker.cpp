@@ -389,11 +389,15 @@ void *worker(void *threadarg) {
 	free(eventData->peak_snr);
 	free(eventData->good_peaks);
 	//TOF stuff.
+    
+    if(eventData->pulnixFail != 0) 
+        free(eventData->pulnixImage);
+
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
 	}
-
+    
 	free(eventData);
 
 	// Exit thread

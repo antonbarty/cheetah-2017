@@ -272,6 +272,16 @@ void event() {
 		global.datarate = datarate2;
 	}
 	
+    /*
+     *  I/O speed test #1: 
+     *  How fast is event() be called by myana?
+     */
+    if(global.ioSpeedTest==1) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global.runNumber, frameNumber, global.datarate);		
+		return;
+	}
+    
+
 	/*
 	 *	Skip frames if we only want a part of the data set
 	 */
@@ -633,23 +643,32 @@ void event() {
 	 *		CxiDg4
 	 *		CxiKb1
 	 *		CxiSc1
+     *  Remember to copy image data into event structure for processing
 	 */
-	DetInfo pulnixInfo(0,DetInfo::CxiEndstation, 0, DetInfo::TM6740, 0);
-	eventData->pulnixFail = getTm6740Value(pulnixInfo, eventData->pulnixWidth, eventData->pulnixHeight, eventData->pulnixImage);
-	//eventData->pulnixFail = getTm6740Value(XppSb3PimCvd, eventData->pulnixWidth, eventData->pulnixHeight, eventData->pulnixImage);
-	//fail = getTm6740Value(CxiSc1, xppSb3Width, xppSb3Height, xppSb3Image);
+	int				pulnixWidth, pulnixHeight;
+	unsigned short	*pulnixImage;
+
+	DetInfo pulnixInfo(0,DetInfo::CxiSc1, 0, DetInfo::TM6740, 0);
+	eventData->pulnixFail = getTm6740Value(pulnixInfo, pulnixWidth, pulnixHeight, pulnixImage);
 	if ( eventData->pulnixFail == 0 )
 	{
-		printf( "Get XppSb3Pim Image %d x %d\n", eventData->pulnixWidth, eventData->pulnixHeight);
+        eventData->pulnixWidth = pulnixWidth;
+        eventData->pulnixHeight = pulnixHeight;
+        eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
+        memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
 	}
+    free(pulnixImage);
+	//else
+	//	printf( "Get pulnix failed\n");
 
 
 	
-	/*
-	 *	I/O speed test?
-	 */
-	if(global.ioSpeedTest) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test\n", global.runNumber, frameNumber, global.datarate);		
+    /*
+     *  I/O speed test #1: 
+     *  How fast can we push data into event structure?
+     */
+	if(global.ioSpeedTest==2) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #2\n", global.runNumber, frameNumber, global.datarate);		
 		for(long i=0; i<global.nDetectors; i++) {
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				free(eventData->detector[i].quad_data[quadrant]);
@@ -793,5 +812,5 @@ void endjob()
 	
 	
 	
-	printf("Done!\n");
+	printf("Cheetah clean exit\n");
 }

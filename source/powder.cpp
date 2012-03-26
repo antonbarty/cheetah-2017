@@ -161,7 +161,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	pthread_mutex_lock(&detector->powderRaw_mutex[powderType]);
 	pthread_mutex_lock(&detector->powderRawSquared_mutex[powderType]);
 	for(long i=0; i<pix_nn; i++)
-		bufferSigma[i] = sqrt(detector->powderRawSquared[powderType][i]/detector->nPowderFrames[powderType] - (detector->powderRaw[powderType][i]*detector->powderRaw[powderType][i]/(detector->nPowderFrames[powderType]*detector->nPowderFrames[powderType])));
+		bufferSigma[i] = sqrt(bufferRawSquared[i]/detector->nPowderFrames[powderType] - (bufferRaw[i]*detector->powderRaw[powderType][i]/(detector->nPowderFrames[powderType]*detector->nPowderFrames[powderType])));
 	pthread_mutex_unlock(&detector->powderRaw_mutex[powderType]);
 	pthread_mutex_unlock(&detector->powderRawSquared_mutex[powderType]);
 	calculateRadialAverage(bufferSigma, radialAverageSigma, radialAverageCounter, global, detID);
@@ -187,22 +187,22 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	}
 	
 	// Write image data in Raw layout
-	size[0] = detector->pix_nx;
+	size[0] = detector->pix_ny;
 	size[1] = detector->pix_nx;
 	sh = H5Screate_simple(2, size, NULL);
-	H5Sget_simple_extent_dims(sh, size, size);
+	//H5Sget_simple_extent_dims(sh, size, max_size);
 	
 	dh = H5Dcreate(gh, "dataRaw", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRaw);
 	H5Dclose(dh);
 	
+	//H5Sget_simple_extent_dims(sh, size, size);
 	dh = H5Dcreate(gh, "dataSquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Sget_simple_extent_dims(sh, size, size);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRawSquared);
 	H5Dclose(dh);
 	
+	//H5Sget_simple_extent_dims(sh, size, size);
 	dh = H5Dcreate(gh, "dataSigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Sget_simple_extent_dims(sh, size, size);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferSigma);
 	H5Dclose(dh);
 	H5Sclose(sh);
@@ -212,8 +212,8 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	size[0] = detector->image_nx;
 	size[1] = detector->image_nx;
 	sh = H5Screate_simple(2, size, NULL);
-	H5Sget_simple_extent_dims(sh, size, size);
 	
+	//H5Sget_simple_extent_dims(sh, size, max_size);
 	dh = H5Dcreate(gh, "dataAssembled", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
@@ -225,7 +225,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 
 	// Save radial averages
 	size[0] = radial_nn;
+	max_size[0] = radial_nn;
 	sh = H5Screate_simple(1, size, NULL);
+	//H5Sget_simple_extent_dims(sh, size, max_size);
 	
 	dh = H5Dcreate(gh, "radialAverage", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverage);
@@ -248,6 +250,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	// Save frame count
 	size[0] = 1;
 	sh = H5Screate_simple(1, size, NULL );
+	//H5Sget_simple_extent_dims(sh, size, size);
 	//sh = H5Screate(H5S_SCALAR);
 	
 	dh = H5Dcreate(gh, "nframes", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);

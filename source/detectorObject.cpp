@@ -133,6 +133,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     
     // Powder sums and mutexes
     for(long i=0; i<nPowderClasses; i++) {
+        printf("i=%li\n",image_nn);
 		nPowderFrames[i] = 0;
 		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
 		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
@@ -478,11 +479,15 @@ bounds:
 		if (pix_y[i] > ymax) ymax = pix_y[i];
 		if (pix_y[i] < ymin) ymin = pix_y[i];
 	}
+	printf("\tGeometry range:\n");
+	printf("\tx range %f to %f\n",xmin,xmax);
+	printf("\ty range %f to %f\n",ymin,ymax);
 	
 	// If physical detector size is less than 1 x 1, detector coordinates
 	// must have been specified in physical distance (m) and not in pixels.
 	if (fabs(xmax-xmin)<1 && fabs(ymax-ymin)<1 ) {
 		printf("\tConverting detector coordinates from meters to pixels\n");
+        printf("\tPixel size: %g m\n",pixelSize);
 		for(i=0;i<nn;i++){
 			pix_x[i] /= pixelSize;
 			pix_y[i] /= pixelSize;
