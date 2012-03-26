@@ -131,7 +131,14 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		}
 	} 
 	else if(dataclass == H5T_INTEGER){
-		if (size == sizeof(short)) {
+		if (size == sizeof(char)) {
+			char* buffer = (char*) calloc(nn, sizeof(char)); 
+			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
+			for(long i=0; i<nn; i++)
+				data[i] = buffer[i];
+			free(buffer);
+		}
+		else if (size == sizeof(short)) {
 			short* buffer = (short*) calloc(nn, sizeof(short)); 
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
@@ -153,8 +160,8 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 			free(buffer);
 		}
 		else {
-			printf("2dData::readHDF5: unknown integer type, size=%i\n",(int) size);
-			return;
+			printf("2dData::readHDF5: unknown integer type, size=%lu\n",size);
+			exit(1);
 		}
 	}
 	else {

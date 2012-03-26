@@ -657,7 +657,6 @@ void event() {
         eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
         memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
 	}
-    free(pulnixImage);
 	//else
 	//	printf( "Get pulnix failed\n");
 

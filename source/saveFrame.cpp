@@ -50,7 +50,6 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	 */
 	char outfile[1024];
 	strcpy(outfile, info->eventname);
-	printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, info->threadNum,global->datarate, outfile);
 	
 	pthread_mutex_lock(&global->framefp_mutex);
 	fprintf(global->cleanedfp, "r%04u/%s, %i, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakDensity);
