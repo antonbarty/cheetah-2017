@@ -250,7 +250,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
 	}
-	else if (!strcmp(tag, "wiremaskfile")) {
+	else if (!strcmp(tag, "wiremask")) {
 		strcpy(wireMaskFile, value);
 	}
 	else if (!strcmp(tag, "pixelsize")) {
@@ -271,7 +271,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 
     
-	else if (!strcmp(tag, "detectorzname")) {
+	else if (!strcmp(tag, "detectorzpvname")) {
 		strcpy(detectorZpvname, value);
 	}
     else if (!strcmp(tag, "defaultcameralengthmm")) {
@@ -280,7 +280,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "cameralengthoffset")) {
 		cameraLengthOffset = atof(value);
 	}
-	else if (!strcmp(tag, "cameraLengthScale")) {
+	else if (!strcmp(tag, "cameralengthscale")) {
 		cameraLengthScale  = atof(value);
 	}
 	else if (!strcmp(tag, "useautohotpixel")) {
