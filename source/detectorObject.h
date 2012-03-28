@@ -68,6 +68,7 @@ public:
 	char		darkcalFile[MAX_FILENAME_LENGTH];		// File containing dark calibration
 	char		gaincalFile[MAX_FILENAME_LENGTH];
 	char		badpixelFile[MAX_FILENAME_LENGTH];
+	char		baddataFile[MAX_FILENAME_LENGTH];
 	char		wireMaskFile[MAX_FILENAME_LENGTH];		// File containing mask of area behind wires
 	
 
@@ -125,6 +126,7 @@ public:
      *  Flags for detector processing options
      */
     int			useBadPixelMask;
+    int         useBadDataMask;
 	int			useDarkcalSubtraction;	
     // Subtract common mode from each ASIC
 	int			cmModule;				
@@ -172,13 +174,14 @@ public:
 	/*
 	 *	Arrays for all sorts of stuff
 	 */
-	int32_t			*darkcal;
 	int16_t			*peakmask;
 	int16_t			*badpixelmask;
+    int16_t         *baddatamask;
 	int16_t			*bg_buffer;
 	int16_t			*hotpix_buffer;
 	int16_t			*hotpixelmask;
 	int16_t			*wiremask;
+	float			*darkcal;
 	float			*selfdark;
 	float			*gaincal;
 	
@@ -217,6 +220,7 @@ public:
 	void readGaincal(cGlobal*, char *);
 	void readPeakmask(cGlobal*, char *);
 	void readBadpixelMask(cGlobal*, char *);
+	void readBaddataMask(cGlobal*, char *);
 	void readWireMask(cGlobal*, char *);
 	
 private:

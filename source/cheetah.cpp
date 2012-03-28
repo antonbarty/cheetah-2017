@@ -109,6 +109,7 @@ void beginjob() {
 		global.detector[i].readGaincal(&global, global.detector[i].gaincalFile);
 		global.detector[i].readPeakmask(&global, global.peaksearchFile);
 		global.detector[i].readBadpixelMask(&global, global.detector[i].badpixelFile);
+		global.detector[i].readBaddataMask(&global, global.detector[i].baddataFile);
 		global.detector[i].readWireMask(&global, global.detector[i].wireMaskFile);
 	}
 	global.setup();
@@ -440,7 +441,7 @@ void event() {
 	/*
 	 *	Detector position (Z) for each detector
 	 */
-    for(long i=0; i<MAX_DETECTORS; i++) {
+    for(long i=0; i<global.nDetectors; i++) {
         float detposnew;
         int update_camera_length;
         if ( getPvFloat(global.detector[i].detectorZpvname, detposnew) == 0 ) {
@@ -512,6 +513,8 @@ void event() {
         }	
     }
 	
+    
+    
 	/*
 	 *	Create a new eventData structure in which to place all information
 	 */

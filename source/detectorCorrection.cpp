@@ -267,10 +267,11 @@ void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
 
     if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_lock(&global->hotpixel_mutex);
-	
-    long frameID = global->detector[detID].hotpixCounter%global->detector[detID].hotpixMemory;
-	memcpy(global->detector[detID].hotpix_buffer+global->detector[detID].pix_nn*frameID, buffer, global->detector[detID].pix_nn*sizeof(int16_t));
+
 	global->detector[detID].hotpixCounter += 1;
+    long frameID = global->detector[detID].hotpixCounter%global->detector[detID].hotpixMemory;
+	
+	memcpy(global->detector[detID].hotpix_buffer+global->detector[detID].pix_nn*frameID, buffer, global->detector[detID].pix_nn*sizeof(int16_t));
 
     if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_unlock(&global->hotpixel_mutex);
@@ -295,6 +296,8 @@ void calculateHotPixelMask(cGlobal *global, int detID){
     
     if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_lock(&global->hotpixel_mutex);
+
+	global->detector[detID].last_hotpix_update = global->detector[detID].hotpixCounter;
 	
 	// Loop over all pixels 
 	long	counter;
@@ -316,7 +319,6 @@ void calculateHotPixelMask(cGlobal *global, int detID){
 		}		
 	}	
 	global->detector[detID].nhot = nhot;
-	global->detector[detID].last_hotpix_update = global->detector[detID].hotpixCounter;
     
     if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_unlock(&global->hotpixel_mutex);

@@ -133,7 +133,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     
     // Powder sums and mutexes
     for(long i=0; i<nPowderClasses; i++) {
-        printf("i=%li\n",image_nn);
 		nPowderFrames[i] = 0;
 		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
 		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
@@ -250,6 +249,9 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
 	}
+	else if (!strcmp(tag, "baddatamap")) {
+		strcpy(baddataFile, value);
+	}
 	else if (!strcmp(tag, "wiremask")) {
 		strcpy(wireMaskFile, value);
 	}
@@ -330,6 +332,9 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usebadpixelmap")) {
 		useBadPixelMask = atoi(value);
+	}
+	else if (!strcmp(tag, "usebaddatamap")) {
+		useBadDataMask = atoi(value);
 	}
 	else if (!strcmp(tag, "usedarkcalsubtraction")) {
 		useDarkcalSubtraction = atoi(value);
@@ -486,6 +491,7 @@ bounds:
 	// If physical detector size is less than 1 x 1, detector coordinates
 	// must have been specified in physical distance (m) and not in pixels.
 	if (fabs(xmax-xmin)<1 && fabs(ymax-ymin)<1 ) {
+		printf("\tData range <1m in both x and y directions.\n");
 		printf("\tConverting detector coordinates from meters to pixels\n");
         printf("\tPixel size: %g m\n",pixelSize);
 		for(i=0;i<nn;i++){
@@ -502,8 +508,8 @@ bounds:
 	ymax = lrint(ymax);
 	ymin = lrint(ymin);
 	printf("\tImage bounds:\n");
-	printf("\tx range %f to %f\n",xmin,xmax);
-	printf("\ty range %f to %f\n",ymin,ymax);
+	printf("\tx range %.0f to %.0f\n",xmin,xmax);
+	printf("\ty range %.0f to %.0f\n",ymin,ymax);
 	
 	
 	// How big must we make the output image?
@@ -593,8 +599,9 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 void cPixelDetectorCommon::readDarkcal(cGlobal *global, char *filename){	
 	
 	// Create memory space and pad with zeros
-	darkcal = (int32_t*) calloc(pix_nn, sizeof(int32_t));
-	memset(darkcal,0, pix_nn*sizeof(int32_t));
+	darkcal = (float*) calloc(pix_nn, sizeof(float));
+    for(long i=0; i<pix_nn; i++)
+        darkcal[i] = 0;
 
 	// Do we need a darkcal file?	
 	if (useDarkcalSubtraction == 0){
@@ -634,7 +641,7 @@ void cPixelDetectorCommon::readDarkcal(cGlobal *global, char *filename){
 	
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
-		darkcal[i] = (int32_t) temp2d.data[i];
+		darkcal[i] = temp2d.data[i];
 	
 }
 
@@ -766,6 +773,7 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
 
 /*
  *	Read in bad pixel mask
+ *  (Pixels will be set to zero before any analysis and when data is exported)
  */
 void cPixelDetectorCommon::readBadpixelMask(cGlobal *global, char *filename){
 	
@@ -819,6 +827,64 @@ void cPixelDetectorCommon::readBadpixelMask(cGlobal *global, char *filename){
 	for(long i=0;i<pix_nn;i++)
 		badpixelmask[i] = (int16_t) temp2d.data[i];
 }
+
+/*
+ *	Read in bad data mask
+ *  (Pixels will be ignored in analysis, but passed through when data is exported)
+ */
+void cPixelDetectorCommon::readBaddataMask(cGlobal *global, char *filename){
+	
+	
+	// Create memory space and default to searching for peaks everywhere
+	baddatamask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	for(long i=0;i<pix_nn;i++)
+		baddatamask[i] = 1;
+	
+	
+	// Do we need a bad pixel map?
+	if ( useBadDataMask == 0 ){
+		return;
+	}
+    
+	// Check if a bad pixel mask file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Bad data mask file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+    
+	printf("Reading bad data mask:\n");
+	printf("\t%s\n",filename);
+    
+	// Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tBad data mask does not exist: %s\n",filename);
+		printf("\tAborting...\n");
+		exit(1);
+	}
+	
+	
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+	
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tAborting...\n");
+		exit(1);
+	} 
+	
+	
+	// Copy back into array
+	for(long i=0;i<pix_nn;i++)
+		baddatamask[i] = (int16_t) temp2d.data[i];
+}
+
 
 /*
  *	Read in wire mask

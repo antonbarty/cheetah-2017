@@ -113,7 +113,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Powder pattern generation
 	nPowderClasses = 2;
-	powderthresh = -20000;
+	powderthresh = -1e9;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
 

@@ -308,13 +308,13 @@ void saveDarkcal(cGlobal *global, int detID) {
 	
 	printf("Processing darkcal\n");
 	sprintf(filename,"%s-r%04u-darkcal.h5",detector->detectorName,global->runNumber);
-	int16_t *buffer = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
 	for(long i=0; i<pix_nn; i++)
-		buffer[i] = (int16_t) lrint(detector->powderRaw[0][i]/detector->nPowderFrames[0]);
+		buffer[i] = detector->powderRaw[0][i]/detector->nPowderFrames[0];
 	pthread_mutex_unlock(&detector->powderRaw_mutex[0]);
 	printf("Saving darkcal to file: %s\n", filename);
-	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_STD_I16LE);	
+	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
 	free(buffer);
 }
 

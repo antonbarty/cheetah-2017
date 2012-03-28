@@ -21,6 +21,92 @@
 
 
 
+/*
+ *  Calculate radial averages
+ *  (repeated once for each different data type)
+ */
+//template <class tData>
+void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global, int detID){
+    
+	
+	long	radial_nn = global->detector[detID].radial_nn;
+	long	pix_nn = global->detector[detID].pix_nn;
+    
+	
+	// Zero arrays
+	for(long i=0; i<radial_nn; i++) {
+		radialAverage[i] = 0.;
+		radialAverageCounter[i] = 0.;
+	}
+	
+	// Radial average
+	long	rbin;
+	for(long i=0; i<pix_nn; i++){
+        
+        // Don't count bad pixels in radial average
+        if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+            continue;
+        
+        // Radius of this pixel
+		rbin = lrint(global->detector[detID].pix_r[i]);
+		
+		// Array bounds check (paranoia)
+		if(rbin < 0) rbin = 0;
+		
+        // Add to average
+		radialAverage[rbin] += data[i];
+		radialAverageCounter[rbin] += 1;
+	}
+	
+	// Divide by number of actual pixels in ring to get the average
+	for(long i=0; i<radial_nn; i++) {
+		if (radialAverageCounter[i] != 0)
+			radialAverage[i] /= radialAverageCounter[i];
+	}
+	
+}
+
+
+void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detID){	
+	
+	long	radial_nn = global->detector[detID].radial_nn;
+	long	pix_nn = global->detector[detID].pix_nn;
+    
+	
+	// Zero arrays
+	for(long i=0; i<radial_nn; i++) {
+		radialAverage[i] = 0.;
+		radialAverageCounter[i] = 0.;
+	}
+	
+	// Radial average
+	long	rbin;
+	for(long i=0; i<pix_nn; i++){
+
+        // Don't count bad pixels in radial average
+        if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+            continue;
+        
+		rbin = lrint(global->detector[detID].pix_r[i]);
+		
+		// Array bounds check (paranoia)
+		if(rbin < 0) rbin = 0;
+		
+		radialAverage[rbin] += data[i];
+		radialAverageCounter[rbin] += 1;
+	}
+	
+	// Divide by number of actual pixels in ring to get the average
+	for(long i=0; i<radial_nn; i++) {
+		if (radialAverageCounter[i] != 0)
+			radialAverage[i] /= radialAverageCounter[i];
+	}
+	
+}
+
+
+
+
 
 /*
  *	Add radial average to stack
@@ -94,87 +180,5 @@ void saveRadialStacks(cGlobal *global) {
         }
     }
 }
-
-
-/*
- *  Calculate radial averages
- *  (repeated once for each different data type)
- */
-//template <class tData>
-void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global, int detID){
-
-	
-	long	radial_nn = global->detector[detID].radial_nn;
-	long	pix_nn = global->detector[detID].pix_nn;
-
-	
-	// Zero arrays
-	for(long i=0; i<radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
-	}
-	
-	// Radial average
-	long	rbin;
-	for(long i=0; i<pix_nn; i++){
-        
-        // Don't count bad pixels in radial average
-        if(global->detector[detID].badpixelmask[i] == 0)
-            continue;
-
-        // Radius of this pixel
-		rbin = lrint(global->detector[detID].pix_r[i]);
-		
-		// Array bounds check (paranoia)
-		if(rbin < 0) 
-            rbin = 0;
-		
-        // Add to average
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
-	}
-	
-	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
-	}
-	
-}
-
-
-void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detID){	
-	
-	long	radial_nn = global->detector[detID].radial_nn;
-	long	pix_nn = global->detector[detID].pix_nn;
-
-	
-	// Zero arrays
-	for(long i=0; i<radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
-	}
-	
-	// Radial average
-	long	rbin;
-	for(long i=0; i<pix_nn; i++){
-		rbin = lrint(global->detector[detID].pix_r[i]);
-		
-		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
-		
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
-	}
-	
-	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
-	}
-	
-}
-
-
 
 
