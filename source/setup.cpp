@@ -872,7 +872,7 @@ void cGlobal::writeInitialLog(void){
 	}
 
 	
-	fprintf(framefp, "# EventName, hit, UnixTime, FrameNumber, npeaks, nPixels, totalIntensity, peakResolution, peakDensity, photonEnergyeV, gmd1, gmd2, detectorZ, EVR41, laserDelay\n");
+	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
 
 	
 	sprintf(cleanedfile,"cleaned.txt");

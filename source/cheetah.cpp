@@ -202,8 +202,7 @@ void beginrun()
                 fclose(global.powderlogfp[i]);
             sprintf(filename,"r%04u-class%ld-log.txt",global.runNumber,i);
             global.powderlogfp[i] = fopen(filename, "w");        
-            fprintf(global.powderlogfp[i], "Frame#, eventName, PhotonEnergyEv, gmd1, gmd2, detectorZ, laserOn, laserDelay, npeaks, peakNpix, peakTotal, peakResolution, peakDensity\n");
-
+            fprintf(global.powderlogfp[i], "eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
         }
     }
 }
@@ -729,10 +728,11 @@ void event() {
 	 *	Save periodic powder patterns
 	 */
 	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.detector[0].startFrames+50) ){
-            for(long i=0; i<global.nDetectors; i++) {
-                saveRunningSums(&global, i);
+            for(long detID=0; detID<global.nDetectors; detID++) {
+                saveRunningSums(&global, detID);
                 global.updateLogfile();
             }
+        saveRadialStacks(&global);
 	}
 	
 	
@@ -773,7 +773,9 @@ void endjob()
 	
 	
 	// Save powder patterns
-	saveRunningSums(&global, 0);
+    for(long detID=0; detID<global.nDetectors; detID++) {
+        saveRunningSums(&global, detID);
+    }
     saveRadialStacks(&global);
 	global.writeFinalLog();
 	
