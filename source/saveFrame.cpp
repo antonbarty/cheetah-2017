@@ -16,8 +16,9 @@
 #include <stdlib.h>
 
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
+#include "cheetahmodules.h"
 #include "median.h"
 
 
@@ -209,8 +210,8 @@ void writeHDF5(tEventData *info, cGlobal *global){
 	 *	Save microscope images (Pulnix CCD)
 	 */
 	if(info->pulnixFail == 0) {
-		size[0] = info->pulnixWidth;	
-		size[1] = info->pulnixHeight;	
+		size[0] = info->pulnixHeight;	
+		size[1] = info->pulnixWidth;	
 
 		dataspace_id = H5Screate_simple(2, size, size);
 		dataset_id = H5Dcreate(gid, "pulnixCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);

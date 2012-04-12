@@ -7,12 +7,12 @@
  *
  */
 
-#include "release/pdsdata/cspad/ConfigV1.hh"
-#include "release/pdsdata/cspad/ConfigV2.hh"
-#include "release/pdsdata/cspad/ConfigV3.hh"
-#include "cspad/CspadTemp.hh"
-#include "cspad/CspadCorrector.hh"
-#include "cspad/CspadGeometry.hh"
+//#include "release/pdsdata/cspad/ConfigV1.hh"
+//#include "release/pdsdata/cspad/ConfigV2.hh"
+//#include "release/pdsdata/cspad/ConfigV3.hh"
+//#include "cspad/CspadTemp.hh"
+//#include "cspad/CspadCorrector.hh"
+//#include "cspad/CspadGeometry.hh"
 
 
 #define	MAX_POWDER_CLASSES 16
@@ -23,18 +23,11 @@
 /*
  *	Stuff from original LCLS code
  */
-using namespace std;
-static CspadCorrector*      corrector;
-static Pds::CsPad::ConfigV1 configV1;
-static Pds::CsPad::ConfigV2 configV2;
-static Pds::CsPad::ConfigV3 configV3;
 static const unsigned		CSPAD_ASIC_NX = 194;		// ASIC nx = extent of one ASIC in x
 static const unsigned		CSPAD_ASIC_NY = 185;		// ASIC ny = extent of one ASIC in y
 static const unsigned		CSPAD_nASICS_X = 8;			// 8 ASICs across in raw data stream
 static const unsigned		CSPAD_nASICS_Y = 8;			// 8 ASICs down in raw data stresm
-//static unsigned				configVsn;
-//static unsigned				quadMask;
-//static unsigned				asicMask;
+
 
 static const unsigned int cbufsize = 1024;
 
@@ -54,12 +47,12 @@ public:
 	// Detector info (cspad-specific)
 	char					detectorName[MAX_FILENAME_LENGTH];
 	char					detectorTypeName[MAX_FILENAME_LENGTH];
-	Pds::DetInfo::Device	detectorType;
-	Pds::DetInfo::Detector	detectorPdsDetInfo;
+	//Pds::DetInfo::Device	detectorType;
+	//Pds::DetInfo::Detector	detectorPdsDetInfo;
 
-	unsigned         configVsn;
-	unsigned         quadMask;
-	unsigned         asicMask;
+	//unsigned         configVsn;
+	//unsigned         quadMask;
+	//unsigned         asicMask;
 	
 	
 	// Detector configuration files

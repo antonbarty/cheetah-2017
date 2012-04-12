@@ -76,11 +76,9 @@ public:
 	float       hitfinderMinSNR;
 	
 	//	TOF
-	Pds::DetInfo::Device	tofType;
-	Pds::DetInfo::Detector	tofPdsDetInfo;
 	char		tofName[MAX_FILENAME_LENGTH];
-	int			TOFchannel;
 	int			TOFPresent;
+	int			TOFchannel;
 	int			AcqNumChannels;
 	int			AcqNumSamples;
 	double		AcqSampleInterval;

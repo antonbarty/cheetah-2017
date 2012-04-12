@@ -31,18 +31,36 @@
 #include <stdlib.h>
 #include <limits>
 #include <stdint.h>
-
-#include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include <unistd.h>
 
 
-static cGlobal		global;
+#include "cheetah.h"
+
+
+static cGlobal		cheetahGlobal;
 static long			frameNumber;
 
+
+
+using namespace std;
+static CspadCorrector*      corrector;
+static Pds::CsPad::ConfigV1 configV1;
+static Pds::CsPad::ConfigV2 configV2;
+static Pds::CsPad::ConfigV3 configV3;
+
+// Cheetah specific
+Pds::DetInfo::Device        detectorType[MAX_DETECTORS];
+Pds::DetInfo::Detector      detectorPdsDetInfo[MAX_DETECTORS];
+unsigned                    configVsn[MAX_DETECTORS];
+unsigned                    quadMask[MAX_DETECTORS];
+unsigned                    asicMask[MAX_DETECTORS];
+
+Pds::DetInfo::Device	tofType;
+Pds::DetInfo::Detector	tofPdsDetInfo;
+
+
+
 using namespace Pds;
-
-
 /*
  *	Return true or false if a given event code is present
  */
@@ -82,38 +100,60 @@ void beginjob() {
 	printf("User analysis beginjob() routine called.\n");
 	
 	/*
-	 * Get time information
+	 *	Initialise libCheetah
 	 */
-	int seconds, nanoSeconds;
+    cheetahInit(&cheetahGlobal);
 
-	getTime( seconds, nanoSeconds );	
-	// fail = getLocalTime( time );
-
-	
+    
 	/*
-	 *	New csPad corrector
+	 *	Determine detector type and address
+	 *	A list of addresses can be found in:
+	 *		release/pdsdata/xtc/Detinfo.hh
+	 *		release/pdsdata/xtc/src/Detinfo.cc
 	 */
-	corrector = new CspadCorrector(global.detector[0].detectorPdsDetInfo,0,CspadCorrector::DarkFrameOffset);
-
-				 
-	/*
-	 *	Stuff for worker thread management
-	 */
-    global.self = &global;
-	global.defaultConfiguration();
-	global.parseConfigFile(global.configFile);
-	for(long i=0; i<global.nDetectors; i++) {
-        global.detector[i].parseConfigFile(global.detector[i].detectorConfigFile);
-		global.detector[i].readDetectorGeometry(global.detector[i].geometryFile);
-		global.detector[i].readDarkcal(&global, global.detector[i].darkcalFile);
-		global.detector[i].readGaincal(&global, global.detector[i].gaincalFile);
-		global.detector[i].readPeakmask(&global, global.peaksearchFile);
-		global.detector[i].readBadpixelMask(&global, global.detector[i].badpixelFile);
-		global.detector[i].readBaddataMask(&global, global.detector[i].baddataFile);
-		global.detector[i].readWireMask(&global, global.detector[i].wireMaskFile);
+	for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
+		if(!strcmp(cheetahGlobal.detector[detID].detectorName, "CxiDs1")) {
+			detectorType[detID] = Pds::DetInfo::Cspad;
+			detectorPdsDetInfo[detID] = Pds::DetInfo::CxiDs1;
+		}
+		else if (!strcmp(cheetahGlobal.detector[detID].detectorName, "CxiDs2")) {
+			detectorType[detID] = Pds::DetInfo::Cspad;
+			detectorPdsDetInfo[detID] = Pds::DetInfo::CxiDs2;
+		}
+		else if (!strcmp(cheetahGlobal.detector[detID].detectorName, "CxiDsd")) {
+			detectorType[detID] = Pds::DetInfo::Cspad;
+			detectorPdsDetInfo[detID] = Pds::DetInfo::CxiDsd;
+		}
+		else if (!strcmp(cheetahGlobal.detector[detID].detectorName, "XppGon")) {
+			detectorType[detID] = Pds::DetInfo::Cspad;
+			detectorPdsDetInfo[detID] = Pds::DetInfo::XppGon;
+		}
+		else {
+			printf("Error: unknown detector %s\n", cheetahGlobal.detector[detID].detectorName);
+			printf("Quitting\n");
+			exit(1);
+		}
 	}
-	global.setup();
-	global.writeInitialLog();
+
+    
+    /*
+	 *	Determine TOF (Acqiris) address
+	 *	A list of addresses can be found in:
+	 *		release/pdsdata/xtc/Detinfo.hh
+	 *		release/pdsdata/xtc/src/Detinfo.cc
+	 */
+	if(!strcmp(cheetahGlobal.tofName, "CxiSc1")) {
+		tofType = Pds::DetInfo::Acqiris;
+		tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+	}
+
+    
+    
+	/*
+	 *	New Cspad corrector
+	 */
+	corrector = new CspadCorrector(detectorPdsDetInfo[0],0,CspadCorrector::DarkFrameOffset);
+
 }
 
 
@@ -122,31 +162,32 @@ void fetchConfig()
 {
 	int fail = 0;
 	// cspad config
-	for(long detID=0; detID < global.nDetectors; detID++)  {
-		if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV1 )==0) {
-			global.detector[detID].configVsn= 1;
-			global.detector[detID].quadMask = configV1.quadMask();
-			global.detector[detID].asicMask = configV1.asicMask();
-			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask,global.detector[detID].asicMask,configV1.runDelay());
+	for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
+		if (getCspadConfig( detectorPdsDetInfo[detID], configV1 )==0) {
+			configVsn[detID]= 1;
+			quadMask[detID] = configV1.quadMask();
+			asicMask[detID] = configV1.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID],asicMask[detID],configV1.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 		}
-		else if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV3 )==0) {
-			global.detector[detID].configVsn= 2;
-			global.detector[detID].quadMask = configV2.quadMask();
-			global.detector[detID].asicMask = configV2.asicMask();
-			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask ,global.detector[detID].asicMask, configV2.runDelay());
+		else if (getCspadConfig( detectorPdsDetInfo[detID], configV3 )==0) {
+			configVsn[detID] = 2;
+			quadMask[detID] = configV2.quadMask();
+			asicMask[detID] = configV2.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID],asicMask[detID], configV2.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV2.quads()[0].intTime(), configV2.quads()[1].intTime(), configV2.quads()[2].intTime(), configV2.quads()[3].intTime());
 		}
-		else if (getCspadConfig( global.detector[detID].detectorPdsDetInfo, configV3 )==0) {
-			global.detector[detID].configVsn= 3;
-			global.detector[detID].quadMask = configV3.quadMask();
-			global.detector[detID].asicMask = configV3.asicMask();
-			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", global.detector[detID].quadMask,global.detector[detID].asicMask,configV3.runDelay());
+		else if (getCspadConfig( detectorPdsDetInfo[detID], configV3 )==0) {
+			configVsn[detID]= 3;
+			quadMask[detID] = configV3.quadMask();
+			asicMask[detID] = configV3.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV3.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV3.quads()[0].intTime(), configV3.quads()[1].intTime(), configV3.quads()[2].intTime(), configV3.quads()[3].intTime());
 		}
 		else {
-			global.detector[detID].configVsn= 0;
+			configVsn[detID] = 0;
 			printf("Failed to get CspadConfig\n");
+            exit(1);
 		}
 	}
 	
@@ -154,28 +195,28 @@ void fetchConfig()
     /*
      *  Get Acqiris config
      */
-	if((fail=getAcqConfig(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0) , global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval))==0){
-		global.TOFPresent = 1;
-		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", global.AcqNumChannels, global.AcqNumSamples, global.AcqSampleInterval);
-		if (global.hitfinderTOFMaxSample > global.AcqNumSamples){
+	if((fail=getAcqConfig(Pds::DetInfo(0,tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0) , cheetahGlobal.AcqNumChannels, cheetahGlobal.AcqNumSamples, cheetahGlobal.AcqSampleInterval))==0){
+		cheetahGlobal.TOFPresent = 1;
+		printf("Acqiris configuration: %d channels, %d samples, %lf sample interval\n", cheetahGlobal.AcqNumChannels, cheetahGlobal.AcqNumSamples, cheetahGlobal.AcqSampleInterval);
+		if (cheetahGlobal.hitfinderTOFMaxSample > cheetahGlobal.AcqNumSamples){
 			printf("hitfinderTOFMaxSample greater than number of TOF samples. hitfinderUseTOF turned off\n");
-            if(global.hitfinderUseTOF){
-                printf("HitfinderUseTOF=%i needs Acqiris data to work\n",global.hitfinderUseTOF);
+            if(cheetahGlobal.hitfinderUseTOF){
+                printf("HitfinderUseTOF=%i needs Acqiris data to work\n",cheetahGlobal.hitfinderUseTOF);
                 printf("*** Cheetah quitting ***\n\n");
                 exit(1);
             }
-			global.hitfinderUseTOF = 0;
+			cheetahGlobal.hitfinderUseTOF = 0;
 		}
 	}
 	else {
-		global.TOFPresent = 0;
+		cheetahGlobal.TOFPresent = 0;
 		printf("Failed to get AcqirisConfig with fail code %d.\n", fail);
-        if(global.hitfinderUseTOF){
-            printf("HitfinderUseTOF=%i needs Acqiris data to work\n",global.hitfinderUseTOF);
+        if(cheetahGlobal.hitfinderUseTOF){
+            printf("HitfinderUseTOF=%i needs Acqiris data to work\n",cheetahGlobal.hitfinderUseTOF);
             printf("*** Cheetah quitting ***\n\n");
             exit(1);
         }
-		global.hitfinderUseTOF = 0 ;
+		cheetahGlobal.hitfinderUseTOF = 0 ;
 	}
 
 }
@@ -187,25 +228,20 @@ void fetchConfig()
  */
 void beginrun() 
 {
-	printf("User analysis beginrun() routine called.\n");
+	printf("User analysis beginrun() routine called.\n");    
 	printf("Processing r%04u\n",getRunNumber());
 	fetchConfig();
 	corrector->loadConstants(getRunNumber());
-	global.runNumber = getRunNumber();
 	frameNumber = 0;
 
-	// Reset the powder log files
-    if(global.runNumber > 0) {
-        for(long i=0; i<global.nPowderClasses; i++) {
-            char	filename[1024];
-            if(global.powderlogfp[i] != NULL)
-                fclose(global.powderlogfp[i]);
-            sprintf(filename,"r%04u-class%ld-log.txt",global.runNumber,i);
-            global.powderlogfp[i] = fopen(filename, "w");        
-            fprintf(global.powderlogfp[i], "eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
-        }
-    }
+
+    /*
+	 *	Pass new run information to Cheetah
+	 */
+	cheetahGlobal.runNumber = getRunNumber();
+    cheetahNewRun(&cheetahGlobal);
 }
+
 
 /*
  *	Calibration
@@ -228,7 +264,6 @@ void event() {
 	int fail = 0;
 
 	
-	
 	/*
 	 *	Get run number
 	 */
@@ -237,10 +272,23 @@ void event() {
 	
 	
 	/*
+	 * Get event time information
+	 */
+	int seconds, nanoSeconds;
+	getTime( seconds, nanoSeconds );
+    
+	/*
+	 *	Get event fiducials
+	 */
+	unsigned		fiducial;
+	fail = getFiducials(fiducial);
+    
+	
+
+	/*
 	 *	Get event information
 	 */	 
 	int 			numEvrData;
-	unsigned		fiducial;
 	unsigned int 	eventCode;
 	unsigned int 	timeStamp;	
 	numEvrData = getEvrDataNumber();
@@ -248,70 +296,11 @@ void event() {
 		fail = getEvrData( i, eventCode, fiducial, timeStamp );
 	}
 	
-	
-	
-	/*
-	 *	How quickly are we processing the data? (average over last 10 events)
-	 */	
-	time_t	tnow;
-	double	dt, datarate1;
-	double	dtime, datarate2;
-	//int		hrs, mins, secs; 
-
-	time(&tnow);
-	dtime = difftime(tnow, global.tlast);
-	dt = clock() - global.lastclock;
-	
-	if(dtime > 0) {
-		datarate1 = ((float)CLOCKS_PER_SEC)/dt;
-		datarate2 = (frameNumber - global.lastTimingFrame)/dtime;
-		global.lastclock = clock();
-		global.lastTimingFrame = frameNumber;
-		time(&global.tlast);
-
-		global.datarate = datarate2;
-	}
-	
-    /*
-     *  I/O speed test #1: 
-     *  How fast is event() be called by myana?
-     */
-    if(global.ioSpeedTest==1) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global.runNumber, frameNumber, global.datarate);		
-		return;
-	}
     
-
-	/*
-	 *	Skip frames if we only want a part of the data set
-	 */
-	if(global.startAtFrame != 0 && frameNumber < global.startAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global.runNumber, frameNumber, global.datarate, global.startAtFrame);		
-		return;
-	}
-	if(global.stopAtFrame != 0 && frameNumber > global.stopAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", global.runNumber, frameNumber, global.datarate, global.stopAtFrame);		
-		return;
-	}
-
-    
-	/*
-	 * Get event time information
-	 */
-	int seconds, nanoSeconds;
-	getTime( seconds, nanoSeconds );
-
-	/*
-	 *	Get event fiducials
-	 */
-	fail = getFiducials(fiducial);
-
-	
 	/* 
 	 *	Is the beam on?
 	 */
 	bool beam = beamOn();
-	//printf("Beam %s : fiducial %x\n", beam ? "On":"Off", fiducial);
 	if(!beam)
 		return;
   
@@ -358,9 +347,9 @@ void event() {
 	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
 		
 		// If no beamline data, but default wavelength specified in ini file
-		// then use that, else 
-		if ( global.defaultPhotonEnergyeV != 0 ) {
-			photonEnergyeV = global.defaultPhotonEnergyeV;
+		// then use that
+		if ( cheetahGlobal.defaultPhotonEnergyeV != 0 ) {
+			photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
 			wavelengthA = 12398.42/photonEnergyeV;
 		} else {
 			wavelengthA = std::numeric_limits<double>::quiet_NaN();
@@ -391,9 +380,6 @@ void event() {
 		wavelengthA = 12398.42/photonEnergyeV;
 	}
 	
-	global.summedPhotonEnergyeV += photonEnergyeV;
-	global.summedPhotonEnergyeVSquared += photonEnergyeV*photonEnergyeV;
-	
 	/*
 	 * 	FEE gas detectors (pulse energy in mJ)
 	 */     
@@ -411,7 +397,6 @@ void event() {
 	
 	/*
 	 * Phase cavity data
-	 *	(we probably won't need this info)
 	 */     
 	double 	phaseCavityTime1;
 	double	phaseCavityTime2;
@@ -423,94 +408,29 @@ void event() {
 	/*
      *  Laser delay setting
      */
-    float laserDelay;
-    if( getPvFloat(global.laserDelayPV, laserDelay) == 0 ) {
+    float laserDelay = 0;
+    if( getPvFloat(cheetahGlobal.laserDelayPV, laserDelay) == 0 ) {
         printf("New laser delay: %f\n",laserDelay);
-        
-        if(laserDelay != 0) {
-            // Don't mess with events currently being processed
-            while (global.nActiveThreads > 0) 
-                usleep(10000);
-            
-            global.laserDelay = laserDelay;
-        }
     }
 
     
+    
 	/*
 	 *	Detector position (Z) for each detector
+     *  This encoder can be flakey and is fixed in the event processing loop
 	 */
-    for(long i=0; i<global.nDetectors; i++) {
-        float detposnew;
-        int update_camera_length;
-        if ( getPvFloat(global.detector[i].detectorZpvname, detposnew) == 0 ) {
-            /* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
-             * skip the first few XTC datagrams, you will likely get error messages
-             * telling you that the EPICS PV is invalid.  Seems that this PV is
-             * updated at only about 1 Hz.  More worrysome is the fact that it
-             * occasionally gives a bogus value of detposnew=0, without a fail
-             * message.  Hardware problem? */
-            if ( detposnew == 0 ) {
-                detposnew = global.detector[i].detposprev;
-                printf("WARNING: detector position is zero, which could be an error\n"
-                       "         will use previous position (%s=%f) instead...\n",global.detector[i].detectorZpvname, detposnew);
-            }
-            /* When encoder reads -500mm, detector is at its closest possible
-             * position to the specimen, and is 79mm from the centre of the 
-             * 8" flange where the injector is mounted.  The injector itself is
-             * about 4mm further away from the detector than this. */
-            global.detector[i].detposprev = detposnew;
-            global.detector[i].detectorZ = detposnew + global.detector[i].cameraLengthOffset;
-            global.detector[i].detectorEncoderValue = detposnew;
-            /* Let's round to the nearest two decimal places 
-             * (10 micron, much less than a pixel size) */
-            global.detector[i].detectorZ = floorf(global.detector[i].detectorZ*100+0.5)/100;
-            update_camera_length = 1;
-        }	 
-        
-        if ( global.detector[i].detectorZ == 0 ) {
-            /* What to do if there is no camera length information?  Keep skipping
-             * frames until this info is found?  In some cases, our analysis doesn't
-             * need to know about this, so OK to skip in that case.  For now, the
-             * solution is for the user to set a (non-zero) default camera length.
-             */
-            if ( global.detector[i].defaultCameraLengthMm == 0 ) {
-                printf("======================================================\n");
-                printf("WARNING: Camera length %s is zero!\n", global.detector[i].detectorZpvname);
-                printf("I'm skipping this frame.  If the problem persists, try\n");
-                printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
-                printf("file.\n");
-                printf("======================================================\n");
-                return;
-            } 
-            else {
-                printf("MESSAGE: Setting default camera length (%gmm).\n",global.detector[i].defaultCameraLengthMm);
-                global.detector[i].detectorZ = global.detector[i].defaultCameraLengthMm;	
-                update_camera_length = 1;
-            }
+    float detposnew;
+    float detectorPosition[MAX_DETECTORS];
+    for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+        if ( getPvFloat(cheetahGlobal.detector[detID].detectorZpvname, detposnew) == 0 ) {
+            detectorPosition[detID] = detposnew;
         }
-        
-        /*
-         * Recalculate reciprocal space geometry if the camera length has changed, 
-         */
-        if ( update_camera_length && ( global.detector[i].detectorZprevious != global.detector[i].detectorZ ) ) {
-            // don't tinker with global geometry while there are active threads...
-            while (global.nActiveThreads > 0) 
-                usleep(10000);
-
-            printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global.detector[i].detectorZprevious,global.detector[i].detectorZ);
-            if ( isnan(wavelengthA ) ) {
-                printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
-            }	
-            global.detector[i].detectorZprevious = global.detector[i].detectorZ;
-            for(long i=0; i<global.nDetectors; i++) 
-                global.detector[i].updateKspace(&global, wavelengthA);
-            
-            // if its the first frame then continue, else skip this event
-            //if ( frameNumber != 1 )     
-            //    return;
-        }	
-    }
+        else {
+            detectorPosition[detID] = std::numeric_limits<float>::quiet_NaN();
+        }
+    }    
+    
+    
 	
     
     
@@ -518,13 +438,15 @@ void event() {
 	 *	Create a new eventData structure in which to place all information
 	 */
 	tEventData	*eventData;
-	eventData = (tEventData*) malloc(sizeof(tEventData));
+	eventData = cheetahNewEvent();
 		
 	
 	/*
 	 *	Copy all interesting information into worker thread structure if we got this far.
-	 *	(ie: presume that myana itself is NOT thread safe and any event info may get overwritten)
+     *  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
+     *  Copy all image data into event structure for processing
 	 */
+    eventData->frameNumber = frameNumber;
 	eventData->seconds = seconds;
 	eventData->nanoSeconds = nanoSeconds;
 	eventData->fiducial = fiducial;
@@ -532,10 +454,8 @@ void event() {
 	eventData->beamOn = beam;
 	eventData->nPeaks = 0;
     
-    //eventData->detectorPosition = global.detector[0].detectorZ;
-	
 	eventData->laserEventCodeOn = laserOn();
-    eventData->laserDelay = global.laserDelay;
+    eventData->laserDelay = cheetahGlobal.laserDelay;
 	
     eventData->gmd1 = gmd1;
     eventData->gmd2 = gmd2;
@@ -559,35 +479,36 @@ void event() {
 	eventData->phaseCavityCharge1 = phaseCavityCharge1;
 	eventData->phaseCavityCharge1 = phaseCavityCharge2;
 	
-	eventData->pGlobal = &global;
+	eventData->pGlobal = &cheetahGlobal;
 	
-	
-	// Allocate memory for detector data and set to zero
-	for(long i=0; i<global.nDetectors; i++) {
-		for(int quadrant=0; quadrant<4; quadrant++) {
-			eventData->detector[i].quad_data[quadrant] = (uint16_t*) calloc(global.detector[i].pix_nn, sizeof(uint16_t));
-			memset(eventData->detector[i].quad_data[quadrant], 0, global.detector[i].pix_nn*sizeof(uint16_t));
-		}
-	}	
+	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+        eventData->detector[detID].detectorZ = detectorPosition[detID];
+    }
 
 
 	/*
-	 *	Copy raw cspad image data into worker thread structure for processing
+	 *	Copy raw cspad image data into Cheetah event structure for processing
+     *  SLAC libraries are not thread safe: must copy data into event structure for processing
 	 */
-	Pds::CsPad::ElementIterator iter;
-	
-	for(long i=0; i<global.nDetectors; i++) {
-        eventData->detector[i].detectorZ = global.detector[i].detectorZ;
-        
-		fail=getCspadData(global.detector[i].detectorPdsDetInfo, iter);
+	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
 
+        uint16_t *quad_data[4];        
+        Pds::CsPad::ElementIterator iter;
+        
+		fail=getCspadData(detectorPdsDetInfo[detID], iter);
 		if (fail) {
 			printf("getCspadData fail %d (%x)\n",fail,fiducial);
-			eventData->detector[i].cspad_fail = fail;
+			eventData->detector[detID].cspad_fail = fail;
 			return;
 		}
 		else {
-			nevents++;
+            // Allocate memory for detector data and set to zero
+            for(int quadrant=0; quadrant<4; quadrant++) {
+                eventData->detector[detID].quad_data[quadrant] = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
+                memset(eventData->detector[detID].quad_data[quadrant], 0, cheetahGlobal.detector[detID].pix_nn*sizeof(uint16_t));
+            }
+			
+            nevents++;
 			const Pds::CsPad::ElementHeader* element;
 
 			// loop over elements (quadrants)
@@ -596,46 +517,69 @@ void event() {
 					// Which quadrant is this?
 					int quadrant = element->quad();
 					
-					// Have we accidentally jumped to a new fiducial (ie: a different event??)
-					
-					// Get temperature on strong back 
-					float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
-					eventData->detector[i].quad_temperature[quadrant] = temperature;
-					
-					
 					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 					while(( s=iter.next(section_id) )) {  
-						memcpy(&eventData->detector[i].quad_data[quadrant][section_id*2*global.detector[i].asic_nx*global.detector[i].asic_ny],s->pixel[0],2*global.detector[i].asic_nx*global.detector[i].asic_ny*sizeof(uint16_t));
+						memcpy(&eventData->detector[detID].quad_data[quadrant][section_id*2*cheetahGlobal.detector[detID].asic_nx*cheetahGlobal.detector[detID].asic_ny],s->pixel[0],2*cheetahGlobal.detector[detID].asic_nx*cheetahGlobal.detector[detID].asic_ny*sizeof(uint16_t));
 					}
+
+                    // Get temperature on strong back, just in case we want it for anything 
+					float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
+					eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
 			}
 		}
-	}	
+        
+        
+        /*
+         *	Assemble data from all four quadrants into one large array (rawdata layout)
+         */
+		//Memcpy is necessary for thread safety.
+        eventData->detector[detID].raw_data = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
+        for(int quadrant=0; quadrant<4; quadrant++) {
+            long	i,j,ii;
+            for(long k=0; k<2*cheetahGlobal.detector[detID].asic_nx*8*cheetahGlobal.detector[detID].asic_ny; k++) {
+                i = k % (2*cheetahGlobal.detector[detID].asic_nx) + quadrant*(2*cheetahGlobal.detector[detID].asic_nx);
+                j = k / (2*cheetahGlobal.detector[detID].asic_nx);
+                ii  = i+(cheetahGlobal.detector[detID].nasics_x*cheetahGlobal.detector[detID].asic_nx)*j;
+                
+                eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
+            }
+        }
+
+        for(int quadrant=0; quadrant<4; quadrant++) 
+            free(quad_data[quadrant]);
+    }	
 	
+    
 	/*
-	 *	Copy TOF (aqiris) channel into worker thread for processing
+	 *	Copy TOF (aqiris) channel into Cheetah event for processing
+     *  SLAC libraries are not thread safe: must copy data into event structure for processing
 	 */
-	eventData->TOFPresent = global.TOFPresent ;	
-	if (global.TOFPresent==1){
+	eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
+	if (cheetahGlobal.TOFPresent==1){
 		double *tempTOFTime;
 		double *tempTOFVoltage;
 		double tempTrigTime;
-		eventData->TOFTime = (double*) malloc(global.AcqNumSamples*sizeof(double));
-		eventData->TOFVoltage = (double*) malloc(global.AcqNumSamples*sizeof(double));
-		fail = getAcqValue(Pds::DetInfo(0,global.tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0), global.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
-		eventData->TOFtrigtime = tempTrigTime;
-		//Memcopy is necessary for thread safety.
-		memcpy(eventData->TOFTime, tempTOFTime, global.AcqNumSamples*sizeof(double));
-		memcpy(eventData->TOFVoltage, tempTOFVoltage, global.AcqNumSamples*sizeof(double));
+		fail = getAcqValue(Pds::DetInfo(0,tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0), cheetahGlobal.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
 		if (fail){
 			printf("getAcqValue fail %d (%x)\n",fail,fiducial);
 			return ;
 		}
+		//Memcpy is necessary for thread safety.
+		eventData->TOFtrigtime = tempTrigTime;
+		eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		memcpy(eventData->TOFTime, tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
+		memcpy(eventData->TOFVoltage, tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
 	}
 	
+    
+    
 	/*
+	 *	Copy Pulnix camera into Cheetah event for processing
+     *
 	 *	Pulnix 120Hz CCD camera on CXI Questar micrscope
 	 *	(where the actual camera is CxiSc1 not XppSb3PimCvd)
 	 *	The choice of CxiEndstation is for a particular camera.  
@@ -645,98 +589,29 @@ void event() {
 	 *		CxiDg4
 	 *		CxiKb1
 	 *		CxiSc1
-     *  Remember to copy image data into event structure for processing
+     *  SLAC libraries are not thread safe: must copy data into event structure for processing
 	 */
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
-
 	DetInfo pulnixInfo(0,DetInfo::CxiSc1, 0, DetInfo::TM6740, 0);
 	eventData->pulnixFail = getTm6740Value(pulnixInfo, pulnixWidth, pulnixHeight, pulnixImage);
 	if ( eventData->pulnixFail == 0 )
 	{
+		//Memcpy is necessary for thread safety.
         eventData->pulnixWidth = pulnixWidth;
         eventData->pulnixHeight = pulnixHeight;
         eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
         memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
 	}
-	//else
-	//	printf( "Get pulnix failed\n");
 
-
-	
+    
+    
+    
+    
     /*
-     *  I/O speed test #1: 
-     *  How fast can we push data into event structure?
-     */
-	if(global.ioSpeedTest==2) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #2\n", global.runNumber, frameNumber, global.datarate);		
-		for(long i=0; i<global.nDetectors; i++) {
-			for(int quadrant=0; quadrant<4; quadrant++) {
-				free(eventData->detector[i].quad_data[quadrant]);
-			}
-		}
-		free(eventData);
-		return;
-	}
-	
-	
-	/*
-	 *	Spawn worker thread to process this frame
-	 *	Threads are created detached so we don't have to wait for anything to happen before returning
-	 *		(each thread is responsible for cleaning up its own eventData structure when done)
+	 *	Call Cheetah to process this event
 	 */
-	pthread_t		thread;
-	pthread_attr_t	threadAttribute;
-	int				returnStatus;
-
-	
-	
-	// Periodically pause and let all threads finish
-	// On cfelsgi we seem to get mutex-lockup on some threads if we don't do this
-	if( global.threadPurge && (global.nprocessedframes%global.threadPurge)==0 ){
-		while(global.nActiveThreads > 0) {
-			printf("Pausing to let remaining %li worker threads to terminate\n", global.nActiveThreads);
-			usleep(10000);
-		}
-	}
-
-	// Wait until we have a spare thread in the thread pool
-	while(global.nActiveThreads >= global.nThreads) {
-		usleep(1000);
-	}
-
-
-	// Increment threadpool counter
-	pthread_mutex_lock(&global.nActiveThreads_mutex);
-	global.nActiveThreads += 1;
-	eventData->threadNum = ++global.threadCounter;
-	pthread_mutex_unlock(&global.nActiveThreads_mutex);
-	
-	// Set detached state
-	pthread_attr_init(&threadAttribute);
-	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-	
-	// Create a new worker thread for this data frame
-	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
-	pthread_attr_destroy(&threadAttribute);
-	global.nprocessedframes += 1;
-	global.nrecentprocessedframes += 1;
-	
-
-	
-	/*
-	 *	Save periodic powder patterns
-	 */
-	if(global.saveInterval!=0 && (global.nprocessedframes%global.saveInterval)==0 && (global.nprocessedframes > global.detector[0].startFrames+50) ){
-            for(long detID=0; detID<global.nDetectors; detID++) {
-                saveRunningSums(&global, detID);
-                global.updateLogfile();
-            }
-        saveRadialStacks(&global);
-	}
-	
-	
-	
+    cheetahProcessEvent(&cheetahGlobal, eventData);
 	
 }
 // End of event data processing block
@@ -760,61 +635,8 @@ void endjob()
 {
 	printf("User analysis endjob() routine called.\n");
 	
-	global.meanPhotonEnergyeV = global.summedPhotonEnergyeV/global.nprocessedframes;
-	global.photonEnergyeVSigma = sqrt(global.summedPhotonEnergyeVSquared/global.nprocessedframes - global.meanPhotonEnergyeV*global.meanPhotonEnergyeV);
-	printf("Mean photon energy: %f eV\n", global.meanPhotonEnergyeV);
-	printf("Sigma of photon energy: %f eV\n", global.photonEnergyeVSigma);
-	
-	// Wait for threads to finish
-	while(global.nActiveThreads > 0) {
-		printf("Waiting for %li worker threads to terminate\n", global.nActiveThreads);
-		usleep(100000);
-	}
-	
-	
-	// Save powder patterns
-    for(long detID=0; detID<global.nDetectors; detID++) {
-        saveRunningSums(&global, detID);
-    }
-    saveRadialStacks(&global);
-	global.writeFinalLog();
-	
-	// Hitrate?
-	printf("%li files processed, %li hits (%2.2f%%)\n",global.nprocessedframes, global.nhits, 100.*( global.nhits / (float) global.nprocessedframes));
-
-
-	// Cleanup
-	for(long i=0; i<global.nDetectors; i++) {
-		free(global.detector[i].darkcal);
-		free(global.detector[i].hotpixelmask);
-		free(global.detector[i].wiremask);
-		free(global.detector[i].selfdark);
-		free(global.detector[i].gaincal);
-		free(global.detector[i].peakmask);
-		free(global.detector[i].bg_buffer);
-		free(global.detector[i].hotpix_buffer);
-
-        for(long j=0; j<global.nPowderClasses; j++) {
-            free(global.detector[i].powderRaw[j]);
-            free(global.detector[i].powderRawSquared[j]);
-            free(global.detector[i].powderAssembled[j]);
-            free(global.detector[i].radialAverageStack[j]);
-            pthread_mutex_destroy(&global.detector[i].powderRaw_mutex[j]);
-            pthread_mutex_destroy(&global.detector[i].powderRawSquared_mutex[j]);
-            pthread_mutex_destroy(&global.detector[i].powderAssembled_mutex[j]);
-            pthread_mutex_destroy(&global.detector[i].radialStack_mutex[j]);
-        }
-	}
-	pthread_mutex_destroy(&global.nActiveThreads_mutex);
-	pthread_mutex_destroy(&global.selfdark_mutex);
-	pthread_mutex_destroy(&global.hotpixel_mutex);
-	pthread_mutex_destroy(&global.bgbuffer_mutex);
-	pthread_mutex_destroy(&global.framefp_mutex);
-	pthread_mutex_destroy(&global.peaksfp_mutex);
-	pthread_mutex_destroy(&global.powderfp_mutex);
-	
-	
-	
-	
-	printf("Cheetah clean exit\n");
+    /*
+	 *	Clean up all variables associated with libCheetah
+	 */
+    cheetahExit(&cheetahGlobal);
 }

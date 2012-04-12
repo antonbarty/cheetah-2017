@@ -68,44 +68,47 @@ $(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/mya
 
 
 # Cheetah processing 
-cheetah.o: cheetah.cpp worker.h setup.h detectorObject.h
+cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-worker.o: worker.cpp worker.h setup.h detectorObject.h
+libcheetah.o: libcheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-setup.o: setup.cpp setup.h worker.h detectorObject.h
+worker.o: worker.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-data2d.o: data2d.cpp data2d.h worker.h setup.h
+setup.o: setup.cpp cheetah.h cheetahGlobal.h cheetahEvent.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-median.o: median.cpp median.h worker.h setup.h 
+data2d.o: data2d.cpp cheetah.h data2d.h cheetahEvent.h cheetahGlobal.h
 	$(CPP) $(CFLAGS) $<
 
-hitfinders.o: hitfinders.cpp hitfinders.h worker.h setup.h detectorObject.h
+median.o: median.cpp cheetah.h median.h cheetahEvent.h cheetahGlobal.h 
 	$(CPP) $(CFLAGS) $<
 
-detectorObject.o: detectorObject.cpp worker.h setup.h detectorObject.h
+hitfinders.o: hitfinders.cpp cheetah.h hitfinders.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-detectorCorrection.o: detectorCorrection.cpp worker.h setup.h detectorObject.h
+detectorObject.o: detectorObject.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-backgroundCorrection.o: backgroundCorrection.cpp worker.h setup.h detectorObject.h
+detectorCorrection.o: detectorCorrection.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-powder.o: powder.cpp worker.h setup.h detectorObject.h
+backgroundCorrection.o: backgroundCorrection.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
+	$(CPP) $(CFLAGS) $<
+
+powder.o: powder.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
     
-radialAverage.o: radialAverage.cpp worker.h setup.h detectorObject.h
+radialAverage.o: radialAverage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-saveFrame.o: saveFrame.cpp worker.h setup.h detectorObject.h
+saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 
-cheetah: cheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	

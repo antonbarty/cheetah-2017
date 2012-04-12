@@ -20,8 +20,8 @@
 
 #include "data2d.h"
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
 
 
 cPixelDetectorCommon::cPixelDetectorCommon() {
@@ -29,8 +29,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     // Defaults to CXI cspad configuration
     strcpy(detectorTypeName, "cspad");
     strcpy(detectorName, "CxiDs1");
-    detectorType = Pds::DetInfo::Cspad;
-    detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
+    //detectorType = Pds::DetInfo::Cspad;
+    //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
     
     // Calibration files
     strcpy(detectorConfigFile, "No_file_specified");

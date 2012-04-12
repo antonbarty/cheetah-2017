@@ -15,8 +15,9 @@
 #include <stdlib.h>
 
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
+#include "cheetahmodules.h"
 #include "median.h"
 
 
@@ -46,8 +47,10 @@ void *worker(void *threadarg) {
 	}
 
 	/*
-	 *	Assemble data from all four quadrants into one large array (rawdata format)
+	 * Assemble data from all four quadrants into one large array (rawdata format)
+     *  Now done in top-level Cheetah loop so rest of code is detector independent
 	 */
+    /*
 	DETECTOR_LOOP {
 		eventData->detector[detID].raw_data = (uint16_t*) calloc(global->detector[detID].pix_nn, sizeof(uint16_t));
 		for(int quadrant=0; quadrant<4; quadrant++) {
@@ -60,6 +63,7 @@ void *worker(void *threadarg) {
 			}
 		}
 	}
+     */
 	
 	/*
 	 *	Create arrays for corrected detector data, etc 
@@ -114,7 +118,8 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useDarkcalSubtraction) 
-			subtractDarkcal(eventData->detector[detID], global->detector[detID]);
+            subtractDarkcal(eventData, global, detID);
+            //subtractDarkcal(eventData->detector[detID], global->detector[detID]);
 	}
 
 	
@@ -139,7 +144,8 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useGaincal) 
-			applyGainCorrection(eventData->detector[detID], global->detector[detID]);
+            applyGainCorrection(eventData, global, detID);
+            //applyGainCorrection(eventData->detector[detID], global->detector[detID]);
 	}
 
 	/*
@@ -147,7 +153,8 @@ void *worker(void *threadarg) {
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].useBadPixelMask) 
-			applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
+            applyBadPixelMask(eventData, global, detID);
+			//applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
 	} 
 	
 	
@@ -212,7 +219,7 @@ void *worker(void *threadarg) {
 	}
     DETECTOR_LOOP {
         if(global->detector[detID].useBadPixelMask) 
-			applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
+            applyBadPixelMask(eventData, global, detID);
 	} 
 		
 
@@ -369,8 +376,8 @@ void *worker(void *threadarg) {
 	
 	// Free memory
 	DETECTOR_LOOP {
-		for(int quadrant=0; quadrant<4; quadrant++) 
-			free(eventData->detector[detID].quad_data[quadrant]);	
+		//for(int quadrant=0; quadrant<4; quadrant++) 
+		//	free(eventData->detector[detID].quad_data[quadrant]);	
 		free(eventData->detector[detID].raw_data);
 		free(eventData->detector[detID].corrected_data);
 		free(eventData->detector[detID].detector_corrected_data);

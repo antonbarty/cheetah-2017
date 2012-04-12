@@ -7,14 +7,14 @@
  *
  */
 
-#include "myana/myana.hh"
-#include "myana/main.hh"
-#include "myana/XtcRun.hh"
-#include "release/pdsdata/cspad/ConfigV1.hh"
-#include "release/pdsdata/cspad/ConfigV2.hh"
-#include "release/pdsdata/cspad/ConfigV3.hh"
-#include "release/pdsdata/cspad/ElementHeader.hh"
-#include "release/pdsdata/cspad/ElementIterator.hh"
+//#include "myana/myana.hh"
+//#include "myana/main.hh"
+//#include "myana/XtcRun.hh"
+//#include "release/pdsdata/cspad/ConfigV1.hh"
+//#include "release/pdsdata/cspad/ConfigV2.hh"
+//#include "release/pdsdata/cspad/ConfigV3.hh"
+//#include "release/pdsdata/cspad/ElementHeader.hh"
+//#include "release/pdsdata/cspad/ElementIterator.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,11 +25,12 @@
 #include <hdf5.h>
 #include <fenv.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
 
 
 /*
@@ -106,8 +107,8 @@ void cGlobal::defaultConfiguration(void) {
 	TOFPresent = 0;
 	TOFchannel = 1;
 	strcpy(tofName, "CxiSc1");
-	tofType = Pds::DetInfo::Acqiris;
-	tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+	//tofType = Pds::DetInfo::Acqiris;
+	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 	
 
 
@@ -168,6 +169,7 @@ void cGlobal::setup() {
 	 *	This section of code possibly redundant if we know detector type from the address 
 	 *	(eg: CxiDs1 is always a cspad)
 	 */
+    /*
 	for(long i=0; i<nDetectors; i++) {
 		if(!strcmp(detector[i].detectorTypeName, "cspad"))
 			detector[i].detectorType = Pds::DetInfo::Cspad;
@@ -180,6 +182,7 @@ void cGlobal::setup() {
 			exit(1);
 		}
 	}
+     */
 	
 	/*
 	 *	Determine detector address
@@ -187,6 +190,7 @@ void cGlobal::setup() {
 	 *		release/pdsdata/xtc/Detinfo.hh
 	 *		release/pdsdata/xtc/src/Detinfo.cc
 	 */
+    /*
 	for(long i=0; i<nDetectors; i++) {
 		if(!strcmp(detector[i].detectorName, "CxiDs1")) {
 			detector[i].detectorType = Pds::DetInfo::Cspad;
@@ -210,39 +214,31 @@ void cGlobal::setup() {
 			exit(1);
 		}
 	}
+     */
 	
 	/*
 	 *	Detector parameters
 	 */
 	for(long i=0; i<nDetectors; i++) {
-		switch(detector[i].detectorType) {
-			case Pds::DetInfo::Cspad : 
+		if(strcmp(detector[i].detectorName, "CxiDs1") == 0 ||
+           strcmp(detector[i].detectorName, "CxiDs2") == 0 ||
+           strcmp(detector[i].detectorName, "CxiDsd") == 0 ||
+           strcmp(detector[i].detectorName, "XppGon") == 0) {
 				detector[i].asic_nx = CSPAD_ASIC_NX;
 				detector[i].asic_ny = CSPAD_ASIC_NY;
 				detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
 				detector[i].nasics_x = CSPAD_nASICS_X;
 				detector[i].nasics_y = CSPAD_nASICS_Y;
-				break;
-				
-			default:
-				printf("Error: unknown detector %s\n", detector[i].detectorName);
-				printf("Quitting\n");
-				exit(1);
-				break;
+        }				
+		else {
+            printf("Error: unknown detector %s\n", detector[i].detectorName);
+            printf("Quitting\n");
+            exit(1);
+            break;
 		}
 	}	
 	
 	
-	/*
-	 *	Determine TOF (Acqiris) address
-	 *	A list of addresses can be found in:
-	 *		release/pdsdata/xtc/Detinfo.hh
-	 *		release/pdsdata/xtc/src/Detinfo.cc
-	 */
-	if(!strcmp(tofName, "CxiSc1")) {
-		tofType = Pds::DetInfo::Acqiris;
-		tofPdsDetInfo = Pds::DetInfo::CxiSc1;
-	}
 	
 	/*
      * How many types of powder pattern do we need?
@@ -274,33 +270,8 @@ void cGlobal::setup() {
 	 *	Currently only tracked for detector[0]  (generalise this later)
      */
 	for(long i=0; i<nPowderClasses; i++) {
-        
-		//nPowderFrames[i] = 0;
-		//powderRaw[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
-		//powderRawSquared[i] = (double*) calloc(detector[0].pix_nn, sizeof(double));
-		//powderAssembled[i] = (double*) calloc(detector[0].image_nn, sizeof(double));
-
-        //radialStackCounter[i] = 0;
-        //radialAverageStack[i] = (float *) calloc(detector[0].radial_nn*radialStackSize, sizeof(float));
-        
-		//pthread_mutex_init(&powderRaw_mutex[i], NULL);
-		//pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-		//pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-        //pthread_mutex_init(&radialStack_mutex[i], NULL);
-		
-		//for(long j=0; j<detector[0].pix_nn; j++) {
-		//	powderRaw[i][j] = 0;
-		//	powderRawSquared[i][j] = 0;
-		//}
-		//for(long j=0; j<detector[0].image_nn; j++) {
-		//	powderAssembled[i][j] = 0;
-		//}
-
-        //for(long j=0; j<detector[0].radial_nn*radialStackSize; j++) {
-        //    radialAverageStack[i][j] = 0;
-        //}
-
 		char	filename[1024];
+        
         powderlogfp[i] = NULL;
         if(runNumber > 0) {
             sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
@@ -394,7 +365,7 @@ void cGlobal::setup() {
 	nrecentprocessedframes = 0;
 	lastclock = clock()-10;
 	datarate = 1;
-	runNumber = getRunNumber();
+	runNumber = 0;
 	time(&tstart);
 	avgGMD = 0;
 

@@ -15,8 +15,9 @@
 #include <stdlib.h>
 
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
+#include "cheetahmodules.h"
 #include "median.h"
 
 
@@ -24,13 +25,17 @@
 /*
  *	Subtract pre-loaded darkcal file
  */
+void subtractDarkcal(tEventData *eventData, cGlobal *global, int detID) {
+	for(long i=0;i< global->detector[detID].pix_nn;i++) {
+		eventData->detector[detID].corrected_data[i] -= global->detector[detID].darkcal[i]; 
+	}
+}
+
 void subtractDarkcal(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){
-	
 	// Do darkcal subtraction
 	for(long i=0;i< detectorGlobal.pix_nn;i++) {
 		detectorEvent.corrected_data[i] -= detectorGlobal.darkcal[i]; 
 	}
-	
 }
 
 
@@ -39,11 +44,14 @@ void subtractDarkcal(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon det
  *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
  *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
  */
-void applyGainCorrection(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){
-	
+void applyGainCorrection(tEventData *eventData, cGlobal *global, int detID){
+	for(long i=0;i<global->detector[detID].pix_nn;i++) 
+		eventData->detector[detID].corrected_data[i] *= global->detector[detID].gaincal[i];	
+}
+
+void applyGainCorrection(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){	
 	for(long i=0;i<detectorGlobal.pix_nn;i++) 
 		detectorEvent.corrected_data[i] *= detectorGlobal.gaincal[i];
-	
 }
 
 
@@ -51,11 +59,14 @@ void applyGainCorrection(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon
  *	Apply bad pixel mask
  *	Assumes that all we have to do here is a multiplication.
  */
-void applyBadPixelMask(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){
-	
+void applyBadPixelMask(tEventData *eventData, cGlobal *global, int detID){	
+	for(long i=0;i<global->detector[detID].pix_nn;i++) 
+		eventData->detector[detID].corrected_data[i] *= global->detector[detID].badpixelmask[i];
+}
+
+void applyBadPixelMask(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){	
 	for(long i=0;i<detectorGlobal.pix_nn;i++) 
 		detectorEvent.corrected_data[i] *= detectorGlobal.badpixelmask[i];
-	
 }
 
 

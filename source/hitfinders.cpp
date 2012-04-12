@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 #include "detectorObject.h"
-#include "setup.h"
-#include "worker.h"
+#include "cheetahGlobal.h"
+#include "cheetahEvent.h"
 #include "median.h"
 #include "hitfinders.h"
 

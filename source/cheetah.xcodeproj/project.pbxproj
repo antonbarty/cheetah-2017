@@ -19,6 +19,7 @@
 		4D4B16B5147D051F00BC8065 /* backgroundCorrection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4B16B4147D051F00BC8065 /* backgroundCorrection.cpp */; };
 		4D51241713038E3F0094D8E9 /* data2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D51241613038E3F0094D8E9 /* data2d.cpp */; };
 		4D7412C713EB1B5D0090C7C3 /* median.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7412C613EB1B5D0090C7C3 /* median.cpp */; };
+		4DB5DCFA1535B92700EBE8AA /* libcheetah.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DCF91535B92700EBE8AA /* libcheetah.cpp */; };
 		4DF5780814CB573600BC473E /* radialAverage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DF5780714CB573600BC473E /* radialAverage.cpp */; };
 		8DD76F6A0486A84900D96B5E /* cspad_cryst.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* cspad_cryst.1 */; };
 /* End PBXBuildFile section */
@@ -51,6 +52,7 @@
 		4D51241613038E3F0094D8E9 /* data2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = data2d.cpp; sourceTree = "<group>"; };
 		4D5125671305CF080094D8E9 /* cheetah.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cheetah.ini; sourceTree = "<group>"; };
 		4D7412C613EB1B5D0090C7C3 /* median.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = median.cpp; sourceTree = "<group>"; };
+		4DB5DCF91535B92700EBE8AA /* libcheetah.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = libcheetah.cpp; sourceTree = "<group>"; };
 		4DF5780714CB573600BC473E /* radialAverage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = radialAverage.cpp; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* cheetah */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cheetah; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859E8B029090EE04C91782 /* cspad_cryst.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = cspad_cryst.1; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 				4D3B885012FF49F500B7ABD9 /* Makefile */,
 				4D51241613038E3F0094D8E9 /* data2d.cpp */,
 				4D3B88681300B56300B7ABD9 /* cheetah.cpp */,
+				4DB5DCF91535B92700EBE8AA /* libcheetah.cpp */,
 				4D06096114E6ED5000345581 /* detectorObject.cpp */,
 				4D4B16B1147D043B00BC8065 /* detectorCorrection.cpp */,
 				4D4B16B4147D051F00BC8065 /* backgroundCorrection.cpp */,
@@ -181,6 +184,7 @@
 				4D4B16B5147D051F00BC8065 /* backgroundCorrection.cpp in Sources */,
 				4DF5780814CB573600BC473E /* radialAverage.cpp in Sources */,
 				4D06096214E6ED5000345581 /* detectorObject.cpp in Sources */,
+				4DB5DCFA1535B92700EBE8AA /* libcheetah.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
