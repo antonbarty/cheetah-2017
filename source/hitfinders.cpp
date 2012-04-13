@@ -14,9 +14,9 @@
 
 
 // Peakfinders local to this routine
-int peakfinder3(cGlobal*, tEventData*, int);
-int peakfinder5(cGlobal*, tEventData*, int);
-int peakfinder6(cGlobal*, tEventData*, int);
+int peakfinder3(cGlobal*, cEventData*, int);
+int peakfinder5(cGlobal*, cEventData*, int);
+int peakfinder6(cGlobal*, cEventData*, int);
 
 
 
@@ -30,7 +30,7 @@ int peakfinder6(cGlobal*, tEventData*, int);
  *		6 - Experimental - find peaks by SNR criteria
  *      7 - Laser on event code (usually EVR41)
  */
-int  hitfinder(tEventData *eventData, cGlobal *global, int detID){
+int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	
 	// Dereference stuff
 	long		pix_nn = global->detector[detID].pix_nn;
@@ -221,7 +221,7 @@ int  hitfinder(tEventData *eventData, cGlobal *global, int detID){
  *	Search of connected pixels above threshold
  *	Anton Barty
  */
-int peakfinder3(cGlobal *global, tEventData *eventData, int detID) {
+int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	
 	// Dereference stuff
 	long		pix_nx = global->detector[detID].pix_nx;
@@ -492,7 +492,7 @@ int peakfinder3(cGlobal *global, tEventData *eventData, int detID) {
  *	peakfinder 5
  *	Rick Kirian
  */
-int peakfinder5(cGlobal *global, tEventData *eventData, int detID) {
+int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 
 	long  nat;
 	long  lastnat;
@@ -753,7 +753,7 @@ int peakfinder5(cGlobal *global, tEventData *eventData, int detID) {
  *	Peak finder 6
  *	Rick Kirian
  */
-int peakfinder6(cGlobal *global, tEventData *eventData, int detID) {
+int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	
 	int counter = 0;
 	int hit = 0;

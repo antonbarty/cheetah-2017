@@ -69,10 +69,10 @@ void cheetahNewRun(cGlobal *global) {
  *  Currently only a malloc() but set up as a function so that we have the option of 
  *  initialising variables without needing to change any top level code
  */
-tEventData* cheetahNewEvent(void) {
+cEventData* cheetahNewEvent(void) {
     
-    tEventData	*eventData;
-    eventData = (tEventData*) malloc(sizeof(tEventData));
+    cEventData	*eventData;
+    eventData = (cEventData*) malloc(sizeof(cEventData));
     return eventData;
 }
 
@@ -81,7 +81,7 @@ tEventData* cheetahNewEvent(void) {
 /*
  *  libCheetah event processing function
  */
-void cheetahProcessEvent(cGlobal *global, tEventData *eventData){
+void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
     /*
 	 *	How quickly are we processing the data? (average over last 10 events)
@@ -119,22 +119,14 @@ void cheetahProcessEvent(cGlobal *global, tEventData *eventData){
 	}
 
     
-    /*
-     *  I/O speed test #1: 
-     *  How fast is event() called by myana?
-     */
-    if(global->ioSpeedTest==1) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
-		return;
-	}
 
     
     /*
-     *  I/O speed test #2: 
-     *  How fast can we push data into event structure?
+     *  I/O speed test
+     *  How fast is processEvent called?
      */
-	if(global->ioSpeedTest==2) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #2\n", global->runNumber, eventData->frameNumber, global->datarate);		
+	if(global->ioSpeedTest==1) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
 		for(long i=0; i<global->nDetectors; i++) {
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				free(eventData->detector[i].quad_data[quadrant]);

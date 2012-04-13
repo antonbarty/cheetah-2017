@@ -25,7 +25,7 @@
 /*
  *	Update background buffer
  */
-void updateBackgroundBuffer(tEventData *eventData, cGlobal *global, int detID) {
+void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int detID) {
 	
     if(global->detector[detID].useBackgroundBufferMutex)
         pthread_mutex_lock(&global->bgbuffer_mutex);
@@ -88,7 +88,7 @@ void calculatePersistentBackground(cGlobal *global, int detID) {
 /*
  *	Subtract persistent background 
  */
-void subtractPersistentBackground(tEventData *eventData, cGlobal *global, int detID){
+void subtractPersistentBackground(cEventData *eventData, cGlobal *global, int detID){
 	
 	float	top = 0;
 	float	s1 = 0;
@@ -140,7 +140,7 @@ void subtractPersistentBackground(tEventData *eventData, cGlobal *global, int de
 /*
  *	Local background subtraction
  */
-void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
+void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 	
 	long		e,ee;
 	long		counter;
@@ -243,7 +243,7 @@ void subtractLocalBackground(tEventData *eventData, cGlobal *global, int detID){
 /*
  * Make a saturated pixel mask
  */
-void checkSaturatedPixels(tEventData *eventData, cGlobal *global, int detID){
+void checkSaturatedPixels(cEventData *eventData, cGlobal *global, int detID){
 	
 	for(long i=0;i<global->detector[i].pix_nn;i++) { 
 		if ( eventData->detector[detID].raw_data[i] >= global->detector[detID].pixelSaturationADC) 

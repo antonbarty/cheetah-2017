@@ -15,8 +15,9 @@
 /*
  *	Structure used for passing information to worker threads
  */
-typedef struct {
+class cEventData {
 	
+public:
 	// Reference to common global structure
 	cGlobal		*pGlobal;
 	int			busy;
@@ -96,7 +97,7 @@ typedef struct {
 	// Thread management
 	int		threadID;
 	
-} tEventData;
+} ;
 
 
 

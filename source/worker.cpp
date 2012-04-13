@@ -31,8 +31,8 @@ void *worker(void *threadarg) {
 	 *	Turn threadarg into a more useful form
 	 */
 	cGlobal			*global;
-	tEventData		*eventData;
-	eventData = (tEventData*) threadarg;
+	cEventData		*eventData;
+	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
 	int	hit = 0;
 
@@ -431,7 +431,7 @@ void *worker(void *threadarg) {
  * 
  * -Rick  
  */
-void evr41fudge(tEventData *t, cGlobal *g){
+void evr41fudge(cEventData *t, cGlobal *g){
 	
 	if ( g->TOFPresent == 0 ) {
 		//printf("Acqiris not present; can't fudge EVR41...\n");
@@ -487,7 +487,7 @@ void evr41fudge(tEventData *t, cGlobal *g){
  *	Interpolate raw (corrected) cspad data into a physical 2D image
  *	using pre-defined pixel mapping (as loaded from .h5 file)
  */
-void assemble2Dimage(tEventData *eventData, cGlobal *global, int detID){
+void assemble2Dimage(cEventData *eventData, cGlobal *global, int detID){
 	
 	// Dereference datector arrays
 	long		pix_nn = global->detector[detID].pix_nn;

@@ -25,7 +25,7 @@
 /*
  *	Subtract pre-loaded darkcal file
  */
-void subtractDarkcal(tEventData *eventData, cGlobal *global, int detID) {
+void subtractDarkcal(cEventData *eventData, cGlobal *global, int detID) {
 	for(long i=0;i< global->detector[detID].pix_nn;i++) {
 		eventData->detector[detID].corrected_data[i] -= global->detector[detID].darkcal[i]; 
 	}
@@ -44,7 +44,7 @@ void subtractDarkcal(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon det
  *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
  *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
  */
-void applyGainCorrection(tEventData *eventData, cGlobal *global, int detID){
+void applyGainCorrection(cEventData *eventData, cGlobal *global, int detID){
 	for(long i=0;i<global->detector[detID].pix_nn;i++) 
 		eventData->detector[detID].corrected_data[i] *= global->detector[detID].gaincal[i];	
 }
@@ -59,7 +59,7 @@ void applyGainCorrection(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon
  *	Apply bad pixel mask
  *	Assumes that all we have to do here is a multiplication.
  */
-void applyBadPixelMask(tEventData *eventData, cGlobal *global, int detID){	
+void applyBadPixelMask(cEventData *eventData, cGlobal *global, int detID){	
 	for(long i=0;i<global->detector[detID].pix_nn;i++) 
 		eventData->detector[detID].corrected_data[i] *= global->detector[detID].badpixelmask[i];
 }
@@ -75,7 +75,7 @@ void applyBadPixelMask(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon d
  *	Subtract common mode on each module
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmModuleSubtract(tEventData *eventData, cGlobal *global, int detID){
+void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
 	
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
@@ -149,7 +149,7 @@ void cmModuleSubtract(tEventData *eventData, cGlobal *global, int detID){
  *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
  *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
  */
-void cmSubtractUnbondedPixels(tEventData *eventData, cGlobal *global, int detID){
+void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global, int detID){
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
 	long		e;
@@ -204,7 +204,7 @@ void cmSubtractUnbondedPixels(tEventData *eventData, cGlobal *global, int detID)
  *	Subtract common mode estimated from signal behind wires
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmSubtractBehindWires(tEventData *eventData, cGlobal *global, int detID){
+void cmSubtractBehindWires(cEventData *eventData, cGlobal *global, int detID){
 	
 	DEBUGL2_ONLY printf("cmModuleSubtract\n");
 	
@@ -267,7 +267,7 @@ void cmSubtractBehindWires(tEventData *eventData, cGlobal *global, int detID){
 /*
  *	Identify and kill hot pixels
  */
-void killHotpixels(tEventData *eventData, cGlobal *global, int detID){
+void killHotpixels(cEventData *eventData, cGlobal *global, int detID){
 	
 	
 	// First update global hot pixel buffer

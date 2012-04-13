@@ -259,6 +259,7 @@ void begincalib()
  */
 void event() {
 	
+        
 	// Variables
 	frameNumber++;
 	int fail = 0;
@@ -437,7 +438,7 @@ void event() {
 	/*
 	 *	Create a new eventData structure in which to place all information
 	 */
-	tEventData	*eventData;
+	cEventData	*eventData;
 	eventData = cheetahNewEvent();
 		
 	

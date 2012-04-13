@@ -25,7 +25,7 @@
 /*
  *	Maintain running powder patterns
  */
-void addToPowder(tEventData *eventData, cGlobal *global, int powderClass, int detID){
+void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int detID){
 	
 	// Dereference common variable
 	long	radial_nn = global->detector[detID].radial_nn;

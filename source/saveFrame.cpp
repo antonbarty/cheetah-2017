@@ -25,7 +25,7 @@
 
 
 
-void nameEvent(tEventData *info, cGlobal *global){
+void nameEvent(cEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -45,7 +45,7 @@ void nameEvent(tEventData *info, cGlobal *global){
 /*
  *	Write out processed data to our 'standard' HDF5 format
  */
-void writeHDF5(tEventData *info, cGlobal *global){
+void writeHDF5(cEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
@@ -545,7 +545,7 @@ void writeHDF5(tEventData *info, cGlobal *global){
 }
 
 
-void writePeakFile(tEventData *eventData, cGlobal *global){
+void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	// No peaks --> go home
 	if(eventData->nPeaks <= 0) {

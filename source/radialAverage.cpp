@@ -112,7 +112,7 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 /*
  *	Add radial average to stack
  */
- void addToRadialAverageStack(tEventData *eventData, cGlobal *global, int powderClass, int detID){
+ void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderClass, int detID){
  
      cPixelDetectorCommon     *detector = &global->detector[detID];
 	 
