@@ -77,12 +77,19 @@ cEventData* cheetahNewEvent(void) {
 }
 
 
+/*
+ *  libCheetah function to clean up all memory allocated in event struture
+ */
+void cheetahDestroyEvent(cEventData *eventData) {
+    
+}
+
 
 /*
- *  libCheetah event processing function
+ *  libCheetah function to update global variables where needed from new event data
  */
-void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
-
+void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
+    
     /*
 	 *	How quickly are we processing the data? (average over last 10 events)
 	 */	
@@ -103,56 +110,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         
 		global->datarate = datarate2;
 	}
-	
     
-    
-	/*
-	 *	Skip frames if we only want a part of the data set
-	 */
-	if(global->startAtFrame != 0 && eventData->frameNumber < global->startAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->startAtFrame);		
-		return;
-	}
-	if(global->stopAtFrame != 0 && eventData->frameNumber > global->stopAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->stopAtFrame);		
-		return;
-	}
-
-    
-
-    
-    /*
-     *  I/O speed test
-     *  How fast is processEvent called?
-     */
-	if(global->ioSpeedTest==1) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
-		for(long i=0; i<global->nDetectors; i++) {
-			for(int quadrant=0; quadrant<4; quadrant++) {
-				free(eventData->detector[i].quad_data[quadrant]);
-			}
-		}
-		free(eventData);
-		return;
-	}
-	
-    /*
-     *  Keep track of wavelength statistics
-     */
-    global->summedPhotonEnergyeV += eventData->photonEnergyeV;
-	global->summedPhotonEnergyeVSquared += eventData->photonEnergyeV*eventData->photonEnergyeV;
-	
-    
-    /*
-     *  Remember laser delay
-     */
-    if(eventData->laserDelay != 0) {
-        // Don't mess with events currently being processed
-        while (global->nActiveThreads > 0) 
-            usleep(10000);
-        global->laserDelay = eventData->laserDelay;
-    }
-
     
     /*
      *  Fix up detector Z position, which can be flakey
@@ -162,7 +120,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     DETECTOR_LOOP {
         float detposnew;
         int update_camera_length;
-            
+        
         detposnew = eventData->detector[detID].detectorZ;
         if ( !isnan(detposnew) ) {
             /* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
@@ -229,17 +187,83 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
             
         }	
     }
-
+    
+    
+    /*
+     *  Keep track of LCLS wavelength statistics
+     */
+    global->summedPhotonEnergyeV += eventData->photonEnergyeV;
+	global->summedPhotonEnergyeVSquared += eventData->photonEnergyeV*eventData->photonEnergyeV;
+	
+    
+    /*
+     *  Remember laser delay
+     */
+    if(eventData->laserDelay != 0) {
+        // Don't mess with events currently being processed
+        while (global->nActiveThreads > 0) 
+            usleep(10000);
+        global->laserDelay = eventData->laserDelay;
+    }
+    
     
 
+    
     /*
      *  Copy over any remaining detector info
      */
     DETECTOR_LOOP {
         eventData->detector[detID].detectorZ = global->detector[detID].detectorZ;        
-
+        
     }
     
+}
+
+
+
+/*
+ *  libCheetah event processing function (multithreaded)
+ */
+void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
+
+    
+	/*
+	 *	Remember to update global variables 
+	 */
+    cheetahUpdateGlobal(global, eventData);
+
+  
+    
+    /*
+     *  I/O speed test
+     *  How fast is processEvent called?
+     */
+	if(global->ioSpeedTest==1) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
+		for(long i=0; i<global->nDetectors; i++) {
+			for(int quadrant=0; quadrant<4; quadrant++) {
+				free(eventData->detector[i].quad_data[quadrant]);
+			}
+		}
+		free(eventData);
+		return;
+	}
+	
+
+	/*
+	 *	Skip frames if we only want a part of the data set
+	 */
+	if(global->startAtFrame != 0 && eventData->frameNumber < global->startAtFrame) {
+		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->startAtFrame);		
+		return;
+	}
+	if(global->stopAtFrame != 0 && eventData->frameNumber > global->stopAtFrame) {
+		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->stopAtFrame);		
+		return;
+	}
+
+    
+  
 	
 	/*
 	 *	Spawn worker thread to process this frame
@@ -252,15 +276,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     
 	
 	
-	// Periodically pause and let all threads finish
-	// On cfelsgi we seem to get mutex-lockup on some threads if we don't do this
-	if( global->threadPurge && (global->nprocessedframes%global->threadPurge)==0 ){
-		while(global->nActiveThreads > 0) {
-			printf("Pausing to let remaining %li worker threads to terminate\n", global->nActiveThreads);
-			usleep(10000);
-		}
-	}
-    
 	// Wait until we have a spare thread in the thread pool
 	while(global->nActiveThreads >= global->nThreads) {
 		usleep(1000);
