@@ -299,6 +299,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	global->nrecentprocessedframes += 1;
 	
     
+    
 	
 	/*
 	 *	Save periodic powder patterns
