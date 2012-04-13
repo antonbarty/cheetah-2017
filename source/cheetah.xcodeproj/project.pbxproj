@@ -61,9 +61,7 @@
 		4DB5DD3815382D8E00EBE8AA /* radialAverage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = radialAverage.cpp; sourceTree = "<group>"; };
 		4DB5DD3915382D8E00EBE8AA /* saveFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = saveFrame.cpp; sourceTree = "<group>"; };
 		4DB5DD3A15382D8E00EBE8AA /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
-		4DB5DD3B15382D8E00EBE8AA /* setup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = setup.h; sourceTree = "<group>"; };
 		4DB5DD3C15382D8E00EBE8AA /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
-		4DB5DD3D15382D8E00EBE8AA /* worker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = worker.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* cheetah */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cheetah; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859E8B029090EE04C91782 /* cspad_cryst.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = cspad_cryst.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -118,10 +116,8 @@
 				4DB5DD2C15382D8E00EBE8AA /* cheetahmodules.h */,
 				4DB5DD2E15382D8E00EBE8AA /* data2d.h */,
 				4DB5DD3115382D8E00EBE8AA /* detectorObject.h */,
-				4DB5DD3B15382D8E00EBE8AA /* setup.h */,
 				4DB5DD3315382D8E00EBE8AA /* hitfinders.h */,
 				4DB5DD3615382D8E00EBE8AA /* median.h */,
-				4DB5DD3D15382D8E00EBE8AA /* worker.h */,
 				4DB5DD3415382D8E00EBE8AA /* libcheetah.cpp */,
 				4DB5DD2D15382D8E00EBE8AA /* data2d.cpp */,
 				4DB5DD3015382D8E00EBE8AA /* detectorObject.cpp */,
