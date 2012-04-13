@@ -14,65 +14,67 @@
 TARGET 			= cheetah
 ARCH 			= x86_64-linux
 
-MYANADIR		= myana
-CSPADDIR		= cspad
+
+
+HDF5DIR 		?= /cfel/common
+CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
+LIBCHEETAHDIR   ?= $(CHEETAHDIR)/libcheetah
+
+LCLSDIR 		?= $(CHEETAHDIR)/lcls/release
+MYANADIR		?= lcls/myana
+CSPADDIR		?= lcls/cspad
+
 #LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
 #HDF5DIR 		= /reg/neh/home/barty/hdf5
-LCLSDIR 		?= /cfel/user/barty/c/cheetah/release
-HDF5DIR 		?= /cfel/common
-ROOTSYS			= /reg/g/pcds/package/root
+
 OBJFILES		= main.o XtcRun.o
 
 CPP				= g++ -c -g -O3
+#CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(CHEETAHDIR)/lcls/release -I$(HDF5DIR)/include
+CFLAGS			= -Ilibcheetah/ -Ilcls/release -I$(HDF5DIR)/include
+
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
-CFLAGS			= -Irelease -I$(HDF5DIR)/include
 PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
-LD_FLAGS		= -Lrelease/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  $(PDSLIBS) -lhdf5 -lpthread -Wl,-rpath=$(LCLSDIR)/build/pdsdata/lib/$(ARCH)/:$(HDF5DIR)/lib
-CFLAGS_ROOT		= $(shell $(ROOTSYS)/bin/root-config --cflags)
-LDFLAGS_ROOT	= $(shell $(ROOTSYS)/bin/root-config --libs) -Wl,-rpath=$(ROOTSYS)/lib:release/build/pdsdata/lib/$(ARCH)/
+LD_FLAGS		= -Llcls/release/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  $(PDSLIBS) -lhdf5 -lpthread -Wl,-rpath=$(CHEETAHDIR):$(LCLSDIR)/build/pdsdata/lib/$(ARCH)/:$(HDF5DIR)/lib
 
-all: $(TARGET)
+VPATH           = libcheetah/
+
+
+
+all: lcls  $(TARGET)
 
 clean:
 	rm -f *.o *.gch $(TARGET)
 
 remake: clean all
-
 .PHONY: all clean remake
 
-# Standard myana libraries
+lcls:
+# Standard myana 
 $(MYANADIR)/main.o: $(MYANADIR)/main.cc $(MYANADIR)/myana.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/main.o $<
-
 $(MYANADIR)/XtcRun.o: $(MYANADIR)/XtcRun.cc $(MYANADIR)/XtcRun.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
-
-
-# CSPAD libraries
+# CSPAD specific
 $(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
-
 $(CSPADDIR)/CspadTemp.o: $(CSPADDIR)/CspadTemp.cc $(CSPADDIR)/CspadTemp.hh
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadTemp.o $<
-	
 $(CSPADDIR)/CspadGeometry.o: $(CSPADDIR)/CspadGeometry.cc $(CSPADDIR)/CspadGeometry.hh
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadGeometry.o $<
-	
 $(CSPADDIR)/CspadCorrector.o: $(CSPADDIR)/CspadCorrector.cc $(CSPADDIR)/CspadCorrector.hh
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadCorrector.o $<
-
 $(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 
-# Cheetah processing 
-cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
-	$(CPP) $(CFLAGS) $<
+# Cheetah library
+cheetah.lib: cheetah.o libcheetah.o worker.o setup.o data2d.o median.o hitfinders.o detectorObject.o detectorCorrection.o backgroundCorrection.o powder.o radialAverage.o saveFrame.o
 
 libcheetah.o: libcheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
-	$(CPP) $(CFLAGS) $<
+	$(CPP) $(CFLAGS) $< -o $@
 
 worker.o: worker.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
@@ -107,6 +109,9 @@ radialAverage.o: radialAverage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h dete
 saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
+
+cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
+	$(CPP) $(CFLAGS) $<
 
 cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^

@@ -10,17 +10,17 @@
  */
 
 
-#include "myana/myana.hh"
-#include "myana/main.hh"
-#include "myana/XtcRun.hh"
-#include "release/pdsdata/cspad/ConfigV1.hh"
-#include "release/pdsdata/cspad/ConfigV2.hh"
-#include "release/pdsdata/cspad/ConfigV3.hh"
-#include "release/pdsdata/cspad/ElementHeader.hh"
-#include "release/pdsdata/cspad/ElementIterator.hh"
-#include "cspad/CspadTemp.hh"
-#include "cspad/CspadCorrector.hh"
-#include "cspad/CspadGeometry.hh"
+#include "lcls/myana/myana.hh"
+#include "lcls/myana/main.hh"
+#include "lcls/myana/XtcRun.hh"
+#include "lcls/release/pdsdata/cspad/ConfigV1.hh"
+#include "lcls/release/pdsdata/cspad/ConfigV2.hh"
+#include "lcls/release/pdsdata/cspad/ConfigV3.hh"
+#include "lcls/release/pdsdata/cspad/ElementHeader.hh"
+#include "lcls/release/pdsdata/cspad/ElementIterator.hh"
+#include "lcls/cspad/CspadTemp.hh"
+#include "lcls/cspad/CspadCorrector.hh"
+#include "lcls/cspad/CspadGeometry.hh"
 
 #include <stdio.h>
 #include <string.h>
