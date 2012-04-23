@@ -7,370 +7,374 @@
  *
  */
 
-#define	MAX_POWDER_CLASSES 16
+#define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
-#define	MAX_FILENAME_LENGTH 1024
+#define MAX_FILENAME_LENGTH 1024
+
+
+
 
 /*
- *	Global variables
+ * Global variables
  */
 class cGlobal {
-	
+
 public:
-	
+
 	/********************************************************************//**
 	 * \brief What's this for?
-	************************************************************************/		
+	************************************************************************/
 	cGlobal     *self;
-	
+
 	/********************************************************************//**
 	 * \brief Path to the global configuration file.
-	 * 
+	 *
 	 * Cheetah can parse this configuration file and populate the members of
 	 * cGlobal with user-specified values. TODO: link to the parser function.
-	************************************************************************/	
-	char    configFile[MAX_FILENAME_LENGTH];
-	
+	************************************************************************/
+	char     configFile[MAX_FILENAME_LENGTH];
+
 	/********************************************************************//**
 	 * \brief Default photon wavelength.
 	 *
-	 * To be used in the event that wavelength information is not provided 
+	 * To be used in the event that wavelength information is not provided
 	 * (or recorded) in the acquisition data stream.
-	 ***********************************************************************/	
-	float   defaultPhotonEnergyeV;
+	 ***********************************************************************/
+	float    defaultPhotonEnergyeV;
 
 	/********************************************************************//**
 	 * \brief Number of pixel-array detectors present.
-	 ***********************************************************************/	
-    int    nDetectors;
+	 ***********************************************************************/
+	int      nDetectors;
 
 	/********************************************************************//**
 	 * \brief Array of pixel-array detector settings?
-	 ***********************************************************************/	 
-	cPixelDetectorCommon	detector[MAX_DETECTORS];
+	 ***********************************************************************/
+	cPixelDetectorCommon detector[MAX_DETECTORS];
 
-	double summedPhotonEnergyeV; /**< For photon wavelength statistics */
-	double summedPhotonEnergyeVSquared; /**< For photon wavelength 
-	                                         statistics */
-	double meanPhotonEnergyeV; /**< For photon wavelength statistics */
-	double photonEnergyeVSigma; /**< For photon wavelength statistics */
+	double   summedPhotonEnergyeV; /**< For photon wavelength statistics */
+	double   summedPhotonEnergyeVSquared; /**< For photon wavelength
+	                                           statistics */
+	double   meanPhotonEnergyeV; /**< For photon wavelength statistics */
+	double   photonEnergyeVSigma; /**< For photon wavelength statistics */
 
 	/********************************************************************//**
-	 * \brief Skip all frames prior to this one (no processing will be done). 
-	 ***********************************************************************/	
-	long	startAtFrame;
+	 * \brief Skip all frames prior to this one (no processing will be done).
+	 ***********************************************************************/
+	long     startAtFrame;
 	/********************************************************************//**
-	 * \brief Skip all frames after this one (no processing willl be done). 
-	 ***********************************************************************/	
-	long	stopAtFrame;
-	
+	 * \brief Skip all frames after this one (no processing willl be done).
+	 ***********************************************************************/
+	long     stopAtFrame;
+
 	/********************************************************************//**
 	 * \brief Toggle the creation of a darkcal image.
 	 *
 	 * This run is assumed to contain data without the X-ray beam on.
-	 ***********************************************************************/	
-	int			generateDarkcal;
+	 ***********************************************************************/
+	int      generateDarkcal;
 	/********************************************************************//**
 	 * \brief Toggle the creation of a gaincal image.
 	 *
-	 ***********************************************************************/	
-	int			generateGaincal;
+	 ***********************************************************************/
+	int      generateGaincal;
 
 	/********************************************************************//**
 	 * \brief Toggle the usage of a hitfinder
 	 *
+	 * TODO: link to the hitfinding documentation.
 	 ***********************************************************************/
-	int         hitfinder;
+	int      hitfinder;
 	/********************************************************************//**
 	 * \brief Specify the hitfinder algorithm
 	 *
 	 * Presently, the acceptable values are 1-6.  TODO: provide documentation
 	 * of all the hitfinder algorithms.
 	 ***********************************************************************/
-	int         hitfinderAlgorithm;
+	int      hitfinderAlgorithm;
 	/********************************************************************//**
 	 * \brief Intensity threshold for hitfinder algorithm.
 	 *
-	 * The influence of this value depends on the hitfinding algorithm.  
+	 * The influence of this value depends on the hitfinding algorithm.
 	 * TODO: provide reference to hitfinder algorithms.
 	 ***********************************************************************/
-	int         hitfinderADC;
+	int      hitfinderADC;
 	/********************************************************************//**
-	 * \brief Required number of connected pixels that constitute a Bragg 
+	 * \brief Required number of connected pixels that constitute a Bragg
 	 * peak.
 	 *
 	 * TODO: check that this is still in use.
 	 ***********************************************************************/
-	long        hitfinderNAT;
+	long     hitfinderNAT;
 	/********************************************************************//**
 	 * \brief Unknown
 	 *
 	 * TODO: figure out what this does.
-	 ***********************************************************************/	
-	float       hitfinderTAT;
+	 ***********************************************************************/
+	float    hitfinderTAT;
 	/********************************************************************//**
 	 * \brief The minimum number of Bragg peaks that constitute a hit.
-	 ***********************************************************************/	
-	int         hitfinderNpeaks;
+	 ***********************************************************************/
+	int      hitfinderNpeaks;
 	/********************************************************************//**
 	 * \brief  The maximum number of Bragg peaks that constitute a hit.
-	 ***********************************************************************/	
-	int         hitfinderNpeaksMax;
+	 ***********************************************************************/
+	int      hitfinderNpeaksMax;
 	/********************************************************************//**
 	 * \brief The minimum number of connected pixels in a Bragg peak.
-	 ***********************************************************************/	
-	int         hitfinderMinPixCount;
+	 ***********************************************************************/
+	int      hitfinderMinPixCount;
 	/********************************************************************//**
-	 * \brief The maximum number of connected pixels in a Bragg peak. 
-	 ***********************************************************************/	
-	int         hitfinderMaxPixCount;
+	 * \brief The maximum number of connected pixels in a Bragg peak.
+	 ***********************************************************************/
+	int      hitfinderMaxPixCount;
 	/********************************************************************//**
 	 * \brief Toggle the useage of gradient testing during peakfinding.
-	 ***********************************************************************/	
-	int         hitfinderCheckGradient;
+	 ***********************************************************************/
+	int      hitfinderCheckGradient;
 	/********************************************************************//**
 	 * \brief Minimum acceptable gradient allowable for a Bragg peak.
-	 ***********************************************************************/	
-	float       hitfinderMinGradient;
+	 ***********************************************************************/
+	float    hitfinderMinGradient;
 	/********************************************************************//**
 	 * \brief Unknown
 	 *
-	 * TODO: figure out what this does. 
-	 ***********************************************************************/	
-	int         hitfinderCluster;
+	 * TODO: figure out what this does.
+	 ***********************************************************************/
+	int      hitfinderCluster;
 	/********************************************************************//**
-	 * \brief Toggle the useage of a peak mask. 
-	 ***********************************************************************/	
-	int         hitfinderUsePeakmask;
+	 * \brief Toggle the useage of a peak mask.
+	 ***********************************************************************/
+	int      hitfinderUsePeakmask;
 	/********************************************************************//**
 	 * \brief Path to the peak mask file.
-	 ***********************************************************************/	
-	char        peaksearchFile[MAX_FILENAME_LENGTH];
+	 ***********************************************************************/
+	char     peaksearchFile[MAX_FILENAME_LENGTH];
 	/********************************************************************//**
 	 * \brief Toggle the useage of the TOF-based hitfinder.
 	 *
 	 * TODO: Is this really needed? isn't it specified by hitfinderAlgorithm?
-	 ***********************************************************************/	
-	int         hitfinderUseTOF;
+	 ***********************************************************************/
+	int      hitfinderUseTOF;
 	/********************************************************************//**
 	 * \brief First sample in the TOF scan to consider.
-	 ***********************************************************************/	
-	int         hitfinderTOFMinSample;
+	 ***********************************************************************/
+	int      hitfinderTOFMinSample;
 	/********************************************************************//**
 	 * \brief Last sample in the TOF scan to consider.
-	 ***********************************************************************/	
-	int         hitfinderTOFMaxSample;
+	 ***********************************************************************/
+	int      hitfinderTOFMaxSample;
 	/********************************************************************//**
 	 * \brief Intensity threshold of TOF for hitfinding.
-	 ***********************************************************************/	
-	double      hitfinderTOFThresh;
+	 ***********************************************************************/
+	double   hitfinderTOFThresh;
 	/********************************************************************//**
 	 * \brief Toggle the checking of Bragg peak separations.
 	 *
 	 * Closely space Bragg peaks will be eliminated.  TODO: link to hitfinder
 	 * algorithms for more details.
-	 ***********************************************************************/	
-	int         hitfinderCheckPeakSeparation;
+	 ***********************************************************************/
+	int      hitfinderCheckPeakSeparation;
 	/********************************************************************//**
 	 * \brief The maximum allowable separation between Bragg peaks.
-	 ***********************************************************************/	
-	float       hitfinderMaxPeakSeparation;
+	 ***********************************************************************/
+	float    hitfinderMaxPeakSeparation;
 	/********************************************************************//**
 	 * \brief Toggle the subtraction of local background.
-	 ***********************************************************************/	
-	int         hitfinderSubtractLocalBG;
+	 ***********************************************************************/
+	int      hitfinderSubtractLocalBG;
 	/********************************************************************//**
 	 * \brief Inner radius of the local background annulus.
 	 *
 	 * TODO: link to an explanation of the hitfinder algorithms.
-	 ***********************************************************************/	
-	int         hitfinderLocalBGRadius;
+	 ***********************************************************************/
+	int      hitfinderLocalBGRadius;
 	/********************************************************************//**
 	 * \brief Thickness of the local background annulus.
 	 *
 	 * TODO: link to an explanation of the hitfinder algorithms.
-	 ***********************************************************************/	
-	int         hitfinderLocalBGThickness;
+	 ***********************************************************************/
+	int      hitfinderLocalBGThickness;
 	/********************************************************************//**
 	 * \brief Toggle the useage of a resolution-based annulus mask.
-	 ***********************************************************************/	
-	int         hitfinderLimitRes;
+	 ***********************************************************************/
+	int      hitfinderLimitRes;
 	/********************************************************************//**
 	 * \brief The minimum resolution to be considered in hitfinding.
 	 *
 	 * The units are angstroms.  Minimum means the *numerical* minimum.
 	 * TODO: link to the hitfinder documenation.
-	 ***********************************************************************/	
-	float       hitfinderMinRes;
+	 ***********************************************************************/
+	float    hitfinderMinRes;
 	/********************************************************************//**
 	 * \brief The maximum resolution to be considered in hitfinding.
 	 *
 	 * The units are angstroms.  Maximum means the *numerical* maximum.
 	 * TODO: link to the hitfinder documenation.
-	 ***********************************************************************/	
-	float       hitfinderMaxRes;
+	 ***********************************************************************/
+	float    hitfinderMaxRes;
 	/********************************************************************//**
 	 * \brief Binary map of pixels excluded based on resolution.
 	 *
 	 * 0 means exclude, 1 means accept.
-	 ***********************************************************************/	
-	int        *hitfinderResMask;
+	 ***********************************************************************/
+	int     *hitfinderResMask;
 	/********************************************************************//**
 	 * \brief The minimum SNR for peakfinding purposes.
 	 *
 	 * TODO: link to the hitfinder documentation.
-	 ***********************************************************************/	
-	float       hitfinderMinSNR;
-	
+	 ***********************************************************************/
+	float    hitfinderMinSNR;
+
 	/********************************************************************//**
 	 * \brief TODO: name of the time-of-flight instrument.
-	 ***********************************************************************/	
-	char        tofName[MAX_FILENAME_LENGTH];
+	 ***********************************************************************/
+	char     tofName[MAX_FILENAME_LENGTH];
 	/********************************************************************//**
 	 * \brief Indicate the presence of TOF data.
-	 ***********************************************************************/	
-	int			TOFPresent;
-	/********************************************************************//**
-	 * \brief TODO: This doesn't belong here (it's LCLS specific)
-	 ***********************************************************************/	
-	int			TOFchannel;
-	/********************************************************************//**
-	 * \brief TODO: This doesn't belong here (it's LCLS specific)
-	 ***********************************************************************/	
-	int			AcqNumChannels;
+	 ***********************************************************************/
+	int      TOFPresent;
 	/********************************************************************//**
 	 * \brief TODO: This doesn't belong here (it's LCLS specific)
 	 ***********************************************************************/
-	int			AcqNumSamples;
+	int      TOFchannel;
 	/********************************************************************//**
 	 * \brief TODO: This doesn't belong here (it's LCLS specific)
-	 ***********************************************************************/	
-	double		AcqSampleInterval;
+	 ***********************************************************************/
+	int      AcqNumChannels;
+	/********************************************************************//**
+	 * \brief TODO: This doesn't belong here (it's LCLS specific)
+	 ***********************************************************************/
+	int      AcqNumSamples;
+	/********************************************************************//**
+	 * \brief TODO: This doesn't belong here (it's LCLS specific)
+	 ***********************************************************************/
+	double   AcqSampleInterval;
 
-	
+
 	// Powder pattern generation
-	int			powderSumHits;
-	int			powderSumBlanks;
-	int			powderthresh;
-	int			saveInterval;
-	int			savePeakInfo;
-	int			savePeakList;
+	int      powderSumHits;
+	int      powderSumBlanks;
+	int      powderthresh;
+	int      saveInterval;
+	int      savePeakInfo;
+	int      savePeakList;
 
 	// Radial stacks
-    int         saveRadialStacks;
-    long        radialStackSize;
-    
+	int      saveRadialStacks;
+	long     radialStackSize;
+
     // Pv values
-    char        laserDelayPV[MAX_FILENAME_LENGTH];
-    float       laserDelay;
-    
-    
+	char     laserDelayPV[MAX_FILENAME_LENGTH];
+	float    laserDelay;
+
+
 	// Saving options
-	int			savehits;
-	int			saveRaw;
-	int			saveAssembled;
-	int			hdf5dump;
-	
+	int      savehits;
+	int      saveRaw;
+	int      saveAssembled;
+	int      hdf5dump;
+
 	// Verbosity
-	int			debugLevel;
-	
+	int      debugLevel;
+
 	// Log files
-	char		logfile[MAX_FILENAME_LENGTH];
-	char		framefile[MAX_FILENAME_LENGTH];
-	char		cleanedfile[MAX_FILENAME_LENGTH];
-	char		peaksfile[MAX_FILENAME_LENGTH];
-	
+	char     logfile[MAX_FILENAME_LENGTH];
+	char     framefile[MAX_FILENAME_LENGTH];
+	char     cleanedfile[MAX_FILENAME_LENGTH];
+	char     peaksfile[MAX_FILENAME_LENGTH];
+
 	// I/O speed test
-	int			ioSpeedTest;
-	
+	int      ioSpeedTest;
+
 	/*
 	 *	Stuff used for managing the program execution
 	 */
 	// Run information
-	unsigned	runNumber;
+	unsigned runNumber;
 
 	// Log file pointers
-	FILE		*framefp;
-	FILE		*cleanedfp;
-	FILE		*peaksfp;
-	
+	FILE    *framefp;
+	FILE    *cleanedfp;
+	FILE    *peaksfp;
+
 	// Thread management
-	int				useHelperThreads;
-	long			nThreads;
-	long			nActiveThreads;
-	long			threadCounter;
-	long			threadPurge;
-	pthread_t		*threadID;
-	pthread_mutex_t	nActiveThreads_mutex;
-	pthread_mutex_t	hotpixel_mutex;
-	pthread_mutex_t	selfdark_mutex;
-	pthread_mutex_t	bgbuffer_mutex;
-	pthread_mutex_t	nhits_mutex;
-	pthread_mutex_t	framefp_mutex;
-	pthread_mutex_t	powderfp_mutex;
-	pthread_mutex_t	peaksfp_mutex;
-	
-	
-	
-	
+	int      useHelperThreads;
+	long     nThreads;
+	long     nActiveThreads;
+	long     threadCounter;
+	long     threadPurge;
+	pthread_t  *threadID;
+	pthread_mutex_t  nActiveThreads_mutex;
+	pthread_mutex_t  hotpixel_mutex;
+	pthread_mutex_t  selfdark_mutex;
+	pthread_mutex_t  bgbuffer_mutex;
+	pthread_mutex_t  nhits_mutex;
+	pthread_mutex_t  framefp_mutex;
+	pthread_mutex_t  powderfp_mutex;
+	pthread_mutex_t  peaksfp_mutex;
+
+
+
+
 	/*
 	 *	Common variables
 	 */
-	float			avgGMD;
-	
+	float    avgGMD;
+
 	/*
 	 *	Powder patterns/sums
 	 */
-	long			nPowderClasses;
-	long			nPowderFrames[MAX_POWDER_CLASSES];
-	FILE			*powderlogfp[MAX_POWDER_CLASSES];
-    
+	long     nPowderClasses;
+	long     nPowderFrames[MAX_POWDER_CLASSES];
+	FILE    *powderlogfp[MAX_POWDER_CLASSES];
+
 	//double			*powderRaw[MAX_POWDER_CLASSES];
 	//double			*powderRawSquared[MAX_POWDER_CLASSES];
 	//double			*powderAssembled[MAX_POWDER_CLASSES];
 	//pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
 	//pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
 	//pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
-    
+
     /*
      *  Radial stacks
      */
 	//long			radialStackCounter[MAX_POWDER_CLASSES];
 	//float			*radialAverageStack[MAX_POWDER_CLASSES];
 	//pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
-	
 
 
-	long			npowderHits;
-	long			npowderBlanks;
 
-	long			nprocessedframes;
-	long			nhits;
-	long			nrecentprocessedframes;
-	long			nrecenthits;
-	
-	time_t			tstart, tend;
-	time_t			tlast, tnow;
-	clock_t			lastclock;
-	float			datarate;
-	long			lastTimingFrame;
+	long     npowderHits;
+	long     npowderBlanks;
+
+	long     nprocessedframes;
+	long     nhits;
+	long     nrecentprocessedframes;
+	long     nrecenthits;
+
+	time_t   tstart, tend;
+	time_t   tlast, tnow;
+	clock_t  lastclock;
+	float    datarate;
+	long     lastTimingFrame;
 
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
-	int			fudgeevr41;		
-	
+	int      fudgeevr41;
+
 public:
 	void defaultConfiguration(void);
 	void parseConfigFile(char *);
 	void parseCommandLineArguments(int, char**);
 	void setup(void);
-	
+
 	void writeInitialLog(void);
 	void updateLogfile(void);
 	void writeFinalLog(void);
 
-	
+
 private:
 	void parseConfigTag(char*, char*);
 
-	
+
 };
