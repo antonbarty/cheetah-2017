@@ -14,9 +14,12 @@
 
 
 
-/*
- * Global variables
- */
+/********************************************************************//**
+ * \brief Global variables.
+ *
+ * TODO: A detailed explanation of what this class is intended for.  
+ * Configuration parameters, and things that don't change often.
+************************************************************************/
 class cGlobal {
 
 public:
@@ -78,6 +81,10 @@ public:
 	 *
 	 ***********************************************************************/
 	int      generateGaincal;
+
+
+
+
 
 	/********************************************************************//**
 	 * \brief Toggle the usage of a hitfinder
@@ -226,6 +233,10 @@ public:
 	 ***********************************************************************/
 	float    hitfinderMinSNR;
 
+
+
+
+
 	/********************************************************************//**
 	 * \brief TODO: name of the time-of-flight instrument.
 	 ***********************************************************************/
@@ -252,27 +263,82 @@ public:
 	double   AcqSampleInterval;
 
 
-	// Powder pattern generation
+
+
+
+	/********************************************************************//**
+	 * \brief Toggle the creation of a virtual powder pattern from hits.
+	 ***********************************************************************/
 	int      powderSumHits;
+	/********************************************************************//**
+	 * \brief Tiggle the creation of a virtual powder pattern from non-hits.
+	 ***********************************************************************/
 	int      powderSumBlanks;
+	/********************************************************************//**
+	 * \brief The intensity threshold for powder pattern formation.
+	 *
+	 * TODO: link to the powder pattern function.
+	 ***********************************************************************/
 	int      powderthresh;
+
+
+
+
+	/********************************************************************//**
+	 * \brief Interval between saving powder patterns and radial profiles.
+	 ***********************************************************************/
 	int      saveInterval;
+	/********************************************************************//**
+	 * \brief Toggle the writing of Bragg peak information in hdf5 files.
+	 ***********************************************************************/
 	int      savePeakInfo;
+	/********************************************************************//**
+	 * \brief Toggle the writing of Bragg peak information into a text file.
+	 ***********************************************************************/
 	int      savePeakList;
 
-	// Radial stacks
+
+
+
+	/********************************************************************//**
+	 * \brief Toggle the writing of radial intensity profile data.
+	 ***********************************************************************/
 	int      saveRadialStacks;
+	/********************************************************************//**
+	 * \brief The number of radial profiles per data file.
+	 ***********************************************************************/
 	long     radialStackSize;
 
-    // Pv values
+
+
+
+	/********************************************************************//**
+	 * \brief The Epics process variable for the pump laser delay.
+	 ***********************************************************************/
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
+	/********************************************************************//**
+	 * \brief The pump laser delay.
+	 ***********************************************************************/
 	float    laserDelay;
 
 
-	// Saving options
+
+
+	/********************************************************************//**
+	 * \brief Toggle the writing of hdf5 files for frames containing hits.
+	 ***********************************************************************/
 	int      savehits;
+	/********************************************************************//**
+	 * \brief Toggle the writing of raw images in hdf5 files.
+	 ***********************************************************************/
 	int      saveRaw;
+	/********************************************************************//**
+	 * \brief Toggle the writing of assembled (i.e. interpolatee) images.
+	 ***********************************************************************/
 	int      saveAssembled;
+	/********************************************************************//**
+	 * \brief Force the writing of every nth data frame (ignore hit status).
+	 ***********************************************************************/
 	int      hdf5dump;
 
 	// Verbosity
@@ -363,9 +429,25 @@ public:
 	int      fudgeevr41;
 
 public:
+	/********************************************************************//**
+	 * \brief Set the default configuration.
+	************************************************************************/
 	void defaultConfiguration(void);
-	void parseConfigFile(char *);
+	/********************************************************************//**
+	 * \brief Parse a global configuration file, update things.
+	 *
+	 * \usage Should be called only at the beginning of an analysis job.
+	 *
+	 * \param configFilePath The full path to the configuration file.
+	************************************************************************/
+	void parseConfigFile(char * configFilePath);
+	/********************************************************************//**
+	 * \brief TODO: does this work now?
+	************************************************************************/
 	void parseCommandLineArguments(int, char**);
+	/********************************************************************//**
+	 * \brief What's this for?
+	************************************************************************/
 	void setup(void);
 
 	void writeInitialLog(void);
