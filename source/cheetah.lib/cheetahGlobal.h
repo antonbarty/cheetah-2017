@@ -337,29 +337,52 @@ public:
 	 ***********************************************************************/
 	int      saveAssembled;
 	/********************************************************************//**
-	 * \brief Force the writing of every nth data frame (ignore hit status).
+	 * \brief Force the writing of hdf5 files (ignoring hit status).
+	 *
+	 * The value of this parameter sets the automatic saving of hdf5 files.
+	 * When set to a value of n, every nth frame will be saved, regardless
+	 * of hit status.
 	 ***********************************************************************/
 	int      hdf5dump;
 
-	// Verbosity
+	/********************************************************************//**
+	 * \brief Toggle the verbosity of Cheetah.
+	 ***********************************************************************/
 	int      debugLevel;
 
-	// Log files
+	/********************************************************************//**
+	 * \brief TODO: Explain what goes here.
+	 ***********************************************************************/
 	char     logfile[MAX_FILENAME_LENGTH];
+	/********************************************************************//**
+	 * \brief TODO: Explain what goes here.
+	 ***********************************************************************/
 	char     framefile[MAX_FILENAME_LENGTH];
+	/********************************************************************//**
+	 * \brief TODO: Explain what goes here.
+	 ***********************************************************************/
 	char     cleanedfile[MAX_FILENAME_LENGTH];
+	/********************************************************************//**
+	 * \brief TODO: Explain what goes here.
+	 ***********************************************************************/
 	char     peaksfile[MAX_FILENAME_LENGTH];
 
-	// I/O speed test
+	/********************************************************************//**
+	 * \brief Check the file input/output speead, without data processing.
+	 ***********************************************************************/
 	int      ioSpeedTest;
 
 	/*
 	 *	Stuff used for managing the program execution
 	 */
-	// Run information
+	/********************************************************************//**
+	 * \brief TODO: Where is this used?
+	 ***********************************************************************/
 	unsigned runNumber;
 
-	// Log file pointers
+	/********************************************************************//**
+	 * \brief .
+	 ***********************************************************************/
 	FILE    *framefp;
 	FILE    *cleanedfp;
 	FILE    *peaksfp;
@@ -457,6 +480,5 @@ public:
 
 private:
 	void parseConfigTag(char*, char*);
-
 
 };

@@ -884,7 +884,7 @@ void cGlobal::updateLogfile(void){
 	pthread_mutex_lock(&framefp_mutex);
 	fflush(framefp);
 	fflush(cleanedfp);
-	thread_mutex_unlock(&framefp_mutex);
+	pthread_mutex_unlock(&framefp_mutex);
 
 	pthread_mutex_lock(&powderfp_mutex);
 	for(long i=0; i<nPowderClasses; i++) {
