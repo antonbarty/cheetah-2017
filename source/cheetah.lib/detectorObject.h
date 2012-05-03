@@ -1,11 +1,11 @@
 /*
-*  pixelDetector.cpp
-*  cheetah
-*
-*  Created by Anton Barty on 7/2/11.
-*  Copyright 2011 CFEL. All rights reserved.
-*
-*/
+ *  pixelDetector.cpp
+ *  cheetah
+ *
+ *  Created by Anton Barty on 7/2/11.
+ *  Copyright 2011 CFEL. All rights reserved.
+ *
+ */
 
 //#include "release/pdsdata/cspad/ConfigV1.hh"
 //#include "release/pdsdata/cspad/ConfigV2.hh"
@@ -37,15 +37,14 @@ static const unsigned int cbufsize = 1024;
 class cGlobal;
 
 
-/*
- * Detector configuration common to all events
- */
+/** @brief Detector configuration common to all events */
 class cPixelDetectorCommon {
 
 public:
 
-	// Detector info (cspad-specific)
+	/** @brief Name of the detector */
 	char     detectorName[MAX_FILENAME_LENGTH];
+	/** @brief Type of detector */
 	char     detectorTypeName[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
 	//Pds::DetInfo::Detector detectorPdsDetInfo;
@@ -55,15 +54,20 @@ public:
 	//unsigned         asicMask;
 
 
-	// Detector configuration files
+	/** @brief Detector configuration file */
 	char  detectorConfigFile[MAX_FILENAME_LENGTH];
-	char  geometryFile[MAX_FILENAME_LENGTH];  // File containing pixelmap (X,Y coordinate of each pixel in raw data stream)
-	char  darkcalFile[MAX_FILENAME_LENGTH];  // File containing dark calibration
+	/** @brief File containing pixelmap (coordinates of pixels) */
+	char  geometryFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing dark calibration */
+	char  darkcalFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing gain calibration */
 	char  gaincalFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing bad pixel mask */
 	char  badpixelFile[MAX_FILENAME_LENGTH];
+	/** @brief What is this? */
 	char  baddataFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing mask of area behind wires */
 	char  wireMaskFile[MAX_FILENAME_LENGTH];  // File containing mask of area behind wires
-
 
 
 	// Detector data block size
