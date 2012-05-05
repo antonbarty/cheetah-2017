@@ -399,7 +399,7 @@ void *worker(void *threadarg) {
 	free(eventData->good_peaks);
 	//TOF stuff.
     
-    if(eventData->pulnixFail != 0) 
+    if(eventData->pulnixFail == 0) 
         free(eventData->pulnixImage);
 
 	if(eventData->TOFPresent==1){
