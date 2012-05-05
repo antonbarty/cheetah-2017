@@ -311,7 +311,7 @@ void saveDarkcal(cGlobal *global, int detID) {
 	char	filename[1024];
 	
 	printf("Processing darkcal\n");
-	sprintf(filename,"%s-r%04u-darkcal.h5",detector->detectorName,global->runNumber);
+	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
 	for(long i=0; i<pix_nn; i++)
@@ -333,7 +333,7 @@ void saveGaincal(cGlobal *global, int detID) {
 	char	filename[1024];
 	
 	printf("Processing gaincal\n");
-	sprintf(filename,"%s-r%04u-gaincal.h5",detector->detectorName, global->runNumber);
+	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
 	// Calculate average intensity per frame
 	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
 	double *buffer = (double*) calloc(pix_nn, sizeof(double));
