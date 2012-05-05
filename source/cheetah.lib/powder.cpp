@@ -85,9 +85,12 @@ void saveRunningSums(cGlobal *global, int detID) {
 
 	//	Save powder patterns from different classes
 	printf("Writing intermediate powder patterns to file\n");
-	for(long powderType=0; powderType < global->nPowderClasses; powderType++) 
-		savePowderPattern(global, detID, powderType);
-
+	for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+		if(powderType == 0 && global->powderSumBlanks)
+			savePowderPattern(global, detID, powderType);
+		else if (powderType > 0 && global->powderSumHits)
+			savePowderPattern(global, detID, powderType);
+	}
 	
 	// Compute and save darkcal
 	if(global->generateDarkcal) {
