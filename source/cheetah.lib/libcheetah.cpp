@@ -139,8 +139,8 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
              * 8" flange where the injector is mounted.  The injector itself is
              * about 4mm further away from the detector than this. */
             global->detector[detID].detposprev = detposnew;
-            global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
             global->detector[detID].detectorEncoderValue = detposnew;
+            global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
             /* Let's round to the nearest two decimal places 
              * (10 micron, much less than a pixel size) */
             global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;

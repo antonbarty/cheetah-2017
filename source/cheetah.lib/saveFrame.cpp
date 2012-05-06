@@ -482,7 +482,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
         
         sprintf(fieldID, "/LCLS/detector%li-EncoderValue", detID);
         dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue );	
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->detector[detID].detectorZ );	
+
+        //H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue );	
         H5Dclose(dataset_id);
     }    
 
