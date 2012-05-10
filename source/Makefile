@@ -35,9 +35,8 @@ CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release -I$(HDF5DIR)/include
 
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
-#PDSLIBS		= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
-PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -lgsc16aidata -llusidata -lcspaddata -lindexdata -lanadata -lcspad2x2data -lphasicsdata -ltimepixdata -loceanopticsdata -lflidata
 
+PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -lgsc16aidata -llusidata -lcspaddata -lindexdata -lanadata -lcspad2x2data -lphasicsdata -ltimepixdata -loceanopticsdata -lflidata
 
 LD_FLAGS		= -Llcls/release/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  -Wl,-rpath=$(CHEETAHDIR):$(LCLSDIR)/build/pdsdata/lib/$(ARCH)/:$(HDF5DIR)/lib $(PDSLIBS) -lhdf5 -lpthread
 
@@ -69,19 +68,6 @@ $(MYANADIR)/myana_morefeatures:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEve
 	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana_morefeatures.cc
 
 	
-# CSPAD specific
-#$(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
-#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
-#$(CSPADDIR)/CspadTemp.o: $(CSPADDIR)/CspadTemp.cc $(CSPADDIR)/CspadTemp.hh
-#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadTemp.o $<
-#$(CSPADDIR)/CspadGeometry.o: $(CSPADDIR)/CspadGeometry.cc $(CSPADDIR)/CspadGeometry.hh
-#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadGeometry.o $<
-#$(CSPADDIR)/CspadCorrector.o: $(CSPADDIR)/CspadCorrector.cc $(CSPADDIR)/CspadCorrector.hh
-#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadCorrector.o $<
-#$(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad.o
-#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-
 
 # Cheetah library
 cheetah.lib: cheetah.o libcheetah.o worker.o setup.o data2d.o median.o hitfinders.o detectorObject.o detectorCorrection.o backgroundCorrection.o powder.o radialAverage.o saveFrame.o
@@ -126,23 +112,6 @@ saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObje
 cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-# $(MYANADIR)/SplitEventQ.o 
-#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o
-#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o $(MYANADIR)/SplitEventQ.o 
+# Cheetah
 cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o 
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-
-
-
-# Backup of what did work on 5 May 2012
-#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
-#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-
-# Other makefiles for mucking around
-# This might be the new makefile... 
-##cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/SplitEventQ.o $(MYANADIR)/main.o $(CSPADDIR)/CspadTemp.o
-#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-	
