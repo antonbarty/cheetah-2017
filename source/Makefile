@@ -125,12 +125,12 @@ cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o p
 
 # Backup of what did work on 5 May 2012
 #cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
+#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 # Other makefiles for mucking around
 # This might be the new makefile... 
 ##cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/SplitEventQ.o $(MYANADIR)/main.o $(CSPADDIR)/CspadTemp.o
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
+#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	
