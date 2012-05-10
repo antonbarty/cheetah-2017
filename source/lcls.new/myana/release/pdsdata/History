@@ -1,0 +1,80 @@
+2012-Apr-03 tomytsai Added Ocean Optics spectrometer and EpicsConfig
+2012-Jan-05 caf         Added Timepix detector.
+2011-Nov-08 caf     Tag V03-00-01   Modified some data types for portability.
+2011-Nov-02 caf     Tag V03-00-00.
+2011-Oct-03 caf         Added Gsc16ai detector.
+2011-Sep-27 caf         New xtcmodify feature: "-s <selectpayloadname>" requests one payoad name
+          to be written to output file.
+2011-Sep-26 jackp     Added Fexamp detector
+2011-Sep-07 weaver  Tag V02-13-09   XtcMonitorClient retries all message queue opens - removed race with XtcMonitorServer.
+          Added Cspad2x2.
+2011-Aug-09 weaver      Added BldDataPimV1.
+2011-July-20  weaver  Tag V02-12-00 Added XRT BLD cameras.
+2011-May-31 weaver  Tag V02-11-01 Added BldDataEbeamV2.
+2011-May-12 weaver      Added Lusi Config V2s to match Ipimb upgrade.
+2011-Apr-04 weaver      Added postmarks to mq_send calls from XtcMonitorServer to allow
+          recovery of shared memory buffers lost to non-responsive clients.
+2010-Dec-17 weaver  Tag V02-10-02 Added new acqiris/Tdc data types.
+2010-Dec-09 tomy    Modified xtc/Detinfo.hh and xtc/src/DetInfo.cc to add CXI detector IDs.
+2010-Nov-30 weaver  Tag V02-10-00.  Added evr/ConfigV5 and evr/SequencerConfigV1.
+2010-Nov-02     caf     Tag V02-08-05.
+2010-Sep-20 weaver  Tag V02-08-00.  Added Cspad ElementIterator and Config/ElementV2.
+2010-Sep-1  weaver  Tag V02-07-00.  Cspad definitions are stable now.
+2010-Aug-10 weaver  Tag V02-06-00.  Added LUSI diagnostic FEX data and config types.
+2010-Jun-24 weaver      Added Cspad preliminary definitions.
+2010-Jun-15 weaver  Tag V02-04-00.  Added value method to encoder/DataV1.  Added pulnix/TM6740ConfigV2, fccd/FccdConfigV2.
+2010-Jun-06 weaver  Tag V02-02-00.  Added some XPP DetInfo entries.  Added TM6740 to xtcreader.
+2010-May-18 weaver      Added evr/IOConfigV1 class for describing EVR IO cabling.
+2010-Apr30  weaver  Tag V02-00-00.  Changed XtcMonitorServer and XtcMonitorClient to allow multiple clients to
+          receive events in parallel or serialized (daisy-chained).
+2010-Apr14  weaver      Created app/XtcMonitorServer for use by online and offline shared memory servers.
+2010-Apr5       jbt                     Removed SxrSpectrometer from DetInfo.hh - never used, never will be.
+2010-Apr2       jbt                     Added Encoder to DetInfo Detector enum.
+2010-Mar13      cpo                     Switch from -1 to the max() function in <limits> for "largest 
+                                        integer".  Also add in Tomy's new event code sequencing
+                                        classes in evr.
+2009-Dec14      cpo                     Tag V01-08-00 for Matt's scan data.
+2009-Nov22      cpo                     Tag V01-07-00 for pnCCD objects for Andy.
+2009-Nov11  weaver      Tag V01-06-00.  Added BldEb to DetInfo.  Added bld BldDataEbeamV0,1.
+2009-Nov05      cpo                     Support for pnCCD data (Config and Frame objects).
+2009-Nov05  weaver      Added Damage bit ContainsIncomplete to indicate when an
+          IncompleteContribution may be found within.
+2009-Nov03  weaver      Add simple apps app/bldreader,dmgreader.
+2009-Oct30  cpo Tag V01-05-02.  Put in pragma pack(4) in PVControl.hh and PVMonitor.hh as suggested by Andy.
+2009-Oct28  cpo Tag V01-05-01.  Put back support for x86_64 in packages.mk.
+                                        Put in pragma pack(4) in bldData.hh.
+2009-Oct27  cpo Tag V01-05-00.  Tomy added phase cavity support.
+2009-Oct08  weaver  Tag V01-04-00.  Added EvrConfig_V2 for opcode support.
+2009-Sep21      tomytsai    Add xtc support for EBeam bld
+2009-Sep14      tomytsai    Add Epics data parsing in app/xtcreader.cc
+2009-Aug27      tomytsai    Add 1. epics xtc data reading library under pdsdata/epics 2. xtc reader sample program in pdsdata/app and change xtc typeid changes for epics and bld data
+2009-Aug24      cpo                     Add Matt's BldInfo classes and put it TypeId for the FEE GasDet.
+    weaver      Add missing transitions {Map,Unconfigure,Unmap} into xtcmonserver.
+2009-Aug15  weaver  Tag V00-05-03.  Applied Bozek's detector name changes.
+          Added master EVG fiducial count details.
+2009-Aug12  weaver  Tag V00-05-02.  Tagged for production release.
+2009-Jul22  weaver  Tag V00-05-01.  Modified RunControl configuration data.
+          Added EVR vectoring field to TimeStamp.
+2009-Jul17  jackp     Added pnCCD support and made strings match enums
+2009-Jul16      cpo                     Put CAMP stuff in DetInfo enums.
+2009-Jul-14 weaver  Tag V00-05-00.  Added run control configuration classes.  Removed
+          Pause/Resume and added Begin/EndCalibCycle transitions.
+          Changed ClockTime default ctor to not zero memory.
+2009-Jul-10     cpo                     Improvements to acqiris configuration classes.
+2009-Jun-01 weaver  Tag V00-04-00.  Tagged Amedeo's changes to xtc/Sequence.
+2009-Apr-16 weaver      Added pulnix directory and its configuration data type.
+          Added out-of-order damage type.
+2009-Apr-10     cpo                     Change Acqiris waveform() to return
+                                        int16 instead of uint16.  Add method
+                                        to get index of first valid point.
+2009-Mar-31 weaver  Tag V00-03-00.  Interface changes require version change.
+2009-Mar-31 weaver  Tag V00-02-05.  Removed TypeId(unsigned) ctor which ignored versions.  Added TwoDGaussianV1.hh.
+2009-Mar-24     cpo     Tag V00-02-04.  Add xtcreader to new app directory.
+2009-Mar-24     cpo     Tag V00-02-03.  Removed WaveformV1.hh and AcqDataDescV1.* and DataCallback.hh.
+          Added acqiris bit field locations in DataDescV1.hh.
+2009-Mar-24     cpo     Tag V00-02-01.  Improved acqiris data support.
+2009-Mar-04 weaver  Tag V00-02-00.  Added camera, evr, opal1k data formats.
+
+2009-Feb-13     cpo     Add outofsynch damage bit.
+
+2008-Nov-14     cpo     Tag V00-01-00.  First version to support offline.

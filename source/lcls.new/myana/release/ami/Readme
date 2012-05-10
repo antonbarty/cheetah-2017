@@ -1,0 +1,20 @@
+Port usage:
+
+Application			address		port
+-----------			-------		----
+ClientManager::_listen		ppinterface	port(5721+)	
+listen for TCP connections
+
+ClientManager::_connect		serverGroup	serverPort(5720)
+multicast request for connect
+
+VServerSocket			serverGroup	serverPort(5720)
+listen for connect request
+
+ServerManager			serverGroup	serverPort(5720)
+multicast "Hello"
+
+
+python environment setup:
+setenv PYTHONPATH (path to pyami.so -> ./build/ami/lib/x86_64-linux/libpyami.so)
+setenv LD_LIBRARY_PATH /reg/g/pcds/package/python-2.5.2/lib:./build/pdsdata/lib/x86_64-linux:./build/ami/lib/x86_64-linux:./build/qt/lib/x86_64-linux

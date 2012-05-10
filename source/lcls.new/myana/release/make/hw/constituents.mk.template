@@ -1,0 +1,29 @@
+# Site location with binary cores
+# bcores := /afs/slac/g/npa/package/xilinx/bcores/rs_v6
+
+# File which specifies synplify options
+# synoptions := hdl/syntemplate_options
+
+# Specify design name, constraints, sdc, bmm and elf files
+# designs := lcls
+# ucf_lcls := hdl/lcls.ucf
+# sdc_lcls := hdl/lcls.sdc
+# bmm_lcls := hdl/lcls.bmm
+# elf_lcls := $(bcores)/cem.elf
+
+# Specify list of source files
+# topsynpl_lcls := hdl/lcls.src
+
+
+# Simulation code source directory
+# scores := $(RELEASE_DIR)/rcehw/lcls
+
+# Simulation settings
+# simoptions := sim/synopsys.setup
+
+# Simulation designs
+# simulations := temac_sim
+
+# Simulation source files (top level and wrappers)
+# topwrapp_temac_sim := sim/temac_sim.src
+# wrappers_temac_sim := sim/temac_export.src sim/temac_import.src
