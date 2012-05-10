@@ -16,16 +16,18 @@ ARCH 			= x86_64-linux
 
 
 
-HDF5DIR 		?= /cfel/common
-CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
-LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.ib
+HDF5DIR 		= /reg/neh/home/barty/hdf5
+CHEETAHDIR      = /reg/neh/home/barty/c/cheetah
 
+#HDF5DIR 		?= /cfel/common
+#CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
+
+LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.ib
 LCLSDIR 		?= $(CHEETAHDIR)/lcls/release
 MYANADIR		?= lcls/myana
 CSPADDIR		?= lcls/cspad
 
 #LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
-#HDF5DIR 		= /reg/neh/home/barty/hdf5
 
 OBJFILES		= main.o XtcRun.o
 
@@ -42,7 +44,7 @@ VPATH           = cheetah.lib/
 
 
 
-all: lcls  $(TARGET)
+all:  $(TARGET)
 
 clean:
 	rm -f *.o *.gch $(TARGET)
@@ -60,16 +62,16 @@ $(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
 	
 # CSPAD specific
-$(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
-	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
-$(CSPADDIR)/CspadTemp.o: $(CSPADDIR)/CspadTemp.cc $(CSPADDIR)/CspadTemp.hh
-	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadTemp.o $<
-$(CSPADDIR)/CspadGeometry.o: $(CSPADDIR)/CspadGeometry.cc $(CSPADDIR)/CspadGeometry.hh
-	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadGeometry.o $<
-$(CSPADDIR)/CspadCorrector.o: $(CSPADDIR)/CspadCorrector.cc $(CSPADDIR)/CspadCorrector.hh
-	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadCorrector.o $<
-$(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad.o
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
+#$(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
+#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
+#$(CSPADDIR)/CspadTemp.o: $(CSPADDIR)/CspadTemp.cc $(CSPADDIR)/CspadTemp.hh
+#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadTemp.o $<
+#$(CSPADDIR)/CspadGeometry.o: $(CSPADDIR)/CspadGeometry.cc $(CSPADDIR)/CspadGeometry.hh
+#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadGeometry.o $<
+#$(CSPADDIR)/CspadCorrector.o: $(CSPADDIR)/CspadCorrector.cc $(CSPADDIR)/CspadCorrector.hh
+#	$(CPP) $(CFLAGS) -o $(CSPADDIR)/CspadCorrector.o $<
+#$(CSPADDIR)/myana_cspad: $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o $(CSPADDIR)/myana_cspad.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o $(CSPADDIR)/myana_cspad.o
+#	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
 
@@ -116,11 +118,19 @@ saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObje
 cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o 
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
+
+
+# Backup of what did work on 5 May 2012
+#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
+
+
+# Other makefiles for mucking around
 # This might be the new makefile... 
-#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/SplitEventQ.o $(MYANADIR)/main.o $(CSPADDIR)/CspadTemp.o
+##cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/SplitEventQ.o $(MYANADIR)/main.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	

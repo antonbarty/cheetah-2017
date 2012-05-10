@@ -531,7 +531,8 @@ void event() {
 					}
 
                     // Get temperature on strong back, just in case we want it for anything 
-					float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
+					//float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
+					float	temperature = std::numeric_limits<float>::quiet_NaN();;
 					eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
 			}
