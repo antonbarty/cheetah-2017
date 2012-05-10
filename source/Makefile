@@ -23,15 +23,15 @@ CHEETAHDIR      = /reg/neh/home/barty/c/cheetah
 #CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
 
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
-LCLSDIR 		?= $(CHEETAHDIR)/lcls.new/myana/release
-MYANADIR		?= lcls.new/myana
+LCLSDIR 		?= $(CHEETAHDIR)/lcls/myana/release
+MYANADIR		?= lcls/myana
 #CSPADDIR		?= lcls/cspad
 
 #OBJFILES		= main.o XtcRun.o
 
 CPP				= g++ -c -g -O3
 #CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(MYANADIR) -I$(LCLSDIR) -I$(HDF5DIR)/include
-CFLAGS			= -Icheetah.lib/ -Ilcls/release -I$(HDF5DIR)/include
+CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release -I$(HDF5DIR)/include
 
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
