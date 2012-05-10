@@ -48,9 +48,8 @@ Pds::DetInfo::Detector      detectorPdsDetInfo[MAX_DETECTORS];
 unsigned                    configVsn[MAX_DETECTORS];
 unsigned                    quadMask[MAX_DETECTORS];
 unsigned                    asicMask[MAX_DETECTORS];
-
-Pds::DetInfo::Device	tofType;
-Pds::DetInfo::Detector	tofPdsDetInfo;
+Pds::DetInfo::Device		tofType;
+Pds::DetInfo::Detector		tofPdsDetInfo;
 
 
 
