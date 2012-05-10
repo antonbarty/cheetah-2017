@@ -10,9 +10,10 @@
  */
 
 
-#include "lcls/myana/myana.hh"
 #include "lcls/myana/main.hh"
+//#include "lcls/myana/SplitEventQ.hh"
 #include "lcls/myana/XtcRun.hh"
+#include "lcls/myana/myana.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV1.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV2.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV3.hh"
