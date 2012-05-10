@@ -22,10 +22,10 @@ CHEETAHDIR      = /reg/neh/home/barty/c/cheetah
 #HDF5DIR 		?= /cfel/common
 #CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
 
-LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.ib
-LCLSDIR 		?= $(CHEETAHDIR)/lcls/release
-MYANADIR		?= lcls/myana
-CSPADDIR		?= lcls/cspad
+LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
+LCLSDIR 		?= $(CHEETAHDIR)/lcls.new/myana/release
+MYANADIR		?= lcls.new/myana
+#CSPADDIR		?= lcls/cspad
 
 #LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
 
@@ -60,6 +60,13 @@ $(MYANADIR)/main.o: $(MYANADIR)/main.cc $(MYANADIR)/myana.hh $(MYANADIR)/main.hh
 #	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
 $(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
+	
+myana:
+$(MYANADIR)/myana:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
+	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana.cc
+$(MYANADIR)/myana_morefeatures:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
+	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana_morefeatures.cc
+
 	
 # CSPAD specific
 #$(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 

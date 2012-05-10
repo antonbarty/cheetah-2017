@@ -11,7 +11,7 @@ set OBJFILES='main.o'
 g++ $CXXFLAGS -Irelease -Wall -c main.cc
 g++ $CXXFLAGS -Irelease -Wall -c myana.cc
 g++ $CXXFLAGS -Irelease -Wall -c myana_morefeatures.cc
-g++ $CXXFLAGS $OBJFILES -lpthread myana.o -Wl,-rpath=$ROOTSYS/lib:$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
-g++ $CXXFLAGS $OBJFILES -lpthread myana_morefeatures.o -Wl,-rpath=$ROOTSYS/lib:$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
+g++ $CXXFLAGS $OBJFILES -lpthread myana.o -Wl,-rpath=$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
+g++ $CXXFLAGS $OBJFILES -lpthread myana_morefeatures.o -Wl,-rpath=$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
 
 
