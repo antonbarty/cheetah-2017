@@ -42,35 +42,31 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(configFile, "cheetah.ini");
 
 	// Default experiment info (in case beamline data is missing...)
-	defaultPhotonEnergyeV = 0; 	
-	
-	// Detector info
-    nDetectors = 1;
-	for(long i=0; i<MAX_DETECTORS; i++) {
-        strcpy(detector[i].detectorConfigFile, "No_file_specified");        
-    }
-    
-    
-	// Statistics 
-	summedPhotonEnergyeV = 0;
-	meanPhotonEnergyeV = 0;	
-    
+	defaultPhotonEnergyeV = 0;
 
-    // Pv values
-    strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
-    laserDelay = std::numeric_limits<float>::quiet_NaN();
-    laserDelay = 0;
-	
+	// Detector info
+	nDetectors = 1;
+	for(long i=0; i<MAX_DETECTORS; i++) {
+		strcpy(detector[i].detectorConfigFile, "No_file_specified");
+	}
+
+	// Statistics
+	summedPhotonEnergyeV = 0;
+	meanPhotonEnergyeV = 0;
+
+	// Pv values
+	strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+	laserDelay = std::numeric_limits<float>::quiet_NaN();
+	laserDelay = 0;
+
 	// Start and stop frames
 	startAtFrame = 0;
 	stopAtFrame = 0;
-	
+
+	// Calibrations
 	generateDarkcal = 0;
 	generateGaincal = 0;
-	
 
-
-	
 	// Hitfinding
 	hitfinder = 0;
 	hitfinderADC = 100;
@@ -95,22 +91,19 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderMinRes = 1e20;
 	hitfinderMaxRes = 0;
 	hitfinderMinSNR = 40;
-	
+
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
 	hitfinderTOFMinSample = 0;
 	hitfinderTOFMaxSample = 1000;
 	hitfinderTOFThresh = 100;
-	
-	
+
 	// TOF configuration
 	TOFPresent = 0;
 	TOFchannel = 1;
 	strcpy(tofName, "CxiSc1");
 	//tofType = Pds::DetInfo::Acqiris;
 	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
-	
-
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -118,55 +111,53 @@ void cGlobal::defaultConfiguration(void) {
 	powderSumHits = 1;
 	powderSumBlanks = 0;
 
-    // Radial average stacks
-    saveRadialStacks=0;
-    radialStackSize=10000;
-	
+	// Radial average stacks
+	saveRadialStacks=0;
+	radialStackSize=10000;
+
 	// Saving options
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
 	hdf5dump = 0;
 	saveInterval = 1000;
-	
+
 	// Peak lists
 	savePeakList = 1;
-	
+
 	// Verbosity
 	debugLevel = 2;
-	
+
 	// I/O speed test?
 	ioSpeedTest = 0;
 
-    // cspad default parameters
-
-	
 	// Default to only a few threads
 	nThreads = 16;
 	useHelperThreads = 0;
 	threadPurge = 10000;
-	
+
 	// Log files
 	strcpy(logfile, "log.txt");
 	strcpy(framefile, "frames.txt");
 	strcpy(cleanedfile, "cleaned.txt");
 	strcpy(peaksfile, "peaks.txt");
-	
+
 	// Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
-	fudgeevr41 = 0; // this means no fudge by default	
-	
+	fudgeevr41 = 0; // this means no fudge by default
+
 }
 
 
 
+
 /*
- *	Setup stuff to do with thread management, settings, etc.
+ * Setup stuff to do with thread management, settings, etc.
  */
 void cGlobal::setup() {
-	
+
 	/*
 	 *	Determine detector type
-	 *	This section of code possibly redundant if we know detector type from the address 
+	 *	This section of code possibly redundant if we know detector type from the address
 	 *	(eg: CxiDs1 is always a cspad)
 	 */
     /*
@@ -183,7 +174,7 @@ void cGlobal::setup() {
 		}
 	}
      */
-	
+
 	/*
 	 *	Determine detector address
 	 *	A list of addresses can be found in:
@@ -215,75 +206,70 @@ void cGlobal::setup() {
 		}
 	}
      */
-	
+
 	/*
-	 *	Detector parameters
+	 * Detector parameters
 	 */
 	for(long i=0; i<nDetectors; i++) {
 		if(strcmp(detector[i].detectorName, "CxiDs1") == 0 ||
-           strcmp(detector[i].detectorName, "CxiDs2") == 0 ||
-           strcmp(detector[i].detectorName, "CxiDsd") == 0 ||
-           strcmp(detector[i].detectorName, "XppGon") == 0) {
-				detector[i].asic_nx = CSPAD_ASIC_NX;
-				detector[i].asic_ny = CSPAD_ASIC_NY;
-				detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-				detector[i].nasics_x = CSPAD_nASICS_X;
-				detector[i].nasics_y = CSPAD_nASICS_Y;
-        }				
-		else {
-            printf("Error: unknown detector %s\n", detector[i].detectorName);
-            printf("Quitting\n");
-            exit(1);
-            break;
+			strcmp(detector[i].detectorName, "CxiDs2") == 0 ||
+			strcmp(detector[i].detectorName, "CxiDsd") == 0 ||
+			strcmp(detector[i].detectorName, "XppGon") == 0) {
+			detector[i].asic_nx = CSPAD_ASIC_NX;
+			detector[i].asic_ny = CSPAD_ASIC_NY;
+			detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+			detector[i].nasics_x = CSPAD_nASICS_X;
+			detector[i].nasics_y = CSPAD_nASICS_Y;
+		} else {
+			printf("Error: unknown detector %s\n", detector[i].detectorName);
+			printf("Quitting\n");
+			exit(1);
+			break;
 		}
-	}	
-	
-	
-	
-	/*
-     * How many types of powder pattern do we need?
-     */
-    if(hitfinder==0)
-        nPowderClasses=1;
-    else
-        nPowderClasses=2;
+	}
 
-    if(generateDarkcal || generateGaincal)
-        nPowderClasses=1;
-    
-	
+
 	/*
-	 *	Set up arrays for hot pixels, running backround, etc.
+	 * How many types of powder pattern do we need?
+	 */
+	if(hitfinder==0)
+		nPowderClasses=1;
+	else
+		nPowderClasses=2;
+
+	if(generateDarkcal || generateGaincal)
+		nPowderClasses=1;
+
+
+	/*
+	 * Set up arrays for hot pixels, running backround, etc.
 	 */
 	for(long i=0; i<nDetectors; i++) {
-        detector[i].allocatePowderMemory(self);
- 	}
-	
+		detector[i].allocatePowderMemory(self);
+	}
+
 	hitfinderResMask = (int	*) calloc(detector[0].pix_nn, sizeof(int));
 	for(long j=0; j<detector[0].pix_nn; j++) {
 		hitfinderResMask[j] = 1;
-	}	
-	
-	
-	/*
-     *  Set up arrays for powder classes and radial stacks
-	 *	Currently only tracked for detector[0]  (generalise this later)
-     */
-	for(long i=0; i<nPowderClasses; i++) {
-		char	filename[1024];
-        
-        powderlogfp[i] = NULL;
-        if(runNumber > 0) {
-            sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
-            powderlogfp[i] = fopen(filename, "w");
-        }
 	}
-	
-	
 
-	
+
 	/*
-	 *	Set up thread management
+	 * Set up arrays for powder classes and radial stacks
+	 * Currently only tracked for detector[0]  (generalise this later)
+	 */
+	for(long i=0; i<nPowderClasses; i++) {
+		char  filename[1024];
+		powderlogfp[i] = NULL;
+		if(runNumber > 0) {
+			sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
+			powderlogfp[i] = fopen(filename, "w");
+		}
+	}
+
+
+	/*
+	 * Set up thread management
 	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
@@ -297,11 +283,12 @@ void cGlobal::setup() {
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
-	
+
 	/*
-	 *	Trap specific configurations and mutually incompatible options
+	 * Trap specific configurations and mutually incompatible options
 	 */
 	if(generateDarkcal) {
+
 		printf("keyword generatedarkcal set: overriding some keyword values!!!");
 
 		hitfinder = 0;
@@ -311,20 +298,21 @@ void cGlobal::setup() {
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
-        for(long i=0; i<nDetectors; i++) {
-            detector[i].cmModule = 0;
-            detector[i].cmSubtractUnbondedPixels = 0;
-            detector[i].useDarkcalSubtraction = 0;
-            detector[i].useGaincal=0;
-            detector[i].useAutoHotpixel = 0;
-            detector[i].useSubtractPersistentBackground = 0;
-            detector[i].startFrames = 0;
-            detector[i].saveDetectorRaw = 1;
-            detector[i].saveDetectorCorrectedOnly = 1;
-        }
+		for(long i=0; i<nDetectors; i++) {
+			detector[i].cmModule = 0;
+			detector[i].cmSubtractUnbondedPixels = 0;
+			detector[i].useDarkcalSubtraction = 0;
+			detector[i].useGaincal=0;
+			detector[i].useAutoHotpixel = 0;
+			detector[i].useSubtractPersistentBackground = 0;
+			detector[i].startFrames = 0;
+			detector[i].saveDetectorRaw = 1;
+			detector[i].saveDetectorCorrectedOnly = 1;
+		}
 	}
 
 	if(generateGaincal) {
+
 		printf("keyword generategaincal set: overriding some keyword values!!!");
 
 		hitfinder = 0;
@@ -334,28 +322,26 @@ void cGlobal::setup() {
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
-        for(long i=0; i<nDetectors; i++) {
-            detector[i].cmModule = 0;
-            detector[i].cmSubtractUnbondedPixels = 0;
-            detector[i].useDarkcalSubtraction = 1;
-            detector[i].useAutoHotpixel = 0;
-            detector[i].useSubtractPersistentBackground = 0;
-            detector[i].useGaincal=0;
-            detector[i].startFrames = 0;
-            detector[i].saveDetectorRaw = 1;
-            detector[i].saveDetectorCorrectedOnly = 1;
-        }
-    }
-	
+		for(long i=0; i<nDetectors; i++) {
+			detector[i].cmModule = 0;
+			detector[i].cmSubtractUnbondedPixels = 0;
+			detector[i].useDarkcalSubtraction = 1;
+			detector[i].useAutoHotpixel = 0;
+			detector[i].useSubtractPersistentBackground = 0;
+			detector[i].useGaincal=0;
+			detector[i].startFrames = 0;
+			detector[i].saveDetectorRaw = 1;
+			detector[i].saveDetectorCorrectedOnly = 1;
+		}
+	}
+
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}
-	
-	
-	
-	
+
+
 	/*
-	 *	Other stuff
+	 * Other stuff
 	 */
 	npowderHits = 0;
 	npowderBlanks = 0;
@@ -369,44 +355,42 @@ void cGlobal::setup() {
 	time(&tstart);
 	avgGMD = 0;
 
-    for(long i=0; i<MAX_DETECTORS; i++) {
-        detector[i].bgCounter = 0;
-        detector[i].last_bg_update = 0;
-        detector[i].hotpixCounter = 0;
-        detector[i].last_hotpix_update = 0;
-        detector[i].hotpixRecalc = detector[i].bgRecalc;
-        detector[i].nhot = 0;
-        detector[i].detectorZprevious = 0;	
-        detector[i].detectorZ = 0;
-        detector[i].detectorEncoderValue = 0;
-    }
-    
+	for(long i=0; i<MAX_DETECTORS; i++) {
+		detector[i].bgCounter = 0;
+		detector[i].last_bg_update = 0;
+		detector[i].hotpixCounter = 0;
+		detector[i].last_hotpix_update = 0;
+		detector[i].hotpixRecalc = detector[i].bgRecalc;
+		detector[i].nhot = 0;
+		detector[i].detectorZprevious = 0;
+		detector[i].detectorZ = 0;
+		detector[i].detectorEncoderValue = 0;
+	}
+
 	time(&tlast);
 	lastTimingFrame=0;
 
 	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);
-	
+
 }
 
 
-
-
 /*
- *	Parse command line arguments 
+ * Parse command line arguments
  */
 void cGlobal::parseCommandLineArguments(int argc, char **argv) {
-	
+
 	// No arguments specified = ask for help
 	if (argc == 1) {
 		printf("No configuration file spcified\n");
 		printf("\t--> using default settings\n");
 		return;
 	}
-	
+
 	// First argument is always the configuration file
 	parseConfigFile(argv[1]);
-	
+
 	// Other arguments are optional switches but take same syntax prefixed by an '-'
 	if (argc > 2) {
 		for (long i=2; i<argc; i++) {
@@ -418,91 +402,89 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
 }
 
 
-
-
 /*
  *	Read and process configuration file
  */
 void cGlobal::parseConfigFile(char* filename) {
-	char		cbuf[cbufsize];
-	char		tag[cbufsize];
-	char		value[cbufsize];
-	char		*cp;
-	FILE		*fp;
-	
-	
+	char  cbuf[cbufsize];
+	char  tag[cbufsize];
+	char  value[cbufsize];
+	char  *cp;
+	FILE  *fp;
+
+
 	/*
-	 *	Open configuration file for reading
+	 * Open configuration file for reading
 	 */
 	printf("Parsing cheetah configuration file: %s\n",filename);
 	printf("\t%s\n",filename);
-	
+
 	fp = fopen(filename,"r");
 	if (fp == NULL) {
 		printf("\tCould not open configuration file \"%s\"\n",filename);
 		printf("\tUsing default values\n");
 		return;
 	}
-	
+
 	/*
-	 *	Loop through configuration file until EOF 
-	 *	Ignore lines beginning with a '#' (comments)
-	 *	Split each line into tag and value at the '=' sign
+	 * Loop through configuration file until EOF
+	 * Ignore lines beginning with a '#' (comments)
+	 * Split each line into tag and value at the '=' sign
 	 */
 	while (feof(fp) == 0) {
-		
+
 		cp = fgets(cbuf, cbufsize, fp);
-		if (cp == NULL) 
+		if (cp == NULL)
 			break;
-		
+
 		if (cbuf[0] == '#')
 			continue;
-		
+
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
 			continue;
-		
+
 		*(cp) = '\0';
 		sscanf(cp+1,"%s",value);
 		sscanf(cbuf,"%s",tag);
-		
+
 		parseConfigTag(tag, value);
 	}
-	
+
 	fclose(fp);
-	
+
 }
 
+
 /*
- *	Process tags for both configuration file and command line options
+ * Process tags for both configuration file and command line options
  */
 void cGlobal::parseConfigTag(char *tag, char *value) {
-	
+
 	/*
-	 *	Convert to lowercase
+	 * Convert to lowercase
 	 */
-	for(int i=0; i<strlen(tag); i++) 
+	for(int i=0; i<strlen(tag); i++)
 		tag[i] = tolower(tag[i]);
-	
+
 	/*
-	 *	Parse known tags
+	 * Parse known tags
 	 */
 	if (!strcmp(tag, "ndetectors")) {
 		nDetectors = atoi(value);
 	}
-    else if (!strcmp(tag, "detector0")) {
+	else if (!strcmp(tag, "detector0")) {
 		strcpy(detector[0].detectorConfigFile, value);
 	}
-    else if (!strcmp(tag, "detector1")) {
+	else if (!strcmp(tag, "detector1")) {
 		strcpy(detector[1].detectorConfigFile, value);
 	}
-    else if (!strcmp(tag, "detector2")) {
+	else if (!strcmp(tag, "detector2")) {
 		strcpy(detector[2].detectorConfigFile, value);
 	}
-    
 	else if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
-	} 
+	}
 	else if (!strcmp(tag, "startatframe")) {
 		startAtFrame = atoi(value);
 	}
@@ -570,12 +552,10 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveinterval")) {
 		saveInterval = atoi(value);
 	}
-	
-	
-	//TOF
+	// Time-of-flight
 	else if (!strcmp(tag, "tofname")) {
 		strcpy(tofName, value);
-	}	
+	}
 	else if (!strcmp(tag, "tofchannel")) {
 		TOFchannel = atoi(value);
 	}
@@ -590,9 +570,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindertofthresh")) {
 		hitfinderTOFThresh = atof(value);
-	}	
-	
-	
+	}
 	// Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);
@@ -600,7 +578,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "radialstacksize")) {
 		radialStackSize = atoi(value);
 	}
-
 	// Power user settings
 	else if (!strcmp(tag, "debuglevel")) {
 		debugLevel = atoi(value);
@@ -655,7 +632,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
 		hitfinderSubtractLocalBG = atoi(value);
-	}	
+	}
 	else if (!strcmp(tag, "hitfinderlocalbgradius")) {
 		hitfinderLocalBGRadius = atoi(value);
 	}
@@ -677,7 +654,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
 	}
-	// Backgrounds
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		printf("The keyword selfDarkMemory has been changed.  It is\n"
              "now known as bgMemory.\n"
@@ -687,8 +663,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
-	
-	
 	// Unknown tags
 	else {
 		printf("\tUnknown tag: %s = %s\n",tag,value);
@@ -698,16 +672,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 }
 
 
-
-
-
 /*
  *	Write initial log file
  */
 void cGlobal::writeInitialLog(void){
+
 	FILE *fp;
-	
-	
+
 	// Start time
 	char	timestr[1024];
 	time_t	rawtime;
@@ -715,9 +686,8 @@ void cGlobal::writeInitialLog(void){
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(timestr,80,"%c",timeinfo);
-	
-	
-	
+
+
 	// Logfile name
 	printf("Writing log file: %s\n", logfile);
 
@@ -727,7 +697,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	
+
 	fprintf(fp, "start time: %s\n",timestr);
 
 	fprintf(fp,"\n\n");
@@ -825,15 +795,15 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
 	//fprintf(fp, "startFrames=%d\n",startFrames);
 	fprintf(fp, ">-------- End of ini params --------<\n");
-	fprintf(fp, "\n\n");	
-	
+	fprintf(fp, "\n\n");
+
 	fprintf(fp, ">-------- Start of job --------<\n");
 	fclose (fp);
-	
-	
+
+
 	// Open a new frame file at the same time
 	pthread_mutex_lock(&framefp_mutex);
-	
+
 	sprintf(framefile,"frames.txt");
 	framefp = fopen (framefile,"w");
 	if(framefp == NULL) {
@@ -842,10 +812,8 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	
 	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
 
-	
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
 	if(cleanedfp == NULL) {
@@ -853,10 +821,9 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");	
+	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");
 	pthread_mutex_unlock(&framefp_mutex);
-	
-	
+
 	pthread_mutex_lock(&peaksfp_mutex);
 	sprintf(peaksfile,"peaks.txt");
 	peaksfp = fopen (peaksfile,"w");
@@ -869,50 +836,50 @@ void cGlobal::writeInitialLog(void){
 		fprintf(peaksfp, "savePeakInfo has been turned off in the config file.\n");
 	}
 	pthread_mutex_unlock(&peaksfp_mutex);
-	
+
 }
 
 
 /*
- *	Update log file
+ * Update log file
  */
 void cGlobal::updateLogfile(void){
 	FILE *fp;
-	
+
 	// Calculate overall hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);
-	
+
 	// Calculate recent hit rate
 	float recenthitrate=0;
 	if(nrecentprocessedframes != 0)
 		recenthitrate = 100.*( nrecenthits / (float) nrecentprocessedframes);
 
-	
+
 	// Elapsed processing time
 	double	dtime;
-	int		hrs, mins, secs; 
+	int		hrs, mins, secs;
 	time(&tend);
 	dtime = difftime(tend,tstart);
 	hrs = (int) floor(dtime / 3600);
 	mins = (int) floor((dtime-3600*hrs)/60);
 	secs = (int) floor(dtime-3600*hrs-60*mins);
-	
+
 	// Average data rate
 	float	fps;
 	fps = nprocessedframes / dtime;
-	
-	
+
+
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
-	
+
 	nrecenthits = 0;
 	nrecentprocessedframes = 0;
 
-	
+
 	// Flush frame file buffer
 	pthread_mutex_lock(&framefp_mutex);
 	fflush(framefp);
@@ -924,31 +891,31 @@ void cGlobal::updateLogfile(void){
 		fflush(powderlogfp[i]);
 	}
 	pthread_mutex_unlock(&powderfp_mutex);
-	
+
 	pthread_mutex_lock(&peaksfp_mutex);
 	fflush(peaksfp);
 	pthread_mutex_unlock(&peaksfp_mutex);
-	
-	
+
+
 }
+
 
 /*
  *	Write final log file
  */
 void cGlobal::writeFinalLog(void){
 
-	
 	FILE *fp;
-	
+
 	// Logfile name
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 
-	
+
 	// Calculate hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);
-	
+
 
 	// End time
 	char	timestr[1024];
@@ -957,26 +924,25 @@ void cGlobal::writeFinalLog(void){
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(timestr,80,"%c",timeinfo);
-	
-	
+
+
 	// Elapsed processing time
 	double	dtime;
-	int		hrs, mins, secs; 
+	int		hrs, mins, secs;
 	time(&tend);
 	dtime = difftime(tend,tstart);
 	hrs = (int) floor(dtime / 3600);
 	mins = (int) floor((dtime-3600*hrs)/60);
 	secs = (int) floor(dtime-3600*hrs-60*mins);
-	
+
 
 	// Average data rate
 	float	fps, mbs;
 	fps = nprocessedframes / dtime;
 	mbs = fps*detector[0].pix_nn*nDetectors*sizeof(uint16_t);
 	mbs /= (1024.*1024.);
-				 
-				 
-	
+
+
 	// Save log file
 	fprintf(fp, ">-------- End of job --------<\n");
 	fprintf(fp, "End time: %s\n",timestr);
@@ -992,26 +958,23 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
 	fprintf(fp, "Photon energy sigma: %5.2f eV\n",photonEnergyeVSigma);
-
 	fclose (fp);
 
-	
+
 	// Close frame buffers
 	pthread_mutex_lock(&framefp_mutex);
 	fclose(framefp);
 	fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
-	
+
 	pthread_mutex_lock(&powderfp_mutex);
 	for(long i=0; i<nPowderClasses; i++) {
 		fclose(powderlogfp[i]);
 	}
 	pthread_mutex_unlock(&powderfp_mutex);
-	
+
 	pthread_mutex_lock(&peaksfp_mutex);
 	fclose(peaksfp);
 	pthread_mutex_unlock(&peaksfp_mutex);
-	
-	
-}
 
+}
