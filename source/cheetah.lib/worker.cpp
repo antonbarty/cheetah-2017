@@ -344,7 +344,6 @@ void *worker(void *threadarg) {
 	/*
 	 *	If this is a hit, write out peak info to peak list file
 	 */
-	//if(hit && global->savePeakList) {
 	if(hit && global->savePeakInfo) {
 		writePeakFile(eventData, global);
 	}

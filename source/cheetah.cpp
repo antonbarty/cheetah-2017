@@ -43,7 +43,7 @@ static long			frameNumber;
 
 
 using namespace std;
-static CspadCorrector*      corrector;
+//static CspadCorrector*      corrector;
 static Pds::CsPad::ConfigV1 configV1;
 static Pds::CsPad::ConfigV2 configV2;
 static Pds::CsPad::ConfigV3 configV3;
@@ -152,7 +152,7 @@ void beginjob() {
 	/*
 	 *	New Cspad corrector
 	 */
-	corrector = new CspadCorrector(detectorPdsDetInfo[0],0,CspadCorrector::DarkFrameOffset);
+	//corrector = new CspadCorrector(detectorPdsDetInfo[0],0,CspadCorrector::DarkFrameOffset);
 
 }
 
@@ -231,7 +231,7 @@ void beginrun()
 	printf("User analysis beginrun() routine called.\n");    
 	printf("Processing r%04u\n",getRunNumber());
 	fetchConfig();
-	corrector->loadConstants(getRunNumber());
+	//corrector->loadConstants(getRunNumber());
 	frameNumber = 0;
 
 
@@ -349,6 +349,7 @@ void event() {
 		
 		// If no beamline data, but default wavelength specified in ini file
 		// then use that
+		printf("getEBeam error: unable to calculate wavelength etc.\n");
 		if ( cheetahGlobal.defaultPhotonEnergyeV != 0 ) {
 			photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
 			wavelengthA = 12398.42/photonEnergyeV;
@@ -356,6 +357,7 @@ void event() {
 			wavelengthA = std::numeric_limits<double>::quiet_NaN();
 			photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
 		}
+		printf("wavelengthA = %g\n", wavelengthA);
 
 	} else {
 		
@@ -423,12 +425,15 @@ void event() {
     float detposnew;
     float detectorPosition[MAX_DETECTORS];
     for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
-        if ( getPvFloat(cheetahGlobal.detector[detID].detectorZpvname, detposnew) == 0 ) {
+		fail = getPvFloat(cheetahGlobal.detector[detID].detectorZpvname, detposnew);
+        if (  fail == 0 ) {
             detectorPosition[detID] = detposnew;
         }
         else {
+			printf("DetectorPosition[%i]: getPvFloat failed (%i)\n", detID, fail);
             detectorPosition[detID] = std::numeric_limits<float>::quiet_NaN();
         }
+		printf("DetectorPosition[%i] = %g\n", detID, detectorPosition[detID]);
     }    
     
     
@@ -530,27 +535,27 @@ void event() {
 					eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
 			}
-		}
         
         
-        /*
-         *	Assemble data from all four quadrants into one large array (rawdata layout)
-         */
-		//Memcpy is necessary for thread safety.
-        eventData->detector[detID].raw_data = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
-        for(int quadrant=0; quadrant<4; quadrant++) {
-            long	i,j,ii;
-            for(long k=0; k<2*cheetahGlobal.detector[detID].asic_nx*8*cheetahGlobal.detector[detID].asic_ny; k++) {
-                i = k % (2*cheetahGlobal.detector[detID].asic_nx) + quadrant*(2*cheetahGlobal.detector[detID].asic_nx);
-                j = k / (2*cheetahGlobal.detector[detID].asic_nx);
-                ii  = i+(cheetahGlobal.detector[detID].nasics_x*cheetahGlobal.detector[detID].asic_nx)*j;
-                
-                eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
-            }
-        }
+			/*
+			 *	Assemble data from all four quadrants into one large array (rawdata layout)
+			 */
+			//Memcpy is necessary for thread safety.
+			eventData->detector[detID].raw_data = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
+			for(int quadrant=0; quadrant<4; quadrant++) {
+				long	i,j,ii;
+				for(long k=0; k<2*cheetahGlobal.detector[detID].asic_nx*8*cheetahGlobal.detector[detID].asic_ny; k++) {
+					i = k % (2*cheetahGlobal.detector[detID].asic_nx) + quadrant*(2*cheetahGlobal.detector[detID].asic_nx);
+					j = k / (2*cheetahGlobal.detector[detID].asic_nx);
+					ii  = i+(cheetahGlobal.detector[detID].nasics_x*cheetahGlobal.detector[detID].asic_nx)*j;
+					
+					eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
+				}
+			}
 
-        for(int quadrant=0; quadrant<4; quadrant++) 
-            free(quad_data[quadrant]);
+			for(int quadrant=0; quadrant<4; quadrant++) 
+				free(eventData->detector[detID].quad_data[quadrant]);
+		}
     }	
 	
     

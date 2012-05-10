@@ -56,6 +56,9 @@ $(MYANADIR)/main.o: $(MYANADIR)/main.cc $(MYANADIR)/myana.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/main.o $<
 $(MYANADIR)/XtcRun.o: $(MYANADIR)/XtcRun.cc $(MYANADIR)/XtcRun.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
+$(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh
+	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
+	
 # CSPAD specific
 $(CSPADDIR)/myana_cspad.o: $(CSPADDIR)/myana_cspad.cc 
 	$(CPP) $(CFLAGS) -o $(CSPADDIR)/myana_cspad.o $<
@@ -114,6 +117,10 @@ cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o $(MYANADIR)/XtcRun.o $(MYANADIR)/main.o $(CSPADDIR)/CspadCorrector.o $(CSPADDIR)/CspadGeometry.o $(CSPADDIR)/CspadTemp.o
+	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
+
+# This might be the new makefile... 
+#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/SplitEventQ.o $(MYANADIR)/main.o $(CSPADDIR)/CspadTemp.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 	

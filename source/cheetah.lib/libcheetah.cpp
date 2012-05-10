@@ -153,12 +153,12 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
              * need to know about this, so OK to skip in that case.  For now, the
              * solution is for the user to set a (non-zero) default camera length.
              */
+			printf("global->detector[%i].detectorZ == 0\n", detID);
             if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
                 printf("WARNING: Camera length %s is zero!\n", global->detector[detID].detectorZpvname);
-                printf("I'm skipping this frame.  If the problem persists, try\n");
-                printf("setting the keyword defaultCameraLengthMm in your ini\n"); 
-                printf("file.\n");
+                printf("If the problem persists, try setting the keyword\n");
+                printf("defaultCameraLengthMm in your ini file\n"); 
                 printf("======================================================\n");
                 return;
             } 
