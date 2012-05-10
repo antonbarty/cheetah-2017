@@ -11,17 +11,11 @@
 
 
 #include "lcls/myana/main.hh"
-//#include "lcls/myana/SplitEventQ.hh"
-//#include "lcls/myana/XtcRun.hh"
-#include "lcls/myana/myana.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV1.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV2.hh"
 #include "lcls/release/pdsdata/cspad/ConfigV3.hh"
 #include "lcls/release/pdsdata/cspad/ElementHeader.hh"
 #include "lcls/release/pdsdata/cspad/ElementIterator.hh"
-//#include "lcls/cspad/CspadTemp.hh"
-//#include "lcls/cspad/CspadCorrector.hh"
-//#include "lcls/cspad/CspadGeometry.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -44,7 +38,6 @@ static long			frameNumber;
 
 
 using namespace std;
-//static CspadCorrector*      corrector;
 static Pds::CsPad::ConfigV1 configV1;
 static Pds::CsPad::ConfigV2 configV2;
 static Pds::CsPad::ConfigV3 configV3;
@@ -232,7 +225,6 @@ void beginrun()
 	printf("User analysis beginrun() routine called.\n");    
 	printf("Processing r%04u\n",getRunNumber());
 	fetchConfig();
-	//corrector->loadConstants(getRunNumber());
 	frameNumber = 0;
 
 
@@ -532,7 +524,6 @@ void event() {
 					}
 
                     // Get temperature on strong back, just in case we want it for anything 
-					//float	temperature = CspadTemp::instance().getTemp(element->sb_temp((element->quad()%2==0)?3:0));
 					float	temperature = std::numeric_limits<float>::quiet_NaN();;
 					eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
