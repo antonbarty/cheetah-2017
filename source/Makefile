@@ -27,17 +27,18 @@ LCLSDIR 		?= $(CHEETAHDIR)/lcls.new/myana/release
 MYANADIR		?= lcls.new/myana
 #CSPADDIR		?= lcls/cspad
 
-#LCLSDIR 		= /reg/neh/home/barty/c/cspad-cryst/release
-
-OBJFILES		= main.o XtcRun.o
+#OBJFILES		= main.o XtcRun.o
 
 CPP				= g++ -c -g -O3
-#CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(CHEETAHDIR)/lcls/release -I$(HDF5DIR)/include
+#CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(MYANADIR) -I$(LCLSDIR) -I$(HDF5DIR)/include
 CFLAGS			= -Icheetah.lib/ -Ilcls/release -I$(HDF5DIR)/include
 
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
-PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
+#PDSLIBS		= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -llusidata -lcspaddata
+PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -lgsc16aidata -llusidata -lcspaddata -lindexdata -lanadata -lcspad2x2data -lphasicsdata -ltimepixdata -loceanopticsdata -lflidata
+
+
 LD_FLAGS		= -Llcls/release/build/pdsdata/lib/$(ARCH)/ -L$(HDF5DIR)/lib  -Wl,-rpath=$(CHEETAHDIR):$(LCLSDIR)/build/pdsdata/lib/$(ARCH)/:$(HDF5DIR)/lib $(PDSLIBS) -lhdf5 -lpthread
 
 VPATH           = cheetah.lib/
@@ -126,8 +127,9 @@ cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 # $(MYANADIR)/SplitEventQ.o 
-cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o
+#cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o $(MYANADIR)/XtcRun.o
 #cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o $(MYANADIR)/SplitEventQ.o 
+cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o 
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 
