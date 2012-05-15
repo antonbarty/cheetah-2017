@@ -196,17 +196,17 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	sh = H5Screate_simple(2, size, NULL);
 	//H5Sget_simple_extent_dims(sh, size, max_size);
 	
-	dh = H5Dcreate(gh, "dataRaw", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRaw);
 	H5Dclose(dh);
 	
 	//H5Sget_simple_extent_dims(sh, size, size);
-	dh = H5Dcreate(gh, "dataSquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "rawdatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRawSquared);
 	H5Dclose(dh);
 	
 	//H5Sget_simple_extent_dims(sh, size, size);
-	dh = H5Dcreate(gh, "dataSigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "rawdatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferSigma);
 	H5Dclose(dh);
 	H5Sclose(sh);
@@ -218,13 +218,13 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	sh = H5Screate_simple(2, size, NULL);
 	
 	//H5Sget_simple_extent_dims(sh, size, max_size);
-	dh = H5Dcreate(gh, "dataAssembled", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
 	H5Dclose(dh);
 	H5Sclose(sh);
 
-	H5Lcreate_soft( "/data/dataAssembled", fh, "/data/data",0,0);
+	H5Lcreate_soft( "/data/assembleddata", fh, "/data/data",0,0);
 
 
 	// Save radial averages
