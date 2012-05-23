@@ -19,10 +19,17 @@
 #include <queue>
 #include <map>
 #include <algorithm>
+#include <memory>
 #include <list>
 #include <iterator>
 #include <poll.h>
 #include <signal.h>
+#include <time.h>
+#include <cstdlib>
+#include <cstring>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "pdsdata/xtc/TypeId.hh"
 #include "pdsdata/xtc/Src.hh"
@@ -2956,7 +2963,7 @@ int convertEventRangeToNo(XtcRun& run, const TEventRangeList& lEventRange, TEven
       bool  bOvertime   = false;
       int   iCalib1     = -1;
       int   iEvent1     = -1;
-      int iError = run.findTime(itEventRange->strEvent1.c_str(), iCalib1, iEvent1, bExactMatch, bOvertime);      
+      int iError = run.findTime((char *)itEventRange->strEvent1.c_str(), iCalib1, iEvent1, bExactMatch, bOvertime);      
       if (iError != 0)
       {
         if (bOvertime)
@@ -2977,7 +2984,7 @@ int convertEventRangeToNo(XtcRun& run, const TEventRangeList& lEventRange, TEven
             
       int iCalib2 = -1;
       int iEvent2 = -1;
-      iError = run.findTime(itEventRange->strEvent2.c_str(), iCalib2, iEvent2, bExactMatch, bOvertime);      
+      iError = run.findTime((char *) itEventRange->strEvent2.c_str(), iCalib2, iEvent2, bExactMatch, bOvertime);      
       if (iError != 0)
       {
         if (bOvertime)
