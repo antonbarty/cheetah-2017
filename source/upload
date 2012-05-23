@@ -6,6 +6,10 @@ switch ($1)
     case cfelsgi:
     rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cheetah/
     breaksw
+
+    case cfelsgi-test:
+    rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cheetah-test/
+    breaksw
     
     case psexport:
     rsync -av --exclude 'build' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah/

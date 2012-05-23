@@ -15,12 +15,14 @@ TARGET 			= cheetah
 ARCH 			= x86_64-linux
 
 
+# LCLS
+#HDF5DIR 		= /reg/neh/home/barty/hdf5
+#CHEETAHDIR      = /reg/neh/home/barty/c/cheetah
 
-HDF5DIR 		= /reg/neh/home/barty/hdf5
-CHEETAHDIR      = /reg/neh/home/barty/c/cheetah
+# cfelsgi
+HDF5DIR 		?= /cfel/common
+CHEETAHDIR      ?= /cfel/user/barty/c/cheetah-test
 
-#HDF5DIR 		?= /cfel/common
-#CHEETAHDIR      ?= /cfel/user/barty/c/cheetah
 
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
 LCLSDIR 		?= $(CHEETAHDIR)/lcls/myana/release
