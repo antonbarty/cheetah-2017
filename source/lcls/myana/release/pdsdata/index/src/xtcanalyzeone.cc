@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string>
+#include <string.h>
+#include <sys/stat.h>
 
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"

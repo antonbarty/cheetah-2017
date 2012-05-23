@@ -1,4 +1,5 @@
 #include "pdsdata/ana/XtcRun.hh"
+#include <stdlib.h>
 
 namespace Pds
 {  
@@ -375,7 +376,7 @@ int XtcRun::jump(int calib, int jump, int& eventNum)
   return 6;
 }
 
-int XtcRun::findTime(const char* sTime, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime)
+int XtcRun::findTime( char* sTime, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime)
 {  
   uint32_t uSeconds = 0, uNanoseconds = 0;
   int iError = Index::convertTimeStringToSeconds( sTime, uSeconds, uNanoseconds );

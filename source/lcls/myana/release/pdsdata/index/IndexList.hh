@@ -3,6 +3,11 @@
 
 #include <vector>
 #include <map>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "pdsdata/xtc/Xtc.hh"
 #include "pdsdata/xtc/ProcInfo.hh"
