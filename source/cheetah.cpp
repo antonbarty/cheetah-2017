@@ -260,6 +260,7 @@ void event() {
     /*
      *  Raw I/O speed test
      *  How fast is event() being called by myana?
+     *  This is the fastest we can ever hope to run.
      */
     if(cheetahGlobal.ioSpeedTest==1) {
         time_t	tnow;
@@ -526,16 +527,25 @@ void event() {
 			return;
 		}
 		else {
+            nevents++;
+
+            long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+            long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
+            long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
+            uint16_t    *quad_data[4];
+
+            
             // Allocate memory for detector data and set to zero
             for(int quadrant=0; quadrant<4; quadrant++) {
-                eventData->detector[detID].quad_data[quadrant] = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
-                memset(eventData->detector[detID].quad_data[quadrant], 0, cheetahGlobal.detector[detID].pix_nn*sizeof(uint16_t));
+                quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+                memset(quad_data[quadrant], 0, pix_nn*sizeof(uint16_t));
             }
-			
-            nevents++;
-			const Pds::CsPad::ElementHeader* element;
+            
 
 			// loop over elements (quadrants)
+			const Pds::CsPad::ElementHeader* element;
 			while(( element=iter.next() )) {  
 				if(element->quad() < 4) {
 					// Which quadrant is this?
@@ -545,7 +555,7 @@ void event() {
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 					while(( s=iter.next(section_id) )) {  
-						memcpy(&eventData->detector[detID].quad_data[quadrant][section_id*2*cheetahGlobal.detector[detID].asic_nx*cheetahGlobal.detector[detID].asic_ny],s->pixel[0],2*cheetahGlobal.detector[detID].asic_nx*cheetahGlobal.detector[detID].asic_ny*sizeof(uint16_t));
+						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
 					}
 
                     // Get temperature on strong back, just in case we want it for anything 
@@ -557,22 +567,23 @@ void event() {
         
 			/*
 			 *	Assemble data from all four quadrants into one large array (rawdata layout)
+             *      Memcpy is necessary for thread safety.
 			 */
-			//Memcpy is necessary for thread safety.
-			eventData->detector[detID].raw_data = (uint16_t*) calloc(cheetahGlobal.detector[detID].pix_nn, sizeof(uint16_t));
+			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				long	i,j,ii;
-				for(long k=0; k<2*cheetahGlobal.detector[detID].asic_nx*8*cheetahGlobal.detector[detID].asic_ny; k++) {
-					i = k % (2*cheetahGlobal.detector[detID].asic_nx) + quadrant*(2*cheetahGlobal.detector[detID].asic_nx);
-					j = k / (2*cheetahGlobal.detector[detID].asic_nx);
-					ii  = i+(cheetahGlobal.detector[detID].nasics_x*cheetahGlobal.detector[detID].asic_nx)*j;
+				for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
+					i = k % (2*asic_nx) + quadrant*(2*asic_nx);
+					j = k / (2*asic_nx);
+					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
 					
 					eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
 				}
 			}
 
+            // quadrant data no longer needed
 			for(int quadrant=0; quadrant<4; quadrant++) 
-				free(eventData->detector[detID].quad_data[quadrant]);
+				free(quad_data[quadrant]);
 		}
     }	
 	
