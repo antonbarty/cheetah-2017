@@ -559,8 +559,8 @@ void event() {
 					}
 
                     // Get temperature on strong back, just in case we want it for anything 
-					float	temperature = std::numeric_limits<float>::quiet_NaN();;
-					eventData->detector[detID].quad_temperature[quadrant] = temperature;
+					//float	temperature = std::numeric_limits<float>::quiet_NaN();;
+					//eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
 			}
         
@@ -577,7 +577,7 @@ void event() {
 					j = k / (2*asic_nx);
 					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
 					
-					eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
+					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
 				}
 			}
 

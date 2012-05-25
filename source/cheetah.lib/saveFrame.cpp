@@ -494,12 +494,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	
 	// cspad temperature
-	size[0] = 4;
-	dataspace_id = H5Screate_simple(1, size, NULL);
-	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->detector[0].quad_temperature[0]);
-	H5Dclose(dataset_id);
-	H5Sclose(dataspace_id);
+	//size[0] = 4;
+	//dataspace_id = H5Screate_simple(1, size, NULL);
+	//dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
+	//H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->detector[0].quad_temperature[0]);
+	//H5Dclose(dataset_id);
+	//H5Sclose(dataspace_id);
 	
 	
 	
