@@ -163,7 +163,7 @@ void fetchConfig()
 			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID],asicMask[detID],configV1.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV1.quads()[0].intTime(), configV1.quads()[1].intTime(), configV1.quads()[2].intTime(), configV1.quads()[3].intTime());
 		}
-		else if (getCspadConfig( detectorPdsDetInfo[detID], configV3 )==0) {
+		else if (getCspadConfig( detectorPdsDetInfo[detID], configV2 )==0) {
 			configVsn[detID] = 2;
 			quadMask[detID] = configV2.quadMask();
 			asicMask[detID] = configV2.asicMask();
