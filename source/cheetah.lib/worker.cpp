@@ -14,9 +14,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
-#include "detectorObject.h"
-#include "cheetahGlobal.h"
-#include "cheetahEvent.h"
+#include "cheetah.h"
 #include "cheetahmodules.h"
 #include "median.h"
 
@@ -373,43 +371,15 @@ void *worker(void *threadarg) {
 	global->nActiveThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	
-	// Free memory
-	DETECTOR_LOOP {
-		//for(int quadrant=0; quadrant<4; quadrant++) 
-		//	free(eventData->detector[detID].quad_data[quadrant]);	
-		free(eventData->detector[detID].raw_data);
-		free(eventData->detector[detID].corrected_data);
-		free(eventData->detector[detID].detector_corrected_data);
-		free(eventData->detector[detID].corrected_data_int16);
-		free(eventData->detector[detID].image);
-		free(eventData->detector[detID].radialAverage);
-		free(eventData->detector[detID].radialAverageCounter);
-		free(eventData->detector[detID].saturatedPixelMask);
-	}
-	free(eventData->peak_com_index);
-	free(eventData->peak_com_x);
-	free(eventData->peak_com_y);
-	free(eventData->peak_com_x_assembled);
-	free(eventData->peak_com_y_assembled);
-	free(eventData->peak_com_r_assembled);
-	free(eventData->peak_intensity);
-	free(eventData->peak_npix);
-	free(eventData->peak_snr);
-	free(eventData->good_peaks);
-	//TOF stuff.
     
-    if(eventData->pulnixFail == 0) 
-        free(eventData->pulnixImage);
-
-	if(eventData->TOFPresent==1){
-		free(eventData->TOFTime);
-		free(eventData->TOFVoltage); 
-	}
-    
-	free(eventData);
-
-	// Exit thread
-	pthread_exit(NULL);
+	// Free memory only if running multi-threaded
+    if(eventData->useThreads == 1) {
+        cheetahDestroyEvent(eventData);
+        pthread_exit(NULL);
+    }
+    else {
+        return(NULL);
+    }
 }
 
 

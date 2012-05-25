@@ -260,7 +260,7 @@ void event() {
      *  Calculate time beteeen processing of data frames
      */
     time_t	tnow;
-    double	dtime, datarate;    
+    double	dtime, datarate;
     time(&tnow);
     
     dtime = difftime(tnow, cheetahGlobal.tlast);
@@ -283,6 +283,19 @@ void event() {
 	}
 
     
+    /*
+	 *	Skip frames if we only want a part of the data set
+	 */
+	if(cheetahGlobal.startAtFrame != 0 && frameNumber < cheetahGlobal.startAtFrame) {
+		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate, cheetahGlobal.startAtFrame);		
+		return;
+	}
+	if(cheetahGlobal.stopAtFrame != 0 && frameNumber > cheetahGlobal.stopAtFrame) {
+		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate, cheetahGlobal.stopAtFrame);		
+		return;
+	}
+    
+
 
 	
 	/*
@@ -642,12 +655,15 @@ void event() {
 
     
     
-    
-    
     /*
 	 *	Call Cheetah to process this event
 	 */
-    cheetahProcessEvent(&cheetahGlobal, eventData);
+    // Multiple processing threads
+    cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
+
+    // Single processing thread    
+    //cheetahProcessEvent(&cheetahGlobal, eventData);
+    //cheetahDestroyEvent(eventData);
 	
 }
 // End of event data processing block

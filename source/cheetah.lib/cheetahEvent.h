@@ -96,6 +96,7 @@ public:
 	
 	// Thread management
 	int		threadID;
+    int     useThreads;
 	
 } ;
 

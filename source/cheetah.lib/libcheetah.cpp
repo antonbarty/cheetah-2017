@@ -71,8 +71,14 @@ void cheetahNewRun(cGlobal *global) {
  */
 cEventData* cheetahNewEvent(void) {
     
+    // Create memory
     cEventData	*eventData;
     eventData = (cEventData*) malloc(sizeof(cEventData));
+    
+    // Initialise any common default values
+    eventData->useThreads = 0;
+    
+    // Return
     return eventData;
 }
 
@@ -82,6 +88,42 @@ cEventData* cheetahNewEvent(void) {
  */
 void cheetahDestroyEvent(cEventData *eventData) {
     
+    cGlobal	*global = eventData->pGlobal;;
+    
+    // Free memory
+	DETECTOR_LOOP {
+		//for(int quadrant=0; quadrant<4; quadrant++) 
+		//	free(eventData->detector[detID].quad_data[quadrant]);	
+		free(eventData->detector[detID].raw_data);
+		free(eventData->detector[detID].corrected_data);
+		free(eventData->detector[detID].detector_corrected_data);
+		free(eventData->detector[detID].corrected_data_int16);
+		free(eventData->detector[detID].image);
+		free(eventData->detector[detID].radialAverage);
+		free(eventData->detector[detID].radialAverageCounter);
+		free(eventData->detector[detID].saturatedPixelMask);
+	}
+	free(eventData->peak_com_index);
+	free(eventData->peak_com_x);
+	free(eventData->peak_com_y);
+	free(eventData->peak_com_x_assembled);
+	free(eventData->peak_com_y_assembled);
+	free(eventData->peak_com_r_assembled);
+	free(eventData->peak_intensity);
+	free(eventData->peak_npix);
+	free(eventData->peak_snr);
+	free(eventData->good_peaks);
+	//TOF stuff.
+    
+    if(eventData->pulnixFail == 0) 
+        free(eventData->pulnixImage);
+    
+	if(eventData->TOFPresent==1){
+		free(eventData->TOFTime);
+		free(eventData->TOFVoltage); 
+	}
+    
+	free(eventData);
 }
 
 
@@ -132,7 +174,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
              * need to know about this, so OK to skip in that case.  For now, the
              * solution is for the user to set a (non-zero) default camera length.
              */
-			printf("global->detector[%i].detectorZ == 0\n", detID);
+			printf("global->detector[%ld].detectorZ == 0\n", detID);
             if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
                 printf("WARNING: Camera length %s is zero!\n", global->detector[detID].detectorZpvname);
@@ -199,6 +241,16 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 }
 
 
+/*
+ *  libCheetah event processing function (multithreaded)
+ *  This function simply sets the thread flag for activating multi-threading
+ */
+void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
+
+    eventData->useThreads = 1;
+    cheetahProcessEvent(global, eventData);
+
+}
 
 /*
  *  libCheetah event processing function (multithreaded)
@@ -216,6 +268,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     /*
      *  I/O speed test
      *  How fast is processEvent called?
+     *  This measures how fast Cheetah could conceivably process the data
      */
 	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
@@ -223,56 +276,52 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		return;
 	}
 	
-
-	/*
-	 *	Skip frames if we only want a part of the data set
-	 */
-	if(global->startAtFrame != 0 && eventData->frameNumber < global->startAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping to start frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->startAtFrame);		
-		return;
-	}
-	if(global->stopAtFrame != 0 && eventData->frameNumber > global->stopAtFrame) {
-		printf("r%04u:%li (%3.1fHz): Skipping from end frame %li\n", global->runNumber, eventData->frameNumber, global->datarate, global->stopAtFrame);		
-		return;
-	}
-
     
-  
-	
+    /*
+     *  Spawn worker in single-threaded mode
+	 *	Note: worker does not clean up its own eventData structure when done: 
+     *      eventData remains available after the worker exits and must be explicitly freed by the user
+     */
+    if(eventData->useThreads == 0) {
+        worker((void *)eventData);
+    }
+    
+  	
 	/*
-	 *	Spawn worker thread to process this frame
+	 *	Spawn worker in multithreaded mode 
 	 *	Threads are created detached so we don't have to wait for anything to happen before returning
 	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
-	pthread_t		thread;
-	pthread_attr_t	threadAttribute;
-	int				returnStatus;
-    
+    if(eventData->useThreads == 1) {
+        pthread_t		thread;
+        pthread_attr_t	threadAttribute;
+        int				returnStatus;
+        
+        // Wait until we have a spare thread in the thread pool
+        while(global->nActiveThreads >= global->nThreads) {
+            usleep(1000);
+        }
+        
+        // Set detached state
+        pthread_attr_init(&threadAttribute);
+        pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+        
+        // Increment threadpool counter
+        pthread_mutex_lock(&global->nActiveThreads_mutex);
+        global->nActiveThreads += 1;
+        eventData->threadNum = ++global->threadCounter;
+        pthread_mutex_unlock(&global->nActiveThreads_mutex);
+        
+        // Create a new worker thread for this data frame
+        returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
+        pthread_attr_destroy(&threadAttribute);
+    }
 	
-	
-	// Wait until we have a spare thread in the thread pool
-	while(global->nActiveThreads >= global->nThreads) {
-		usleep(1000);
-	}
-    
-    
-	// Increment threadpool counter
-	pthread_mutex_lock(&global->nActiveThreads_mutex);
-	global->nActiveThreads += 1;
-	eventData->threadNum = ++global->threadCounter;
-	pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	
-	// Set detached state
-	pthread_attr_init(&threadAttribute);
-	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-	
-	// Create a new worker thread for this data frame
-	returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
-	pthread_attr_destroy(&threadAttribute);
-	global->nprocessedframes += 1;
+    /*
+     *  Update counters
+     */
+    global->nprocessedframes += 1;
 	global->nrecentprocessedframes += 1;
-	
-    
     
 	
 	/*
