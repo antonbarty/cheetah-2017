@@ -238,7 +238,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
      *  I/O speed test
      *  How fast is processEvent called?
      */
-	if(global->ioSpeedTest==1) {
+	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
 		for(long i=0; i<global->nDetectors; i++) {
 			for(int quadrant=0; quadrant<4; quadrant++) {

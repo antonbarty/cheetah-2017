@@ -255,6 +255,32 @@ void event() {
 	// Variables
 	frameNumber++;
 	int fail = 0;
+    
+    
+    /*
+     *  Raw I/O speed test
+     *  How fast is event() being called by myana?
+     */
+    if(cheetahGlobal.ioSpeedTest==1) {
+        time_t	tnow;
+        double	dtime, datarate;    
+        time(&tnow);
+
+        dtime = difftime(tnow, cheetahGlobal.tlast);
+	
+        if(dtime > 0) {
+            datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/dtime;
+            cheetahGlobal.lastTimingFrame = frameNumber;
+            time(&cheetahGlobal.tlast);
+            
+            cheetahGlobal.datarate = datarate;
+        }
+
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+		return;
+	}
+
+    
 
 	
 	/*
