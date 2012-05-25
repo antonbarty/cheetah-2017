@@ -89,28 +89,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
  *  libCheetah function to update global variables where needed from new event data
  */
 void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
-    
-    /*
-	 *	How quickly are we processing the data? (average over last 10 events)
-	 */	
-	time_t	tnow;
-	double	dt, datarate1;
-	double	dtime, datarate2;
-    
-	time(&tnow);
-	dtime = difftime(tnow, global->tlast);
-	dt = clock() - global->lastclock;
-	
-	if(dtime > 0) {
-		datarate1 = ((float)CLOCKS_PER_SEC)/dt;
-		datarate2 = (eventData->frameNumber - global->lastTimingFrame)/dtime;
-		global->lastclock = clock();
-		global->lastTimingFrame = eventData->frameNumber;
-		time(&global->tlast);
-        
-		global->datarate = datarate2;
-	}
-    
+      
     
     /*
      *  Fix up detector Z position, which can be flakey
