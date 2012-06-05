@@ -4,11 +4,16 @@
 #
 #	Note: before this makefile will work it is necessary to compile 
 #	the LCLS libraries.  This is done as follows:
+#	> cd lcls/myana
 #	> cd release/pdsdata
 #	> make x86_64-linux
-#	(this creates the LCLS libraries necessary for compile to complete.
-#	if not done, you'll get an error such as 'can not find libacqdata.so'.
-#	Change the target CPU/OS combination if working on a different system, eg: OS-X)
+#	
+#	This creates the LCLS libraries necessary for compile to complete.
+#	If there are complation errors, fix them before proceeding further.
+#	If not done, you'll get an error such as 'can not find libacqdata.so'.
+#	
+#	It may also be necessary to change the paths to HDF5 and LCLSDIR depending on 
+#	where things are on the target system. 
 #
 ###############################################
 TARGET 			= cheetah
