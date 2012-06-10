@@ -532,19 +532,19 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 * Parse known tags
 	 */
-	if (!strcmp(tag, "ndetectors")) {
-		nDetectors = atoi(value);
-	}
-	else if (!strcmp(tag, "detector0")) {
-		strcpy(detector[0].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "detector1")) {
-		strcpy(detector[1].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "detector2")) {
-		strcpy(detector[2].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "defaultphotonenergyev")) {
+//	if (!strcmp(tag, "ndetectors")) {
+//		nDetectors = atoi(value);
+//	}
+//	else if (!strcmp(tag, "detector0")) {
+//		strcpy(detector[0].detectorConfigFile, value);
+//	}
+//	else if (!strcmp(tag, "detector1")) {
+//		strcpy(detector[1].detectorConfigFile, value);
+//	}
+//	else if (!strcmp(tag, "detector2")) {
+//		strcpy(detector[2].detectorConfigFile, value);
+//	}
+	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
 	}
 	else if (!strcmp(tag, "startatframe")) {

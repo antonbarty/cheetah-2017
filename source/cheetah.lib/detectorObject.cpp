@@ -169,55 +169,55 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 /*
  *	Read and process configuration file
  */
-void cPixelDetectorCommon::parseConfigFile(char* filename) {
-	char		cbuf[cbufsize];
-	char		tag[cbufsize];
-	char		value[cbufsize];
-	char		*cp;
-	FILE		*fp;
-	
-	
-	/*
-	 *	Open configuration file for reading
-	 */
-	printf("Parsing detector configuration file: %s\n",filename);
-	printf("\t%s\n",filename);
-	
-	fp = fopen(filename,"r");
-	if (fp == NULL) {
-		printf("\tCould not open detector configuration file %s\n",filename);
-		printf("\tExiting in confusion\n");
-		exit(1);
-	}
-	
-	/*
-	 *	Loop through configuration file until EOF 
-	 *	Ignore lines beginning with a '#' (comments)
-	 *	Split each line into tag and value at the '=' sign
-	 */
-	while (feof(fp) == 0) {
-		
-		cp = fgets(cbuf, cbufsize, fp);
-		if (cp == NULL) 
-			break;
-		
-		if (cbuf[0] == '#')
-			continue;
-		
-		cp = strpbrk(cbuf, "=");
-		if (cp == NULL)
-			continue;
-		
-		*(cp) = '\0';
-		sscanf(cp+1,"%s",value);
-		sscanf(cbuf,"%s",tag);
-		
-		parseConfigTag(tag, value);
-	}
-	
-	fclose(fp);
-	
-}
+//void cPixelDetectorCommon::parseConfigFile(char* filename) {
+//	char		cbuf[cbufsize];
+//	char		tag[cbufsize];
+//	char		value[cbufsize];
+//	char		*cp;
+//	FILE		*fp;
+//	
+//	
+//	/*
+//	 *	Open configuration file for reading
+//	 */
+//	printf("Parsing detector configuration file: %s\n",filename);
+//	printf("\t%s\n",filename);
+//	
+//	fp = fopen(filename,"r");
+//	if (fp == NULL) {
+//		printf("\tCould not open detector configuration file %s\n",filename);
+//		printf("\tExiting in confusion\n");
+//		exit(1);
+//	}
+//	
+//	/*
+//	 *	Loop through configuration file until EOF 
+//	 *	Ignore lines beginning with a '#' (comments)
+//	 *	Split each line into tag and value at the '=' sign
+//	 */
+//	while (feof(fp) == 0) {
+//		
+//		cp = fgets(cbuf, cbufsize, fp);
+//		if (cp == NULL) 
+//			break;
+//		
+//		if (cbuf[0] == '#')
+//			continue;
+//		
+//		cp = strpbrk(cbuf, "=");
+//		if (cp == NULL)
+//			continue;
+//		
+//		*(cp) = '\0';
+//		sscanf(cp+1,"%s",value);
+//		sscanf(cbuf,"%s",tag);
+//		
+//		parseConfigTag(tag, value);
+//	}
+//	
+//	fclose(fp);
+//	
+//}
 
 /*
  *	Process tags for both configuration file and command line options
