@@ -36,9 +36,10 @@ void cGlobal::defaultConfiguration(void) {
 	defaultPhotonEnergyeV = 0;
 
 	// Detector info
-	nDetectors = 1;
+	nDetectors = 0;
 	for(long i=0; i<MAX_DETECTORS; i++) {
 		strcpy(detector[i].detectorConfigFile, "No_file_specified");
+		strcpy(detector[i].configGroup,"none");
 	}
 
 	// Statistics
@@ -453,6 +454,8 @@ void cGlobal::parseConfigFile(char* filename) {
 			}
 		}
 
+		printf(cbuf);
+
 		/* get the value */
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
@@ -472,7 +475,42 @@ void cGlobal::parseConfigFile(char* filename) {
 			sscanf(cbuf,"%s",group);
 		}
 
-		parseConfigTag(tag, value);
+
+		if (!strcmp(group,"default")) {
+
+			/* set global configuration */
+			parseConfigTag(tag, value);
+
+		} else {
+
+			int matched=0;
+
+			/* set detector-specific configuration */
+			for (i=0; i<MAX_DETECTORS; i++){
+
+				/* assign unused detector to group? */
+				if (!strcmp("none",detector[i].configGroup)){
+					strcpy(detector[i].configGroup,group);
+					nDetectors++;
+				}
+
+				/* try to match group to detector */
+				if (!strcmp(group,detector[i].configGroup)){
+					matched = 1;
+					detector[i].parseConfigTag(tag,value);
+					break;
+				}
+
+			}
+		
+			if (matched == 0){
+				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
+				exit(0);
+			}
+
+		}
+
+
 	}
 
 	fclose(fp);
