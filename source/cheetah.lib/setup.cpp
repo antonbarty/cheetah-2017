@@ -400,8 +400,14 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  cbuf[cbufsize];
 	char  tag[cbufsize];
 	char  value[cbufsize];
+	char  group[cbufsize];
 	char  *cp;
 	FILE  *fp;
+	int i,cnt;
+
+	char test1[cbufsize];
+	char *test2;
+	char test3[cbufsize];
 
 
 	/*
@@ -422,22 +428,49 @@ void cGlobal::parseConfigFile(char* filename) {
 	 * Ignore lines beginning with a '#' (comments)
 	 * Split each line into tag and value at the '=' sign
 	 */
+
+	
+
 	while (feof(fp) == 0) {
 
 		cp = fgets(cbuf, cbufsize, fp);
 		if (cp == NULL)
 			break;
 
-		if (cbuf[0] == '#')
-			continue;
+		/* strip whitespace */
+		cnt=0;
+		for (i=0; i<cbufsize; i++){
+			if (cbuf[i] == ' ') continue;
+			cbuf[cnt] = cbuf[i];
+			cnt++;
+		}
 
+		/* strip comments */
+		for (i=0; i<cbufsize-1; i++){
+			if (cbuf[i] == '#'){
+				cbuf[i] = '\n';
+				cbuf[i+1] = '\0';
+			}
+		}
+
+		/* get the value */
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
 			continue;
 
 		*(cp) = '\0';
 		sscanf(cp+1,"%s",value);
-		sscanf(cbuf,"%s",tag);
+				
+		/* get the tag and group */
+		cp = strpbrk(cbuf,"/");
+		if (cp == NULL){
+			sscanf(cbuf,"%s",tag);
+			sscanf("default","%s",group);
+		} else {
+			*(cp) = '\n';
+			sscanf(cp+1,"%s",tag);
+			sscanf(cbuf,"%s",group);
+		}
 
 		parseConfigTag(tag, value);
 	}
