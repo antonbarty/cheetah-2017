@@ -16,13 +16,13 @@
 #	where things are on the target system. 
 #
 ###############################################
-TARGET 			= cheetah chuck
+TARGET 			= cheetah #chuck
 ARCH 			= x86_64-linux
 
 
 # LCLS
-HDF5DIR 		= /reg/neh/home/yoon82/hdf5
-CHEETAHDIR      = /reg/neh/home/yoon82/cheetah/source
+HDF5DIR 		?= /reg/neh/home/yoon82/hdf5
+CHEETAHDIR      ?= /reg/neh/home/yoon82/cheetah/source
 
 # cfelsgi
 #HDF5DIR 		?= /cfel/common
