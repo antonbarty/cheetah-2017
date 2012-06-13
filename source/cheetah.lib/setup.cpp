@@ -402,6 +402,8 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  tag[cbufsize];
 	char  value[cbufsize];
 	char  group[cbufsize];
+	char  groupPrepend[cbufsize] = "";
+	char  ts[cbufsize];
 	char  *cp;
 	FILE  *fp;
 	int i,cnt;
@@ -454,27 +456,48 @@ void cGlobal::parseConfigFile(char* filename) {
 			}
 		}
 
+		/* skip empty lines */
+		if ( strlen(cbuf) <= 1) continue;
+
+		/* check for string prepend */
+		cp = strrchr(cbuf,']');
+		if (cp != NULL){
+			*(cp) = '\0';
+			strcpy(groupPrepend,cbuf+1);
+			if (strlen(groupPrepend) != 0) 
+				strcat(groupPrepend,"/");
+			continue;
+		}
+
+		/* prepend string */
+		if (strcmp(groupPrepend, "")) {
+			strcpy(ts,groupPrepend);
+			strcat(ts,cbuf);
+			strcpy(cbuf,ts);
+		}
+	
+		/* show the input keywords */
 		printf(cbuf);
 
 		/* get the value */
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
 			continue;
-
 		*(cp) = '\0';
 		sscanf(cp+1,"%s",value);
-				
+		
 		/* get the tag and group */
-		cp = strpbrk(cbuf,"/");
+		cp = strrchr(cbuf,'/');
 		if (cp == NULL){
 			sscanf(cbuf,"%s",tag);
 			sscanf("default","%s",group);
 		} else {
-			*(cp) = '\n';
+			*(cp) = '\0';
 			sscanf(cp+1,"%s",tag);
 			sscanf(cbuf,"%s",group);
 		}
 
+		//printf("group=%s, tag=%s, value=%s\n",group,tag,value);
 
 		if (!strcmp(group,"default")) {
 
