@@ -721,11 +721,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindercheckpeakseparation")) {
-		hitfinderCheckPeakSeparation = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfindermaxpeakseparation")) {
 		hitfinderMaxPeakSeparation = atof(value);
+		hitfinderCheckPeakSeparation = 1;
 	}
 	else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
 		hitfinderSubtractLocalBG = atoi(value);
@@ -866,7 +864,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
 	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
 	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
-	fprintf(fp, "hitfinderCheckPeakSeparation=%d\n",hitfinderCheckPeakSeparation);
 	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
