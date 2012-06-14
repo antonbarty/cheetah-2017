@@ -825,7 +825,6 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	//fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
 	//fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);

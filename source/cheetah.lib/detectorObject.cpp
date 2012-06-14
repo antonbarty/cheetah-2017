@@ -249,6 +249,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
+		useBadPixelMask = 1;
 	}
 	else if (!strcmp(tag, "baddatamap")) {
 		strcpy(baddataFile, value);
@@ -327,9 +328,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);
-	}
-	else if (!strcmp(tag, "usebadpixelmap")) {
-		useBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "usebaddatamap")) {
 		useBadDataMask = atoi(value);
