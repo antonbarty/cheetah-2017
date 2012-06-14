@@ -232,14 +232,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	for(int i=0; i<strlen(tag); i++) 
 		tag[i] = tolower(tag[i]);
 
-    if (!strcmp(tag, "detectorname")) {
+	if (!strcmp(tag, "detectorname")) {
 		strcpy(detectorName, value);
 	}
-    else if (!strcmp(tag, "detectortype")) {
+	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
 	}
-
-    else if (!strcmp(tag, "geometry")) {
+	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
 	else if (!strcmp(tag, "darkcal")) {
@@ -260,8 +259,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "pixelsize")) {
 		pixelSize = atof(value);
 	}
-    
-    else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
 		saveDetectorCorrectedOnly = atoi(value);
 	}
 	else if (!strcmp(tag, "savedetectorraw")) {
@@ -272,9 +270,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "beamcentery")) {
 		beamCenterPixY  = atof(value);
-	}
-
-    
+	} 
 	else if (!strcmp(tag, "detectorzpvname")) {
 		strcpy(detectorZpvname, value);
 	}
