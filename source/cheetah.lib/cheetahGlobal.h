@@ -96,7 +96,7 @@ public:
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
-	float    hitfinderMaxPeakSeparation;
+	float    hitfinderMinPeakSeparation;
 	/** @brief Toggle the subtraction of local background. */
 	int      hitfinderSubtractLocalBG;
 	/** @brief Inner radius of the local background annulus. */

@@ -692,7 +692,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 		int peakNum1;
 		int peakNum2;
 		float diffX,diffY;
-		float maxPeakSepSq = global->hitfinderMaxPeakSeparation*global->hitfinderMaxPeakSeparation;
+		float maxPeakSepSq = global->hitfinderMinPeakSeparation*global->hitfinderMinPeakSeparation;
 		float peakSepSq;
 		
 		/* all peaks assumed "good" to start */
@@ -871,7 +871,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 						/* Distance to neighbor peak */
 						dist = pow(fs - eventData->peak_com_x[p],2) + 
 						pow(ss - eventData->peak_com_y[p], 2);
-						if ( dist <= global->hitfinderMaxPeakSeparation ) {
+						if ( dist <= global->hitfinderMinPeakSeparation ) {
 							if ( snr > eventData->peak_snr[p]) {
 								/* This peak will overtake its neighbor */ 
 								newpeak = 0;

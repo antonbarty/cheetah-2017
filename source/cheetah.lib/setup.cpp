@@ -74,7 +74,7 @@ void cGlobal::defaultConfiguration(void) {
 	strcpy(peaksearchFile, "No_file_specified");
 	savePeakInfo = 0;
 	hitfinderCheckPeakSeparation = 0;
-	hitfinderMaxPeakSeparation = 50;
+	hitfinderMinPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
 	hitfinderLocalBGThickness = 1;
@@ -721,8 +721,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindermaxpeakseparation")) {
-		hitfinderMaxPeakSeparation = atof(value);
+	else if (!strcmp(tag, "hitfinderminpeakseparation")) {
+		hitfinderMinPeakSeparation = atof(value);
 		hitfinderCheckPeakSeparation = 1;
 	}
 	else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
@@ -864,7 +864,7 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
 	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
 	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
-	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
+	fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
 	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
