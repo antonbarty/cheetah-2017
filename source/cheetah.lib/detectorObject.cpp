@@ -247,6 +247,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "gaincal")) {
 		strcpy(gaincalFile, value);
+		useGaincal = 1;
 	}
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
@@ -335,9 +336,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
-	}
-	else if (!strcmp(tag, "usegaincal")) {
-		useGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);

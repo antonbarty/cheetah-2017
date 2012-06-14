@@ -607,6 +607,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
+		hitfinderUsePeakmask = 1;
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
@@ -744,9 +745,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
 	}
-	else if (!strcmp(tag, "hitfinderusepeakmask")) {
-		hitfinderUsePeakmask = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
 	}
@@ -821,7 +819,6 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "subtractUnbondedPixels=%d\n",cmSubtractUnbondedPixels);
 	//fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
 	//fprintf(fp, "subtractBehindWires=%d\n",cmSubtractBehindWires);
-	//fprintf(fp, "useGaincal=%d\n",useGaincal);
 	//fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
@@ -877,7 +874,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
-	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	//fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	//fprintf(fp, "bgMemory=%li\n",bgMemory);
