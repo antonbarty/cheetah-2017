@@ -62,7 +62,6 @@ void cGlobal::defaultConfiguration(void) {
 	// Hitfinding
 	hitfinder = 0;
 	hitfinderADC = 100;
-	hitfinderNAT = 100;
 	hitfinderTAT = 1e3;
 	hitfinderNpeaks = 50;
 	hitfinderNpeaksMax = 100000;
@@ -694,9 +693,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindernat")) {
-		hitfinderNAT = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
 	}
@@ -866,7 +862,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-	fprintf(fp, "hitfinderNAT=%ld\n",hitfinderNAT);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);

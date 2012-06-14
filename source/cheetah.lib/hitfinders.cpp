@@ -96,7 +96,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 					nat++;
 				}
 			}
-			if(nat >= global->hitfinderNAT)
+			if(nat >= global->hitfinderMinPixCount)
 				hit = 1;
 			
 			eventData->peakNpix = nat;
@@ -141,7 +141,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 						nat++;
 					}
 				}
-				if(nat >= global->hitfinderNAT)
+				if(nat >= global->hitfinderMinPixCount)
 					hit = 1;
 			}
 			break;

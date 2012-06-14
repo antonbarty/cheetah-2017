@@ -63,9 +63,6 @@ public:
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
 	int      hitfinderADC;
-	/** @brief Required number of connected pixels that constitute a Bragg
-	 * peak. */
-	long     hitfinderNAT;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
