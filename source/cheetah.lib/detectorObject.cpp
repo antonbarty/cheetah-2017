@@ -243,6 +243,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "darkcal")) {
 		strcpy(darkcalFile, value);
+		useDarkcalSubtraction = 1;
 	}
 	else if (!strcmp(tag, "gaincal")) {
 		strcpy(gaincalFile, value);
@@ -331,9 +332,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usebaddatamap")) {
 		useBadDataMask = atoi(value);
-	}
-	else if (!strcmp(tag, "usedarkcalsubtraction")) {
-		useDarkcalSubtraction = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
