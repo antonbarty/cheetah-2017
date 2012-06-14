@@ -73,7 +73,7 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderCheckGradient = 0;
 	hitfinderMinGradient = 0;
 	strcpy(peaksearchFile, "No_file_specified");
-	savePeakInfo = 1;
+	savePeakInfo = 0;
 	hitfinderCheckPeakSeparation = 0;
 	hitfinderMaxPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
@@ -331,6 +331,11 @@ void cGlobal::setup() {
 		saveAssembled = 1;
 	}
 
+	/* Only save peak info for certain hitfinders */
+	if (( hitfinderAlgorithm == 3 ) ||
+	    ( hitfinderAlgorithm == 5 ) ||
+	    ( hitfinderAlgorithm == 6 ))
+		savePeakInfo = 1; 
 
 	/*
 	 * Other stuff
@@ -629,9 +634,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savehits")) {
 		savehits = atoi(value);
 	}
-	else if (!strcmp(tag, "savepeakinfo")) {
-		savePeakInfo = atoi(value);
-	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
 		       "now known as powderSumHits and powderSumBlanks.\n"
@@ -831,7 +833,6 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
-	fprintf(fp, "savePeakInfo=%d\n",savePeakInfo);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
@@ -932,9 +933,6 @@ void cGlobal::writeInitialLog(void){
 		printf("Error: Can not open %s for writing\n",peaksfile);
 		printf("Aborting...");
 		exit(1);
-	}
-	if(savePeakInfo==0) {
-		fprintf(peaksfp, "savePeakInfo has been turned off in the config file.\n");
 	}
 	pthread_mutex_unlock(&peaksfp_mutex);
 
