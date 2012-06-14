@@ -505,6 +505,10 @@ void cGlobal::parseConfigFile(char* filename) {
 
 			/* set global configuration */
 			fail = parseConfigTag(tag, value);
+			
+			/* tag doesn't belog to global?  Then by default we will pass 
+			 * it to the first detector. */
+			fail = detector[0].parseConfigTag(tag,value);
 
 		} else {
 
