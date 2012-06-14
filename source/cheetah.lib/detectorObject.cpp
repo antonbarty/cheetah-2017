@@ -222,8 +222,10 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 /*
  *	Process tags for both configuration file and command line options
  */
-void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
+int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	
+	int fail = 0;
+
 	/*
 	 *	Convert to lowercase
 	 */
@@ -322,7 +324,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		printf("The keyword useSelfDarkcal has been changed.  It is\n"
                "now known as useSubtractPersistentBackground.\n"
                "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -376,18 +378,17 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		printf("The keyword scaleDarkcal does the same thing as scaleBackground.\n"
                "Use scaleBackground instead.\n"
                "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);
-	}
-    
+	} 
 	// Unknown tags
 	else {
-		printf("\tUnknown tag: %s = %s\n",tag,value);
-		printf("Aborting...\n");
-		exit(1);
+		fail = 1;
 	}
+
+	return fail;
 
 }
 

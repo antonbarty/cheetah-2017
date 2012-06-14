@@ -436,6 +436,8 @@ void cGlobal::parseConfigFile(char* filename) {
 
 	while (feof(fp) == 0) {
 
+		int fail = 0;
+
 		cp = fgets(cbuf, cbufsize, fp);
 		if (cp == NULL)
 			break;
@@ -502,7 +504,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		if (!strcmp(group,"default")) {
 
 			/* set global configuration */
-			parseConfigTag(tag, value);
+			fail = parseConfigTag(tag, value);
 
 		} else {
 
@@ -511,7 +513,7 @@ void cGlobal::parseConfigFile(char* filename) {
 			/* set detector-specific configuration */
 			for (i=0; i<MAX_DETECTORS; i++){
 
-				/* assign unused detector to group? */
+				/* new group? */
 				if (!strcmp("none",detector[i].configGroup)){
 					strcpy(detector[i].configGroup,group);
 					nDetectors++;
@@ -520,7 +522,7 @@ void cGlobal::parseConfigFile(char* filename) {
 				/* try to match group to detector */
 				if (!strcmp(group,detector[i].configGroup)){
 					matched = 1;
-					detector[i].parseConfigTag(tag,value);
+					fail = detector[i].parseConfigTag(tag,value);
 					break;
 				}
 
@@ -528,6 +530,11 @@ void cGlobal::parseConfigFile(char* filename) {
 		
 			if (matched == 0){
 				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
+				exit(0);
+			}
+
+			if (fail != 0){
+				printf("The tag %s is not recognized.\n",tag);
 				exit(0);
 			}
 
@@ -544,7 +551,9 @@ void cGlobal::parseConfigFile(char* filename) {
 /*
  * Process tags for both configuration file and command line options
  */
-void cGlobal::parseConfigTag(char *tag, char *value) {
+int cGlobal::parseConfigTag(char *tag, char *value) {
+
+	int fail = 0;
 
 	/*
 	 * Convert to lowercase
@@ -596,7 +605,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword subtractcmModule has been changed. It is\n"
 		       "now known as cmModule.\n"
 		       "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "generatedarkcal")) {
 		generateDarkcal = atoi(value);
@@ -608,7 +617,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword subtractBg has been changed.  It is\n"
              "now known as useDarkcalSubtraction.\n"
              "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
@@ -623,7 +632,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword powdersum has been changed.  It is\n"
 		       "now known as powderSumHits and powderSumBlanks.\n"
 		       "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
     }
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
@@ -743,17 +752,20 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword selfDarkMemory has been changed.  It is\n"
              "now known as bgMemory.\n"
              "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
 	// Unknown tags
 	else {
-		printf("\tUnknown tag: %s = %s\n",tag,value);
-		printf("Aborting...\n");
-		exit(1);
+		//printf("\tUnknown tag: %s = %s\n",tag,value);
+		//printf("Aborting...\n");
+		fail = 1;
 	}
+
+	return fail;
+
 }
 
 

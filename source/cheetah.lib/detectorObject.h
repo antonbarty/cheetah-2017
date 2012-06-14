@@ -225,7 +225,7 @@ public:
 
 //private:
 
-	void parseConfigTag(char*, char*);
+	int parseConfigTag(char*, char*);
 
 };
 
