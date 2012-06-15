@@ -558,7 +558,7 @@ void event() {
             }
             
 
-			// loop over elements (quadrants)
+			// loop over quadrants and read out the data
 			const Pds::CsPad::ElementHeader* element;
 			while(( element=iter.next() )) {  
 				if(element->quad() < 4) {
@@ -622,6 +622,9 @@ void event() {
 		eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 		memcpy(eventData->TOFTime, tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
 		memcpy(eventData->TOFVoltage, tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
+        
+        free(tempTOFTime);
+        free(tempTOFVoltage);
 	}
 	
     
@@ -651,6 +654,8 @@ void event() {
         eventData->pulnixHeight = pulnixHeight;
         eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
         memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
+        
+        free(pulnixImage);
 	}
 
     
