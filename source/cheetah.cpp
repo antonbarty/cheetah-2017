@@ -605,6 +605,7 @@ void event() {
 	/*
 	 *	Copy TOF (aqiris) channel into Cheetah event for processing
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
+     *  Assumes that myana creates a copy of the Acqiris data arrays and will never need these data arrays later. 
 	 */
 	eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
@@ -642,6 +643,7 @@ void event() {
 	 *		CxiKb1
 	 *		CxiSc1
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
+     *  Assumes that myana creates a copy of the pulnix data array and will never need these memory locations again. 
 	 */
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
