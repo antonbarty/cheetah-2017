@@ -734,14 +734,13 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
 		hitfinderLocalBGThickness = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfinderlimitres")) {
-		hitfinderLimitRes = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfinderminres")) {
 		hitfinderMinRes = atof(value);
+		hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
+		hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
