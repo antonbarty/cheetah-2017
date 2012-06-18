@@ -135,7 +135,15 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
     
     /*
      *  Fix up detector Z position, which can be flakey
-     *  event->detector[detID].detectorZ holds the read-out value
+	 *
+	 *	Seems that this PV is updated at only about 1 Hz.  
+	 *	The function getPvFloat seems to misbehave.  
+	 *	Firstly, if you skip the first few XTC datagrams, you will likely
+	 *	get error messages telling you that the EPICS PV is invalid.  
+	 *	More worrysome is the fact that it occasionally gives a bogus value 
+	 *	of detposnew=0, without a fail message.  Hardware problem? 
+	 *
+	 *  event->detector[detID].detectorZ holds the read-out value
      *  fail=std::numeric_limits<float>::quiet_NaN();
      */
     DETECTOR_LOOP {
@@ -143,38 +151,37 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
         int update_camera_length;
         
         detposnew = eventData->detector[detID].detectorZ;
+		
         if ( !isnan(detposnew) ) {
-            /* FYI: the function getPvFloat seems to misbehave.  Firstly, if you
-             * skip the first few XTC datagrams, you will likely get error messages
-             * telling you that the EPICS PV is invalid.  Seems that this PV is
-             * updated at only about 1 Hz.  More worrysome is the fact that it
-             * occasionally gives a bogus value of detposnew=0, without a fail
-             * message.  Hardware problem? */
+			
+			// New detector position = 0 could be an error
             if ( detposnew == 0 ) {
                 detposnew = global->detector[detID].detposprev;
                 printf("WARNING: detector position is zero, which could be an error\n"
                        "         will use previous position (%s=%f) instead...\n",global->detector[detID].detectorZpvname, detposnew);
             }
-            /* When encoder reads -500mm, detector is at its closest possible
-             * position to the specimen, and is 79mm from the centre of the 
-             * 8" flange where the injector is mounted.  The injector itself is
-             * about 4mm further away from the detector than this. */
+			
+            //	Apply offsets
+			//	When encoder reads -500mm, detector is at its closest possible
+			//	position to the specimen, and is 79mm from the centre of the 
+			//	8" flange where the injector is mounted.  
+			//	The injector itself is about 4mm further away from the detector than this. 
             global->detector[detID].detposprev = detposnew;
             global->detector[detID].detectorEncoderValue = detposnew;
             global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
-            /* Let's round to the nearest two decimal places 
-             * (10 micron, much less than a pixel size) */
+
+            //	Round to the nearest two decimal places 
+			//	(10 micron, much less than a pixel size) 
             global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;
             update_camera_length = 1;
         }	 
         
+		//	What to do if there is no camera length information?  
+		//	Keep skipping frames until this info is found?  
+		//	For now, set a (non-zero) default camera length.
         if ( global->detector[detID].detectorZ == 0 ) {
-            /* What to do if there is no camera length information?  Keep skipping
-             * frames until this info is found?  In some cases, our analysis doesn't
-             * need to know about this, so OK to skip in that case.  For now, the
-             * solution is for the user to set a (non-zero) default camera length.
-             */
 			printf("global->detector[%ld].detectorZ == 0\n", detID);
+
             if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
                 printf("WARNING: Camera length %s is zero!\n", global->detector[detID].detectorZpvname);
@@ -190,6 +197,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
             }
         }
         
+		
         /*
          * Recalculate reciprocal space geometry if the camera length has changed, 
          */
