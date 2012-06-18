@@ -255,6 +255,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "baddatamap")) {
 		strcpy(baddataFile, value);
+		useBadDataMask = 1;
 	}
 	else if (!strcmp(tag, "wiremask")) {
 		strcpy(wireMaskFile, value);
@@ -330,9 +331,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);
-	}
-	else if (!strcmp(tag, "usebaddatamap")) {
-		useBadDataMask = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
