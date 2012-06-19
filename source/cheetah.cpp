@@ -383,7 +383,7 @@ void event() {
 		
 		// If no beamline data, but default wavelength specified in ini file
 		// then use that
-		printf("getEBeam error: unable to calculate wavelength etc.\n");
+		printf("getEBeam error: unable to calculate wavelength for this event\n");
 		if ( cheetahGlobal.defaultPhotonEnergyeV != 0 ) {
 			photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
 			wavelengthA = 12398.42/photonEnergyeV;
