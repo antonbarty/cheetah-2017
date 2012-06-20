@@ -42,6 +42,8 @@ class cPixelDetectorCommon {
 
 public:
 
+	/** @brief ID of grouped configuration keywords */
+	char configGroup[MAX_FILENAME_LENGTH];
 	/** @brief Name of the detector */
 	char     detectorName[MAX_FILENAME_LENGTH];
 	/** @brief Type of detector */
@@ -221,9 +223,9 @@ public:
 	void readBaddataMask(cGlobal*, char *);
 	void readWireMask(cGlobal*, char *);
 
-private:
+//private:
 
-	void parseConfigTag(char*, char*);
+	int parseConfigTag(char*, char*);
 
 };
 

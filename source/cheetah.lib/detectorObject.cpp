@@ -169,88 +169,93 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 /*
  *	Read and process configuration file
  */
-void cPixelDetectorCommon::parseConfigFile(char* filename) {
-	char		cbuf[cbufsize];
-	char		tag[cbufsize];
-	char		value[cbufsize];
-	char		*cp;
-	FILE		*fp;
-	
-	
-	/*
-	 *	Open configuration file for reading
-	 */
-	printf("Parsing detector configuration file: %s\n",filename);
-	printf("\t%s\n",filename);
-	
-	fp = fopen(filename,"r");
-	if (fp == NULL) {
-		printf("\tCould not open detector configuration file %s\n",filename);
-		printf("\tExiting in confusion\n");
-		exit(1);
-	}
-	
-	/*
-	 *	Loop through configuration file until EOF 
-	 *	Ignore lines beginning with a '#' (comments)
-	 *	Split each line into tag and value at the '=' sign
-	 */
-	while (feof(fp) == 0) {
-		
-		cp = fgets(cbuf, cbufsize, fp);
-		if (cp == NULL) 
-			break;
-		
-		if (cbuf[0] == '#')
-			continue;
-		
-		cp = strpbrk(cbuf, "=");
-		if (cp == NULL)
-			continue;
-		
-		*(cp) = '\0';
-		sscanf(cp+1,"%s",value);
-		sscanf(cbuf,"%s",tag);
-		
-		parseConfigTag(tag, value);
-	}
-	
-	fclose(fp);
-	
-}
+//void cPixelDetectorCommon::parseConfigFile(char* filename) {
+//	char		cbuf[cbufsize];
+//	char		tag[cbufsize];
+//	char		value[cbufsize];
+//	char		*cp;
+//	FILE		*fp;
+//	
+//	
+//	/*
+//	 *	Open configuration file for reading
+//	 */
+//	printf("Parsing detector configuration file: %s\n",filename);
+//	printf("\t%s\n",filename);
+//	
+//	fp = fopen(filename,"r");
+//	if (fp == NULL) {
+//		printf("\tCould not open detector configuration file %s\n",filename);
+//		printf("\tExiting in confusion\n");
+//		exit(1);
+//	}
+//	
+//	/*
+//	 *	Loop through configuration file until EOF 
+//	 *	Ignore lines beginning with a '#' (comments)
+//	 *	Split each line into tag and value at the '=' sign
+//	 */
+//	while (feof(fp) == 0) {
+//		
+//		cp = fgets(cbuf, cbufsize, fp);
+//		if (cp == NULL) 
+//			break;
+//		
+//		if (cbuf[0] == '#')
+//			continue;
+//		
+//		cp = strpbrk(cbuf, "=");
+//		if (cp == NULL)
+//			continue;
+//		
+//		*(cp) = '\0';
+//		sscanf(cp+1,"%s",value);
+//		sscanf(cbuf,"%s",tag);
+//		
+//		parseConfigTag(tag, value);
+//	}
+//	
+//	fclose(fp);
+//	
+//}
 
 /*
  *	Process tags for both configuration file and command line options
  */
-void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
+int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	
+	int fail = 0;
+
 	/*
 	 *	Convert to lowercase
 	 */
 	for(int i=0; i<strlen(tag); i++) 
 		tag[i] = tolower(tag[i]);
 
-    if (!strcmp(tag, "detectorname")) {
+	if (!strcmp(tag, "detectorname")) {
 		strcpy(detectorName, value);
 	}
-    else if (!strcmp(tag, "detectortype")) {
+	else if (!strcmp(tag, "detectortype")) {
 		strcpy(detectorTypeName, value);
 	}
-
-    else if (!strcmp(tag, "geometry")) {
+	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
 	}
 	else if (!strcmp(tag, "darkcal")) {
 		strcpy(darkcalFile, value);
+		useDarkcalSubtraction = 1;
 	}
 	else if (!strcmp(tag, "gaincal")) {
 		strcpy(gaincalFile, value);
+		useGaincal = 1;
 	}
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
+		useBadPixelMask = 1;
 	}
 	else if (!strcmp(tag, "baddatamap")) {
 		strcpy(baddataFile, value);
+		useBadDataMask = 1;
 	}
 	else if (!strcmp(tag, "wiremask")) {
 		strcpy(wireMaskFile, value);
@@ -258,8 +263,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "pixelsize")) {
 		pixelSize = atof(value);
 	}
-    
-    else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
 		saveDetectorCorrectedOnly = atoi(value);
 	}
 	else if (!strcmp(tag, "savedetectorraw")) {
@@ -270,9 +274,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "beamcentery")) {
 		beamCenterPixY  = atof(value);
-	}
-
-    
+	} 
 	else if (!strcmp(tag, "detectorzpvname")) {
 		strcpy(detectorZpvname, value);
 	}
@@ -322,7 +324,7 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		printf("The keyword useSelfDarkcal has been changed.  It is\n"
                "now known as useSubtractPersistentBackground.\n"
                "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
@@ -330,20 +332,8 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);
 	}
-	else if (!strcmp(tag, "usebadpixelmap")) {
-		useBadPixelMask = atoi(value);
-	}
-	else if (!strcmp(tag, "usebaddatamap")) {
-		useBadDataMask = atoi(value);
-	}
-	else if (!strcmp(tag, "usedarkcalsubtraction")) {
-		useDarkcalSubtraction = atoi(value);
-	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
 		cmSubtractBehindWires = atoi(value);
-	}
-	else if (!strcmp(tag, "usegaincal")) {
-		useGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);
@@ -376,18 +366,17 @@ void cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		printf("The keyword scaleDarkcal does the same thing as scaleBackground.\n"
                "Use scaleBackground instead.\n"
                "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);
-	}
-    
+	} 
 	// Unknown tags
 	else {
-		printf("\tUnknown tag: %s = %s\n",tag,value);
-		printf("Aborting...\n");
-		exit(1);
+		fail = 1;
 	}
+
+	return fail;
 
 }
 

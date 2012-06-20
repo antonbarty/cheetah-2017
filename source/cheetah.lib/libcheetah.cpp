@@ -30,7 +30,7 @@ void cheetahInit(cGlobal *global) {
 	global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
 	for(long i=0; i<global->nDetectors; i++) {
-        global->detector[i].parseConfigFile(global->detector[i].detectorConfigFile);
+        //global->detector[i].parseConfigFile(global->detector[i].detectorConfigFile);
 		global->detector[i].readDetectorGeometry(global->detector[i].geometryFile);
 		global->detector[i].readDarkcal(global, global->detector[i].darkcalFile);
 		global->detector[i].readGaincal(global, global->detector[i].gaincalFile);

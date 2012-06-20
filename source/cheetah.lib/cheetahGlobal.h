@@ -63,9 +63,6 @@ public:
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
 	int      hitfinderADC;
-	/** @brief Required number of connected pixels that constitute a Bragg
-	 * peak. */
-	long     hitfinderNAT;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -99,7 +96,7 @@ public:
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
-	float    hitfinderMaxPeakSeparation;
+	float    hitfinderMinPeakSeparation;
 	/** @brief Toggle the subtraction of local background. */
 	int      hitfinderSubtractLocalBG;
 	/** @brief Inner radius of the local background annulus. */
@@ -163,31 +160,17 @@ public:
 	long     radialStackSize;
 
 
-
-
-	/**
-	 * @brief The Epics process variable for the pump laser delay.
-	 */
+	/** @brief The Epics process variable for the pump laser delay. */
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
-	/**
-	 * @brief The pump laser delay.
-	 */
+	/** @brief The pump laser delay. */
 	float    laserDelay;
 
 
-
-
-	/**
-	 * @brief Toggle the writing of hdf5 files for frames containing hits.
-	 */
+	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
 	int      savehits;
-	/**
-	 * @brief Toggle the writing of raw images in hdf5 files.
-	 */
+	/** @brief Toggle the writing of raw images in hdf5 files. */
 	int      saveRaw;
-	/**
-	 * @brief Toggle the writing of assembled (i.e. interpolatee) images.
-	 */
+	/** @brief Toggle the writing of assembled (i.e. interpolatee) images. */
 	int      saveAssembled;
 	/**
 	 * @brief Force the writing of hdf5 files (ignoring hit status).
@@ -198,44 +181,27 @@ public:
 	 */
 	int      hdf5dump;
 
-	/**
-	 * @brief Toggle the verbosity of Cheetah.
-	 */
+	/** @brief Toggle the verbosity of Cheetah. */
 	int      debugLevel;
 
-	/**
-	 * @brief TODO: Explain what goes here.
-	 */
+	/** @brief TODO: Explain what goes here. */
 	char     logfile[MAX_FILENAME_LENGTH];
-	/**
-	 * @brief TODO: Explain what goes here.
-	 */
+	/** @brief TODO: Explain what goes here. */
 	char     framefile[MAX_FILENAME_LENGTH];
-	/**
-	 * @brief TODO: Explain what goes here.
-	 */
+	/** @brief TODO: Explain what goes here. */
 	char     cleanedfile[MAX_FILENAME_LENGTH];
-	/**
-	 * @brief TODO: Explain what goes here.
-	 */
+	/** @brief TODO: Explain what goes here. */
 	char     peaksfile[MAX_FILENAME_LENGTH];
 
-	/**
-	 * @brief Check the file input/output speead, without data processing.
-	 */
+	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
 
 	/*
 	 *	Stuff used for managing the program execution
 	 */
-	/**
-	 * @brief TODO: Where is this used?
-	 */
+	/** @brief TODO: Where is this used? */
 	unsigned runNumber;
 
-	/**
-	 * @brief .
-	 */
 	FILE    *framefp;
 	FILE    *cleanedfp;
 	FILE    *peaksfp;
@@ -332,6 +298,6 @@ public:
 
 
 private:
-	void parseConfigTag(char*, char*);
+	int parseConfigTag(char*, char*);
 
 };

@@ -36,9 +36,10 @@ void cGlobal::defaultConfiguration(void) {
 	defaultPhotonEnergyeV = 0;
 
 	// Detector info
-	nDetectors = 1;
+	nDetectors = 0;
 	for(long i=0; i<MAX_DETECTORS; i++) {
 		strcpy(detector[i].detectorConfigFile, "No_file_specified");
+		strcpy(detector[i].configGroup,"none");
 	}
 
 	// Statistics
@@ -61,7 +62,6 @@ void cGlobal::defaultConfiguration(void) {
 	// Hitfinding
 	hitfinder = 0;
 	hitfinderADC = 100;
-	hitfinderNAT = 100;
 	hitfinderTAT = 1e3;
 	hitfinderNpeaks = 50;
 	hitfinderNpeaksMax = 100000;
@@ -72,9 +72,9 @@ void cGlobal::defaultConfiguration(void) {
 	hitfinderCheckGradient = 0;
 	hitfinderMinGradient = 0;
 	strcpy(peaksearchFile, "No_file_specified");
-	savePeakInfo = 1;
+	savePeakInfo = 0;
 	hitfinderCheckPeakSeparation = 0;
-	hitfinderMaxPeakSeparation = 50;
+	hitfinderMinPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
 	hitfinderLocalBGThickness = 1;
@@ -330,6 +330,11 @@ void cGlobal::setup() {
 		saveAssembled = 1;
 	}
 
+	/* Only save peak info for certain hitfinders */
+	if (( hitfinderAlgorithm == 3 ) ||
+	    ( hitfinderAlgorithm == 5 ) ||
+	    ( hitfinderAlgorithm == 6 ))
+		savePeakInfo = 1; 
 
 	/*
 	 * Other stuff
@@ -400,8 +405,16 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  cbuf[cbufsize];
 	char  tag[cbufsize];
 	char  value[cbufsize];
+	char  group[cbufsize];
+	char  groupPrepend[cbufsize] = "";
+	char  ts[cbufsize];
 	char  *cp;
 	FILE  *fp;
+	int i,cnt;
+
+	char test1[cbufsize];
+	char *test2;
+	char test3[cbufsize];
 
 
 	/*
@@ -422,24 +435,120 @@ void cGlobal::parseConfigFile(char* filename) {
 	 * Ignore lines beginning with a '#' (comments)
 	 * Split each line into tag and value at the '=' sign
 	 */
+
+	
+
 	while (feof(fp) == 0) {
+
+		int fail = 0;
 
 		cp = fgets(cbuf, cbufsize, fp);
 		if (cp == NULL)
 			break;
 
-		if (cbuf[0] == '#')
-			continue;
+		/* strip whitespace */
+		cnt=0;
+		for (i=0; i<cbufsize; i++){
+			if (cbuf[i] == ' ') continue;
+			cbuf[cnt] = cbuf[i];
+			cnt++;
+		}
 
+		/* strip comments */
+		for (i=0; i<cbufsize-1; i++){
+			if (cbuf[i] == '#'){
+				cbuf[i] = '\n';
+				cbuf[i+1] = '\0';
+			}
+		}
+
+		/* skip empty lines */
+		if ( strlen(cbuf) <= 1) continue;
+
+		/* check for string prepend */
+		cp = strrchr(cbuf,']');
+		if (cp != NULL){
+			*(cp) = '\0';
+			strcpy(groupPrepend,cbuf+1);
+			if (strlen(groupPrepend) != 0) 
+				strcat(groupPrepend,"/");
+			continue;
+		}
+
+		/* prepend string */
+		if (strcmp(groupPrepend, "")) {
+			strcpy(ts,groupPrepend);
+			strcat(ts,cbuf);
+			strcpy(cbuf,ts);
+		}
+	
+		/* show the input keywords */
+		printf(cbuf);
+
+		/* get the value */
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
 			continue;
-
 		*(cp) = '\0';
 		sscanf(cp+1,"%s",value);
-		sscanf(cbuf,"%s",tag);
+		
+		/* get the tag and group */
+		cp = strrchr(cbuf,'/');
+		if (cp == NULL){
+			sscanf(cbuf,"%s",tag);
+			sscanf("default","%s",group);
+		} else {
+			*(cp) = '\0';
+			sscanf(cp+1,"%s",tag);
+			sscanf(cbuf,"%s",group);
+		}
 
-		parseConfigTag(tag, value);
+		//printf("group=%s, tag=%s, value=%s\n",group,tag,value);
+
+		if (!strcmp(group,"default")) {
+
+			/* set global configuration */
+			fail = parseConfigTag(tag, value);
+			
+			/* tag doesn't belog to global?  Then by default we will pass 
+			 * it to the first detector. */
+			fail = detector[0].parseConfigTag(tag,value);
+
+		} else {
+
+			int matched=0;
+
+			/* set detector-specific configuration */
+			for (i=0; i<MAX_DETECTORS; i++){
+
+				/* new group? */
+				if (!strcmp("none",detector[i].configGroup)){
+					strcpy(detector[i].configGroup,group);
+					nDetectors++;
+				}
+
+				/* try to match group to detector */
+				if (!strcmp(group,detector[i].configGroup)){
+					matched = 1;
+					fail = detector[i].parseConfigTag(tag,value);
+					break;
+				}
+
+			}
+		
+			if (matched == 0){
+				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
+				exit(0);
+			}
+
+			if (fail != 0){
+				printf("The tag %s is not recognized.\n",tag);
+				exit(0);
+			}
+
+		}
+
+
 	}
 
 	fclose(fp);
@@ -450,7 +559,9 @@ void cGlobal::parseConfigFile(char* filename) {
 /*
  * Process tags for both configuration file and command line options
  */
-void cGlobal::parseConfigTag(char *tag, char *value) {
+int cGlobal::parseConfigTag(char *tag, char *value) {
+
+	int fail = 0;
 
 	/*
 	 * Convert to lowercase
@@ -461,19 +572,19 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 * Parse known tags
 	 */
-	if (!strcmp(tag, "ndetectors")) {
-		nDetectors = atoi(value);
-	}
-	else if (!strcmp(tag, "detector0")) {
-		strcpy(detector[0].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "detector1")) {
-		strcpy(detector[1].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "detector2")) {
-		strcpy(detector[2].detectorConfigFile, value);
-	}
-	else if (!strcmp(tag, "defaultphotonenergyev")) {
+//	if (!strcmp(tag, "ndetectors")) {
+//		nDetectors = atoi(value);
+//	}
+//	else if (!strcmp(tag, "detector0")) {
+//		strcpy(detector[0].detectorConfigFile, value);
+//	}
+//	else if (!strcmp(tag, "detector1")) {
+//		strcpy(detector[1].detectorConfigFile, value);
+//	}
+//	else if (!strcmp(tag, "detector2")) {
+//		strcpy(detector[2].detectorConfigFile, value);
+//	}
+	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
 	}
 	else if (!strcmp(tag, "startatframe")) {
@@ -496,13 +607,14 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
+		hitfinderUsePeakmask = 1;
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
 		printf("The keyword subtractcmModule has been changed. It is\n"
 		       "now known as cmModule.\n"
 		       "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "generatedarkcal")) {
 		generateDarkcal = atoi(value);
@@ -514,7 +626,7 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword subtractBg has been changed.  It is\n"
              "now known as useDarkcalSubtraction.\n"
              "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
@@ -522,14 +634,11 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savehits")) {
 		savehits = atoi(value);
 	}
-	else if (!strcmp(tag, "savepeakinfo")) {
-		savePeakInfo = atoi(value);
-	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
 		       "now known as powderSumHits and powderSumBlanks.\n"
 		       "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
     }
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
@@ -585,9 +694,6 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindernat")) {
-		hitfinderNAT = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
 	}
@@ -615,11 +721,9 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxpixcount")) {
 		hitfinderMaxPixCount = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindercheckpeakseparation")) {
-		hitfinderCheckPeakSeparation = atoi(value);
-	}
-	else if (!strcmp(tag, "hitfindermaxpeakseparation")) {
-		hitfinderMaxPeakSeparation = atof(value);
+	else if (!strcmp(tag, "hitfinderminpeakseparation")) {
+		hitfinderMinPeakSeparation = atof(value);
+		hitfinderCheckPeakSeparation = 1;
 	}
 	else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
 		hitfinderSubtractLocalBG = atoi(value);
@@ -630,17 +734,13 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
 		hitfinderLocalBGThickness = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfinderlimitres")) {
-		hitfinderLimitRes = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfinderminres")) {
 		hitfinderMinRes = atof(value);
+		hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
-	}
-	else if (!strcmp(tag, "hitfinderusepeakmask")) {
-		hitfinderUsePeakmask = atoi(value);
+		hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
@@ -649,17 +749,20 @@ void cGlobal::parseConfigTag(char *tag, char *value) {
 		printf("The keyword selfDarkMemory has been changed.  It is\n"
              "now known as bgMemory.\n"
              "Modify your ini file and try again...\n");
-		exit(1);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
 	// Unknown tags
 	else {
-		printf("\tUnknown tag: %s = %s\n",tag,value);
-		printf("Aborting...\n");
-		exit(1);
+		//printf("\tUnknown tag: %s = %s\n",tag,value);
+		//printf("Aborting...\n");
+		fail = 1;
 	}
+
+	return fail;
+
 }
 
 
@@ -713,15 +816,11 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "subtractUnbondedPixels=%d\n",cmSubtractUnbondedPixels);
 	//fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
 	//fprintf(fp, "subtractBehindWires=%d\n",cmSubtractBehindWires);
-	//fprintf(fp, "useGaincal=%d\n",useGaincal);
 	//fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	//fprintf(fp, "useBadPixelMap=%d\n",useBadPixelMask);
-	//fprintf(fp, "useDarkcalSubtraction=%d\n",useDarkcalSubtraction);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
-	fprintf(fp, "savePeakInfo=%d\n",savePeakInfo);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
@@ -755,7 +854,6 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-	fprintf(fp, "hitfinderNAT=%ld\n",hitfinderNAT);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
@@ -765,15 +863,13 @@ void cGlobal::writeInitialLog(void){
 	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
 	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
 	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
-	fprintf(fp, "hitfinderCheckPeakSeparation=%d\n",hitfinderCheckPeakSeparation);
-	fprintf(fp, "hitfinderMaxPeakSeparation=%f\n",hitfinderMaxPeakSeparation);
+	fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
 	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
 	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
-	fprintf(fp, "hitfinderUsePeakMask=%d\n",hitfinderUsePeakmask);
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	//fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	//fprintf(fp, "bgMemory=%li\n",bgMemory);
@@ -822,9 +918,6 @@ void cGlobal::writeInitialLog(void){
 		printf("Error: Can not open %s for writing\n",peaksfile);
 		printf("Aborting...");
 		exit(1);
-	}
-	if(savePeakInfo==0) {
-		fprintf(peaksfp, "savePeakInfo has been turned off in the config file.\n");
 	}
 	pthread_mutex_unlock(&peaksfp_mutex);
 

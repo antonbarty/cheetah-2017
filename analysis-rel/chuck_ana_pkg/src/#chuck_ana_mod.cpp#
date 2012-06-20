@@ -1,0 +1,71 @@
+//--------------------------------------------------------------------------
+// File and Version Information:
+// 	$Id$
+//
+// Description:
+//	Class chuck_ana_mod...
+//
+// Author List:
+//      Chunhong Yoon
+//
+//------------------------------------------------------------------------
+
+//-----------------------
+// This Class's Header --
+//-----------------------
+#include "chuck_ana_pkg/chuck_ana_mod.h"
+
+//-----------------
+// C/C++ Headers --
+//-----------------
+
+//-------------------------------
+// Collaborating Class Headers --
+//-------------------------------
+#include "MsgLogger/MsgLogger.h"
+// to work with detector data include corresponding 
+// header from psddl_psana package
+#include "psddl_psana/bld.ddl.h"
+#include "PSEvt/EventId.h"
+
+//-----------------------------------------------------------------------
+// Local Macros, Typedefs, Structures, Unions and Forward Declarations --
+//-----------------------------------------------------------------------
+
+// This declares this class as psana module
+using namespace chuck_ana_pkg;
+PSANA_MODULE_FACTORY(chuck_ana_mod)
+
+//		----------------------------------------
+// 		-- Public Function Member Definitions --
+//		----------------------------------------
+
+namespace chuck_ana_pkg {
+
+//----------------
+// Constructors --
+//----------------
+chuck_ana_mod::chuck_ana_mod (const std::string& name)
+  : Module(name)
+{
+// Method which is called with event data, this is the only required 
+/// method, all other methods are optional
+void 
+chuck_ana_mod::event(Event& evt, Env& env)
+{
+  // get event time
+  PSTime::Time evtTime;
+  boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
+  if (eventId.get()) {
+    evtTime = eventId->time();
+  }
+  
+  // get beam data
+  boost::shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam = evt.get(Source());
+  if (ebeam.get()) {
+    MsgLog(name(), info, "time: " << evtTime << ", charge: " << ebeam->ebeamCharge() << ", energy: " 
+<< ebeam->ebeamL3Energy());
+  }
+}
+  
+} // namespace chuck_ana_pkg
