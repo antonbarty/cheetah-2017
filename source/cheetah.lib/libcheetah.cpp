@@ -41,6 +41,7 @@ void cheetahInit(cGlobal *global) {
 	}
 	global->setup();
 	global->writeInitialLog();
+	global->writeConfigurationLog();
     printf("Cheetah clean initialisation\n");
     
 }

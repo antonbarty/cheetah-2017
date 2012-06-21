@@ -31,6 +31,7 @@ void cGlobal::defaultConfiguration(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
+	strcpy(configOutFile, "cheetah.out");
 
 	// Default experiment info (in case beamline data is missing...)
 	defaultPhotonEnergyeV = 0;
@@ -767,33 +768,25 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 
 
 /*
- *	Write initial log file
+ *	Write all configuration parameters to log file
+ *	(which can itself be used as a .ini file)
  */
-void cGlobal::writeInitialLog(void){
-
+void cGlobal::writeConfigurationLog(void){
 	FILE *fp;
 
-	// Start time
-	char	timestr[1024];
-	time_t	rawtime;
-	tm		*timeinfo;
-	time(&rawtime);
-	timeinfo=localtime(&rawtime);
-	strftime(timestr,80,"%c",timeinfo);
-
-
+	
+	
 	// Logfile name
-	printf("Writing log file: %s\n", logfile);
+	printf("Writing log file: %s\n", configOutFile);
 
+	// Open file
 	fp = fopen(logfile,"w");
 	if(fp == NULL) {
-		printf("Error: Can not open %s for writing\n",logfile);
+		printf("Error: Can not open %s for writing\n",configOutFile);
 		printf("Aborting...");
 		exit(1);
 	}
-
-	fprintf(fp, "start time: %s\n",timestr);
-
+	
 	fprintf(fp,"\n\n");
 	fprintf(fp, ">-------- Start of ini params --------<\n");
 	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
@@ -881,13 +874,46 @@ void cGlobal::writeInitialLog(void){
 	//fprintf(fp, "scaleBackground=%d\n",scaleBackground);
 	//fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
 	//fprintf(fp, "startFrames=%d\n",startFrames);
-	fprintf(fp, ">-------- End of ini params --------<\n");
-	fprintf(fp, "\n\n");
 
+	
+	// CLose file
+	fclose (fp);
+
+	
+}
+
+/*
+ *	Write initial log file
+ */
+void cGlobal::writeInitialLog(void){
+
+	FILE *fp;
+
+	// Start time
+	char	timestr[1024];
+	time_t	rawtime;
+	tm		*timeinfo;
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(timestr,80,"%c",timeinfo);
+
+
+	// Logfile name
+	printf("Writing log file: %s\n", logfile);
+
+	fp = fopen(logfile,"w");
+	if(fp == NULL) {
+		printf("Error: Can not open %s for writing\n",logfile);
+		printf("Aborting...");
+		exit(1);
+	}
+
+	fprintf(fp, "start time: %s\n",timestr);
 	fprintf(fp, ">-------- Start of job --------<\n");
 	fclose (fp);
 
 
+	
 	// Open a new frame file at the same time
 	pthread_mutex_lock(&framefp_mutex);
 
