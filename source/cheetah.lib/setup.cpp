@@ -769,7 +769,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 
 /*
  *	Write all configuration parameters to log file
- *	(which can itself be used as a .ini file)
+ *	(in a format that can be used as a .ini file if needed)
  */
 void cGlobal::writeConfigurationLog(void){
 	FILE *fp;

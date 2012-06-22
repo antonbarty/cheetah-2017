@@ -565,7 +565,7 @@ void event() {
         
 		fail=getCspadData(detectorPdsDetInfo[detID], iter);
 		if (fail) {
-			printf("getCspadData fail %d (%x)\n",fail,fiducial);
+			printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
 			eventData->detector[detID].cspad_fail = fail;
 			return;
 		}
