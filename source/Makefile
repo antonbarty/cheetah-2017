@@ -18,11 +18,15 @@
 ###############################################
 TARGET 			= cheetah #chuck
 ARCH 			= x86_64-linux
+#ARCH 			= i386-linux
 
 
 # LCLS
-HDF5DIR 		?= /reg/neh/home/yoon82/hdf5
-CHEETAHDIR      ?= /reg/neh/home/yoon82/cheetah/source
+#HDF5DIR=/reg/data/ana12/cxi/cxi54312/scratch/programs/
+HDF5DIR ?= /reg/neh/home/hgliu/software/hdf5-1.8.8/hdf5
+CRYSTFELDIR ?= /reg/data/ana12/cxi/cxi54312/scratch/programs/bin
+
+CHEETAHDIR      ?= /reg/data/ana12/cxi/cxi54312/scratch/hgliu/cheetah
 
 # cfelsgi
 #HDF5DIR 		?= /cfel/common
