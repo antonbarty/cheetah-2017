@@ -183,7 +183,8 @@ void fetchConfig()
 			configVsn[detID]= 4;
 			quadMask[detID] = configV4.quadMask();
 			asicMask[detID] = configV4.asicMask();
-			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
+			//printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV3.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV4.quads()[0].intTime(), configV4.quads()[1].intTime(), configV4.quads()[2].intTime(), configV4.quads()[3].intTime());
 		}
 		else {

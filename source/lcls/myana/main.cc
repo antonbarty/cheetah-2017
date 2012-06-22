@@ -4,10 +4,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-//#include <TROOT.h>
-//#include <TApplication.h>
-//#include <TFile.h>
-//#include <TH1.h>
+/*
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TFile.h>
+#include <TH1.h>
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -589,15 +591,16 @@ void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
       peak = y;
   }
 }
-
-//void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-//                   float thresh, TH1* hist) {
-//  double edge[100];
-//  int n;
-//  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
-//  for(int i=0; i<n; i++)
-//    hist->Fill(edge[i],1.0);
-//}
+/*
+void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
+                   float thresh, TH1* hist) {
+  double edge[100];
+  int n;
+  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
+  for(int i=0; i<n; i++)
+    hist->Fill(edge[i],1.0);
+}
+*/
 
 /* 
  * Time Data
@@ -1826,6 +1829,15 @@ int getCspadData  (DetInfo::Detector det, CsPad::ElementIterator& iter)
                                           TypeId(TypeId::Id_CspadConfig,3) );
     if (cfg && cfg->damage.value()==0) {
       iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV3*>(cfg->payload()),
+                                    *xtc);
+      return 0;
+    }
+  }
+
+  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
+                                          TypeId(TypeId::Id_CspadConfig,4) );
+    if (cfg && cfg->damage.value()==0) {
+      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV4*>(cfg->payload()),
                                     *xtc);
       return 0;
     }
