@@ -14,6 +14,7 @@
 #include "lcls/myana/release/pdsdata/cspad/ConfigV1.hh"
 #include "lcls/myana/release/pdsdata/cspad/ConfigV2.hh"
 #include "lcls/myana/release/pdsdata/cspad/ConfigV3.hh"
+#include "lcls/myana/release/pdsdata/cspad/ConfigV4.hh"
 #include "lcls/myana/release/pdsdata/cspad/ElementHeader.hh"
 #include "lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
 
@@ -41,6 +42,7 @@ using namespace std;
 static Pds::CsPad::ConfigV1 configV1;
 static Pds::CsPad::ConfigV2 configV2;
 static Pds::CsPad::ConfigV3 configV3;
+static Pds::CsPad::ConfigV4 configV4;
 
 // Cheetah specific
 Pds::DetInfo::Device        detectorType[MAX_DETECTORS];
@@ -176,6 +178,13 @@ void fetchConfig()
 			asicMask[detID] = configV3.asicMask();
 			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV3.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV3.quads()[0].intTime(), configV3.quads()[1].intTime(), configV3.quads()[2].intTime(), configV3.quads()[3].intTime());
+		}
+		else if (getCspadConfig( detectorPdsDetInfo[detID], configV4 )==0) {
+			configVsn[detID]= 4;
+			quadMask[detID] = configV4.quadMask();
+			asicMask[detID] = configV4.asicMask();
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
+			printf("\tintTime %d/%d/%d/%d\n", configV4.quads()[0].intTime(), configV4.quads()[1].intTime(), configV4.quads()[2].intTime(), configV4.quads()[3].intTime());
 		}
 		else {
 			configVsn[detID] = 0;
