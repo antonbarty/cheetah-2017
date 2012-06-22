@@ -4,10 +4,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <TROOT.h>
-#include <TApplication.h>
-#include <TFile.h>
-#include <TH1.h>
+//#include <TROOT.h>
+//#include <TApplication.h>
+//#include <TFile.h>
+//#include <TH1.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -590,14 +590,14 @@ void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
   }
 }
 
-void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-                   float thresh, TH1* hist) {
-  double edge[100];
-  int n;
-  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
-  for(int i=0; i<n; i++)
-    hist->Fill(edge[i],1.0);
-}
+//void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
+//                   float thresh, TH1* hist) {
+//  double edge[100];
+//  int n;
+//  fillConstFrac(t,v,numSamples,baseline,thresh,edge,n,100);
+//  for(int i=0; i<n; i++)
+//    hist->Fill(edge[i],1.0);
+//}
 
 /* 
  * Time Data
@@ -3219,9 +3219,9 @@ int main(int argc, char *argv[])
   else if (runPrefix)
     makeoutfilename(runPrefix, outfile);
 
-  printf("Opening ROOT output file %s\n", outfile);
-  TFile *out;
-  out = new TFile(outfile, "RECREATE");
+  //printf("Opening ROOT output file %s\n", outfile);
+  //TFile *out;
+  //out = new TFile(outfile, "RECREATE");
 
   _split = new SplitEventQ(split_depth);
 
@@ -3364,8 +3364,8 @@ int main(int argc, char *argv[])
 
   delete _split;
 
-  out->Write();
-  out->Close();
+  //out->Write();
+  //out->Close();
 
   if (_writer)
     delete _writer;
