@@ -1,0 +1,48 @@
+Requires the following environment:
+
+setenv DAQREL /reg/neh/home/weaver/release (for example)
+setenv PYTHONPATH ${DAQREL}/build/ami/lib/x86_64-linux
+setenv LD_LIBRARY_PATH /reg/g/pcds/package/python-2.5.2/lib:${DAQREL}/build/pdsdata/lib/x86_64-linux:${DAQREL}/build/ami/lib/x86_64-linux
+
+-- pyami module --
+
+connect(Server_Group)
+	Connects the module to the group of monitoring servers.
+	The Server_Group parameter is specific to the hutch.
+	This must be called before any of the following class methods.
+
+class pyami.Entry(name,'Scalar')
+	Monitors data from the scalar variable 'name'.  A dictionary of 
+	('Scalar', n_events, mean, rms) is accumulated.
+
+class pyami.Entry(name,'TH1F',nbins,xlo,xhi)
+	Monitors data from the scalar variable 'name'.  A dictionary of 
+	('TH1F', underflows, overflows, ( n_bin0, n_bin1, ...)) is accumulated.
+
+class pyami.Entry(det_identifier) or 
+class pyami.Entry(det_identifier,channel)
+	Monitors the data from the detector associated with 'det_identifier' and
+	'channel'.  A dictionary of data averaged over events is accumulated.  The 
+	dimensions and binning of the data are determined from the detector.
+	The dictionary format is
+	('Waveform', events, xlow, xhigh, (y0, y1, ...)) or
+	('Image', events, dark_level, ppxbin, ppybin, 
+		((row0col0,row0col1,...),(row1col0,row1col1,...))) or
+	('ImageArray', events, dark_level, ppxbin, ppybin,
+		( ((row0col0,row0col1,...),(row1col0,row1col1,...))_0,
+		  ((row0col0,row0col1,...),(row1col0,row1col1,...))_1,
+		  ... ))
+
+	Each of the above methods also takes an optional final string argument that
+	defines an event filter.  The string must take the form:
+	
+		_lo_value_<_scalar_name_<_hi_value_  or
+		(_expr1_)&(_expr2_)                  or
+		(_expr1_)|(_expr2_)
+
+	where _expr1_ and _expr2_ also take one of the forms.
+
+Members:
+
+	Entry.get()
+		Returns the data accumulated since the object was created.

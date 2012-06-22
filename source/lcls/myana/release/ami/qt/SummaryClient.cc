@@ -50,13 +50,37 @@ namespace Ami {
 
     class QtBasePlot : public QtPlot {
     public:
-      QtBasePlot(QtBase* b) : QtPlot(NULL,b->title()), _base(b) { b->attach(_frame); }
-      virtual ~QtBasePlot() { delete _base; }
+      QtBasePlot(QtBase* b) : QtPlot(NULL,b->title()) 
+      {
+        _base.push_back(b); 
+        b->attach(_frame); 
+      }
+      virtual ~QtBasePlot() 
+      {
+        for(std::list<QtBase*>::iterator it=_base.begin(); it!=_base.end(); it++) {
+          QtBase* b = *it;
+          delete b;
+        }
+      }
     public:
-      void update() { _base->update(); emit redraw(); }
-      void dump(FILE* f) const { _base->dump(f); }
+      void add   (QtBase* b)
+      {
+        _base.push_back(b);
+        b->attach(_frame);
+      }
+      void update() 
+      { 
+        for(std::list<QtBase*>::iterator it=_base.begin(); it!=_base.end(); it++)
+          (*it)->update(); 
+        emit redraw(); 
+      }
+      void dump(FILE* f) const 
+      {
+        for(std::list<QtBase*>::const_iterator it=_base.begin(); it!=_base.end(); it++)
+          (*it)->dump(f); 
+      }
     private:
-      QtBase* _base; 
+      std::list<QtBase*> _base; 
     };
 
     class PagePlot : public QWidget {
@@ -67,11 +91,22 @@ namespace Ami {
       const QString& title() const { return _title; }
       void add   (QtBase* plot, int row, int col)
       {
-	QtBasePlot* frame = new QtBasePlot(plot);
         if (row<0 || col<0) {
           row = _layout->rowCount();
           col = 0;
         }
+        { int trow, tcol, trows, tcols;
+          for(unsigned i=0; i<_layout->count(); i++) {
+            _layout->getItemPosition(i, &trow, &tcol, &trows, &tcols);
+            if (trow==row &&
+                tcol==col) {
+              QtBasePlot* frame = reinterpret_cast<QtBasePlot*>(_layout->itemAt(i)->widget());
+              frame->add(plot);
+              return;
+            }
+          }
+        }
+	QtBasePlot* frame = new QtBasePlot(plot);
 	_layout->addWidget(frame, row, col);
 	_plots.push_back(frame);
       }
@@ -245,6 +280,7 @@ void SummaryClient::_read_description(int size)
 
     QString page_title, plot_title;
     int row=-1, col=-1;
+    int rgb=0;
     { QString title(desc->name());
       int index = title.indexOf( PageIndex );
       if (index >= 0) {
@@ -255,7 +291,13 @@ void SummaryClient::_read_description(int size)
           int cIndex = title.indexOf( PageIndex, rIndex+1 );
           if (cIndex >= 0) {
             row = title.mid( rIndex+1, cIndex-rIndex-1).toInt();
-            col = title.mid( cIndex+1 ).toInt();
+            int rgbIndex = title.indexOf( PageIndex, cIndex+1 );
+            if (rgbIndex >= 0) {
+              col = title.mid( cIndex+1, rgbIndex-cIndex-1).toInt();
+              rgb = title.mid( rgbIndex+1 ).toInt(0,16);
+            }
+            else
+              col = title.mid( cIndex+1 ).toInt();
           }
           else
             row = title.mid( rIndex+1 ).toInt();
@@ -273,19 +315,19 @@ void SummaryClient::_read_description(int size)
     switch(desc->type()) {
     case Ami::DescEntry::TH1F: 
       plot = new QtTH1F(plot_title,*static_cast<const Ami::EntryTH1F*>(entry),
-			noTransform,noTransform,QColor(0,0,0));
+			noTransform,noTransform,QColor((rgb>>16)&0xff,(rgb>>8)&0xff,(rgb>>0)&0xff));
       break;
     case Ami::DescEntry::Scalar:  // create a chart from a scalar
       plot = new QtChart(plot_title,*static_cast<const Ami::EntryScalar*>(entry),
-			 QColor(0,0,0));
+                         QColor((rgb>>16)&0xff,(rgb>>8)&0xff,(rgb>>0)&0xff));
       break;
     case Ami::DescEntry::Prof: 
       plot = new QtProf(plot_title,*static_cast<const Ami::EntryProf*>(entry),
-			noTransform,noTransform,QColor(0,0,0));
+			noTransform,noTransform,QColor((rgb>>16)&0xff,(rgb>>8)&0xff,(rgb>>0)&0xff));
       break;
     case Ami::DescEntry::Scan: 
       plot = new QtScan(plot_title,*static_cast<const Ami::EntryScan*>(entry),
-			noTransform,noTransform,QColor(0,0,0));
+			noTransform,noTransform,QColor((rgb>>16)&0xff,(rgb>>8)&0xff,(rgb>>0)&0xff));
       break;
     case Ami::DescEntry::Image:
       img  = new QtImage(plot_title,*static_cast<const Ami::EntryImage*>(entry),

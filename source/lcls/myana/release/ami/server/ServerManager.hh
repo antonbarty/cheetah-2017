@@ -11,6 +11,7 @@ namespace Ami {
   class Factory;
   class Ins;
   class Server;
+  class Semaphore;
   class Socket;
   class VServerSocket;
 
@@ -21,7 +22,7 @@ namespace Ami {
 		   unsigned serverGroup);
     ~ServerManager();
   public:
-    void serve     (Factory&);
+    void serve     (Factory&, Semaphore* =0);
     void dont_serve();
   public:
     void discover  ();
@@ -42,6 +43,7 @@ namespace Ami {
     Factory*           _factory;
     Socket*            _socket;
     SvList             _servers;
+    Semaphore*         _connect_sem;
   };
 };
 

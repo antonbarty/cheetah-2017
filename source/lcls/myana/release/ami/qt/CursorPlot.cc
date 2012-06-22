@@ -159,6 +159,8 @@ void CursorPlot::configure(char*& p, unsigned input, unsigned& output,
     }
     new_expr.append(expr.mid(last));
     new_expr.replace(QString("]%1[").arg(BinMath::integrate()),QString(BinMath::integrate()));
+    new_expr.replace(QString("]%1[").arg(BinMath::moment1  ()),QString(BinMath::moment1  ()));
+    new_expr.replace(QString("]%1[").arg(BinMath::moment2  ()),QString(BinMath::moment2  ()));
     new_expr.replace(QString("]%1[").arg(BinMath::range    ()),QString(BinMath::range    ()));
   }
   QString end_expr;

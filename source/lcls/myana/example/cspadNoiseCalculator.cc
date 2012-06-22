@@ -1,4 +1,4 @@
-/* $Id: cspadNoiseCalculator.cc,v 1.1 2012/04/12 18:04:24 philiph Exp $ */
+/* $Id: cspadNoiseCalculator.cc,v 1.3 2012/06/07 16:08:34 weaver Exp $ */
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -9,6 +9,7 @@
 #include "../release/pdsdata/cspad/ConfigV1.hh"
 #include "../release/pdsdata/cspad/ConfigV2.hh"
 #include "../release/pdsdata/cspad/ConfigV3.hh"
+#include "../release/pdsdata/cspad/ConfigV4.hh"
 #include "../release/pdsdata/cspad2x2/ConfigV1.hh"
 #include "../release/pdsdata/cspad/ElementHeader.hh"
 #include "../release/pdsdata/cspad/ElementIterator.hh"
@@ -48,18 +49,20 @@ class MyNoiseCalculator {
 public:
   MyNoiseCalculator(Pds::DetInfo::Detector _detector,
 		    Pds::DetInfo::Device _device,
+		    int _devId,
 		    const char*            _pedPath,
 		    const char*            _resPath
 		    ) :
     detector   (_detector),
     device   (_device),
+    devId (_devId),
     pedFile(new char[strlen(_pedPath)+14]),
     resDumpFile(new char[strlen(_resPath)+14])
   { 
     printf("in noise calc constructor\n");
     memset(pedVal, 0, sizeof(double)*QUADS*TWOXONES*COLS*ROWS);
     memset(resVal, 0, sizeof(double)*QUADS*TWOXONES*COLS*ROWS);
-    Pds::DetInfo info(0,_detector,0,_device,0);
+    Pds::DetInfo info(0,_detector,0,_device,devId);
     _quads = QUADS;
     _twoXones = TWOXONES;
     if(device == Pds::DetInfo::Cspad2x2) {
@@ -221,7 +224,7 @@ public:
     int fail = -1;
     if ((device==Pds::DetInfo::Cspad and (fail=getCspadData(detector, iter))==0) 
 	or 
-	(device==Pds::DetInfo::Cspad2x2 and (fail=getCspad2x2Data(detector, iter))==0))  {
+	(device==Pds::DetInfo::Cspad2x2 and (fail=getCspad2x2Data(detector, devId, iter))==0))  {
       const Pds::CsPad::ElementHeader* element;
       while( (element=iter.next()) ) {  // loop over elements (quadrants)
         if (device==Pds::DetInfo::Cspad and fiducials != element->fiducials())
@@ -252,6 +255,7 @@ public:
 private:
   Pds::DetInfo::Detector detector;
   Pds::DetInfo::Device device;
+  int devId;
 
   double                 pedVal[QUADS][TWOXONES][COLS][ROWS];
   double                 resVal[QUADS][TWOXONES][COLS][ROWS];
@@ -310,23 +314,28 @@ void beginjob() {
     Pds::CsPad::ConfigV1 configV1;
     Pds::CsPad::ConfigV2 configV2;
     Pds::CsPad::ConfigV3 configV3;
+    Pds::CsPad::ConfigV4 configV4;
     Pds::CsPad2x2::ConfigV1 configV1_2x2;
     for (int isMini=0; isMini<2; isMini++) {
       for(unsigned i=Pds::DetInfo::NoDetector; i<Pds::DetInfo::NumDetector; i++) {
-	Pds::DetInfo::Detector detector = Pds::DetInfo::Detector(i);
-	Pds::DetInfo::Device device = (isMini == 0) ? Pds::DetInfo::Cspad : Pds::DetInfo::Cspad2x2;
-	Pds::DetInfo info(0,detector,0,device,0);
-	if (
-	    (device==Pds::DetInfo::Cspad and ((getCspadConfig(detector, configV3)==0) ||
-					      (getCspadConfig(detector, configV2)==0) ||
-					      (getCspadConfig(detector, configV1)==0)))
-	    or (device==Pds::DetInfo::Cspad2x2 and getCspad2x2Config(detector, configV3)==0)
-	    or (device==Pds::DetInfo::Cspad2x2 and getCspad2x2Config(detector, configV1_2x2)==0)
-	    )
-	  {
-	    calculators.push_back(new MyNoiseCalculator(detector,device,pedFile,resDumpFile));
-	    printf("have built noise calc\n");
+	for (int devId=0; devId<8; devId++) {
+	  if (devId>0 and isMini==0) {
+	    continue;
 	  }
+	  Pds::DetInfo::Detector detector = Pds::DetInfo::Detector(i);
+	  Pds::DetInfo::Device device = (isMini == 0) ? Pds::DetInfo::Cspad : Pds::DetInfo::Cspad2x2;
+	  if (
+	      (device==Pds::DetInfo::Cspad and ((getCspadConfig(detector, configV4)==0) ||
+						(getCspadConfig(detector, configV3)==0) ||
+						(getCspadConfig(detector, configV2)==0) ||
+						(getCspadConfig(detector, configV1)==0)))
+	      or (device==Pds::DetInfo::Cspad2x2 and getCspad2x2Config(detector, configV3)==0)
+	      or (device==Pds::DetInfo::Cspad2x2 and getCspad2x2Config(detector, devId, configV1_2x2)==0)
+	      )
+	    {
+	      calculators.push_back(new MyNoiseCalculator(detector,device,devId,pedFile,resDumpFile));
+	    }
+	}
       }
     }
   }

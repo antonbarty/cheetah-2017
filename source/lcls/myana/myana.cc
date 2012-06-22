@@ -1,7 +1,7 @@
 /* $Id: myana.cc,v 1.16 2012/02/16 21:55:20 caf Exp $ */
-//#include <TROOT.h>
-//#include <TH1F.h>
-//#include <TProfile.h>
+#include <TROOT.h>
+#include <TH1F.h>
+#include <TProfile.h>
 
 #include "myana.hh"
 #include "main.hh"

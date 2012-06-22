@@ -44,6 +44,8 @@ enum { _TH1F, _vT, _vF, _vS };
 using namespace Ami::Qt;
 
 //static QChar _integrate   (0x2026);  // ..
+static QChar _moment2     (0x2a0e);  // S=
+static QChar _moment1     (0x2a0d);  // S-
 static QChar _integrate   (0x222b);  // S
 static QChar _range       (0x2194);  // left-right arrow
 static QChar _exponentiate(0x005E);
@@ -106,13 +108,17 @@ CursorsX::CursorsX(QWidget* parent,
   { QGroupBox* expr_box = new QGroupBox("Expression:");
     expr_box->setToolTip(QString("Expression is a set of cursor names with the operations:\n" \
 				 "  A %1 B : Integrate between cursors A and B\n"\
-				 "  A %2 B : Count of bins between cursors A and B\n"\
-				 "  A %3 B : Exponentiate [value at] A to the power of [value at] B\n "	\
-				 "  A %4 B : Multiply [value at] A by [value at] B\n "	\
-				 "  A %5 B : Divide \n "	\
-				 "  A %6 B : Add \n "		\
-				 "  A %7 B : Subtract \n ")
+				 "  A %2 B : 1st-moment Integral between cursors A and B\n"\
+				 "  A %3 B : 2nd-moment Integral between cursors A and B\n"\
+				 "  A %4 B : Count of bins between cursors A and B\n"\
+				 "  A %5 B : Exponentiate [value at] A to the power of [value at] B\n "	\
+				 "  A %6 B : Multiply [value at] A by [value at] B\n "	\
+				 "  A %7 B : Divide \n "	\
+				 "  A %8 B : Add \n "		\
+				 "  A %9 B : Subtract \n ")
 			 .arg(_integrate)
+			 .arg(_moment1)
+			 .arg(_moment2)
 			 .arg(_range)
 			 .arg(_exponentiate)
 			 .arg(_multiply)
@@ -297,8 +303,10 @@ void CursorsX::calc()
       << _subtract;
 
   QStringList vops;
-  vops << _integrate
-       << _range;
+  vops << _range
+       << _integrate
+       << _moment1
+       << _moment2;
 
   Calculator* c = new Calculator(tr("Cursor Math"),"",
  				 variables, vops, ops);
@@ -329,6 +337,8 @@ void CursorsX::plot()
     expr = new_expr;
   }
   expr.replace(_integrate   ,BinMath::integrate());
+  expr.replace(_moment1     ,BinMath::moment1  ());
+  expr.replace(_moment2     ,BinMath::moment2  ());
   expr.replace(_range       ,BinMath::range    ());
   expr.replace(_exponentiate,Expression::exponentiate());
   expr.replace(_multiply    ,Expression::multiply());
@@ -366,6 +376,8 @@ void CursorsX::add_post()
     expr = new_expr;
   }
   expr.replace(_integrate   ,BinMath::integrate());
+  expr.replace(_moment1     ,BinMath::moment1  ());
+  expr.replace(_moment2     ,BinMath::moment2  ());
   expr.replace(_range       ,BinMath::range    ());
   expr.replace(_exponentiate,Expression::exponentiate());
   expr.replace(_multiply    ,Expression::multiply());

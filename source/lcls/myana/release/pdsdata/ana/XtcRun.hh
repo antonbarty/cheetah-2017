@@ -28,7 +28,7 @@ public:
 
   int jump    (int calib, int jump, int& eventNum);
  
-  int findTime( char* sTime, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime);
+  int findTime(const char* sTime, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime);
   int findTime(uint32_t uSeconds, uint32_t uNanoseconds, int& iCalib, int& iEvent, bool& bExactMatch, bool& bOvertime);
   int getStartAndEndTime(ClockTime& start, ClockTime& end);
   int findNextFiducial

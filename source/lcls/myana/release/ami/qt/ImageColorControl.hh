@@ -31,6 +31,8 @@ namespace Ami {
       float  pedestal() const;
       float  scale   () const;
       const QVector<QRgb>& color_table() const;
+    public:
+      static void set_color_choice(int);
     public slots:
       void show_scale();
       void set_auto(bool);

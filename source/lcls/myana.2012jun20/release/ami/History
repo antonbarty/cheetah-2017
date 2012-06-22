@@ -1,0 +1,77 @@
+2012-04-03 tomytsai     Added Ocean Optics spectrometer
+2012-01-05  weaver      Added PostAnalysis cache.
+2011-11-08  caf     Tag V03-00-01.
+2011-11-02  caf     Tag V03-00-00.
+2011-10-13  caf       Added support for Gsc16ai ADC.
+2011-09-07  weaver  Tag V02-13-09.  Added normalization for images/waveforms.
+2011-08-09  weaver      Added data/UserModule to replace UserAnalysis and UserFilter.
+          Added support for CspadMini (2x2).
+2011-05-31  weaver  Tag V01-08-00.  
+2011-05-20  weaver      Modified ClientManager to seek an unused port for connection to servers.
+          Changed use of Tuples to Dictionarys in pyami.  Removed unnecessary 
+          parameters from pyami::connect.
+2011-05-04  weaver      Modified EventHandler interface to allow configure version tracking for
+          maintaining readback of old data.
+2011-04-28  weaver      Added UserFilter plug-in handling.
+2011-04-20  weaver      Fixed task destruction for python interface.
+2011-04-12  weaver  Tag V01-07-00.  Added "Hello" multicast from server to clients to
+          trigger connect/discovery.  Removed qtclient sleep
+          prior to connect.  Fixed x86_64 build.
+          Added app/EventFilter for plug-in filter modules.
+          Added python module for scripted access to
+          monitoring servers.  Added OpenMP impl for Average.cc.
+          Added timestamp to image display.
+2011-02-15  weaver  Tag V01-06-00.  Added hidden CDS to support full resolution zoom plots.
+          Added xy pixel value histograms.
+2011-01-31  weaver      Added filter to EnvClient/Plots.  Fixed filter load.
+2011-01-19  weaver  Tag V01-05-00.  Added EntryRef type to ami/data.  Added TDC support.
+2010-09-20  weaver  Tag V01-04-00.  CspadHandler now uses pdsdata/cspad/ElementIterator.  
+          Consistent with pds* V02-08-00.
+2010-09-01  weaver  Tag V01-03-00.  EventHandler can now handle multiple configuration types.
+          Added grid, scale, and cursors to images (esp Pim).
+          Added normalization and weighted averages to EnvPlot.
+2010-08-18      cpo                     Add discriminator level for Contour projection.
+2010-08-10  weaver  Tag V01-02-00.  Added LUSI diag FEX handlers.
+2010-06-24  waaver      Added Cspad.  Added tool tips for Env scalars.
+2010-06-06  weaver  Tag V01-01-00.  Added static SummaryAnalysis.  Added FeatureCalculator for EnvPlot.
+2010-05-28  weaver      Added event/EncoderHandler and SummaryAnalysis example.
+2010-04-14  weaver      Fixed hang in TSocket::readv on zero length reads.
+          Added FccdHandler.  Image scales up to 640x640 based on input size (ROI).
+2010-03-22  weaver      Committed for release 1.10.0.
+2010-03-19  weaver  Tag V01-00-00.  Changed service/Poll broadcast to distinguish input and output (connected sockets).
+          Upgraded app to multiple monshm client model.  Changed event/ to
+          discover BLD components on Configure.  Added aggr attribute to DescEntry.
+          data/Aggregator now handles all Entry types.  qt/ added more content to
+          Save/Load feature.  DetectorSelect dynamicly learns detectors from
+          Configure.
+2010-02-22  weaver      Added client/ClientManager using TCP.  Added server aggregation.
+2010-02-11  weaver  Tag V00-05-00.  Added DetInfo to DescEntry.  qt/DetectorSelect is now dyanmic.
+2010-02-11  weaver  Tag V00-04-00.  Added ContourProjection, mouse release events.
+2009-11-24  weaver  Tag V00-03-00.  Changed DetectorSelect to reflect Camp instruments.
+2009-10-28  weaver      Changed ami/data FeatureCache index references to strings to handle cases when
+          FeatureCache list changes.  Added global reset_plots and save_plots button.
+2009-10-26  weaver      Added semaphore in AnalysisFactory to guard Analysis list.  Raised CursorsX.cc
+          number of cursors to 10.  Added prototype member to Display for discovering
+          cursor operation bin mapping (when cursor settings are loaded prior to bin mapping
+          configuration).
+2009-10-20  weaver  Tag V00-02-00.  Added EBeam and PhaseCavity BLD.  Added XtcIterator protection against
+          corrupt xtcs.  Added PeakFitPlots {FWHM,RMS}, EnvPlot.  Added plot
+          versus algebra of features.  Added scatter plots ("vs Scan").
+          Added 2 GasDet channels and 2 MBES channels.
+2009-10-13  weaver  Tag V00-01-01.  Added peak fit plots to image projections {FWHM,RMS}.
+          Extended save/restore to image processing.
+          Offline interface looks at appropriate offline array.
+2009-10-07  weaver  Tag V00-01-00.  Added offline interface to full statistics.
+          Added pulse counters to Edge,EnvPlots.
+          First try add Print buttons.
+2009-10-05  weaver      Added additional components to load/save setup.  current->1.2.6
+2009-10-02  weaver      Added global load/save feature for restoring windows/plots.
+          Fixed bug in EdgeFinder to properly scale threshold/baseline on averaged waveforms.
+2009-09-28  weaver  Tag V00-00-02.  Added "env" plots for viewing distributions/correlations/histories of PV and BLD.
+          Fixed bug with cursors plots fetching the wrong data.  Fixed handling of monomials
+          in expression parser.  Made calculator button text bigger and added bin range operation 
+          (left-right arrow).  Removed "e" as a cursor name, since it conflicts with double value
+          parsing.  Changed many top-level windows to independent child-windows.  Still can't close
+          all windows from the top-level, though.
+2009-09-23  weaver  Tag V00-00-01.  Added peak finding in images, image averaging and some bug fixes.
+2009-09-21  weaver  Tag V00-00-00.  Added image handling, zoom plots, x/y + r/phi projections.

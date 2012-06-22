@@ -1,0 +1,25 @@
+#  Comment lines begin with '#'
+#
+#  Env Name			Description
+#
+BLD:EBEAM:Q			Electron bunch charge @ L3 [nC]
+BLD:EBEAM:L3E			Electron energy @ L3 [MeV]
+BLD:EBEAM:LTUX			Electron x-position @ undulator
+BLD:EBEAM:LTUY			Electron y-position @ undulator
+BLD:EBEAM:LTUXP			Electron x-angle @ undulator
+BLD:EBEAM:LTUYP			Electron y-angle @ undulator
+BLD:EBEAM:PKCURRBC2		Electron peak bunch current @ compressor 2
+BLD:PHASECAV:T1			Phase cavity 1 electron bunch time
+BLD:PHASECAV:Q1			Phase cavity 1 electron bunch charge [pC]
+BLD:PHASECAV:T2			Phase cavity 2 electron bunch time
+BLD:PHASECAV:Q2			Phase cavity 2 electron bunch charge [pC]
+BLD:FEE:GDET1:PMT1:ENRC		FEE gas detector 1 pulse energy [mJ]
+BLD:FEE:GDET1:PMT2:ENRC		FEE gas detector 1 pulse energy [mJ]
+BLD:FEE:GDET2:PMT1:ENRC		FEE gas detector 2 pulse energy [mJ]
+BLD:FEE:GDET2:PMT2:ENRC		FEE gas detector 2 pulse energy [mJ]
+DAQ:EVR0:P0:Delay		Trigger Output 0 Delay [119 MHz]
+DAQ:EVR0:P1:Delay		Trigger Output 1 Delay [119 MHz]
+DAQ:EVR0:P2:Delay		Trigger Output 2 Delay [119 MHz]
+DAQ:EVR0:P3:Delay		Trigger Output 3 Delay [119 MHz]
+DAQ:EVR0:Evt140			Beam present [yes=1,no=0]
+DAQ:EVR0:Evt162			Beam kicker fired [yes=1,no=0]

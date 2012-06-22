@@ -1,10 +1,5 @@
 #include <fcntl.h>
 #include <errno.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
 
 #include "pdsdata/ana/XtcSlice.hh"
 

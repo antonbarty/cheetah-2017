@@ -1,7 +1,6 @@
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"
 #include "pdsdata/xtc/BldInfo.hh"
-#include <stdio.h>
 
 #include "pdsdata/index/XtcIterL1Accept.hh"
 

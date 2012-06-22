@@ -5,17 +5,29 @@ qtincdir  := qt/include
 endif
 
 # List targets (if any) for this package
-tgtnames := ami test
+tgtnames := ami ami_proxy test tcptest
 
 # List source files for each target
 tgtsrcs_ami := ami.cc AmiApp.cc AmiApp.hh
+tgtsrcs_ami_proxy := ami_proxy.cc
 tgtsrcs_test := test.cc
+tgtsrcs_tcptest := tcptest.cc
 
 # List system libraries (if any) needed by exe_a as <dir>/<lib>. 
 # Note that <lib> is the name of the library, not of the file: i.e.
 # <lib> for 'libc.so' is 'c'. Low level first.
 tgtslib_ami := $(USRLIBDIR)/rt
+tgtslib_ami_proxy := $(USRLIBDIR)/rt
 tgtslib_test := $(USRLIBDIR)/rt
+tgtslib_tcptest := $(USRLIBDIR)/rt
+
+tgtlibs_ami_proxy := ami/service ami/data ami/server ami/client
+tgtlibs_ami_proxy += pdsdata/xtcdata pdsdata/acqdata
+ifneq ($(findstring x86_64-linux,$(tgt_arch)),)
+  tgtlibs_ami_proxy += qt/QtCore
+else
+  tgtlibs_ami_proxy += qt/QtCore
+endif
 
 #
 # Need all pdsdata libraries to support dynamic linking of plug-in modules
@@ -39,6 +51,8 @@ else
   tgtlibs_ami += qt/QtCore
 endif
 
+tgtlibs_tcptest := ami/service pdsdata/xtcdata
+
 # List system include directories (if any) needed by exe_a as <incdir>.
 # tgtsinc_exe_a := /usr/include
 
@@ -47,7 +61,7 @@ libnames := app
 
 # List source files for each library
 #libsrcs_app := $(filter-out Agent.cc ami_agent.cc test.cc ami.cc,$(wildcard *.cc))
-libsrcs_app := $(filter-out test.cc ami.cc,$(wildcard *.cc))
+libsrcs_app := $(filter-out test.cc ami.cc ami_proxy.cc tcptest.cc,$(wildcard *.cc))
 # libsrcs_lib_b := src_6.cc
 
 # List special include directories (if any) needed by lib_a as

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. /reg/g/pcds/setup/pathmunge.sh
+. /reg/g/pcds/setup/python.sh
+pythondir=/reg/common/package/python/2.5.5
+pathmunge $pythondir/bin
+ldpathmunge $pythondir/lib
+
+QTINC=../../build/qt/include
+QTLIB=../../build/qt/lib/x86_64-linux-dbg
+
+FFTINC=fftw/include
+FFTLIB=fftw/lib
+
+rm -f *.o
+g++ -g -c ColorMap.cc || exit 1
+g++ -g -c -I$FFTINC -I$QTINC Display.cc || exit 1
+g++ -g -c -I$FFTINC RMatrix.cc || exit 1
+g++ -g -c -I$FFTINC CMatrix.cc || exit 1
+g++ -g -c -I$FFTINC jread.cc || exit 1
+g++ -o jread *.o -g -L$QTLIB -L$FFTLIB -lrt -lQtGui -lQtCore -lfftw3 || exit 1
+rm -f *.o
+
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$QTLIB
+
+./jread

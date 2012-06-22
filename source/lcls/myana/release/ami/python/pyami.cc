@@ -506,8 +506,12 @@ pyami_connect(PyObject *self, PyObject *args)
     return NULL;
   }
   if (mcinterface==0) {
-    PyErr_SetString(PyExc_RuntimeError,"failed to lookup group interface");
-    return NULL;
+    if (servergroup & 0x80000000) {
+      PyErr_SetString(PyExc_RuntimeError,"failed to lookup group interface");
+      return NULL;
+    }
+    else
+      mcinterface = ppinterface;
   }
 
   if (_discovery)
