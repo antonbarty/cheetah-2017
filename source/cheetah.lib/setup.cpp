@@ -402,20 +402,16 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
  *	Read and process configuration file
  */
 void cGlobal::parseConfigFile(char* filename) {
-	char  cbuf[cbufsize];
-	char  tag[cbufsize];
-	char  value[cbufsize];
-	char  group[cbufsize];
+	
+	char  cbuf[cbufsize] = "";
+	char  tag[cbufsize] = "";
+	char  value[cbufsize] = "";
+	char  group[cbufsize] = "";
 	char  groupPrepend[cbufsize] = "";
-	char  ts[cbufsize];
+	char  ts[cbufsize] = "";
 	char  *cp;
 	FILE  *fp;
 	int i,cnt;
-
-	char test1[cbufsize];
-	char *test2;
-	char test3[cbufsize];
-
 
 	/*
 	 * Open configuration file for reading
@@ -434,9 +430,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	 * Loop through configuration file until EOF
 	 * Ignore lines beginning with a '#' (comments)
 	 * Split each line into tag and value at the '=' sign
-	 */
-
-	
+	 */	
 
 	while (feof(fp) == 0) {
 
@@ -482,9 +476,6 @@ void cGlobal::parseConfigFile(char* filename) {
 			strcpy(cbuf,ts);
 		}
 	
-		/* show the input keywords */
-		printf(cbuf);
-
 		/* get the value */
 		cp = strpbrk(cbuf, "=");
 		if (cp == NULL)
