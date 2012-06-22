@@ -3,15 +3,15 @@
 setenv CXXFLAGS -g
 #setenv ARCH i386-linux-dbg
 #setenv CXXFLAGS -O4
-setenv ARCH x86_64-linux
-#setenv ROOTSYS /reg/g/pcds/package/root
+setenv ARCH i386-linux-opt
+setenv ROOTSYS /reg/g/pcds/package/root
 set PDSLIBS='-l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -lgsc16aidata -llusidata -lcspaddata -lindexdata -lanadata -lcspad2x2data -lphasicsdata -ltimepixdata -loceanopticsdata -lflidata'
 set OBJFILES='main.o'
 
-g++ $CXXFLAGS -Irelease -Wall -c main.cc
-g++ $CXXFLAGS -Irelease -Wall -c myana.cc
-g++ $CXXFLAGS -Irelease -Wall -c myana_morefeatures.cc
-g++ $CXXFLAGS $OBJFILES -lpthread myana.o -Wl,-rpath=$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
-g++ $CXXFLAGS $OBJFILES -lpthread myana_morefeatures.o -Wl,-rpath=$PWD/release/build/pdsdata/lib/$ARCH/ -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c main.cc
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c myana.cc
+g++ -m32 $CXXFLAGS -Irelease -Wall `$ROOTSYS/bin/root-config --cflags` -c myana_morefeatures.cc
+g++ -m32 $CXXFLAGS $OBJFILES myana.o -Wl,-rpath=$ROOTSYS/lib:$PWD/release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana
+g++ -m32 $CXXFLAGS $OBJFILES myana_morefeatures.o -Wl,-rpath=$ROOTSYS/lib:$PWD/release/build/pdsdata/lib/$ARCH/ `$ROOTSYS/bin/root-config --libs` -Lrelease/build/pdsdata/lib/$ARCH/ $PDSLIBS -o myana_morefeatures
 
 

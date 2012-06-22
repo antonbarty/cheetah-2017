@@ -1,8 +1,23 @@
 #include "ami/qt/DetectorSelect.hh"
 #include "ami/qt/Path.hh"
+#include "ami/qt/ImageColorControl.hh"
 #include "ami/service/Ins.hh"
 
 #include <QtGui/QApplication>
+
+static void usage(char* p)
+{
+  printf("Usage: %s -I <interface> [-i <interface>] -s <address> [-f <path> -F <path> -C <int>]\n" \
+         "arguments: <interface> = IP address (dot notation) or ethX\n" \
+         "           <address>   = IP address (dot notation)\n" \
+         "           <path>      = full file path\n" \
+         "-I <interface> : point-to-point interface (cds subnet)\n" \
+         "-i <interface> : multicast interface (fez subnet), reqd if -s is multicast group\n" \
+         "-s <address>   : server multicast group or proxy address\n" \
+         "-f <path>      : default path for load/save operations\n" \
+         "-F <path>      : file to load initial configuration\n" \
+         "-C <int>       : color palette choice (0-jette, 1-radiation)\n", p);
+}
 
 int main(int argc, char **argv) 
 {
@@ -26,6 +41,14 @@ int main(int argc, char **argv)
     }
     else if (strcmp(argv[i],"-F")==0) {
       loadfile = argv[++i];
+    }
+    else if (strcmp(argv[i],"-C")==0) {
+      Ami::Qt::ImageColorControl::set_color_choice(atoi(argv[++i]));
+    }
+    else if (strcmp(argv[i],"-h")==0 ||
+             strcmp(argv[i],"-?")==0) {
+      usage(argv[0]);
+      exit(1);
     }
   }
   QApplication app(argc, argv);

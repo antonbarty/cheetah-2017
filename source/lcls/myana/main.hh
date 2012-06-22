@@ -1,4 +1,4 @@
-/* $Id: main.hh,v 1.57 2012/05/04 23:26:35 tomytsai Exp $ */
+/* $Id: main.hh,v 1.59 2012/06/07 16:08:34 weaver Exp $ */
 #ifndef MAIN_H
 #define MAIN_H
 
@@ -78,13 +78,15 @@ int getIpmFexConfig   (Pds::DetInfo::Detector det, int iDevId,
            float* base3, float* scale3,
            float& xscale, float& yscale);
 
-namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; class ConfigV3;}}
+namespace Pds { namespace CsPad { class ConfigV1; class ConfigV2; class ConfigV3; class ConfigV4; }}
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV1& cfg);
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV2& cfg);
 int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV3& cfg);
+int getCspadConfig (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV4& cfg);
 int getCspad2x2Config (Pds::DetInfo::Detector det, Pds::CsPad::ConfigV3& cfg);
 namespace Pds { namespace CsPad2x2 { class ConfigV1; }}
 int getCspad2x2Config (Pds::DetInfo::Detector det, Pds::CsPad2x2::ConfigV1& cfg);
+int getCspad2x2Config (Pds::DetInfo::Detector det, int DetId, Pds::CsPad2x2::ConfigV1& cfg);
 
 int getGsc16aiConfig(Pds::DetInfo::Detector det, int iDetId, int iDevId,
                      uint16_t&   voltageRange,
@@ -182,6 +184,7 @@ int getCspadData  (Pds::DetInfo::Detector det, Pds::CsPad::ElementIterator& iter
 namespace Pds { namespace CsPad { class MiniElementV1; }}
 int getCspad2x2Data (Pds::DetInfo::Detector det, const Pds::CsPad::MiniElementV1*& elem);
 int getCspad2x2Data (Pds::DetInfo::Detector det, Pds::CsPad::ElementIterator& iter);
+int getCspad2x2Data (Pds::DetInfo::Detector det, int iDetId, Pds::CsPad::ElementIterator& iter);
 
 int getBldIpimbVolts(Pds::BldInfo::Type bldType, float &channel0, float &channel1,
                      float &channel2, float &channel3);
@@ -214,8 +217,10 @@ int   getEpicsPvNumber();
 int   getEpicsPvConfig(int iPvId, const char*& sPvName, int& iType, int& iNumElements);
 int   getEpicsPvValue (int pvId, const void*& value, int& dbrype, struct tm& tmTimeStamp, int& nanoSec);
 
-//void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-//                   float thresh, TH1* hist);
+/*
+void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
+                   float thresh, TH1* hist);
+*/
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
         float thresh, double* edge, int& n, int maxhits);
 

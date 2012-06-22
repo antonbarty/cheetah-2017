@@ -20,7 +20,7 @@ namespace Ami {
   class Task;
   class Socket;
   class TSocket;
-  class ConnectRoutine;
+  class Routine;
 
   class ClientManager : public Routine {
   public:
@@ -67,7 +67,7 @@ namespace Ami {
     Semaphore       _listen_sem;
     Semaphore       _client_sem;
     Ins             _server;
-    ConnectRoutine* _reconn;
+    Routine*        _reconn;
   };
 
 };

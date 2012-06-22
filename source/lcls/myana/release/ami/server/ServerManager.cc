@@ -10,6 +10,7 @@
 #include "ami/data/Message.hh"
 #include "ami/server/Server.hh"
 #include "ami/server/VServerSocket.hh"
+#include "ami/service/Semaphore.hh"
 #include "ami/service/TSocket.hh"
 #include "ami/service/Exception.hh"
 
@@ -26,7 +27,8 @@ ServerManager::ServerManager(unsigned interface,
   Poll        (1000),
   _interface  (interface),
   _serverGroup(serverGroup),
-  _socket     (0)
+  _socket     (0),
+  _connect_sem(0)
 {
 }
 
@@ -36,9 +38,10 @@ ServerManager::~ServerManager()
 }
 
 
-void ServerManager::serve(Factory& factory)
+void ServerManager::serve(Factory& factory, Semaphore* sem)
 {
   _factory = &factory;
+  _connect_sem = sem;
   try {
     if (Ins::is_multicast(_serverGroup))
       _socket = new VServerSocket(Ins(_serverGroup,Port::serverPort()),
@@ -121,6 +124,11 @@ int ServerManager::processIo()
         _servers.push_back(srv);
     }
     manage(*srv);
+
+    if (_connect_sem) {
+      _connect_sem->give();
+      _connect_sem = 0;
+    }
   }
   else {
     _socket->read(&request, sizeof(request));
@@ -147,6 +155,11 @@ int ServerManager::processIo()
       if (request.id())
         _servers.push_back(srv);
       manage(*srv);
+
+      if (_connect_sem) {
+        _connect_sem->give();
+        _connect_sem = 0;
+      }
      } 
     catch (Event& e) {
       printf("Connect failed: %s\n",e.what());

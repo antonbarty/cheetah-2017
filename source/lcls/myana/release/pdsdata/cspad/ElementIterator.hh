@@ -51,6 +51,7 @@ namespace Pds {
     class ConfigV1;
     class ConfigV2;
     class ConfigV3;
+    class ConfigV4;
     class ElementHeader;
     
     class Section {
@@ -74,6 +75,7 @@ namespace Pds {
       ElementIterator(const ConfigV1&, const Xtc&);
       ElementIterator(const ConfigV2&, const Xtc&);
       ElementIterator(const ConfigV3&, const Xtc&);
+      ElementIterator(const ConfigV4&, const Xtc&);
       ElementIterator(const ElementIterator&);
       ~ElementIterator();
     public:

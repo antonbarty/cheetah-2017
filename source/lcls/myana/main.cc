@@ -1,13 +1,15 @@
-/* $Id: main.cc,v 1.109 2012/05/07 17:32:29 tomytsai Exp $ */
+/* $Id: main.cc,v 1.111 2012/06/07 16:08:33 weaver Exp $ */
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
 #include <fcntl.h>
 
-//#include <TROOT.h>
-//#include <TApplication.h>
-//#include <TFile.h>
-//#include <TH1.h>
+/*
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TFile.h>
+#include <TH1.h>
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,17 +21,10 @@
 #include <queue>
 #include <map>
 #include <algorithm>
-#include <memory>
 #include <list>
 #include <iterator>
 #include <poll.h>
 #include <signal.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include "pdsdata/xtc/TypeId.hh"
 #include "pdsdata/xtc/Src.hh"
@@ -61,6 +56,7 @@
 #include "pdsdata/evr/ConfigV3.hh"
 #include "pdsdata/evr/ConfigV4.hh"
 #include "pdsdata/evr/ConfigV5.hh"
+#include "pdsdata/evr/ConfigV6.hh"
 #include "pdsdata/evr/DataV3.hh"
 #include "pdsdata/princeton/ConfigV1.hh"
 #include "pdsdata/princeton/ConfigV2.hh"
@@ -80,6 +76,7 @@
 #include "pdsdata/cspad/ConfigV1.hh"
 #include "pdsdata/cspad/ConfigV2.hh"
 #include "pdsdata/cspad/ConfigV3.hh"
+#include "pdsdata/cspad/ConfigV4.hh"
 #include "pdsdata/cspad/ElementIterator.hh"
 #include "pdsdata/cspad/ElementHeader.hh"
 #include "pdsdata/cspad/MiniElementV1.hh"
@@ -594,7 +591,6 @@ void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
       peak = y;
   }
 }
-
 /*
 void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
                    float thresh, TH1* hist) {
@@ -604,7 +600,7 @@ void fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
   for(int i=0; i<n; i++)
     hist->Fill(edge[i],1.0);
 }
- */
+*/
 
 /* 
  * Time Data
@@ -881,6 +877,17 @@ int getCspadConfig (DetInfo::Detector det, CsPad::ConfigV3& cfg)
 }
 
 
+int getCspadConfig (DetInfo::Detector det, CsPad::ConfigV4& cfg)
+{
+  const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0), 
+                                        TypeId(TypeId::Id_CspadConfig,4) );
+  if (xtc && xtc->damage.value()==0) {
+    cfg = *reinterpret_cast<const CsPad::ConfigV4*>(xtc->payload());
+  }
+  return xtc ? xtc->damage.value() : 2;
+}
+
+
 int getCspad2x2Config (DetInfo::Detector det, CsPad::ConfigV3& cfg)
 {
   const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,0), 
@@ -893,7 +900,12 @@ int getCspad2x2Config (DetInfo::Detector det, CsPad::ConfigV3& cfg)
 
 int getCspad2x2Config (DetInfo::Detector det, CsPad2x2::ConfigV1& cfg)
 {
-  const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,0), 
+  return getCspad2x2Config(det, 0, cfg);
+}
+
+int getCspad2x2Config (DetInfo::Detector det, int iDevId, CsPad2x2::ConfigV1& cfg)
+{
+  const Xtc* xtc = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,iDevId), 
                                         TypeId(TypeId::Id_Cspad2x2Config,1) );
   if (xtc && xtc->damage.value()==0) {
     cfg = *reinterpret_cast<const CsPad2x2::ConfigV1*>(xtc->payload());
@@ -1822,6 +1834,15 @@ int getCspadData  (DetInfo::Detector det, CsPad::ElementIterator& iter)
     }
   }
 
+  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad,0),
+                                          TypeId(TypeId::Id_CspadConfig,4) );
+    if (cfg && cfg->damage.value()==0) {
+      iter = CsPad::ElementIterator(*reinterpret_cast<CsPad::ConfigV4*>(cfg->payload()),
+                                    *xtc);
+      return 0;
+    }
+  }
+
   return 2;
 }
 
@@ -1837,6 +1858,8 @@ int getCspad2x2Data (DetInfo::Detector det, const CsPad2x2::ElementV1*& elem)
   return 0;
 }
 
+
+
 int getCspad2x2Data (DetInfo::Detector det, const CsPad::MiniElementV1*& elem)
 {
   const Xtc* xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad2x2,0),
@@ -1849,16 +1872,20 @@ int getCspad2x2Data (DetInfo::Detector det, const CsPad::MiniElementV1*& elem)
   return 0;
 }
 
-int getCspad2x2Data (DetInfo::Detector det, CsPad::ElementIterator& iter)
+int getCspad2x2Data (DetInfo::Detector det, CsPad::ElementIterator& iter) {
+  return getCspad2x2Data(det, 0, iter);
+}
+
+int getCspad2x2Data (DetInfo::Detector det, int iDevId, CsPad::ElementIterator& iter)
 {
   unsigned newFlag = 0; 
-  const Xtc* xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad2x2,0),
+  const Xtc* xtc = _estore->lookup_evt( DetInfo(0,det,0,DetInfo::Cspad2x2,iDevId),
                                         TypeId(TypeId::Id_Cspad2x2Element,1) );
 
   if (!xtc || xtc->damage.value())
     return 2;
 
-  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,0),
+  { const Xtc* cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,iDevId),
                                           TypeId(TypeId::Id_CspadConfig,3) );
     if (!(cfg && cfg->damage.value()==0)) {
       cfg = _estore->lookup_cfg( DetInfo(0,det,0,DetInfo::Cspad2x2,0),
@@ -1871,7 +1898,7 @@ int getCspad2x2Data (DetInfo::Detector det, CsPad::ElementIterator& iter)
 
     if (cfg && cfg->damage.value()==0) {
       
-      const Xtc* nxtc = _estore->buffer( DetInfo(0,det,0,DetInfo::Cspad2x2,0), 
+      const Xtc* nxtc = _estore->buffer( DetInfo(0,det,0,DetInfo::Cspad2x2,iDevId), 
                                          TypeId(TypeId::Id_CspadElement,2),
                                          sizeof(CsPad::ElementHeader)+2*sizeof(CsPad::Section));
 
@@ -2963,7 +2990,7 @@ int convertEventRangeToNo(XtcRun& run, const TEventRangeList& lEventRange, TEven
       bool  bOvertime   = false;
       int   iCalib1     = -1;
       int   iEvent1     = -1;
-      int iError = run.findTime((char *)itEventRange->strEvent1.c_str(), iCalib1, iEvent1, bExactMatch, bOvertime);      
+      int iError = run.findTime(itEventRange->strEvent1.c_str(), iCalib1, iEvent1, bExactMatch, bOvertime);      
       if (iError != 0)
       {
         if (bOvertime)
@@ -2984,7 +3011,7 @@ int convertEventRangeToNo(XtcRun& run, const TEventRangeList& lEventRange, TEven
             
       int iCalib2 = -1;
       int iEvent2 = -1;
-      iError = run.findTime((char *) itEventRange->strEvent2.c_str(), iCalib2, iEvent2, bExactMatch, bOvertime);      
+      iError = run.findTime(itEventRange->strEvent2.c_str(), iCalib2, iEvent2, bExactMatch, bOvertime);      
       if (iError != 0)
       {
         if (bOvertime)

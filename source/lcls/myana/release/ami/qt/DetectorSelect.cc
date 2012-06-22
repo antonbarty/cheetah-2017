@@ -353,6 +353,7 @@ Ami::Qt::AbsClient* DetectorSelect::_create_client(const Pds::Src& src,
     case Pds::DetInfo::Opal1000 : 
     case Pds::DetInfo::Opal2000 : 
     case Pds::DetInfo::Opal4000 : 
+    case Pds::DetInfo::Opal8000 : 
     case Pds::DetInfo::Phasics  :
     case Pds::DetInfo::Timepix  :
     case Pds::DetInfo::TM6740   : 

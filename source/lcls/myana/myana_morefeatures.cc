@@ -1,7 +1,7 @@
 /* $Id: myana_morefeatures.cc,v 1.34 2012/05/04 23:26:35 tomytsai Exp $ */
-//#include <TROOT.h>
-//#include <TH1F.h>
-//#include <TProfile.h>
+#include <TROOT.h>
+#include <TH1F.h>
+#include <TProfile.h>
 
 #include "myana.hh"
 #include "main.hh"
@@ -15,15 +15,15 @@ static const int            maxETofChannel = 20;
 static int                  numChannelsITof;
 static int                  numSamplesITof;
 static double               sampleIntervalITof;
-//static TProfile*            profileITof = NULL;
-//static TH1F*                h1fITof[numITofShot];
-//static TH1F*                constFracITof;
+static TProfile*            profileITof = NULL;
+static TH1F*                h1fITof[numITofShot];
+static TH1F*                constFracITof;
 static unsigned int         shotCountITof = 0;
 
 static int                  numChannelsETof;
 static int                  numSamplesETof;
 static double               sampleIntervalETof;
-//static TProfile*            profileETof[maxETofChannel];
+static TProfile*            profileETof[maxETofChannel];
 
 static int                  numChannelsMbes;
 static int                  numSamplesMbes;
@@ -115,18 +115,17 @@ void beginjob() {
   fail = getAcqConfig( AmoITof, numChannelsITof, numSamplesITof, sampleIntervalITof);
 
   // create an "averaging" histogram (called "profile")
-//  profileITof = new TProfile("avg","avg",numSamplesITof,
-//                             0.0,sampleIntervalITof,"");
-//  profileITof->SetYTitle("Volts");    //optional
-//  profileITof->SetXTitle("Seconds");//optional
+  profileITof = new TProfile("avg","avg",numSamplesITof,
+                             0.0,sampleIntervalITof,"");
+  profileITof->SetYTitle("Volts");    //optional
+  profileITof->SetXTitle("Seconds");//optional
 
   // create a constant-fraction histogram for itof.
-//  constFracITof = new TH1F("ITOF Constant Fraction","ITOF Constant Fraction",
-//                           numSamplesITof,0.0,sampleIntervalITof);
+  constFracITof = new TH1F("ITOF Constant Fraction","ITOF Constant Fraction",
+                           numSamplesITof,0.0,sampleIntervalITof);
 
   char name[32];
   // create 5 individual shot histograms
-  /*
   for (i=0;i<numITofShot;i=i+1) 
     {
       sprintf(name,"shot%3d",i);
@@ -134,13 +133,12 @@ void beginjob() {
       h1fITof[i]->SetYTitle("Volts");    //optional
       h1fITof[i]->SetXTitle("Seconds");//optional
     }    
-*/
+
   /*
    * Processing ETof Config Data.  Make an averaging histogram for each channel.
    */
   fail = getAcqConfig( AmoETof, numChannelsETof, numSamplesETof, sampleIntervalETof);    
   // create 5 individual shot histograms
-  /*
   for (i=0;i<numChannelsETof;i=i+1) {
     sprintf(name,"ETOF Channel %d",i);
     profileETof[i] = new TProfile(name,name,numSamplesETof,
@@ -148,7 +146,7 @@ void beginjob() {
     profileETof[i]->SetYTitle("Volts");    //optional
     profileETof[i]->SetXTitle("Seconds");//optional
   }    
-*/
+
   /*
    * Processing Mbes Config Data
    */
@@ -293,17 +291,17 @@ void event()
   {        
     float baseline  = -0.03;
     float threshold = -0.06;
-//    fillConstFrac(timeITof,voltageITof,numSamplesITof,
-//                  baseline,threshold,constFracITof);
+    fillConstFrac(timeITof,voltageITof,numSamplesITof,
+                  baseline,threshold,constFracITof);
 
     for (i=0;i<numSamplesITof;i=i+1) 
       {
         double t = timeITof[i];
         double v = voltageITof[i];
-//        profileITof->Fill(t,v);
-//        if (shotCountITof<5) h1fITof[shotCountITof]->Fill(t,v);
+        profileITof->Fill(t,v);
+        if (shotCountITof<5) h1fITof[shotCountITof]->Fill(t,v);
       }
-//    shotCountITof++;
+    shotCountITof++;
   }
 
   /*
@@ -320,7 +318,7 @@ void event()
             {
               double t = timeETof[j];
               double v = voltageETof[j];
-//              profileETof[i]->Fill(t,v);
+              profileETof[i]->Fill(t,v);
             }
         }
     }

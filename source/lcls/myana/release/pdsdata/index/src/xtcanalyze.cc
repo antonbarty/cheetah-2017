@@ -6,15 +6,6 @@
 #include <errno.h>
 #include <vector>
 #include <string>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <cstdlib>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"

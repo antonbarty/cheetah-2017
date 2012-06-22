@@ -1,19 +1,13 @@
 #include <iostream>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "XtcRunSet.hh"
 
 using namespace std;
 
-/*
 static void sigfunc(int sig_no) {
   cout << endl << "Caught " << strsignal(sig_no) << " signal, exiting..." << endl;
   exit(0);
 }
- */
 
 void usage(char* progname) {
   cerr << "Usage: " << progname

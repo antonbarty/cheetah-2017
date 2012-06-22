@@ -529,10 +529,10 @@ namespace CspadMiniGeometry {
     {
       char buff[64];
       _cache = &cache;
-      const char* detname = DetInfo::name(static_cast<const DetInfo&>(_src).detector());
+      const char* detname = DetInfo::name(static_cast<const DetInfo&>(_src));
       mini->fill(image, (1<<2)-1);
       for(unsigned a=0; a<4; a++) {
-        sprintf(buff,"%s:CspadMini:Temp[%d]",detname,a);
+        sprintf(buff,"%s:Temp[%d]",detname,a);
         _feature[a] = cache.add(buff);
       }
     }

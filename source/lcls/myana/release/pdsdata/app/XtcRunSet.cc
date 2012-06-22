@@ -4,7 +4,6 @@
 #include "pdsdata/xtc/ProcInfo.hh"
 #include <iostream>
 #include <dirent.h>
-#include <string.h>
 
 using namespace Pds;
 using namespace std;

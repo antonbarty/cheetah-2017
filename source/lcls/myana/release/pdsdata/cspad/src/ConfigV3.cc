@@ -36,7 +36,7 @@ unsigned ConfigV3::roiMask      (int iq) const
 
 unsigned ConfigV3::numAsicsRead () const
 {
-  return ((_AsicMask&0xf)==1) ? (4) : (16);
+  return (_AsicMask&0xf==1) ? 4 : 16;
 }
 
 unsigned ConfigV3::numAsicsStored(int iq) const
