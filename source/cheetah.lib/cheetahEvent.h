@@ -38,7 +38,8 @@ public:
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
 
-	
+	// Hit finding
+	int			hit;
 	
 	
 	// Peak info
@@ -54,6 +55,7 @@ public:
 	float		*peak_npix;				// Number of pixels in peak
 	float       *peak_snr;           // Signal-to-noise of peak
 	float		peakResolution;			// Radius of 80% of peaks
+	float		peakResolutionA;			// Radius of 80% of peaks
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks

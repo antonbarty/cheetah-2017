@@ -78,6 +78,7 @@ cEventData* cheetahNewEvent(void) {
     
     // Initialise any common default values
     eventData->useThreads = 0;
+    eventData->hit = 0;
     
     // Return
     return eventData;

@@ -53,7 +53,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	strcpy(outfile, info->eventname);
 	
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->cleanedfp, "r%04u/%s, %i, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakDensity);
+	fprintf(global->cleanedfp, "r%04u/%s, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	

@@ -171,29 +171,42 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	if( eventData->nPeaks > 1 &&
 	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
 		   
-		   long	np;
-		   long  kk;
-		   float	resolution;
-		   float	cutoff = 0.8;
-		   
-		   np = eventData->nPeaks;
-		   if(np >= global->hitfinderNpeaksMax) 
-			   np = global->hitfinderNpeaksMax; 
-		   
-		   float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
-		   for(long k=0; k<np; k++) {
-			   buffer1[k] = eventData->peak_com_r_assembled[k];
-		   }
-		   kk = (long) floor(cutoff*np);
-		   resolution = kth_smallest(buffer1, np, kk);
-		   
-		   eventData->peakResolution = resolution;
-		   if(resolution > 0) {
-			   float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
-			   eventData->peakDensity = (cutoff*np)/area;
-		   }
-		   
-		   free(buffer1);
+		long	np;
+		long  kk;
+		float	resolution;
+		float	resolutionA;	
+		float	cutoff = 0.95;
+	   
+		np = eventData->nPeaks;
+		if(np >= global->hitfinderNpeaksMax) 
+		   np = global->hitfinderNpeaksMax; 
+		kk = (long) floor(cutoff*np);
+	
+
+
+		// Pixel radius resolution (bigger is better)
+		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
+		for(long k=0; k<np; k++) 
+			buffer1[k] = eventData->peak_com_r_assembled[k];
+		resolution = kth_smallest(buffer1, np, kk);		   
+		eventData->peakResolution = resolution;
+		free(buffer1);
+	
+		// Resolution to real space (in Angstrom)
+		// Crystallographic resolution d = lambda/sin(theta)
+		float z = global->detector[0].detectorZ;
+		float dx = global->detector[0].pixelSize;
+		double r = sqrt(z*z+dx*dx*resolution*resolution);
+		double sintheta = dx*resolution/r;
+		resolutionA = eventData->wavelengthA/sintheta;
+		eventData->peakResolutionA = resolutionA;
+
+	
+		if(resolution > 0) {
+			float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
+			eventData->peakDensity = (cutoff*np)/area;
+		}
+	   
     } 
 	
 	// Update central hit counter
@@ -915,7 +928,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					eventData->peak_com_x_assembled[peakindex] = global->detector[detID].pix_x[e];
 					eventData->peak_com_y_assembled[peakindex] = global->detector[detID].pix_y[e];
 					eventData->peak_com_r_assembled[peakindex] = global->detector[detID].pix_r[e];
-					
+				
 					/* Note that we only increment the peak counter if this is a new one */
 					if ( newpeak ) counter++;
 					

@@ -784,8 +784,9 @@ void cGlobal::writeConfigurationLog(void){
 		exit(1);
 	}
 	
-	fprintf(fp,"\n\n");
-	fprintf(fp, ">-------- Start of ini params --------<\n");
+	fprintf(fp, "# Automatic output of all Cheetah configurations settings\n");
+	fprintf(fp, "# (if not set in your .ini, these are the default values used in calculation)\n");
+
 	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
 	//fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
 	//fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
@@ -922,7 +923,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
@@ -931,7 +932,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakDensity\n");
+	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
 	pthread_mutex_unlock(&framefp_mutex);
 
 	pthread_mutex_lock(&peaksfp_mutex);
@@ -1055,12 +1056,12 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "End time: %s\n",timestr);
 	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
+	fprintf(fp, "Number of hits: %li\n",nhits);
+	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "nFrames in powder patterns:\n");
 	for(long i=0; i<nPowderClasses; i++) {
 		fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
 	}
-	fprintf(fp, "Number of hits: %li\n",nhits);
-	fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
