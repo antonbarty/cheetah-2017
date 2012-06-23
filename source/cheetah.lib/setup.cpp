@@ -454,17 +454,23 @@ void cGlobal::parseConfigFile(char* filename) {
 			if (cbuf[i] == '#'){
 				cbuf[i] = '\n';
 				cbuf[i+1] = '\0';
+				break;
 			}
 		}
 
+
 		/* skip empty lines */
 		if ( strlen(cbuf) <= 1) continue;
+
+		
+		printf("%s\n",cbuf);
 
 		/* check for string prepend */
 		cp = strrchr(cbuf,']');
 		if (cp != NULL){
 			*(cp) = '\0';
-			strcpy(groupPrepend,cbuf+1);
+			strncpy(groupPrepend,cbuf+1,cbufsize);
+			groupPrepend[cbufsize-1] = '\0';
 			if (strlen(groupPrepend) != 0) 
 				strcat(groupPrepend,"/");
 			continue;
@@ -472,9 +478,9 @@ void cGlobal::parseConfigFile(char* filename) {
 
 		/* prepend string */
 		if (strcmp(groupPrepend, "")) {
-			strcpy(ts,groupPrepend);
+			strncpy(ts,groupPrepend,cbufsize);
 			strcat(ts,cbuf);
-			strcpy(cbuf,ts);
+			strncpy(cbuf,ts,cbufsize);
 		}
 	
 		/* get the value */
