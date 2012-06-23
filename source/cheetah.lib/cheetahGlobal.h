@@ -270,6 +270,9 @@ public:
 
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int      fudgeevr41;
+	int      evr41previous;
+	double   lasttime;
+	int      laserPumpScheme;
 
 public:
 	/**

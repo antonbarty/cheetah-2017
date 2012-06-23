@@ -136,6 +136,8 @@ void cGlobal::defaultConfiguration(void) {
 
 	// Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
 	fudgeevr41 = 0; // this means no fudge by default
+	lasttime = 0;
+	laserPumpScheme = 0;
 
 }
 
@@ -752,6 +754,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
+	else if (!strcmp(tag, "laserpumpscheme")) {
+		laserPumpScheme = atoi(value);
+	}
 	// Unknown tags
 	else {
 		//printf("\tUnknown tag: %s = %s\n",tag,value);
@@ -922,7 +927,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+	fprintf(framefp, "# eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");

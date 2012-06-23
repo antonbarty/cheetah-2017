@@ -72,14 +72,15 @@ public:
 	double		wavelengthA;		// in Angstrom
 	
 	double      gmd1;
-    double      gmd2;
+	double      gmd2;
 	double		gmd11;
 	double		gmd12;
 	double		gmd21;
 	double		gmd22;
     
-	bool		laserEventCodeOn;
-    double      laserDelay;
+	bool        laserEventCodeOn;
+	double      laserDelay;
+	int         samplePumped;
 	
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
@@ -96,7 +97,7 @@ public:
 	
 	// Thread management
 	int		threadID;
-    int     useThreads;
+	int     useThreads;
 	
 } ;
 
