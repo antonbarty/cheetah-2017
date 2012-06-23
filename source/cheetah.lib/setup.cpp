@@ -512,7 +512,8 @@ void cGlobal::parseConfigFile(char* filename) {
 			
 			/* tag doesn't belog to global?  Then by default we will pass 
 			 * it to the first detector. */
-			fail = detector[0].parseConfigTag(tag,value);
+			if ( fail != 0 )
+				fail = detector[0].parseConfigTag(tag,value);
 
 		} else {
 
@@ -541,13 +542,12 @@ void cGlobal::parseConfigFile(char* filename) {
 				exit(0);
 			}
 
-			if (fail != 0){
-				printf("The tag %s is not recognized.\n",tag);
-				exit(0);
-			}
-
 		}
 
+		if (fail != 0){
+			printf("The tag %s is not recognized.\n",tag);
+			exit(0);
+		}
 
 	}
 
