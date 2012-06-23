@@ -217,13 +217,10 @@ else
 	cd $SAVEDIR
 	echo "Deleting previous $SCRIPTNAME files"
 	rm -f *.h5 \
-	      cheetah.ini \
-	      cspad-cryst.ini \
-	      cleaned.txt  \
-	      frames.txt  \
-	      log.txt  \
-	      peaks.txt  \
-	      xtcfiles.txt \
+			*.ini \
+			*.out \
+			*.log \
+			*.txt 
 	      &> /dev/null
 fi
 
