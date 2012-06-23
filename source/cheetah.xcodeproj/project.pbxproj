@@ -39,7 +39,6 @@
 
 /* Begin PBXFileReference section */
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
-		4D4892A41520728300B89D73 /* CxiDs1.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CxiDs1.ini; sourceTree = "<group>"; };
 		4D5125671305CF080094D8E9 /* cheetah.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cheetah.ini; sourceTree = "<group>"; };
 		4DB5DD25153828EE00EBE8AA /* cheetah.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cheetah.cpp; sourceTree = "<group>"; };
 		4DB5DD2815382D8E00EBE8AA /* backgroundCorrection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = backgroundCorrection.cpp; sourceTree = "<group>"; };
@@ -92,7 +91,6 @@
 			children = (
 				4D3B885012FF49F500B7ABD9 /* Makefile */,
 				4D5125671305CF080094D8E9 /* cheetah.ini */,
-				4D4892A41520728300B89D73 /* CxiDs1.ini */,
 				4DB5DD25153828EE00EBE8AA /* cheetah.cpp */,
 				4DB5DD2715382D8E00EBE8AA /* cheetah.lib */,
 			);

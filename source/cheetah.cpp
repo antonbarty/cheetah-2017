@@ -183,6 +183,7 @@ void fetchConfig()
 			configVsn[detID]= 4;
 			quadMask[detID] = configV4.quadMask();
 			asicMask[detID] = configV4.asicMask();
+			//printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
 			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV3.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV4.quads()[0].intTime(), configV4.quads()[1].intTime(), configV4.quads()[2].intTime(), configV4.quads()[3].intTime());
 		}
@@ -386,22 +387,25 @@ void event() {
 	double photonEnergyeV;
 	double wavelengthA;
 	
-	if ( getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
-	              fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2) ) {
+	fail = getEBeam(fEbeamCharge, fEbeamL3Energy, fEbeamLTUPosX, fEbeamLTUPosY,
+					fEbeamLTUAngX, fEbeamLTUAngY, fEbeamPkCurrBC2);
+	if ( fail ) {
 		
 		// If no beamline data, but default wavelength specified in ini file
 		// then use that
-		printf("getEBeam error: unable to calculate wavelength etc.\n");
+		printf("getEBeam error: unable to calculate wavelength for this event\n");
 		if ( cheetahGlobal.defaultPhotonEnergyeV != 0 ) {
 			photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
 			wavelengthA = 12398.42/photonEnergyeV;
-		} else {
+		} 
+		else {
 			wavelengthA = std::numeric_limits<double>::quiet_NaN();
 			photonEnergyeV = std::numeric_limits<double>::quiet_NaN();
 		}
-		printf("wavelengthA = %g\n", wavelengthA);
+		// printf("wavelengthA set to %g\n", wavelengthA);
 
-	} else {
+	} 
+	else {
 		
 		/* Calculate the resonant photon energy (ie: photon wavelength) */
 		// Get the present peak current in Amps
@@ -431,10 +435,12 @@ void event() {
 	double gasdet[4];
 	double gmd1;
 	double gmd2;
-	if ( getFeeGasDet(gasdet) ) {
+	fail = getFeeGasDet(gasdet);
+	if ( fail ) {
 		gmd1 = std::numeric_limits<double>::quiet_NaN();
 		gmd2 = std::numeric_limits<double>::quiet_NaN();
-	} else {
+	} 
+	else {
 		gmd1 = (gasdet[0]+gasdet[1])/2;
 		gmd2 = (gasdet[2]+gasdet[3])/2;
 	}
@@ -454,7 +460,8 @@ void event() {
      *  Laser delay setting
      */
     float laserDelay = 0;
-    if( getPvFloat(cheetahGlobal.laserDelayPV, laserDelay) == 0 ) {
+	fail = getPvFloat(cheetahGlobal.laserDelayPV, laserDelay);
+    if( fail == 0 ) {
         printf("New laser delay: %f\n",laserDelay);
     }
 
@@ -462,20 +469,34 @@ void event() {
     
 	/*
 	 *	Detector position (Z) for each detector
-     *  This encoder can be flakey and is fixed in the event processing loop
+	 *	This PV is updated at only about 1 Hz.  
+	 *	The function getPvFloat seems to misbehave.  
+	 *	Firstly, if you skip the first few XTC datagrams, you will likely
+	 *	get error messages telling you that the EPICS PV is invalid.  
+	 *	More worrysome is the fact that it occasionally gives a bogus value 
+	 *	of detposnew=0, without a fail message.  Hardware problem? 
+     *  Fixes for this flakey behaviour are found in cheetahUpdateGlobal()
 	 */
     float detposnew;
     float detectorPosition[MAX_DETECTORS];
+
+	// Loop through all detectors
     for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+		
 		fail = getPvFloat(cheetahGlobal.detector[detID].detectorZpvname, detposnew);
         if (  fail == 0 ) {
             detectorPosition[detID] = detposnew;
         }
         else {
-			printf("DetectorPosition[%i]: getPvFloat failed (%i)\n", detID, fail);
             detectorPosition[detID] = std::numeric_limits<float>::quiet_NaN();
+			/*
+			 *	Do not print error message each iteration: 
+			 *	Detector position is in slow data stream, updated at 1 Hz
+			 *	Printing error each time will create perception of errors 
+			 *	when there are in fact none
+			 */
         }
-		printf("DetectorPosition[%i] = %g\n", detID, detectorPosition[detID]);
+		//printf("DetectorPosition[%i] = %g\n", detID, detectorPosition[detID]);
     }    
     
     
@@ -545,7 +566,7 @@ void event() {
         
 		fail=getCspadData(detectorPdsDetInfo[detID], iter);
 		if (fail) {
-			printf("getCspadData fail %d (%x)\n",fail,fiducial);
+			printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
 			eventData->detector[detID].cspad_fail = fail;
 			return;
 		}
@@ -567,7 +588,7 @@ void event() {
             }
             
 
-			// loop over elements (quadrants)
+			// loop over quadrants and read out the data
 			const Pds::CsPad::ElementHeader* element;
 			while(( element=iter.next() )) {  
 				if(element->quad() < 4) {
@@ -614,6 +635,7 @@ void event() {
 	/*
 	 *	Copy TOF (aqiris) channel into Cheetah event for processing
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
+     *  Assumes that myana creates a copy of the Acqiris data arrays and will never need these data arrays later. 
 	 */
 	eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
@@ -631,6 +653,9 @@ void event() {
 		eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 		memcpy(eventData->TOFTime, tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
 		memcpy(eventData->TOFVoltage, tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
+        
+        free(tempTOFTime);
+        free(tempTOFVoltage);
 	}
 	
     
@@ -648,6 +673,7 @@ void event() {
 	 *		CxiKb1
 	 *		CxiSc1
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
+     *  Assumes that myana creates a copy of the pulnix data array and will never need these memory locations again. 
 	 */
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
@@ -660,6 +686,8 @@ void event() {
         eventData->pulnixHeight = pulnixHeight;
         eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
         memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
+        
+        free(pulnixImage);
 	}
 
     

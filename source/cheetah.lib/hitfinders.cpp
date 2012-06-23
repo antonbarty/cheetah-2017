@@ -223,6 +223,11 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
  */
 int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	
+	if(detID > global->nDetectors) {
+		printf("peakfinder 3: false detectorID %i\n",detID);
+		exit(1);
+	}
+	
 	// Dereference stuff
 	long		pix_nx = global->detector[detID].pix_nx;
 	long		pix_ny = global->detector[detID].pix_ny;
@@ -446,23 +451,25 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 							
 							// Only space to save the first NpeaksMax peaks
 							// Make sure we don't overflow this buffer whilst also retaining peak count
-							if ( counter > global->hitfinderNpeaksMax ) {
+							if ( counter >= global->hitfinderNpeaksMax ) {
 								counter++;
 								continue;
 							}
 							
 							// Remember peak information
-							eventData->peak_intensity[counter] = totI;
-							eventData->peak_com_x[counter] = peak_com_x/totI;
-							eventData->peak_com_y[counter] = peak_com_y/totI;
-							eventData->peak_npix[counter] = nat;
-							
-							e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*pix_nx;
-							eventData->peak_com_index[counter] = e;
-							eventData->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
-							eventData->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
-							eventData->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
-							counter++;
+							if (counter < global->hitfinderNpeaksMax) {
+								eventData->peak_intensity[counter] = totI;
+								eventData->peak_com_x[counter] = peak_com_x/totI;
+								eventData->peak_com_y[counter] = peak_com_y/totI;
+								eventData->peak_npix[counter] = nat;
+								
+								e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*pix_nx;
+								eventData->peak_com_index[counter] = e;
+								eventData->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
+								eventData->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
+								eventData->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
+								counter++;
+							}
 						}
 					}
 				}
