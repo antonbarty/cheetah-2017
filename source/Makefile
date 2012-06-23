@@ -35,7 +35,7 @@ CRYSTFELDIR		?= /reg/data/ana12/cxi/cxi54312/scratch/programs/bin
 
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
 MYANADIR		?= lcls/myana
-LCLSDIR 		?= $(CHEETAHDIR)/lcls/myana/release
+LCLSDIR 		?= $(CHEETAHDIR)/source/lcls/myana/release
 #CSPADDIR		?= lcls/cspad
 
 #OBJFILES		= main.o XtcRun.o
