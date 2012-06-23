@@ -3,7 +3,6 @@
 
 #include <string>
 #include <stdint.h>
-#include <stdio.h>
 
 #if defined(INCLcadefh)
 #define EPICS_HEADERS_INCLUDED

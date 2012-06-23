@@ -1,9 +1,6 @@
 #ifndef EPICS_PV_DATA_H
 #define EPICS_PV_DATA_H
 #include "EpicsDbrTools.hh"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 namespace Pds
 {
