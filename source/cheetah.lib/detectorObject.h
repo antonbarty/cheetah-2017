@@ -234,6 +234,8 @@ class cPixelDetectorEvent {
 
 public:
 
+	cPixelDetectorEvent();
+	
 	int       cspad_fail;
 	//float     quad_temperature[4];
 	//uint16_t  *quad_data[4];

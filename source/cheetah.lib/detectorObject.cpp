@@ -932,3 +932,8 @@ void cPixelDetectorCommon::readWireMask(cGlobal *global, char *filename){
 		wiremask[i] = (int16_t) temp2d.data[i];
 }
 
+cPixelDetectorEvent::cPixelDetectorEvent() {
+
+	detectorZ=0;
+
+}
