@@ -498,23 +498,79 @@ void event() {
         }
     }    
     
-    
-	
-    
-    
+  
 	/*
 	 *	Create a new eventData structure in which to place all information
 	 */
 	cEventData	*eventData;
 	eventData = cheetahNewEvent();
 		
+ 
+		
+	/* This laser event code */
+	int evr41 = laserOn();
+
+	/* Check that previous frame is present (not damaged) */
+	double thistime = seconds + nanoSeconds*1e-9;
+	double deltime = thistime - cheetahGlobal.lasttime;
+	double deltimefel = 1.0/120;
+	double deltimejitter = 0.10*deltimefel;
+	int havePreviousPulse = 0;
+	if ( fabs(deltime - deltimefel) < deltimejitter/2.0 ) havePreviousPulse = 1;
+
+	/* Has the sample been pumped with the laser? */
+	switch ( cheetahGlobal.laserPumpScheme) {
+		
+		/* Scheme 1: simply trust the evr41 signal (default action) */
+		case 1:
+			if ( evr41 == 1 ) {
+				eventData->samplePumped = 1;
+			} else {
+				eventData->samplePumped = 0;
+			}
+			break;
+	
+		/* Scheme 2: the previous evr41 corresponds to this frame */
+		case 2:
+			if ( havePreviousPulse != 1){
+				eventData->samplePumped = -1;
+			} else {
+				eventData->samplePumped = cheetahGlobal.evr41previous;
+			}
+			break;
+
+		/* Scheme 3: the previous evr41 corresponds to this frame, but pulse is possibly too long to know if it is dark with certainty */
+		case 3:
+			if ( havePreviousPulse != 1){
+				eventData->samplePumped = -1;
+			} else {
+				if ( cheetahGlobal.evr41previous == 1){
+					eventData->samplePumped = 1;
+				} else {
+					eventData->samplePumped = -1;
+				}
+			}
+	} 
+
+//	printf("=======================================\n");
+//	printf("evr41        = %d\n",evr41);
+//	printf("evr41previous= %d\n",cheetahGlobal.evr41previous);
+//	printf("delta time   = %g\n",deltime);
+//	printf("previous     ? %d\n",havePreviousPulse);
+//	printf("pumped       ? %d\n",eventData->samplePumped);
+//	printf("=======================================\n");	
+
+	cheetahGlobal.evr41previous = evr41;
+	cheetahGlobal.lasttime = thistime;
+
+   
 	
 	/*
 	 *	Copy all interesting information into worker thread structure if we got this far.
      *  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
      *  Copy all image data into event structure for processing
 	 */
-    eventData->frameNumber = frameNumber;
+	eventData->frameNumber = frameNumber;
 	eventData->seconds = seconds;
 	eventData->nanoSeconds = nanoSeconds;
 	eventData->fiducial = fiducial;
@@ -522,11 +578,11 @@ void event() {
 	eventData->beamOn = beam;
 	eventData->nPeaks = 0;
     
-	eventData->laserEventCodeOn = laserOn();
-    eventData->laserDelay = cheetahGlobal.laserDelay;
+	eventData->laserEventCodeOn = evr41;
+	eventData->laserDelay = cheetahGlobal.laserDelay;
 	
-    eventData->gmd1 = gmd1;
-    eventData->gmd2 = gmd2;
+	eventData->gmd1 = gmd1;
+	eventData->gmd2 = gmd2;
 	eventData->gmd11 = gasdet[0];
 	eventData->gmd12 = gasdet[1];
 	eventData->gmd21 = gasdet[2];
