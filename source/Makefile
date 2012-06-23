@@ -16,13 +16,13 @@
 #	where things are on the target system. 
 #
 ###############################################
-TARGET 			= cheetah chuck
+TARGET 			= cheetah
 ARCH 			= x86_64-linux
 
 
 # LCLS
-HDF5DIR 		= /reg/neh/home/yoon82/hdf5
-CHEETAHDIR      = /reg/neh/home/yoon82/cheetah/source
+HDF5DIR 		?= /reg/neh/home/yoon82/hdf5
+CHEETAHDIR      ?= /reg/neh/home/yoon82/cheetah/source
 
 # cfelsgi
 #HDF5DIR 		?= /cfel/common
@@ -122,8 +122,3 @@ cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 # Cheetah
 cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o 
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-chuck.o: chuck.cpp cheetah.h
-	$(CPP) $(CFLAGS) $<     
-
-chuck: chuck.o
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -L/reg/neh/home/yoon82/cheetah/lib/ -lcheetah -o $@ $^

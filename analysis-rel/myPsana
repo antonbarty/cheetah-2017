@@ -1,2 +1,11 @@
+#!/bin/tcsh
+echo 'Running Psana'
+
+setenv XTCDIR '/reg/d/psdm/cxi/cxi43312/xtc'
+#setenv XTCDIR '/reg/d/psdm/cxi/cxi54312/xtc'
+
 # Execute psana
-psana /reg/d/ana12/cxi/cxi43312/xtc/e142-r0001-s01-c00.xtc
+psana	$XTCDIR/e142-r0001-s01-c00.xtc
+#psana   $XTCDIR/e187-r0033-s00-c00.xtc \
+#	$XTCDIR/e142-r0001-s01-c00.xtc \
+#	$XTCDIR/e142-r0001-s02-c00.xtc

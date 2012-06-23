@@ -3,7 +3,7 @@
 #
 # Main SCons script for SIT release building
 #
-# $Id: SConstruct.main 3221 2012-04-20 17:10:43Z salnikov@SLAC.STANFORD.EDU $
+# $Id: SConstruct.main 3731 2012-06-04 16:43:52Z salnikov@SLAC.STANFORD.EDU $
 #
 #===============================================================================
 
@@ -42,32 +42,32 @@ if os.environ["SIT_RELEASE"] != test_rel:
 #
 for dirs in [("SConsTools/src", "SConsTools"), ("SConsTools/src/tools", "SConsTools/tools")]:
     if os.path.isdir(dirs[0]):
-        
+
         # list of python files in source directory
         pys = set(f for f in os.listdir(dirs[0]) if os.path.splitext(f)[1] == ".py")
-        
+
         # list of links in arch/$SIT_ARCH/python/SConsTools
         d = pjoin("arch", sit_arch, "python", dirs[1])
-        if not os.path.isdir(d) : os.makedirs(d) 
+        if not os.path.isdir(d): os.makedirs(d)
         links = set(f for f in os.listdir(d) if os.path.splitext(f)[1] == ".py")
-        
+
         # remove extra links
-        for f in links - pys :
-            try :
+        for f in links - pys:
+            try:
                 os.remove(pjoin(d, f))
-            except Exception, e :
+            except Exception, e:
                 print >> sys.stderr, "Failed to remove file " + pjoin(d, f)
                 print >> sys.stderr, str(e)
                 print >> sys.stderr, "Check your permissions and AFS token"
                 Exit(2)
-        
+
         # add missing links (make links relative)
-        for f in pys - links :
+        for f in pys - links:
             reldst = '/'.join(['..'] * len(d.split('/')))
             os.symlink(pjoin(reldst, dirs[0], f), pjoin(d, f))
-    
+
         init = pjoin(d, "__init__.py")
-        if not os.path.isfile(init) :
+        if not os.path.isfile(init):
             open(init, 'w').close()
         del init
 
@@ -78,7 +78,6 @@ for dirs in [("SConsTools/src", "SConsTools"), ("SConsTools/src/tools", "SConsTo
 from SConsTools.trace import *
 from SConsTools.scons_functions import *
 from SConsTools.scons_env import buildEnv
-from SConsTools.compilers import setupCompilers
 from SConsTools.standardSConscript import standardSConscript
 from SConsTools.dependencies import *
 
@@ -86,7 +85,6 @@ from SConsTools.dependencies import *
 #   Setup default build environment
 # ===================================
 env = buildEnv()
-setupCompilers( env )
 
 # re-build dependencies based on timestamps
 env.Decider('timestamp-newer')
@@ -95,40 +93,48 @@ env.Decider('timestamp-newer')
 if env.GetOption('help'): Return()
 
 #
+# Special install target
+#
+destdir = env['DESTDIR']
+install = env.ReleaseInstall([Dir(destdir)], [])
+env.AlwaysBuild(install)
+env.Alias('install', [install])
+
+#
 # find out which packages we have locally
 #
-packages = [ d for d in os.listdir(cwd) if os.path.isfile(pjoin( d, "SConscript" )) ]
-trace ( "Packages: " + pformat( packages ), "<top>", 1 )
+packages = [ d for d in os.listdir(cwd) if os.path.isfile(pjoin(d, "SConscript")) ]
+trace("Packages: " + pformat(packages), "<top>", 1)
 
 #
 # Check the links in include/, data/, web/
 #
-makePackageLinks ( "include", packages )
-makePackageLinks ( "data", packages )
-makePackageLinks ( "web", packages )
+makePackageLinks("include", packages)
+makePackageLinks("data", packages)
+makePackageLinks("web", packages)
 
 #
 # load package dependencies from base releases
 #
-trace( "Loading existing package dependencies", "<top>", 1 )
-for r in reversed(env['SIT_REPOS']) :
-    fname = pjoin ( r, env['PKG_DEPS_FILE'] )
-    if os.path.isfile ( fname ) :
-        loadPkgDeps ( fname )
+trace("Loading existing package dependencies", "<top>", 1)
+for r in reversed(env['SIT_REPOS']):
+    fname = pjoin(r, env['PKG_DEPS_FILE'])
+    if os.path.isfile(fname):
+        loadPkgDeps(fname)
 
 
 #
 # include all SConscript files from all packages
 #
-trace("Reading packages SConscript files", "<top>", 1 )
-for p in packages :
-    scons = pjoin(p,"SConscript")
+trace("Reading packages SConscript files", "<top>", 1)
+for p in packages:
+    scons = pjoin(p, "SConscript")
     build = pjoin("#build", sit_arch, p)
-    env.SConscript( pjoin(p,"SConscript"), 
+    env.SConscript(pjoin(p, "SConscript"),
                 variant_dir=build,
-                src_dir='#'+p, 
+                src_dir='#' + p,
                 duplicate=0,
-                exports="env trace standardSConscript" )
+                exports="env trace standardSConscript")
 
 #
 # Analyze whole dependency tree and adjust dependencies and libraries
@@ -140,17 +146,39 @@ adjustPkgDeps()
 # Now store the dependencies in case somebody else would want to use them later
 #
 trace("Storing packages dependencies", "<top>", 1)
-storePkgDeps ( env['PKG_DEPS_FILE'] )
+storePkgDeps(env['PKG_DEPS_FILE'])
 
 #
 # define few aliases and default targets
 #
-libs = env.Alias ( 'lib', env['ALL_TARGETS']['LIBS'] )
-bins = env.Alias ( 'bin', env['ALL_TARGETS']['BINS'] )
-all = env.Alias ( 'all', libs+bins )
-tests = env.Alias ( 'test', env['ALL_TARGETS']['TESTS'] )
-env.Requires ( env['ALL_TARGETS']['TESTS'], all )
-env.Default ( all )
+incs = env.Alias('includes', env['ALL_TARGETS']['INCLUDES'])
+libs = env.Alias('lib', env['ALL_TARGETS']['LIBS'])
+bins = env.Alias('bin', env['ALL_TARGETS']['BINS'])
+all = env.Alias('all', incs + libs + bins)
+tests = env.Alias('test', env['ALL_TARGETS']['TESTS'])
+# these are not strictly necessary, just to make it look more make-ish
+env.Requires(env['ALL_TARGETS']['TESTS'], all)
+env.Requires(libs, incs)
+env.Requires(bins, libs)
+# default is to build all
+env.Default(all)
+
+#
+# Special install target
+#
+destdir = env['DESTDIR']
+install = env.ReleaseInstall([Dir(destdir)], [])
+env.AlwaysBuild(install)
+env.Alias('install', [install])
+env.Requires(install, all)
+
+#
+# Special target for package list file
+#
+#pkg_list = env['PKG_LIST_FILE']
+pkg_list = env.PackageList(['SConsTools.pkg_list'], [])
+env.AlwaysBuild(pkg_list)
+#env.Alias('SConsTools.pkg_list', pkg_list)
 
 #
 # Additional targets for documentation generation
@@ -164,9 +192,9 @@ if 'psana' in packages:
     docTargets.append(env.Command('doc/psana-modules-doxy/html/index.html', env.Dir('psana'), "doxy-driver -m psana-modules doc/psana-modules-doxy/"))
 if 'pyana' in packages:
     docTargets.append(env.Command('doc/pyana-ref/html/index.html', env.Dir('pyana'), "pydoc-driver -p pyana -Q doc/pyana-ref/html pyana _pdsdata pypdsdata"))
-env.Alias ( 'doc', docTargets )
+env.Alias('doc', docTargets)
 
-#trace ( "Build env = "+pformat(env.Dictionary()), "<top>", 7 )
-trace ( "BUILD_TARGETS is " + pformat( map(str, BUILD_TARGETS) ), "<top>", 1 )
-trace ( "DEFAULT_TARGETS is " + pformat( map(str, DEFAULT_TARGETS) ), "<top>", 1 )
-trace ( "COMMAND_LINE_TARGETS is " + pformat( map(str, COMMAND_LINE_TARGETS) ), "<top>", 1 )
+#trace( "Build env = "+pformat(env.Dictionary()), "<top>", 7 )
+trace("BUILD_TARGETS is " + pformat(map(str, BUILD_TARGETS)), "<top>", 1)
+trace("DEFAULT_TARGETS is " + pformat(map(str, DEFAULT_TARGETS)), "<top>", 1)
+trace("COMMAND_LINE_TARGETS is " + pformat(map(str, COMMAND_LINE_TARGETS)), "<top>", 1)
