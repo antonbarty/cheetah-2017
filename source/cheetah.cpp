@@ -183,8 +183,7 @@ void fetchConfig()
 			configVsn[detID]= 4;
 			quadMask[detID] = configV4.quadMask();
 			asicMask[detID] = configV4.asicMask();
-			//printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
-			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV3.runDelay());
+			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV4.quads()[0].intTime(), configV4.quads()[1].intTime(), configV4.quads()[2].intTime(), configV4.quads()[3].intTime());
 		}
 		else {
@@ -564,6 +563,7 @@ void event() {
         uint16_t *quad_data[4];        
         Pds::CsPad::ElementIterator iter;
         
+		
 		fail=getCspadData(detectorPdsDetInfo[detID], iter);
 		if (fail) {
 			printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
@@ -637,6 +637,7 @@ void event() {
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
      *  Assumes that myana creates a copy of the Acqiris data arrays and will never need these data arrays later. 
 	 */
+	cheetahGlobal.TOFPresent=0;
 	eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
 		double *tempTOFTime;

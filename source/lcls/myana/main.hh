@@ -12,7 +12,7 @@
 #include "pdsdata/cspad2x2/ConfigV1.hh"
 #include "pdsdata/phasics/ConfigV1.hh"
 
-//class TH1;
+class TH1;
 
 /*
  * Time functions
@@ -217,8 +217,8 @@ int   getEpicsPvNumber();
 int   getEpicsPvConfig(int iPvId, const char*& sPvName, int& iType, int& iNumElements);
 int   getEpicsPvValue (int pvId, const void*& value, int& dbrype, struct tm& tmTimeStamp, int& nanoSec);
 
-//void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
-//                   float thresh, TH1* hist);
+void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
+                   float thresh, TH1* hist);
 void  fillConstFrac(double* t, double* v, unsigned numSamples, float baseline,
         float thresh, double* edge, int& n, int maxhits);
 

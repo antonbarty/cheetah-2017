@@ -23,10 +23,10 @@ ARCH 			= x86_64-linux
 
 # LCLS
 #HDF5DIR=/reg/data/ana12/cxi/cxi54312/scratch/programs/
-HDF5DIR ?= /reg/neh/home/hgliu/software/hdf5-1.8.8/hdf5
-CRYSTFELDIR ?= /reg/data/ana12/cxi/cxi54312/scratch/programs/bin
+HDF5DIR			?= /reg/neh/home/barty/hdf5
+CHEETAHDIR      ?= /reg/neh/home/barty/c/cheetah
+CRYSTFELDIR		?= /reg/data/ana12/cxi/cxi54312/scratch/programs/bin
 
-CHEETAHDIR      ?= /reg/data/ana12/cxi/cxi54312/scratch/hgliu/cheetah
 
 # cfelsgi
 #HDF5DIR 		?= /cfel/common
@@ -34,8 +34,8 @@ CHEETAHDIR      ?= /reg/data/ana12/cxi/cxi54312/scratch/hgliu/cheetah
 
 
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
-LCLSDIR 		?= $(CHEETAHDIR)/lcls/myana/release
 MYANADIR		?= lcls/myana
+LCLSDIR 		?= $(CHEETAHDIR)/lcls/myana/release
 #CSPADDIR		?= lcls/cspad
 
 #OBJFILES		= main.o XtcRun.o
