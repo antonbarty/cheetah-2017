@@ -485,17 +485,17 @@ void event() {
 		fail = getPvFloat(cheetahGlobal.detector[detID].detectorZpvname, detposnew);
         if (  fail == 0 ) {
             detectorPosition[detID] = detposnew;
+			//printf("DetectorPosition[%i] = %g\n", detID, detposnew);
         }
         else {
             detectorPosition[detID] = std::numeric_limits<float>::quiet_NaN();
 			/*
-			 *	Do not print error message each iteration: 
+			 *	Do not print error message
 			 *	Detector position is in slow data stream, updated at 1 Hz
-			 *	Printing error each time will create perception of errors 
+			 *	Printing error each event (120Hz) will create perception of errors 
 			 *	when there are in fact none
 			 */
         }
-		//printf("DetectorPosition[%i] = %g\n", detID, detectorPosition[detID]);
     }    
     
     
@@ -549,10 +549,6 @@ void event() {
 	
 	eventData->pGlobal = &cheetahGlobal;
 	
-	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
-        eventData->detector[detID].detectorZ = detectorPosition[detID];
-    }
-
 
 	/*
 	 *	Copy raw cspad image data into Cheetah event structure for processing
@@ -629,6 +625,11 @@ void event() {
 			for(int quadrant=0; quadrant<4; quadrant++) 
 				free(quad_data[quadrant]);
 		}
+		
+		// Update detector positions
+		eventData->detector[detID].detectorZ;
+        eventData->detector[detID].detectorZ = detectorPosition[detID];
+		
     }	
 	
     

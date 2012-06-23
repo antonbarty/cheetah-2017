@@ -774,10 +774,10 @@ void cGlobal::writeConfigurationLog(void){
 	
 	
 	// Logfile name
-	printf("Writing log file: %s\n", configOutFile);
+	printf("Writing configuration file: %s\n", configOutFile);
 
 	// Open file
-	fp = fopen(logfile,"w");
+	fp = fopen(configOutFile,"w");
 	if(fp == NULL) {
 		printf("Error: Can not open %s for writing\n",configOutFile);
 		printf("Aborting...");
