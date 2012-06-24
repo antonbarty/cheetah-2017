@@ -27,7 +27,7 @@
 void cheetahInit(cGlobal *global) {
     
     global->self = global;
-	global->defaultConfiguration();
+	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
 	for(long i=0; i<global->nDetectors; i++) {
         //global->detector[i].parseConfigFile(global->detector[i].detectorConfigFile);

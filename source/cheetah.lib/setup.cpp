@@ -27,7 +27,7 @@
 /*
  *	Default settings/configuration
  */
-void cGlobal::defaultConfiguration(void) {
+cGlobal::cGlobal(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
@@ -572,18 +572,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 * Parse known tags
 	 */
-//	if (!strcmp(tag, "ndetectors")) {
-//		nDetectors = atoi(value);
-//	}
-//	else if (!strcmp(tag, "detector0")) {
-//		strcpy(detector[0].detectorConfigFile, value);
-//	}
-//	else if (!strcmp(tag, "detector1")) {
-//		strcpy(detector[1].detectorConfigFile, value);
-//	}
-//	else if (!strcmp(tag, "detector2")) {
-//		strcpy(detector[2].detectorConfigFile, value);
-//	}
 	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
 	}

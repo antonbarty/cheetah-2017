@@ -22,6 +22,9 @@ class cGlobal {
 
 public:
 
+	/** @brief Default constructor (set default values) */
+	cGlobal();
+
 	/** @brief What's this? */
 	cGlobal     *self;
 
