@@ -369,6 +369,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  *cp;
 	FILE  *fp;
 	int i,cnt,fail;
+	int exitCheetah = 0;
 
 	/*
 	 * Open configuration file for reading
@@ -450,7 +451,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		cp = strrchr(cbuf,'/');
 		if (cp == NULL){
 			sscanf(cbuf,"%s",tag);
-			sscanf("detector1","%s",group);
+			sscanf("default","%s",group);
 		} else {
 			*(cp) = '\0';
 			sscanf(cp+1,"%s",tag);
@@ -459,17 +460,11 @@ void cGlobal::parseConfigFile(char* filename) {
 
 		//printf("group=%s, tag=%s, value=%s\n",group,tag,value);
 
-		if (!strcmp(group,"detector1")) {
-
-			/* set global configuration */
-			fail = parseConfigTag(tag, value);
-			
-			/* tag doesn't belog to global?  Then by default we will pass 
-			 * it to the first detector. */
-			if ( fail != 0 )
-				fail = detector[0].parseConfigTag(tag,value);
-
-		} else {
+		/* Try to set global configuration */
+		fail = parseConfigTag(tag, value);
+		
+		/* Not a global keyword?  Then it must be detector-specific. */
+		if (fail != 0){
 
 			int matched=0;
 
@@ -478,7 +473,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
 				/* new group? */
 				if (!strcmp("none",detector[i].configGroup)){
-					strcpy(detector[i].configGroup,group);
+					strncpy(detector[i].configGroup,group,cbufsize);
 					nDetectors++;
 				}
 
@@ -490,7 +485,7 @@ void cGlobal::parseConfigFile(char* filename) {
 				}
 
 			}
-		
+
 			if (matched == 0){
 				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
 				exit(0);
@@ -499,15 +494,22 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 
 		if (fail != 0){
-			printf("The keyword %s is not regognized.\n",tag);
+			printf("ERROR: The keyword %s is not regognized.\n",tag);
+			exitCheetah = 1;
 		}
 
 	}
 
-	if (fail != 0){
-		printf("Exiting Cheetah due to unknown configuration keywords.\n",tag);
+	if (exitCheetah != 0){
+		printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n",tag);
 		exit(0);
 	}
+
+	printf("Configured %d detectors\n",nDetectors);
+	for (i=0;i<nDetectors;i++){
+		printf("detector %d: %s\n",i,detector[i].configGroup);
+	}
+
 
 	fclose(fp);
 
