@@ -16,7 +16,7 @@
 #	where things are on the target system. 
 #
 ###############################################
-TARGET 			= cheetah #chuck
+TARGET 			= cheetah
 ARCH 			= x86_64-linux
 #ARCH 			= i386-linux
 
@@ -40,9 +40,9 @@ LCLSDIR 		?= $(CHEETAHDIR)/source/lcls/myana/release
 
 #OBJFILES		= main.o XtcRun.o
 
-CPP				= g++ -c -g -O3
+CPP				= g++ -c -g -O3 -fPIC
 #CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(MYANADIR) -I$(LCLSDIR) -I$(HDF5DIR)/include
-CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release/ -I$(HDF5DIR)/include
+CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release/ -I$(HDF5DIR)/include 
 
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall
@@ -126,8 +126,6 @@ cheetah.o: cheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 # Cheetah
 cheetah: cheetah.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o 
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-chuck.o: chuck.cpp cheetah.h
-	$(CPP) $(CFLAGS) $<     
 
-chuck: chuck.o
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -L/reg/neh/home/yoon82/cheetah/lib/ -lcheetah -o $@ $^
+libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o
+	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o 
