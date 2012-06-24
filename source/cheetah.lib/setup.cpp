@@ -414,7 +414,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  ts[cbufsize] = "";
 	char  *cp;
 	FILE  *fp;
-	int i,cnt;
+	int i,cnt,fail;
 
 	/*
 	 * Open configuration file for reading
@@ -437,7 +437,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
 	while (feof(fp) == 0) {
 
-		int fail = 0;
+		fail = 0;
 
 		cp = fgets(cbuf, cbufsize, fp);
 		if (cp == NULL)
@@ -542,17 +542,17 @@ void cGlobal::parseConfigFile(char* filename) {
 				exit(0);
 			}
 
-			if (fail != 0){
-				printf("The keyword %s is not regognized.\n",tag);
-			}
-
 		}
 
 		if (fail != 0){
-			printf("Exiting Cheetah due to unknown configuration keywords.\n",tag);
-			exit(0);
+			printf("The keyword %s is not regognized.\n",tag);
 		}
 
+	}
+
+	if (fail != 0){
+		printf("Exiting Cheetah due to unknown configuration keywords.\n",tag);
+		exit(0);
 	}
 
 	fclose(fp);
