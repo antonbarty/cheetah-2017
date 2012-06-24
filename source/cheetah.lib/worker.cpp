@@ -38,7 +38,7 @@ void *worker(void *threadarg) {
 	long		pix_nn = global->detector[0].pix_nn;
 	long		asic_nx = global->detector[0].asic_nx;
 	long		asic_ny = global->detector[0].asic_ny;	
-	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
+	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
 
 	
 	/*

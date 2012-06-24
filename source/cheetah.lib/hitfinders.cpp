@@ -37,7 +37,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;
 
-	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
+	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
 
 	
 	long	nat;
@@ -65,8 +65,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
 	 */
-	printf("%i\n",detID);
-	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
+	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
 	if(temp == NULL) 
 		printf("temp == NULL\n");
