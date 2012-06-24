@@ -27,7 +27,7 @@
 /*
  *	Default settings/configuration
  */
-void cGlobal::defaultConfiguration(void) {
+cGlobal::cGlobal(void) {
 
 	// ini file to use
 	strcpy(configFile, "cheetah.ini");
@@ -368,7 +368,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	char  ts[cbufsize] = "";
 	char  *cp;
 	FILE  *fp;
-	int i,cnt;
+	int i,cnt,fail;
 
 	/*
 	 * Open configuration file for reading
@@ -391,7 +391,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
 	while (feof(fp) == 0) {
 
-		int fail = 0;
+		fail = 0;
 
 		cp = fgets(cbuf, cbufsize, fp);
 		if (cp == NULL)
@@ -450,7 +450,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		cp = strrchr(cbuf,'/');
 		if (cp == NULL){
 			sscanf(cbuf,"%s",tag);
-			sscanf("default","%s",group);
+			sscanf("detector1","%s",group);
 		} else {
 			*(cp) = '\0';
 			sscanf(cp+1,"%s",tag);
@@ -459,14 +459,15 @@ void cGlobal::parseConfigFile(char* filename) {
 
 		//printf("group=%s, tag=%s, value=%s\n",group,tag,value);
 
-		if (!strcmp(group,"default")) {
+		if (!strcmp(group,"detector1")) {
 
 			/* set global configuration */
 			fail = parseConfigTag(tag, value);
 			
 			/* tag doesn't belog to global?  Then by default we will pass 
 			 * it to the first detector. */
-			fail = detector[0].parseConfigTag(tag,value);
+			if ( fail != 0 )
+				fail = detector[0].parseConfigTag(tag,value);
 
 		} else {
 
@@ -495,14 +496,17 @@ void cGlobal::parseConfigFile(char* filename) {
 				exit(0);
 			}
 
-			if (fail != 0){
-				printf("The tag %s is not recognized.\n",tag);
-				exit(0);
-			}
-
 		}
 
+		if (fail != 0){
+			printf("The keyword %s is not regognized.\n",tag);
+		}
 
+	}
+
+	if (fail != 0){
+		printf("Exiting Cheetah due to unknown configuration keywords.\n",tag);
+		exit(0);
 	}
 
 	fclose(fp);
@@ -526,18 +530,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	/*
 	 * Parse known tags
 	 */
-//	if (!strcmp(tag, "ndetectors")) {
-//		nDetectors = atoi(value);
-//	}
-//	else if (!strcmp(tag, "detector0")) {
-//		strcpy(detector[0].detectorConfigFile, value);
-//	}
-//	else if (!strcmp(tag, "detector1")) {
-//		strcpy(detector[1].detectorConfigFile, value);
-//	}
-//	else if (!strcmp(tag, "detector2")) {
-//		strcpy(detector[2].detectorConfigFile, value);
-//	}
 	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
 	}

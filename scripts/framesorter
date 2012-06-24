@@ -42,6 +42,8 @@ cat << EOF
 This is framesorter, a bash script for parsing the output of cheetah.
 
 Rick Kirian, Oct. 2011
+Nadia Zatsepin, May 2012: tweaked for use with May 2012 Cheetah, i.e. if 
+it breaks, complain to me first.
 
 A brief summary of the options:
 
@@ -124,10 +126,12 @@ fi
 [ -d $TMPDIR ] || TMPDIR="/tmp"
 [ -d $TMPDIR ] || TMPDIR="."
 
-
 # pick off the header
 HEADEROG="$(head -n 1 $FRAMESFILE)"
 HEADER="$HEADEROG,"
+# fix annoying prefix (Thanks Nadia)
+HEADER=$(echo $HEADER | sed 's/eventData->//g')
+HEADER=$(echo $HEADER | sed 's/# //')
 awk '{if (NR!=1) {print}}' $FRAMESFILE > $TMPDIR/framesorter.list
 FRAMESFILE=$TMPDIR/framesorter.list
 
@@ -181,6 +185,7 @@ if [ $FIXPATH ]; then
 	sed 's/LCLS_/'$(echo $SAVEDIR | sed 's/\//\\\//g')'\/LCLS_/g' $FRAMESFILE > $TMPDIR/framesorter5.list
 	FRAMESFILE=$TMPDIR/framesorter5.list
 fi
+
 
 # finally, get rid of files that don't exist
 # this is actually broken - it only works if you use the full path, 

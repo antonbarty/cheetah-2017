@@ -27,7 +27,7 @@
 void cheetahInit(cGlobal *global) {
     
     global->self = global;
-	global->defaultConfiguration();
+	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
 
 	// Configure detectors
