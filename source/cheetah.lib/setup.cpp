@@ -496,7 +496,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		cp = strrchr(cbuf,'/');
 		if (cp == NULL){
 			sscanf(cbuf,"%s",tag);
-			sscanf("default","%s",group);
+			sscanf("detector1","%s",group);
 		} else {
 			*(cp) = '\0';
 			sscanf(cp+1,"%s",tag);
@@ -505,7 +505,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
 		//printf("group=%s, tag=%s, value=%s\n",group,tag,value);
 
-		if (!strcmp(group,"default")) {
+		if (!strcmp(group,"detector1")) {
 
 			/* set global configuration */
 			fail = parseConfigTag(tag, value);
@@ -542,10 +542,14 @@ void cGlobal::parseConfigFile(char* filename) {
 				exit(0);
 			}
 
+			if (fail != 0){
+				printf("The keyword %s is not regognized.\n",tag);
+			}
+
 		}
 
 		if (fail != 0){
-			printf("The tag %s is not recognized.\n",tag);
+			printf("Exiting Cheetah due to unknown configuration keywords.\n",tag);
 			exit(0);
 		}
 
