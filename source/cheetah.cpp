@@ -503,7 +503,7 @@ void event() {
 	 *	Create a new eventData structure in which to place all information
 	 */
 	cEventData	*eventData;
-	eventData = cheetahNewEvent();
+	eventData = cheetahNewEvent(&cheetahGlobal);
 		
  
 		
@@ -654,10 +654,7 @@ void event() {
 						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
 					}
 
-                    // Get temperature on strong back, just in case we want it for anything 
-					//float	temperature = std::numeric_limits<float>::quiet_NaN();;
-					//eventData->detector[detID].quad_temperature[quadrant] = temperature;
-				}
+  				}
 			}
         
         

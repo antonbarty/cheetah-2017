@@ -149,57 +149,7 @@ void cGlobal::defaultConfiguration(void) {
  */
 void cGlobal::setup() {
 
-	/*
-	 *	Determine detector type
-	 *	This section of code possibly redundant if we know detector type from the address
-	 *	(eg: CxiDs1 is always a cspad)
-	 */
-    /*
-	for(long i=0; i<nDetectors; i++) {
-		if(!strcmp(detector[i].detectorTypeName, "cspad"))
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-		else if(!strcmp(detector[i].detectorTypeName, "pnccd")) {
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-		}
-		else {
-			printf("Error: unknown detector type %s\n", detector[i].detectorTypeName);
-			printf("Quitting\n");
-			exit(1);
-		}
-	}
-     */
 
-	/*
-	 *	Determine detector address
-	 *	A list of addresses can be found in:
-	 *		release/pdsdata/xtc/Detinfo.hh
-	 *		release/pdsdata/xtc/src/Detinfo.cc
-	 */
-    /*
-	for(long i=0; i<nDetectors; i++) {
-		if(!strcmp(detector[i].detectorName, "CxiDs1")) {
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
-		}
-		else if (!strcmp(detector[i].detectorName, "CxiDs2")) {
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDs2;
-		}
-		else if (!strcmp(detector[i].detectorName, "CxiDsd")) {
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-			detector[i].detectorPdsDetInfo = Pds::DetInfo::CxiDsd;
-		}
-		else if (!strcmp(detector[i].detectorName, "XppGon")) {
-			detector[i].detectorType = Pds::DetInfo::Cspad;
-			detector[i].detectorPdsDetInfo = Pds::DetInfo::XppGon;
-		}
-		else {
-			printf("Error: unknown detector %s\n", detector[i].detectorName);
-			printf("Quitting\n");
-			exit(1);
-		}
-	}
-     */
 
 	/*
 	 * Detector parameters
@@ -214,6 +164,10 @@ void cGlobal::setup() {
 			detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
 			detector[i].nasics_x = CSPAD_nASICS_X;
 			detector[i].nasics_y = CSPAD_nASICS_Y;
+			detector[i].pix_nx = CSPAD_ASIC_NX*CSPAD_nASICS_X;
+			detector[i].pix_ny = CSPAD_ASIC_NX*CSPAD_nASICS_Y;
+			detector[i].pix_nn = CSPAD_ASIC_NX*CSPAD_ASIC_NY*CSPAD_nASICS_X*CSPAD_nASICS_Y;
+
 		} else {
 			printf("Error: unknown detector %s\n", detector[i].detectorName);
 			printf("Quitting\n");

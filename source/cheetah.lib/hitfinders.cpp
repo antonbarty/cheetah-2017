@@ -37,14 +37,16 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;
 
+	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
+
 	
 	long	nat;
 	long	counter;
 	int		hit=0;
 	float	total;
-	long *inx = (long *) calloc(pix_nn, sizeof(long));
-	long *iny = (long *) calloc(pix_nn, sizeof(long));
-	float mingrad = global->hitfinderMinGradient*2;
+	long	*inx = (long *) calloc(pix_nn, sizeof(long));
+	long	*iny = (long *) calloc(pix_nn, sizeof(long));
+	float	mingrad = global->hitfinderMinGradient*2;
 	mingrad *= mingrad;
 	
 	nat = 0;
@@ -63,8 +65,13 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	/*
 	 *	Use a data buffer so we can zero out pixels already counted
 	 */
+	printf("%i\n",detID);
+	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
-	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	if(temp == NULL) printf("temp == NULL\n");
+	for(long i=0;i<pix_nn;i++)
+		temp[i] = eventData->detector[detID].corrected_data[i]; 
+	//memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	/*
 	 *	Apply peak search mask 
@@ -249,6 +256,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long		asic_ny = global->detector[detID].asic_ny;
 	long		nasics_x = global->detector[detID].nasics_x;
 	long		nasics_y = global->detector[detID].nasics_y;
+	
+	printf("************>>> %li, %li, %li\n", pix_nx, pix_ny, pix_nn);
 
 	// Variables for this hitfinder
 	long	nat, lastnat;
@@ -307,8 +316,10 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 					fs = i+mi*asic_nx;
 					e = ss + fs;
 					
-					//if(e >= global->pix_nn)
-					//	printf("Array bounds error: e=%i\n");
+					if(e >= pix_nn) {
+						printf("Array bounds error: e=%i\n");
+						exit(1);
+					}
 					
 					if(temp[e] > global->hitfinderADC){
 						

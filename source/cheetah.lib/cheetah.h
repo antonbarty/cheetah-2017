@@ -22,5 +22,5 @@ void cheetahProcessEvent(cGlobal *, cEventData *);
 void cheetahProcessEventMultithreaded(cGlobal *, cEventData *);
 void cheetahDestroyEvent(cEventData *);
 void cheetahExit(cGlobal *);
-cEventData* cheetahNewEvent();
+cEventData* cheetahNewEvent(cGlobal	*global);
 void cheetahDestroyEvent(cEventData *);

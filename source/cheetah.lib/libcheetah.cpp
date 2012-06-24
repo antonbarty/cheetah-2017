@@ -29,8 +29,9 @@ void cheetahInit(cGlobal *global) {
     global->self = global;
 	global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
+
+	// Configure detectors
 	for(long i=0; i<global->nDetectors; i++) {
-        //global->detector[i].parseConfigFile(global->detector[i].detectorConfigFile);
 		global->detector[i].readDetectorGeometry(global->detector[i].geometryFile);
 		global->detector[i].readDarkcal(global, global->detector[i].darkcalFile);
 		global->detector[i].readGaincal(global, global->detector[i].gaincalFile);
@@ -39,6 +40,7 @@ void cheetahInit(cGlobal *global) {
 		global->detector[i].readBaddataMask(global, global->detector[i].baddataFile);
 		global->detector[i].readWireMask(global, global->detector[i].wireMaskFile);
 	}
+	
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
@@ -70,17 +72,30 @@ void cheetahNewRun(cGlobal *global) {
  *  Currently only a malloc() but set up as a function so that we have the option of 
  *  initialising variables without needing to change any top level code
  */
-cEventData* cheetahNewEvent(void) {
+cEventData* cheetahNewEvent(cGlobal	*global) {
     
-    // Create memory
+    /*
+	 *	Create new event structure
+	 */
     cEventData	*eventData;
     eventData = (cEventData*) malloc(sizeof(cEventData));
-    
-    // Initialise any common default values
+	eventData->pGlobal = global;
+
+    /*
+	 *	Initialise any common default values
+	 */
     eventData->useThreads = 0;
     eventData->hit = 0;
 	eventData->samplePumped = 0;   
 
+	long		pix_nn1 = global->detector[0].pix_nn;
+	long		asic_nx = global->detector[0].asic_nx;
+	long		asic_ny = global->detector[0].asic_ny;	
+	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn1);
+	
+
+	
+	
     // Return
     return eventData;
 }
@@ -116,11 +131,13 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	free(eventData->peak_npix);
 	free(eventData->peak_snr);
 	free(eventData->good_peaks);
-	//TOF stuff.
-    
+	
+	
+	// Pulnix external camera
     if(eventData->pulnixFail == 0) 
         free(eventData->pulnixImage);
     
+	//TOF stuff.
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
@@ -239,8 +256,6 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
     }
     
     
-
-    
     /*
      *  Copy over any remaining detector info
      */
@@ -248,7 +263,6 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
         eventData->detector[detID].detectorZ = global->detector[detID].detectorZ;        
         
     }
-    
 }
 
 

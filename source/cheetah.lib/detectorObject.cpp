@@ -46,6 +46,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
     nasics_x = CSPAD_nASICS_X;
     nasics_y = CSPAD_nASICS_Y;
+	pix_nx = asic_nx*nasics_x;
+	pix_ny = asic_ny*nasics_y;
+	pix_nn = pix_nx*pix_ny;
     pixelSize = 110e-6;
 
     

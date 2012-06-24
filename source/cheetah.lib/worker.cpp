@@ -35,6 +35,12 @@ void *worker(void *threadarg) {
 	int	hit = 0;
 
 
+	long		pix_nn = global->detector[0].pix_nn;
+	long		asic_nx = global->detector[0].asic_nx;
+	long		asic_ny = global->detector[0].asic_ny;	
+	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
+
+	
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
@@ -45,57 +51,52 @@ void *worker(void *threadarg) {
 	}
 
 	/*
-	 * Assemble data from all four quadrants into one large array (rawdata format)
-     *  Now done in top-level Cheetah loop so rest of code is detector independent
-	 */
-    /*
-	DETECTOR_LOOP {
-		eventData->detector[detID].raw_data = (uint16_t*) calloc(global->detector[detID].pix_nn, sizeof(uint16_t));
-		for(int quadrant=0; quadrant<4; quadrant++) {
-			long	i,j,ii;
-			for(long k=0; k<2*global->detector[detID].asic_nx*8*global->detector[detID].asic_ny; k++) {
-				i = k % (2*global->detector[detID].asic_nx) + quadrant*(2*global->detector[detID].asic_nx);
-				j = k / (2*global->detector[detID].asic_nx);
-				ii  = i+(global->detector[detID].nasics_x*global->detector[detID].asic_nx)*j;
-				eventData->detector[detID].raw_data[ii] = eventData->detector[detID].quad_data[quadrant][k];
-			}
-		}
-	}
-     */
-	
-	/*
-	 *	Create arrays for corrected detector data, etc 
+	 *	Create arrays for intermediate detector data, etc 
 	 */
 	DETECTOR_LOOP {
-		eventData->detector[detID].corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
-		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-		eventData->detector[detID].detector_corrected_data = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
-		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-		eventData->detector[detID].image = (int16_t*) calloc(global->detector[detID].image_nn,sizeof(int16_t));
-
-		eventData->detector[detID].radialAverage = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
-		eventData->detector[detID].radialAverageCounter = (float *) calloc(global->detector[detID].radial_nn, sizeof(float));
+		long	pix_nn = global->detector[detID].pix_nn;
+		long	image_nn = global->detector[detID].image_nn;
+		long	radial_nn = global->detector[detID].radial_nn;
 		
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].saturatedPixelMask[i] = 1;
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-		}
+		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
+		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(pix_nn,sizeof(int16_t));
+		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		
+		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
 	}	
-
+	
+	
+	
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	eventData->peak_com_index = (long *) calloc(global->hitfinderNpeaksMax, sizeof(long));
-	eventData->peak_intensity = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
-	eventData->peak_npix = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));	
-	eventData->peak_snr = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->peak_com_x = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->peak_com_y = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->peak_com_x_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->peak_com_y_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->peak_com_r_assembled = (float *) calloc(global->hitfinderNpeaksMax, sizeof(float));
-	eventData->good_peaks = (int *) calloc(global->hitfinderNpeaksMax, sizeof(int));
+	long NpeaksMax = global->hitfinderNpeaksMax;
+	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
+	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
+	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
+	eventData->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
+
+	
+	/*
+	 *	Copy across detector data into corrected array
+	 */
+    DETECTOR_LOOP {
+		for(long i=0;i<global->detector[detID].pix_nn;i++){
+			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+			eventData->detector[detID].saturatedPixelMask[i] = 1;
+		}
+	}
+
 
 	/*
 	 *	Create a unique name for this event
