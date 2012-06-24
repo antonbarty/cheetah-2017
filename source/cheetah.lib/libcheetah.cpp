@@ -94,7 +94,42 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn1);
 	
 
+	/*
+	 *	Create arrays for intermediate detector data, etc 
+	 */
+	DETECTOR_LOOP {
+		long	pix_nn = global->detector[detID].pix_nn;
+		long	image_nn = global->detector[detID].image_nn;
+		long	radial_nn = global->detector[detID].radial_nn;
+		
+		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
+		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(pix_nn,sizeof(int16_t));
+		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		
+		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
+	}	
 	
+	
+	
+	/*
+	 *	Create arrays for remembering Bragg peak data
+	 */
+	long NpeaksMax = global->hitfinderNpeaksMax;
+	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
+	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
+	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
+	eventData->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
+	
+
 	
     // Return
     return eventData;

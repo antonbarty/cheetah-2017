@@ -49,46 +49,18 @@ void *worker(void *threadarg) {
 	if ( global->fudgeevr41 == 1 ) {
 		evr41fudge(eventData,global);	
 	}
-
-	/*
-	 *	Create arrays for intermediate detector data, etc 
-	 */
-	DETECTOR_LOOP {
-		long	pix_nn = global->detector[detID].pix_nn;
-		long	image_nn = global->detector[detID].image_nn;
-		long	radial_nn = global->detector[detID].radial_nn;
-		
-		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
-		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(pix_nn,sizeof(int16_t));
-		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
-		
-		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
-	}	
-	
-	
-	
-	/*
-	 *	Create arrays for remembering Bragg peak data
-	 */
-	long NpeaksMax = global->hitfinderNpeaksMax;
-	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
-	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
 
 	
 	/*
-	 *	Copy across detector data into corrected array
+	 *	Create a unique name for this event
+	 */
+	nameEvent(eventData, global);
+	
+
+	
+	/*
+	 *	Copy raw detector data into corrected array as starting point for corrections
 	 */
     DETECTOR_LOOP {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
@@ -98,63 +70,38 @@ void *worker(void *threadarg) {
 	}
 
 
-	/*
-	 *	Create a unique name for this event
-	 */
-	nameEvent(eventData, global);
-	
 
 	/*
-	 * Check for saturated pixels, before any other corrections
+	 * Check for saturated pixels before applying any other corrections
 	 */
-    DETECTOR_LOOP {
-        if ( global->detector[detID].maskSaturatedPixels == 1 ) 
-			checkSaturatedPixels(eventData, global, detID);
-	}
+	checkSaturatedPixels(eventData, global);
+
+
 	
 	/*
 	 *	Subtract darkcal image (static electronic offsets)
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useDarkcalSubtraction) 
-            subtractDarkcal(eventData, global, detID);
-            //subtractDarkcal(eventData->detector[detID], global->detector[detID]);
-	}
+	subtractDarkcal(eventData, global);
 
 	
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
-	DETECTOR_LOOP {
-        if(global->detector[detID].cmModule) 
-			cmModuleSubtract(eventData, global, detID);
-	}
-    DETECTOR_LOOP {
-        if(global->detector[detID].cmSubtractUnbondedPixels) 
-			cmSubtractUnbondedPixels(eventData, global, detID);
-	}
-    DETECTOR_LOOP {
-        if(global->detector[detID].cmSubtractBehindWires) 
-			cmSubtractBehindWires(eventData, global, detID);
-	}
+	cmModuleSubtract(eventData, global);
+	cmSubtractUnbondedPixels(eventData, global);
+	cmSubtractBehindWires(eventData, global);
+
 	
 	/*
 	 *	Apply gain correction
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useGaincal) 
-            applyGainCorrection(eventData, global, detID);
-            //applyGainCorrection(eventData->detector[detID], global->detector[detID]);
-	}
+	applyGainCorrection(eventData, global);
 
+	
 	/*
 	 *	Apply bad pixel map
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useBadPixelMask) 
-            applyBadPixelMask(eventData, global, detID);
-			//applyBadPixelMask(eventData->detector[detID], global->detector[detID]);
-	} 
+	applyBadPixelMask(eventData, global);
 	
 	
 	/*
@@ -186,6 +133,7 @@ void *worker(void *threadarg) {
 	 */
 	DETECTOR_LOOP {
 		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
 		}
@@ -216,10 +164,7 @@ void *worker(void *threadarg) {
         if(global->detector[detID].useAutoHotpixel)
 			killHotpixels(eventData, global, detID);
 	}
-    DETECTOR_LOOP {
-        if(global->detector[detID].useBadPixelMask) 
-            applyBadPixelMask(eventData, global, detID);
-	} 
+	applyBadPixelMask(eventData, global);
 		
 
 	/*

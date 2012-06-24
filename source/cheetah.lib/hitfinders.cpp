@@ -68,10 +68,11 @@ int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
 	printf("%i\n",detID);
 	printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
-	if(temp == NULL) printf("temp == NULL\n");
-	for(long i=0;i<pix_nn;i++)
-		temp[i] = eventData->detector[detID].corrected_data[i]; 
-	//memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	if(temp == NULL) 
+		printf("temp == NULL\n");
+	//for(long i=0;i<pix_nn;i++)
+	//	temp[i] = eventData->detector[detID].corrected_data[i]; 
+	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	/*
 	 *	Apply peak search mask 
