@@ -58,7 +58,7 @@ VPATH           = cheetah.lib/
 all:  $(TARGET)
 
 clean:
-	rm -f *.o *.gch $(TARGET)
+	rm -f *.o *.gch *.so* $(TARGET)
 
 remake: clean all
 .PHONY: all clean remake
