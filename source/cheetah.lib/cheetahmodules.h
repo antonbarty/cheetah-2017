@@ -3,25 +3,37 @@
  */
 void *worker(void *);
 void assemble2Dimage(cEventData*, cGlobal*, int);
-void checkSaturatedPixels(cEventData *eventData, cGlobal *global, int);
 
 // detectorCorrection.cpp
-//void subtractDarkcal(cEventData*, cGlobal*, int);
-void subtractDarkcal(cEventData*, cGlobal*, int);
-void applyGainCorrection(cEventData*, cGlobal*, int);
-void applyBadPixelMask(cEventData*, cGlobal*, int);
-void cmModuleSubtract(cEventData*, cGlobal*, int);
-void cmSubtractUnbondedPixels(cEventData*, cGlobal*, int);
-void cmSubtractBehindWires(cEventData*, cGlobal*, int);
+void subtractDarkcal(cEventData*, cGlobal*);
+void applyGainCorrection(cEventData*, cGlobal*);
+void applyBadPixelMask(cEventData*, cGlobal*);
+void cmModuleSubtract(cEventData*, cGlobal*);
+void cmSubtractUnbondedPixels(cEventData*, cGlobal*);
+void cmSubtractBehindWires(cEventData*, cGlobal*);
+
+
+void subtractDarkcal(float*, float*, long);
+void applyGainCorrection(float*, float*, long);
+void applyBadPixelMask(float*, int16_t*, long);
+void cmModuleSubtract(float*, int16_t*, float, long, long, long, long);
+void cmSubtractUnbondedPixels(float*, int16_t*, long, long, long, long);
+void cmSubtractBehindWires(float*, int16_t*, float, long, long, long, long);
+
+
 void calculateHotPixelMask(cGlobal*, int);
 void killHotpixels(cEventData*, cGlobal*, int);
 
 
 // backgroundCorrection.cpp
+void checkSaturatedPixels(uint16_t*, int16_t*, long, long);
+
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
 void calculatePersistentBackground(cGlobal*, int);
 void subtractPersistentBackground(cEventData*, cGlobal*, int);
 void subtractLocalBackground(cEventData*, cGlobal*, int);
+void checkSaturatedPixels(cEventData *eventData, cGlobal *global);
+
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);

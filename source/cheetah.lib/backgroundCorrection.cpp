@@ -243,14 +243,31 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 /*
  * Make a saturated pixel mask
  */
-void checkSaturatedPixels(cEventData *eventData, cGlobal *global, int detID){
+void checkSaturatedPixels(uint16_t *raw_data, int16_t *saturatedPixelMask, long pix_nn, long pixelSaturationADC) {
 	
-	for(long i=0;i<global->detector[i].pix_nn;i++) { 
-		if ( eventData->detector[detID].raw_data[i] >= global->detector[detID].pixelSaturationADC) 
-			eventData->detector[detID].saturatedPixelMask[i] = 0;
+	for(long i=0; i<pix_nn; i++) { 
+		if ( raw_data[i] >= pixelSaturationADC) 
+			saturatedPixelMask[i] = 0;
 		else
-			eventData->detector[detID].saturatedPixelMask[i] = 1;
+			saturatedPixelMask[i] = 1;
 	}
-	
 }
+
+
+void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
+
+    DETECTOR_LOOP {
+        if ( global->detector[detID].maskSaturatedPixels == 1 ) {
+			
+			uint16_t	*raw_data = eventData->detector[detID].raw_data;
+			int16_t		*saturatedPixelMask = eventData->detector[detID].saturatedPixelMask;
+			long		nn = global->detector[detID].pix_nn;
+			long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
+			
+			checkSaturatedPixels(raw_data, saturatedPixelMask, nn, pixelSaturationADC);
+		}
+	}	
+}
+
+
 

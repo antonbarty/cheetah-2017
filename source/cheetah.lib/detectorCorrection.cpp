@@ -25,18 +25,24 @@
 /*
  *	Subtract pre-loaded darkcal file
  */
-void subtractDarkcal(cEventData *eventData, cGlobal *global, int detID) {
-	for(long i=0;i< global->detector[detID].pix_nn;i++) {
-		eventData->detector[detID].corrected_data[i] -= global->detector[detID].darkcal[i]; 
+void subtractDarkcal(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if(global->detector[detID].useDarkcalSubtraction) {
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*data = eventData->detector[detID].corrected_data;
+			float	*darkcal = global->detector[detID].darkcal;
+
+			subtractDarkcal(data, darkcal, pix_nn);
+		}			
 	}
 }
 
-void subtractDarkcal(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){
-	// Do darkcal subtraction
-	for(long i=0;i< detectorGlobal.pix_nn;i++) {
-		detectorEvent.corrected_data[i] -= detectorGlobal.darkcal[i]; 
+void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] -= darkcal[i]; 
 	}
 }
+
 
 
 /*
@@ -44,29 +50,48 @@ void subtractDarkcal(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon det
  *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
  *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
  */
-void applyGainCorrection(cEventData *eventData, cGlobal *global, int detID){
-	for(long i=0;i<global->detector[detID].pix_nn;i++) 
-		eventData->detector[detID].corrected_data[i] *= global->detector[detID].gaincal[i];	
+void applyGainCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if(global->detector[detID].useGaincal) {
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*data = eventData->detector[detID].corrected_data;
+			float	*gaincal = global->detector[detID].gaincal;
+			
+			applyGainCorrection(data, gaincal, pix_nn);
+		}
+	}
 }
 
-void applyGainCorrection(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){	
-	for(long i=0;i<detectorGlobal.pix_nn;i++) 
-		detectorEvent.corrected_data[i] *= detectorGlobal.gaincal[i];
+void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] *= gaincal[i]; 
+	}
 }
+
 
 
 /*
  *	Apply bad pixel mask
  *	Assumes that all we have to do here is a multiplication.
  */
-void applyBadPixelMask(cEventData *eventData, cGlobal *global, int detID){	
-	for(long i=0;i<global->detector[detID].pix_nn;i++) 
-		eventData->detector[detID].corrected_data[i] *= global->detector[detID].badpixelmask[i];
+
+void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
+	
+	DETECTOR_LOOP {
+		if(global->detector[detID].useBadPixelMask) {
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*data = eventData->detector[detID].corrected_data;
+			int16_t	*badpixelmask = global->detector[detID].badpixelmask;
+
+			applyBadPixelMask(data, badpixelmask, pix_nn);
+		}
+	} 
 }
 
-void applyBadPixelMask(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon detectorGlobal){	
-	for(long i=0;i<detectorGlobal.pix_nn;i++) 
-		detectorEvent.corrected_data[i] *= detectorGlobal.badpixelmask[i];
+void applyBadPixelMask(float *data, int16_t *badpixelmask, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] *= badpixelmask[i]; 
+	}
 }
 
 
@@ -75,23 +100,33 @@ void applyBadPixelMask(cPixelDetectorEvent detectorEvent, cPixelDetectorCommon d
  *	Subtract common mode on each module
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
+void cmModuleSubtract(cEventData *eventData, cGlobal *global){
 	
-	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+	DETECTOR_LOOP {
+        if(global->detector[detID].cmModule) { 
+		
+			// Dereference datector arrays
+			float		threshold = global->detector[detID].cmFloor;
+			float		*data = eventData->detector[detID].corrected_data;
+			int16_t		*mask = global->detector[detID].badpixelmask;
+			long		asic_nx = global->detector[detID].asic_nx;
+			long		asic_ny = global->detector[detID].asic_ny;
+			long		nasics_x = global->detector[detID].nasics_x;
+			long		nasics_y = global->detector[detID].nasics_y;
+			
+			cmModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+			
+		}
+	}
+}
+
+void cmModuleSubtract(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	long		mval;
-    long		counter;
+	long		counter;
 	float		median;
-	
-	// Dereference datector arrays
-	long		asic_nx = global->detector[detID].asic_nx;
-	long		asic_ny = global->detector[detID].asic_ny;
-	long		nasics_x = global->detector[detID].nasics_x;
-	long		nasics_y = global->detector[detID].nasics_y;
-	float		*corrected_data = eventData->detector[detID].corrected_data;
-	
-	
+					  
 	// Create median buffer
 	float	*buffer; 
 	buffer = (float*) calloc(asic_nx*asic_ny, sizeof(float));
@@ -111,8 +146,8 @@ void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
 				for(long i=0; i<asic_nx; i++){
 					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					e += i + mi*asic_nx;
-                    if(global->detector[detID].badpixelmask[e] != 0) {           // badpixelmask[e]==0 are the bad pixels
-						buffer[counter++] = corrected_data[e];
+                    if(mask[e] != 0) {           // badpixelmask[e]==0 are the bad pixels
+						buffer[counter++] = data[e];
 					}
 				}
 			}
@@ -121,7 +156,7 @@ void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
             // Calculate background using median value 
 			//median = kth_smallest(buffer, global->asic_nx*global->asic_ny, mval);
 			if(counter>0) {
-				mval = lrint(counter*global->detector[detID].cmFloor);
+				mval = lrint(counter*threshold);
                 if(mval < 0) 
                     mval = 1;
 				median = kth_smallest(buffer, counter, mval);
@@ -134,7 +169,7 @@ void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
 				for(long i=0; i<asic_nx; i++){
 					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					e += i + mi*asic_nx;
-					corrected_data[e] -= median;
+					data[e] -= median;
 				}
 			}
 		}
@@ -149,20 +184,30 @@ void cmModuleSubtract(cEventData *eventData, cGlobal *global, int detID){
  *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
  *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
  */
-void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global, int detID){
-	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
+	
+	DETECTOR_LOOP {
+        if(global->detector[detID].cmSubtractUnbondedPixels) { 
+			
+			// Dereference datector arrays
+			float		*data = eventData->detector[detID].corrected_data;
+			int16_t		*mask = global->detector[detID].badpixelmask;
+			long		asic_nx = global->detector[detID].asic_nx;
+			long		asic_ny = global->detector[detID].asic_ny;
+			long		nasics_x = global->detector[detID].nasics_x;
+			long		nasics_y = global->detector[detID].nasics_y;
+			
+			cmSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
+			
+		}
+	}
+}
+
+void cmSubtractUnbondedPixels(float *data, int16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	double		counter;
 	double		background;
-	
-	// Dereference datector arrays
-	long		asic_nx = global->detector[detID].asic_nx;
-	long		asic_ny = global->detector[detID].asic_ny;
-	long		nasics_x = global->detector[detID].nasics_x;
-	long		nasics_y = global->detector[detID].nasics_y;
-	float		*corrected_data = eventData->detector[detID].corrected_data;
-
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<nasics_x; mi++){
@@ -180,7 +225,7 @@ void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global, int detID)
 				long i=j;
 				e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 				e += i + mi*asic_nx;
-				background += corrected_data[e];
+				background += data[e];
 				counter += 1;
 			}
 			background /= counter;
@@ -191,7 +236,7 @@ void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global, int detID)
 				for(long i=0; i<asic_nx; i++){
 					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					e += i + mi*asic_nx;
-					corrected_data[e] -= background;
+					data[e] -= background;
 					
 				}
 			}
@@ -200,26 +245,38 @@ void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global, int detID)
 	
 }
 
+
 /*
  *	Subtract common mode estimated from signal behind wires
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmSubtractBehindWires(cEventData *eventData, cGlobal *global, int detID){
+void cmSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
-	DEBUGL2_ONLY printf("cmModuleSubtract\n");
+	
+	DETECTOR_LOOP {
+        if(global->detector[detID].cmSubtractBehindWires) {
+			float		threshold = global->detector[detID].cmFloor;
+			float		*data = eventData->detector[detID].corrected_data;
+			int16_t		*mask = global->detector[detID].badpixelmask;
+			long		asic_nx = global->detector[detID].asic_nx;
+			long		asic_ny = global->detector[detID].asic_ny;
+			long		nasics_x = global->detector[detID].nasics_x;
+			long		nasics_y = global->detector[detID].nasics_y;
+
+			cmSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+
+		}
+	}
+}		
+
+void cmSubtractBehindWires(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		p;
 	long		counter;
 	long		mval;
 	float		median;
 	
-	// Dereference datector arrays
-	long		asic_nx = global->detector[detID].asic_nx;
-	long		asic_ny = global->detector[detID].asic_ny;
-	long		nasics_x = global->detector[detID].nasics_x;
-	long		nasics_y = global->detector[detID].nasics_y;
-	float		*corrected_data = eventData->detector[detID].corrected_data;
-	
+	// Create median buffer
 	float	*buffer; 
 	buffer = (float*) calloc(asic_ny*asic_nx, sizeof(float));
 	
@@ -234,8 +291,8 @@ void cmSubtractBehindWires(cEventData *eventData, cGlobal *global, int detID){
 				for(long i=0; i<asic_nx; i++){
 					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					p += i + mi*asic_nx;
-					if(global->detector[detID].wiremask[i] && global->detector[detID].badpixelmask[p] != 0) {
-						buffer[counter] = corrected_data[p];
+					if(mask[i]) {
+						buffer[counter] = data[p];
 						counter++;
 					}
 				}
@@ -243,7 +300,7 @@ void cmSubtractBehindWires(cEventData *eventData, cGlobal *global, int detID){
 			
 			// Median value of pixels behind wires
 			if(counter>0) {
-				mval = lrint(counter*global->detector[detID].cmFloor);
+				mval = lrint(counter*threshold);
 				median = kth_smallest(buffer, counter, mval);
 			}
 			else 
@@ -255,13 +312,14 @@ void cmSubtractBehindWires(cEventData *eventData, cGlobal *global, int detID){
 				for(long j=0; j<asic_ny; j++){
 					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					p += i + mi*asic_nx;
-					corrected_data[p] -= median;
+					data[p] -= median;
 				}
 			}
 		}
 	}
 	free(buffer);
 }
+
 
 
 /*
