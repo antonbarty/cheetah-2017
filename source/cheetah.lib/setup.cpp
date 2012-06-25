@@ -165,8 +165,8 @@ void cGlobal::setup() {
 			detector[i].nasics_x = CSPAD_nASICS_X;
 			detector[i].nasics_y = CSPAD_nASICS_Y;
 			detector[i].pix_nx = CSPAD_ASIC_NX*CSPAD_nASICS_X;
-			detector[i].pix_ny = CSPAD_ASIC_NX*CSPAD_nASICS_Y;
-			detector[i].pix_nn = CSPAD_ASIC_NX*CSPAD_ASIC_NY*CSPAD_nASICS_X*CSPAD_nASICS_Y;
+			detector[i].pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
+			detector[i].pix_nn = (CSPAD_ASIC_NX*CSPAD_nASICS_X)*(CSPAD_ASIC_NY*CSPAD_nASICS_Y);
 
 		} else {
 			printf("Error: unknown detector %s\n", detector[i].detectorName);

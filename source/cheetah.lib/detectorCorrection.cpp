@@ -252,7 +252,6 @@ void cmSubtractUnbondedPixels(float *data, int16_t *mask, long asic_nx, long asi
  */
 void cmSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
-	
 	DETECTOR_LOOP {
         if(global->detector[detID].cmSubtractBehindWires) {
 			float		threshold = global->detector[detID].cmFloor;
