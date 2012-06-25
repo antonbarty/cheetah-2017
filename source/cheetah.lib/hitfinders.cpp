@@ -257,7 +257,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long		nasics_x = global->detector[detID].nasics_x;
 	long		nasics_y = global->detector[detID].nasics_y;
 	
-	printf("************>>> %li, %li, %li\n", pix_nx, pix_ny, pix_nn);
+	//printf("************>>> %li, %li, %li\n", pix_nx, pix_ny, pix_nn);
 
 	// Variables for this hitfinder
 	long	nat, lastnat;
