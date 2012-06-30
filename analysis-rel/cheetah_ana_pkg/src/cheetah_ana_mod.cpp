@@ -123,9 +123,6 @@ void
 cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 {
 	cheetahInit(&cheetahGlobal);
-	cout << "cheetahGlobal.nDetectors: " << cheetahGlobal.nDetectors << endl;
-	cout << "cheetahGlobal.defaultPhotonEnergyeV: " << cheetahGlobal.defaultPhotonEnergyeV << endl;
-
 }
 
 /// Method which is called with event data, this is the only required 
@@ -138,14 +135,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
   count++;
   cout << "**************************** count: " << count << endl; 
 
-
-//if (count==2){exit(1);}
-//  if (count==325 || count==435){
-//
-//  } else {
-//	return;
-	//exit(1);
-//  }  
+//if (count==2){exit(1);}  
 
   // get RunNumber & EventTime
   int runNumber = 0;
