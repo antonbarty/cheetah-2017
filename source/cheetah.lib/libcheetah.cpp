@@ -169,9 +169,9 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	
 	
 	// Pulnix external camera
-    if(eventData->pulnixFail == 0) 
+    if(eventData->pulnixFail == 0){ 
         free(eventData->pulnixImage);
-    
+    }
 	//TOF stuff.
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);

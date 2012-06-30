@@ -615,7 +615,7 @@ void event() {
         uint16_t *quad_data[4];        
         Pds::CsPad::ElementIterator iter;
         
-		
+		//std::cout << "detectorPdsDetInfo[" << detID << "]: " << detectorPdsDetInfo[detID] << std::endl;
 		fail=getCspadData(detectorPdsDetInfo[detID], iter);
 		if (fail) {
 			printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
@@ -632,7 +632,7 @@ void event() {
             long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
             uint16_t    *quad_data[4];
 
-            
+printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
             // Allocate memory for detector data and set to zero
             for(int quadrant=0; quadrant<4; quadrant++) {
                 quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
@@ -651,6 +651,8 @@ void event() {
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 					while(( s=iter.next(section_id) )) {  
+printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
+//printf("pixel: %d\n",s->pixel[0]);
 						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
 					}
 
@@ -669,7 +671,7 @@ void event() {
 					i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 					j = k / (2*asic_nx);
 					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-					
+//printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k,quad_data[quadrant][0]);					
 					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
 				}
 			}

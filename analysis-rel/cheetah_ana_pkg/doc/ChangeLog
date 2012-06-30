@@ -1,0 +1,21 @@
+#--------------------------------------------------------------------------
+# File and Version Information:
+#  $Id$
+#
+# Description:
+#  ChangeLog file for package cheetah_ana_pkg
+#------------------------------------------------------------------------
+
+Package author: Chunhong Yoon
+
+Please describe any modifications that you made to the package in the
+reverse time order.
+
+Tag: V00-00-01
+2012-06-21 Chunhong Yoon
+- just created this template file, this entry is an example of the change log
+  entry
+- keep it brief and easy to read
+- always include author name and date of the change, provide CVS tag when 
+  appropriate
+
