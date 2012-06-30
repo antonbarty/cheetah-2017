@@ -18,105 +18,137 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
+#include "cheetahmodules.h"
 #include "median.h"
 
-
-
-/*
- *	Update background buffer
- */
-void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int detID) {
-	
-    if(global->detector[detID].useBackgroundBufferMutex)
-        pthread_mutex_lock(&global->bgbuffer_mutex);
-
-	long frameID = global->detector[detID].bgCounter%global->detector[detID].bgMemory;	
-	global->detector[detID].bgCounter += 1;
-	memcpy(global->detector[detID].bg_buffer+global->detector[detID].pix_nn*frameID, eventData->detector[detID].corrected_data_int16, global->detector[detID].pix_nn*sizeof(int16_t));
-	
-	//for(long i=0;i<global->pix_nn;i++)
-	//	global->bg_buffer[global->pix_nn*frameID + i] = eventData->corrected_data_int16[i];
-	
-    if(global->detector[detID].useBackgroundBufferMutex)
-        pthread_mutex_unlock(&global->bgbuffer_mutex);
-	
-}
-
-
-
-
-/*
- *	Calculate persistent background from stack of remembered frames
- */
-void calculatePersistentBackground(cGlobal *global, int detID) {
-	
-	
-	long	median_element = lrint((global->detector[detID].bgMemory*global->detector[detID].bgMedian));
-	int16_t	*buffer = (int16_t*) calloc(global->detector[detID].bgMemory, sizeof(int16_t));
-	printf("Finding %lith smallest element of buffer depth %li\n",median_element,global->detector[detID].bgMemory);	
-	
-	// Lock the global variables
-    if(global->detector[detID].useBackgroundBufferMutex){
-        //pthread_mutex_lock(&global->bgbuffer_mutex);
-        pthread_mutex_lock(&global->selfdark_mutex);
-    }
-	
-	// Loop over all pixels 
-	for(long i=0; i<global->detector[detID].pix_nn; i++) {
-		
-		// Create a local array for sorting
-		for(long j=0; j< global->detector[detID].bgMemory; j++) {
-			buffer[j] = global->detector[detID].bg_buffer[j*global->detector[detID].pix_nn+i];
-		}
-		
-		// Find median value of the temporary array
-		global->detector[detID].selfdark[i] = kth_smallest(buffer, global->detector[detID].bgMemory, median_element);
-	}	
-	global->detector[detID].last_bg_update = global->detector[detID].bgCounter;
-
-    if(global->detector[detID].useBackgroundBufferMutex){
-        //pthread_mutex_unlock(&global->bgbuffer_mutex);
-        pthread_mutex_unlock(&global->selfdark_mutex);
-    }
-	
-	free (buffer);
-}
 
 
 
 
 /*
  *	Subtract persistent background 
+ *	(and perform recalculation when required)
  */
-void subtractPersistentBackground(cEventData *eventData, cGlobal *global, int detID){
+void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
+
+	DETECTOR_LOOP {
+        if(global->detector[detID].useSubtractPersistentBackground){
+			
+			/*
+			 *	Subtract persistent background
+			 */
+			int		scaleBg = global->detector[detID].scaleBackground;
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*frameData = eventData->detector[detID].corrected_data;
+			float	*background = global->detector[detID].selfdark;
+
+			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+			
+
+			
+			/*
+			 *	Recalculate background from time to time
+			 */
+			int16_t *frameBuffer = global->detector[detID].bg_buffer; 
+			int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
+			long	bufferDepth = global->detector[detID].bgMemory;
+			long	bgCounter = global->detector[detID].bgCounter;
+			long	bgRecalc = global->detector[detID].bgRecalc;
+			long	lastUpdate = global->detector[detID].last_bg_update;
+			float	medianPoint = global->detector[detID].bgMedian;
+			long	threshold = lrint(bufferDepth*medianPoint);
+
+            pthread_mutex_lock(&global->bgbuffer_mutex);
+            if( ( (bgCounter % bgRecalc) == 0 || bgCounter == bufferDepth) && bgCounter != lastUpdate ) {
+				printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
+				
+				if(lockThreads)
+					pthread_mutex_lock(&global->selfdark_mutex);
+				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
+				global->detector[detID].last_bg_update = bgCounter;				
+				if(lockThreads)
+					pthread_mutex_unlock(&global->selfdark_mutex);
+            }
+            pthread_mutex_unlock(&global->bgbuffer_mutex);
+			
+			
+			
+			/*
+			 *	Remember GMD values  (why is this here?)
+			 */
+			float	gmd;
+			pthread_mutex_lock(&global->selfdark_mutex);
+			gmd = (eventData->gmd21+eventData->gmd22)/2;
+			global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
+			pthread_mutex_unlock(&global->selfdark_mutex);
+
+        }
+    }	
+}
+
+/*
+ *	Update background buffer
+ *	Requires eventData->detector[detID].corrected_data_int16
+ */
+void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
+	
+	DETECTOR_LOOP {
+        if (global->detector[detID].useSubtractPersistentBackground) 
+						
+            if (hit==0 || global->detector[detID].bgIncludeHits) {
+				
+				int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
+				long	bgCounter = global->detector[detID].bgCounter;
+				long	bufferDepth = global->detector[detID].bgMemory;
+				long	pix_nn = global->detector[detID].pix_nn;
+				int16_t	*frameBuffer = global->detector[detID].bg_buffer;
+				int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
+				
+
+				if(lockThreads)
+					pthread_mutex_lock(&global->bgbuffer_mutex);
+				
+				updateBackgroundBuffer(data16, frameBuffer, bgCounter, bufferDepth, pix_nn);
+				global->detector[detID].bgCounter += 1;
+				
+				if(lockThreads)
+					pthread_mutex_unlock(&global->bgbuffer_mutex);
+				
+			}		
+    }
+}
+
+// Do we really need a separarte function for this?
+void updateBackgroundBuffer(int16_t *data16, int16_t *frameBuffer, long bgCounter, long bufferDepth, long pix_nn){
+	
+	long frameID = bgCounter%bufferDepth;	
+	memcpy(frameBuffer+pix_nn*frameID, data16, pix_nn*sizeof(int16_t));
+	
+}
+
+
+
+/*
+ *	Subtract pre-calculated persistent background value
+ */
+void subtractPersistentBackground(float *data, float *background, int scaleBg, long pix_nn) {
 	
 	float	top = 0;
 	float	s1 = 0;
 	float	s2 = 0;
 	float	v1, v2;
 	float	factor;
-	float	gmd;
 	
 	
-	// Add current (uncorrected) image to self darkcal
-	pthread_mutex_lock(&global->selfdark_mutex);
-	//for(long i=0;i<global->pix_nn;i++){
-	//	global->selfdark[i] = ( eventData->corrected_data[i] + (global->bgMemory-1)*global->selfdark[i]) / global->bgMemory;
-	//}
-	gmd = (eventData->gmd21+eventData->gmd22)/2;
-	global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-	pthread_mutex_unlock(&global->selfdark_mutex);
-	
-	
-	// Find appropriate scaling factor 
-	if(global->detector[detID].scaleBackground) {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			//v1 = pow(global->selfdark[i], 0.25);
-			//v2 = pow(eventData->corrected_data[i], 0.25);
-			v1 = global->detector[detID].selfdark[i];
-			v2 = eventData->detector[detID].corrected_data[i];
-			if(v2 > global->hitfinderADC)
-				continue;
+	/*
+	 *	Find appropriate scaling factor to match background with current image
+	 *	Use with care: this assumes background vector is orthogonal to the image vector (which is often not true)
+	 */
+	factor = 1;
+	if(scaleBg) {
+		for(long i=0; i<pix_nn; i++){
+			v1 = background[i];
+			v2 = data[i];
 			
 			// Simple inner product gives cos(theta), which is always less than zero
 			// Want ( (a.b)/|b| ) * (b/|b|)
@@ -126,47 +158,91 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global, int de
 		}
 		factor = top/s1;
 	}
-	else 
-		factor=1;
 	
 	
 	// Do the weighted subtraction
-	for(long i=0;i<global->detector[detID].pix_nn;i++) {
-		eventData->detector[detID].corrected_data[i] -= (factor*global->detector[detID].selfdark[i]);	
+	for(long i=0; pix_nn; i++) {
+		data[i] -= (factor*background[i]);	
 	}	
-	
 }
+
+
+/*
+ *	Calculate persistent background from stack of remembered frames
+ */
+void calculatePersistentBackground(float *background, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn) {
+
+	// Buffer for median calculation
+	int16_t	*buffer = (int16_t*) calloc(bufferDepth, sizeof(int16_t));
+		
+	// Loop over all pixels 
+	for(long i=0; i<pix_nn; i++) {
+		
+		// Create a local array for sorting
+		for(long j=0; j< bufferDepth; j++) {
+			buffer[j] = frameBuffer[j*pix_nn+i];
+		}
+		
+		// Find median value of the temporary array
+		background[i] = kth_smallest(buffer, bufferDepth, threshold);
+	}
+	
+	free (buffer);
+}
+
+
+
+
+
+
 
 /*
  *	Local background subtraction
  */
-void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
+void subtractLocalBackground(cEventData *eventData, cGlobal *global){
 	
-	long		e,ee;
-	long		counter;
+	DETECTOR_LOOP {
+        if(global->detector[detID].useLocalBackgroundSubtraction) {
+			long		asic_nx = global->detector[detID].asic_nx;
+			long		asic_ny = global->detector[detID].asic_ny;
+			long		nasics_x = global->detector[detID].nasics_x;
+			long		nasics_y = global->detector[detID].nasics_y;
+			long		radius = global->detector[detID].localBackgroundRadius;
+			float		*data = eventData->detector[detID].corrected_data;
+			
+			subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, nasics_y);
+		}
+	}
 	
-	// Dereference datector arrays
-	long		pix_nx = global->detector[detID].pix_nx;
-	long		pix_ny = global->detector[detID].pix_ny;
-	long		pix_nn = global->detector[detID].pix_nn;
-	long		asic_nx = global->detector[detID].asic_nx;
-	long		asic_ny = global->detector[detID].asic_ny;
-	long		nasics_x = global->detector[detID].nasics_x;
-	long		nasics_y = global->detector[detID].nasics_y;
-	float		*corrected_data = eventData->detector[detID].corrected_data;
+}
 
+
+void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
-	// Search subunits
-	if(global->detector[detID].localBackgroundRadius <= 0 || global->detector[detID].localBackgroundRadius >= asic_ny/2 )
+	// Tank for silly radius values
+	if(radius <= 0 || radius >= asic_ny/2 )
 		return;
-	long nn = (2*global->detector[detID].localBackgroundRadius+1);
+	
+	// Raw data array size can be calculated from asic modules
+	long	pix_nx = asic_nx*nasics_x;
+	long	pix_ny = asic_ny*nasics_y;
+	long	pix_nn = pix_nx*pix_ny;
+	
+	
+	// Subunit size
+	long nn = (2*radius+1);
 	nn=nn*nn;
 	
-	
-	// Create local arrays needed for background subtraction
-	float	*localBg = (float*) calloc(pix_nn, sizeof(float)); 
 	float	*buffer = (float*) calloc(nn, sizeof(float));
+	float	*localBg = (float*) calloc(pix_nn, sizeof(float)); 
 	
+	
+	/*
+	 *	Determine local background
+	 *	(median over window width either side of current pixel)
+	 */
+	long		e,ee;
+	long		counter;
 	
 	
 	// Loop over ASIC modules 
@@ -182,8 +258,8 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 					e += i+mi*asic_nx;
 					
 					// Loop over median window
-					for(long jj=-global->detector[detID].localBackgroundRadius; jj<=global->detector[detID].localBackgroundRadius; jj++){
-						for(long ii=-global->detector[detID].localBackgroundRadius; ii<=global->detector[detID].localBackgroundRadius; ii++){
+					for(long jj=-radius; jj<=radius; jj++){
+						for(long ii=-radius; ii<=radius; ii++){
 							
 							// Quick array bounds check
 							if((i+ii) < 0)
@@ -203,7 +279,7 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 								continue;
 							}
 							
-							buffer[counter] = corrected_data[ee];
+							buffer[counter] = data[ee];
 							counter++;
 						}
 					}
@@ -227,9 +303,11 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 	}
 	
 	
-	// Actually do the local background subtraction
+	/*
+	 *	Do the background subtraction
+	 */
 	for(long i=0;i<pix_nn;i++) {
-		corrected_data[i] -= localBg[i];	
+		data[i] -= localBg[i];	
 	}	
 	
 	
@@ -237,6 +315,7 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global, int detID){
 	free(localBg);
 	free(buffer);
 }
+
 
 
 

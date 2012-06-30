@@ -35,12 +35,6 @@ void *worker(void *threadarg) {
 	int	hit = 0;
 
 
-	long		pix_nn = global->detector[0].pix_nn;
-	long		asic_nx = global->detector[0].asic_nx;
-	long		asic_ny = global->detector[0].asic_ny;	
-	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn);
-
-	
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
@@ -104,67 +98,45 @@ void *worker(void *threadarg) {
 	applyBadPixelMask(eventData, global);
 	
 	
-	/*
-	 *	Recalculate running background from time to time
-	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useSubtractPersistentBackground){
-            pthread_mutex_lock(&global->bgbuffer_mutex);
-            if( ( (global->detector[detID].bgCounter % global->detector[detID].bgRecalc) == 0 || global->detector[detID].bgCounter == global->detector[detID].bgMemory) && global->detector[detID].bgCounter != global->detector[detID].last_bg_update ) {
-                    calculatePersistentBackground(global, detID);
-            }
-            pthread_mutex_unlock(&global->bgbuffer_mutex);
-        }
-    }	
-    
-	/*
-	 *	Recalculate hot pixel maskfrom time to time
-	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useAutoHotpixel) {
-            if( ( (global->detector[detID].hotpixCounter % global->detector[detID].hotpixRecalc) == 0 || global->detector[detID].hotpixCounter == global->detector[detID].hotpixMemory) && global->detector[detID].hotpixCounter != global->detector[detID].last_hotpix_update ) {
-                    calculateHotPixelMask(global, detID);
-            }
-        }	
-	}
-    
 	/* 
-	 *	Keep memory of data with only detector artefacts subtracted (needed for later reference)
+	 *	Keep memory of data with only detector artefacts subtracted 
+	 *	(possibly needed later)
 	 */
 	DETECTOR_LOOP {
 		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
-
+		
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
 		}
 	}
+	
 
 	/*
-	 *	Subtract running photon background
+	 *	Calculate hot pixel masks
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useSubtractPersistentBackground) 
-			subtractPersistentBackground(eventData, global, detID);
-	}
+	calculateHotPixelMask(global);
+    
 	
+
+	/*
+	 *	Subtract persistent photon background
+	 */
+	subtractPersistentBackground(eventData, global);
+
+    	
 
 	/*
 	 *	Local background subtraction
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useLocalBackgroundSubtraction) 
-			subtractLocalBackground(eventData, global, detID);
-	}
+	subtractLocalBackground(eventData, global);
+	
 		
 
 	/*
 	 *	Identify and remove hot pixels
 	 */
-    DETECTOR_LOOP {
-        if(global->detector[detID].useAutoHotpixel)
-			killHotpixels(eventData, global, detID);
-	}
 	applyBadPixelMask(eventData, global);
+	applyHotPixelMask(eventData, global);
 		
 
 	/*
@@ -193,12 +165,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	Update running backround estimate based on non-hits
 	 */
-    DETECTOR_LOOP {
-        if (global->detector[detID].useSubtractPersistentBackground) 
-            if (hit==0 || global->detector[detID].bgIncludeHits) {
-                updateBackgroundBuffer(eventData, global, detID); 
-        }		
-    }
+	updateBackgroundBuffer(eventData, global, hit); 
+	
+	
 	
 	/*
 	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted
@@ -207,6 +176,7 @@ void *worker(void *threadarg) {
         if(global->detector[detID].saveDetectorCorrectedOnly) 
 			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
+	
 	
 	/*
 	 *	If using detector raw, do it here

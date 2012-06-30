@@ -11,7 +11,8 @@ void applyBadPixelMask(cEventData*, cGlobal*);
 void cmModuleSubtract(cEventData*, cGlobal*);
 void cmSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cmSubtractBehindWires(cEventData*, cGlobal*);
-
+void calculateHotPixelMask(cGlobal*);
+void applyHotPixelMask(cEventData*, cGlobal*);
 
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
@@ -19,20 +20,22 @@ void applyBadPixelMask(float*, int16_t*, long);
 void cmModuleSubtract(float*, int16_t*, float, long, long, long, long);
 void cmSubtractUnbondedPixels(float*, int16_t*, long, long, long, long);
 void cmSubtractBehindWires(float*, int16_t*, float, long, long, long, long);
+long calculateHotPixelMask(int16_t*, int16_t*, long, long, long);
 
-
-void calculateHotPixelMask(cGlobal*, int);
-void killHotpixels(cEventData*, cGlobal*, int);
 
 
 // backgroundCorrection.cpp
-void checkSaturatedPixels(uint16_t*, int16_t*, long, long);
-
+void subtractLocalBackground(cEventData*, cGlobal*);
+void checkSaturatedPixels(cEventData*, cGlobal*);
+void subtractPersistentBackground(cEventData*, cGlobal*);
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
-void calculatePersistentBackground(cGlobal*, int);
-void subtractPersistentBackground(cEventData*, cGlobal*, int);
-void subtractLocalBackground(cEventData*, cGlobal*, int);
-void checkSaturatedPixels(cEventData *eventData, cGlobal *global);
+
+void subtractLocalBackground(float*, long, long, long, long, long);
+void checkSaturatedPixels(uint16_t*, int16_t*, long, long);
+void subtractPersistentBackground(float*, float*, int, long);
+void calculatePersistentBackground(float*, int16_t*, long, long, long);
+void updateBackgroundBuffer(int16_t*, int16_t*, long, long, long);
+
 
 
 // saveFrame.cpp
@@ -42,8 +45,10 @@ void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 
 
+
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*, int);
+
 
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*, int, int);
