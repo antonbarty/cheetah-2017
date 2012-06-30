@@ -1,1 +1,16 @@
 sit_setup: every time you change the directory
+
+psana.cfg: Configure module to run
+
+myPsana: Runs psana on specified XTC
+
+To run XTC proof reader:
+Open psana.cfg (nano psana.cfg)
+uncomment modules = chuck_ana_pkg.chuck_ana_mod
+Run myPsana (./myPsana)
+
+To run psana cheetah:
+Open psana.cfg (nano psana.cfg)
+uncomment modules = cheetah_ana_pkg.cheetah_ana_mod
+Run myPsana (./myPsana)
+
