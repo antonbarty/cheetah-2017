@@ -34,8 +34,6 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 
-//#include "/reg/neh/home/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
-
 #define beamCode 140
 #define laserCode 41
 #define verbose 0
@@ -58,8 +56,6 @@ static int count = 0;
 static cGlobal cheetahGlobal;
 static int laserSwitch = 0;
 static int prevLaser = 0;
-
-//char detZ[] = "CXI:DS1:MMS:06.RBV";
 
 template <typename T>
 bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
