@@ -132,7 +132,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
  
  int numErrors = 0;
   count++;
-  cout << "**************************** count: " << count << endl; 
 
 //if (count==2){exit(1);}  
 
@@ -152,18 +151,9 @@ cout << sec << " " << nsec << endl;
   		cout << "*** runNumber: " << runNumber << endl; 
   		cout << "*** eventTime: " << evtTime << endl;
 	}
-  } else {
-	numErrors++;
-	if (verbose) {
-	cout << "/////////////////////////////////" << "\n"
-	     << "//				//" << "\n"
-	     << "//	ERROR: NO EVENT ID	//" << "\n"
-	     << "//				//" << "\n"
-	     << "/////////////////////////////////" << endl;
-  	}
   }
-  cheetahGlobal.runNumber = runNumber;
-  //cout << "global/event/runNumber: " << cheetahGlobal.runNumber << "/" << eventId->run() << "/" << runNumber << endl;
+
+  //cheetahGlobal.runNumber = runNumber;
   // get number of EvrData & fiducials
   int numEvrData = 0;
   int fiducial = 0;
@@ -180,15 +170,6 @@ cout << sec << " " << nsec << endl;
 		}
 		cout << endl;
 	}
-  } else {
-	numErrors++;
-	if (verbose) {
-        cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//     ERROR: NO EVR DATA      //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
   }
 
   // get EBeam
@@ -218,25 +199,6 @@ cout << sec << " " << nsec << endl;
          	<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
          	<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
 	}
-	if ( charge < 0 || L3Energy < 0 || LTUPosX < 0 || LTUPosY < 0
- 	     || LTUAngX < 0 || LTUAngY < 0 || PkCurrBC2 < 0) {
-	if (verbose) {
-	cout << "+++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                               ++" << "\n"
-             << "++ WARNING: NEGATIVE EBEAM PARAM ++" << "\n"
-             << "++                               ++" << "\n"
-             << "+++++++++++++++++++++++++++++++++++" << endl;
-	}
-	}
-  } else {
-	numErrors++;
-	if (verbose) {
-        cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//     ERROR: NO EBEAM 1       //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
   }
 
   shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
@@ -257,26 +219,8 @@ cout << sec << " " << nsec << endl;
          	<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
          	<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
 	}
-	if ( charge < 0 || L3Energy < 0 || LTUPosX < 0 || LTUPosY < 0
- 	     || LTUAngX < 0 || LTUAngY < 0 || PkCurrBC2 < 0) {
-	if (verbose) {
-	cout << "+++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                               ++" << "\n"
-             << "++ WARNING: NEGATIVE EBEAM PARAM3++" << "\n"
-             << "++                               ++" << "\n"
-             << "+++++++++++++++++++++++++++++++++++" << endl;
-	}
-	}
-  } else {
-	numErrors++;
-	if (verbose) {
-        cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//     ERROR: NO EBEAM 3       //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
   }
+
   double photonEnergyeV=0;
   double wavelengthA=0;
 
@@ -304,19 +248,6 @@ cout << sec << " " << nsec << endl;
   if (verbose) {
   	cout << "***** wavelengthA: " << wavelengthA << endl;
   }
-  // Soft: 100 ~ 1 Ang
-  // Hard: 1 ~ 0.1 Ang
-  if (wavelengthA <= 0 || wavelengthA > 100) {
-	numErrors++;
-	if (verbose) {
-        cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//   ERROR: WRONG WAVELENGTH   //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
-  }
-  // wavelengthA different to myana (DON'T WORK)
   }
 
   if (ebeam3.get()){
@@ -343,19 +274,6 @@ cout << sec << " " << nsec << endl;
   if (verbose) {
   	cout << "***** wavelengthA: " << wavelengthA << endl;
   }
-  // Soft: 100 ~ 1 Ang
-  // Hard: 1 ~ 0.1 Ang
-  if (wavelengthA <= 0 || wavelengthA > 100) {
-	numErrors++;
-	if (verbose) {
-        cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//   ERROR: WRONG WAVELENGTH   //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
-  }
-  // wavelengthA different to myana (DON'T WORK)
   }
 
   // get gasdet[4]
@@ -372,17 +290,7 @@ cout << sec << " " << nsec << endl;
   	if (verbose) {
 		cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
   	}
-  } else {
-	numErrors++;
-	if (verbose) {
-	cout << "/////////////////////////////////" << "\n"
-             << "//                             //" << "\n"
-             << "//      ERROR: NO FEE GAS      //" << "\n"
-             << "//                             //" << "\n"
-             << "/////////////////////////////////" << endl;
-  	}
-  }
-  // gmd1,gmd2 different to myana (DON'T WORK) 
+  } 
 
   // get PhaseCavity
   float fitTime1=0;
@@ -401,23 +309,6 @@ cout << sec << " " << nsec << endl;
              << "* charge1=" << charge1 << "\n"
              << "* charge2=" << charge2 << endl;
 	}
-	if (fitTime1 == 0 || fitTime2 == 0 || charge1 == 0 || charge2 == 0) {
-	if (verbose) {
-	cout << "+++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                               ++" << "\n"
-             << "++  WARNING: ZERO PHASE CAVITY   ++" << "\n"
-             << "++                               ++" << "\n"
-             << "+++++++++++++++++++++++++++++++++++" << endl;
-	}
-	}
-  } else {
-	if( verbose) {
-  	cout << "+++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                               ++" << "\n"
-             << "++    WARNING: NO PHASE CAVITY   ++" << "\n"
-             << "++                               ++" << "\n"
-             << "+++++++++++++++++++++++++++++++++++" << endl;
-  	}
   }
 
   // get laserDelay only for Neutze TiSa delay
@@ -432,75 +323,26 @@ cout << sec << " " << nsec << endl;
                 if (verbose) {
 			cout << "laserDelay[" << detID << "]: " << value << endl;
 		}
-		if (value < -10 || value > 10) {
-		if (verbose) {
-		cout << "+++++++++++++++++++++++++++++++++++++++" << "\n"
-                     << "++                                   ++" << "\n"
-                     << "++    WARNING: LARGE LASER DELAY     ++" << "\n"
-                     << "++                                   ++" << "\n"
-                     << "+++++++++++++++++++++++++++++++++++++++" << endl;
-		}
-		}
-        } else {
-	if (verbose) {
-	cout << "+++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                               ++" << "\n"
-             << "++    WARNING: NO TiSa DELAY     ++" << "\n"
-             << "++                               ++" << "\n"
-             << "+++++++++++++++++++++++++++++++++++" << endl;
-	}
-	}
+        }
   }
 
   float detectorPosition[MAX_DETECTORS];
   //!! get detector position (Z)
   for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
-	//shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(detZ);
   	shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
-	//cout << pv->numElements() << endl;
 	if (pv && pv->numElements() > 0) {
-		//const float& value = estore.value(detZ,0);
-		//detectorPosition[detID] = value;
 		const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
 		detectorPosition[detID] = value;
 		if (verbose) {
 			cout << "***** DetectorPosition[" << detID << "]: " << value << endl;
 		}
-		if (value < -10 || value > 10) {
-		if (verbose) {
-		cout << "+++++++++++++++++++++++++++++++++++++++++++++++" << "\n"
-             	     << "++                               	      ++" << "\n"
-                     << "++    WARNING: LARGE DETECTOR POSITION Z     ++" << "\n"
-             	     << "++                               	      ++" << "\n"
-             	     << "+++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		}
-		}
-  	} else {
-	 numErrors++;
-	 if (verbose) {
-	cout << "/////////////////////////////////////////" << "\n"
-             << "//                                     //" << "\n"
-             << "//      ERROR: NO DETECTOR POS Z       //" << "\n"
-             << "//                                     //" << "\n"
-             << "/////////////////////////////////////////" << endl;
-	}
-	}
+  	}
   }
 
   //! get beamOn
   bool beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
   if (verbose) {
 	cout << "***** beamOn: " << beamOn << endl;
-  }
-  if (!beamOn) {
-	numErrors++;
-	if (verbose) {
-	cout << "////////////////////////////////////////////" << "\n"
-             << "//                                        //" << "\n"
-             << "//      ERROR: NO BEAM. GAME OVER!        //" << "\n"
-             << "//                                        //" << "\n"
-             << "////////////////////////////////////////////" << endl;
-  	}
   }
 
   //! get laserOn
@@ -544,16 +386,7 @@ cout << sec << " " << nsec << endl;
 		}
 		cout << endl;
 		}
-  	} else {
-	numErrors++;
-	if (verbose) {
-	cout << "/////////////////////////////////////////" << "\n"
-             << "//                                     //" << "\n"
-             << "//      ERROR: NO CSPAD DATA V2        //" << "\n"
-             << "//                                     //" << "\n"
-             << "/////////////////////////////////////////" << endl;
-	}
-	}
+  	}
   }
 
   //? get Acqiris
@@ -596,14 +429,6 @@ cout << sec << " " << nsec << endl;
 	cout << endl;
     }
     }
-  } else {
-	if (verbose) {
-	cout << "++++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                                ++" << "\n"
-             << "++    WARNING: NO ACQIRIS TOF     ++" << "\n"
-             << "++                                ++" << "\n"
-             << "++++++++++++++++++++++++++++++++++++" << endl;
-  	}
   }
 
   // get Pulnix
@@ -630,27 +455,8 @@ cout << sec << " " << nsec << endl;
       	}  
      cout << endl;
      }
-  } else {
-	if (verbose) {
-	cout << "++++++++++++++++++++++++++++++++++++++" << "\n"
-             << "++                                  ++" << "\n"
-             << "++    WARNING: NO PULNIX CAMERA     ++" << "\n"
-             << "++                                  ++" << "\n"
-             << "++++++++++++++++++++++++++++++++++++++" << endl;
-  	}
-  }
-
-  // Message
-//  if (numErrors > 0) {
-//  	cout << "number of Errors: " << numErrors << endl;
-//  }
-  if (numErrors == 0) {
-//	cout << "OK" << endl;
-  } else {
-	cout << "CHEETAH BAD DATAGRAM: " << count << endl;
   }
 	
-  	
 	 //	Create a new eventData structure in which to place all information
 	 
 	cEventData	*eventData;
@@ -660,14 +466,10 @@ cout << sec << " " << nsec << endl;
 	 //	Copy all interesting information into worker thread structure if we got this far.
      	 //  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
      	 //  Copy all image data into event structure for processing
-cout << "count: " << count << endl;	 
     	eventData->frameNumber = count;
-cout << "sec/nsec: " << sec << "/" << nsec << endl;
 	eventData->seconds = sec;
 	eventData->nanoSeconds = nsec;
-cout << "fiducial: " << fiducial << endl;
 	eventData->fiducial = fiducial;
-cout << "run: " << runNumber << endl;
 	eventData->runNumber = runNumber;
 	eventData->beamOn = beamOn;
 	eventData->nPeaks = 0;
@@ -705,15 +507,6 @@ cout << "run: " << runNumber << endl;
 	int fail=0;
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
         	uint16_t *quad_data[4];        
-        	//Pds::CsPad::ElementIterator iter;
-        
-		//fail=getCspadData(detectorPdsDetInfo[detID], iter);
-		//if (fail) {
-		//	printf("getCspadData fail %d (%x)\n",fail,fiducial);
-		//	eventData->detector[detID].cspad_fail = fail;
-		//	return;
-		//}
-		//else {
             		nevents++;
             		long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
 			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
@@ -744,14 +537,7 @@ cout << "run: " << runNumber << endl;
 					int quadrant = el.quad();
 					
 					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-	//				const Pds::CsPad::Section* s;
-	//				unsigned section_id;
-//					while(( s=iter.next(section_id) )) {  
-//						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
-//					}
-					
 					for (unsigned s = 0; s != data.shape()[0]; ++s) {
-					//	std::copy(data[s],data[s]+2*asic_nx*asic_ny,&quad_data[quadrant][s*2*asic_nx*asic_ny]);
 						memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
 					}
                     			// Get temperature on strong back, just in case we want it for anything 
@@ -770,8 +556,7 @@ cout << "run: " << runNumber << endl;
 				for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
 					i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 					j = k / (2*asic_nx);
-					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-//printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k, quad_data[quadrant][k]); 				
+					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;		
 					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
 				}
 			}
@@ -784,7 +569,6 @@ cout << "run: " << runNumber << endl;
 	
 	 //	Copy TOF (aqiris) channel into Cheetah event for processing
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
-	 
 	eventData->TOFPresent = 0;
 	//eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
@@ -792,11 +576,6 @@ cout << "run: " << runNumber << endl;
 		double *tempTOFTime;
 		double *tempTOFVoltage;
 		double tempTrigTime = 0;
-		//fail = getAcqValue(Pds::DetInfo(0,tofPdsDetInfo,0,Pds::DetInfo::Acqiris,0), cheetahGlobal.TOFchannel, tempTOFTime,tempTOFVoltage, tempTrigTime);
-		//if (fail){
-		//	printf("getAcqValue fail %d (%x)\n",fail,fiducial);
-		//	return ;
-		//}
 		//Memcpy is necessary for thread safety.
 		eventData->TOFtrigtime = tempTrigTime;
 		eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
@@ -804,7 +583,6 @@ cout << "run: " << runNumber << endl;
 		memcpy(eventData->TOFTime, tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
 		memcpy(eventData->TOFVoltage, tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
 	}
-
 	
 	 //	Copy Pulnix camera into Cheetah event for processing
      	 //	Pulnix 120Hz CCD camera on CXI Questar micrscope
@@ -838,11 +616,8 @@ cout << "run: " << runNumber << endl;
 	       	eventData->detector[detID].detectorZ = detectorPosition[detID];
 	}
 
-	//cheetahProcessEvent(&cheetahGlobal, eventData);
-        //cheetahDestroyEvent(eventData);
-
+	// Call cheetah
 	cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
-
 }
   
 /// Method which is called at the end of the calibration cycle
@@ -865,8 +640,6 @@ cheetah_ana_mod::endJob(Event& evt, Env& env)
          *      Clean up all variables associated with libCheetah
          */
     	cheetahExit(&cheetahGlobal);
-	cout << "End Job" << endl;
-
 }
 
 } // namespace cheetah_ana_pkg
