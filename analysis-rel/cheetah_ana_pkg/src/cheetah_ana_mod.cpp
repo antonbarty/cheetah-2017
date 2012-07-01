@@ -68,7 +68,6 @@ bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
   return false;
 }
 
-
 //----------------
 // Constructors --
 //----------------
@@ -139,11 +138,16 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
   // get RunNumber & EventTime
   int runNumber = 0;
+  time_t sec = 0;
+  time_t nsec = 0;
   PSTime::Time evtTime;
   boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
   if (eventId.get()) {
 	runNumber = eventId->run();
     	evtTime = eventId->time();
+	sec = evtTime.sec();
+	nsec = evtTime.nsec();
+cout << sec << " " << nsec << endl;
 	if (verbose) {
   		cout << "*** runNumber: " << runNumber << endl; 
   		cout << "*** eventTime: " << evtTime << endl;
@@ -158,7 +162,8 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	     << "/////////////////////////////////" << endl;
   	}
   }
-
+  cheetahGlobal.runNumber = runNumber;
+  //cout << "global/event/runNumber: " << cheetahGlobal.runNumber << "/" << eventId->run() << "/" << runNumber << endl;
   // get number of EvrData & fiducials
   int numEvrData = 0;
   int fiducial = 0;
@@ -166,6 +171,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
   if (data3.get()) {
 	numEvrData = data3->numFifoEvents();
   	const ndarray<Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
+	fiducial = array[0].timestampHigh();
 	if (verbose) { 
 		cout << "*** fiducial: ";
 		for (int i=0; i<numEvrData; i++) {
@@ -276,8 +282,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
   if (ebeam1.get()){
   // get wavelengthA
-  //double photonEnergyeV;
-  //double wavelengthA;
   // Calculate the resonant photon energy (ie: photon wavelength) 
   // Get the present peak current in Amps
   double peakCurrent = ebeam1->ebeamPkCurrBC2();
@@ -317,8 +321,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
   if (ebeam3.get()){
   // get wavelengthA
-  //double photonEnergyeV;
-  //double wavelengthA;
   // Calculate the resonant photon energy (ie: photon wavelength) 
   // Get the present peak current in Amps
   double peakCurrent = ebeam3->ebeamPkCurrBC2();
@@ -658,12 +660,14 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	 //	Copy all interesting information into worker thread structure if we got this far.
      	 //  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
      	 //  Copy all image data into event structure for processing
-	 
+cout << "count: " << count << endl;	 
     	eventData->frameNumber = count;
-	eventData->seconds = 7;
-	eventData->nanoSeconds = 18;
+cout << "sec/nsec: " << sec << "/" << nsec << endl;
+	eventData->seconds = sec;
+	eventData->nanoSeconds = nsec;
+cout << "fiducial: " << fiducial << endl;
 	eventData->fiducial = fiducial;
-cout << "runNumber: " << runNumber << endl;
+cout << "run: " << runNumber << endl;
 	eventData->runNumber = runNumber;
 	eventData->beamOn = beamOn;
 	eventData->nPeaks = 0;
