@@ -146,7 +146,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
     	evtTime = eventId->time();
 	sec = evtTime.sec();
 	nsec = evtTime.nsec();
-cout << sec << " " << nsec << endl;
 	if (verbose) {
   		cout << "*** runNumber: " << runNumber << endl; 
   		cout << "*** eventTime: " << evtTime << endl;
