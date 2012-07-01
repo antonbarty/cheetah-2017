@@ -21,6 +21,7 @@
 //-----------------
 #include <iostream>
 #include <string>
+#include <time.h>
 //-------------------------------
 // Collaborating Class Headers --
 //-------------------------------
@@ -56,6 +57,7 @@ static int count = 0;
 static cGlobal cheetahGlobal;
 static int laserSwitch = 0;
 static int prevLaser = 0;
+static time_t startT = 0;
 
 template <typename T>
 bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
@@ -96,6 +98,7 @@ cheetah_ana_mod::~cheetah_ana_mod ()
 void 
 cheetah_ana_mod::beginJob(Event& evt, Env& env)
 {
+	time(&startT);
 }
 
 /// Method which is called at the beginning of the run
@@ -129,8 +132,6 @@ cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 void 
 cheetah_ana_mod::event(Event& evt, Env& env)
 {
- 
- int numErrors = 0;
   count++;
 
 //if (count==2){exit(1);}  
@@ -152,7 +153,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	}
   }
 
-  //cheetahGlobal.runNumber = runNumber;
   // get number of EvrData & fiducials
   int numEvrData = 0;
   int fiducial = 0;
@@ -472,46 +472,39 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	eventData->runNumber = runNumber;
 	eventData->beamOn = beamOn;
 	eventData->nPeaks = 0;
-
 	eventData->laserEventCodeOn = 0;
     	eventData->laserDelay = 0;
-	
     	eventData->gmd1 = gmd1;
     	eventData->gmd2 = gmd2;
 	eventData->gmd11 = gmd11;
 	eventData->gmd12 = gmd12;
 	eventData->gmd21 = gmd21;
 	eventData->gmd22 = gmd22;
-
 	eventData->fEbeamCharge = charge;		// in nC
-	eventData->fEbeamL3Energy = L3Energy;	// in MeV
+	eventData->fEbeamL3Energy = L3Energy;		// in MeV
 	eventData->fEbeamLTUPosX = LTUPosX;		// in mm
 	eventData->fEbeamLTUPosY = LTUPosY;		// in mm
 	eventData->fEbeamLTUAngX = LTUAngX;		// in mrad
 	eventData->fEbeamLTUAngY = LTUAngY;		// in mrad
-	eventData->fEbeamPkCurrBC2 = PkCurrBC2;	// in Amps
+	eventData->fEbeamPkCurrBC2 = PkCurrBC2;		// in Amps
 	eventData->photonEnergyeV = photonEnergyeV;	// in eV
-	eventData->wavelengthA = wavelengthA;			// in Angstrom
-
+	eventData->wavelengthA = wavelengthA;		// in Angstrom
 	eventData->phaseCavityTime1 = fitTime1;
 	eventData->phaseCavityTime2 = fitTime2;
 	eventData->phaseCavityCharge1 = charge1;
-	eventData->phaseCavityCharge1 = charge2;
-	
+	eventData->phaseCavityCharge1 = charge2;	
 	eventData->pGlobal = &cheetahGlobal;
 
-	
 	 //	Copy raw cspad image data into Cheetah event structure for processing
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
-	int fail=0;
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
         	uint16_t *quad_data[4];        
             		nevents++;
             		long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
 			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
 			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-            		long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
-            		long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
+            		//long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
+            		//long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
             		//uint16_t    *quad_data[4];
             
             		// Allocate memory for detector data and set to zero
@@ -639,6 +632,11 @@ cheetah_ana_mod::endJob(Event& evt, Env& env)
          *      Clean up all variables associated with libCheetah
          */
     	cheetahExit(&cheetahGlobal);
+
+	time_t endT;
+        time(&endT);
+	double dif = difftime(endT,startT);
+        cout << "time taken: " << dif << endl;
 }
 
 } // namespace cheetah_ana_pkg
