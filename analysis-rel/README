@@ -1,6 +1,8 @@
 sit_setup: every time you change the directory
 
-psana.cfg: Configure module to run
+scons: compiles all packages in this directory, XTC proof reader and cheetah
+
+psana.cfg: Select module you want to run
 
 myPsana: Runs psana on specified XTC
 
