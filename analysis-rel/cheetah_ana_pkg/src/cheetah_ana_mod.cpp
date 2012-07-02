@@ -5,9 +5,10 @@
 //
 // Description:
 //	Class cheetah_ana_mod...
+//	This is a psana-based module for running Cheetah (Anton's hitfinder)
 //
 // Author List:
-//      Chunhong Yoon
+//      Chunhong Yoon	06/2012		chun.hong.yoon@cfel.de
 //
 //------------------------------------------------------------------------
 
