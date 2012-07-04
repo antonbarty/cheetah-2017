@@ -36,13 +36,14 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 
+// LCLS event codes
 #define beamCode 140
 #define laserCode 41
 #define verbose 0
+
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
 //-----------------------------------------------------------------------
-
 
 // This declares this class as psana module
 using namespace cheetah_ana_pkg;
@@ -62,7 +63,6 @@ static time_t startT = 0;
 
 template <typename T>
 bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
-  //const int nfifo =  array.size();
   for (unsigned i = 0; i < array.size(); ++i) {
 	if (array[i].eventCode() == EvrCode) {
 		return true;
@@ -135,8 +135,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 {
   count++;
 
-//if (count==2){exit(1);}  
-
   // get RunNumber & EventTime
   int runNumber = 0;
   time_t sec = 0;
@@ -165,7 +163,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	if (verbose) { 
 		cout << "*** fiducial: ";
 		for (int i=0; i<numEvrData; i++) {
- 			fiducial = array[i].timestampHigh(); // array[0] and array[1]
+ 			fiducial = array[i].timestampHigh(); // array[0],array[1]
   			cout << fiducial << " ";
 		}
 		cout << endl;
@@ -504,29 +502,21 @@ cheetah_ana_mod::event(Event& evt, Env& env)
             		long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
 			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
 			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-            		//long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
-            		//long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
-            		//uint16_t    *quad_data[4];
             
             		// Allocate memory for detector data and set to zero
             		for(int quadrant=0; quadrant<4; quadrant++) {
                 		quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-                		//memset(quad_data[quadrant], 0, pix_nn*sizeof(uint16_t));
             		}
 
 			// loop over elements (quadrants)
 			shared_ptr<Psana::CsPad::DataV2> data2 = evt.get(m_src, m_key);
 			int nQuads = data2->quads_shape()[0];
 			
-			//const Pds::CsPad::ElementHeader* element;
-			//while(( element=iter.next() )) {
 			for (int q = 0; q < nQuads; ++ q) {
 				const Psana::CsPad::ElementV2& el = data2->quads(q); 
 				const ndarray<int16_t, 3>& data = el.data();
-				//if(element->quad() < 4) {
 				if(el.quad() < 4){
 					// Which quadrant is this?
-					//int quadrant = element->quad();
 					int quadrant = el.quad();
 					
 					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
@@ -542,7 +532,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 			
 			 //	Assemble data from all four quadrants into one large array (rawdata layout)
              		 //      Memcpy is necessary for thread safety.
-			 
 			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				long	i,j,ii;
@@ -557,12 +546,11 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 			for(int quadrant=0; quadrant<4; quadrant++) 
 				free(quad_data[quadrant]);
 		}
-    	//}	
 
 	
 	 //	Copy TOF (aqiris) channel into Cheetah event for processing
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
-	eventData->TOFPresent = 0;
+	eventData->TOFPresent = 0; // DO NOT READ TOF
 	//eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
 		cout << "cheetahGlobal.TOFPresent" << endl;
@@ -601,7 +589,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 //        eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
 //        memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
 	//}
-	eventData->pulnixFail = 1;
+	eventData->pulnixFail = 1; // DO NOT READ PULNIX
 
 	// Update detector positions
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
