@@ -460,7 +460,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	 
 	cEventData	*eventData;
 	eventData = cheetahNewEvent(&cheetahGlobal);
-
+	nevents++;
 	
 	 //	Copy all interesting information into worker thread structure if we got this far.
      	 //  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
@@ -499,7 +499,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
         	uint16_t *quad_data[4];        
-            		nevents++;
             		long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
 			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
 			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
