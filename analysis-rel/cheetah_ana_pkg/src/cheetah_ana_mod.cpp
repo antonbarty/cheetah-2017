@@ -86,6 +86,7 @@ cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 	m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
 	m_srcCam = configStr("cameraSource","DetInfo()");
+	m_srcPnccd = configStr("source","DetInfo(:pnCCD)");
 }
 
 //--------------

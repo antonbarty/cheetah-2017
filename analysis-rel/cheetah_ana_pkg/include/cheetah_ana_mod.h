@@ -92,7 +92,7 @@ private:
   Source m_srcCav;
   Source m_srcAcq;
   Source m_srcCam;
-
+  Source m_srcPnccd;
 };
 
 } // namespace cheetah_ana_pkg
