@@ -1,17 +1,57 @@
-sit_setup: every time you change the directory
+Follow these step to get started with psana Cheetah
 
-scons: compiles all packages in this directory, XTC proof reader and cheetah
+1) sit_setup: 
+Type "sit_setup" every time you change into this directory for compiling.
+If you are not up to date with latest version of ana, type "sit_setup ana-current"
 
-psana.cfg: Select module you want to run
+2) scons: 
+Type "scons" in ~/analysis-rel/ directory. This compiles all packages in 
+the subdirectories, 
+1) XTC proof reader and 
+2) Cheetah
 
-myPsana: Runs psana on specified XTC
+3) psana.cfg: 
+Select the module you want to run
+
+4) myPsana: 
+This executes psana on the specified XTC
+For multiple XTC files, use "\"
+
+
+Trouble shooting:
+1) If you get the following message -
+
+Running Psana
+Standard exception caught in runApp(): psana::Exception: failed to load dynamic 
+library libcheetah_ana_pkg.so: libcheetah.so.1: cannot open shared object file: No 
+such file or directory [in function loadPackageLib at psana/src/DynLoader.cpp:158]
+
+Solution:
+It's looking for the Cheetah shared library
+Type this in your terminal
+export LD_LIBRARY_PATH=/reg/neh/home/yoon82/cheetah/lib/:$LD_LIBRARY_PATH
+
+2) If you get the following message -
+Warning! ***HDF5 library version mismatched error***
+
+Solution:
+It's looking for hdf5 v.1.8.4 library
+Type this in your terminal
+export LD_LIBRARY_PATH=/reg/neh/home/yoon82/hdf5/lib/:$LD_LIBRARY_PATH
+
+
+Example:
 
 To run XTC proof reader:
+sit_setup
+scons
 Open psana.cfg (nano psana.cfg)
 uncomment modules = chuck_ana_pkg.chuck_ana_mod
 Run myPsana (./myPsana)
 
 To run psana cheetah:
+sit_setup
+scons
 Open psana.cfg (nano psana.cfg)
 uncomment modules = cheetah_ana_pkg.cheetah_ana_mod
 Run myPsana (./myPsana)
