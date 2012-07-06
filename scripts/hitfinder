@@ -19,9 +19,10 @@ OVERWRITE="NO"
 [ $H5DIR ] || H5DIR="."
 [ $XTCDIR ] || XTCDIR="."
 [ $CONFIGDIR ] || CONFIGDIR="."
+[ $PSANA_CONFIG ] || PSANA_CONFIG="psana.cfg"
 
 # get options:
-while getopts "r:i:t:s:n:j:qdoOh" OPTION; do
+while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
 	case $OPTION in
 	r) if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
 			RUNDIR=$(printf 'r%04d' $OPTARG)
@@ -41,7 +42,8 @@ while getopts "r:i:t:s:n:j:qdoOh" OPTION; do
 	d) DARKCAL="YES";;
 	o) OVERWRITE="CHECK";;
 	O) OVERWRITE="FORCE";;
-	h) SHOWHELP="YES";; 
+	h) SHOWHELP="YES";;
+	p) PSANA="YES";;
 	?) UERROR "Unrecognized option $OPTARG";;
 	esac
 done
@@ -67,6 +69,7 @@ Brief summary of options:
    -o       Overwrite the previous run (if it successfully finished).
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
+	-p       Use the psana version of cheetah
 
 Best to explain by example.  Firstly, you will probably want to set up some 
 environment variables for ease of use.  This seems to be the easiest way to 
@@ -248,14 +251,21 @@ cp $(awk -F '=' '/^badpixelmap/ {print $2}' $INIFILE) $SAVEDIR/badpixelmap.h5 &>
 find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
 [ "$(wc -l xtcfiles.txt | awk '{print $1}')" -lt 1 ] && UERROR "Found no xtc files for $RUNDIR"
 echo "Running cheetah..."
-ARGS="$ARGS -l xtcfiles.txt"
+
+if [ $PSANA ]; then
+	ARGS="$ARGS $( cat xtcfiles.txt | tr '\n' ' ' )"
+	cp $PSANA_CONFIG .
+else
+	ARGS="$ARGS -l xtcfiles.txt"
+fi
+
 if [ $QUE ]; then
 	FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	echo $FULLCOMMAND
 	$FULLCOMMAND
 	echo "$SCRIPTNAME job sent to queue"
 else
-	FULLCOMMAND="$CHEETAH $ARGS >& $LOGFILE"
+	FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
 	echo $FULLCOMMAND
 	$FULLCOMMAND
 	echo "$SCRIPTNAME has finished"
