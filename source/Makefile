@@ -23,9 +23,9 @@ ARCH 			= x86_64-linux
 
 # LCLS
 #HDF5DIR=/reg/data/ana12/cxi/cxi54312/scratch/programs/
-HDF5DIR			?= /reg/neh/home/barty/hdf5
-CHEETAHDIR      ?= /reg/neh/home/barty/c/cheetah
-CRYSTFELDIR		?= /reg/data/ana12/cxi/cxi54312/scratch/programs/bin
+HDF5DIR			?= /specify/this/elsewhere
+CHEETAHDIR      ?= /specify/this/elsewhere
+CRYSTFELDIR		?= /specify/this/elsewhere
 
 
 # cfelsgi
