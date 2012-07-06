@@ -39,6 +39,19 @@ It's looking for hdf5 v.1.8.4 library
 Type this in your terminal
 export LD_LIBRARY_PATH=/reg/neh/home/yoon82/hdf5/lib/:$LD_LIBRARY_PATH
 
+3) If you get the following messgae -
+psana: 
+/reg/g/psdm/sw/releases/ana-0.5.1/arch/x86_64-rhel5-gcc41-opt/geninc/boost/smart_ptr/shared_ptr.hpp:424: 
+T* boost::shared_ptr<T>::operator->() const [with T = Psana::CsPad::DataV2]: Assertion 
+`px != 0' failed.
+
+Solution:
+You have an out-of-date psana package as indicated by ana-0.5.1.
+At the time of writing, current psana is ana-0.5.7.
+Type this in your terminal
+relupgrade ana-current
+scons -c
+scons
 
 Example:
 
