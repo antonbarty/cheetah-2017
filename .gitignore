@@ -55,3 +55,7 @@ cheetah
 ./release/pdsdata/CVS
 ./release/CVS
 myinstall
+libcheetah.so.*
+libcheetah_ana_pkg.so*
+libchuck_ana_pkg.so*
+.sconsign.dblite
