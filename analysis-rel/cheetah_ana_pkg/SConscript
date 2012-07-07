@@ -26,4 +26,5 @@ Import('*')
 # PYEXTMOD - name of the Python extension module, package name used by default
 #
 #
-standardSConscript(LIBS="libcheetah hdf5",LIBPATH="/reg/neh/home/yoon82/cheetah/lib /reg/neh/home/yoon82/hdf5/lib")
+import os
+standardSConscript(LIBS="libcheetah hdf5",LIBPATH=os.environ['LIBPATH']+" /reg/neh/home/yoon82/cheetah/lib /reg/neh/home/yoon82/hdf5/lib")
