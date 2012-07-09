@@ -87,7 +87,8 @@ cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 	m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
 	m_srcCam = configStr("cameraSource","DetInfo()");
-	m_srcPnccd = configStr("pnccdSource","DetInfo(:pnCCD)");
+	m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
+	m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 }
 
 //--------------
@@ -552,7 +553,14 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	//	Copy raw pnCCD image data into Cheetah event structure for processing
      	//  SLAC libraries are not thread safe: must copy data into event structure for processing
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
-  		shared_ptr<Psana::PNCCD::FullFrameV1> frame = evt.get(m_srcPnccd);
+		shared_ptr<Psana::PNCCD::FullFrameV1> frame;
+		if (detID == 0) {
+			frame = evt.get(m_srcPnccd0);	
+			cout << "front" << endl;
+		} else if (detID == 1) {
+			cout << "back" << endl;
+			frame = evt.get(m_srcPnccd1);
+		}
   		if (frame) {
       			const ndarray<uint16_t, 2> data = frame->data();
 			long	nx = data.shape()[0];
