@@ -35,6 +35,7 @@
 #include "psddl_psana/evr.ddl.h"
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
+#include "psddl_psana/pnccd.ddl.h"
 
 // LCLS event codes
 #define beamCode 140
@@ -86,7 +87,7 @@ cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 	m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
 	m_srcCam = configStr("cameraSource","DetInfo()");
-	m_srcPnccd = configStr("source","DetInfo(:pnCCD)");
+	m_srcPnccd = configStr("pnccdSource","DetInfo(:pnCCD)");
 }
 
 //--------------
@@ -495,21 +496,22 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	eventData->phaseCavityCharge1 = charge2;	
 	eventData->pGlobal = &cheetahGlobal;
 
-	 //	Copy raw cspad image data into Cheetah event structure for processing
-     	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
+	//	Copy raw cspad image data into Cheetah event structure for processing
+     	//  SLAC libraries are not thread safe: must copy data into event structure for processing
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
         	uint16_t *quad_data[4];        
-            		long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+            	long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+		long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+		long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
             
-            		// Allocate memory for detector data and set to zero
+		// loop over elements (quadrants)
+		shared_ptr<Psana::CsPad::DataV2> data2 = evt.get(m_src, m_key);
+		if (data2.get()) {
+			// Allocate memory for detector data and set to zero
             		for(int quadrant=0; quadrant<4; quadrant++) {
-                		quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-            		}
+        	        	quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+	            	}
 
-			// loop over elements (quadrants)
-			shared_ptr<Psana::CsPad::DataV2> data2 = evt.get(m_src, m_key);
 			int nQuads = data2->quads_shape()[0];
 			
 			for (int q = 0; q < nQuads; ++ q) {
@@ -527,11 +529,10 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 					//float	temperature = std::numeric_limits<float>::quiet_NaN();;
 					//eventData->detector[detID].quad_temperature[quadrant] = temperature;
 				}
-			}
-        
+			}        
 			
-			 //	Assemble data from all four quadrants into one large array (rawdata layout)
-             		 //      Memcpy is necessary for thread safety.
+			//	Assemble data from all four quadrants into one large array (rawdata layout)
+             		//      Memcpy is necessary for thread safety.
 			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				long	i,j,ii;
@@ -542,10 +543,25 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
 				}
 			}
-            		// quadrant data no longer needed
+			// quadrant data no longer needed
 			for(int quadrant=0; quadrant<4; quadrant++) 
 				free(quad_data[quadrant]);
 		}
+	}
+
+	//	Copy raw pnCCD image data into Cheetah event structure for processing
+     	//  SLAC libraries are not thread safe: must copy data into event structure for processing
+	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+  		shared_ptr<Psana::PNCCD::FullFrameV1> frame = evt.get(m_srcPnccd);
+  		if (frame) {
+      			const ndarray<uint16_t, 2> data = frame->data();
+			long	nx = data.shape()[0];
+			long	ny = data.shape()[1];
+			long    pix_nn = nx*ny;
+			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+			memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+    		}
+	}
 
 	
 	 //	Copy TOF (aqiris) channel into Cheetah event for processing
