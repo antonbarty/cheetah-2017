@@ -395,7 +395,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
         // loop over segments
         for (unsigned seg = 0; seg<elem.nbrSegments(); ++seg) {
         	unsigned size = std::min(elem.nbrSamplesInSeg(), 32U);
-		cout << "size: " << size << endl;
+		cout << "\n  size: " << size << endl;
 		cout << "\n  Segment #" << seg
               	<< "\n    timestamp=" << timestamps[seg].pos()
               	<< "\n    data=[";
@@ -586,6 +586,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
       		const ndarray<uint8_t, 2>& data8 = frmData->data8();
       		if (not data8.empty()) {
+			cout << "Pulnix(uint8_t) will not be passed to Cheetah. Complain to Chuck if you need this!" << endl;
 			//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
 			//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
       		}
