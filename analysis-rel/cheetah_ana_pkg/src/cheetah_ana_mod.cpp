@@ -40,7 +40,7 @@
 // LCLS event codes
 #define beamCode 140
 #define laserCode 41
-#define verbose 0
+#define verbose 1
 
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
@@ -224,14 +224,19 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
   double photonEnergyeV=0;
   double wavelengthA=0;
-
-  if (ebeam1.get()){
+  double peakCurrent = 0;
+  double DL2energyGeV = 0;
+  if (ebeam1.get()) {
+	// Get the present peak current in Amps
+	// Get present beam energy [GeV]
+	peakCurrent = ebeam1->ebeamPkCurrBC2();
+	DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
+  } else if (ebeam3.get()) {
+	peakCurrent = ebeam3->ebeamPkCurrBC2();
+	DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
+  }
   // get wavelengthA
   // Calculate the resonant photon energy (ie: photon wavelength) 
-  // Get the present peak current in Amps
-  double peakCurrent = ebeam1->ebeamPkCurrBC2();
-  // Get present beam energy [GeV]
-  double DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
   // wakeloss prior to undulators
   double LTUwakeLoss = 0.0016293*peakCurrent;
   // Spontaneous radiation loss per segment
@@ -249,34 +254,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
   if (verbose) {
   	cout << "***** wavelengthA: " << wavelengthA << endl;
   }
-  }
-
-  if (ebeam3.get()){
-  // get wavelengthA
-  // Calculate the resonant photon energy (ie: photon wavelength) 
-  // Get the present peak current in Amps
-  double peakCurrent = ebeam3->ebeamPkCurrBC2();
-  // Get present beam energy [GeV]
-  double DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
-  // wakeloss prior to undulators
-  double LTUwakeLoss = 0.0016293*peakCurrent;
-  // Spontaneous radiation loss per segment
-  double SRlossPerSegment = 0.63*DL2energyGeV;
-  // wakeloss in an undulator segment
-  double wakeLossPerSegment = 0.0003*peakCurrent;
-  // energy loss per segment
-  double energyLossPerSegment = SRlossPerSegment + wakeLossPerSegment;
-  // energy in first active undulator segment [GeV]
-  double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss - 0.0005*energyLossPerSegment;
-  // Calculate the resonant photon energy of the first active segment
-  photonEnergyeV = 44.42*energyProfile*energyProfile;
-  // Calculate wavelength in Angstrom
-  wavelengthA = 12398.42/photonEnergyeV;
-  if (verbose) {
-  	cout << "***** wavelengthA: " << wavelengthA << endl;
-  }
-  }
-
+  
   // get gasdet[4]
   double gmd1=0, gmd2=0;
   double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
@@ -600,9 +578,24 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	 //		CxiKb1
 	 //		CxiSc1
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
-	 //
-//	int pulnixWidth, pulnixHeight;
-//	unsigned short	*pulnixImage;
+  	if (frmData.get()) {
+    		eventData->pulnixWidth = frmData->width();
+             	eventData->pulnixHeight = frmData->height();
+
+      		const ndarray<uint8_t, 2>& data8 = frmData->data8();
+      		if (not data8.empty()) {
+			//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
+			//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
+      		}
+
+      		const ndarray<uint16_t, 2>& data16 = frmData->data16();
+      		if (not data16.empty()) {
+			eventData->pulnixImage = (uint16_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint16_t));
+			memcpy(eventData->pulnixImage, &data16[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint16_t));
+      		}  
+     		cout << endl;
+  	}
+
 	//DetInfo pulnixInfo(0,DetInfo::CxiSc1, 0, DetInfo::TM6740, 0);
 	//eventData->pulnixFail = getTm6740Value(pulnixInfo, pulnixWidth, pulnixHeight, pulnixImage);
 	//if ( eventData->pulnixFail == 0 )
