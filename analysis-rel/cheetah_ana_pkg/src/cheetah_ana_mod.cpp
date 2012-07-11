@@ -578,7 +578,9 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	 //		CxiKb1
 	 //		CxiSc1
      	 //  SLAC libraries are not thread safe: must copy data into event structure for processing
+	eventData->pulnixFail = 1;
   	if (frmData.get()) {
+		eventData->pulnixFail = 0;
     		eventData->pulnixWidth = frmData->width();
              	eventData->pulnixHeight = frmData->height();
 
@@ -595,18 +597,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
       		}  
      		cout << endl;
   	}
-
-	//DetInfo pulnixInfo(0,DetInfo::CxiSc1, 0, DetInfo::TM6740, 0);
-	//eventData->pulnixFail = getTm6740Value(pulnixInfo, pulnixWidth, pulnixHeight, pulnixImage);
-	//if ( eventData->pulnixFail == 0 )
-	//{
-		//Memcpy is necessary for thread safety.
-//        eventData->pulnixWidth = pulnixWidth;
-//        eventData->pulnixHeight = pulnixHeight;
-//        eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
-//        memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
-	//}
-	eventData->pulnixFail = 1; // DO NOT READ PULNIX
 
 	// Update detector positions
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
