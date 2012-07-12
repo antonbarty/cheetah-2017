@@ -40,7 +40,7 @@
 // LCLS event codes
 #define beamCode 140
 #define laserCode 41
-#define verbose 1
+#define verbose 0
 
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
@@ -80,7 +80,8 @@ cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 {
   	// get the values from configuration or use defaults
   	m_key = configStr("inputKey", "");
-	m_src = configStr("source","DetInfo(:Cspad)");
+	m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
+	m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
 	m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
 	m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
 	m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
@@ -343,8 +344,13 @@ cheetah_ana_mod::event(Event& evt, Env& env)
   // laserSwitch should be as large as count (50% on and off)
 
   //!! get CsPadData
-  for (long detID=0; detID<=cheetahGlobal.nDetectors; detID++){
-	shared_ptr<Psana::CsPad::DataV2> data2 = evt.get(m_src, m_key);
+  for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
+	shared_ptr<Psana::CsPad::DataV2> data2;
+	if (detID == 0) {
+		data2 = evt.get(m_srcCspad0, m_key);
+	} else if (detID == 1) {
+		data2 = evt.get(m_srcCspad1, m_key);
+	}
   	if (data2.get()) {
 		if (verbose) {
     		cout << "CsPad::DataV2:";
@@ -449,6 +455,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	eventData->seconds = sec;
 	eventData->nanoSeconds = nsec;
 	eventData->fiducial = fiducial;
+//cout << "runNumber: " << runNumber << endl;
 	eventData->runNumber = runNumber;
 	eventData->beamOn = beamOn;
 	eventData->nPeaks = 0;
@@ -484,7 +491,12 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 		long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
             
 		// loop over elements (quadrants)
-		shared_ptr<Psana::CsPad::DataV2> data2 = evt.get(m_src, m_key);
+		shared_ptr<Psana::CsPad::DataV2> data2;
+		if (detID == 0) {
+			data2 = evt.get(m_srcCspad0, m_key);
+		} else if (detID == 1) {
+			data2 = evt.get(m_srcCspad1, m_key);
+		}
 		if (data2.get()) {
 			// Allocate memory for detector data and set to zero
             		for(int quadrant=0; quadrant<4; quadrant++) {
@@ -510,8 +522,8 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 				}
 			}        
 			
-			//	Assemble data from all four quadrants into one large array (rawdata layout)
-             		//      Memcpy is necessary for thread safety.
+			// Assemble data from all four quadrants into one large array (rawdata layout)
+             		// Memcpy is necessary for thread safety.
 			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			for(int quadrant=0; quadrant<4; quadrant++) {
 				long	i,j,ii;
@@ -555,6 +567,9 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 	eventData->TOFPresent = 0; // DO NOT READ TOF
 	//eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 	if (cheetahGlobal.TOFPresent==1){
+
+		// Cheetah can only handle one channel. Must inc. to 4
+
 		cout << "cheetahGlobal.TOFPresent" << endl;
 		double *tempTOFTime;
 		double *tempTOFVoltage;
@@ -633,7 +648,7 @@ cheetah_ana_mod::endJob(Event& evt, Env& env)
 	time_t endT;
         time(&endT);
 	double dif = difftime(endT,startT);
-        cout << "time taken: " << dif << endl;
+        cout << "time taken: " << dif << " seconds" << endl;
 }
 
 } // namespace cheetah_ana_pkg
