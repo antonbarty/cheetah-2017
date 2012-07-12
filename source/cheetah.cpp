@@ -651,8 +651,8 @@ printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny)
 					const Pds::CsPad::Section* s;
 					unsigned section_id;
 					while(( s=iter.next(section_id) )) {  
-printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
-//printf("pixel: %d\n",s->pixel[0]);
+                        //printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
+                        //printf("pixel: %d\n",s->pixel[0]);
 						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
 					}
 
@@ -671,7 +671,7 @@ printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
 					i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 					j = k / (2*asic_nx);
 					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-//printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k,quad_data[quadrant][0]);					
+                    //printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k,quad_data[quadrant][0]);					
 					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
 				}
 			}
@@ -744,7 +744,7 @@ printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
         eventData->pulnixImage = (unsigned short*) calloc((long)pulnixWidth*(long)pulnixHeight, sizeof(unsigned short));
         memcpy(eventData->pulnixImage, pulnixImage, (long)pulnixWidth*(long)pulnixHeight*sizeof(unsigned short));
         
-        free(pulnixImage);
+        //free(pulnixImage);
 	}
 
     
