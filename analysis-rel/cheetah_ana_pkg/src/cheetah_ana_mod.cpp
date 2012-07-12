@@ -547,9 +547,9 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 		shared_ptr<Psana::PNCCD::FullFrameV1> frame;
 		if (detID == 0) {
 			frame = evt.get(m_srcPnccd0);	
-			cout << "front" << endl;
+			//cout << "front" << endl;
 		} else if (detID == 1) {
-			cout << "back" << endl;
+			//cout << "back" << endl;
 			frame = evt.get(m_srcPnccd1);
 		}
   		if (frame) {
