@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export HDF5DIR=/reg/neh/home/rkirian/local
+export CHEETAHDIR=/reg/neh/home/rkirian/software/cheetah
+
+export LD_LIBRARY_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
+export LD_RUN_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
+
+make cheetah
+make libcheetah
+
+cp cheetah /reg/d/psdm/cxi/cxi54312/scratch/programs/bin/cheetah-rick
+cp cheetah /reg/neh/home/rkirian/local/bin
+cp libcheetah.so.* /reg/neh/home/rkirian/local/lib
