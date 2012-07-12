@@ -40,7 +40,7 @@
 // LCLS event codes
 #define beamCode 140
 #define laserCode 41
-#define verbose 1
+#define verbose 0
 
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
