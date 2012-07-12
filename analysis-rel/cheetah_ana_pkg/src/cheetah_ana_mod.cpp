@@ -176,6 +176,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
   // get EBeam
   // EBeamV0 ~ EBeamV3
+  // EBeamV2 not implemented yet
   float charge=0;
   float L3Energy=0;
   float LTUPosX=0; 
@@ -616,7 +617,6 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
 	// Update detector positions
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
-		//eventData->detector[detID].detectorZ;
 	       	eventData->detector[detID].detectorZ = detectorPosition[detID];
 	}
 
