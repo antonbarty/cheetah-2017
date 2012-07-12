@@ -69,7 +69,7 @@ Brief summary of options:
    -o       Overwrite the previous run (if it successfully finished).
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
-	-p       Use the psana version of cheetah
+   -p       Use the psana version of cheetah (this will be the default soon)
 
 Best to explain by example.  Firstly, you will probably want to set up some 
 environment variables for ease of use.  This seems to be the easiest way to 
@@ -141,7 +141,7 @@ Also note that hitfinder will copy the hdf5 files specified in the ini file to
 the output directory - nice to have a copy of the original geometry file, for 
 instance, for future reference.
 
-If there are bugs, let me know (rkirian@asu.edu).
+If there are bugs, let me know (richard.kirian@desy.de).
 
 EOF
 exit 0
@@ -165,6 +165,11 @@ fi
 # set the save directory if not specified
 SAVEDIR=$H5DIR/$RUNDIR
 [ $TAG ] && SAVEDIR=$SAVEDIR-$TAG
+
+# if the save directory exists, make sure we can write files as needed
+if [ -d $SAVEDIR ]; then
+[ -w $SAVEDIR ]   || UERROR "You don't have write permissions in the directory $SAVEDIR"
+fi
 
 # no ini file name specified? take a guess:
 [ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
