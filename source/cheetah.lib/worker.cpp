@@ -170,7 +170,7 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	Revert to detector-corrections-only data if we don't want to export data with photon bacground subtracted
+	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
 	 */
     DETECTOR_LOOP {
         if(global->detector[detID].saveDetectorCorrectedOnly) 
@@ -332,22 +332,11 @@ void evr41fudge(cEventData *t, cGlobal *g){
 	double Vmax = 0;
 	int tCounts = 0;
 	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
-	//for ( i=0; i<nSamp; i++){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
 		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
-		//printf("%f\n",Vtof[i]);
 	}
 	
-	//printf("================================================================\n"); 
-	//printf("tCounts = %d\n",tCounts);
-	/*
-	if ( t->laserEventCodeOn ) {
-		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 1\n",nCh,nSamp,Vtot,Vmax);
-	} else {
-		printf("%d channels, %d samples, Vtot = %f, Vmax = %f, evr41 = 0\n",nCh,nSamp,Vtot,Vmax);
-	}
-	*/
 
 	bool acqLaserOn = false;
 	if ( tCounts >= 1 ) {
@@ -363,7 +352,6 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		}
 		t->laserEventCodeOn = acqLaserOn;
 	}
-	//printf("================================================================\n");
 }
 
 

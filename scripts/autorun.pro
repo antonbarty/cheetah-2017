@@ -21,9 +21,9 @@
 pro autorun
 
 	
-	h5dir = '/reg/d/psdm/cxi/cxi49012/scratch/hdf5/'
-	xtcdir = '/reg/d/psdm/cxi/cxi49012/xtc/'
-	command = '/reg/d/psdm/cxi/cxi49012/scratch/cheetah/crystfinder-q'
+	h5dir = '/reg/d/psdm/cxi/cxi54312/scratch/hdf5/'
+	xtcdir = '/reg/d/psdm/cxi/cxi54312/xtc/'
+	command = '/reg/d/psdm/cxi/cxi54312/scratch/autorun/crystfinder-q'
 
 	while 1 do begin
 	
@@ -34,7 +34,7 @@ pro autorun
 		
 
 		;; Last directory processed 
-		f = file_search(h5dir+'r*')
+		f = file_search(h5dir+'r*autorun')
 		ff = file_basename(f[n_elements(f)-1])
 		lastrun = strmid(ff,1,4)
 		
@@ -81,7 +81,7 @@ pro autorun
 
 
 			;; Is there a job already in the queue?
-			cmnd = 'bjobs -q psfehq -u all | grep ' + nextrunstr + ' | wc -l' 
+			cmnd = 'bjobs -q psfehq -u all | grep autorun | grep ' + nextrunstr + ' | wc -l' 
 			spawn, cmnd, result
 			if result[0] ne '0' then begin
 				print,'Run already submitted to batch queue: ', nextrunstr

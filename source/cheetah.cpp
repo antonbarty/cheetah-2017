@@ -632,7 +632,7 @@ void event() {
             long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
             uint16_t    *quad_data[4];
 
-printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
+            //printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
             // Allocate memory for detector data and set to zero
             for(int quadrant=0; quadrant<4; quadrant++) {
                 quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));

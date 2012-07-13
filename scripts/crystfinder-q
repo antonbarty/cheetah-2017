@@ -1,0 +1,24 @@
+#!/bin/tcsh
+# Anton Barty
+# Script for launching 'crystfinder' using the LCLS batch queue system
+# Launch from pslogin using the same syntax as crystfinder
+# eg:
+# > crtystfinder-q cheetah.ini r0032 
+#
+# Useful commands 
+# bsub		submit a job
+# bjobs		summary of my running jobs
+# bjobs -l	More info on jobs than you want
+# bjobs -q psfehq -u all	Info on all jobs in the queue
+# bkill		Kill a job
+# bkill 0 -u user	Kill all jobs belonging to user
+# bqueues	Info on queues
+# bmod
+# busers	Summary of my batch activity
+
+
+setenv LOGDIR '/reg/d/psdm/cxi/cxi54312/scratch/hdf5/logs'
+setenv COMMAND '/reg/d/psdm/cxi/cxi54312/scratch/autorun/crystfinder' 
+
+bsub -q psfehq -o $LOGDIR/$2.log  -J $2 $COMMAND $1 $2
+#bsub -q lclsq -o $LOGDIR/$2.log  $COMMAND $1 $2

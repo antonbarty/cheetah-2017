@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. /reg/g/psdm/bin/sit_setup.sh
+
+export LIBPATH=/reg/neh/home/rkirian/local/lib
+
+scons
