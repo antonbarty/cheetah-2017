@@ -22,7 +22,6 @@ ARCH 			= x86_64-linux
 
 
 # LCLS
-#HDF5DIR=/reg/data/ana12/cxi/cxi54312/scratch/programs/
 HDF5DIR			?= /specify/this/elsewhere
 CHEETAHDIR      ?= /specify/this/elsewhere
 CRYSTFELDIR		?= /specify/this/elsewhere
@@ -35,14 +34,14 @@ CRYSTFELDIR		?= /specify/this/elsewhere
 
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
 MYANADIR		?= lcls/myana
-LCLSDIR 		?= $(CHEETAHDIR)/source/lcls-myana/myana/release
+LCLSDIR 		?= $(CHEETAHDIR)/source/lcls/myana/release
 #CSPADDIR		?= lcls/cspad
 
 #OBJFILES		= main.o XtcRun.o
 
 CPP				= g++ -c -g -O3 -fPIC
 #CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(MYANADIR) -I$(LCLSDIR) -I$(HDF5DIR)/include
-CFLAGS			= -Icheetah.lib/ -Ilcls-myana/myana/release/ -I$(HDF5DIR)/include 
+CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release/ -I$(HDF5DIR)/include 
 
 LD 				= g++
 CPP_LD_FLAGS	= -O4 -Wall

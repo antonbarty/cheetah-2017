@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Make LCLS pds libraries
+cd source lcls/myana/release/pdsdata
+make x86_64-linux
+make x86_64-linux
+

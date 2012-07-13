@@ -543,6 +543,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 
 	//	Copy raw pnCCD image data into Cheetah event structure for processing
      	//  SLAC libraries are not thread safe: must copy data into event structure for processing
+    /*
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
 		shared_ptr<Psana::PNCCD::FullFrameV1> frame;
 		if (detID == 0) {
@@ -561,6 +562,7 @@ cheetah_ana_mod::event(Event& evt, Env& env)
 			memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
     		}
 	}
+     */
 
 	
 	 //	Copy TOF (aqiris) channel into Cheetah event for processing

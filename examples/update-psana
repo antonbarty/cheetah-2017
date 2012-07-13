@@ -1,10 +1,10 @@
 #!/bin/bash
-# In case of errors, run update-psana
 
 cd analysis-rel
 
+relupgrade ana-current
+scons -c
+
 . /reg/g/psdm/bin/sit_setup.sh
-
 export LIBPATH=/reg/neh/home/rkirian/local/lib
-
 scons

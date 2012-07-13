@@ -6,6 +6,7 @@ export CHEETAHDIR=/reg/neh/home/rkirian/software/cheetah
 export LD_LIBRARY_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
 export LD_RUN_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
 
+cd source
 make cheetah
 make libcheetah
 

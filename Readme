@@ -12,11 +12,34 @@ There are a couple of steps to follow when starting from scratch:
 
 1. Compile libcheetah (the analysis part of the code)
 2. Link libcheetah to the file reading front-end (currently psana at LCLS)
-3. Set up environment configuration (where are the programs, where is the data?)
-4. Run the analysis script
+3. Run the analysis
+4. Optimise parameters for your experiment
 
 
 Some knowledge of your computing architecture is assumed.
+
+
+------------------------------------------------------------------------
+0. Compiling the SLAC data analysis libraries
+------------------------------------------------------------------------
+
+Look at:  examples/build-pdslib
+
+Which does the following: 
+>------------------------------------------------------------------------<
+cd source/lcls/myana/release/pdsdata
+make x86_64-linux
+>------------------------------------------------------------------------<
+
+Technically this is only required if compiling cheetah within the myana framework.
+libcheetah and psana SHOULD be able to compile without this. 
+
+However, it seems to help if this is present (make does not tank).
+Some modification may be required for compilation on your home system
+(mainly missing #includes and some type definitions. SLAC does not 
+guarantee ease portability outside of their own system, nor do we.)
+
+
 
 ------------------------------------------------------------------------
 1. Compiling libcheetah
@@ -41,17 +64,93 @@ cp cheetah /reg/neh/home/rkirian/local/bin
 cp libcheetah.so.* /reg/neh/home/rkirian/local/lib
 >------------------------------------------------------------------------<
 
-Copy this script and edit these fields to point to where things are for you.
+Copy this script, edit these fields to point to where things are for you, and run it.
 
-Make sure to point to a thread-safe version of the HDF5 library.  
-If you don't things will appear to run, but randomly crash with segmentation faults whenever two threads try to write an HDF5 file at the same time.
+Make sure to point to a thread-safe version of the HDF5 library.   
+If you don't cheetah will appear to run, but randomly crash with segmentation faults whenever two threads try to write an HDF5 file at the same time.
 Simply add "--enable-threadsafe" to the hdf5 ./configure command.
 hdf5-directory > ./configure --enable-threadsafe
 
+Re-run this after making any changes to libcheetah.
+
+------------------------------------------------------------------------
+2. Compiling psana with libcheetah
+------------------------------------------------------------------------
+
+Look at: examples/build-psana
+
+Which does the following: 
+>------------------------------------------------------------------------<
+cd analysis-rel
+. /reg/g/psdm/bin/sit_setup.sh
+export LIBPATH=/reg/neh/home/rkirian/local/lib
+scons
+>------------------------------------------------------------------------<
+
+In case of errors, look at analysis-rel/README
+
+Common errors are:
+- Path to libcheetah not set
+- Mismatched HDF5 versions
+- Out-of-date psana references
+
+Look at: examples/update-psana for fixing the last problem.
+
+It is possibly a good idea to re-compile psana after making any changes to libcheetah.
+Note that SLAC does not guarantee psana to be easily portable outside of their own systems.
 
 
+------------------------------------------------------------------------
+3. Running analysis scripts
+------------------------------------------------------------------------
+
+Cheetah can now be run directly; however it is more useful to have a script do a lot of the housekeeping for you.
+This is what scripts/hitfinder does.
+
+Look at: 
+scripts/hitfinder
+examples/run-cheetah-psana
+
+First you have to set a few environment variables telling Cheetah where to look for things:
+
+>------------------------------------------------------------------------<
+XTCDIR:    Path to where the xtc data is (default: ./)
+H5DIR:     Path to where the results of cheetah will be written (default: ./)
+CONFIGDIR: Search path for ini files (default: ./)
+TMPDIR:    A place to put temporary files (default: /tmp)
+CHEETAH:   The path to cheetah (default: cheetah)
+>------------------------------------------------------------------------<
+
+Then hitfinding for data can be done with a simple one-line command, such as: 
+
+> hitfinder -r 57 -i /some/path/foobar.ini
+
+Running "hitfinder -h" tells you all the options.
 
 
+------------------------------------------------------------------------
+4. Optimising Cheetah for your experiment
+------------------------------------------------------------------------
+
+Operation of cheetah is controlled by the parameters specified in cheetah.ini 
+
+As with most analysis programs, not all default parameters can cover every situation, and it is most likely that you can benefit from tweaking parameters.
+Monitoring your output, in particular Bragg peak identification, is normal procedure.
+
+Common things to change are:
+Crystals:
+- Local background subtraction radius (tradeoff for speed vs peak size)
+- Size and number of Bragg peaks to qualify as a hit
+- Minimum signal:noise ratio
+Single particles:
+- ADC value and number of pixels above threshold to qualify as a hit
+- Number of past non-hit frames to use as background
+
+See the full cheetah documentation for all options, or talk to your local guru.
+
+Most parameters take sensible default values if not specified. 
+There are many 'hidden parameters' which are not critical, but can be tweaked if you need to.
 
 
+   
 
