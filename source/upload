@@ -12,6 +12,13 @@ switch ($1)
     breaksw
     
     case psexport:
+    rsync -av --exclude 'build' --exclude 'lcls-myana' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah-psana/
+    #rsync -av --exclude 'build' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah/
+    #rsync -av *.cpp *.h  barty@psexport.slac.stanford.edu:c/cheetah/
+    #rsync -av --exclude 'release' --exclude 'build' --exclude '.git' --exclude '*.o' --exclude Makefile . barty@psexport.slac.stanford.edu:c/cheetah/
+
+
+    case psexport-myana:
     rsync -av --exclude 'build' --exclude 'lcls' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah/
     #rsync -av --exclude 'build' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah/
     #rsync -av *.cpp *.h  barty@psexport.slac.stanford.edu:c/cheetah/
