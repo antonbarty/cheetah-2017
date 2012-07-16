@@ -1,6 +1,7 @@
 #!/bin/bash
 
-cd analysis-rel
+cd source/lcls-psana
+#cd analysis-rel
 
 relupgrade ana-current
 scons -c

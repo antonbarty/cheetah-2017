@@ -1,7 +1,8 @@
 #!/bin/bash
 # In case of errors, run update-psana
 
-cd analysis-rel
+cd source/lcls-psana
+#cd analysis-rel
 
 . /reg/g/psdm/bin/sit_setup.sh
 
