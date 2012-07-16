@@ -30,17 +30,6 @@ void cheetahInit(cGlobal *global) {
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
 
-	// Configure detectors
-	for(long i=0; i<global->nDetectors; i++) {
-		global->detector[i].readDetectorGeometry(global->detector[i].geometryFile);
-		global->detector[i].readDarkcal(global, global->detector[i].darkcalFile);
-		global->detector[i].readGaincal(global, global->detector[i].gaincalFile);
-		global->detector[i].readPeakmask(global, global->peaksearchFile);
-		global->detector[i].readBadpixelMask(global, global->detector[i].badpixelFile);
-		global->detector[i].readBaddataMask(global, global->detector[i].baddataFile);
-		global->detector[i].readWireMask(global, global->detector[i].wireMaskFile);
-	}
-	
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();

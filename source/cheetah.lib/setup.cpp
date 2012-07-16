@@ -152,29 +152,19 @@ void cGlobal::setup() {
 
 
 	/*
-	 * Detector parameters
+	 *	Configure detectors
 	 */
 	for(long i=0; i<nDetectors; i++) {
-		if(strcmp(detector[i].detectorName, "CxiDs1") == 0 ||
-			strcmp(detector[i].detectorName, "CxiDs2") == 0 ||
-			strcmp(detector[i].detectorName, "CxiDsd") == 0 ||
-			strcmp(detector[i].detectorName, "XppGon") == 0) {
-			detector[i].asic_nx = CSPAD_ASIC_NX;
-			detector[i].asic_ny = CSPAD_ASIC_NY;
-			detector[i].asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-			detector[i].nasics_x = CSPAD_nASICS_X;
-			detector[i].nasics_y = CSPAD_nASICS_Y;
-			detector[i].pix_nx = CSPAD_ASIC_NX*CSPAD_nASICS_X;
-			detector[i].pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
-			detector[i].pix_nn = (CSPAD_ASIC_NX*CSPAD_nASICS_X)*(CSPAD_ASIC_NY*CSPAD_nASICS_Y);
-
-		} else {
-			printf("Error: unknown detector %s\n", detector[i].detectorName);
-			printf("Quitting\n");
-			exit(1);
-			break;
-		}
+		detector[i].configure();
+		detector[i].readDetectorGeometry(detector[i].geometryFile);
+		detector[i].readDarkcal(detector[i].darkcalFile);
+		detector[i].readGaincal(detector[i].gaincalFile);
+		detector[i].readPeakmask(self, peaksearchFile);
+		detector[i].readBadpixelMask(detector[i].badpixelFile);
+		detector[i].readBaddataMask(detector[i].baddataFile);
+		detector[i].readWireMask(detector[i].wireMaskFile);
 	}
+	
 
 
 	/*

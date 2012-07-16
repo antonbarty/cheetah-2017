@@ -23,11 +23,13 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 
-
+/*
+ *	Set default values to something reasonable for CSPAD at CXI 
+ */
 cPixelDetectorCommon::cPixelDetectorCommon() {
     
     // Defaults to CXI cspad configuration
-    strcpy(detectorTypeName, "cspad");
+    strcpy(detectorType, "cspad");
     strcpy(detectorName, "CxiDs1");
     //detectorType = Pds::DetInfo::Cspad;
     //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
@@ -112,115 +114,43 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 }
 
-/*
- *  Allocate arrays for memory, etc
- */
-void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
-    
-    // Constants
-    nPowderClasses = global->nPowderClasses;
-    radialStackSize = global->radialStackSize;
-    
-    
-    // Background buffers and the like
-    selfdark = (float*) calloc(pix_nn, sizeof(float));
-    bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-    hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-    hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-    wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-    for(long j=0; j<pix_nn; j++) {
-        selfdark[j] = 0;
-        hotpixelmask[j] = 1;
-        wiremask[j] = 1;
-    }
-    
-    // Powder sums and mutexes
-    for(long i=0; i<nPowderClasses; i++) {
-		nPowderFrames[i] = 0;
-		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
-        
-		pthread_mutex_init(&powderRaw_mutex[i], NULL);
-		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-        pthread_mutex_init(&radialStack_mutex[i], NULL);
-		
-		for(long j=0; j<pix_nn; j++) {
-			powderRaw[i][j] = 0;
-			powderRawSquared[i][j] = 0;
-		}
-		for(long j=0; j<image_nn; j++) {
-			powderAssembled[i][j] = 0;
-		}
-    }    
-        
-    
-    // Radial stacks
-    for(long i=0; i<nPowderClasses; i++) {
-        radialStackCounter[i] = 0;
-        radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
-        
-        for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-            radialAverageStack[i][j] = 0;
-        }
+void cPixelDetectorCommon::configure(void) {
+	
+	/*
+	 * Configure basic detector parameters
+	 */
+	if(strcmp(detectorName, "CxiDs1") == 0 || strcmp(detectorName, "CxiDs2") == 0 ||
+	   strcmp(detectorName, "CxiDsd") == 0 || strcmp(detectorName, "XppGon") == 0) {
+		strcpy(detectorType, "cspad");
+		asic_nx = CSPAD_ASIC_NX;
+		asic_ny = CSPAD_ASIC_NY;
+		asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+		nasics_x = CSPAD_nASICS_X;
+		nasics_y = CSPAD_nASICS_Y;
+		pix_nx = CSPAD_ASIC_NX*CSPAD_nASICS_X;
+		pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
+		pix_nn = pix_nx * pix_ny;
+		pixelSize = 110e-6;
+	} 
+	else if(strcmp(detectorName, "pnCCD") == 0 ) {
+		strcpy(detectorType, "pnccd");
+		asic_nx = PNCCD_ASIC_NX;
+		asic_ny = PNCCD_ASIC_NY;
+		asic_nn = PNCCD_ASIC_NX * PNCCD_ASIC_NY;
+		nasics_x = PNCCD_nASICS_X;
+		nasics_y = PNCCD_nASICS_Y;
+		pix_nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
+		pix_ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
+		pix_nn = pix_nx * pix_ny;
+		pixelSize = 75e-6;
 	}
-    
+	else {
+		printf("Error: unknown detector %s\n", detectorName);
+		printf("Quitting\n");
+		exit(1);
+	}
 }
 
-
-/*
- *	Read and process configuration file
- */
-//void cPixelDetectorCommon::parseConfigFile(char* filename) {
-//	char		cbuf[cbufsize];
-//	char		tag[cbufsize];
-//	char		value[cbufsize];
-//	char		*cp;
-//	FILE		*fp;
-//	
-//	
-//	/*
-//	 *	Open configuration file for reading
-//	 */
-//	printf("Parsing detector configuration file: %s\n",filename);
-//	printf("\t%s\n",filename);
-//	
-//	fp = fopen(filename,"r");
-//	if (fp == NULL) {
-//		printf("\tCould not open detector configuration file %s\n",filename);
-//		printf("\tExiting in confusion\n");
-//		exit(1);
-//	}
-//	
-//	/*
-//	 *	Loop through configuration file until EOF 
-//	 *	Ignore lines beginning with a '#' (comments)
-//	 *	Split each line into tag and value at the '=' sign
-//	 */
-//	while (feof(fp) == 0) {
-//		
-//		cp = fgets(cbuf, cbufsize, fp);
-//		if (cp == NULL) 
-//			break;
-//		
-//		if (cbuf[0] == '#')
-//			continue;
-//		
-//		cp = strpbrk(cbuf, "=");
-//		if (cp == NULL)
-//			continue;
-//		
-//		*(cp) = '\0';
-//		sscanf(cp+1,"%s",value);
-//		sscanf(cbuf,"%s",tag);
-//		
-//		parseConfigTag(tag, value);
-//	}
-//	
-//	fclose(fp);
-//	
-//}
 
 /*
  *	Process tags for both configuration file and command line options
@@ -239,7 +169,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(detectorName, value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
-		strcpy(detectorTypeName, value);
+		strcpy(detectorType, value);
 	}
 	else if (!strcmp(tag, "geometry")) {
 		strcpy(geometryFile, value);
@@ -384,6 +314,63 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 }
 
 
+/*
+ *  Allocate arrays for memory, etc
+ */
+void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
+    
+    // Constants
+    nPowderClasses = global->nPowderClasses;
+    radialStackSize = global->radialStackSize;
+    
+    
+    // Background buffers and the like
+    selfdark = (float*) calloc(pix_nn, sizeof(float));
+    bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+    hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+    hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+    wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+    for(long j=0; j<pix_nn; j++) {
+        selfdark[j] = 0;
+        hotpixelmask[j] = 1;
+        wiremask[j] = 1;
+    }
+    
+    // Powder sums and mutexes
+    for(long i=0; i<nPowderClasses; i++) {
+		nPowderFrames[i] = 0;
+		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+        
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+        pthread_mutex_init(&radialStack_mutex[i], NULL);
+		
+		for(long j=0; j<pix_nn; j++) {
+			powderRaw[i][j] = 0;
+			powderRawSquared[i][j] = 0;
+		}
+		for(long j=0; j<image_nn; j++) {
+			powderAssembled[i][j] = 0;
+		}
+    }    
+	
+    
+    // Radial stacks
+    for(long i=0; i<nPowderClasses; i++) {
+        radialStackCounter[i] = 0;
+        radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
+        
+        for(long j=0; j<radial_nn*global->radialStackSize; j++) {
+            radialAverageStack[i][j] = 0;
+        }
+	}
+    
+}
+
+
 
 
 /*
@@ -435,13 +422,13 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	
 	
 	// Create local arrays for detector pixel locations
-	long	nx = 8*asic_nx;
-	long	ny = 8*asic_ny;
+	long	nx = pix_nx;
+	long	ny = pix_ny;
 	long	nn = nx*ny;
 	long 	i;
-	pix_nx = nx;
-	pix_ny = ny;
-	pix_nn = nn;
+	//pix_nx = nx;
+	//pix_ny = ny;
+	//pix_nn = nn;
 	pix_x = (float *) calloc(nn, sizeof(float));
 	pix_y = (float *) calloc(nn, sizeof(float));
 	pix_z = (float *) calloc(nn, sizeof(float));
@@ -588,7 +575,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 /*
  *	Read in darkcal file
  */
-void cPixelDetectorCommon::readDarkcal(cGlobal *global, char *filename){	
+void cPixelDetectorCommon::readDarkcal(char *filename){	
 	
 	// Create memory space and pad with zeros
 	darkcal = (float*) calloc(pix_nn, sizeof(float));
@@ -641,7 +628,7 @@ void cPixelDetectorCommon::readDarkcal(cGlobal *global, char *filename){
 /*
  *	Read in gaincal file
  */
-void cPixelDetectorCommon::readGaincal(cGlobal *global, char *filename){
+void cPixelDetectorCommon::readGaincal(char *filename){
 	
 
 	// Create memory space and set default gain to 1 everywhere
@@ -767,7 +754,7 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
  *	Read in bad pixel mask
  *  (Pixels will be set to zero before any analysis and when data is exported)
  */
-void cPixelDetectorCommon::readBadpixelMask(cGlobal *global, char *filename){
+void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	
 	
 	// Create memory space and default to searching for peaks everywhere
@@ -824,7 +811,7 @@ void cPixelDetectorCommon::readBadpixelMask(cGlobal *global, char *filename){
  *	Read in bad data mask
  *  (Pixels will be ignored in analysis, but passed through when data is exported)
  */
-void cPixelDetectorCommon::readBaddataMask(cGlobal *global, char *filename){
+void cPixelDetectorCommon::readBaddataMask(char *filename){
 	
 	
 	// Create memory space and default to searching for peaks everywhere
@@ -881,7 +868,7 @@ void cPixelDetectorCommon::readBaddataMask(cGlobal *global, char *filename){
 /*
  *	Read in wire mask
  */
-void cPixelDetectorCommon::readWireMask(cGlobal *global, char *filename){
+void cPixelDetectorCommon::readWireMask(char *filename){
 	
 
 	// Create memory space and default to searching for peaks everywhere

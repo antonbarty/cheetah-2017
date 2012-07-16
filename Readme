@@ -65,13 +65,13 @@ cp libcheetah.so.* /reg/neh/home/rkirian/local/lib
 >------------------------------------------------------------------------<
 
 Copy this script, edit these fields to point to where things are for you, and run it.
+Re-run this after making any changes to libcheetah.
 
 Make sure to point to a thread-safe version of the HDF5 library.   
-If you don't cheetah will appear to run, but randomly crash with segmentation faults whenever two threads try to write an HDF5 file at the same time.
+If you don't cheetah will start to run, but randomly crash with segmentation faults whenever two threads try to write an HDF5 file at the same time.
 Simply add "--enable-threadsafe" to the hdf5 ./configure command.
 hdf5-directory > ./configure --enable-threadsafe
 
-Re-run this after making any changes to libcheetah.
 
 ------------------------------------------------------------------------
 2. Compiling psana with libcheetah
@@ -135,13 +135,14 @@ Running "hitfinder -h" tells you all the options.
 Operation of cheetah is controlled by the parameters specified in cheetah.ini 
 
 As with most analysis programs, not all default parameters can cover every situation, and it is most likely that you can benefit from tweaking parameters.
-Monitoring your output, in particular Bragg peak identification, is normal procedure.
+Monitoring output and optimising, in particular Bragg peak identification, is normal procedure.
 
 Common things to change are:
 Crystals:
 - Local background subtraction radius (tradeoff for speed vs peak size)
 - Size and number of Bragg peaks to qualify as a hit
 - Minimum signal:noise ratio
+- Static ADC threshold (if used)
 Single particles:
 - ADC value and number of pixels above threshold to qualify as a hit
 - Number of past non-hit frames to use as background

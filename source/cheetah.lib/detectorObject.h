@@ -21,12 +21,19 @@
 
 
 /*
- * Stuff from original LCLS code
+ * Detector geometries
  */
+//	CSPAD	//
 static const unsigned  CSPAD_ASIC_NX = 194;  // ASIC nx = extent of one ASIC in x
 static const unsigned  CSPAD_ASIC_NY = 185;  // ASIC ny = extent of one ASIC in y
 static const unsigned  CSPAD_nASICS_X = 8;   // 8 ASICs across in raw data stream
 static const unsigned  CSPAD_nASICS_Y = 8;   // 8 ASICs down in raw data stresm
+
+//	PNCCD	//
+static const unsigned  PNCCD_ASIC_NX = 1024;	// ASIC nx = extent of one ASIC in x
+static const unsigned  PNCCD_ASIC_NY = 1024;	// ASIC ny = extent of one ASIC in y
+static const unsigned  PNCCD_nASICS_X = 1;		// 8 ASICs across in raw data stream
+static const unsigned  PNCCD_nASICS_Y = 1;		// 8 ASICs down in raw data stresm
 
 
 static const unsigned int cbufsize = 1024;
@@ -47,7 +54,7 @@ public:
 	/** @brief Name of the detector */
 	char     detectorName[MAX_FILENAME_LENGTH];
 	/** @brief Type of detector */
-	char     detectorTypeName[MAX_FILENAME_LENGTH];
+	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
 	//Pds::DetInfo::Detector detectorPdsDetInfo;
 
@@ -212,16 +219,17 @@ public:
 public:
 
 	cPixelDetectorCommon();
+	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
-	void readDarkcal(cGlobal*, char *);
-	void readGaincal(cGlobal*, char *);
+	void readDarkcal(char *);
+	void readGaincal(char *);
 	void readPeakmask(cGlobal*, char *);
-	void readBadpixelMask(cGlobal*, char *);
-	void readBaddataMask(cGlobal*, char *);
-	void readWireMask(cGlobal*, char *);
+	void readBadpixelMask(char *);
+	void readBaddataMask(char *);
+	void readWireMask(char *);
 
 //private:
 

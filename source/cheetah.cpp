@@ -611,74 +611,83 @@ void event() {
      *  SLAC libraries are not thread safe: must copy data into event structure for processing
 	 */
 	for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+		
+		// cspad data
+		if ( strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
 
-        uint16_t *quad_data[4];        
-        Pds::CsPad::ElementIterator iter;
-        
-		//std::cout << "detectorPdsDetInfo[" << detID << "]: " << detectorPdsDetInfo[detID] << std::endl;
-		fail=getCspadData(detectorPdsDetInfo[detID], iter);
-		if (fail) {
-			printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
-			eventData->detector[detID].cspad_fail = fail;
-			return;
+			uint16_t *quad_data[4];        
+			Pds::CsPad::ElementIterator iter;
+			
+			//std::cout << "detectorPdsDetInfo[" << detID << "]: " << detectorPdsDetInfo[detID] << std::endl;
+			fail=getCspadData(detectorPdsDetInfo[detID], iter);
+			if (fail) {
+				printf("getCspadData fail for detector %li (%d, %x)\n",detID, fail,fiducial);
+				eventData->detector[detID].cspad_fail = fail;
+				return;
+			}
+			else {
+				nevents++;
+
+				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+				long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
+				long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
+				uint16_t    *quad_data[4];
+
+				//printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
+				// Allocate memory for detector data and set to zero
+				for(int quadrant=0; quadrant<4; quadrant++) {
+					quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					memset(quad_data[quadrant], 0, pix_nn*sizeof(uint16_t));
+				}
+				
+
+				// loop over quadrants and read out the data
+				const Pds::CsPad::ElementHeader* element;
+				while(( element=iter.next() )) {  
+					if(element->quad() < 4) {
+						// Which quadrant is this?
+						int quadrant = element->quad();
+						
+						// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+						const Pds::CsPad::Section* s;
+						unsigned section_id;
+						while(( s=iter.next(section_id) )) {  
+							//printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
+							//printf("pixel: %d\n",s->pixel[0]);
+							memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
+						}
+
+					}
+				}
+			
+			
+				/*
+				 *	Assemble data from all four quadrants into one large array (rawdata layout)
+				 *      Memcpy is necessary for thread safety.
+				 */
+				eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+				for(int quadrant=0; quadrant<4; quadrant++) {
+					long	i,j,ii;
+					for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
+						i = k % (2*asic_nx) + quadrant*(2*asic_nx);
+						j = k / (2*asic_nx);
+						ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
+						//printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k,quad_data[quadrant][0]);					
+						eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
+					}
+				}
+
+				// quadrant data no longer needed
+				for(int quadrant=0; quadrant<4; quadrant++) 
+					free(quad_data[quadrant]);
+			}
 		}
 		else {
-            nevents++;
-
-            long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-			long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-			long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-            long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
-            long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
-            uint16_t    *quad_data[4];
-
-            //printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
-            // Allocate memory for detector data and set to zero
-            for(int quadrant=0; quadrant<4; quadrant++) {
-                quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-                memset(quad_data[quadrant], 0, pix_nn*sizeof(uint16_t));
-            }
-            
-
-			// loop over quadrants and read out the data
-			const Pds::CsPad::ElementHeader* element;
-			while(( element=iter.next() )) {  
-				if(element->quad() < 4) {
-					// Which quadrant is this?
-					int quadrant = element->quad();
-					
-					// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
-					const Pds::CsPad::Section* s;
-					unsigned section_id;
-					while(( s=iter.next(section_id) )) {  
-                        //printf("quadrant/section_id: %d/%d\n",quadrant,section_id);
-                        //printf("pixel: %d\n",s->pixel[0]);
-						memcpy(&quad_data[quadrant][section_id*2*asic_nx*asic_ny],s->pixel[0],2*asic_nx*asic_ny*sizeof(uint16_t));
-					}
-
-  				}
-			}
-        
-        
-			/*
-			 *	Assemble data from all four quadrants into one large array (rawdata layout)
-             *      Memcpy is necessary for thread safety.
-			 */
-			eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-			for(int quadrant=0; quadrant<4; quadrant++) {
-				long	i,j,ii;
-				for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
-					i = k % (2*asic_nx) + quadrant*(2*asic_nx);
-					j = k / (2*asic_nx);
-					ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-                    //printf("quadrant/k/quad_data: %d/%d/%d\n",quadrant,k,quad_data[quadrant][0]);					
-					eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
-				}
-			}
-
-            // quadrant data no longer needed
-			for(int quadrant=0; quadrant<4; quadrant++) 
-				free(quad_data[quadrant]);
+			printf("Unsupported detector type: %s\n", cheetahGlobal.detector[detID].detectorType);
+			printf("Detector name: %s\n", cheetahGlobal.detector[detID].detectorName);
+			exit(1);
 		}
 		
 		// Update detector positions
