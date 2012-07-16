@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4D3B885112FF49F500B7ABD9 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B885012FF49F500B7ABD9 /* Makefile */; };
 		4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */; };
+		4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */; };
 		4DB5DD3E15382D8E00EBE8AA /* backgroundCorrection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD2815382D8E00EBE8AA /* backgroundCorrection.cpp */; };
 		4DB5DD3F15382D8E00EBE8AA /* data2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD2D15382D8E00EBE8AA /* data2d.cpp */; };
 		4DB5DD4015382D8E00EBE8AA /* detectorCorrection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD2F15382D8E00EBE8AA /* detectorCorrection.cpp */; };
@@ -40,6 +41,7 @@
 /* Begin PBXFileReference section */
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "cheetah-myana.cpp"; sourceTree = "<group>"; };
+		4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheetah_ana_mod.cpp; path = "lcls-psana/cheetah_ana_pkg/src/cheetah_ana_mod.cpp"; sourceTree = "<group>"; };
 		4D5125671305CF080094D8E9 /* cheetah.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cheetah.ini; sourceTree = "<group>"; };
 		4DB5DD2815382D8E00EBE8AA /* backgroundCorrection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = backgroundCorrection.cpp; sourceTree = "<group>"; };
 		4DB5DD2915382D8E00EBE8AA /* cheetah.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cheetah.h; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				4D3B885012FF49F500B7ABD9 /* Makefile */,
 				4D5125671305CF080094D8E9 /* cheetah.ini */,
 				4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */,
+				4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */,
 				4DB5DD2715382D8E00EBE8AA /* cheetah.lib */,
 			);
 			name = Source;
@@ -207,6 +210,7 @@
 				4DB5DD4815382D8E00EBE8AA /* setup.cpp in Sources */,
 				4DB5DD4915382D8E00EBE8AA /* worker.cpp in Sources */,
 				4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */,
+				4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
