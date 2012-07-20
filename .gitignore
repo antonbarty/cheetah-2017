@@ -59,3 +59,7 @@ libcheetah.so.*
 libcheetah_ana_pkg.so*
 libchuck_ana_pkg.so*
 .sconsign.dblite
+source/build-libcheetah
+source/build-pdslib
+source/build-psana
+
