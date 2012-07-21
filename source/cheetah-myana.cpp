@@ -123,8 +123,13 @@ void beginjob() {
 			detectorType[detID] = Pds::DetInfo::Cspad;
 			detectorPdsDetInfo[detID] = Pds::DetInfo::XppGon;
 		}
+		else if (!strcmp(cheetahGlobal.detector[detID].detectorName, "pnCCD")) {
+			detectorType[detID] = Pds::DetInfo::pnCCD;
+			detectorPdsDetInfo[detID] = Pds::DetInfo::Camp;
+		}
 		else {
 			printf("Error: unknown detector %s\n", cheetahGlobal.detector[detID].detectorName);
+			printf("cheetah-myana.cpp, beginjob()\n");
 			printf("Quitting\n");
 			exit(1);
 		}
@@ -185,6 +190,9 @@ void fetchConfig()
 			asicMask[detID] = configV4.asicMask();
 			printf("CSPAD configuration: quadMask %x  asicMask %x  runDelay %d\n", quadMask[detID], asicMask[detID], configV4.runDelay());
 			printf("\tintTime %d/%d/%d/%d\n", configV4.quads()[0].intTime(), configV4.quads()[1].intTime(), configV4.quads()[2].intTime(), configV4.quads()[3].intTime());
+		}
+		else if (!strcmp(cheetahGlobal.detector[detID].detectorName, "pnCCD")) {
+			// pnCCD needs nothing ??
 		}
 		else {
 			configVsn[detID] = 0;
@@ -683,6 +691,31 @@ void event() {
 				for(int quadrant=0; quadrant<4; quadrant++) 
 					free(quad_data[quadrant]);
 			}
+		}
+		// pnccd
+		if ( strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
+			fail = 1;
+			int             pnCcdImageWidth, pnCcdImageHeight;
+			unsigned char*  pnCcdImage;
+			
+			if (detID == 0) 
+				fail = getPnCcdValue( 0, pnCcdImage, pnCcdImageWidth, pnCcdImageHeight);			
+			else if (detID == 1) 
+				fail = getPnCcdValue( 1, pnCcdImage, pnCcdImageWidth, pnCcdImageHeight);
+
+			if ( fail ) {
+				printf("%li: pnCCD frame data not available (detID=%li)\n", frameNumber, detID);
+				eventData->detector[detID].cspad_fail = fail;
+				return;
+			}
+			else {
+				//printf( "Get PnCCD Image from device %d, width = %d height = %d\n", 0, pnCcdImageWidth, pnCcdImageHeight );
+				long pix_nn = (long)pnCcdImageWidth * (long)pnCcdImageHeight;
+				
+				eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+				memcpy(&eventData->detector[detID].raw_data[0], pnCcdImage, pix_nn*sizeof(uint16_t));
+			}
+
 		}
 		else {
 			printf("Unsupported detector type: %s\n", cheetahGlobal.detector[detID].detectorType);

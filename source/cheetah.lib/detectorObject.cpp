@@ -147,7 +147,8 @@ void cPixelDetectorCommon::configure(void) {
 		pixelSize = 75e-6;
 	}
 	else {
-		printf("Error: unknown detector %s\n", detectorName);
+		printf("Error: unknown detector name %s\n", detectorName);
+		printf("cPixelDetectorCommon::configure()\n");
 		printf("Quitting\n");
 		exit(1);
 	}

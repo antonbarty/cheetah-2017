@@ -380,6 +380,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	 * Split each line into tag and value at the '=' sign
 	 */	
 
+	printf("\t------ Start cheetah configuration keywords ------\n");
 	while (feof(fp) == 0) {
 
 		fail = 0;
@@ -410,7 +411,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		if ( strlen(cbuf) <= 1) continue;
 
 		
-		printf("%s\n",cbuf);
+		printf("%s",cbuf);
 
 		/* check for string prepend */
 		cp = strrchr(cbuf,']');
@@ -489,6 +490,8 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 
 	}
+	printf("\t------ End cheetah configuration keywords ------\n");
+
 
 	if (exitCheetah != 0){
 		printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n",tag);

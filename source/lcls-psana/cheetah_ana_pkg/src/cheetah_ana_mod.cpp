@@ -83,14 +83,14 @@ namespace cheetah_ana_pkg {
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
 		m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
+		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
+		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
 		m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
 		m_srcCam = configStr("cameraSource","DetInfo()");
-		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
-		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 	}
 
 	//--------------
@@ -400,6 +400,7 @@ namespace cheetah_ana_pkg {
 		}
 
 		
+		
 		//? get Acqiris
 		shared_ptr<Psana::Acqiris::DataDescV1> acq = evt.get(m_srcAcq);
 		if (acq.get()) {
@@ -589,14 +590,17 @@ namespace cheetah_ana_pkg {
 				shared_ptr<Psana::PNCCD::FrameV1> frame;
 				shared_ptr<Psana::PNCCD::ConfigV2> config;
 				if (detID == 0) {
-					frame = evt.get(m_srcPnccd0);	
-					//cout << "front" << endl;
+					cout << "front" << endl;
+					frame = evt.get(m_srcPnccd0, m_key);	
+					config = evt.get(m_srcPnccd0, m_key);	
 				} 
 				else if (detID == 1) {
-					//cout << "back" << endl;
-					frame = evt.get(m_srcPnccd1);
+					cout << "back" << endl;
+					frame = evt.get(m_srcPnccd1, m_key);
+					config = evt.get(m_srcPnccd1, m_key);	
 				}
-
+				cout << "frame: " << frame << " get: " << frame.get() << endl;
+				
 				// copy data into event structure if successful
 				if (frame) {
 					const	ndarray<uint16_t, 1> data = frame->data();
@@ -616,7 +620,7 @@ namespace cheetah_ana_pkg {
 					//memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
-					printf("%li: pnCCD frame data not available\n", count);
+					printf("%li: pnCCD frame data not available (detID=%li)\n", count, detID);
 					return;
 				}
 			}
