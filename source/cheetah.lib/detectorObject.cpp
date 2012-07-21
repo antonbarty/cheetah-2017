@@ -416,6 +416,8 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	// Sanity check that all detector arrays are the same size (!)
 	if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
 		printf("readDetectorGeometry: array size mismatch\n");
+		printf("Dimensions of x,y,z data do not match\n");
+		printf("%li != %li || %li != %li\n", detector_x.nn, detector_y.nn, detector_x.nn, detector_z.nn);
 		exit(1);
 	}
 	
