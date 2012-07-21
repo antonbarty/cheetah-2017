@@ -521,7 +521,8 @@ namespace cheetah_ana_pkg {
 				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
 				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
 				
-				// loop over elements (quadrants)
+				
+				// Pull out front or back detector depending on detID=0 or 1
 				shared_ptr<Psana::CsPad::DataV2> data2;
 				if (detID == 0) {
 					data2 = evt.get(m_srcCspad0, m_key);
@@ -530,14 +531,17 @@ namespace cheetah_ana_pkg {
 					data2 = evt.get(m_srcCspad1, m_key);
 				}
 				
+				// copy data into event structure if successful
 				if (data2.get()) {
+
 					// Allocate memory for detector data and set to zero
-							for(int quadrant=0; quadrant<4; quadrant++) {
-								quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-							}
+					for(int quadrant=0; quadrant<4; quadrant++) {
+						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					}
 
 					int nQuads = data2->quads_shape()[0];
 					
+					// loop over elements (quadrants)
 					for (int q = 0; q < nQuads; ++ q) {
 						const Psana::CsPad::ElementV2& el = data2->quads(q); 
 						const ndarray<int16_t, 3>& data = el.data();
@@ -576,6 +580,7 @@ namespace cheetah_ana_pkg {
 			// PNCCD
 			else if(strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
 
+				// Pull out front or back detector depending on detID=0 or 1
 				shared_ptr<Psana::PNCCD::FullFrameV1> frame;
 				if (detID == 0) {
 					frame = evt.get(m_srcPnccd0);	
@@ -585,8 +590,10 @@ namespace cheetah_ana_pkg {
 					//cout << "back" << endl;
 					frame = evt.get(m_srcPnccd1);
 				}
+
+				// copy data into event structure if successful
 				if (frame) {
-					const ndarray<uint16_t, 2> data = frame->data();
+					const	ndarray<uint16_t, 2> data = frame->data();
 					long	nx = data.shape()[0];
 					long	ny = data.shape()[1];
 					long    pix_nn = nx*ny;
