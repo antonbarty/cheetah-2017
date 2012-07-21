@@ -27,4 +27,4 @@ Import('*')
 #
 #
 import os
-standardSConscript(LIBS="libcheetah hdf5",LIBPATH=os.environ['LIBPATH']+" /reg/neh/home/yoon82/cheetah/lib /reg/neh/home/yoon82/hdf5/lib")
+standardSConscript(LIBS="libcheetah hdf5",LIBPATH=os.environ['LIBPATH'])
