@@ -581,7 +581,9 @@ namespace cheetah_ana_pkg {
 			else if(strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
 
 				// Pull out front or back detector depending on detID=0 or 1
-				shared_ptr<Psana::PNCCD::FullFrameV1> frame;
+				//shared_ptr<Psana::PNCCD::DataV2> frame;
+				shared_ptr<Psana::PNCCD::FrameV1> frame;
+				shared_ptr<Psana::PNCCD::ConfigV2> config;
 				if (detID == 0) {
 					frame = evt.get(m_srcPnccd0);	
 					//cout << "front" << endl;
@@ -593,12 +595,21 @@ namespace cheetah_ana_pkg {
 
 				// copy data into event structure if successful
 				if (frame) {
-					const	ndarray<uint16_t, 2> data = frame->data();
-					long	nx = data.shape()[0];
-					long	ny = data.shape()[1];
-					long    pix_nn = nx*ny;
+					const	ndarray<uint16_t, 1> data = frame->data();
+					long	nx = config->numChannels();
+					long	ny = config->numRows();
+					long    pix_nn = data.shape()[0];
+					cout << nx << ny << pix_nn << endl;
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+					memcpy(&eventData->detector[detID].raw_data[0],&data[0],pix_nn*sizeof(uint16_t));
+
+					// Chuck's original
+					//const	ndarray<uint16_t, 2> data = frame->data();
+					//long	nx = data.shape()[0];
+					//long	ny = data.shape()[1];
+					//long    pix_nn = nx*ny;
+					//eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					//memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 			}
 			
