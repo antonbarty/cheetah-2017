@@ -421,7 +421,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	
 
 	// Sanity check that size matches what we expect for cspad (!)
-	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
+	if (detector_x.nx != pix_nx || detector_x.ny != pix_ny) {
 		printf("readDetectorGeometry: array size mismatch\n");
 		printf("%ldx%ld != %lix%li\n", pix_nx, pix_ny, detector_x.nx, detector_x.ny);
 		exit(1);
