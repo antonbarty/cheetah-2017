@@ -119,6 +119,8 @@ void cPixelDetectorCommon::configure(void) {
 	/*
 	 * Configure basic detector parameters
 	 */
+	printf("Configuring for detector: %s\n",detectorName);
+	
 	if(strcmp(detectorName, "CxiDs1") == 0 || strcmp(detectorName, "CxiDs2") == 0 ||
 	   strcmp(detectorName, "CxiDsd") == 0 || strcmp(detectorName, "XppGon") == 0) {
 		strcpy(detectorType, "cspad");
@@ -149,6 +151,11 @@ void cPixelDetectorCommon::configure(void) {
 		printf("Quitting\n");
 		exit(1);
 	}
+	
+	printf("\tDetector size: %lix%li\n",pix_nx,pix_ny);
+	printf("\tASIC geometry: %lix%li\n",nasics_x,nasics_y);
+	printf("\tASIC size: %lix%li\n",asic_nx,asic_ny);
+	printf("\tPixel size: %g (m)\n",pixelSize);
 }
 
 
@@ -416,7 +423,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	// Sanity check that size matches what we expect for cspad (!)
 	if (detector_x.nx != 8*asic_nx || detector_x.ny != 8*asic_ny) {
 		printf("readDetectorGeometry: array size mismatch\n");
-		printf("%ldx%ld != %lix%li\n", 8*asic_nx, 8*asic_ny, detector_x.nx, detector_x.ny);
+		printf("%ldx%ld != %lix%li\n", pix_nx, pix_ny, detector_x.nx, detector_x.ny);
 		exit(1);
 	}
 	
