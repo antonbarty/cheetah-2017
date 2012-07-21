@@ -57,6 +57,7 @@ void *worker(void *threadarg) {
 	 *	Copy raw detector data into corrected array as starting point for corrections
 	 */
     DETECTOR_LOOP {
+		printf("%li\n",global->detector[detID].pix_nn); 
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
 			eventData->detector[detID].saturatedPixelMask[i] = 1;

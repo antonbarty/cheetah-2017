@@ -55,7 +55,7 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
-	static int count = 0;
+	static long count = 0;
 	static cGlobal cheetahGlobal;
 	static int laserSwitch = 0;
 	static int prevLaser = 0;
@@ -575,6 +575,10 @@ namespace cheetah_ana_pkg {
 					for(int quadrant=0; quadrant<4; quadrant++) 
 						free(quad_data[quadrant]);
 				}
+				else {
+					printf("%li: cspad frame data not available\n", count);
+					return;
+				}
 			}
 
 			// PNCCD
@@ -610,6 +614,10 @@ namespace cheetah_ana_pkg {
 					//long    pix_nn = nx*ny;
 					//eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					//memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+				}
+				else {
+					printf("%li: pnCCD frame data not available\n", count);
+					return;
 				}
 			}
 			
