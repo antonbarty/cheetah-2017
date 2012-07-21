@@ -44,7 +44,6 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 
 			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
 			
-
 			
 			/*
 			 *	Recalculate background from time to time
@@ -58,18 +57,24 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 			float	medianPoint = global->detector[detID].bgMedian;
 			long	threshold = lrint(bufferDepth*medianPoint);
 
+			// Lock threads for the first few cycles
+			if(bgCounter < 3*bgRecalc)
+				lockThreads = 1;
+			
             pthread_mutex_lock(&global->bgbuffer_mutex);
-            if( ( (bgCounter % bgRecalc) == 0 || bgCounter == bufferDepth) && bgCounter != lastUpdate ) {
-				printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
-				
+
+            if( ((bgCounter % bgRecalc) == 0)  && bgCounter != lastUpdate ) {
 				if(lockThreads)
 					pthread_mutex_lock(&global->selfdark_mutex);
-				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
+				printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
 				global->detector[detID].last_bg_update = bgCounter;				
+				pthread_mutex_unlock(&global->bgbuffer_mutex);
+				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
 				if(lockThreads)
 					pthread_mutex_unlock(&global->selfdark_mutex);
             }
-            pthread_mutex_unlock(&global->bgbuffer_mutex);
+			else
+				pthread_mutex_unlock(&global->bgbuffer_mutex);
 			
 			
 			
@@ -158,10 +163,9 @@ void subtractPersistentBackground(float *data, float *background, int scaleBg, l
 		}
 		factor = top/s1;
 	}
-	
-	
+
 	// Do the weighted subtraction
-	for(long i=0; pix_nn; i++) {
+	for(long i=0; i<pix_nn; i++) {
 		data[i] -= (factor*background[i]);	
 	}	
 }

@@ -30,9 +30,12 @@ int peakfinder6(cGlobal*, cEventData*, int);
  *		6 - Experimental - find peaks by SNR criteria
  *      7 - Laser on event code (usually EVR41)
  */
-int  hitfinder(cEventData *eventData, cGlobal *global, int detID){
+int  hitfinder(cEventData *eventData, cGlobal *global){
+	
+	
 	
 	// Dereference stuff
+	int			detID = global->hitfinderDetector;
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;

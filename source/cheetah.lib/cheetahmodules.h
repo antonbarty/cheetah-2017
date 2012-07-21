@@ -47,7 +47,7 @@ void writeSimpleHDF5(const char*, const void*, int, int, int);
 
 
 // hitfinders.cpp
-int  hitfinder(cEventData*, cGlobal*, int);
+int  hitfinder(cEventData*, cGlobal*);
 
 
 // powder.cpp

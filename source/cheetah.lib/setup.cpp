@@ -62,6 +62,7 @@ cGlobal::cGlobal(void) {
 
 	// Hitfinding
 	hitfinder = 0;
+	hitfinderDetector = 1;
 	hitfinderADC = 100;
 	hitfinderTAT = 1e3;
 	hitfinderNpeaks = 50;
@@ -178,6 +179,14 @@ void cGlobal::setup() {
 	if(generateDarkcal || generateGaincal)
 		nPowderClasses=1;
 
+	
+	if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
+		printf("Errors: hitfinderDetector > nDetectors\n");
+		printf("This doesn't make sense.\n");
+		printf("void cGlobal::setup()\n");
+		printf("Quitting...\n");
+		exit(1);
+	}
 
 	/*
 	 * Set up arrays for hot pixels, running backround, etc.
@@ -410,9 +419,10 @@ void cGlobal::parseConfigFile(char* filename) {
 		/* skip empty lines */
 		if ( strlen(cbuf) <= 1) continue;
 
-		
-		printf("%s",cbuf);
+		/* Print our for sanity */
+		printf("\t%s",cbuf);
 
+		
 		/* check for string prepend */
 		cp = strrchr(cbuf,']');
 		if (cp != NULL){
@@ -571,6 +581,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
+	}
+	else if (!strcmp(tag, "hitfinderdetector")) {
+		hitfinderDetector = atoi(value);
 	}
 	else if (!strcmp(tag, "savehits")) {
 		savehits = atoi(value);
@@ -1017,8 +1030,10 @@ void cGlobal::writeFinalLog(void){
 
 	// Close frame buffers
 	pthread_mutex_lock(&framefp_mutex);
-	fclose(framefp);
-	fclose(cleanedfp);
+	if(framefp != NULL)
+		fclose(framefp);
+	if(cleanedfp != NULL)
+		fclose(cleanedfp);
 	pthread_mutex_unlock(&framefp_mutex);
 
 	pthread_mutex_lock(&powderfp_mutex);

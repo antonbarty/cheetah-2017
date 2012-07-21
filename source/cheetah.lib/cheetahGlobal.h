@@ -63,6 +63,8 @@ public:
 
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;
+	/** @brief Which detector to use for hitfinding (only one is currently used). */
+	int      hitfinderDetector;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
