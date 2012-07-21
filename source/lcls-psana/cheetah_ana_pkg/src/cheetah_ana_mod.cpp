@@ -16,7 +16,7 @@
 // This Class's Header --
 //-----------------------
 #include "cheetah_ana_pkg/cheetah_ana_mod.h"
-#include "/reg/neh/home/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+#include "../../../cheetah.lib/cheetah.h"
 //-----------------
 // C/C++ Headers --
 //-----------------
