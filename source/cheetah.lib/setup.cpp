@@ -379,8 +379,8 @@ void cGlobal::parseConfigFile(char* filename) {
 	fp = fopen(filename,"r");
 	if (fp == NULL) {
 		printf("\tCould not open configuration file \"%s\"\n",filename);
-		printf("\tUsing default values\n");
-		return;
+		printf("\tExiting\n");
+		exit(1);
 	}
 
 	/*
