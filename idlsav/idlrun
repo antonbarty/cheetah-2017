@@ -1,0 +1,14 @@
+#!/bin/tcsh
+
+# Script to help with running IDL .sav files
+# .sav files can be executed in runtime mode without an IDL licence
+# The IDL runtime environment can be obtained free of charge for many platforms from: 
+# http://www.exelisvis.com/ProductsServices/IDL.aspx
+
+
+
+setenv IDL_DIR /usr/local/bin/itt/idl
+setenv IDL_STARTUP /home/barty/idl/idlstartup.pro
+
+
+/usr/local/bin/itt/idl/bin/idl -vm=/reg/neh/home/barty/idlsav/$1
