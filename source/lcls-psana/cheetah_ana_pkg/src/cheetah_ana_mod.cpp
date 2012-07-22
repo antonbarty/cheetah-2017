@@ -132,6 +132,57 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 	{
+		cout << "beginCalibCycle()" << endl;
+		
+		/*
+		 *	pnCCD configuration
+		 *	configuration objects (PNCCD::ConfigV2) do not appear in event but are stored in the environment. 
+		 *	You should use the code like this to get configuration data and you should always check that 
+		 *	you are returned non-zero pointer:
+		 *	
+		 *	config = env.configStore().get(m_srcPnccd);
+		 *	if (not config) {
+		 *		MsgLog(name(), error, "failed to retrieve configuration object , address: " << m_srcPnccd);
+		 *		return;
+		 *	}
+		 */
+		for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
+
+			if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
+
+				// Need to make this do 
+				shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_srcPnccd0);
+				shared_ptr<Psana::PNCCD::ConfigV2> config2 = env.configStore().get(m_srcPnccd0);
+
+				if (config1.get()) {
+					cout << "PNCCD::ConfigV1:" << endl;
+					cout << "\n  numLinks = " << config1->numLinks() << endl;
+					cout << "\n  payloadSizePerLink = " << config1->payloadSizePerLink() << endl;
+				}
+				else if (config2.get()) {
+					cout << "PNCCD::ConfigV2:" << endl;
+					cout << "\n  numLinks = " << config2->numLinks() << endl;
+					cout << "\n  payloadSizePerLink = " << config2->payloadSizePerLink() << endl;
+					cout << "\n  numChannels = " << config2->numChannels() << endl;
+					cout << "\n  numRows = " << config2->numRows() << endl;
+					cout << "\n  numSubmoduleChannels = " << config2->numSubmoduleChannels() << endl;
+					cout << "\n  numSubmoduleRows = " << config2->numSubmoduleRows() << endl;
+					cout << "\n  numSubmodules = " << config2->numSubmodules() << endl;
+					cout << "\n  camexMagic = " << config2->camexMagic() << endl;
+					cout << "\n  info = " << config2->info() << endl;
+					cout << "\n  timingFName = " << config2->timingFName() << endl;
+				}
+				else {
+					cout << "Failed to retrieve pnCCD configuration object. " << detID << endl;
+					cout << "cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)" << endl;
+					cout << "Exiting..." << endl;
+					exit(1);
+				}
+			}
+			else {
+				cout << "No configuration data" << endl;
+			}
+		}
 	}
 
 	///
@@ -582,42 +633,50 @@ namespace cheetah_ana_pkg {
 				}
 			}
 
-			// PNCCD
+			/*
+			 *
+			 *	In the recent releases the data format used for pnccd data has changed. 
+			 *	To get the full image data for pnccd you need to use Psana::PNCCD::FullFrameV1 type now instead of Psana::PNCCD:: FrameV1 
+			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psddl_psana/type.Psana.PNCCD.FullFrameV1.html
+			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:
+			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psana-modules-doxy/html/DumpPnccd_8cpp-source.html
+			 */
 			else if(strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
-
+				
 				// Pull out front or back detector depending on detID=0 or 1
-				//shared_ptr<Psana::PNCCD::DataV2> frame;
 				shared_ptr<Psana::PNCCD::FrameV1> frame;
-				shared_ptr<Psana::PNCCD::ConfigV2> config;
+				shared_ptr<Psana::PNCCD::FullFrameV1> fullframe;
+				
 				if (detID == 0) {
-					cout << "front" << endl;
-					frame = evt.get(m_srcPnccd0, m_key);	
-					config = evt.get(m_srcPnccd0, m_key);	
+					//cout << "front" << endl;
+					frame = evt.get(m_srcPnccd0);	
+					fullframe = evt.get(m_srcPnccd0);
 				} 
 				else if (detID == 1) {
-					cout << "back" << endl;
-					frame = evt.get(m_srcPnccd1, m_key);
-					config = evt.get(m_srcPnccd1, m_key);	
+					//cout << "back" << endl;
+					frame = evt.get(m_srcPnccd1);
+					fullframe = evt.get(m_srcPnccd1);
 				}
-				cout << "frame: " << frame << " get: " << frame.get() << endl;
+				//cout << "frame: " << frame << " get: " << frame.get() << endl;
 				
 				// copy data into event structure if successful
-				if (frame) {
-					const	ndarray<uint16_t, 1> data = frame->data();
-					long	nx = config->numChannels();
-					long	ny = config->numRows();
-					long    pix_nn = data.shape()[0];
-					cout << nx << ny << pix_nn << endl;
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					memcpy(&eventData->detector[detID].raw_data[0],&data[0],pix_nn*sizeof(uint16_t));
-
+				if (fullframe) {
 					// Chuck's original
-					//const	ndarray<uint16_t, 2> data = frame->data();
-					//long	nx = data.shape()[0];
-					//long	ny = data.shape()[1];
-					//long    pix_nn = nx*ny;
+					const	ndarray<uint16_t, 2> data = fullframe->data();
+					long	nx = data.shape()[0];
+					long	ny = data.shape()[1];
+					long    pix_nn = nx*ny;
+					//cout << nx << "x" << ny << " = " << pix_nn << endl;
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+
+					//const	ndarray<uint16_t, 1> data = frame->data();
+					//long	nx = config->numChannels();
+					//long	ny = config->numRows();
+					//long    pix_nn = data.shape()[0];
 					//eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					//memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+					//memcpy(&eventData->detector[detID].raw_data[0],&data[0],pix_nn*sizeof(uint16_t));
+
 				}
 				else {
 					printf("%li: pnCCD frame data not available (detID=%li)\n", count, detID);

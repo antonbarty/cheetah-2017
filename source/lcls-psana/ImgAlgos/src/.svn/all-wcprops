@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src
+END
+CSPadCommonModeCorrection.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadCommonModeCorrection.cpp
+END
+EventNumberFilter.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/EventNumberFilter.cpp
+END
+CSPadBackgroundV1.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadBackgroundV1.cpp
+END
+ImgPixAmpFilter.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/ImgPixAmpFilter.cpp
+END
+ImgRadialCorrection.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/ImgRadialCorrection.cpp
+END
+ImgPeakFilter.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/ImgPeakFilter.cpp
+END
+TimeInterval.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/TimeInterval.cpp
+END
+ImgPeakFinder.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/ImgPeakFinder.cpp
+END
+TimeStampFilter.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/TimeStampFilter.cpp
+END
+CSPadArrAverage.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadArrAverage.cpp
+END
+CSPadBkgdSubtract.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadBkgdSubtract.cpp
+END
+CSPadMaskApply.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadMaskApply.cpp
+END
+CSPadMaskV1.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/src/CSPadMaskV1.cpp
+END
