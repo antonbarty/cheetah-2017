@@ -648,12 +648,12 @@ namespace cheetah_ana_pkg {
 				shared_ptr<Psana::PNCCD::FullFrameV1> fullframe;
 				
 				if (detID == 0) {
-					cout << "front" << endl;
+					//cout << "front" << endl;
 					frame = evt.get(m_srcPnccd0);	
 					fullframe = evt.get(m_srcPnccd0);
 				} 
 				else if (detID == 1) {
-					cout << "back" << endl;
+					//cout << "back" << endl;
 					frame = evt.get(m_srcPnccd1);
 					fullframe = evt.get(m_srcPnccd1);
 				}
@@ -666,7 +666,7 @@ namespace cheetah_ana_pkg {
 					long	nx = data.shape()[0];
 					long	ny = data.shape()[1];
 					long    pix_nn = nx*ny;
-					cout << nx << ny << pix_nn << endl;
+					//cout << nx << "x" << ny << " = " << pix_nn << endl;
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 

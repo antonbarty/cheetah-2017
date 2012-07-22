@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data
+END
+psana.cfg
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/psana.cfg
+END
+MakePixelMask.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/MakePixelMask.py
+END
+PlotHDF5Dataset.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/PlotHDF5Dataset.py
+END
+PlotCSPadArrayFromFile.py
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/PlotCSPadArrayFromFile.py
+END
+PlotCameraImageFromFile.py
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/PlotCameraImageFromFile.py
+END
+PlotCameraImageAndPeaks.py
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/PlotCameraImageAndPeaks.py
+END
+PrintHDF5Structure.py
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/psdmrepo/!svn/ver/3250/ImgAlgos/tags/V00-00-03/data/PrintHDF5Structure.py
+END
