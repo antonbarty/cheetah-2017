@@ -57,11 +57,12 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     // Detector Z position
 	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
 	strcpy(detectorZpvname,"");
-	defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
+	//defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
 	defaultCameraLengthMm = 0;
+	fixedCameraLengthMm = 0;
 	detposprev = 0;
-    cameraLengthOffset = 500.0 + 79.0;
-    cameraLengthScale = 1e-3;
+	cameraLengthOffset = 500.0 + 79.0;
+	cameraLengthScale = 1e-3;
 
 	beamCenterPixX = 0;
 	beamCenterPixY = 0;
@@ -222,6 +223,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
     else if (!strcmp(tag, "defaultcameralengthmm")) {
 		defaultCameraLengthMm = atof(value);
+	}
+	else if (!strcmp(tag, "fixedcameralengthmm")) {
+		fixedCameraLengthMm = atof(value);
 	}
 	else if (!strcmp(tag, "cameralengthoffset")) {
 		cameraLengthOffset = atof(value);

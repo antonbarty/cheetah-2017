@@ -188,17 +188,24 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 	 *	of detposnew=0, without a fail message.  Hardware problem? 
 	 *
 	 *  event->detector[detID].detectorZ holds the read-out value
-     *  fail=std::numeric_limits<float>::quiet_NaN();
-     */
-    DETECTOR_LOOP {
-        float detposnew;
-        int update_camera_length;
-        
-        detposnew = eventData->detector[detID].detectorZ;
+	 *  fail=std::numeric_limits<float>::quiet_NaN();
+	 */
+	DETECTOR_LOOP {
 		
-        if ( !isnan(detposnew) ) {
-			
-			// New detector position = 0 could be an error
+		float detposnew;
+		int update_camera_length = 0;
+
+		// what's the detector "camera length" for this shot?
+		if ( global->detector[detID].fixedCameraLengthMm != 0 ) {
+			// If fixed detector camera length is provided, override it here... it's a bit of a hack for now...
+			detposnew = global->detector[detID].fixedCameraLengthMm;
+		} else {
+			detposnew = eventData->detector[detID].detectorZ;
+		}
+
+		if ( !isnan(detposnew) ) {
+
+				// New detector position = 0 could be an error
             if ( detposnew == 0 ) {
                 detposnew = global->detector[detID].detposprev;
                 printf("WARNING: detector position is zero, which could be an error\n"
@@ -206,25 +213,24 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
             }
 			
             //	Apply offsets
-			//	When encoder reads -500mm, detector is at its closest possible
-			//	position to the specimen, and is 79mm from the centre of the 
-			//	8" flange where the injector is mounted.  
-			//	The injector itself is about 4mm further away from the detector than this. 
+				//	When encoder reads -500mm, detector is at its closest possible
+				//	position to the specimen, and is 79mm from the centre of the 
+				//	8" flange where the injector is mounted.  
+				//	The injector itself is about 4mm further away from the detector than this. 
             global->detector[detID].detposprev = detposnew;
             global->detector[detID].detectorEncoderValue = detposnew;
             global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
 
             //	Round to the nearest two decimal places 
-			//	(10 micron, much less than a pixel size) 
+				//	(10 micron, much less than a pixel size) 
             global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;
             update_camera_length = 1;
         }	 
         
-		//	What to do if there is no camera length information?  
-		//	Keep skipping frames until this info is found?  
-		//	For now, set a (non-zero) default camera length.
-        if ( global->detector[detID].detectorZ == 0 ) {
-			printf("global->detector[%ld].detectorZ == 0\n", detID);
+			//	What to do if there is no camera length information?  
+			//	Keep skipping frames until this info is found?  
+			//	For now, set a (non-zero) default camera length.
+			if ( global->detector[detID].detectorZ == 0 ) {
 
             if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
