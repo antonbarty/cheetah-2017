@@ -55,7 +55,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
     
     // Detector Z position
-	strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+	strcpy(detectorZpvname,"");
 	defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
 	defaultCameraLengthMm = 0;
 	detposprev = 0;
