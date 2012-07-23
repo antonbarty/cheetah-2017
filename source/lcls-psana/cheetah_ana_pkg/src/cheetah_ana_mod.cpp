@@ -649,19 +649,17 @@ namespace cheetah_ana_pkg {
 				
 				if (detID == 0) {
 					//cout << "front" << endl;
-					frame = evt.get(m_srcPnccd0);	
+					//frame = evt.get(m_srcPnccd0);	
 					fullframe = evt.get(m_srcPnccd0);
 				} 
 				else if (detID == 1) {
 					//cout << "back" << endl;
-					frame = evt.get(m_srcPnccd1);
+					//frame = evt.get(m_srcPnccd1);
 					fullframe = evt.get(m_srcPnccd1);
 				}
-				//cout << "frame: " << frame << " get: " << frame.get() << endl;
 				
 				// copy data into event structure if successful
 				if (fullframe) {
-					// Chuck's original
 					const	ndarray<uint16_t, 2> data = fullframe->data();
 					long	nx = data.shape()[0];
 					long	ny = data.shape()[1];
@@ -669,14 +667,6 @@ namespace cheetah_ana_pkg {
 					//cout << nx << "x" << ny << " = " << pix_nn << endl;
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
-
-					//const	ndarray<uint16_t, 1> data = frame->data();
-					//long	nx = config->numChannels();
-					//long	ny = config->numRows();
-					//long    pix_nn = data.shape()[0];
-					//eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					//memcpy(&eventData->detector[detID].raw_data[0],&data[0],pix_nn*sizeof(uint16_t));
-
 				}
 				else {
 					printf("%li: pnCCD frame data not available (detID=%li)\n", count, detID);
