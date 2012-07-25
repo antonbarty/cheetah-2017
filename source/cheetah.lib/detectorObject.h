@@ -117,6 +117,7 @@ public:
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
 	float   defaultCameraLengthMm;
+	float   fixedCameraLengthMm;
 	float   cameraLengthOffset;
 	float   cameraLengthScale;
 	float   detectorZprevious;
