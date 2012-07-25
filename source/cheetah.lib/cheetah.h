@@ -17,10 +17,9 @@ static uint32_t nevents = 0;
 
 void cheetahInit(cGlobal *);
 void cheetahNewRun(cGlobal *);
-void cheetahUpdateGlobal(cGlobal *, cEventData *);
+cEventData* cheetahNewEvent(cGlobal	*global);
 void cheetahProcessEvent(cGlobal *, cEventData *);
 void cheetahProcessEventMultithreaded(cGlobal *, cEventData *);
 void cheetahDestroyEvent(cEventData *);
 void cheetahExit(cGlobal *);
-cEventData* cheetahNewEvent(cGlobal	*global);
-void cheetahDestroyEvent(cEventData *);
+void cheetahUpdateGlobal(cGlobal *, cEventData *);

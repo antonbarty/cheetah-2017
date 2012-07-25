@@ -827,4 +827,5 @@ void endjob()
 	 *	Clean up all variables associated with libCheetah
 	 */
     cheetahExit(&cheetahGlobal);
+	exit(1);
 }

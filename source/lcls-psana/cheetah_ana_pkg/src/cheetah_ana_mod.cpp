@@ -635,7 +635,7 @@ namespace cheetah_ana_pkg {
 
 			/*
 			 *
-			 *	In the recent releases the data format used for pnccd data has changed. 
+			 *	The data format used for pnccd data has changed in recent releases. 
 			 *	To get the full image data for pnccd you need to use Psana::PNCCD::FullFrameV1 type now instead of Psana::PNCCD:: FrameV1 
 			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psddl_psana/type.Psana.PNCCD.FullFrameV1.html
 			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:
@@ -644,6 +644,7 @@ namespace cheetah_ana_pkg {
 			else if(strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
 				
 				// Pull out front or back detector depending on detID=0 or 1
+				// Make this selectable in the .ini file (easier: let which detector is whcih be set in psana.conf)
 				shared_ptr<Psana::PNCCD::FrameV1> frame;
 				shared_ptr<Psana::PNCCD::FullFrameV1> fullframe;
 				
@@ -769,6 +770,7 @@ namespace cheetah_ana_pkg {
 		time(&endT);
 		double dif = difftime(endT,startT);
 			cout << "time taken: " << dif << " seconds" << endl;
+		exit(1);
 	}
 
 } // namespace cheetah_ana_pkg
