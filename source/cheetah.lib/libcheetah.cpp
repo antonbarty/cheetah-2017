@@ -279,9 +279,6 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
      *  Remember laser delay
      */
     if(eventData->laserDelay != 0) {
-        // Don't mess with events currently being processed
-        while (global->nActiveThreads > 0) 
-            usleep(10000);
         global->laserDelay = eventData->laserDelay;
     }
     

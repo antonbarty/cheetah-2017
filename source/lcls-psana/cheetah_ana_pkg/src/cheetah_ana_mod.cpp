@@ -733,7 +733,6 @@ namespace cheetah_ana_pkg {
 				eventData->pulnixImage = (uint16_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint16_t));
 				memcpy(eventData->pulnixImage, &data16[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint16_t));
 			}  
-			cout << endl;
 		}
 
 		// Update detector positions
