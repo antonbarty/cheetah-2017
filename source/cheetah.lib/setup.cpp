@@ -62,7 +62,7 @@ cGlobal::cGlobal(void) {
 
 	// Hitfinding
 	hitfinder = 0;
-	hitfinderDetector = 1;
+	hitfinderDetector = 0;
 	hitfinderADC = 100;
 	hitfinderTAT = 1e3;
 	hitfinderNpeaks = 50;
@@ -182,8 +182,10 @@ void cGlobal::setup() {
 	
 	if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
 		printf("Errors: hitfinderDetector > nDetectors\n");
+		printf("nDetectors = %i\n", nDetectors);
+		printf("hitfinderDetector = detector%i\n", hitfinderDetector);
 		printf("This doesn't make sense.\n");
-		printf("void cGlobal::setup()\n");
+		printf("in void cGlobal::setup()\n");
 		printf("Quitting...\n");
 		exit(1);
 	}
