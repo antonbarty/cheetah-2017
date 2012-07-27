@@ -281,8 +281,8 @@ void event() {
     time(&tnow);
     
     dtime = difftime(tnow, cheetahGlobal.tlast);
-    if(dtime > 0) {
-        datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/dtime;
+    if(dtime > 1) {
+        datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/(float)dtime;
         cheetahGlobal.lastTimingFrame = frameNumber;
         time(&cheetahGlobal.tlast);
         
@@ -693,7 +693,7 @@ void event() {
 			}
 		}
 		// pnccd
-		if ( strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
+		else if ( strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
 			fail = 1;
 			int             pnCcdImageWidth, pnCcdImageHeight;
 			unsigned char*  pnCcdImage;

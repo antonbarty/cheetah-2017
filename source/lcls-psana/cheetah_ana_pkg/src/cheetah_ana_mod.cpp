@@ -55,7 +55,7 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
-	static long count = 0;
+	static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
 	static int laserSwitch = 0;
 	static int prevLaser = 0;
@@ -191,8 +191,35 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
-		count++;
+		frameNumber++;
 
+		
+		// Calculate time beteeen processing of data frames
+		time_t	tnow;
+		double	dtime, datarate;
+		time(&tnow);
+		
+		dtime = difftime(tnow, cheetahGlobal.tlast);
+		if(dtime > 1) {
+			datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/(float)dtime;
+			cheetahGlobal.lastTimingFrame = frameNumber;
+			time(&cheetahGlobal.tlast);
+			
+			cheetahGlobal.datarate = datarate;
+		}
+		
+		/*
+		 *  Raw I/O speed test
+		 *  How fast is event() being called by myana?
+		 *  This is the fastest we can ever hope to run.
+		 */
+		if(cheetahGlobal.ioSpeedTest==1) {
+			printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+			return;
+		}
+
+		
+		
 		// get RunNumber & EventTime
 		int runNumber = 0;
 		time_t sec = 0;
@@ -398,7 +425,7 @@ namespace cheetah_ana_pkg {
 		
 		//! get laserOn
 		bool laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
-		if (count == 1) {
+		if (frameNumber == 1) {
 			// initialize
 			prevLaser = laserOn;
 			laserSwitch = 1;
@@ -411,7 +438,7 @@ namespace cheetah_ana_pkg {
 		}
 		if (verbose) {
 		cout << "*** laserOn: " << laserOn << "\n"
-			 << "laserSwitch/count: " << laserSwitch << "/" << count << endl;
+			 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
 		}
 		// laserSwitch should be as large as count (50% on and off)
 
@@ -531,7 +558,7 @@ namespace cheetah_ana_pkg {
 		//	Copy all interesting information into worker thread structure if we got this far.
 		//  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
 		//  Copy all image data into event structure for processing
-		eventData->frameNumber = count;
+		eventData->frameNumber = frameNumber;
 		eventData->seconds = sec;
 		eventData->nanoSeconds = nsec;
 		eventData->fiducial = fiducial;
@@ -628,7 +655,7 @@ namespace cheetah_ana_pkg {
 						free(quad_data[quadrant]);
 				}
 				else {
-					printf("%li: cspad frame data not available\n", count);
+					printf("%li: cspad frame data not available\n", frameNumber);
 					return;
 				}
 			}
@@ -670,7 +697,7 @@ namespace cheetah_ana_pkg {
 					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
-					printf("%li: pnCCD frame data not available (detID=%li)\n", count, detID);
+					printf("%li: pnCCD frame data not available (detID=%li)\n", frameNumber, detID);
 					return;
 				}
 			}
