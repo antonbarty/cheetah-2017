@@ -260,10 +260,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     
 	// Local background subtraction
 	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
-		useLocalBackgroundSubtraction = atoi(value);
+		// useLocalBackgroundSubtraction = atoi(value);
+		// Delete this later, not during beamtime
 	}
 	else if (!strcmp(tag, "localbackgroundradius")) {
 		localBackgroundRadius = atoi(value);
+		useLocalBackgroundSubtraction = 1;
 	}
     
 	else if (!strcmp(tag, "pixelsaturationadc")) {
