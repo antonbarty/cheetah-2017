@@ -104,7 +104,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	localBackgroundRadius = 3;
 	
 	// Kill persistently hot pixels
-	useAutoHotpixel = 1;
+	useAutoHotpixel = 0;
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
@@ -233,20 +233,23 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "cameralengthscale")) {
 		cameraLengthScale  = atof(value);
 	}
-	else if (!strcmp(tag, "useautohotpixel")) {
-		useAutoHotpixel = atoi(value);
-	}
 	else if (!strcmp(tag, "masksaturatedpixels")) {
 		maskSaturatedPixels = atoi(value);
 	}
 	else if (!strcmp(tag, "bgmemory")) {
 		bgMemory = atoi(value);
 	}
+	else if (!strcmp(tag, "useautohotpixel")) {
+		//useAutoHotpixel = atoi(value);
+		// Eventually delete this, but not during beamtime!
+	}
 	else if (!strcmp(tag, "hotpixfreq")) {
 		hotpixFreq = atof(value);
+		useAutoHotpixel = 1;
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
 		hotpixADC = atoi(value);
+		useAutoHotpixel = 1;
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotpixMemory = atoi(value);
