@@ -149,7 +149,8 @@ public:
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
 	/** @brief Lower intensity threshold for forming powder patterns. */
-	int      powderthresh;
+	float   powderthresh;
+	int		usePowderThresh;
 
 
 	/** @brief Interval between saving of powder patterns, etc. */

@@ -100,7 +100,8 @@ cGlobal::cGlobal(void) {
 
 	// Powder pattern generation
 	nPowderClasses = 2;
-	powderthresh = -100000;
+	usePowderThresh = 0;
+	powderthresh = 0.0;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
 
@@ -639,7 +640,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		debugLevel = atoi(value);
 	}
 	else if (!strcmp(tag, "powderthresh")) {
-		powderthresh = atoi(value);
+		powderthresh = atof(value);
+		usePowderThresh	= 1;
 	}
 	else if (!strcmp(tag, "powdersumhits")) {
 		powderSumHits = atoi(value);
