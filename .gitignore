@@ -64,3 +64,4 @@ source/build-pdslib
 source/build-psana
 source/build-myana
 source/lcls-psana/include/cheetah_ana_pkg
+.pkg_tree.pkl
