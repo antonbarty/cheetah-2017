@@ -1,15 +1,30 @@
 #!/bin/bash
 
+# you should only need to modify the following three lines (?)
+export INSTALLDIR=/reg/neh/home/rkirian/local
 export HDF5DIR=/reg/neh/home/rkirian/local
 export CHEETAHDIR=/reg/neh/home/rkirian/software/cheetah
 
-export LD_LIBRARY_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
-export LD_RUN_PATH="/reg/neh/home/rkirian/local/lib:/reg/neh/home/rkirian/software/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
+# 
+export LD_LIBRARY_PATH="$INSTALLDIR/lib:$HDF5DIR/lib"
+export LD_LIBRARY_PATH="$CHEETAHDIR/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux:$LD_LIBRARY_PATH"
+export LD_RUN_PATH=$LD_LIBRARY_PATH
 
-cd source
-make cheetah
+# build libcheetah
+cd $CHEETAHDIR/source
+make clean
 make libcheetah
 
-cp cheetah /reg/d/psdm/cxi/cxi54312/scratch/programs/bin/cheetah-rick
-cp cheetah /reg/neh/home/rkirian/local/bin
-cp libcheetah.so.* /reg/neh/home/rkirian/local/lib
+# Now "install" the libcheetah library...
+mkdir -p $INSTALLDIR
+cp libcheetah.so.* $INSTALLDIR/lib
+# I'm mystified by the naming conventions for shared libraries.. but this seems to work... for now
+latestlib=$(find $INSTALLDIR/lib -name libcheetah.so.* | tail -n 1)
+rm /reg/neh/home/rkirian/local/lib/libcheetah.so
+rm /reg/neh/home/rkirian/local/lib/libcheetah.so.1
+ln -s $latestlib /reg/neh/home/rkirian/local/lib/libcheetah.so
+ln -s $latestlib /reg/neh/home/rkirian/local/lib/libcheetah.so.1
+
+# if you want to install scripts
+cd $CHEETAHDIR/scripts
+cp hitfinder quickview framesorter $INSTALLDIR/scripts
