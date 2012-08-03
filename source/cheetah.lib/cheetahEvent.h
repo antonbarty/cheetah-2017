@@ -21,11 +21,14 @@ public:
 	// Reference to common global structure
 	cGlobal		*pGlobal;
 	int			busy;
-	long		threadNum;
-    long        frameNumber;
+	long        threadNum;
+	long        frameNumber;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
+
+	// Misc. EPICS data
+	float       epicsPvFloatValues[MAX_EPICS_PVS];
 	
 	// Aqiris data
 	int			TOFPresent;

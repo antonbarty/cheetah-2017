@@ -193,7 +193,11 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
 		frameNumber++;
 
-		
+		//	Create a new eventData structure in which to place all information
+		cEventData	*eventData;
+		eventData = cheetahNewEvent(&cheetahGlobal);
+		nevents++;
+
 		// Calculate time beteeen processing of data frames
 		time_t	tnow;
 		double	dtime, datarate;
@@ -402,6 +406,22 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
+
+		// Misc. EPICS PV float values
+		for(long i=0; i < cheetahGlobal.nEpicsPvFloatValues; i++) {
+			char * thisPv = & cheetahGlobal.epicsPvFloatAddresses[i][0];
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(thisPv);
+			if (pv && pv->numElements() > 0) {
+				const float& value = estore.value(thisPv,0);
+				eventData->epicsPvFloatValues[i] = value;
+				if (verbose) {
+					cout << thisPv << " : " << value << endl;
+				}
+			}
+		}
+
+	
+
 		// Detector position
 		float detectorPosition[MAX_DETECTORS];
 		//!! get detector position (Z)
@@ -546,14 +566,7 @@ namespace cheetah_ana_pkg {
 				cout << endl;
 			}
 		}
-		
-		
-		
-		//	Create a new eventData structure in which to place all information
-		cEventData	*eventData;
-		eventData = cheetahNewEvent(&cheetahGlobal);
-		nevents++;
-		
+				
 		
 		//	Copy all interesting information into worker thread structure if we got this far.
 		//  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call

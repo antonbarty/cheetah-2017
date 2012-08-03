@@ -52,6 +52,9 @@ cGlobal::cGlobal(void) {
 	laserDelay = std::numeric_limits<float>::quiet_NaN();
 	laserDelay = 0;
 
+	// Misc. PV values
+	nEpicsPvFloatValues = 0;
+
 	// Start and stop frames
 	startAtFrame = 0;
 	stopAtFrame = 0;
@@ -540,6 +543,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	 */
 	if (!strcmp(tag, "defaultphotonenergyev")) {
 		defaultPhotonEnergyeV = atof(value);
+	}
+	else if (!strcmp(tag, "saveepicspvfloat")) {
+		strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
+		nEpicsPvFloatValues++;
 	}
 	else if (!strcmp(tag, "startatframe")) {
 		startAtFrame = atoi(value);

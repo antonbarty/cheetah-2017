@@ -471,8 +471,16 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
-	
-    
+
+
+	// Misc EPICS PVs
+	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {	
+		sprintf(fieldID, "/LCLS/%s", &global->epicsPvFloatAddresses[i][0]);
+		dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->epicsPvFloatValues[i] );	
+		H5Dclose(dataset_id);
+	}
+
     // Detector motor positions
     DETECTOR_LOOP {
         sprintf(fieldID, "/LCLS/detector%li-Position", detID);
