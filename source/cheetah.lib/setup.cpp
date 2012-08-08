@@ -1029,8 +1029,7 @@ void cGlobal::writeFinalLog(void){
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
 	fprintf(fp, "Photon energy sigma: %5.2f eV\n",photonEnergyeVSigma);
-	fprintf(fp, "Cheetah clean exit\n");
-	fprintf(fp, ">-------- Cheetah exit --------<\n");
+	fprintf(fp, ">-------- Cheetah clean exit --------<\n");
 	fclose (fp);
 
 
