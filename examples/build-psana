@@ -1,11 +1,14 @@
 #!/bin/bash
-# In case of errors, run update-psana
 
-cd source/lcls-psana
-#cd analysis-rel
-
-. /reg/g/psdm/bin/sit_setup.sh
-
+# please modify the following two lines
+export CHEETAHDIR=/reg/neh/home/rkirian/software/cheetah
 export LIBPATH=/reg/neh/home/rkirian/local/lib
 
+cd $CHEETAHDIR/source/lcls-psana
+
+. /reg/g/psdm/bin/sit_setup.sh
+scons -c
 scons
+
+# The psana executable should end up here:
+# $CHEETAHDIR/source/lcls-psana/arch/x86_64-rhel5-gcc41-opt/bin/psana

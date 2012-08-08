@@ -10,8 +10,8 @@
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
-
-
+#define MAX_EPICS_PVS 10
+#define MAX_EPICS_PV_NAME_LENGTH 512
 
 
 /** @brief Global variables.
@@ -34,6 +34,9 @@ public:
 
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
+
+	char     epicsPvFloatAddresses[MAX_EPICS_PVS][MAX_EPICS_PV_NAME_LENGTH];
+	int      nEpicsPvFloatValues;
 
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
