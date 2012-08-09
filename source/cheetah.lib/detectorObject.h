@@ -30,10 +30,10 @@ static const unsigned  CSPAD_nASICS_X = 8;   // 8 ASICs across in raw data strea
 static const unsigned  CSPAD_nASICS_Y = 8;   // 8 ASICs down in raw data stresm
 
 //	PNCCD	//
-static const unsigned  PNCCD_ASIC_NX = 1024;	// ASIC nx = extent of one ASIC in x
-static const unsigned  PNCCD_ASIC_NY = 1024;	// ASIC ny = extent of one ASIC in y
-static const unsigned  PNCCD_nASICS_X = 1;		// 8 ASICs across in raw data stream
-static const unsigned  PNCCD_nASICS_Y = 1;		// 8 ASICs down in raw data stresm
+static const unsigned  PNCCD_ASIC_NX = 512;	// ASIC nx = extent of one ASIC in x
+static const unsigned  PNCCD_ASIC_NY = 512;	// ASIC ny = extent of one ASIC in y
+static const unsigned  PNCCD_nASICS_X = 2;		// 2 ASICs across in raw data stream
+static const unsigned  PNCCD_nASICS_Y = 2;		// 2 ASICs down in raw data stresm
 
 
 static const unsigned int cbufsize = 1024;
@@ -56,7 +56,7 @@ public:
 	/** @brief Type of detector */
 	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
-	//Pds::DetInfo::Detector detectorPdsDetInfo;
+    	//Pds::DetInfo::Detector detectorPdsDetInfo;
 
 	//unsigned         configVsn;
 	//unsigned         quadMask;
@@ -172,6 +172,9 @@ public:
 	long   nhot;
 	long   last_hotpix_update;
 	int    startFrames;
+	// correction for PNCCD read out artifacts on back detector
+	int    usePnccdOffsetCorrection;
+	
 
 	// Saving options
 	int   saveDetectorCorrectedOnly;

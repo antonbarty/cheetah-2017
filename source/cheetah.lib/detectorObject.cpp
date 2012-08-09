@@ -48,70 +48,73 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
     nasics_x = CSPAD_nASICS_X;
     nasics_y = CSPAD_nASICS_Y;
-	pix_nx = asic_nx*nasics_x;
-	pix_ny = asic_ny*nasics_y;
-	pix_nn = pix_nx*pix_ny;
+    pix_nx = asic_nx*nasics_x;
+    pix_ny = asic_ny*nasics_y;
+    pix_nn = pix_nx*pix_ny;
     pixelSize = 110e-6;
 
     
     // Detector Z position
-	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
-	strcpy(detectorZpvname,"");
-	//defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
-	defaultCameraLengthMm = 0;
-	fixedCameraLengthMm = 0;
-	detposprev = 0;
-	cameraLengthOffset = 500.0 + 79.0;
-	cameraLengthScale = 1e-3;
-
-	beamCenterPixX = 0;
-	beamCenterPixY = 0;
-	
+    //strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+    strcpy(detectorZpvname,"");
+    //defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
+    defaultCameraLengthMm = 0;
+    fixedCameraLengthMm = 0;
+    detposprev = 0;
+    cameraLengthOffset = 500.0 + 79.0;
+    cameraLengthScale = 1e-3;
+    
+    beamCenterPixX = 0;
+    beamCenterPixY = 0;
+    
     // Bad pixel mask    
     useBadPixelMask = 0;
     
     // Saturated pixels
-	maskSaturatedPixels = 0;
-	pixelSaturationADC = 15564;  // 95% of 2^14 ??
+    maskSaturatedPixels = 0;
+    pixelSaturationADC = 15564;  // 95% of 2^14 ??
 
     // Static dark calibration (electronic offsets)
-	useDarkcalSubtraction = 0;
+    useDarkcalSubtraction = 0;
 
     // Common mode subtraction from each ASIC
-	cmModule = 0;
-	cmFloor = 0.1;
-	cmSubtractUnbondedPixels = 0;
-	cmSubtractBehindWires = 0;
+    cmModule = 0;
+    cmFloor = 0.1;
+    cmSubtractUnbondedPixels = 0;
+    cmSubtractBehindWires = 0;
 
     // Gain calibration correction
-	useGaincal = 0;
-	invertGain = 0;
+    useGaincal = 0;
+    invertGain = 0;
 	
-	// Subtraction of running background (persistent photon background) 
-	useSubtractPersistentBackground = 0;
-	bgMemory = 50;
-	startFrames = 0;
-	scaleBackground = 0;
-	useBackgroundBufferMutex = 0;
-	bgMedian = 0.5;
-	bgRecalc = bgMemory;
-	bgIncludeHits = 0;
-	bgNoBeamReset = 0;
-	bgFiducialGlitchReset = 0;
+    // Subtraction of running background (persistent photon background) 
+    useSubtractPersistentBackground = 0;
+    bgMemory = 50;
+    startFrames = 0;
+    scaleBackground = 0;
+    useBackgroundBufferMutex = 0;
+    bgMedian = 0.5;
+    bgRecalc = bgMemory;
+    bgIncludeHits = 0;
+    bgNoBeamReset = 0;
+    bgFiducialGlitchReset = 0;
 	
-	// Local background subtraction
-	useLocalBackgroundSubtraction = 0;
-	localBackgroundRadius = 3;
+    // Local background subtraction
+    useLocalBackgroundSubtraction = 0;
+    localBackgroundRadius = 3;
 	
-	// Kill persistently hot pixels
-	useAutoHotpixel = 0;
-	hotpixFreq = 0.9;
-	hotpixADC = 1000;
-	hotpixMemory = 50;
+    // Kill persistently hot pixels
+    useAutoHotpixel = 0;
+    hotpixFreq = 0.9;
+    hotpixADC = 1000;
+    hotpixMemory = 50;
     
+    // correction for PNCCD read out artifacts 
+    usePnccdOffsetCorrection = 0;
+
     // Saving options
     saveDetectorCorrectedOnly = 0;
-	saveDetectorRaw = 0;
+    saveDetectorRaw = 0;
 
 
 }
@@ -147,6 +150,7 @@ void cPixelDetectorCommon::configure(void) {
 		pix_ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 		pix_nn = pix_nx * pix_ny;
 		pixelSize = 75e-6;
+		
 	}
 	else {
 		printf("Error: unknown detector name %s\n", detectorName);
@@ -260,12 +264,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     
 	// Local background subtraction
 	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
-		// useLocalBackgroundSubtraction = atoi(value);
-		// Delete this later, not during beamtime
+		useLocalBackgroundSubtraction = atoi(value);
 	}
 	else if (!strcmp(tag, "localbackgroundradius")) {
 		localBackgroundRadius = atoi(value);
-		useLocalBackgroundSubtraction = 1;
 	}
     
 	else if (!strcmp(tag, "pixelsaturationadc")) {
@@ -294,6 +296,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
+	}
+	else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
+	  //usePnccdOffsetCorrection = atoi(value);
+	  usePnccdOffsetCorrection = 1;
 	}
 	else if (!strcmp(tag, "bgrecalc")) {
 		bgRecalc = atoi(value);

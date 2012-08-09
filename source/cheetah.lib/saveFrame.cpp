@@ -68,14 +68,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	herr_t		hdf_error;
 	hid_t   	gid, gidHitfinder;
 	//char 		fieldname[100]; 
-    char        fieldID[1023];
+	char        fieldID[1023];
 
 	
 	/*
 	 *	Create the HDF5 file
 	 */
 	hdf_fileID = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	
 	
 	
 	
@@ -647,6 +646,4 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	H5Fclose(fh);
 }
-
-
 
