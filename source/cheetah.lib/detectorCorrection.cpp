@@ -505,18 +505,13 @@ void pnccdOffsetCorrection(float *data) {
   int nasics_x = PNCCD_nASICS_X;
   int nasics_y = PNCCD_nASICS_Y;
   int x_insens_start[4] = {11,1012,11,1012};
-  int x_sens_start[4] = {12,1011,12,1011};
+  int x_sens_start[4] = {511,512,511,511};
   int insensitve_border_width = 12;
   int Nxsens = 500;
   float sumThreshold = 50000.;
-  // c1
   float offset_m[4] = {0.0055,0.0056,0.0050,0.0049};
   float offset_c[4] = {0.0047,0.0007,0.0078,0.0043};
-  // c2
-  //float offset_m[4] = {0.0056,0.0055,0.0049,0.0050};
-  //float offset_c[4] = {0.0007,0.0047,0.0043,0.0078};
   int read_out_direction[4] = {-1,1,-1,1};
-  //puts("1");
   // Loop over quadrants
   for(my=0; my<nasics_y; my++){
     for(mx=0; mx<nasics_x; mx++){
@@ -536,20 +531,15 @@ void pnccdOffsetCorrection(float *data) {
 	    x = x_insens_start[q]+x_*read_out_direction[q];
 	    j = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + x;
 	    m += data[j];
-	    //data[j] = 1000.;
 	  }
 	  m /= float(insensitve_border_width);
-	  //printf("m=%f",m);
 	  // do offset correction
 	  for(x_=0; x_<Nxsens; x_++){
-	    x = x_sens_start[q]-x_*read_out_direction[q];
+	    x = x_sens_start[q]+x_*read_out_direction[q];
 	    j = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + x;
 	    data[j] -= m;
 	    data[j] -= (m*offset_m[q]+offset_c[q])*float(500-x_);
 	  }
-	  //printf("q=%d ",q);
-	  //printf("x=%d ",x);
-	  //printf("i=%d\n",i);
 	}
       }
     }
