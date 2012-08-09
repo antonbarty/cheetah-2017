@@ -207,6 +207,7 @@ if [ ! -d $SAVEDIR ]; then
 
 	echo "Creating hdf5 data directory"
 	mkdir $SAVEDIR
+	[ -d $SAVEDIR ] || UERROR "Couldn't create the directory $SAVEDIR"
 	echo "Moving to hdf5 data directory"
 	cd $SAVEDIR
 
