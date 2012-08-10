@@ -476,11 +476,9 @@ void pnccdOffsetCorrection(float *data) {
 
   /*
 
-    view along beam axis (in direction of beam propagation)
-    
                 insensitive pixels at the edge
-                 | | | | | | | | | 
-                 v v v v v v v v v 
+                |                 | 
+                v                 v 
                 --------- ---------
     read out <- |       | |       | -> read-out
              <- |  q=0  | |  q=1  | ->
@@ -490,9 +488,9 @@ void pnccdOffsetCorrection(float *data) {
              <- |  q=2  | |  q=3  | ->
              <- |       | |       | ->
                 --------- ---------
-                 ^ ^ ^ ^ ^ ^ ^ ^ ^
-                 | | | | | | | | | 
-                 insensitive pixels at the edge
+                ^                 ^
+                |                 | 
+                insensitive pixels at the edge
 
     
   */
