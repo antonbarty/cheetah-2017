@@ -77,13 +77,6 @@ void *worker(void *threadarg) {
 	 */
 	subtractDarkcal(eventData, global);
 
-	
-	/*
-	 *	Correct for negative offset (read out artifacts prominent in lines with high signal)
-	 */
-	pnccdOffsetCorrection(eventData, global);
-
-
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
@@ -156,7 +149,13 @@ void *worker(void *threadarg) {
         }
 	}
     
+
+	/*
+	 *	Correct for negative offset (read out artifacts prominent in lines with high signal)
+	 */
+	pnccdOffsetCorrection(eventData, global);
     
+
 	/*
 	 *	Hitfinding
 	 */
