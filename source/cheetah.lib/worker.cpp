@@ -151,7 +151,7 @@ void *worker(void *threadarg) {
     
 
 	/*
-	 *	Correct for negative offset (read out artifacts prominent in lines with high signal)
+	 *	pnCCD offset correction (read out artifacts prominent in lines with high signal)
 	 */
 	pnccdOffsetCorrection(eventData, global);
     
