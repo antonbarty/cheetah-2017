@@ -447,5 +447,99 @@ long calculateHotPixelMask(int16_t *mask, int16_t *frameBuffer, long threshold, 
 }
 
 
+// Read out artifact compensation for pnCCD back detector
+/*
+  Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
+  Correction formula: O_i(x) = M(x) + ( M_i(x) * m_i + c_i ) * x
+  O_i(x): offset that is applied to line x in quadrant i
+  M_i(x): mean value of insensitive pixels (12 pixels closest to the edge) in line x in quadrant i
+  m_a1 = 0.055 1/px ; m_a2 = 0.0050  1/px ; m_b2 = 0.0056 1/px ; m_b1 = 0.0049 1/px
+  c_a1 = 0.0047 adu/px ; c_a2 = 0.0078 adu/px ; c_b2 = 0.0007 adu/px ; c_b1 = 0.0043 adu/px
+  Apply correction only if integrated signal in line is above certain threshold (50000 ADU).
+*/
+
+void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
+
+  DETECTOR_LOOP {
+    if(global->detector[detID].usePnccdOffsetCorrection == 1)
+      {
+	float		*data = eventData->detector[detID].corrected_data;
+	pnccdOffsetCorrection(data);
+	
+      }
+  }
+}		
 
 
+void pnccdOffsetCorrection(float *data) {
+
+
+  /*
+
+                insensitive pixels at the edge
+                |                 | 
+                v                 v 
+                --------- ---------
+    read out <- |       | |       | -> read-out
+             <- |  q=0  | |  q=1  | ->
+             <- |       | |       | ->
+             <- | - - - |x| - - - | ->
+             <- |       | |       | ->
+             <- |  q=2  | |  q=3  | ->
+             <- |       | |       | ->
+                --------- ---------
+                ^                 ^
+                |                 | 
+                insensitive pixels at the edge
+
+    
+  */
+
+  float sum,m;
+  int i,j,x,y,mx,my,x_;
+  int q;
+  int asic_nx = PNCCD_ASIC_NX;
+  int asic_ny = PNCCD_ASIC_NY;
+  int nasics_x = PNCCD_nASICS_X;
+  int nasics_y = PNCCD_nASICS_Y;
+  int x_insens_start[4] = {11,1012,11,1012};
+  int x_sens_start[4] = {511,512,511,511};
+  int insensitve_border_width = 12;
+  int Nxsens = 500;
+  float sumThreshold = 50000.;
+  float offset_m[4] = {0.0055,0.0056,0.0050,0.0049};
+  float offset_c[4] = {0.0047,0.0007,0.0078,0.0043};
+  int read_out_direction[4] = {-1,1,-1,1};
+  // Loop over quadrants
+  for(my=0; my<nasics_y; my++){
+    for(mx=0; mx<nasics_x; mx++){
+      q = mx+my*nasics_x;
+      for(y=0; y<asic_ny; y++){
+	// sum up values in line
+	sum = 0.;
+	for(x=0; x<asic_nx; x++){
+	  i = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + mx*asic_nx + x;
+	  sum += data[i];
+	}
+	// only do corrections for line if sum exceeds threshold
+	if (sum > sumThreshold){
+	  // calculate mean value of insensitve pixels
+	  m = 0.;
+	  for(x_=0; x_<insensitve_border_width; x_++){
+	    x = x_insens_start[q]+x_*read_out_direction[q];
+	    j = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + x;
+	    m += data[j];
+	  }
+	  m /= float(insensitve_border_width);
+	  // do offset correction
+	  for(x_=0; x_<Nxsens; x_++){
+	    x = x_sens_start[q]+x_*read_out_direction[q];
+	    j = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + x;
+	    data[j] -= m;
+	    data[j] -= (m*offset_m[q]+offset_c[q])*float(500-x_);
+	  }
+	}
+      }
+    }
+  }
+}

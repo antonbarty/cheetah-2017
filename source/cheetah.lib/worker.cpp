@@ -34,7 +34,7 @@ void *worker(void *threadarg) {
 	global = eventData->pGlobal;
 	int	hit = 0;
 
-
+	//puts("0");
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
@@ -56,7 +56,7 @@ void *worker(void *threadarg) {
 	/*
 	 *	Copy raw detector data into corrected array as starting point for corrections
 	 */
-    DETECTOR_LOOP {
+	DETECTOR_LOOP {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
 			eventData->detector[detID].saturatedPixelMask[i] = 1;
@@ -77,7 +77,6 @@ void *worker(void *threadarg) {
 	 */
 	subtractDarkcal(eventData, global);
 
-	
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
@@ -129,15 +128,13 @@ void *worker(void *threadarg) {
 	 *	Local background subtraction
 	 */
 	subtractLocalBackground(eventData, global);
-	
-		
+			
 
 	/*
 	 *	Identify and remove hot pixels
 	 */
 	applyBadPixelMask(eventData, global);
-	applyHotPixelMask(eventData, global);
-		
+	applyHotPixelMask(eventData, global);	
 
 	/*
 	 *	Skip first set of frames to build up running estimate of background...
@@ -152,7 +149,13 @@ void *worker(void *threadarg) {
         }
 	}
     
+
+	/*
+	 *	Correct for negative offset (read out artifacts prominent in lines with high signal)
+	 */
+	pnccdOffsetCorrection(eventData, global);
     
+
 	/*
 	 *	Hitfinding
 	 */
@@ -255,13 +258,14 @@ void *worker(void *threadarg) {
 	else
 		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
-	
+	//puts("1");
 	/*
 	 *	If this is a hit, write out peak info to peak list file
 	 */
 	if(hit && global->savePeakInfo) {
 		writePeakFile(eventData, global);
 	}
+	//puts("2");
 
 	
 	
@@ -272,12 +276,12 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->framefp_mutex);
 	fprintf(global->framefp, "%s, %li, %i, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
 	pthread_mutex_unlock(&global->framefp_mutex);
-	
+	//puts("3");
 	// Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
 	fprintf(global->powderlogfp[hit], "%s, %li, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n", eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
-	
+	//puts("4");
 	
 	/*
 	 *	Cleanup and exit
@@ -287,7 +291,7 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	
+	//puts("5");
     
 	// Free memory only if running multi-threaded
     if(eventData->useThreads == 1) {
@@ -295,6 +299,7 @@ void *worker(void *threadarg) {
         pthread_exit(NULL);
     }
     else {
+      //puts("6");
         return(NULL);
     }
 }
