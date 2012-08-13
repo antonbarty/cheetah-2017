@@ -8,18 +8,18 @@ void assemble2Dimage(cEventData*, cGlobal*, int);
 void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
 void applyBadPixelMask(cEventData*, cGlobal*);
-void cmModuleSubtract(cEventData*, cGlobal*);
-void cmSubtractUnbondedPixels(cEventData*, cGlobal*);
-void cmSubtractBehindWires(cEventData*, cGlobal*);
+void cspadModuleSubtract(cEventData*, cGlobal*);
+void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
+void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
 void applyBadPixelMask(float*, int16_t*, long);
-void cmModuleSubtract(float*, int16_t*, float, long, long, long, long);
-void cmSubtractUnbondedPixels(float*, int16_t*, long, long, long, long);
-void cmSubtractBehindWires(float*, int16_t*, float, long, long, long, long);
+void cspadModuleSubtract(float*, int16_t*, float, long, long, long, long);
+void cspadSubtractUnbondedPixels(float*, int16_t*, long, long, long, long);
+void cspadSubtractBehindWires(float*, int16_t*, float, long, long, long, long);
 long calculateHotPixelMask(int16_t*, int16_t*, long, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);

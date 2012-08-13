@@ -100,7 +100,7 @@ void applyBadPixelMask(float *data, int16_t *badpixelmask, long pix_nn) {
  *	Subtract common mode on each module
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmModuleSubtract(cEventData *eventData, cGlobal *global){
+void cspadModuleSubtract(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
         if(global->detector[detID].cmModule) { 
@@ -114,13 +114,13 @@ void cmModuleSubtract(cEventData *eventData, cGlobal *global){
 			long		nasics_x = global->detector[detID].nasics_x;
 			long		nasics_y = global->detector[detID].nasics_y;
 			
-			cmModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+			cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 			
 		}
 	}
 }
 
-void cmModuleSubtract(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+void cspadModuleSubtract(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	long		mval;
@@ -184,10 +184,10 @@ void cmModuleSubtract(float *data, int16_t *mask, float threshold, long asic_nx,
  *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
  *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
  */
-void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
+void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cmSubtractUnbondedPixels) { 
+        if(global->detector[detID].cspadSubtractUnbondedPixels) { 
 			
 			// Dereference datector arrays
 			float		*data = eventData->detector[detID].corrected_data;
@@ -197,13 +197,13 @@ void cmSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 			long		nasics_x = global->detector[detID].nasics_x;
 			long		nasics_y = global->detector[detID].nasics_y;
 			
-			cmSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
+			cspadSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
 			
 		}
 	}
 }
 
-void cmSubtractUnbondedPixels(float *data, int16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+void cspadSubtractUnbondedPixels(float *data, int16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	double		counter;
@@ -250,10 +250,10 @@ void cmSubtractUnbondedPixels(float *data, int16_t *mask, long asic_nx, long asi
  *	Subtract common mode estimated from signal behind wires
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cmSubtractBehindWires(cEventData *eventData, cGlobal *global){
+void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cmSubtractBehindWires) {
+        if(global->detector[detID].cspadSubtractBehindWires) {
 			float		threshold = global->detector[detID].cmFloor;
 			float		*data = eventData->detector[detID].corrected_data;
 			int16_t		*mask = global->detector[detID].badpixelmask;
@@ -262,13 +262,13 @@ void cmSubtractBehindWires(cEventData *eventData, cGlobal *global){
 			long		nasics_x = global->detector[detID].nasics_x;
 			long		nasics_y = global->detector[detID].nasics_y;
 
-			cmSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+			cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 
 		}
 	}
 }		
 
-void cmSubtractBehindWires(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+void cspadSubtractBehindWires(float *data, int16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		p;
 	long		counter;

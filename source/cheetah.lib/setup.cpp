@@ -253,7 +253,7 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		for(long i=0; i<nDetectors; i++) {
 			detector[i].cmModule = 0;
-			detector[i].cmSubtractUnbondedPixels = 0;
+			detector[i].cspadSubtractUnbondedPixels = 0;
 			detector[i].useDarkcalSubtraction = 0;
 			detector[i].useGaincal=0;
 			detector[i].useAutoHotpixel = 0;
@@ -277,7 +277,7 @@ void cGlobal::setup() {
 		powderthresh = -30000;
 		for(long i=0; i<nDetectors; i++) {
 			detector[i].cmModule = 0;
-			detector[i].cmSubtractUnbondedPixels = 0;
+			detector[i].cspadSubtractUnbondedPixels = 0;
 			detector[i].useDarkcalSubtraction = 1;
 			detector[i].useAutoHotpixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
@@ -774,9 +774,9 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "badPixelMap=%s\n",detector[0].badpixelFile);
 	//fprintf(fp, "subtractcmModule=%d\n",cmModule);
 	//fprintf(fp, "cmModule=%d\n",cmModule);
-	//fprintf(fp, "subtractUnbondedPixels=%d\n",cmSubtractUnbondedPixels);
+	//fprintf(fp, "subtractUnbondedPixels=%d\n",cspadSubtractUnbondedPixels);
 	//fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
-	//fprintf(fp, "subtractBehindWires=%d\n",cmSubtractBehindWires);
+	//fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
 	//fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);

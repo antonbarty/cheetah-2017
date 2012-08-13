@@ -80,8 +80,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     // Common mode subtraction from each ASIC
     cmModule = 0;
     cmFloor = 0.1;
-    cmSubtractUnbondedPixels = 0;
-    cmSubtractBehindWires = 0;
+    cspadSubtractUnbondedPixels = 0;
+    cspadSubtractBehindWires = 0;
 
     // Gain calibration correction
     useGaincal = 0;
@@ -286,13 +286,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		useBackgroundBufferMutex = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbehindwires")) {
-		cmSubtractBehindWires = atoi(value);
+		cspadSubtractBehindWires = atoi(value);
 	}
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractunbondedpixels")) {
-		cmSubtractUnbondedPixels = atoi(value);
+		cspadSubtractUnbondedPixels = atoi(value);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -903,7 +903,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 		wiremask[i] = 1;
 	
 	// Do we need this file?
-	if ( cmSubtractBehindWires == 0 ){
+	if ( cspadSubtractBehindWires == 0 ){
 		return;
 	}
 	

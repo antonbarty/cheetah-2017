@@ -137,8 +137,8 @@ public:
 	int    useDarkcalSubtraction;
 	// Subtract common mode from each ASIC
 	int    cmModule;
-	int    cmSubtractUnbondedPixels;
-	int    cmSubtractBehindWires;
+	int    cspadSubtractUnbondedPixels;
+	int    cspadSubtractBehindWires;
 	float  cmFloor;    // Use lowest x% of values to estimate DC offset
 	// Gain calibration
 	int    useGaincal;

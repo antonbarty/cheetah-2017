@@ -80,9 +80,9 @@ void *worker(void *threadarg) {
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
 	 */
-	cmModuleSubtract(eventData, global);
-	cmSubtractUnbondedPixels(eventData, global);
-	cmSubtractBehindWires(eventData, global);
+	cspadModuleSubtract(eventData, global);
+	cspadSubtractUnbondedPixels(eventData, global);
+	cspadSubtractBehindWires(eventData, global);
 
 	
 	/*
