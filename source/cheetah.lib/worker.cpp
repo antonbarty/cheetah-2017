@@ -152,8 +152,10 @@ void *worker(void *threadarg) {
 
 	/*
 	 *	pnCCD offset correction (read out artifacts prominent in lines with high signal)
+     *  pnCCD wiring error
 	 */
 	pnccdOffsetCorrection(eventData, global);
+    pnccdFixWiringError(eventData, global);
     
 
 	/*

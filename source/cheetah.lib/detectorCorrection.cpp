@@ -544,3 +544,66 @@ read out <- |       | |       | -> read-out
         }
     }
 }
+
+
+/*
+ * Fix pnccd wiring error
+ *
+ * For each CCD, there are two CAMEX channels which may require special attention for scientific analysis. 
+ * When numbering the 1024 CAMEX channels of a CCD from 1 to 1024, these are channels 513 and 1024. 
+ * CAMEX channel 513 is not bonded to a physical detector channel. It herefore does not contain any photon data, 
+ * but only CAMEX noise, and should be excluded from scientific analysis. The data of the physical detector channel n 
+ * for 512 ≤ n ≤ 1022 is in CAMEX channel n + 1. CAMEX channel 1024 is bonded to both detector channels 1023 and 1024. 
+ * This channel therefore contains the summed signal of detector channels 1023 and 1024. Depending on the analysis goal, 
+ * this channel may be excluded from further analysis, treated as the sum that it actually is, or may be even split into two 
+ * channels under some assumptions.
+ *	
+ *	In IDL this becomes:
+ *	;; Re-align top right
+ *	data[512:1023, 512:1023] = shift(data[512:1023,512:1023], 0, -1)
+ *	data[512:1023, 1022:1023] = 0
+ *
+ *	;; Re-align bottom left
+ *	data[0:511, 0:511] = shift(data[0:511, 0:511], 0, 1)
+ *	data[0:511, 0:1] = 0
+ *
+ *  Everything here is rotated 90 degrees CW compared to CASS (where this was originally implemented and the above IDL code debugged)
+ */
+
+void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
+    DETECTOR_LOOP {
+        if(strcmp(global->detector[detID].detectorType, "pnccd") == 0 ) {
+            if(global->detector[detID].usePnccdOffsetCorrection == 1) {
+                float	*data = eventData->detector[detID].corrected_data;
+                pnccdFixWiringError(data);
+            }
+        }
+    }
+}
+
+
+
+void pnccdFixWiringError(float *data) {
+    long	i,j;
+    long    nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
+    
+
+    // Fix top left quadrant 
+    // (shift all pixels right by one and zero first column)
+    for(j=512; j<1023; j++)		
+        for(i=511; i>0; i--)
+            data[i+j*nx] = data[(i-1)+j*nx];            
+    for(j=512; j<1024; j++) 
+        data[0+j*nx] = 0;
+    
+
+    // Fix bottom right quadrant 
+    //  (shift all pixels left by one and zero last column)
+    for(j=0; j<512; j++)
+        for(i=512; i<1024; i++)
+            data[i+j*nx] =  data[(i+1)+j*nx];            
+    for(j=0; j<512; j++) 
+        data[1023+j*nx] = 0;
+    
+}
+

@@ -23,7 +23,10 @@ void cspadSubtractBehindWires(float*, int16_t*, float, long, long, long, long);
 long calculateHotPixelMask(int16_t*, int16_t*, long, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
+void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
+void pnccdFixWiringError(float*);
+
 
 // backgroundCorrection.cpp
 void subtractLocalBackground(cEventData*, cGlobal*);
