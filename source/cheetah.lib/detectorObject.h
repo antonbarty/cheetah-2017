@@ -249,8 +249,6 @@ public:
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;
-	//float     quad_temperature[4];
-	//uint16_t  *quad_data[4];
 	uint16_t  *raw_data;
 	float     *corrected_data;
 	float     *detector_corrected_data;

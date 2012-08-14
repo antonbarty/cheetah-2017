@@ -26,14 +26,36 @@
  *  Calculate radial averages
  *  (repeated once for each different data type)
  */
-//template <class tData>
-void calculateRadialAverage(float *data, float *radialAverage, float *radialAverageCounter, cGlobal *global, int detID){
+
+void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
     
-	
-	long	radial_nn = global->detector[detID].radial_nn;
-	long	pix_nn = global->detector[detID].pix_nn;
+ 	DETECTOR_LOOP {
+        float   *corrected_data = eventData->detector[detID].corrected_data;
+        float   *pix_r = global->detector[detID].pix_r;
+       	long	pix_nn = global->detector[detID].pix_nn;
+        float   *radial_average = eventData->detector[detID].radialAverage;
+        float   *radial_average_counter = eventData->detector[detID].radialAverageCounter;
+        long	radial_nn = global->detector[detID].radial_nn;
+
+        // Mask for where to calculate average
+        int     *mask = (int *) calloc(pix_nn, sizeof(int));
+        for(long i=0; i<pix_nn; i++){
+            mask[i] = 1;
+            if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+                mask[i] = 0;
+        }
+        
+        calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
+        
+        // Remember to free the mask
+        free(mask); 
+    }
+   
+}
     
-	
+
+void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
+    
 	// Zero arrays
 	for(long i=0; i<radial_nn; i++) {
 		radialAverage[i] = 0.;
@@ -45,11 +67,11 @@ void calculateRadialAverage(float *data, float *radialAverage, float *radialAver
 	for(long i=0; i<pix_nn; i++){
         
         // Don't count bad pixels in radial average
-        if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+        if(mask[i] == 0)
             continue;
         
         // Radius of this pixel
-		rbin = lrint(global->detector[detID].pix_r[i]);
+		rbin = lrint(pix_r[i]);
 		
 		// Array bounds check (paranoia)
 		if(rbin < 0) rbin = 0;

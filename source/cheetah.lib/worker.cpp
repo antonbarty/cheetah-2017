@@ -34,7 +34,7 @@ void *worker(void *threadarg) {
 	global = eventData->pGlobal;
 	int	hit = 0;
 
-	//puts("0");
+
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
@@ -213,38 +213,24 @@ void *worker(void *threadarg) {
 	
 	/*
 	 *	Calculate radial average
+     *  Maintain radial average stack
 	 */
-	DETECTOR_LOOP
-		calculateRadialAverage(eventData->detector[detID].corrected_data, eventData->detector[detID].radialAverage, eventData->detector[detID].radialAverageCounter, global, detID);
+    calculateRadialAverage(eventData, global); 
+
+    if(global->saveRadialStacks) {
+        DETECTOR_LOOP
+        addToRadialAverageStack(eventData, global, hit, detID);
+    }
 	
 	
 	
 	/*
 	 *	Maintain a running sum of data (powder patterns)
 	 */
-    if(hit && global->powderSumHits) {
-        DETECTOR_LOOP
-            addToPowder(eventData, global, hit, detID);
-    }
-    if(!hit && global->powderSumBlanks){
-        DETECTOR_LOOP
-            addToPowder(eventData, global, hit, detID);
-    } 
-    if(global->generateDarkcal || global->generateGaincal){
-        DETECTOR_LOOP
-            addToPowder(eventData, global, 0, detID);
-    } 
+    addToPowder(eventData, global);
     
     
-    /*
-     *  Maintain radial average stack
-     */
-    if(global->saveRadialStacks) {
-        DETECTOR_LOOP
-            addToRadialAverageStack(eventData, global, hit, detID);
-    }
-	
-	
+    	
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
@@ -261,14 +247,14 @@ void *worker(void *threadarg) {
 	else
 		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
-	//puts("1");
+    
+    
 	/*
 	 *	If this is a hit, write out peak info to peak list file
 	 */
 	if(hit && global->savePeakInfo) {
 		writePeakFile(eventData, global);
 	}
-	//puts("2");
 
 	
 	

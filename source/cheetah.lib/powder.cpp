@@ -25,6 +25,24 @@
 /*
  *	Maintain running powder patterns
  */
+
+void addToPowder(cEventData *eventData, cGlobal *global) {
+
+    int hit = eventData->hit;
+    
+    DETECTOR_LOOP {
+        if(hit && global->powderSumHits) 
+            addToPowder(eventData, global, hit, detID);
+    
+        if(!hit && global->powderSumBlanks)
+            addToPowder(eventData, global, hit, detID);
+    
+        if(global->generateDarkcal || global->generateGaincal)
+            addToPowder(eventData, global, 0, detID);
+    } 
+
+}
+
 void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int detID){
 	
 	// Dereference common variable

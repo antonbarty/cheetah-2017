@@ -59,6 +59,7 @@ int  hitfinder(cEventData*, cGlobal*);
 
 
 // powder.cpp
+void addToPowder(cEventData*, cGlobal*);
 void addToPowder(cEventData*, cGlobal*, int, int);
 void saveRunningSums(cGlobal*, int);
 void saveDarkcal(cGlobal*, int);
@@ -71,6 +72,9 @@ void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
+
+void calculateRadialAverage(cEventData*, cGlobal*);
+void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
 
 void calculateRadialAverage(float*, float*, float*, cGlobal*, int);
 void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
