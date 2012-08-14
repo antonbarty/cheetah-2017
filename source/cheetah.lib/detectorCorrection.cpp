@@ -449,13 +449,33 @@ long calculateHotPixelMask(int16_t *mask, int16_t *frameBuffer, long threshold, 
 
 // Read out artifact compensation for pnCCD back detector
 /*
-  Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
-  Correction formula: O_i(x) = M(x) + ( M_i(x) * m_i + c_i ) * x
-  O_i(x): offset that is applied to line x in quadrant i
-  M_i(x): mean value of insensitive pixels (12 pixels closest to the edge) in line x in quadrant i
-  m_a1 = 0.055 1/px ; m_a2 = 0.0050  1/px ; m_b2 = 0.0056 1/px ; m_b1 = 0.0049 1/px
-  c_a1 = 0.0047 adu/px ; c_a2 = 0.0078 adu/px ; c_b2 = 0.0007 adu/px ; c_b1 = 0.0043 adu/px
-  Apply correction only if integrated signal in line is above certain threshold (50000 ADU).
+    Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
+    Correction formula: O_i(x) = M(x) + ( M_i(x) * m_i + c_i ) * x
+    O_i(x): offset that is applied to line x in quadrant i
+    M_i(x): mean value of insensitive pixels (12 pixels closest to the edge) in line x in quadrant i
+    m_a1 = 0.055 1/px ; m_a2 = 0.0050  1/px ; m_b2 = 0.0056 1/px ; m_b1 = 0.0049 1/px
+    c_a1 = 0.0047 adu/px ; c_a2 = 0.0078 adu/px ; c_b2 = 0.0007 adu/px ; c_b1 = 0.0043 adu/px
+    Apply correction only if integrated signal in line is above certain threshold (50000 ADU).
+
+    This is what the detector map looks like:
+ 
+ 
+     insensitive pixels at the edge
+     |                 | 
+     v                 v 
+     --------- ---------
+     read out <- |       | |       | -> read-out
+     <- |  q=0  | |  q=1  | ->
+     <- |       | |       | ->
+     <- | - - - |x| - - - | ->
+     <- |       | |       | ->
+     <- |  q=2  | |  q=3  | ->
+     <- |       | |       | ->
+     --------- ---------
+     ^                 ^
+     |                 | 
+     insensitive pixels at the edge
+
 */
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
@@ -471,27 +491,6 @@ void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
 
 void pnccdOffsetCorrection(float *data) {
-/*
-
-            insensitive pixels at the edge
-            |                 | 
-            v                 v 
-            --------- ---------
-read out <- |       | |       | -> read-out
-         <- |  q=0  | |  q=1  | ->
-         <- |       | |       | ->
-         <- | - - - |x| - - - | ->
-         <- |       | |       | ->
-         <- |  q=2  | |  q=3  | ->
-         <- |       | |       | ->
-            --------- ---------
-            ^                 ^
-            |                 | 
-            insensitive pixels at the edge
-
-
-*/
-
     float sum,m;
     int i,j,x,y,mx,my,x_;
     int q;
@@ -558,7 +557,7 @@ read out <- |       | |       | -> read-out
  * this channel may be excluded from further analysis, treated as the sum that it actually is, or may be even split into two 
  * channels under some assumptions.
  *	
- *	In IDL this becomes:
+ *	In IDL and using the 1st version of CASS this becomes:
  *	;; Re-align top right
  *	data[512:1023, 512:1023] = shift(data[512:1023,512:1023], 0, -1)
  *	data[512:1023, 1022:1023] = 0
@@ -567,7 +566,8 @@ read out <- |       | |       | -> read-out
  *	data[0:511, 0:511] = shift(data[0:511, 0:511], 0, 1)
  *	data[0:511, 0:1] = 0
  *
- *  Everything here is rotated 90 degrees CW compared to CASS (where this was originally implemented and the above IDL code debugged)
+ *  Everything in cheetah is rotated 90 degrees CW compared to CASS 
+ *  (and this change is reflected in the code below)
  */
 
 void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {

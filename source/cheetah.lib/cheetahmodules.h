@@ -2,7 +2,6 @@
  *	Function prototypes
  */
 void *worker(void *);
-void assemble2Dimage(cEventData*, cGlobal*, int);
 
 // detectorCorrection.cpp
 void subtractDarkcal(cEventData*, cGlobal*);
@@ -48,6 +47,11 @@ void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 
+
+
+// assemble2DImage.cpp
+void assemble2Dimage(cEventData*, cGlobal*);
+void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long);
 
 
 // hitfinders.cpp

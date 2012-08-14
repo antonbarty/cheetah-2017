@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D0EFCAD15DA87010082B016 /* assemble2DImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */; };
 		4D3B885112FF49F500B7ABD9 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B885012FF49F500B7ABD9 /* Makefile */; };
 		4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */; };
 		4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */; };
@@ -39,6 +40,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = assemble2DImage.cpp; sourceTree = "<group>"; };
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "cheetah-myana.cpp"; sourceTree = "<group>"; };
 		4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheetah_ana_mod.cpp; path = "lcls-psana/cheetah_ana_pkg/src/cheetah_ana_mod.cpp"; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 				4DB5DD3315382D8E00EBE8AA /* hitfinders.h */,
 				4DB5DD3615382D8E00EBE8AA /* median.h */,
 				4DB5DD3415382D8E00EBE8AA /* libcheetah.cpp */,
+				4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */,
 				4DB5DD2D15382D8E00EBE8AA /* data2d.cpp */,
 				4DB5DD3015382D8E00EBE8AA /* detectorObject.cpp */,
 				4DB5DD2F15382D8E00EBE8AA /* detectorCorrection.cpp */,
@@ -211,6 +214,7 @@
 				4DB5DD4915382D8E00EBE8AA /* worker.cpp in Sources */,
 				4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */,
 				4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */,
+				4D0EFCAD15DA87010082B016 /* assemble2DImage.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
