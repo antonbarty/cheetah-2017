@@ -216,11 +216,7 @@ void *worker(void *threadarg) {
      *  Maintain radial average stack
 	 */
     calculateRadialAverage(eventData, global); 
-
-    if(global->saveRadialStacks) {
-        DETECTOR_LOOP
-        addToRadialAverageStack(eventData, global, hit, detID);
-    }
+    addToRadialAverageStack(eventData, global);
 	
 	
 	

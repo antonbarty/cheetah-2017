@@ -134,35 +134,67 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 /*
  *	Add radial average to stack
  */
- void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderClass, int detID){
- 
-     cPixelDetectorCommon     *detector = &global->detector[detID];
-	 
-     pthread_mutex_lock(&detector->radialStack_mutex[powderClass]);
+void addToRadialAverageStack(cEventData *eventData, cGlobal *global){
 
-     // Offset to current position in stack
-	 long	radial_nn = detector->radial_nn;
-     long stackoffset = detector->radialStackCounter[powderClass] % detector->radialStackSize;
-     long dataoffset = stackoffset*radial_nn;
+    // If not keeping stacks, simply return now
+    if(!global->saveRadialStacks) 
+        return;
+    
+    // Sorting parameter
+    int powderClass = eventData->hit;
+
+    // Loop over all detectors
+    DETECTOR_LOOP {
+        
+        addToRadialAverageStack(eventData, global, powderClass, detID);
+    }
+
+}
+
+
+void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderClass, int detID){
+ 
+    cPixelDetectorCommon     *detector = &global->detector[detID];
+
+    float   *stack = detector->radialAverageStack[powderClass];
+    float   *radialAverage = eventData->detector[detID].radialAverage;
+    long	radial_nn = detector->radial_nn;
+    long    stackCounter = detector->radialStackCounter[powderClass];
+    long    stackSize = detector->radialStackSize;
+
+    pthread_mutex_t mutex = detector->radialStack_mutex[powderClass];
+    pthread_mutex_lock(&mutex);
+
      
-     // Copy data and increment counter
-     for(long i=0; i<radial_nn; i++) {
-         detector->radialAverageStack[powderClass][dataoffset+i] = (float) eventData->detector[detID].radialAverage[i];
-     }
-     detector->radialStackCounter[powderClass] += 1;
+    // Data offsets
+    long stackoffset = stackCounter % stackSize;
+    long dataoffset = stackoffset*radial_nn;
+    
+
+    // Copy data and increment counter
+    for(long i=0; i<radial_nn; i++) {
+        stack[dataoffset+i] = (float) radialAverage[i];
+    }
+
+    // Increment counter
+    detector->radialStackCounter[powderClass] += 1;
      
      
-     // Save data once stack is full
-     if((detector->radialStackCounter[powderClass] % detector->radialStackSize) == 0) {
-         printf("Saving radial stack: %i %i\n", powderClass, detID);
-         saveRadialAverageStack(global, powderClass, detID);
-         for(long j=0; j<radial_nn*global->radialStackSize; j++) 
-             detector->radialAverageStack[powderClass][j] = 0;
-     }
+    // Save data once stack is full
+    if((stackCounter % stackSize) == 0) {
+        
+        printf("Saving radial stack: %i %i\n", powderClass, detID);
+        saveRadialAverageStack(global, powderClass, detID);
+        
+        for(long j=0; j<radial_nn*global->radialStackSize; j++) 
+            detector->radialAverageStack[powderClass][j] = 0;
+    }
      
-     pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);			
+    pthread_mutex_unlock(&mutex);			
  
  }
+
+
 
 /*
  *	Wrapper for saving all radial stacks
