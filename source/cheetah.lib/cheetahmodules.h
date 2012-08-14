@@ -71,7 +71,6 @@ void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
 void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
-//void calculateRadialAverage(float*, float*, float*, cGlobal*, int);
 void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
 
 void addToRadialAverageStack(cEventData*, cGlobal*);

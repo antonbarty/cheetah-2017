@@ -261,12 +261,11 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->framefp_mutex);
 	fprintf(global->framefp, "%s, %li, %i, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
 	pthread_mutex_unlock(&global->framefp_mutex);
-	//puts("3");
+
 	// Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
 	fprintf(global->powderlogfp[hit], "%s, %li, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n", eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
-	//puts("4");
 	
 	/*
 	 *	Cleanup and exit
@@ -276,7 +275,6 @@ void *worker(void *threadarg) {
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	//puts("5");
     
 	// Free memory only if running multi-threaded
     if(eventData->useThreads == 1) {
@@ -284,7 +282,6 @@ void *worker(void *threadarg) {
         pthread_exit(NULL);
     }
     else {
-      //puts("6");
         return(NULL);
     }
 }
