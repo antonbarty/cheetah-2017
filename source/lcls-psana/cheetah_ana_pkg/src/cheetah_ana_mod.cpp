@@ -731,16 +731,16 @@ namespace cheetah_ana_pkg {
 		if (cheetahGlobal.TOFPresent==1){
 			// Cheetah can only handle one channel. Must inc. to 4
 			cout << "cheetahGlobal.TOFPresent" << endl;
-			double *tempTOFTime;
-			double *tempTOFVoltage;
+			double tempTOFTime;
+			double tempTOFVoltage;
 			double tempTrigTime = 0;
 			
 			//Memcpy is necessary for thread safety.
 			eventData->TOFtrigtime = tempTrigTime;
 			eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 			eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFTime, tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFVoltage, tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
+			memcpy(eventData->TOFTime, &tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
+			memcpy(eventData->TOFVoltage, &tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
 		}
 		
 		
