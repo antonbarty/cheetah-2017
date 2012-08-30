@@ -3,6 +3,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 //#include <TROOT.h>
 //#include <TApplication.h>
@@ -100,7 +101,7 @@ using std::vector;
 using std::string;
 using std::map;
 using std::queue;
-using std::auto_ptr;
+//using std::auto_ptr;
 using namespace Pds;
 using namespace Ana;
 

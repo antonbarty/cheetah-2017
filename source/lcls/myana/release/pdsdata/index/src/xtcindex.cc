@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 
 #include "pdsdata/xtc/XtcFileIterator.hh"
 #include "pdsdata/index/XtcIterL1Accept.hh"

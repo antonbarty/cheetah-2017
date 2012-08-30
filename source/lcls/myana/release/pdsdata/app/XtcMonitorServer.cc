@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/stat.h>
 
 using std::queue;
 using std::stack;

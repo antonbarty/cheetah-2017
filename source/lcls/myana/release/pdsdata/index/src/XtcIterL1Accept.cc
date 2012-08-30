@@ -3,6 +3,7 @@
 #include "pdsdata/xtc/BldInfo.hh"
 
 #include "pdsdata/index/XtcIterL1Accept.hh"
+#include <stdio.h>
 
 namespace Pds
 {  

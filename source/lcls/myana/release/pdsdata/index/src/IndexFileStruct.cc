@@ -1,4 +1,7 @@
 #include "pdsdata/index/IndexList.hh"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 namespace Pds
 {  
@@ -77,19 +80,22 @@ int convertTimeStringToSeconds(const char* sTime, uint32_t& uSeconds, uint32_t& 
   strptime(sTime, "%Y-%m-%d %H:%M:%S", &tm);
   if (tm.tm_year < 0) tm.tm_year += 2000;
   
-  char* pDST = strstr(sTime, "PDT");
+	char ft[1024];
+	strcpy(ft,sTime);	
+
+  char* pDST = strstr(ft, "PDT");
   if (pDST == NULL)
-    pDST = strstr(sTime, "DST");
+    pDST = strstr(ft, "DST");
   if (pDST != NULL)
       tm.tm_isdst = 1;
   else
       tm.tm_isdst = 0;    
   
-  char* pUTC = strstr(sTime, "UTC");
+  char* pUTC = strstr(ft, "UTC");
   if (pUTC == NULL)
-    pUTC = strstr(sTime, "GMT");
+    pUTC = strstr(ft, "GMT");
   if (pUTC == NULL)
-    pUTC = strstr(sTime, "Z");
+    pUTC = strstr(ft, "Z");
   
   if (pUTC != NULL) 
   {
@@ -99,7 +105,7 @@ int convertTimeStringToSeconds(const char* sTime, uint32_t& uSeconds, uint32_t& 
   
   uSeconds = mktime(&tm);
   
-  char* pDot = strchr(sTime, '.');
+  char* pDot = strchr(ft, '.');
   if ( pDot != NULL)
   {
     double fNanoseconds = strtod(pDot, NULL);

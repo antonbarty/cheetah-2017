@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <vector>
 #include <string>
+#include <string.h>
+#include <sys/stat.h>
 
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"

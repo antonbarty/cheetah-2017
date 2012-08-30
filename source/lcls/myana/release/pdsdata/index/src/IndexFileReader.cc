@@ -2,6 +2,10 @@
 #include <fcntl.h>
 
 #include "pdsdata/index/IndexFileReader.hh"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 namespace Pds
 {  

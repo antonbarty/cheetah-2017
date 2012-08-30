@@ -3,6 +3,12 @@
 
 #include "pdsdata/ana/XtcSlice.hh"
 
+#include <stdio.h> 
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+
 namespace Pds
 {  
 namespace Ana
@@ -559,7 +565,8 @@ static int genIndexFromXtcFilename( const std::string& strXtcFilename, std::stri
   strIndexFilename = strXtcFilename.substr(0, iFindPos) + ".xtc.idx";  
     
   struct ::stat64 statFile;
-  int iError = ::stat64( strIndexFilename.c_str(), &statFile );
+
+	int iError = ::stat64( strIndexFilename.c_str(), &statFile );
   if ( iError != 0 )
   {
     size_t iFindDir = strXtcFilename.rfind("/");
@@ -568,7 +575,7 @@ static int genIndexFromXtcFilename( const std::string& strXtcFilename, std::stri
     else
       strIndexFilename = strXtcFilename.substr(0, iFindDir+1) + "index/" + strXtcFilename.substr(iFindDir+1) + ".idx";    
     
-    iError = ::stat64( strIndexFilename.c_str(), &statFile );    
+    iError = ::stat64( strIndexFilename.c_str(), &statFile );
     if ( iError != 0 )
     {
       strIndexFilename.clear();

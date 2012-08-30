@@ -3,6 +3,10 @@
 
 #include <queue>
 #include <semaphore.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 
 namespace Pds {
   namespace Ana {
