@@ -273,6 +273,25 @@ namespace cheetah_ana_pkg {
 		float LTUAngY=0; 
 		float PkCurrBC2=0;
 		
+		// Ebeam v0
+		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
+		if (ebeam0.get()) {
+			charge = ebeam0->ebeamCharge();
+			L3Energy = ebeam0->ebeamL3Energy();
+			LTUPosX = ebeam0->ebeamLTUPosX();
+			LTUPosY = ebeam0->ebeamLTUPosY();
+			LTUAngX = ebeam0->ebeamLTUAngX();
+			LTUAngY = ebeam0->ebeamLTUAngY();
+			if (verbose) {
+			cout << "* fEbeamCharge1=" << charge << "\n"
+					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY1=" << LTUAngY << endl;
+			}
+		}
+
 		// Ebeam v1
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		if (ebeam1.get()) {
@@ -291,6 +310,27 @@ namespace cheetah_ana_pkg {
 					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
 					<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
 					<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
+			}
+		}
+
+		// Ebeam v2
+		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
+		if (ebeam2.get()) {
+		charge = ebeam2->ebeamCharge();
+		L3Energy = ebeam2->ebeamL3Energy();
+		LTUPosX = ebeam2->ebeamLTUPosX();
+		LTUPosY = ebeam2->ebeamLTUPosY();
+		LTUAngX = ebeam2->ebeamLTUAngX();
+		LTUAngY = ebeam2->ebeamLTUAngY();
+		PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
+		if (verbose) {
+			cout << "* fEbeamCharge2=" << charge << "\n"
+					<< "* fEbeamL3Energy2=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
 			}
 		}
 
@@ -320,13 +360,21 @@ namespace cheetah_ana_pkg {
 		double wavelengthA=0;
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
-		if (ebeam1.get()) {
+		if (ebeam0.get()) {
+			cout << "***** WARNING *****" << endl;
+			cout << "EBeamV0 does not record peak current" << endl;
+			cout << "Setting peak current to 0" << endl;
+			peakCurrent = 0;
+			DL2energyGeV = 0.001*ebeam0->ebeamL3Energy();
+		} else if (ebeam1.get()) {
 			// Get the present peak current in Amps
 			// Get present beam energy [GeV]
 			peakCurrent = ebeam1->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
-		} 
-		else if (ebeam3.get()) {
+		} else if (ebeam2.get()) {
+			peakCurrent = ebeam2->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam2->ebeamL3Energy();
+		} else if (ebeam3.get()) {
 			peakCurrent = ebeam3->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
 		}
