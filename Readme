@@ -15,7 +15,6 @@ There are a couple of steps to follow when starting from scratch:
 3. Run the analysis
 4. Optimise parameters for your experiment
 
-
 Some knowledge of your computing architecture is assumed.
 
 ------------------------------------------------------------------------
@@ -161,6 +160,15 @@ See the full cheetah documentation for all options, or talk to your local guru.
 Most parameters take sensible default values if not specified. 
 There are many 'hidden parameters' which are not critical, but can be tweaked if you need to.
 
+------------------------------------------------------------------------
+5. Source code for cheetah
+------------------------------------------------------------------------
 
-   
+Cheetah's shared library is under:
+~/cheetha/source/cheetah.lib
 
+Myana source code is under:
+~/cheetah/source/lcls/myana
+
+Psana source code is under:
+~/cheetah/source/lcls-psana
