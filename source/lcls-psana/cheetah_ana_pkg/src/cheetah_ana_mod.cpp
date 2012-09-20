@@ -9,6 +9,7 @@
 //
 // Author List:
 //      Chunhong Yoon	06/2012		chun.hong.yoon@cfel.de
+//  	Copyright (c) 2012 CFEL. All rights reserved.
 //
 //------------------------------------------------------------------------
 
@@ -79,6 +80,7 @@ namespace cheetah_ana_pkg {
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	  : Module(name)
 	{
+		cout << "*** Constructor ***" << endl;
 		// get the values from configuration or use defaults
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
@@ -104,6 +106,7 @@ namespace cheetah_ana_pkg {
 	/// Method which is called once at the beginning of the job
 	void cheetah_ana_mod::beginJob(Event& evt, Env& env)
 	{
+		cout << "*** beginJob ***" << endl;
 		time(&startT);
 		cheetahInit(&cheetahGlobal);
 	}
@@ -113,6 +116,7 @@ namespace cheetah_ana_pkg {
 	///	Pass new run information to Cheetah
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
+	cout << "*** beginRun ***" << endl;
 		int runNumber = 0;
 		PSTime::Time evtTime;
 		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
@@ -124,7 +128,7 @@ namespace cheetah_ana_pkg {
 		cheetahGlobal.runNumber = runNumber;
 		cheetahNewRun(&cheetahGlobal);
 		printf("User analysis beginrun() routine called.\n");
-		printf("Processing r%04u\n",runNumber);
+		printf("*** Processing r%04u ***\n",runNumber);
 	}
 
 
@@ -191,6 +195,7 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
+	cout << "*** New EVENT ***" << endl;
 		frameNumber++;
 
 		//	Create a new eventData structure in which to place all information
@@ -218,7 +223,7 @@ namespace cheetah_ana_pkg {
 		 *  This is the fastest we can ever hope to run.
 		 */
 		if(cheetahGlobal.ioSpeedTest==1) {
-			printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+			printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
 			return;
 		}
 
@@ -283,12 +288,12 @@ namespace cheetah_ana_pkg {
 			LTUAngX = ebeam0->ebeamLTUAngX();
 			LTUAngY = ebeam0->ebeamLTUAngY();
 			if (verbose) {
-			cout << "* fEbeamCharge1=" << charge << "\n"
-					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY1=" << LTUAngY << endl;
+			cout << "* fEbeamCharge0=" << charge << "\n"
+					<< "* fEbeamL3Energy0=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX0=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY0=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX0=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY0=" << LTUAngY << endl;
 			}
 		}
 
@@ -345,13 +350,13 @@ namespace cheetah_ana_pkg {
 		LTUAngY = ebeam3->ebeamLTUAngY();
 		PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
 		if (verbose) {
-			cout << "* fEbeamCharge2=" << charge << "\n"
-					<< "* fEbeamL3Energy2=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
-					<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
+			cout << "* fEbeamCharge3=" << charge << "\n"
+					<< "* fEbeamL3Energy3=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX3=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY3=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX3=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY3=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
 			}
 		}
 

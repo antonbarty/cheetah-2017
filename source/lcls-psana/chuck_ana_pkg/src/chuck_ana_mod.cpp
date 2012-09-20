@@ -3,10 +3,11 @@
 // 	$Id$
 //
 // Description:
-//	Class chuck_ana_mod...
+//	Class chuck_ana_mod... XTC proof reader
 //
 // Author List:
-//      Chunhong Yoon
+//      Chunhong Yoon	06/2012		chun.hong.yoon@cfel.de
+//  	Copyright (c) 2012 CFEL. All rights reserved.
 //
 //------------------------------------------------------------------------
 
@@ -15,7 +16,7 @@
 //-----------------------
 #include "chuck_ana_pkg/chuck_ana_mod.h"
 
-#include "/reg/neh/home/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
 //-----------------
 // C/C++ Headers --
 //-----------------
@@ -35,10 +36,11 @@
 #include "psddl_psana/camera.ddl.h"
 //#include "psddl_psana/xtc.ddl.h"
 
-#include "/reg/neh/home/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+#include "/reg/neh/home3/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
 
 #define beamCode 140
 #define laserCode 41
+#define verbose 1
 
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
@@ -118,13 +120,15 @@ chuck_ana_mod::beginCalibCycle(Event& evt, Env& env)
 void 
 chuck_ana_mod::event(Event& evt, Env& env)
 {
-
+  int numErrors = 0;
+  count++;
+cout << count << endl;
+/*
   if (count==2){
 	exit(1);
   }  
   std::cout << "count = " << count << std::endl;
-
-  count++;
+*/
 
   // get event time
   PSTime::Time evtTime;
@@ -135,7 +139,7 @@ chuck_ana_mod::event(Event& evt, Env& env)
   }
   
   // get beam data
-  boost::shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam = evt.get(Source());
+  boost::shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam = evt.get(m_srcBeam);
   if (ebeam.get()) {
     MsgLog(name(), info, "time: " << evtTime << ", charge: " << ebeam->ebeamCharge() << ", energy: " 
 << ebeam->ebeamL3Energy());
@@ -195,26 +199,123 @@ std::cout << "==========================================" << std::endl;
 
   // get EBeam
   // EBeamV0 ~ EBeamV3
-  shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
-  if (ebeam1.get()) {
-     // << "\n  damageMask=" << ebeam1->damageMask()
-     std::cout << "fEbeamCharge=" << ebeam1->ebeamCharge()
-          << " fEbeamL3Energy=" << ebeam1->ebeamL3Energy()
-          << " fEbeamLTUPosX=" << ebeam1->ebeamLTUPosX()
-          << " fEbeamLTUPosY=" << ebeam1->ebeamLTUPosY()
-          << " fEbeamLTUAngX=" << ebeam1->ebeamLTUAngX()
-          << " fEbeamLTUAngY=" << ebeam1->ebeamLTUAngY()
-          << " fEbeamPkCurrBC2=" << ebeam1->ebeamPkCurrBC2() << std::endl;
-  }
+  		float charge=0;
+		float L3Energy=0;
+		float LTUPosX=0; 
+		float LTUPosY=0; 
+		float LTUAngX=0; 
+		float LTUAngY=0; 
+		float PkCurrBC2=0;
+		
+		// Ebeam v0
+		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
+		if (ebeam0.get()) {
+			charge = ebeam0->ebeamCharge();
+			L3Energy = ebeam0->ebeamL3Energy();
+			LTUPosX = ebeam0->ebeamLTUPosX();
+			LTUPosY = ebeam0->ebeamLTUPosY();
+			LTUAngX = ebeam0->ebeamLTUAngX();
+			LTUAngY = ebeam0->ebeamLTUAngY();
+			if (verbose) {
+			cout << "* fEbeamCharge0=" << charge << "\n"
+					<< "* fEbeamL3Energy0=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX0=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY0=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX0=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY0=" << LTUAngY << endl;
+			}
+		}
+
+		// Ebeam v1
+		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
+		if (ebeam1.get()) {
+			charge = ebeam1->ebeamCharge();
+			L3Energy = ebeam1->ebeamL3Energy();
+			LTUPosX = ebeam1->ebeamLTUPosX();
+			LTUPosY = ebeam1->ebeamLTUPosY();
+			LTUAngX = ebeam1->ebeamLTUAngX();
+			LTUAngY = ebeam1->ebeamLTUAngY();
+			PkCurrBC2 = ebeam1->ebeamPkCurrBC2();
+			if (verbose) {
+			cout << "* fEbeamCharge1=" << charge << "\n"
+					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
+			}
+		}
+
+		// Ebeam v2
+		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
+		if (ebeam2.get()) {
+		charge = ebeam2->ebeamCharge();
+		L3Energy = ebeam2->ebeamL3Energy();
+		LTUPosX = ebeam2->ebeamLTUPosX();
+		LTUPosY = ebeam2->ebeamLTUPosY();
+		LTUAngX = ebeam2->ebeamLTUAngX();
+		LTUAngY = ebeam2->ebeamLTUAngY();
+		PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
+		if (verbose) {
+			cout << "* fEbeamCharge2=" << charge << "\n"
+					<< "* fEbeamL3Energy2=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
+			}
+		}
+
+		// Ebeam v3
+		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
+		if (ebeam3.get()) {
+		charge = ebeam3->ebeamCharge();
+		L3Energy = ebeam3->ebeamL3Energy();
+		LTUPosX = ebeam3->ebeamLTUPosX();
+		LTUPosY = ebeam3->ebeamLTUPosY();
+		LTUAngX = ebeam3->ebeamLTUAngX();
+		LTUAngY = ebeam3->ebeamLTUAngY();
+		PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
+		if (verbose) {
+			cout << "* fEbeamCharge3=" << charge << "\n"
+					<< "* fEbeamL3Energy3=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX3=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY3=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX3=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY3=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
+			}
+		}
+
+		// Calculate photon energy and wavelength
+		double photonEnergyeV=0;
+		double wavelengthA=0;
+		double peakCurrent = 0;
+		double DL2energyGeV = 0;
+		if (ebeam0.get()) {
+			cout << "***** WARNING *****" << endl;
+			cout << "EBeamV0 does not record peak current" << endl;
+			cout << "Setting peak current to 0" << endl;
+			peakCurrent = 0;
+			DL2energyGeV = 0.001*ebeam0->ebeamL3Energy();
+		} else if (ebeam1.get()) {
+			// Get the present peak current in Amps
+			// Get present beam energy [GeV]
+			peakCurrent = ebeam1->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
+		} else if (ebeam2.get()) {
+			peakCurrent = ebeam2->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam2->ebeamL3Energy();
+		} else if (ebeam3.get()) {
+			peakCurrent = ebeam3->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
+		}
+		
     
   // get wavelengthA
-  double photonEnergyeV;
-  double wavelengthA;
   /* Calculate the resonant photon energy (ie: photon wavelength) */
-                // Get the present peak current in Amps
-                double peakCurrent = ebeam1->ebeamPkCurrBC2();
-                // Get present beam energy [GeV]
-                double DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
                 // wakeloss prior to undulators
                 double LTUwakeLoss = 0.0016293*peakCurrent;
                 // Spontaneous radiation loss per segment
