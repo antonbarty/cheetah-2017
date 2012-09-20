@@ -90,13 +90,13 @@ Look at: examples/build-psana
 
 Which does the following: 
 >------------------------------------------------------------------------<
-cd analysis-rel
+cd ~/cheetah/source/lcls-psana
 . /reg/g/psdm/bin/sit_setup.sh
 export LIBPATH=/reg/neh/home/rkirian/local/lib
 scons
 >------------------------------------------------------------------------<
 
-In case of errors, look at analysis-rel/README
+In case of errors, look at ~/cheetah/source/lcls-psana/README
 
 Common errors are:
 - Path to libcheetah not set
