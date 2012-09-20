@@ -18,6 +18,15 @@ There are a couple of steps to follow when starting from scratch:
 
 Some knowledge of your computing architecture is assumed.
 
+------------------------------------------------------------------------
+For people in a hurry: Compiling pdslib, libcheetah and psana
+------------------------------------------------------------------------
+
+Look at examples/build-all
+
+Which builds everything from steps 0 to 2. For more information, read on.
+For running cheetah, go to step 3.
+
 
 ------------------------------------------------------------------------
 0. Compiling the SLAC data analysis libraries
