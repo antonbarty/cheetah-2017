@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# you should only need to modify the following four lines
+CHEETAHDIR=$HOME/cheetah	# Your cheetah directory
+export INSTALLDIR=$HOME/local	# Your local installation directory
+export HDF5DIR=$HOME/local
+export LIBPATH=$HOME/local/lib
+
+########################
+# PDSLIB
+########################
+
+# Make LCLS pds libraries
+cd $CHEETAHDIR/source/lcls/myana/release/pdsdata
+make x86_64-linux
+
+########################
+# LIBCHEETAH
+########################
+
+# 
+export LD_LIBRARY_PATH="$INSTALLDIR/lib:$HDF5DIR/lib"
+export LD_LIBRARY_PATH="$CHEETAHDIR/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux:$LD_LIBRARY_PATH"
+export LD_RUN_PATH=$LD_LIBRARY_PATH
+
+# build libcheetah
+cd $CHEETAHDIR/source
+make clean
+make libcheetah
+
+# Now "install" the libcheetah library...
+mkdir -p $INSTALLDIR
+cp libcheetah.so.* $INSTALLDIR/lib
+# I'm mystified by the naming conventions for shared libraries.. but this seems to work... for now
+latestlib=$(find $INSTALLDIR/lib -name libcheetah.so.* | tail -n 1)
+rm $INSTALLDIR/lib/libcheetah.so
+rm $INSTALLDIR/lib/libcheetah.so.1
+ln -s $latestlib $INSTALLDIR/lib/libcheetah.so
+ln -s $latestlib $INSTALLDIR/lib/libcheetah.so.1
+
+# if you want to install scripts
+cd $CHEETAHDIR/scripts
+cp hitfinder quickview framesorter $INSTALLDIR/scripts
+
+########################
+# PSANA
+########################
+
+cd $CHEETAHDIR/source/lcls-psana
+
+. /reg/g/psdm/bin/sit_setup.sh
+scons -c
+scons
+
