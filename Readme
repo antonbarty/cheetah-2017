@@ -20,7 +20,10 @@ Some knowledge of your computing architecture is assumed.
 ------------------------------------------------------------------------
 For people in a hurry: Compiling pdslib, libcheetah and psana
 ------------------------------------------------------------------------
+In your startup script .profile or .bashrc add the following line: 
+. /reg/g/psdm/bin/sit_setup.sh
 
+Then
 Look at examples/build-all
 
 Which builds everything from steps 0 to 2. For more information, read on.
