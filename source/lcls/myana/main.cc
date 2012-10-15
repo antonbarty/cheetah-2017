@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <list>
 #include <iterator>
+#include <memory>
 #include <poll.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #include "pdsdata/xtc/TypeId.hh"
 #include "pdsdata/xtc/Src.hh"

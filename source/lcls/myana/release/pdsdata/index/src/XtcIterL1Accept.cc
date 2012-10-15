@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "pdsdata/xtc/DetInfo.hh"
 #include "pdsdata/xtc/ProcInfo.hh"
 #include "pdsdata/xtc/BldInfo.hh"
