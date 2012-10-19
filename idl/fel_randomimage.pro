@@ -579,6 +579,11 @@ pro fel_randomimage, pixmap=pixmap
 	xview = min([screensize[0],s[0]])
 	yview = min([screensize[1],s[1]])
 
+	;; Create inverse-BW colour table (X-ray film style)
+	loadct, 0, rgb_table=bw, /silent
+	invbw = reverse(bw, 1)
+	modifyct, 41, 'Inverse B-W', invbw[*,0], invbw[*,1], invbw[*,2]
+
 	;; Load colour table names
 	loadct, 0, /silent
 	loadct, get_names=table_names
@@ -708,6 +713,8 @@ pro fel_randomimage, pixmap=pixmap
  	;;
  	;;	Set up window
  	;;
+ 		device, retain=3, decomposed=0
+ 	
  		wset, slide_window
 	    tvscl, image
 		WIDGET_CONTROL, scroll, SET_DRAW_VIEW=[(s[0]-xview)/2, (s[0]-yview)/2]

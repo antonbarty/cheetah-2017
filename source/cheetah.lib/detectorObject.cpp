@@ -556,10 +556,10 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     float   kx,ky,kz,kr;
     float   res,minres,maxres;
 
-	minres = 0;
-	maxres = 9999999999999999;
+	minres = 1e9;
+	maxres = -1e9;
 
-    printf("MESSAGE: Recalculating K-space coordinates\n");
+    printf("Recalculating K-space coordinates\n");
 
     for ( i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
@@ -579,8 +579,8 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         pix_kr[i] = kr;
         pix_res[i] = res;
         
-		if ( res > minres ) minres = res;
-		if ( res < maxres ) maxres = res;
+		if ( res < minres ) minres = res;
+		if ( res > maxres ) maxres = res;
         
         // Check whether resolution limits still make sense.
         if ( global->hitfinderLimitRes == 1 ) {
@@ -593,7 +593,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         }
     }
 
-	printf("MESSAGE: Current resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
+	printf("\tCurrent resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
 
 }
 
