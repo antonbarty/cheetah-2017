@@ -902,7 +902,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, npeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
+	fprintf(cleanedfp, "# Filename, nPeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
 	pthread_mutex_unlock(&framefp_mutex);
 
 	pthread_mutex_lock(&peaksfp_mutex);
