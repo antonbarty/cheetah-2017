@@ -1,0 +1,97 @@
+#
+# psana configuration file which instantiates all Dump* modules from 
+# psana_examples package
+#
+
+[psana]
+modules = \
+        PrintSeparator \
+        PrintEventId \
+        psana_examples.DumpAcqTdc \
+        psana_examples.DumpAcqiris \
+        psana_examples.DumpBld \
+        psana_examples.DumpCamera \
+        psana_examples.DumpControl \
+        psana_examples.DumpCsPad \
+        psana_examples.DumpCsPad2x2 \
+        psana_examples.DumpEncoder \
+#        psana_examples.DumpEpics \
+        psana_examples.DumpEvr \
+        psana_examples.DumpFccd \
+        psana_examples.DumpFli \
+        psana_examples.DumpIpimb \
+        psana_examples.DumpLusi \
+        psana_examples.DumpOpal1k \
+        psana_examples.DumpPnccd \
+        psana_examples.DumpPrinceton \
+        psana_examples.DumpPulnix \
+        psana_examples.DumpQuartz \
+        psana_examples.DumpTimepix
+
+[psana.PrintSeparator]
+separator = =
+repeat = 120
+
+[psana_examples.DumpAcqTdc]
+source = *:AcqTDC
+
+[psana_examples.DumpAcqiris]
+source = :Acqiris
+
+[psana_examples.DumpBld]
+eBeamSource = BldInfo(EBeam)
+phaseCavSource = BldInfo(PhaseCavity)
+feeSource = BldInfo(FEEGasDetEnergy)
+feeSource = BldInfo(NH2-SB1-IPM-01)
+
+[psana_examples.DumpCamera]
+source = :Opal1000
+
+[psana_examples.DumpControl]
+source = ProcInfo()
+
+[psana_examples.DumpCsPad]
+source = :Cspad
+
+[psana_examples.DumpCsPad2x2]
+source = :Cspad2x2
+
+[psana_examples.DumpEncoder]
+source = :Encoder
+
+[psana_examples.DumpEpics]
+# no parameters defined yet
+
+[psana_examples.DumpEvr]
+source = :Evr
+
+[psana_examples.DumpFccd]
+source = :Fccd
+
+[psana_examples.DumpFli]
+source = :Fli
+
+[psana_examples.DumpIpimb]
+source = :Ipimb
+
+[psana_examples.DumpLusi]
+ipimbSource = :Ipimb
+tmSource = :Tm6740
+
+[psana_examples.DumpOpal1k]
+source = :Opal1000
+
+[psana_examples.DumpPnccd]
+source = :pnCCD
+
+[psana_examples.DumpPrinceton]
+source = :Princeton
+
+[psana_examples.DumpPulnix]
+source = :Tm6740
+
+[psana_examples.DumpQuartz]
+source = :Quartz4A150
+
+[psana_examples.DumpTimepix]
+source = :Timepix

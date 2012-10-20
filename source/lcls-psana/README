@@ -59,7 +59,7 @@ To run XTC proof reader:
 sit_setup
 scons
 Open psana.cfg (nano psana.cfg)
-uncomment modules = chuck_ana_pkg.chuck_ana_mod
+uncomment modules = xtcProofReaderPkg.xtcProofReader_mod
 Run myPsana (./myPsana)
 
 To run psana cheetah:

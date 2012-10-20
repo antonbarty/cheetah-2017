@@ -1,0 +1,75 @@
+[pyana]
+files = /reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s02-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s01-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s00-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s00-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s04-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s03-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s05-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s05-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s03-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s01-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s04-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s02-c00.xtc
+modules = XtcExplorer.pyana_epics XtcExplorer.pyana_bld XtcExplorer.pyana_ipimb XtcExplorer.pyana_image XtcExplorer.pyana_plotter
+
+[psana]
+files = /reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s02-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s01-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s00-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s00-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s04-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s03-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s05-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s05-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s03-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s01-c01.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s04-c00.xtc \
+	/reg/d/psdm/CXI/cxii0212/xtc/e165-r0010-s02-c00.xtc
+modules = py:XtcExplorer.pyana_epics py:XtcExplorer.pyana_bld py:XtcExplorer.pyana_ipimb py:XtcExplorer.pyana_image py:XtcExplorer.pyana_plotter
+
+[PSXtcInput.XtcInputModule]
+dgSizeMB = 33
+
+[XtcExplorer.pyana_epics]
+accumulate_n = 0
+fignum = 100
+plot_every_n = 10
+pv_names = CXI:SC2:MZM:09:ENCPOSITIONGET CXI:SC2:MZM:02:ENCPOSITIONGET CXI:SC2:MZM:07:ENCPOSITIONGET
+
+[XtcExplorer.pyana_bld]
+accumulate_n = 0
+do_ebeam = True
+do_gasdetector = True
+fignum = 200
+plot_every_n = 10
+
+[XtcExplorer.pyana_ipimb]
+accumulate_n = 0
+fignum = 300
+plot_every_n = 10
+quantities = fex:channels fex:sum
+sources = CxiDg1-0|Ipimb-0 CxiDg2-0|Ipimb-0 CxiDg2-0|Ipimb-1 CxiDg4-0|Ipimb-0 CxiDsu-0|Ipimb-0 CxiSc1-0|Ipimb-0
+
+[XtcExplorer.pyana_image]
+#algorithms = rotate shift
+#threshold = lower=0 upper=1200 roi=(x1:x2,y1:y2) type=maximum
+accumulate_n = 0
+calib_path = /reg/d/psdm/CXI/cxii0212/calib/CsPad::CalibV1/CxiDs1.0:Cspad.0
+cmmode_mode = asic
+cmmode_thr = 30
+fignum = 400
+inputdark = 
+max_save = 0
+# ... max event images to save
+outputfile = 
+plot_every_n = 10
+quantities = image 
+# ... average dark maximum
+small_tilt = False
+sources = CxiDg1-0|TM6740-0 CxiDg2-0|TM6740-0 CxiDs1-0|Cspad-0 CxiEndstation-0|Opal1000-1 CxiEndstation-0|Opal2000-3
+
+[XtcExplorer.pyana_plotter]
+display_mode = SlideShow
+ipython = 0
+

@@ -1,0 +1,54 @@
+8
+
+dir
+4033
+https://pswww.slac.stanford.edu/svn/psdmrepo/psana_examples/trunk/doc
+https://pswww.slac.stanford.edu/svn/psdmrepo
+
+
+
+2012-07-06T20:34:07.437402Z
+4032
+salnikov@SLAC.STANFORD.EDU
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b967ad99-d558-0410-b138-e0f6c56caec7
+
+ChangeLog
+file
+
+
+
+
+2012-07-06T22:38:44.000000Z
+158ae783ff04f785494d2f9175408388
+2012-07-06T20:34:07.437402Z
+4032
+salnikov@SLAC.STANFORD.EDU
+has-props
+
+README
+file
+
+
+
+
+2012-07-06T22:38:44.000000Z
+1beac47aac0bd3feaaa458d6c8d024d0
+2010-09-28T23:52:25.415157Z
+1211
+salnikov
+has-props
+
