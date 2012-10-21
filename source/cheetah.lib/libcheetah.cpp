@@ -20,9 +20,6 @@
 
 #include "cheetah.h"
 
-#include <iostream>
-using namespace std;
-
 /*
  *  libCheetah initialisation function
  */
@@ -362,7 +359,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         
 		// Create a new worker thread for this data frame
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
-		cout << "returnStatus: " << returnStatus << endl;
+
 		if (returnStatus == 0) { // creation successful
 	        // Increment threadpool counter
     	    pthread_mutex_lock(&global->nActiveThreads_mutex);
