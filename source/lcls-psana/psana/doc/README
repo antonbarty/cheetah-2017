@@ -1,0 +1,14 @@
+#--------------------------------------------------------------------------
+# File and Version Information:
+#  $Id: README 1209 2010-09-28 23:49:13Z salnikov $
+#
+# Description:
+#  README file for package psana
+#------------------------------------------------------------------------
+
+Package author: Andrei Salnikov
+
+Brief description:
+==================
+
+psana analysis framework for LCLS

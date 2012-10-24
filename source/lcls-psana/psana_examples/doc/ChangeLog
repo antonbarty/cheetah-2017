@@ -1,0 +1,149 @@
+#--------------------------------------------------------------------------
+# File and Version Information:
+#  $Id: ChangeLog 4032 2012-07-06 20:34:07Z salnikov@SLAC.STANFORD.EDU $
+#
+# Description:
+#  ChangeLog file for package psana_examples
+#------------------------------------------------------------------------
+
+Package author: Andy Salnikov
+
+Please describe any modifications that you made to the package in the
+reverse time order.
+
+Tag: V00-02-11
+2012-07-06 Andy Salnikov
+- add new module DumpQuartz
+- change DumpPnccd to dump FullFrameV1 class
+
+Tag: V00-02-10
+2012-06-22 Andy Salnikov
+- EvrData.EventCodeV5: one member method was incorrectly named
+
+Tag: V00-02-09
+2012-06-07 Andy Salnikov
+- DumpTimepix.cpp: add comment about Timepix::DataV1 class 
+
+Tag: V00-02-08
+2012-06-03 Andy Salnikov
+- added code to dump new type CsPad::ConfigV4
+
+Tag: V00-02-07
+2012-05-11 Andy Salnikov
+- added code to dump new type Princeton::ConfigV3
+- added code to dump new type EvrData::ConfigV6
+
+Tag: V00-02-06
+2012-03-27 Andy Salnikov
+- added code to dump new type BldDataEBeamV3
+
+Tag: V00-02-05
+2012-03-14 Andy Salnikov
+- added code to dump new type TimePix::ConfigV2
+
+Tag: V00-02-04
+2012-02-18 Andy Salnikov
+- added code to dump new type TimePix::DataV2
+- updated Ipimb Config code to dump diodeGain() contents
+
+Tag: V00-02-03
+2012-02-06 Andy Salnikov
+- add new module DumpCsPad2x2 which dumps all cspad2x2 classes
+- removed MiniElementV1 from DumpCsPad
+
+Tag: V00-02-02
+2012-01-20 Andy Salnikov
+- more details printed in DumpControl module
+
+Tag: V00-02-01
+2012-01-12 Andy Salnikov
+- adding DumpTimepix module
+
+Tag: V00-02-00
+2011-12-09 Andy Salnikov
+- migrating to ndarray for adrray data
+
+Tag: V00-01-05
+2011-10-04 Andy Salnikov
+- DumpCsPad now prints common_mode from new schema and some data from images
+
+Tag: V00-01-04
+2011-09-12 Andy Salnikov
+- DumpCsPad can now dump MiniElementV1 objects
+- DumpBld can now dump Bld::BldDataPimV1 objects
+
+Tag: V00-01-03
+2011-08-22 Andy Salnikov
+- modified DumpPrinceton to recognize ConfigV2 objects
+
+Tag: V00-01-02
+2011-06-29 Andy Salnikov
+- update EBeamHist module to use new PSHist histogramming
+
+Tag: V00-01-01
+2011-06-16 Andy Salnikov
+- upgrade to pdsdata V02-11-05
+
+Tag: V00-01-00
+2011-05-21 Andy Salnikov
+- Module interface changed, all subclasses need update; 
+  now all methods have Event argument.
+
+Tag: V00-00-13
+2011-05-07 Andy Salnikov
+- fix parameter name in DumpBld
+
+Tag: V00-00-12
+2011-04-26 Andy Salnikov
+- extended DumpAcqiris module to make waveforms() usage example
+
+Tag: V00-00-11
+2011-04-14 Andy Salnikov
+- new module EBeamHist to test histogramming
+
+Tag: V00-00-10
+2011-04-05 Andy Salnikov
+- insert missing newline in DumpEpics output
+
+Tag: V00-00-09
+2011-04-01 Andy Salnikov
+- make things more uniform
+- use module name for logger name, remove explicit logger name
+- added data/DumpAll.cfg config file which uses all modules from this
+  package
+
+Tag: V00-00-08
+2011-04-01 Andy Salnikov
+- added DumpEncoder, DumpEvr, DumpFccd, DumpIpimb, DumpLusi, DumpOpal1k,
+  DumpPnccd, DumpPrinceton, DumpPulnix modules
+
+Tag: V00-00-07
+2011-03-31 Andy Salnikov
+- added DumpCamera, DumpControl, DumpCsPad modules
+
+Tag: V00-00-06
+2011-03-30 Andy Salnikov
+- adding DumpAcqTdc module
+- removed data/Module1.cfg
+
+Tag: V00-00-05
+2011-03-28 Andy Salnikov
+- added DumpEpics module
+
+Tag: V00-00-04
+2011-03-23 Andy Salnikov
+- modified examples to work with Source class instead of Pds::Src
+
+Tag: V00-00-03
+2011-03-21 Andy Salnikov
+- removed Module1 module
+- added DumpAcqiris and DumpBld examples
+
+Tag: V00-00-02
+2011-01-26 Andy Salnikov
+- fixed event() arguments
+
+Tag: V00-00-01
+2010-09-28 Andy Salnikov
+- first commit, just one non-functional example module which I use
+  for development

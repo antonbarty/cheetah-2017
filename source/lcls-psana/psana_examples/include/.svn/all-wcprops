@@ -1,0 +1,131 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/psdmrepo/!svn/ver/4032/psana_examples/trunk/include
+END
+DumpEpics.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpEpics.h
+END
+DumpFli.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/psdmrepo/!svn/ver/3359/psana_examples/trunk/include/DumpFli.h
+END
+EBeamHist.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/psdmrepo/!svn/ver/2066/psana_examples/trunk/include/EBeamHist.h
+END
+DumpLusi.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpLusi.h
+END
+DumpEncoder.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpEncoder.h
+END
+DumpPulnix.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpPulnix.h
+END
+DumpTimepix.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/psdmrepo/!svn/ver/2791/psana_examples/trunk/include/DumpTimepix.h
+END
+DumpControl.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpControl.h
+END
+DumpCsPad2x2.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/psdmrepo/!svn/ver/2878/psana_examples/trunk/include/DumpCsPad2x2.h
+END
+DumpQuartz.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/psdmrepo/!svn/ver/4032/psana_examples/trunk/include/DumpQuartz.h
+END
+DumpPnccd.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpPnccd.h
+END
+DumpOpal1k.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpOpal1k.h
+END
+DumpCamera.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpCamera.h
+END
+DumpCsPad.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/psdmrepo/!svn/ver/2878/psana_examples/trunk/include/DumpCsPad.h
+END
+DumpAcqiris.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpAcqiris.h
+END
+DumpEvr.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpEvr.h
+END
+DumpFccd.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpFccd.h
+END
+DumpAcqTdc.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpAcqTdc.h
+END
+DumpIpimb.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpIpimb.h
+END
+DumpBld.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/psdmrepo/!svn/ver/3154/psana_examples/trunk/include/DumpBld.h
+END
+DumpPrinceton.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/psdmrepo/!svn/ver/1919/psana_examples/trunk/include/DumpPrinceton.h
+END
