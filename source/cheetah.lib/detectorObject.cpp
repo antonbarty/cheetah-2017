@@ -556,8 +556,8 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     float   kx,ky,kz,kr;
     float   res,minres,maxres;
 
-	minres = 1e9;
-	maxres = -1e9;
+	minres = 99999999;
+	maxres = -99999999;
 
     printf("Recalculating K-space coordinates\n");
 
@@ -571,7 +571,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         ky = y/r/wavelengthA;
         kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
         kr = sqrt(kx*kx + ky*ky + kz*kz);
-        res = 1/kr;
+        res = 1.0/kr;
         
         pix_kx[i] = kx;
         pix_ky[i] = ky;

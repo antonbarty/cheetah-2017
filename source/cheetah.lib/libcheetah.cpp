@@ -330,7 +330,11 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     
     /*
      *  Spawn worker in single-threaded mode
-	 *	Note: worker does not clean up its own eventData structure when done: 
+     *
+     *  Calling worker() as a function rather than a thread means this code waits until worker() is done before proceeding,
+     *  so every event is called in sequence, and cheetah runs in a single thread.
+     *
+	 *	In non-threaded mode, the worker does not clean up its own eventData structure when done:
      *      eventData remains available after the worker exits and must be explicitly freed by the user
      */
     if(eventData->useThreads == 0) {
@@ -358,15 +362,19 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
         
 		// Create a new worker thread for this data frame
+        eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
 		if (returnStatus == 0) { // creation successful
 	        // Increment threadpool counter
     	    pthread_mutex_lock(&global->nActiveThreads_mutex);
         	global->nActiveThreads += 1;
-        	eventData->threadNum = ++global->threadCounter;
+        	global->threadCounter += 1;
         	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
+        else {
+            printf("Error: thread creation failed (frame skipped)\n");
+        }
 
         pthread_attr_destroy(&threadAttribute);
     }
