@@ -8,6 +8,8 @@ void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
 void applyBadPixelMask(cEventData*, cGlobal*);
 void cspadModuleSubtract(cEventData*, cGlobal*);
+void cspadModuleSubtract2(cEventData*, cGlobal*);
+void cspadModuleSubtract(cEventData*, cGlobal*, int);
 void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);

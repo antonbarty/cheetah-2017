@@ -258,6 +258,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotpixMemory = atoi(value);
 	}
+	else if (!strcmp(tag, "cmmodule")) {
+		cmModule = atoi(value);
+	}
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);
 	}
@@ -293,9 +296,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "subtractunbondedpixels")) {
 		cspadSubtractUnbondedPixels = atoi(value);
-	}
-	else if (!strcmp(tag, "cmmodule")) {
-		cmModule = atoi(value);
 	}
 	else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
 	  //usePnccdOffsetCorrection = atoi(value);

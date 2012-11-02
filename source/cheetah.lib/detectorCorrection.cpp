@@ -101,9 +101,17 @@ void applyBadPixelMask(float *data, int16_t *badpixelmask, long pix_nn) {
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
 void cspadModuleSubtract(cEventData *eventData, cGlobal *global){
+    cspadModuleSubtract(eventData, global, 1);
+}
+
+void cspadModuleSubtract2(cEventData *eventData, cGlobal *global){
+    cspadModuleSubtract(eventData, global, 2);
+}
+
+void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cmModule) { 
+        if(global->detector[detID].cmModule == flag) {
 		
 			// Dereference datector arrays
 			float		threshold = global->detector[detID].cmFloor;

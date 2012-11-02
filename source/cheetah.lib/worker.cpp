@@ -79,6 +79,7 @@ void *worker(void *threadarg) {
 
 	/*
 	 *	Subtract common mode offsets (electronic offsets)
+	 *	cmModule = 1
 	 */
 	cspadModuleSubtract(eventData, global);
 	cspadSubtractUnbondedPixels(eventData, global);
@@ -130,6 +131,13 @@ void *worker(void *threadarg) {
 	subtractLocalBackground(eventData, global);
 			
 
+	/*
+	 *	Subtract residual common mode offsets (cmModule=2)
+	 */
+	cspadModuleSubtract2(eventData, global);
+
+	
+	
 	/*
 	 *	Identify and remove hot pixels
 	 */
