@@ -11,6 +11,8 @@
 
 
 
+#ifndef CHEETAHEVENT_H
+#define CHEETAHEVENT_H
 
 /*
  *	Structure used for passing information to worker threads
@@ -23,6 +25,7 @@ public:
 	int			busy;
 	long		threadNum;
     long        frameNumber;
+	long frameNum;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
@@ -114,5 +117,5 @@ public:
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
 
-
+#endif
 

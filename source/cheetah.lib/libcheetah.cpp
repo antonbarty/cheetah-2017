@@ -7,19 +7,20 @@
 //
 
 #include <stdio.h>
-#include <string.h>
 #include <sys/time.h>
 #include <hdf5.h>
 #include <math.h>
 #include <pthread.h>
 #include <limits>
 #include <stdint.h>
+#include <string.h>
 #include <stdlib.h>
 #include <fenv.h>
 #include <unistd.h>
 
 #include "cheetah.h"
-
+#include "staticPara.h"
+#include "createHid_t.h"
 
 /*
  *  libCheetah initialisation function
@@ -307,6 +308,7 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
 /*
  *  libCheetah event processing function (multithreaded)
  */
+
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
     
@@ -314,8 +316,38 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *	Remember to update global variables 
 	 */
     cheetahUpdateGlobal(global, eventData);
+    if (strcmp (global->current,"")==0){
+        stpcpy(global->current, global->currentCXIFileName);
+        printf("current is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
+        //create(global, eventData->pPara );
+        create(global);
+        printf("para pro %d dims[0] %d\n\n\n",CxiFileHandlar::Instance()->para.pro, CxiFileHandlar::Instance()->para.dims3[0]);
+        ///todo no wait
+    }
+    if(strcmp (global->current,global->currentCXIFileName)!=0 ){
+        printf("current1 is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
+        while(global->nActiveThreads > 0) {
+            printf("Waiting for %li worker threads to terminate for new ones\n", global->nActiveThreads);
+            usleep(100000);
 
-  
+        }
+	 usleep(100000);
+        if(global->nActiveThreads == 0)
+        {
+            printf("global->nActiveThreads == 0 \n");
+        }
+        else
+        {
+            printf("ERROR!!!global->nActiveThreads != 0 \n");
+        }
+        close();
+        stpcpy(global->current, global->currentCXIFileName);
+        printf("current is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
+        //create(global, eventData->pPara );
+        create(global);
+        printf("para pro %d dims[0] %d\n\n\n",CxiFileHandlar::Instance()->para.pro, CxiFileHandlar::Instance()->para.dims3[0]);
+    }
+
     
     /*
      *  I/O speed test
@@ -350,7 +382,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         int				returnStatus;
         
         // Wait until we have a spare thread in the thread pool
-        while(global->nActiveThreads >= global->nThreads) {
+        while(global->nActiveThreads >= global->nThreads || global->nActiveThreads >= global->getMaxThreads()) {
             usleep(1000);
         }
         
@@ -363,9 +395,10 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         global->nActiveThreads += 1;
         eventData->threadNum = ++global->threadCounter;
         pthread_mutex_unlock(&global->nActiveThreads_mutex);
-        
+        global->isFinished[eventData->frameNumber % global->nActiveThreads] = false;
         // Create a new worker thread for this data frame
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
+	 global->threadID[global->frameNumber % global->nThreads ] = thread;
         pthread_attr_destroy(&threadAttribute);
     }
 	

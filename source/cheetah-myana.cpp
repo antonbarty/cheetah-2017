@@ -30,10 +30,7 @@
 #include <unistd.h>
 
 
-#include "cheetah.h"
 
-
-static cGlobal		cheetahGlobal;
 static long			frameNumber;
 
 
@@ -248,6 +245,7 @@ void beginrun()
 	 *	Pass new run information to Cheetah
 	 */
 	cheetahGlobal.runNumber = getRunNumber();
+    setCxiname(cheetahGlobal.currentCXIFileName);
     cheetahNewRun(&cheetahGlobal);
 }
 

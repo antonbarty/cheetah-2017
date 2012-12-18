@@ -17,8 +17,7 @@
 #include "cheetah.h"
 #include "cheetahmodules.h"
 #include "median.h"
-
-
+#include "saveCxi.h"
 
 /*
  *	Worker thread function for processing each cspad data frame
@@ -30,6 +29,8 @@ void *worker(void *threadarg) {
 	 */
 	cGlobal			*global;
 	cEventData		*eventData;
+    //Cxi_para *para;
+
 	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
 	int	hit = 0;
@@ -243,20 +244,24 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	If this is a hit, write out to our favourite HDF5 format
+     *	If this is a hit, write out to #our favourite HDF5 format
 	 */
 	save:
 	if(hit && global->savehits) {
-		writeHDF5(eventData, global);
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+        //writeHDF5(eventData, global);
+        CXI* cc = new CXI;
+        cc->writeCxi(eventData, global);
+        //printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
 
 	else if((global->hdf5dump > 0) && ((eventData->threadNum % global->hdf5dump) == 0)) {        
-		writeHDF5(eventData, global);
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+		//writeHDF5(eventData, global);
+        CXI* cc = new CXI;
+        cc->writeCxi(eventData, global);
+        //printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
 	else
-		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
+        ///printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
 	//puts("1");
 	/*
@@ -264,6 +269,7 @@ void *worker(void *threadarg) {
 	 */
 	if(hit && global->savePeakInfo) {
 		writePeakFile(eventData, global);
+		//writeCxi(eventData, global, para);
 	}
 	//puts("2");
 
@@ -296,11 +302,16 @@ void *worker(void *threadarg) {
 	// Free memory only if running multi-threaded
     if(eventData->useThreads == 1) {
         cheetahDestroyEvent(eventData);
+        //global->isFinished[eventData->frameNumber % global->nActiveThreads] = true;
         pthread_exit(NULL);
+ 
     }
     else {
       //puts("6");
+        //global->isFinished[eventData->frameNumber % global->nActiveThreads] = true;
+	//pthread_exit(NULL);
         return(NULL);
+
     }
 }
 

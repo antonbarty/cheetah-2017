@@ -9,6 +9,7 @@
 //#include <TFile.h>
 //#include <TH1.h>
 
+#include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -105,6 +106,7 @@ using std::queue;
 using std::auto_ptr;
 using namespace Pds;
 using namespace Ana;
+
 
 static string GenerateCtrlPvHashKey( const char* pvName, int arrayIndex);
 
@@ -637,6 +639,13 @@ static int _runnumber;
 int getRunNumber()
 {
   return _runnumber;
+}
+
+static string _cxifile;
+void setCxiname(char cur[1024]){
+    strncpy(cur ,_cxifile.c_str(),_cxifile.length()+1);
+    cur[_cxifile.length() +1 ] = '\0';
+    std::cout<<"filename length: "<< _cxifile.length()<< std::endl;
 }
 
 /*
@@ -2523,6 +2532,20 @@ void makeoutfilename(char* filename, char* outfilename)
   strncpy(outfilename+end-start+1,".root",6);
 }
 
+string makeCurrentXciFilename(string filename)
+{
+      size_t found;
+      size_t pos;
+      std::cout << "Splitting: " << filename << std::endl;
+      found=filename.find_last_of("/");
+      std::cout << " file: " << filename.substr(found+1) << std::endl;
+      pos = filename.find_last_of(".xtc");
+
+      string sub =filename.substr(found+1)  + ".cxi";
+      std::cout << " substring: " << sub << std::endl;
+      return sub;
+}
+
 static void dump(Dgram* dg, unsigned int uCurCalib, int iSlice, int64_t i64Offset)
 {
   char buff[128];
@@ -2831,8 +2854,8 @@ void anarun(XtcRun& run, unsigned &maxevt, unsigned &skip, const char* reorder_f
   endrun();
   printf("Processed %d events, %d damaged, with damage mask 0x%x.\n", 
     numProcessedEvents, ndamage, damagemask);
-
-  delete _estore;
+  if(_estore != NULL)
+  	delete _estore;
 }
 
 list<string> calib_files;
@@ -3224,12 +3247,15 @@ int main(int argc, char *argv[])
 
   char outfile[200];
   char filename[200];  
+
   if (xtcname)
     makeoutfilename(xtcname, outfile);
   else if (filelist)
     makeoutfilename(filelist, outfile);
   else if (runPrefix)
     makeoutfilename(runPrefix, outfile);
+
+
 
 //  printf("Opening ROOT output file %s\n", outfile);
 //  TFile *out;
@@ -3269,7 +3295,7 @@ int main(int argc, char *argv[])
   
   if (filelist)
   {
-    printf("Opening filelist %s\n", filelist);
+
     FILE *flist = fopen(filelist, "r");
     if (flist)
     {
@@ -3286,31 +3312,65 @@ int main(int argc, char *argv[])
         all_files.push_back(filename);
       }
       all_files.sort();
-
       XtcRun* run_ptr = new XtcRun;
       XtcRun& run = *run_ptr;
-      std::list<std::string>::const_iterator it=all_files.begin();
+      std::list<std::string>::iterator it=all_files.begin();
       run.reset(*it);
       int nfiles=1;
-      while(++it!=all_files.end()) {
+     
+      /*while(++it!=all_files.end()) {
         if (!run.add_file(*it)) {
-          printf("Analyzing files %s [%d]\n", 
+          printf("Analyzing files %s [%d] \n",
                  run.base(),nfiles);
+          std::list<std::string>::iterator cur = it;
+          cur --;
+          std::cout<<  *cur <<std::endl;
+          _cxifile = makeCurrentXciFilename(*cur);
+          std::cout<<std::endl<<"Current cxifile: "<<_cxifile<<std::endl<<std::endl<<std::endl<<std::endl<<std::endl;
+
           anarun(run, maxevt, skip, reorder_file, jump, calib, lEventRange, sTime, uFiducialSearch, iFidFromEvent, iDebugLevel);
           run.reset(*it);
           nfiles=0;
+
         }
         nfiles++;
       }
-      printf("Analyzing files %s [%d]\n", 
+      printf("Analyzing files %s [%d]\n",
              run.base(),nfiles);
+      std::list<std::string>::iterator cur = it;
+      cur --;
+      std::cout<<  *cur <<std::endl;
+      _cxifile = makeCurrentXciFilename(*cur);
+      std::cout<<"Current1 cxifil: "<<_cxifile<<std::endl;
       anarun(run, maxevt, skip, reorder_file, jump, calib, lEventRange, sTime, uFiducialSearch, iFidFromEvent, iDebugLevel);
-      //      delete run_ptr;
+            delete run_ptr;
+*/
+
+for (it = all_files.begin(); it != all_files.end(); it++){
+          std::cout<< *it <<std::endl;
+	    std::cout<<all_files.size()<<std::endl;
+}
+
+	for (it = all_files.begin(); it != all_files.end(); it++){
+	 printf("Analyzing files %s [%d] \n",
+                 run.base(),nfiles);
+    
+          std::cout<< *it <<std::endl;
+          _cxifile = makeCurrentXciFilename(*it);
+          std::cout<<std::endl<<"Current cxifile:"<< _cxifile<<std::endl<<std::endl<<std::endl<<std::endl<<std::endl;
+          anarun(run, maxevt, skip, reorder_file, jump, calib, lEventRange, sTime, uFiducialSearch, iFidFromEvent, iDebugLevel);
+	printf("end of anarun!!\n\n");
+	if (it != all_files.end() --)
+          run.reset(*it);	  	
+	}
+printf("delete run_ptr\n\n");
+	delete run_ptr;
+printf("delete run_ptr end\n\n");
     }
     else
       printf("Unable to open list of files %s\n", filelist);
   }
-
+ printf("ALL file saved \n\n");
   if (runPrefix)
   {
     string strFnPrefix(runPrefix);  

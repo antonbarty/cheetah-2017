@@ -20,11 +20,10 @@
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
 #include "median.h"
-
-
-
-
-
+#include "GetSnabshot.h"
+#include "staticPara.h"
+#define PRO CxiFileHandlar::Instance()->para.pro
+//#define PRO 1
 void nameEvent(cEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
@@ -91,12 +90,18 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	// Assembled image
 	if(global->saveAssembled) {
+		int16_t * shot;
+		int width = CxiFileHandlar::Instance()->para.snabdims3[2];
 		char fieldID[1023];
 		DETECTOR_LOOP {
-			size[0] = global->detector[detID].image_nx;	// size[0] = height
-			size[1] = global->detector[detID].image_nx;	// size[1] = width
-			max_size[0] = global->detector[detID].image_nx;
-			max_size[1] = global->detector[detID].image_nx;
+			//size[0] = global->detector[detID].image_nx;	// size[0] = height
+			//size[1] = global->detector[detID].image_nx;	// size[1] = width
+			//max_size[0] = global->detector[detID].image_nx;
+			//max_size[1] = global->detector[detID].image_nx;
+			size[0] = width;
+			size[1] = width;
+			max_size[0] = width;
+			max_size[1] = width;
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			sprintf(fieldID, "assembleddata%li", detID);
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -105,7 +110,11 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+			
+            shot = (int16_t *) malloc(sizeof(int16_t) * width * width);
+            getSnapshot<int16_t *>(info->detector[detID].image, CxiFileHandlar::Instance()->para.dims3[2],PRO,width,shot);
+			//hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, shot);
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", info->threadNum);
 				H5Dclose(dataspace_id);
@@ -119,11 +128,17 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	// Save raw data
 	if(global->saveRaw) {
 		char fieldID[1023];
+		//int16_t * shot;
+		int width = CxiFileHandlar::Instance()->para.dims3[2];
 		DETECTOR_LOOP {
-			size[0] = global->detector[detID].pix_ny;	// size[0] = height
-			size[1] = global->detector[detID].pix_nx;	// size[1] = width
-			max_size[0] = global->detector[detID].pix_ny;
-			max_size[1] = global->detector[detID].pix_nx;
+			size[0] = width;
+			size[1] = width;
+			max_size[0] = width;
+			max_size[1] = width;
+			//size[0] = global->detector[detID].pix_ny;	// size[0] = height
+			//size[1] = global->detector[detID].pix_nx;	// size[1] = width
+			//max_size[0] = global->detector[detID].pix_ny;
+			//max_size[1] = global->detector[detID].pix_nx;
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			sprintf(fieldID, "rawdata%li", detID);
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -132,7 +147,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].corrected_data_int16);
+		//	shot = (int16_t *) malloc(sizeof(int16_t) * width * width);
+            //getSnapshot<int16_t *>(info->detector[detID].corrected_data_int16, CxiFileHandlar::Instance()->para.dims3[2],PRO,width,shot);
+			//hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+		//	hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, shot);
+			//hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].corrected_data_int16);
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", info->threadNum);
 				H5Dclose(dataspace_id);
@@ -330,7 +350,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		long i;
 		char * pixelmasks = (char *) calloc(global->detector[0].pix_nn,sizeof(char));
-		for (i=0; i<global->detector[0].pix_nn; i++) {
+	       for (i=0; i<global->detector[0].pix_nn; i++) {
 			pixelmasks[i] = 0; // default: all bits are equal to 1
 			if ( global->detector[0].badpixelmask[i] == 0 )
 				pixelmasks[i] |= (1 << 0);
