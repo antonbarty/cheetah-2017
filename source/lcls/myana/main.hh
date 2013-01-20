@@ -12,13 +12,7 @@
 #include "pdsdata/cspad2x2/ConfigV1.hh"
 #include "pdsdata/phasics/ConfigV1.hh"
 
-#include "cheetah.h"
-
-
-static cGlobal		cheetahGlobal;
-
 class TH1;
-//static cGlobal		cheetahGlobal;
 
 /*
  * Time functions
@@ -27,7 +21,7 @@ int getTime( int& seconds, int& nanoSeconds );
 int getLocalTime( const char*& time );
 int getFiducials(unsigned& fiducials);
 int getRunNumber();
-void setCxiname(char*);
+string getXTCFilename();
 
 /*
  * Enum definitions
