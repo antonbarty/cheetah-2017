@@ -45,6 +45,8 @@ void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 
+// saveCXI.cpp
+void writeCXI(cEventData *info, cGlobal *global);
 
 
 // hitfinders.cpp

@@ -19,8 +19,7 @@
 #include <unistd.h>
 
 #include "cheetah.h"
-#include "staticPara.h"
-#include "createHid_t.h"
+
 
 /*
  *  libCheetah initialisation function

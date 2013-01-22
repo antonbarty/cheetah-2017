@@ -109,6 +109,6 @@ const int version = 130;
 const int initialStackSize = 10;
 }
 
-void writeCXI(cEventData *info, cGlobal *global);
+
 
 
