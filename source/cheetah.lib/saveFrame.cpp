@@ -38,6 +38,7 @@ void nameEvent(cEventData *info, cGlobal *global){
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(info->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+	sprintf(info->cxiFilename,"%s",global->currentCXIFileName);
 }
 
 
@@ -645,25 +646,4 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	
 	H5Fclose(fh);
-}
-
-
-template <class T>
-T * generateThumbnail(const T * src,const int srcWidth, const int srcHeight, const int scale)
-{
-  int dstWidth = srcWidth/scale;
-  int dstHeight = srcHeight/scale;
-  T * dst = new T[srcWidth*srcHeight];
-  for(int x = 0; x <dstWidth; x++){
-    for(int y = 0; y<dstHeight; y++){
-      double res=0;
-      for (int xx = x*scale; xx <x*scale+scale; xx++){
-	for(int yy = y*scale; yy <y*scale+scale; yy++){
-	  res += src[yy*srcWidth+xx];
-	}	
-      }
-      dst[y*dstWidth+x] = res/(scale*scale);
-    }
-  }
-  return dst;
 }

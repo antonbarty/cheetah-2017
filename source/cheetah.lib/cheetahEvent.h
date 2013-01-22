@@ -22,9 +22,9 @@ class cEventData {
 public:
 	// Reference to common global structure
 	cGlobal		*pGlobal;
-	int			busy;
+	int		busy;
 	long		threadNum;
-    long        frameNumber;
+	long            frameNumber;
 	long frameNum;
 	
 	// Detector data
@@ -70,6 +70,7 @@ public:
 	unsigned	fiducial;
 	char		timeString[1024];
 	char		eventname[1024];
+	char            cxiFilename[1024];
 	bool		beamOn;
 	unsigned	runNumber;
 

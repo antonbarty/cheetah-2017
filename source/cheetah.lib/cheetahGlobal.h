@@ -35,20 +35,13 @@ public:
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
 	char     currentCXIFileName[MAX_FILENAME_LENGTH];
-	char     current[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
 
-
-
-
-    long frameNumber;
-
-
-
+	long frameNumber;
 
 	/** @brief Detector settings that don't change from shot to shot. */
 	cPixelDetectorCommon detector[MAX_DETECTORS];
@@ -241,9 +234,7 @@ public:
 	pthread_mutex_t  powderfp_mutex;
 	pthread_mutex_t  peaksfp_mutex;
 
-    bool isFinished[MAX_THREADS];
-    //pthread_t active_threads[MAX_THREADS];
-    int getMaxThreads(){return MAX_THREADS;}
+	bool isFinished[MAX_THREADS];
 
 	/*
 	 *	Common variables

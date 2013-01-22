@@ -382,7 +382,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         int				returnStatus;
         
         // Wait until we have a spare thread in the thread pool
-        while(global->nActiveThreads >= global->nThreads || global->nActiveThreads >= global->getMaxThreads()) {
+        while(global->nActiveThreads >= global->nThreads) {
             usleep(1000);
         }
         

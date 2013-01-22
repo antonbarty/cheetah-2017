@@ -30,7 +30,10 @@
 #include <unistd.h>
 
 
+#include "cheetah.h"
 
+
+static cGlobal		cheetahGlobal;
 static long			frameNumber;
 
 
@@ -58,7 +61,7 @@ using namespace Pds;
  */
 bool eventCodePresent(int EvrCode)
 {
-	int nfifo = getEvrDataNumber();
+        int nfifo = getEvrDataNumber();	
 	for(int i=0; i<nfifo; i++) {
 		unsigned eventCode, fiducial, timestamp;
 		if (getEvrData(i,eventCode,fiducial,timestamp)) 
@@ -72,9 +75,8 @@ bool eventCodePresent(int EvrCode)
 /*
  *	Beam on or off??
  */
-static bool beamOn()
-{
-	return eventCodePresent(140);
+static bool beamOn(){
+        return eventCodePresent(140);
 }
 
 /*
@@ -245,7 +247,7 @@ void beginrun()
 	 *	Pass new run information to Cheetah
 	 */
 	cheetahGlobal.runNumber = getRunNumber();
-    setCxiname(cheetahGlobal.currentCXIFileName);
+	cheetahGlobal.currentCXIFileName = getCXIfromXTC(getXTCFilename());
     cheetahNewRun(&cheetahGlobal);
 }
 
@@ -826,4 +828,19 @@ void endjob()
 	 */
     cheetahExit(&cheetahGlobal);
 	exit(1);
+}
+
+/* Change file extension from .xtc to .cxi */
+static string getCXIfromXTC(string filename)
+{
+      size_t found;
+      size_t pos;
+      std::cout << "Splitting: " << filename << std::endl;
+      found=filename.find_last_of("/");
+      std::cout << " file: " << filename.substr(found+1) << std::endl;
+      pos = filename.find_last_of(".xtc");
+
+      string sub =filename.substr(found+1)  + ".cxi";
+      std::cout << " substring: " << sub << std::endl;
+      return sub;
 }
