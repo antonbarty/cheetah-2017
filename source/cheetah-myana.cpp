@@ -120,7 +120,9 @@ void beginjob() {
     cheetahInit(&cheetahGlobal);
 
     /* catch SIGINT and handle appropriately */
-    signal(SIGINT, sig_handler);
+    if(!cheetahGlobal.oneFilePerImage){
+      signal(SIGINT, sig_handler);
+    }
 
     
 	/*

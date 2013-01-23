@@ -13,7 +13,6 @@
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
-#define MAX_THREADS 1024
 
 
 
@@ -234,7 +233,7 @@ public:
 	pthread_mutex_t  powderfp_mutex;
 	pthread_mutex_t  peaksfp_mutex;
 
-	bool isFinished[MAX_THREADS];
+	bool oneFilePerImage;
 
 	/*
 	 *	Common variables

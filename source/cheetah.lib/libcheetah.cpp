@@ -365,10 +365,9 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         global->nActiveThreads += 1;
         eventData->threadNum = ++global->threadCounter;
         pthread_mutex_unlock(&global->nActiveThreads_mutex);
-        global->isFinished[eventData->frameNumber % global->nActiveThreads] = false;
         // Create a new worker thread for this data frame
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData); 
-	 global->threadID[global->frameNumber % global->nThreads ] = thread;
+	global->threadID[global->frameNumber % global->nThreads ] = thread;
         pthread_attr_destroy(&threadAttribute);
     }
 	
