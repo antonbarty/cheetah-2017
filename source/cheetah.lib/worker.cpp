@@ -249,12 +249,12 @@ void *worker(void *threadarg) {
 	if(hit && global->savehits) {
     /* FM: Maybe we should do this an option */
 	  // writeHDF5(eventData, global);
+	  // printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
 	  writeCXI(eventData, global);
-	  printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
 	}else if((global->hdf5dump > 0) && ((eventData->threadNum % global->hdf5dump) == 0)) {        
 	  // writeHDF5(eventData, global);
-	  writeCxi(eventData, global);
-	  printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+	  // printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+	  writeCXI(eventData, global);
 	}else{
 	  printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 	}

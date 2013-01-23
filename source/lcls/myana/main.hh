@@ -12,6 +12,8 @@
 #include "pdsdata/cspad2x2/ConfigV1.hh"
 #include "pdsdata/phasics/ConfigV1.hh"
 
+#include <string>
+
 class TH1;
 
 /*
@@ -21,7 +23,7 @@ int getTime( int& seconds, int& nanoSeconds );
 int getLocalTime( const char*& time );
 int getFiducials(unsigned& fiducials);
 int getRunNumber();
-string getXTCFilename();
+std::string getXTCFilename();
 
 /*
  * Enum definitions

@@ -1,4 +1,4 @@
-#include once
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <typeinfo>
+#include <vector>
 
 
 #include "detectorObject.h"
@@ -105,8 +106,9 @@ typedef struct{
 }File;
 
 
-const int version = 130;
-const int initialStackSize = 10;
+ const int version = 130;
+ const int initialStackSize = 10;
+ const int thumbnailScale = 8;
 }
 
 

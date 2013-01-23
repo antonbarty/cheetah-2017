@@ -47,7 +47,7 @@ void writeSimpleHDF5(const char*, const void*, int, int, int);
 
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
-
+void closeCXIFiles(cGlobal * global);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);

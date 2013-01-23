@@ -21,20 +21,23 @@
 #include "cheetah.h"
 
 
+
+
 /*
  *  libCheetah initialisation function
  */
 void cheetahInit(cGlobal *global) {
     
     global->self = global;
-	//global->defaultConfiguration();
-	global->parseConfigFile(global->configFile);
-
-	global->setup();
-	global->writeInitialLog();
-	global->writeConfigurationLog();
+    //global->defaultConfiguration();
+    global->parseConfigFile(global->configFile);
+    
+    global->setup();
+    global->writeInitialLog();
+    global->writeConfigurationLog();
     printf("Cheetah clean initialisation\n");
     
+
 }
 
 /*
@@ -315,38 +318,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *	Remember to update global variables 
 	 */
     cheetahUpdateGlobal(global, eventData);
-    if (strcmp (global->current,"")==0){
-        stpcpy(global->current, global->currentCXIFileName);
-        printf("current is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
-        //create(global, eventData->pPara );
-        create(global);
-        printf("para pro %d dims[0] %d\n\n\n",CxiFileHandlar::Instance()->para.pro, CxiFileHandlar::Instance()->para.dims3[0]);
-        ///todo no wait
-    }
-    if(strcmp (global->current,global->currentCXIFileName)!=0 ){
-        printf("current1 is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
-        while(global->nActiveThreads > 0) {
-            printf("Waiting for %li worker threads to terminate for new ones\n", global->nActiveThreads);
-            usleep(100000);
-
-        }
-	 usleep(100000);
-        if(global->nActiveThreads == 0)
-        {
-            printf("global->nActiveThreads == 0 \n");
-        }
-        else
-        {
-            printf("ERROR!!!global->nActiveThreads != 0 \n");
-        }
-        close();
-        stpcpy(global->current, global->currentCXIFileName);
-        printf("current is %s %d", global->current,strcmp (global->current,global->currentCXIFileName));
-        //create(global, eventData->pPara );
-        create(global);
-        printf("para pro %d dims[0] %d\n\n\n",CxiFileHandlar::Instance()->para.pro, CxiFileHandlar::Instance()->para.dims3[0]);
-    }
-
     
     /*
      *  I/O speed test
@@ -429,16 +400,18 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 void cheetahExit(cGlobal *global) {
     
     global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-	global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
-	printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
-	printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
-	
-	// Wait for threads to finish
-	while(global->nActiveThreads > 0) {
-		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-		usleep(100000);
-	}
-	
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
+    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
+    
+    // Wait for threads to finish
+    while(global->nActiveThreads > 0) {
+      printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+      usleep(100000);
+    }
+    
+    // Close all CXI files
+    closeCXIFiles(global);
 	
 	// Save powder patterns
     for(long detID=0; detID<global->nDetectors; detID++) {

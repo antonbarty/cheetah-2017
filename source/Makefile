@@ -39,12 +39,14 @@ LCLSDIR 		?= $(CHEETAHDIR)/source/lcls/myana/release
 
 #OBJFILES		= main.o XtcRun.o
 
-CPP				= g++ -c -g -O3 -fPIC
+#CPP				= g++ -c -g -O3 -fPIC
+CPP				= g++ -c -g -fPIC
 #CFLAGS			= -I$(CHEETAHDIR) -I$(LIBCHEETAHDIR) -I$(MYANADIR) -I$(LCLSDIR) -I$(HDF5DIR)/include
 CFLAGS			= -Icheetah.lib/ -Ilcls/myana/release/ -I$(HDF5DIR)/include 
 
 LD 				= g++
-CPP_LD_FLAGS	= -O4 -Wall
+#CPP_LD_FLAGS	= -O4 -Wall
+CPP_LD_FLAGS	= -g
 
 PDSLIBS			= -l acqdata -l bld -l xtcdata -l opal1kdata -l camdata -l pnccddata -l controldata -lipimbdata -lprincetondata -levrdata -lencoderdata -lgsc16aidata -llusidata -lcspaddata -lindexdata -lanadata -lcspad2x2data -lphasicsdata -ltimepixdata -loceanopticsdata -lflidata -lhdf5
 
@@ -70,22 +72,22 @@ $(MYANADIR)/main.o: $(MYANADIR)/main.cc $(MYANADIR)/myana.hh $(MYANADIR)/main.hh
 #	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
 $(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
-	
+
 myana:
 $(MYANADIR)/myana:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
 	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana.cc
 $(MYANADIR)/myana_morefeatures:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
 	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana_morefeatures.cc
 
-	
+
 
 # Cheetah library
-cheetah.lib: cheetah.o libcheetah.o worker.o setup.o data2d.o median.o hitfinders.o detectorObject.o detectorCorrection.o backgroundCorrection.o powder.o radialAverage.o saveFrame.o resize.o createHid_t.o saveCxi.o 
+cheetah.lib: cheetah.o libcheetah.o worker.o setup.o data2d.o median.o hitfinders.o detectorObject.o detectorCorrection.o backgroundCorrection.o powder.o radialAverage.o saveFrame.o resize.o createHid_t.o saveCXI.o
 
-libcheetah.o: libcheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h  staticPara.h
+libcheetah.o: libcheetah.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $< -o $@
 
-worker.o: worker.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h staticPara.h
+worker.o: worker.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 setup.o: setup.cpp cheetah.h cheetahGlobal.h cheetahEvent.h detectorObject.h
@@ -111,28 +113,22 @@ backgroundCorrection.o: backgroundCorrection.cpp cheetah.h cheetahEvent.h cheeta
 
 powder.o: powder.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
-    
+
 radialAverage.o: radialAverage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-staticPara.o : staticPara.cpp
+saveCXI.o: saveCXI.cpp saveCXI.h
 	$(CPP) $(CFLAGS) $<
-
-createHid_t.o: createHid_t.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h staticPara.h
-	$(CPP) $(CFLAGS) $<
-
-saveCxi.o: saveCxi.cpp saveCxi.h staticPara.h GetSnabshot.h
-        $(CPP) -std=c++0x $(CFLAGS) $<
 
 cheetah-myana.o: cheetah-myana.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 # Cheetah
-cheetah: staticPara.o cheetah-myana.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o  createHid_t.o saveCxi.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o
+cheetah: cheetah-myana.o libcheetah.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o saveCXI.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
-libcheetah: staticPara.o backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o resize.o createHid_t.o saveCxi.o worker.o
-	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o resize.o createHid_t.o saveCxi.o worker.o 
+libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o resize.o saveCXI.o worker.o
+	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o resize.o saveCXI.o worker.o 

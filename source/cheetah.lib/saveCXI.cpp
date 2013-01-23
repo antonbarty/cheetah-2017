@@ -8,6 +8,9 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include "saveCXI.h"
 
 template <class T>
@@ -20,9 +23,9 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
     for(int y = 0; y<dstHeight; y++){
       double res=0;
       for (int xx = x*scale; xx <x*scale+scale; xx++){
-  for(int yy = y*scale; yy <y*scale+scale; yy++){
-    res += src[yy*srcWidth+xx];
-  } 
+	for(int yy = y*scale; yy <y*scale+scale; yy++){
+	  res += src[yy*srcWidth+xx];
+	} 
       }
       dst[y*dstWidth+x] = res/(scale*scale);
     }
@@ -32,7 +35,7 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
 
 static int getStackSlice(CXI::File * cxi){
 #ifdef __GNUC__
-  return __sync_fetch_and_add(&(cxi->stackCounter),1)
+  return __sync_fetch_and_add(&(cxi->stackCounter),1);
 #else
   pthread_mutex_lock(&global->framefp_mutex);
   int ret = cxi->stackCounter;
@@ -54,7 +57,7 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
 
 template <class T> 
 static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
-  hsize_t count[1] = {1}
+  hsize_t count[1] = {1};
   hsize_t offset[1] = {stackSlice};
   hsize_t stride[1] = {1};
   hsize_t block[1] = {1};
@@ -69,7 +72,9 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
     while(block[0] <= stackSlice){
       block[0] *= 2;
     }
-    H5Dextend (dataset, block);
+    H5Dset_extent(dataset, block);
+    /* get enlarged dataspace */
+    dataspace = H5Dget_space (dataset);
   }
   block[0] = 1;
   hid_t memspace = H5Screate_simple (1, block, NULL);
@@ -79,23 +84,24 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
     type = H5T_NATIVE_INT32;
   }else if(typeid(T) == typeid(double)){
     type = H5T_NATIVE_DOUBLE;
-  }else if(typeid(T) == typeid(char)){
-    type = H5Tcopy(H5T_C_S1);
   }else if(typeid(T) == typeid(unsigned int)){
     type = H5T_NATIVE_UINT32;
+  }else if(typeid(T) == typeid(long)){
+    type = H5T_NATIVE_LONG;
   }
 
   H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, &data);
+  if(H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, &value) < 0){
+    abort();
+  }
   H5Sclose(memspace);
-  H5Sclose(dataSpace);
+  H5Sclose(dataspace);
 }
 
 /* Create a 2D stack. The fastest changing dimension is along the width */
 static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
   hsize_t dims[3] = {CXI::initialStackSize,height,width};
   hsize_t maxdims[3] = {H5S_UNLIMITED,height,width};
-  hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   H5Pset_chunk(cparms, 3, dims);
@@ -103,8 +109,8 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
 }
 
 template <class T> 
-static void write2DToStack(hid_t dataset, int stackSlice, T * value){  
-  hsize_t count[3] = {1,1,1}
+static void write2DToStack(hid_t dataset, int stackSlice, T * data){  
+  hsize_t count[3] = {1,1,1};
   hsize_t offset[3] = {stackSlice,0,0};
   /* stride is irrelevant in this case */
   hsize_t stride[3] = {1,1,1};
@@ -120,46 +126,87 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * value){
       block[0] *= 2;
     }
     H5Dextend (dataset, block);
+    /* get enlarged dataspace */
+    dataspace = H5Dget_space (dataset);
   }
   block[0] = 1;
-  hid_t memspace = H5Screate_simple (1, block, NULL);
+  hid_t memspace = H5Screate_simple (3, block, NULL);
 
   hid_t type;
   if(typeid(T) == typeid(int)){
     type = H5T_NATIVE_INT32;
   }else if(typeid(T) == typeid(double)){
     type = H5T_NATIVE_DOUBLE;
-  }else if(typeid(T) == typeid(char)){
-    type = H5Tcopy(H5T_C_S1);
   }else if(typeid(T) == typeid(unsigned int)){
     type = H5T_NATIVE_UINT32;
+  }else if(typeid(T) == typeid(unsigned short)){
+    type = H5T_NATIVE_UINT16;
+  }else if(typeid(T) == typeid(short)){
+    type = H5T_NATIVE_INT16;
   }
 
   H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
+  if(H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data) < 0){
+    abort();
+  }
   H5Sclose(memspace);
-  H5Sclose(dataSpace);
+  H5Sclose(dataspace);
 }
 
-static hid_t createStringStack(const char * name, hid_t loc){
+static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   /* FM: This is probably wrong */
   hid_t datatype = H5Tcopy(H5T_C_S1);
+  H5Tset_size(datatype, maxSize);
   hsize_t dims[1] = {CXI::initialStackSize};
   hsize_t maxdims[1] = {H5S_UNLIMITED};
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
   H5Pset_chunk (cparms, 1, dims);
-  return H5Dcreate(loc, name, datatype, dataspace_1, H5P_DEFAULT, cparms, H5P_DEFAULT);
+  return H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
 }
 
-static CXI::File * createCXISkeleton(const char * filename){
+static void writeStringToStack(hid_t dataset, int stackSlice, char * value){
+  hsize_t count[1] = {1};
+  hsize_t offset[1] = {stackSlice};
+  hsize_t stride[1] = {1};
+  hsize_t block[1] = {1};
+  /* dummy */
+  hsize_t mdims[1];
+
+  
+  hid_t dataspace = H5Dget_space (dataset);
+  H5Sget_simple_extent_dims(dataspace, block, mdims);
+  /* check if we need to extend the dataset */
+  if(block[0] <= stackSlice){
+    while(block[0] <= stackSlice){
+      block[0] *= 2;
+    }
+    H5Dset_extent(dataset, block);
+    /* get enlarged dataspace */
+    dataspace = H5Dget_space (dataset);
+  }
+  block[0] = 1;
+  hid_t memspace = H5Screate_simple (1, block, NULL);
+
+  hid_t type = H5Tcopy(H5T_C_S1);
+  H5Tset_size(type, strlen(value)-1);
+
+  H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
+  if(H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, value) < 0){
+    abort();
+  }
+  H5Sclose(memspace);
+  H5Sclose(dataspace);
+}
+
+static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   /* Creates the initial skeleton for the CXI file.
      We'll rely on HDF5 automatic error reporting. It's usually loud enough.
   */
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
   cxi->self = fid;
-  cxi->stackCounter = 0
+  cxi->stackCounter = 0;
   hsize_t dims[3];
 
   /* Create /cxi_version */
@@ -196,12 +243,12 @@ static CXI::File * createCXISkeleton(const char * filename){
     CXI::Image img;
     img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(global->saveAssembled){
-      img.data = create2DStack("data", d.self, global->detector[detID].image_nx, global->detector[detID].image_nx, H5T_STD_I16LE);
-      H5Lcreate_soft((string("/entry_1/instrument_1/") + detectorNam).c_str(),img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
+      img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_nx, H5T_STD_I16LE);
+      H5Lcreate_soft((std::string("/entry_1/instrument_1/") + detectorName).c_str(),img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
       H5Lcreate_soft("/entry_1/instrument_1/source_1",img.self,"source_1",H5P_DEFAULT,H5P_DEFAULT);
       img.dataType = createStringStack("data_type",img.self);
       img.dataSpace = createStringStack("data_space",img.self);
-      img.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_STD_I16LE);
+      img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_STD_I16LE);
     }
     cxi->entry.images.push_back(img);
   }
@@ -233,43 +280,74 @@ static CXI::File * createCXISkeleton(const char * filename){
   DETECTOR_LOOP{
     char buffer[1024];
     sprintf(buffer,"detector%li-position", detID +1);
-    cxi->llcls.detector_positions.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
+    cxi->lcls.detector_positions.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
     sprintf(buffer,"detector%li-EncoderValue", detID +1);
-    cxi->llcls.detector_EncoderValues.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
+    cxi->lcls.detector_EncoderValues.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
   }
 
   return cxi;
 }
 
-static CXI::File * getCXIFileByName(const char * filename){
-  static std::list<string> openFilenames = std::list<string>();
-  static std::list<CXI::File* > openFiles = std::list<CXI::File>();
-  for(int i = 0;i<openFilenames.size();i++){
-    if(openFilenames[i] == string(filename)){
-      return openFiles[i];
-    }
-  }
+static std::vector<std::string> openFilenames = std::vector<std::string>();
+static std::vector<CXI::File* > openFiles = std::vector<CXI::File *>();
+
+static CXI::File * getCXIFileByName(const char * filename, cGlobal *global){
   pthread_mutex_lock(&global->framefp_mutex);
   /* search again to be sure */
   for(int i = 0;i<openFilenames.size();i++){
-    if(openFilenames[i] == string(filename)){
+    if(openFilenames[i] == std::string(filename)){
       pthread_mutex_unlock(&global->framefp_mutex);
       return openFiles[i];
     }
   }
   openFilenames.push_back(filename);
-  openFiles.push_back(createCXISkeleton(filename));
+  CXI::File * cxi = createCXISkeleton(filename,global);
+  openFiles.push_back(cxi);
   pthread_mutex_unlock(&global->framefp_mutex);
+  return cxi;
+}
+
+
+static void  closeCXI(CXI::File * cxi){
+  hid_t ids[256];
+  int n_ids = H5Fget_obj_ids(cxi->self, H5F_OBJ_DATASET, 256, ids);
+  for (int i=0; i<n_ids; i++){
+    H5I_type_t type;
+    hsize_t block[3];
+    hsize_t mdims[3];
+    hid_t dataspace = H5Dget_space (ids[i]);
+    H5Sget_simple_extent_dims(dataspace, block, mdims);
+    if(mdims[0] == H5S_UNLIMITED){
+      block[0] = cxi->stackCounter;
+      H5Dset_extent(ids[i], block);
+    }
+  }
+}
+
+void closeCXIFiles(cGlobal * global){
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 8 && H5_VERS_RELEASE < 9
+#warn "HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n"
+#warn "Please update your HDF5 to get properly truncated output files.\n"
+  fprintf(stderr,"HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n");
+  fprintf(stderr,"Please update your HDF5 to get properly truncated output files.\n")
+#else
+  pthread_mutex_lock(&global->framefp_mutex);
+  /* Go through each file and resize them to their right size */
+  for(int i = 0;i<openFilenames.size();i++){
+    closeCXI(openFiles[i]);    
+  }
+  pthread_mutex_unlock(&global->framefp_mutex);
+#endif
 }
 
 void writeCXI(cEventData *info, cGlobal *global ){
   /* Get the existing CXI file or open a new one */
-  CXI::File * cxi = getCXIFileByName(info->cxiFilename);
+  CXI::File * cxi = getCXIFileByName(info->cxiFilename, global);
   int stackSlice = getStackSlice(cxi);
-  printf("Writting CXI file for frame number %ld \n", frameNum);
+  printf("Writting CXI file for stack slice number %ld \n", stackSlice);
   
   double en = info->photonEnergyeV * 1.60217646e-19;
-  writeScalarToStack(cxi->lcls.photonEnergyeV,stackSlice,en);
+  writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,en);
   DETECTOR_LOOP {    
     /*Save assembled image under image groups*/
     if(global->saveAssembled){
@@ -281,7 +359,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
     if(global->saveRaw){
       write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
       int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
-      write2DToStack(cxi->entry.images[detID].thumbnail,stackSlice,thumbnail);
+      write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
       delete thumbnail;
     }
   }
@@ -303,7 +381,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
   writeScalarToStack(cxi->lcls.phaseCavityTime2,stackSlice,info->phaseCavityTime2);
   writeScalarToStack(cxi->lcls.phaseCavityCharge1,stackSlice,info->phaseCavityCharge1);
   writeScalarToStack(cxi->lcls.phaseCavityCharge2,stackSlice,info->phaseCavityCharge2);
-  writeScalarToStack(cxi->lcls.photon_energy_ev,stackSlice,info->photonEnergyeV);
+  writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,info->photonEnergyeV);
   writeScalarToStack(cxi->lcls.photon_wavelength_A,stackSlice,info->wavelengthA);
   writeScalarToStack(cxi->lcls.f_11_ENRC,stackSlice,info->gmd11);
   writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
@@ -313,9 +391,8 @@ void writeCXI(cEventData *info, cGlobal *global ){
   writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
   char timestr[26];
   time_t eventTime = info->seconds;
-  // This is probably not what we want
   ctime_r(&eventTime,timestr);
-  /* FM: I don't think this will work */
-  writeScalarToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
+  writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
+  printf("r%04u:%li (%2.1f Hz): Writing %s to %s slice %d\n",global->runNumber, info->threadNum,global->datarate, info->eventname, info->cxiFilename, stackSlice);
 }
 

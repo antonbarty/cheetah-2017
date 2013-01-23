@@ -28,6 +28,8 @@
 #include <limits>
 #include <stdint.h>
 #include <unistd.h>
+#include <iostream>
+#include <signal.h>
 
 
 #include "cheetah.h"
@@ -44,6 +46,7 @@ static Pds::CsPad::ConfigV2 configV2;
 static Pds::CsPad::ConfigV3 configV3;
 static Pds::CsPad::ConfigV4 configV4;
 
+
 // Cheetah specific
 Pds::DetInfo::Device        detectorType[MAX_DETECTORS];
 Pds::DetInfo::Detector      detectorPdsDetInfo[MAX_DETECTORS];
@@ -53,9 +56,27 @@ unsigned                    asicMask[MAX_DETECTORS];
 Pds::DetInfo::Device		tofType;
 Pds::DetInfo::Detector		tofPdsDetInfo;
 
-
+static string getCXIfromXTC(string filename);
 
 using namespace Pds;
+
+void sig_handler(int signo)
+{
+  if (signo == SIGINT){
+    // Wait for threads to finish
+    while(cheetahGlobal.nActiveThreads > 0) {
+      printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
+      usleep(100000);
+    }
+    printf("Attempting to close CXIs cleanly\n");
+    closeCXIFiles(&cheetahGlobal);
+    H5close();
+    signal(SIGINT,SIG_DFL);
+    kill(getpid(),SIGINT);
+    
+  }
+}
+
 /*
  *	Return true or false if a given event code is present
  */
@@ -97,6 +118,9 @@ void beginjob() {
 	 *	Initialise libCheetah
 	 */
     cheetahInit(&cheetahGlobal);
+
+    /* catch SIGINT and handle appropriately */
+    signal(SIGINT, sig_handler);
 
     
 	/*
@@ -247,7 +271,8 @@ void beginrun()
 	 *	Pass new run information to Cheetah
 	 */
 	cheetahGlobal.runNumber = getRunNumber();
-	cheetahGlobal.currentCXIFileName = getCXIfromXTC(getXTCFilename());
+	string cxiFilename = getCXIfromXTC(getXTCFilename());
+	strcpy(cheetahGlobal.currentCXIFileName,cxiFilename.c_str());
     cheetahNewRun(&cheetahGlobal);
 }
 
@@ -831,16 +856,15 @@ void endjob()
 }
 
 /* Change file extension from .xtc to .cxi */
-static string getCXIfromXTC(string filename)
-{
-      size_t found;
-      size_t pos;
-      std::cout << "Splitting: " << filename << std::endl;
-      found=filename.find_last_of("/");
-      std::cout << " file: " << filename.substr(found+1) << std::endl;
-      pos = filename.find_last_of(".xtc");
-
-      string sub =filename.substr(found+1)  + ".cxi";
-      std::cout << " substring: " << sub << std::endl;
-      return sub;
+static string getCXIfromXTC(string filename){
+  size_t end,start;
+  start = filename.find_last_of("/");
+  if(start == string::npos){
+    start = 0;
+  }else{
+    start++;
+  }
+  end = filename.find_last_of(".xtc");
+  string sub =filename.substr(start,end-start+1-4)  + ".cxi";
+  return sub;
 }

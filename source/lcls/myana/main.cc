@@ -3307,7 +3307,8 @@ int main(int argc, char *argv[])
         if (!run.add_file(*it)) {
           printf("Analyzing files %s [%d] \n",
                  run.base(),nfiles);
-	  _xtcfilename = it[-1];
+	  _xtcfilename = *(--it);
+	  ++it;
           anarun(run, maxevt, skip, reorder_file, jump, calib, lEventRange, sTime, uFiducialSearch, iFidFromEvent, iDebugLevel);
           run.reset(*it);
           nfiles=0;
@@ -3316,7 +3317,8 @@ int main(int argc, char *argv[])
       }
       printf("Analyzing files %s [%d]\n",
              run.base(),nfiles);
-      _xtcfilename = it[-1];
+      _xtcfilename = *(--it);
+      ++it;
       anarun(run, maxevt, skip, reorder_file, jump, calib, lEventRange, sTime, uFiducialSearch, iFidFromEvent, iDebugLevel);
       //      delete run_ptr;
     }
