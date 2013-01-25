@@ -852,7 +852,11 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					nat = 1;
 					nexte[0] = e;
 					ce = 0;
-					itot = 0; ftot = 0; stot = 0;
+					itot = temp[e] - bg;
+					cf = e % stride; 
+					cs = e / stride; 
+					ftot = itot*(float)cf; 
+					stot = itot*(float)cs;
 					do {
 						lastnat = nat;
 						thise = nexte[ce];
@@ -875,7 +879,8 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 								cf = ne % stride;
 								cs = ne / stride;
 								ftot += thisI*(float)cf;
-								stot += thisI*(float)cs;						
+								stot += thisI*(float)cs;
+								//printf("nat: %i cf: %i cs: %i thisI: %f\n",nat,cf,cs,thisI);						
 							}
 						}
 						ce++;
@@ -926,6 +931,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					eventData->peak_intensity[peakindex] = itot;
 					eventData->peak_com_x[peakindex] = ftot/itot;
 					eventData->peak_com_y[peakindex] = stot/itot;
+					//printf("here: %f %f\n",eventData->peak_com_x[peakindex],eventData->peak_com_y[peakindex]);
 					eventData->peak_npix[peakindex] = 1;
 					eventData->peak_snr[peakindex] = snr;
 					eventData->peak_com_index[peakindex] = e;
