@@ -780,16 +780,21 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	
 	int counter = 0;
+	int counter2 = 0;
 	int hit = 0;
 	int fail;
 	int stride = global->detector[detID].pix_nx;
-	int fs,ss,e,thise,p,ce,ne,nat,lastnat,cs,cf;
+	int i,fs,ss,e,thise,p,p1,p2,ce,ne,nat,lastnat,cs,cf;
 	int peakindex,newpeak;
 	float dist, itot, ftot, stot;	
 	float thisI,snr,bg,bgsig;
 	
 	/* For counting neighbor pixels */
 	int * nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));	
+	int * killpeak = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
+	for (i=0; i<global->detector[detID].pix_nn; i++){
+		killpeak[i] = 0;
+	}
 	
 	/* Shift in linear indices to eight nearest neighbors */
 	int shift[8] = { +1, -1, +stride, -stride,
@@ -880,7 +885,6 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 								cs = ne / stride;
 								ftot += thisI*(float)cf;
 								stot += thisI*(float)cs;
-								//printf("nat: %i cf: %i cs: %i thisI: %f\n",nat,cf,cs,thisI);						
 							}
 						}
 						ce++;
@@ -931,7 +935,6 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					eventData->peak_intensity[peakindex] = itot;
 					eventData->peak_com_x[peakindex] = ftot/itot;
 					eventData->peak_com_y[peakindex] = stot/itot;
-					//printf("here: %f %f\n",eventData->peak_com_x[peakindex],eventData->peak_com_y[peakindex]);
 					eventData->peak_npix[peakindex] = 1;
 					eventData->peak_snr[peakindex] = snr;
 					eventData->peak_com_index[peakindex] = e;
@@ -954,8 +957,41 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					
 				}}
 		}}	
+
+
+	/* Final round of killing peaks */
+	for ( p1=0;    p1 < counter; p1++) {
+	for ( p2=p1+1; p2 < counter; p2++) {
+		/* Distance to neighbor peak */
+		dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) + 
+		pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
+		if ( dist <= global->hitfinderMinPeakSeparation ) {
+			if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
+				killpeak[p2] = 1;
+			} else {
+				killpeak[p1] = 1;
+			}
+		} 
+	}}
 	
-	eventData->nPeaks = counter;
+	counter2 = 0;
+	for ( p=0;    p < counter; p++) {
+		if (killpeak[p] == 0) {
+			counter2++;
+			eventData->peak_intensity[counter2] = eventData->peak_intensity[p];
+			eventData->peak_com_x[counter2] = eventData->peak_com_x[p];
+			eventData->peak_com_y[counter2] = eventData->peak_com_y[p];
+			eventData->peak_npix[counter2] = eventData->peak_npix[p] ;
+			eventData->peak_snr[counter2] = eventData->peak_snr[p];
+			eventData->peak_com_index[counter2] = eventData->peak_com_index[p];
+			eventData->peak_com_x_assembled[counter2] = eventData->peak_com_x_assembled[p];
+			eventData->peak_com_y_assembled[counter2] = eventData->peak_com_y_assembled[p];
+			eventData->peak_com_r_assembled[counter2] = eventData->peak_com_r_assembled[p];
+		}
+	}	
+
+
+	eventData->nPeaks = counter2;
 	
 	if(eventData->nPeaks >= global->hitfinderNpeaks && 
 	   eventData->nPeaks <= global->hitfinderNpeaksMax)
@@ -967,7 +1003,8 @@ nohit:
 	free(mask);
 	free(natmask);
 	free(temp);
-	
+	free(killpeak);	
+
 	return(hit);
 	
 }
