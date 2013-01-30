@@ -52,7 +52,17 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
   /* Modify dataset creation properties, i.e. enable chunking  */
   H5Pset_chunk(cparms, 1, dims);
-  return H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+  hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+
+  const char * axis = "experiment_identifier";
+  hsize_t one = 1;
+  hid_t datatype = H5Tcopy(H5T_C_S1);
+  H5Tset_size(datatype, strlen(axis));
+  hid_t memspace = H5Screate_simple(1,&one,NULL);
+  hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  H5Awrite(attr,datatype,axis);
+  H5Aclose(attr);
+  return dataset;    
 }
 
 template <class T> 
@@ -105,7 +115,17 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   H5Pset_chunk(cparms, 3, dims);
-  return H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+  hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+
+  const char * axis = "experiment_identifier:y:x";
+  hsize_t one = 1;
+  hid_t datatype = H5Tcopy(H5T_C_S1);
+  H5Tset_size(datatype, strlen(axis));
+  hid_t memspace = H5Screate_simple(1,&one,NULL);
+  hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  H5Awrite(attr,datatype,axis);
+  H5Aclose(attr);
+  return dataset;    
 }
 
 template <class T> 
@@ -162,10 +182,20 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
   H5Pset_chunk (cparms, 1, dims);
-  return H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+  hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+
+  const char * axis = "experiment_identifier";
+  hsize_t one = 1;
+  datatype = H5Tcopy(H5T_C_S1);
+  H5Tset_size(datatype, strlen(axis));
+  hid_t memspace = H5Screate_simple(1,&one,NULL);
+  hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  H5Awrite(attr,datatype,axis);
+  H5Aclose(attr);
+  return dataset;    
 }
 
-static void writeStringToStack(hid_t dataset, int stackSlice, char * value){
+static void writeStringToStack(hid_t dataset, int stackSlice, const char * value){
   hsize_t count[1] = {1};
   hsize_t offset[1] = {stackSlice};
   hsize_t stride[1] = {1};
@@ -189,7 +219,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, char * value){
   hid_t memspace = H5Screate_simple (1, block, NULL);
 
   hid_t type = H5Tcopy(H5T_C_S1);
-  H5Tset_size(type, strlen(value)-1);
+  H5Tset_size(type, strlen(value));
 
   H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
   if(H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, value) < 0){
@@ -221,8 +251,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->entry.instrument.self = H5Gcreate(cxi->self, "/entry_1/instrument_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   cxi->entry.instrument.source.self = H5Gcreate(cxi->self, "/entry_1/instrument_1/source_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+  H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
   cxi->entry.instrument.source.energy = createScalarStack("energy",cxi->entry.instrument.source.self,H5T_NATIVE_DOUBLE);
 
+  cxi->entry.experimentIdentifier = createStringStack("experiment_identifier",cxi->entry.self);
   DETECTOR_LOOP{
     char detectorName[1024];
     char imageName[1024];
@@ -230,11 +262,15 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     sprintf(detectorName,"detector_%ld",detID+1);
     CXI::Detector d;
     d.self = H5Gcreate(cxi->entry.instrument.self, detectorName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    // Unfortunately this is not set
     d.distance = createScalarStack("distance", d.self,H5T_NATIVE_DOUBLE);
+    
     if(global->saveRaw){
 
       d.data = create2DStack("data", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_STD_I16LE);
       d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
+      H5Lcreate_soft("/entry_1/experiment_identifier",d.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
     }
     cxi->entry.instrument.detectors.push_back(d);
 
@@ -249,6 +285,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       img.dataType = createStringStack("data_type",img.self);
       img.dataSpace = createStringStack("data_space",img.self);
       img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_STD_I16LE);
+      H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
     }
     cxi->entry.images.push_back(img);
   }
@@ -276,6 +313,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->lcls.evr41 = createScalarStack("evr41", cxi->lcls.self,H5T_NATIVE_INT);
   cxi->lcls.eventTimeString = createStringStack("eventTimeString", cxi->lcls.self);
   H5Lcreate_soft("/LCLS/eventTimeString", cxi->self, "/LCLS/eventTime",H5P_DEFAULT,H5P_DEFAULT);
+  H5Lcreate_soft("/entry_1/experiment_identifier",cxi->lcls.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
   DETECTOR_LOOP{
     char buffer[1024];
@@ -284,7 +322,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     sprintf(buffer,"detector%li-EncoderValue", detID +1);
     cxi->lcls.detector_EncoderValues.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
   }
-
   return cxi;
 }
 
@@ -349,16 +386,26 @@ void writeCXI(cEventData *info, cGlobal *global ){
   printf("Writting CXI file for stack slice number %ld \n", stackSlice);
   
   double en = info->photonEnergyeV * 1.60217646e-19;
-  writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,en);
+  writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);
+  // remove the '.h5' from eventname
+  info->eventname[strlen(info->eventname) - 3] = 0;
+  writeStringToStack(cxi->entry.experimentIdentifier,stackSlice,info->eventname);
+  // put it back
+  info->eventname[strlen(info->eventname)] = '.';
+
   DETECTOR_LOOP {    
-    /*Save assembled image under image groups*/
+    /* Save assembled image under image groups */
+
     if(global->saveAssembled){
       write2DToStack(cxi->entry.images[detID].data,stackSlice,info->detector[detID].image);
       int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_nx,CXI::thumbnailScale);
       write2DToStack(cxi->entry.images[detID].thumbnail,stackSlice,thumbnail);
+      writeStringToStack(cxi->entry.images[detID].dataType,stackSlice,"intensities");
+      writeStringToStack(cxi->entry.images[detID].dataSpace,stackSlice,"diffraction");
       delete thumbnail;      
     }
     if(global->saveRaw){
+      writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
       write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
       int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
       write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);

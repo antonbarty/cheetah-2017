@@ -92,6 +92,7 @@ typedef struct{
 
   Data data;
   Instrument instrument;
+  hid_t experimentIdentifier;
   std::vector<Image> images;
 }Entry;
 
