@@ -24,6 +24,9 @@ typedef struct{
     hid_t distance;
     hid_t data;
     hid_t thumbnail;
+    hid_t description;
+    hid_t xPixelSize;
+    hid_t yPixelSize;
 }Detector;
 
 
@@ -108,7 +111,7 @@ typedef struct{
 
 
  const int version = 130;
- const int initialStackSize = 10;
+ const int initialStackSize = 16;
  const int thumbnailScale = 8;
 }
 

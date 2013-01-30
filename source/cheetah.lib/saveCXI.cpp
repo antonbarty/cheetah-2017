@@ -52,6 +52,8 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
   /* Modify dataset creation properties, i.e. enable chunking  */
   H5Pset_chunk(cparms, 1, dims);
+  //  H5Pset_deflate (cparms, 2);
+
   hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
 
   const char * axis = "experiment_identifier";
@@ -94,10 +96,15 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
     type = H5T_NATIVE_INT32;
   }else if(typeid(T) == typeid(double)){
     type = H5T_NATIVE_DOUBLE;
+  }else if(typeid(T) == typeid(float)){
+    type = H5T_NATIVE_FLOAT;
   }else if(typeid(T) == typeid(unsigned int)){
     type = H5T_NATIVE_UINT32;
   }else if(typeid(T) == typeid(long)){
     type = H5T_NATIVE_LONG;
+  }else{
+    fprintf(stderr,"Cannot find right H5 type!\n");
+    abort();
   }
 
   H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
@@ -115,7 +122,9 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   H5Pset_chunk(cparms, 3, dims);
+  //  H5Pset_deflate (cparms, 2);
   hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+  H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
 
   const char * axis = "experiment_identifier:y:x";
   hsize_t one = 1;
@@ -182,6 +191,7 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
   H5Pset_chunk (cparms, 1, dims);
+  //  H5Pset_deflate(cparms, 2);
   hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
 
   const char * axis = "experiment_identifier";
@@ -263,8 +273,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     CXI::Detector d;
     d.self = H5Gcreate(cxi->entry.instrument.self, detectorName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    // Unfortunately this is not set
     d.distance = createScalarStack("distance", d.self,H5T_NATIVE_DOUBLE);
+    d.description = createStringStack("description",d.self);
+    d.xPixelSize = createScalarStack("x_pixel_size",d.self,H5T_NATIVE_DOUBLE);
+    d.yPixelSize = createScalarStack("y_pixel_size",d.self,H5T_NATIVE_DOUBLE);
     
     if(global->saveRaw){
 
@@ -395,7 +407,13 @@ void writeCXI(cEventData *info, cGlobal *global ){
 
   DETECTOR_LOOP {    
     /* Save assembled image under image groups */
+    writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
+    writeScalarToStack(cxi->entry.instrument.detectors[detID].xPixelSize,stackSlice,global->detector[detID].pixelSize);
+    writeScalarToStack(cxi->entry.instrument.detectors[detID].yPixelSize,stackSlice,global->detector[detID].pixelSize);
 
+    char buffer[1024];
+    sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
+    writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
     if(global->saveAssembled){
       write2DToStack(cxi->entry.images[detID].data,stackSlice,info->detector[detID].image);
       int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_nx,CXI::thumbnailScale);
@@ -405,7 +423,6 @@ void writeCXI(cEventData *info, cGlobal *global ){
       delete thumbnail;      
     }
     if(global->saveRaw){
-      writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
       write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
       int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
       write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
