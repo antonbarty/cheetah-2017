@@ -319,6 +319,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 */
     cheetahUpdateGlobal(global, eventData);
     
+
     /*
      *  I/O speed test
      *  How fast is processEvent called?

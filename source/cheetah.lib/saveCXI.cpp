@@ -336,6 +336,8 @@ void closeCXIFiles(cGlobal * global){
   for(int i = 0;i<openFilenames.size();i++){
     closeCXI(openFiles[i]);    
   }
+  openFiles.clear();
+  openFilenames.clear();
   pthread_mutex_unlock(&global->framefp_mutex);
 #endif
 }

@@ -56,7 +56,7 @@ unsigned                    asicMask[MAX_DETECTORS];
 Pds::DetInfo::Device		tofType;
 Pds::DetInfo::Detector		tofPdsDetInfo;
 
-static string getCXIfromXTC(string filename);
+static std::string getCXIfromXTC(std::string filename);
 
 using namespace Pds;
 
@@ -273,9 +273,7 @@ void beginrun()
 	 *	Pass new run information to Cheetah
 	 */
 	cheetahGlobal.runNumber = getRunNumber();
-	string cxiFilename = getCXIfromXTC(getXTCFilename());
-	strcpy(cheetahGlobal.currentCXIFileName,cxiFilename.c_str());
-    cheetahNewRun(&cheetahGlobal);
+	cheetahNewRun(&cheetahGlobal);
 }
 
 
@@ -348,6 +346,19 @@ void event() {
 	unsigned runNumber;
 	runNumber = getRunNumber();
 	
+	if(!cheetahGlobal.oneFilePerImage){
+	  std::string cxiFilename = getCXIfromXTC(getXTCFilename());
+	  if(cxiFilename.compare(cheetahGlobal.currentCXIFileName)!=0){
+	    while(cheetahGlobal.nActiveThreads > 0){
+	      printf("Waiting for %li worker threads to terminate for new ones\n", cheetahGlobal.nActiveThreads);
+	      usleep(100000);
+	    }
+	    if(strcmp(cheetahGlobal.currentCXIFileName,"") != 0){
+	      closeCXIFiles(&cheetahGlobal);
+	    }
+	    strcpy(cheetahGlobal.currentCXIFileName,cxiFilename.c_str());
+	  }
+	}
 	
 	/*
 	 * Get event time information
@@ -857,16 +868,19 @@ void endjob()
 	exit(1);
 }
 
+
+
+
 /* Change file extension from .xtc to .cxi */
-static string getCXIfromXTC(string filename){
+static std::string getCXIfromXTC(std::string filename){
   size_t end,start;
   start = filename.find_last_of("/");
-  if(start == string::npos){
+  if(start == std::string::npos){
     start = 0;
   }else{
     start++;
   }
-  end = filename.find_last_of(".xtc");
-  string sub =filename.substr(start,end-start+1-4)  + ".cxi";
+  end = filename.find_last_of("-s");
+  std::string sub =filename.substr(start,end-start+1-5)  + ".cxi";
   return sub;
 }

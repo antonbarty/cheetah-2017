@@ -77,10 +77,13 @@ Result XtcSlice::skip()
   return _next();
 }
 
+void setXTCFilename(const char * fname);
+
 bool XtcSlice::_open()
 {
   const char* fname = _current->data();
   _fd = ::open(fname,O_LARGEFILE,O_RDONLY);
+  setXTCFilename(fname);
   if (_fd == -1) {
     char buff[256];
     sprintf(buff,"Error opening file %s\n",fname);
