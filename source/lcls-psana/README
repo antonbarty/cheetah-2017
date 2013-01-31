@@ -37,7 +37,10 @@ Warning! ***HDF5 library version mismatched error***
 Solution:
 It's looking for hdf5 v.1.8.4 library
 Type this in your terminal
-export LD_LIBRARY_PATH=/reg/neh/home/yoon82/hdf5/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/reg/neh/home3/yoon82/local/lib/:$LD_LIBRARY_PATH
+
+A better solution would be to install your own hdf5. Just follow the instruction:
+http://www.hdfgroup.org/ftp/HDF5/current/src/unpacked/release_docs/INSTALL
 
 3) If you get the following messgae -
 psana: 
@@ -49,6 +52,19 @@ Solution:
 You have an out-of-date psana package as indicated by ana-0.5.1.
 At the time of writing, current psana is ana-0.5.7.
 Type this in your terminal
+relupgrade ana-current
+scons -c
+scons
+
+4) If you get the following message -
+
+Running Psana
+Standard exception caught in runApp(): psana::Exception: failed to load dynamic library libPSXtcInput.so: 
+/reg/g/psdm/sw/releases/ana-0.7.13/arch/x86_64-rhel5-gcc41-opt/lib/libpsddl_pds2psana.so: undefined symbol: _ZN3Pds6TypeIdC1ENS0_4TypeEjb [in 
+function loadPackageLib at psana/src/DynLoader.cpp:158]
+
+Solution:
+cd /cheetah/source/lcls-psana
 relupgrade ana-current
 scons -c
 scons
