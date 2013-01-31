@@ -18,7 +18,12 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <iomanip>
 
 /*
  *	Worker thread function for processing each cspad data frame
@@ -33,7 +38,12 @@ void *worker(void *threadarg) {
 	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
 	int	hit = 0;
-
+	
+	std::vector<int> myvector;
+        std::stringstream sstm;
+	std::string result;
+        std::ofstream outFlu;
+	std::ios_base::openmode mode;
 
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
@@ -211,8 +221,31 @@ void *worker(void *threadarg) {
 			eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
 		}
 	}
-	
-	
+
+	/*
+	 *	Write cspad to file in 1D
+	 */
+/*	if (eventData->threadNum < 6000+50) {
+	std::cout << "Write cspad to file.. single threaded" << std::endl;
+	DETECTOR_LOOP {
+                for(long i=0;i<global->detector[detID].pix_nn;i++){
+                        myvector.push_back( (int16_t) lrint(eventData->detector[detID].corrected_data[i]) );
+                }
+	}
+       // Write out files
+        sstm << "r0" << global->runNumber << "_cspad_corrected1D";
+        result = sstm.str();
+        outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
+	//std::cout << myvector.size() << std::endl;
+	//std::cout << global->nDetectors << std::endl;
+        for (unsigned i = 0; i < myvector.size(); i++ ) {
+        	outFlu << myvector[i] << " ";
+        }
+        outFlu << std::endl;
+        outFlu.close();
+	}
+*/
+
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
@@ -267,13 +300,18 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%s, %li, %i, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
+	fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
 	pthread_mutex_unlock(&global->framefp_mutex);
 
 	// Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "%s, %li, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n", eventData->eventname, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
+	fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
+
+
+
+
+
 	
 	/*
 	 *	Cleanup and exit

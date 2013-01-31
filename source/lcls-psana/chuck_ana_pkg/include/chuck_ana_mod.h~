@@ -81,8 +81,6 @@ public:
 
   virtual double getPhotonEnergyeV(Event& evt, Env& env);
 
-  virtual double getPulseEnergymJ(Event& evt, Env& env);
-
 	double cspadSum;
 	double cspad2x2Sum;
 	double goodPixel;

@@ -22,6 +22,7 @@ int peakfinder6(cGlobal*, cEventData*, int);
 
 /*
  *	Various flavours of hitfinder
+ *		0 - Everything is a hit
  *		1 - Number of pixels above ADC threshold
  *		2 - Total intensity above ADC threshold
  *		3 - Count Bragg peaks
@@ -90,7 +91,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	 *	Use one of various hitfinder algorithms
 	 */
 	switch(global->hitfinderAlgorithm) {
-			
+		
+		case 0 :	// Everything is a hit. Used for converting xtc to hdf
+			hit = 1;
+	
 		case 1 :	// Count the number of pixels above ADC threshold
 			for(long i=0;i<pix_nn;i++){
 				if(temp[i] > global->hitfinderADC){

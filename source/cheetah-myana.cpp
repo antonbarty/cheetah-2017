@@ -239,7 +239,7 @@ void fetchConfig()
 void beginrun() 
 {
 	printf("User analysis beginrun() routine called.\n");    
-	printf("Processing r%04u\n",getRunNumber());
+	printf("+++ Processing r%04u +++\n",getRunNumber());
 	fetchConfig();
 	frameNumber = 0;
 
