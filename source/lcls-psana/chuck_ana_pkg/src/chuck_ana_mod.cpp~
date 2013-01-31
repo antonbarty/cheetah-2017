@@ -56,8 +56,8 @@
 #define lookAtGain 0 // use to look at the position of gainmap	(no region)
 #define generateDark 0		// generate average dark	(no region)
 #define sumSubsectionMinusDark 0	// Dark corrected calculations (darkSubregion)
-#define sumSubsectionMinusDarkCommonMode 0	// Dark background and common mode corrected calculations (darkSubregion)
-#define correctFluores 1 // correct for dark, common mode and gain map
+#define sumSubsectionMinusDarkCommonMode 1	// Dark background and common mode corrected calculations (darkSubregion)
+#define correctFluores 0 // correct for dark, common mode and gain map
 #define generateHistogram 0		// histogram of all pixel values for a run (darkSubregion)
 #define generateDarkFluctuation 0	// fluctuation of a pixel shot to shot for a dark (darkSubregion)
 #define generateMeanAsicDark 0	// fluctuation of mean Asic shot to shot for dark run (no region)

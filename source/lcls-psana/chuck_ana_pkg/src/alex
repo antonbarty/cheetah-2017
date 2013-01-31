@@ -1,0 +1,447 @@
+//--------------------------------------------------------------------------
+// File and Version Information:
+// 	$Id$
+//
+// Description:
+//	Class chuck_ana_mod...
+//
+// Author List:
+//      Chunhong Yoon
+//
+//------------------------------------------------------------------------
+
+//-----------------------
+// This Class's Header --
+//-----------------------
+#include "chuck_ana_pkg/chuck_ana_mod.h"
+#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+//-----------------
+// C/C++ Headers --
+//-----------------
+#include <iostream>
+#include <string>
+#include <iomanip>
+//-------------------------------
+// Collaborating Class Headers --
+//-------------------------------
+#include "MsgLogger/MsgLogger.h"
+// to work with detector data include corresponding 
+// header from psddl_psana package
+#include "psddl_psana/bld.ddl.h"
+#include "PSEvt/EventId.h"
+#include "psddl_psana/cspad.ddl.h"
+#include "psddl_psana/evr.ddl.h"
+#include "psddl_psana/acqiris.ddl.h"
+#include "psddl_psana/camera.ddl.h"
+#include "psddl_psana/cspad2x2.ddl.h"
+
+#include "/reg/neh/home3/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <stdio.h>
+#include <vector>
+#include <fstream>
+#include <sstream>
+
+#define beamCode 140
+#define laserCode 41
+#define verbose 1
+
+#define generateDark 0
+#define sumSubsectionMinusDark 0
+#define ALEX_DARKPERSHOT 0
+#define ALEX_SQUAREPOSITION 0
+#define ALEX_CHUCKTEST 0
+#define ALEX_CHUCKTEST_BGSUBTRACTIONDIFFERENT 1
+
+//-----------------------------------------------------------------------
+// Local Macros, Typedefs, Structures, Unions and Forward Declarations --
+//-----------------------------------------------------------------------
+
+// This declares this class as psana module
+using namespace chuck_ana_pkg;
+using namespace std;
+PSANA_MODULE_FACTORY(chuck_ana_mod)
+
+//		----------------------------------------
+// 		-- Public Function Member Definitions --
+//		----------------------------------------
+
+namespace chuck_ana_pkg
+{
+	static int count = 0;
+	static cGlobal cheetahGlobal;
+	static int laserSwitch = 0;
+	static int prevLaser = 0;
+	char detZ[] = "CXI:DS1:MMS:06.RBV";
+	int sx = 10;
+	int ex = 176;
+	int sy = 10;
+	int ey = 378;
+	int dx = ex-sx;
+	int dy = ey-sy;
+	
+	int size_x = 186;
+	int size_y = 388;
+	vector<vector<double> > dark(size_x, vector<double> (size_y));
+	
+	std::vector<double> darkPerShot;
+	const int pixelsPerArea = (ex - sx)*(ey - sy);
+	
+	const int numDisposed = 50;
+
+	template <typename T>
+	bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode)
+	{
+		//const int nfifo =  array.size();
+		for (unsigned i = 0; i < array.size(); ++i)
+		{
+			if (array[i].eventCode() == EvrCode)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	string trim( const string& s )
+	{
+		string result( s );
+		result.erase(result.find_last_not_of(" ") + 1);
+		result.erase(0, result.find_first_not_of(" "));
+		return result;
+	}
+
+	void readinDark(string darkFile)
+	{
+		std::cerr << "(II) Yay!" << std::endl;
+	
+		string input_buffer;
+		ifstream infConfig(darkFile.c_str());
+		int cntrR = 0;
+		int cntr = 0;
+		if (infConfig.is_open())
+		{
+			while (!infConfig.eof())
+			{
+				getline(infConfig, input_buffer);
+				istringstream iss(input_buffer);
+	  			string word;
+	  			cntr = 0;
+				while (getline(iss, word, ' '))
+				{
+					trim(word);
+					dark[cntr][cntrR] = atof(word.c_str());
+					cntr++;
+					
+					//std::cerr << "(II) num column: " << cntr << "\tnum row: " << cntrR << std::endl;
+				}
+				cntrR++;
+			}
+		}
+		
+		
+	}
+
+	//----------------
+	// Constructors --
+	//----------------
+	chuck_ana_mod::chuck_ana_mod (const std::string& name)
+	  : Module(name)
+	  , m_src()
+	  , m_maxEvents()
+	  , m_filter()
+	  , m_count(0)
+	{
+	  // get the values from configuration or use defaults
+		m_maxEvents = config("events", 32U);
+		m_filter = config("filter", false);
+		m_key = configStr("inputKey", "");
+		m_src = configStr("source","DetInfo(:Cspad)");
+		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
+		m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
+		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
+		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
+		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
+		m_srcCam = configStr("cameraSource","DetInfo()");
+	  	m_src2x2 = configStr("source2x2", "DetInfo(:Cspad2x2)");
+	}
+
+	//--------------
+	// Destructor --
+	//--------------
+	chuck_ana_mod::~chuck_ana_mod ()
+	{
+	}
+
+	/// Method which is called once at the beginning of the job
+	void 
+	chuck_ana_mod::beginJob(Event& evt, Env& env)
+	{
+	}
+
+	/// Method which is called at the beginning of the run
+	void 
+	chuck_ana_mod::beginRun(Event& evt, Env& env)
+	{
+		//std::cout << "#(II) This is Alex test." << std::endl;
+
+		cspadSum = 0;
+		cspad2x2Sum = 0;
+		goodPixel = 0;
+		goodPixel2x2 = 0;
+	
+		if (sumSubsectionMinusDark)
+		{
+			readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark117.cspad2x2");
+		}
+		
+		if(ALEX_SQUAREPOSITION)
+		{
+			readinDark("/reg/neh/home3/acamara/cheetah/source/lcls-psana/dark117_whole.cspad2x2");
+		}
+		
+		//std::cout << "#(II) Going through all the shots getting the <dark enegy>." << std::endl;
+	}
+
+	/// Method which is called at the beginning of the calibration cycle
+	void 
+	chuck_ana_mod::beginCalibCycle(Event& evt, Env& env)
+	{
+	}
+
+	/// Method which is called with event data, this is the only required 
+	/// method, all other methods are optional
+	void 
+	chuck_ana_mod::event(Event& evt, Env& env)
+	{
+	////////////////////////// MY CODE STARTS HERE /////////////////////
+	  	int numErrors = 0;
+	  	count++;
+
+		if (sumSubsectionMinusDark)
+		{
+			// Subsection: CsPad2x2 - Dark
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get()) {
+				const ndarray<int16_t, 3>& data = elem1->data();
+				for (int i = sx; i < ex; i++)
+				{ // width
+					for (int j = sy; j < ey; j++)
+					{ // height
+						int k = 1;
+						if (data[i][j][k] > 0 && data[i][j][k] < 3000)
+						{
+							cspad2x2Sum += data[i][j][k] - dark[i-sx][j-sy];
+							goodPixel2x2++;
+						}
+					}
+				}
+			}
+		}
+		if (generateDark)
+		{
+			// Darkcal: Sum subsection of CsPad2x2
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get())
+			{
+				const ndarray<int16_t, 3>& data = elem1->data();
+				for (int i = sx; i < ex; i++)
+				{ // width
+					for (int j = sy; j < ey; j++)
+					{ // height
+						int k = 1;
+						dark[i-sx][j-sy] += data[i][j][k];
+					}
+				}
+			}
+		}
+
+		if(ALEX_DARKPERSHOT)
+		{
+			// energy sum
+			double summ = 0.0;
+
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get())
+			{
+				const ndarray<int16_t, 3>& data = elem1->data();
+				for (int i = sx; i < ex; i++)
+				{ // width
+					for (int j = sy; j < ey; j++)
+					{ // height
+						int k = 1;
+						summ += data[i][j][k];
+					}
+				}
+			}
+			darkPerShot.push_back(summ/(double) pixelsPerArea);
+		}
+		
+		if(ALEX_SQUAREPOSITION)
+		{			
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get())
+			{
+				const ndarray<int16_t, 3>& data = elem1->data();
+				const int k = 1;
+				
+				for(int i=0; i<size_x; ++i)
+				{
+					for(int j=0; j<size_y; ++j)
+					{
+						if(i>=sx && i<=ex && j>=sy && j<=ey)
+						{
+							std::cout << data[i][j][k] - dark[i][j] << "\t";
+						}
+						else //if(data[i][j][k] < 3000)
+						{
+							std::cout << "0\t";
+						}
+/*						else
+						{
+							std::cout << "0\t";
+						}*/
+					}
+					std::cout << std::endl;
+				}
+			}
+			exit(0);
+		}
+		
+		if(ALEX_CHUCKTEST)
+		{			
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get())
+			{
+				const ndarray<int16_t, 3>& data = elem1->data();
+				const int k = 1;
+				
+				for(int i=0; i<size_x; ++i)
+				{
+					for(int j=0; j<size_y; ++j)
+					{
+						if(i>=sx && i<=ex && j>=sy && j<=ey 
+						   && data[i][j][k] > 0 && data[i][j][k] < 3000)
+						{
+							cspad2x2Sum += data[i][j][k] - dark[i-sx][j-sy];
+							goodPixel2x2++;
+						}
+					}
+				}
+			}
+		}
+		
+		if(ALEX_CHUCKTEST_BGSUBTRACTIONDIFFERENT)
+		{			
+			shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+			if (elem1.get())
+			{
+				const ndarray<int16_t, 3>& data = elem1->data();
+				const int k = 1;
+				
+				for(int i=0; i<size_x; ++i)
+				{
+					for(int j=0; j<size_y; ++j)
+					{
+						if(i>=sx && i<=ex && j>=sy && j<=ey 
+						   && data[i][j][k] > 0 && data[i][j][k] < 3000)
+						{
+							cspad2x2Sum += data[i][j][k] - data[i][j][0];
+							goodPixel2x2++;
+						}
+					}
+				}
+			}
+		}
+	}
+	  
+	/// Method which is called at the end of the calibration cycle
+	void 
+	chuck_ana_mod::endCalibCycle(Event& evt, Env& env)
+	{
+	}
+
+	/// Method which is called at the end of the run
+	void 
+	chuck_ana_mod::endRun(Event& evt, Env& env)
+	{
+
+		if (sumSubsectionMinusDark) {
+			int runNumber = 0;
+			PSTime::Time evtTime;
+			boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
+			if (eventId.get())
+			{
+				runNumber = eventId->run();
+			}
+			cout << "runNumber: " << runNumber << endl; 
+			cout << "number of events: " << count << endl;
+			cout << "cspad2x2Sum: " << setprecision(16) << cspad2x2Sum << endl;
+			cout << "cspadSum: " << setprecision(16) << cspadSum << endl;
+			cout << "cspad2x2SumPerEvent: " << setprecision(16) << cspad2x2Sum/count << endl;
+			cout << "cspadSumPerEvent: " << setprecision(16) << cspadSum/count << endl;
+			cout << "cspad2x2AvgPixelValuePerEvent: " << setprecision(16) << (cspad2x2Sum/goodPixel2x2)/count << endl;
+			cout << "cspadAvgPixelValuePerEvent: " << setprecision(16) << (cspadSum/goodPixel)/count << endl;
+		}
+
+		if (generateDark)
+		{
+			// Print average dark subregion CsPad2x2
+			for (int j = sy; j < ey; j++)
+			{ // height
+				for (int i = sx; i < ex; i++)
+				{ // width
+					cout << dark[i-sx][j-sy]/count << " ";
+				}
+				cout << endl;
+			}
+		}
+
+		if(ALEX_DARKPERSHOT)
+		{
+			double media = 0.0;
+			double media_squared = 0.0;
+			for(int i=0; i<darkPerShot.size(); ++i)
+			{
+				media += (double) darkPerShot[i];
+				media_squared += (double) darkPerShot[i] * (double) darkPerShot[i];
+				 
+				std::cout << i << "\t" << darkPerShot[i] << std::endl;
+			}
+			media /= darkPerShot.size();
+			media = media*media;
+			media_squared /= darkPerShot.size();
+			
+			std::cerr << "(II) Std. deviation: " << media_squared - media << std::endl;
+		}
+		
+		if(ALEX_CHUCKTEST || ALEX_CHUCKTEST_BGSUBTRACTIONDIFFERENT)
+		{
+			int runNumber = 0;
+			PSTime::Time evtTime;
+			boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
+			if (eventId.get())
+			{
+				runNumber = eventId->run();
+			}
+			cout << "runNumber: " << runNumber << endl; 
+			cout << "number of events: " << count << endl;
+			cout << "cspad2x2Sum: " << setprecision(16) << cspad2x2Sum << endl;
+			cout << "cspadSum: " << setprecision(16) << cspadSum << endl;
+			cout << "cspad2x2SumPerEvent: " << setprecision(16) << cspad2x2Sum/count << endl;
+			cout << "cspadSumPerEvent: " << setprecision(16) << cspadSum/count << endl;
+			cout << "cspad2x2AvgPixelValuePerEvent: " << setprecision(16) << (cspad2x2Sum/goodPixel2x2)/count << endl;
+			cout << "cspadAvgPixelValuePerEvent: " << setprecision(16) << (cspadSum/goodPixel)/count << endl;
+		}
+	}
+
+	/// Method which is called once at the end of the job
+	void 
+	chuck_ana_mod::endJob(Event& evt, Env& env)
+	{
+	}
+
+} // namespace chuck_ana_pkg
