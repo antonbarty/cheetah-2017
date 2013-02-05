@@ -12,7 +12,7 @@ exit 1
 DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
 
 # check optional inputs
-while getopts "r:t:i:b:Rm:e:g:l:h" OPTION; do
+while getopts "r:t:i:b:Rm:e:g:l:hs:" OPTION; do
 	case $OPTION in
 	r)
 		if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
@@ -33,6 +33,7 @@ while getopts "r:t:i:b:Rm:e:g:l:h" OPTION; do
 		[ -e $UGEOMFILE ] || UERROR "Geometry file $UGEOMFILE does not exist"
 		;;
 	h) SHOWHELP="YES";;
+	s) SIMPLERINGS=$OPTARG;;
 	?) UERROR "Unrecognized flag: $OPTION";;
 	esac
 done
@@ -268,6 +269,8 @@ for FILE in $(cat $FILELIST); do
 		awk '/^   \(/ {print $2 $3}' | awk -F ',' '{print $1, $2}' > \
 		$TMPDIR/quickview-peaks.list
 		
+	#$H5DUMP -d /processing/hitfinder/peakinfo-raw $FILE
+
 	NPEAKS=$(cat $TMPDIR/quickview-peaks.list | wc -l)
 
 	printf 'File %d of %d: %s (%d peaks)\n' \
@@ -281,6 +284,8 @@ for FILE in $(cat $FILELIST); do
 		GEOMFILE=$(find $CONFIGDIR -name $GEOMFILE)
 		[ $GEOMFILE ] && ARGSEXTRA="$ARGSEXTRA -g $GEOMFILE"
 	fi 
+
+	[ $SIMPLERINGS ] && ARGSEXTRA="$ARGSEXTRA --simple-rings $SIMPLERINGS"
 
 	[ "$NPEAKS" -ge $MINPEAKS ] && \
 		$HDFSEE $FILE $ARGS $ARGSEXTRA -p $TMPDIR/quickview-peaks.list
