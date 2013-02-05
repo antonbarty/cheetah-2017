@@ -254,7 +254,7 @@ namespace cheetah_ana_pkg {
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
-			const ndarray<Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
+			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();
 			if (verbose) { 
 				cout << "*** fiducial: ";
@@ -573,8 +573,8 @@ namespace cheetah_ana_pkg {
 						 << "\n  nbrSegments=" << elem.nbrSegments()
 						 << "\n  nbrSamplesInSeg=" << elem.nbrSamplesInSeg()
 						 << "\n  indexFirstPoint=" << elem.indexFirstPoint();
-					const ndarray<Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-				const ndarray<int16_t, 2>& waveforms = elem.waveforms();
+					const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
 					// loop over segments
 					for (unsigned seg = 0; seg<elem.nbrSegments(); ++seg) {
 						unsigned size = std::min(elem.nbrSamplesInSeg(), 32U);
@@ -602,14 +602,14 @@ namespace cheetah_ana_pkg {
 					 << " depth=" << frmData->depth()
 					 << " offset=" << frmData->offset() ;
 
-				const ndarray<uint8_t, 2>& data8 = frmData->data8();
+				const ndarray<const uint8_t, 2>& data8 = frmData->data8();
 				if (not data8.empty()) {
 					cout << " data8=[" << int(data8[0][0])
 						 << ", " << int(data8[0][1])
 						 << ", " << int(data8[0][2]) << ", ...]";
 				}
 
-				const ndarray<uint16_t, 2>& data16 = frmData->data16();
+				const ndarray<const uint16_t, 2>& data16 = frmData->data16();
 				if (not data16.empty()) {
 					cout << " data16=[" << int(data16[0][0])
 						 << ", " << int(data16[0][1])
@@ -688,7 +688,7 @@ namespace cheetah_ana_pkg {
 					// loop over elements (quadrants)
 					for (int q = 0; q < nQuads; ++ q) {
 						const Psana::CsPad::ElementV2& el = data2->quads(q); 
-						const ndarray<int16_t, 3>& data = el.data();
+						const ndarray<const int16_t, 3>& data = el.data();
 						if(el.quad() < 4){
 							// Which quadrant is this?
 							int quadrant = el.quad();
@@ -753,7 +753,7 @@ namespace cheetah_ana_pkg {
 				
 				// copy data into event structure if successful
 				if (fullframe) {
-					const	ndarray<uint16_t, 2> data = fullframe->data();
+					const	ndarray<const uint16_t, 2> data = fullframe->data();
 					long	nx = data.shape()[0];
 					long	ny = data.shape()[1];
 					long    pix_nn = nx*ny;
@@ -813,14 +813,14 @@ namespace cheetah_ana_pkg {
 			eventData->pulnixWidth = frmData->width();
 			eventData->pulnixHeight = frmData->height();
 
-			const ndarray<uint8_t, 2>& data8 = frmData->data8();
+			const ndarray<const uint8_t, 2>& data8 = frmData->data8();
 			if (not data8.empty()) {
 				cout << "Pulnix(uint8_t) will not be passed to Cheetah. Complain to Chuck if you need this!" << endl;
 				//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
 				//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
 			}
 
-			const ndarray<uint16_t, 2>& data16 = frmData->data16();
+			const ndarray<const uint16_t, 2>& data16 = frmData->data16();
 			if (not data16.empty()) {
 				eventData->pulnixImage = (uint16_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint16_t));
 				memcpy(eventData->pulnixImage, &data16[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint16_t));

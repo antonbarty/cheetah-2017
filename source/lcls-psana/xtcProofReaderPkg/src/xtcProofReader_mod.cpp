@@ -155,7 +155,7 @@ xtcProofReader_mod::event(Event& evt, Env& env)
   shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
   if (data3.get()) {
 	numEvrData = data3->numFifoEvents();
-  	const ndarray<Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
+  	const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 	if (verbose) { 
 		cout << "*** fiducial: ";
 		for (int i=0; i<numEvrData; i++) {
@@ -533,8 +533,8 @@ xtcProofReader_mod::event(Event& evt, Env& env)
              << "\n  nbrSegments=" << elem.nbrSegments()
      	     << "\n  nbrSamplesInSeg=" << elem.nbrSamplesInSeg()
              << "\n  indexFirstPoint=" << elem.indexFirstPoint();
-        const ndarray<Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-	const ndarray<int16_t, 2>& waveforms = elem.waveforms();
+        const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+	const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
         // loop over segments
         for (unsigned seg = 0; seg<elem.nbrSegments(); ++seg) {
         	unsigned size = std::min(elem.nbrSamplesInSeg(), 32U);
@@ -570,14 +570,14 @@ xtcProofReader_mod::event(Event& evt, Env& env)
              << " depth=" << frmData->depth()
              << " offset=" << frmData->offset() ;
 
-      	const ndarray<uint8_t, 2>& data8 = frmData->data8();
+      	const ndarray<const uint8_t, 2>& data8 = frmData->data8();
       	if (not data8.empty()) {
         cout << " data8=[" << int(data8[0][0])
              << ", " << int(data8[0][1])
              << ", " << int(data8[0][2]) << ", ...]";
       	}
 
-      	const ndarray<uint16_t, 2>& data16 = frmData->data16();
+      	const ndarray<const uint16_t, 2>& data16 = frmData->data16();
       	if (not data16.empty()) {
         cout << " data16=[" << int(data16[0][0])
              << ", " << int(data16[0][1])

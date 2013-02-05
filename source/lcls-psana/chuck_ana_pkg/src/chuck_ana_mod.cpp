@@ -14,7 +14,9 @@
 // This Class's Header --
 //-----------------------
 #include "chuck_ana_pkg/chuck_ana_mod.h"
-#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+//#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+#include "../../../cheetah.lib/cheetah.h"
+
 //-----------------
 // C/C++ Headers --
 //-----------------
@@ -35,7 +37,7 @@
 #include "psddl_psana/camera.ddl.h"
 #include "psddl_psana/cspad2x2.ddl.h"
 
-#include "/reg/neh/home3/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -303,7 +305,8 @@ nevent++;
 if (generateMeanAsicDark) {
 	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 	if (elem1.get()) {
-		const ndarray<int16_t, 3>& data = elem1->data();
+//		const ndarray<int16_t, 3>& data = elem1->data();
+		const ndarray<const int16_t, 3> data = elem1->data();
 		int asicHeight = dimY/2;
 		int numPix = dimX*asicHeight;
 		double mean0 = 0;
@@ -328,7 +331,7 @@ if (generateMeanAsicDark) {
 if (generateDarkFluctuation) {
 	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 	if (elem1.get()) {
-		const ndarray<int16_t, 3>& data = elem1->data();
+		const ndarray<const int16_t, 3>& data = elem1->data();
 		pickC = 102; 	// pick a value between sx and ex, (40,145)
 		pickR = 223;	// pick a value between sy and ey, (210,265)
 		int k = 1;
@@ -339,7 +342,7 @@ if (generateDarkFluctuation) {
 if (generateHistogram) {
 	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 	if (elem1.get()) {
-		const ndarray<int16_t, 3>& data = elem1->data();
+		const ndarray<const int16_t, 3>& data = elem1->data();
 		int k = 1;
 		for (int i = sx; i < ex; i++) { // width
 		for (int j = sy; j < ey; j++) { // height
@@ -356,7 +359,7 @@ if (generateHistogram) {
 if (correctFluores) {
 	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 	if (elem1.get()) {
-		const ndarray<int16_t, 3>& data = elem1->data();
+		const ndarray<const int16_t, 3>& data = elem1->data();
 		int k = 1;
 		double sumPerShot = 0;
 		int goodPixPerShot = 0;
@@ -380,7 +383,7 @@ if (sumSubsectionMinusDarkCommonMode) {
 		double ev = getPhotonEnergyeV(evt, env);
 		double pulseEv = getPulseEnergymJ(evt, env);
 		nonzeroCount++;
-		const ndarray<int16_t, 3>& data = elem1->data();
+		const ndarray<const int16_t, 3>& data = elem1->data();
 		int k = 1;
 		double sumPerShot = 0;
 		int goodPixPerShot = 0;
@@ -419,7 +422,7 @@ if (sumSubsectionMinusDark) {
 		double pulseEv = getPulseEnergymJ(evt, env);
 		//if (ev > 0) { // sometimes ebeam data is not recorded
 			nonzeroCount++;
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			int k = 1;
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
@@ -448,7 +451,7 @@ if (generateDark) { // This works on a subregion
 			nonzeroCount++;
 			photonEnergy.push_back(ev);
 			pulseEnergy.push_back(pulseEv);
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			int k = 1; // second CsPad2x1
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
@@ -470,7 +473,7 @@ if (lookAtSubregion) {
 		ofstream outFile("cspad2x2_subregion.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			for (int j = 0; j < dimY; j++) {
 			for (int i = 0; i < dimX; i++) {
 				int k = 1;
@@ -504,7 +507,7 @@ if (subtractNGainImage) {
 		ofstream outFile("cspad2x2_DarkSubtractedGain.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			for (int j = 0; j < dimY; j++) { // 388
 			for (int i = 0; i < dimX; i++) { // 185
 				int k = 1;
@@ -523,7 +526,7 @@ if (subtractImage) {
 		ofstream outFile("cspad2x2_DarkSubtracted.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			for (int j = 0; j < dimY; j++) { // 388
 			for (int i = 0; i < dimX; i++) { // 185
 				int k = 1;
@@ -544,7 +547,7 @@ if (outputImage) {
 		ofstream outFile("dark_region.txt"); // modify myPsana1 to r117
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
-			const ndarray<int16_t, 3>& data = elem1->data();
+			const ndarray<const int16_t, 3>& data = elem1->data();
 			int k = 1;
 			for (int j = 0; j < dimY; j++) { // 388
 			for (int i = 0; i < dimX; i++) { // 185
