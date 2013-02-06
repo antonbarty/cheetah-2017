@@ -146,6 +146,7 @@ public:
 	/** @brief What's this? */
 	double   AcqSampleInterval;
 
+	
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;

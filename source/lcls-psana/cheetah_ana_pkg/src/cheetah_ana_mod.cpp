@@ -808,7 +808,8 @@ namespace cheetah_ana_pkg {
 		//		CxiSc1
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
 		eventData->pulnixFail = 1;
-		if (frmData.get()) {
+		int usePulnix = 0;		// Ignore Pulnix camera
+		if (frmData.get() && usePulnix ) {
 			eventData->pulnixFail = 0;
 			eventData->pulnixWidth = frmData->width();
 			eventData->pulnixHeight = frmData->height();
@@ -827,6 +828,7 @@ namespace cheetah_ana_pkg {
 			}  
 		}
 
+		
 		// Update detector positions
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
 			eventData->detector[detID].detectorZ = detectorPosition[detID];

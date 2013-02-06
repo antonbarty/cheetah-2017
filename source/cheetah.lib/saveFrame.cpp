@@ -44,6 +44,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 }
 
 
+
 /*
  *	Update the subdirectory name
  */
@@ -55,11 +56,11 @@ void makeSubdir(cEventData *event, cGlobal *global) {
 	
 	if (global->subdirFileCount == filesPerDirectory || global->subdirFileCount == -1) {
 		char subdir[80];
-
 		global->subdirNumber += 1;
 		sprintf(subdir, "data%li", global->subdirNumber);
 		//mkdir(subdir);
 		strcpy(global->subdirName, subdir);
+		global->subdirFileCount = 0;
 	};
 
 	global->subdirFileCount += 1;
@@ -547,9 +548,10 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	// Time in human readable format
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
+	char ctime_buffer[1024];
 	char* timestr;
 	time_t eventTime = info->seconds;
-	timestr = ctime_r(&eventTime);
+	timestr = ctime_r(&eventTime, ctime_buffer);
 	dataspace_id = H5Screate(H5S_SCALAR);
 	datatype = H5Tcopy(H5T_C_S1);  
 	H5Tset_size(datatype,strlen(timestr)+1);
