@@ -456,7 +456,9 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->bgbuffer_mutex);
 	pthread_mutex_destroy(&global->framefp_mutex);
 	pthread_mutex_destroy(&global->peaksfp_mutex);
-	pthread_mutex_destroy(&global->powderfp_mutex);  
+	pthread_mutex_destroy(&global->powderfp_mutex);
+	pthread_mutex_destroy(&global->subdir_mutex);
+
     
     printf("Cheetah clean exit\n");
 }

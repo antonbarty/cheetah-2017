@@ -132,6 +132,12 @@ cGlobal::cGlobal(void) {
 	nThreads = 16;
 	useHelperThreads = 0;
 	threadPurge = 10000;
+	
+	// Saving to subdirectories
+	subdirFileCount = -1;
+	subdirNumber = 0;
+	strcpy(subdirName, "");
+
 
 	// Log files
 	strcpy(logfile, "log.txt");
@@ -234,6 +240,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&framefp_mutex, NULL);
 	pthread_mutex_init(&powderfp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
+	pthread_mutex_init(&subdir_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 
@@ -902,7 +909,7 @@ void cGlobal::writeInitialLog(void){
 		printf("Aborting...");
 		exit(1);
 	}
-	fprintf(cleanedfp, "# Filename, nPeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
+	fprintf(cleanedfp, "# Filename, frameNumber, nPeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
 	pthread_mutex_unlock(&framefp_mutex);
 
 	pthread_mutex_lock(&peaksfp_mutex);

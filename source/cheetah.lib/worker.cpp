@@ -277,7 +277,7 @@ void *worker(void *threadarg) {
         printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
 
-	else if((global->hdf5dump > 0) && ((eventData->threadNum % global->hdf5dump) == 0)) {        
+	else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
 		writeHDF5(eventData, global);
         printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }

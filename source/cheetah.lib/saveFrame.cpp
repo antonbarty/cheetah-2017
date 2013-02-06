@@ -25,20 +25,49 @@
 
 
 
-void nameEvent(cEventData *info, cGlobal *global){
+/*
+ *	Create a standardised name for this event
+ */
+void nameEvent(cEventData *event, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
 	 */
 	char buffer1[80];
 	char buffer2[80];	
-	time_t eventTime = info->seconds;
+	time_t eventTime = event->seconds;
 	
 	struct tm *timestatic, timelocal;
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(info->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,info->fiducial);
+	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,event->fiducial);
 }
+
+
+/*
+ *	Update the subdirectory name
+ */
+void makeSubdir(cEventData *event, cGlobal *global) {
+
+	long filesPerDirectory = 1000;
+	
+	pthread_mutex_lock(&global->subdir_mutex);
+	
+	if (global->subdirFileCount == filesPerDirectory || global->subdirFileCount == -1) {
+		char subdir[80];
+
+		global->subdirNumber += 1;
+		sprintf(subdir, "data%li", global->subdirNumber);
+		mkdir(subdir);
+		strcpy(global->subdirName, subdir);
+	};
+
+	global->subdirFileCount += 1;
+	
+	pthread_mutex_unlock(&global->subdir_mutex);
+
+}
+
 
 
 
@@ -48,12 +77,18 @@ void nameEvent(cEventData *info, cGlobal *global){
 void writeHDF5(cEventData *info, cGlobal *global){
 	/*
 	 *	Create filename based on date, time and fiducial for this image
+	 *	and put it in the current working sub-directory
 	 */
 	char outfile[1024];
-	strcpy(outfile, info->eventname);
+	makeSubdir(info, global);
+	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
+
 	
+	/*
+	 *	Update text file log
+	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->cleanedfp, "r%04u/%s, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
+	fprintf(global->cleanedfp, "r%04u/%s, $li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	

@@ -212,10 +212,21 @@ public:
 	/** @brief TODO: Where is this used? */
 	unsigned runNumber;
 
+	/*
+	 *	File management
+	 */
 	FILE    *framefp;
 	FILE    *cleanedfp;
 	FILE    *peaksfp;
+	
+	/*
+	 *	Subdir management
+	 */
+	long	subdirFileCount;
+	long	subdirNumber;
+	char    subdirName[MAX_FILENAME_LENGTH];
 
+	
 	// Thread management
 	int      useHelperThreads;
 	long     nThreads;
@@ -231,6 +242,7 @@ public:
 	pthread_mutex_t  framefp_mutex;
 	pthread_mutex_t  powderfp_mutex;
 	pthread_mutex_t  peaksfp_mutex;
+	pthread_mutex_t  subdir_mutex;
 
 
 
