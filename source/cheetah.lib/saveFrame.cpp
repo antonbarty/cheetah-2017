@@ -58,7 +58,7 @@ void makeSubdir(cEventData *event, cGlobal *global) {
 
 		global->subdirNumber += 1;
 		sprintf(subdir, "data%li", global->subdirNumber);
-		mkdir(subdir);
+		//mkdir(subdir);
 		strcpy(global->subdirName, subdir);
 	};
 
@@ -549,7 +549,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
 	char* timestr;
 	time_t eventTime = info->seconds;
-	timestr = ctime(&eventTime);
+	timestr = ctime_r(&eventTime);
 	dataspace_id = H5Screate(H5S_SCALAR);
 	datatype = H5Tcopy(H5T_C_S1);  
 	H5Tset_size(datatype,strlen(timestr)+1);
