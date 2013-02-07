@@ -10,29 +10,17 @@ export LIBPATH=$HOME/local/lib
 # LATEST PSANA
 ########################
 
-#cd source/lcls-psana
 cd $CHEETAHDIR/source/lcls-psana
-
 relupgrade ana-current
-scons -c
-
 . /reg/g/psdm/bin/sit_setup.sh
-export LIBPATH=/reg/neh/home3/yoon82/local/lib
+export LIBPATH=$HOME/local/lib
+scons -c
 scons
-
-########################
-# PDSLIB
-########################
-
-# Make LCLS pds libraries
-#cd $CHEETAHDIR/source/lcls/myana/release/pdsdata
-#make x86_64-linux
 
 ########################
 # LIBCHEETAH
 ########################
 
-# 
 export LD_LIBRARY_PATH="$INSTALLDIR/lib:$HDF5DIR/lib"
 export LD_LIBRARY_PATH="$CHEETAHDIR/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux:$LD_LIBRARY_PATH"
 export LD_RUN_PATH=$LD_LIBRARY_PATH
@@ -40,7 +28,6 @@ export LD_RUN_PATH=$LD_LIBRARY_PATH
 # build libcheetah
 cd $CHEETAHDIR/source
 make clean
-#make cheetah
 make libcheetah
 
 # Now "install" the libcheetah library...
@@ -61,17 +48,9 @@ cp hitfinder quickview framesorter $INSTALLDIR/scripts
 # PSANA
 ########################
 
-export LIBPATH=/reg/neh/home3/yoon82/local/lib
+export LIBPATH=/reg/neh/home3/yoon82/local/lib:$LIBPATH
 
 cd $CHEETAHDIR/source/lcls-psana
 
 . /reg/g/psdm/bin/sit_setup.sh
-#scons -c
-scons
-
-#cd $CHEETAHDIR/source/lcls-psana
-
-#. /reg/g/psdm/bin/sit_setup.sh
-#scons -c
-#scons
-
+scons	# Do not scons -c here
