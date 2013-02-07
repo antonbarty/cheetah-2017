@@ -14,7 +14,6 @@
 // This Class's Header --
 //-----------------------
 #include "chuck_ana_pkg/chuck_ana_mod.h"
-//#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
 #include "../../../cheetah.lib/cheetah.h"
 
 //-----------------

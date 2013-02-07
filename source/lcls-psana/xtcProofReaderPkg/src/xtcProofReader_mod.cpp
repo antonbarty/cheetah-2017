@@ -14,7 +14,7 @@
 // This Class's Header --
 //-----------------------
 #include "xtcProofReaderPkg/xtcProofReader_mod.h"
-#include "/reg/neh/home3/yoon82/cheetah/source/cheetah.lib/cheetah.h"
+#include "../../../cheetah.lib/cheetah.h"
 //-----------------
 // C/C++ Headers --
 //-----------------
@@ -33,7 +33,7 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 
-#include "/reg/neh/home3/yoon82/cheetah/source/lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
 
 #define beamCode 140
 #define laserCode 41
