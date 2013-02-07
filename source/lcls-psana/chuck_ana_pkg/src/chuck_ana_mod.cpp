@@ -305,7 +305,6 @@ nevent++;
 if (generateMeanAsicDark) {
 	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 	if (elem1.get()) {
-//		const ndarray<int16_t, 3>& data = elem1->data();
 		const ndarray<const int16_t, 3> data = elem1->data();
 		int asicHeight = dimY/2;
 		int numPix = dimX*asicHeight;
