@@ -36,8 +36,6 @@
 #include "psddl_psana/camera.ddl.h"
 #include "psddl_psana/cspad2x2.ddl.h"
 
-#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
