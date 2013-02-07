@@ -14,6 +14,8 @@
 #include <math.h>
 #include <hdf5.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+
 
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
@@ -58,7 +60,7 @@ void makeSubdir(cEventData *event, cGlobal *global) {
 		char subdir[80];
 		global->subdirNumber += 1;
 		sprintf(subdir, "data%li", global->subdirNumber);
-		//mkdir(subdir);
+		mkdir(subdir, 0777);
 		strcpy(global->subdirName, subdir);
 		global->subdirFileCount = 0;
 	};
