@@ -257,7 +257,12 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   /* /entry_1 */
   cxi->entry.self = H5Gcreate(cxi->self, "/entry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  cxi->entry.data.self = H5Gcreate(cxi->self, "/data_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Gcreate(cxi->entry.self, "data_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Lcreate_soft("/entry_1/instrument_1/detector_1/data",cxi->entry.self,"data_1/data",H5P_DEFAULT,H5P_DEFAULT);
+  
+  H5Gcreate(cxi->entry.self, "data_2", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Lcreate_soft("/entry_1/instrument_1/detector_2/data",cxi->entry.self,"data_2/data",H5P_DEFAULT,H5P_DEFAULT);
+
   cxi->entry.instrument.self = H5Gcreate(cxi->self, "/entry_1/instrument_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   cxi->entry.instrument.source.self = H5Gcreate(cxi->self, "/entry_1/instrument_1/source_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
