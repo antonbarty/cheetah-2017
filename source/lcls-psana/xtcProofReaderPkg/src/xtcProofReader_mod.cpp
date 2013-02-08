@@ -33,7 +33,7 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 
-#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+//#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
 
 #define beamCode 140
 #define laserCode 41

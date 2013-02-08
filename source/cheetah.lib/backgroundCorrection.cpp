@@ -98,7 +98,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
 	DETECTOR_LOOP {
-        if (global->detector[detID].useSubtractPersistentBackground) 
+        if (global->detector[detID].useSubtractPersistentBackground)
 						
             if (hit==0 || global->detector[detID].bgIncludeHits) {
 				
