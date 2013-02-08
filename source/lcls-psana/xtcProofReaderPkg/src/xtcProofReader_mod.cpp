@@ -33,8 +33,6 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 
-//#include "../../../lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
-
 #define beamCode 140
 #define laserCode 41
 #define verbose 1
@@ -155,6 +153,7 @@ xtcProofReader_mod::event(Event& evt, Env& env)
   shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
   if (data3.get()) {
 	numEvrData = data3->numFifoEvents();
+	// const added to psana interface everywhere
   	const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 	if (verbose) { 
 		cout << "*** fiducial: ";
