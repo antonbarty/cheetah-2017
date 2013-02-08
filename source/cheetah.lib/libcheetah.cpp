@@ -410,10 +410,25 @@ void cheetahExit(cGlobal *global) {
 	printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
 	printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
 	
-	// Wait for threads to finish
+	/*
+	 *	Wait for all worker threads to finish
+	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+	 */	
+	time_t	tstart, tnow;
+	time(&tstart);
+	double	dtime;
+	float	maxwait = 10*60.;
+
 	while(global->nActiveThreads > 0) {
 		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
 		usleep(100000);
+		time(&tnow);
+		dtime = difftime(tnow, tstart);
+		if(dtime > maxwait) {
+			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
+			printf("\tGiving up and exiting anyway\n");
+			break;
+		}
 	}
 	
 	
