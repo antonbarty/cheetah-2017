@@ -391,9 +391,9 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
         for(long detID=0; detID<global->nDetectors; detID++) {
             saveRunningSums(global, detID);
-            global->updateLogfile();
         }
         saveRadialStacks(global);
+		global->updateLogfile();
 	}
 	
 }

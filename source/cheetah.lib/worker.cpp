@@ -39,12 +39,6 @@ void *worker(void *threadarg) {
 	global = eventData->pGlobal;
 	int	hit = 0;
 	
-	std::vector<int> myvector;
-        std::stringstream sstm;
-	std::string result;
-        std::ofstream outFlu;
-	std::ios_base::openmode mode;
-
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	 * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
@@ -222,29 +216,7 @@ void *worker(void *threadarg) {
 		}
 	}
 
-	/*
-	 *	Write cspad to file in 1D
-	 */
-/*	if (eventData->threadNum < 6000+50) {
-	std::cout << "Write cspad to file.. single threaded" << std::endl;
-	DETECTOR_LOOP {
-                for(long i=0;i<global->detector[detID].pix_nn;i++){
-                        myvector.push_back( (int16_t) lrint(eventData->detector[detID].corrected_data[i]) );
-                }
-	}
-       // Write out files
-        sstm << "r0" << global->runNumber << "_cspad_corrected1D";
-        result = sstm.str();
-        outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
-	//std::cout << myvector.size() << std::endl;
-	//std::cout << global->nDetectors << std::endl;
-        for (unsigned i = 0; i < myvector.size(); i++ ) {
-        	outFlu << myvector[i] << " ";
-        }
-        outFlu << std::endl;
-        outFlu.close();
-	}
-*/
+
 
 	/*
 	 *	Assemble quadrants into a 'realistic' 2D image
@@ -357,8 +329,6 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		return;
 	}
  
-	int nCh = g->AcqNumChannels;
-	int nSamp = g->AcqNumSamples;
 	double * Vtof = t->TOFVoltage;
 	int i;
 	double Vtot = 0;
