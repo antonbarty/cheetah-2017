@@ -66,6 +66,7 @@ void makeSubdir(cEventData *event, cGlobal *global) {
 	};
 
 	global->subdirFileCount += 1;
+	strcpy(event->eventSubdir, global->subdirName);
 	
 	pthread_mutex_unlock(&global->subdir_mutex);
 
@@ -91,7 +92,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 *	Update text file log
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->cleanedfp, "r%04u/%s, $li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
+	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventSubdir, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
