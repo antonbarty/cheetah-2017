@@ -44,6 +44,8 @@ void *worker(void *threadarg) {
 	std::string result;
         std::ofstream outFlu;
 	std::ios_base::openmode mode;
+	std::stringstream sstm1;
+	std::ofstream outHit;
 
 	/*
 	 * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
@@ -225,7 +227,8 @@ void *worker(void *threadarg) {
 	/*
 	 *	Write cspad to file in 1D
 	 */
-/*	if (eventData->threadNum < 6000+50) {
+/*
+//	if (eventData->threadNum >= 0) {
 	std::cout << "Write cspad to file.. single threaded" << std::endl;
 	DETECTOR_LOOP {
                 for(long i=0;i<global->detector[detID].pix_nn;i++){
@@ -233,9 +236,10 @@ void *worker(void *threadarg) {
                 }
 	}
        // Write out files
-        sstm << "r0" << global->runNumber << "_cspad_corrected1D";
+        sstm << "r0" << global->runNumber << "_cspad_corrected1D_" << eventData->frameNumber;
         result = sstm.str();
-        outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
+        //outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
+	outFlu.open(result.c_str()); // output cspad for all shots
 	//std::cout << myvector.size() << std::endl;
 	//std::cout << global->nDetectors << std::endl;
         for (unsigned i = 0; i < myvector.size(); i++ ) {
@@ -243,7 +247,15 @@ void *worker(void *threadarg) {
         }
         outFlu << std::endl;
         outFlu.close();
-	}
+
+	sstm1 << "r0" << global->runNumber << "_cspad_corrected1D_target_" << eventData->frameNumber;
+        result = sstm1.str();
+        outHit.open(result.c_str()); // output cspad for all shots
+        outHit << eventData->hit;
+	outHit << std::endl;
+        outHit.close();
+
+//	}
 */
 
 	/*
