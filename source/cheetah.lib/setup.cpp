@@ -82,7 +82,7 @@ cGlobal::cGlobal(void) {
 	hitfinderMinPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
-	hitfinderLocalBGThickness = 1;
+	hitfinderLocalBGThickness = 5;
 	//hitfinderLimitRes = 1;
 	hitfinderMinRes = 0;
 	hitfinderMaxRes = 1e10;

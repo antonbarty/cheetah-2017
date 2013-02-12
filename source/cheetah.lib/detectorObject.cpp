@@ -595,7 +595,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 			global->hitfinderResMask[i] = 0;
     }
 
-	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n",minres,maxres);
+	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
 
 }
 

@@ -14,6 +14,7 @@
 
 
 // Peakfinders local to this routine
+int hitfinder1(cGlobal*, cEventData*, int);
 int peakfinder3(cGlobal*, cEventData*, int);
 int peakfinder5(cGlobal*, cEventData*, int);
 int peakfinder6(cGlobal*, cEventData*, int);
@@ -64,13 +65,14 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 	
 	/*
-	 *	Use a data buffer so we can zero out pixels already counted
+	 *	Create a buffer for image data so we don't nuke the main image by mistake 
 	 */
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
 	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
+	
 	/*
-	 *	Apply peak search mask 
+	 *	Apply peak search mask
 	 *	(multiply data by 0 to ignore regions)
 	 */
 	if(global->hitfinderUsePeakmask) {
@@ -80,11 +82,20 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	}
 	
 	
-	// Combined mask
+	/*
+	 *	Apply other bad region masks
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	// Combined mask of regions to ignore
 	int* mask = (int *) calloc(pix_nn, sizeof(int) );
-	memcpy(mask, global->hitfinderResMask, pix_nn*sizeof(int));
-	for (long i=0; i<pix_nn; i++) 
-        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * eventData->detector[detID].saturatedPixelMask[i];
+	memset(mask, 1, pix_nn*sizeof(int));
+	for (long i=0; i<pix_nn; i++) {
+        mask[i] =  global->hitfinderResMask[i];
+		mask[i] *= global->detector[detID].hotpixelmask[i];
+		mask[i] *= global->detector[detID].badpixelmask[i];
+		mask[i] *= eventData->detector[detID].saturatedPixelMask[i];
+		temp[i] *= mask[i];
+	}
 	
     
 	/*
@@ -96,35 +107,18 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			hit = 1;
 	
 		case 1 :	// Count the number of pixels above ADC threshold
-			for(long i=0;i<pix_nn;i++){
-				if(temp[i] > global->hitfinderADC){
-					total += temp[i];
-					nat++;
-				}
-			}
-			if(nat >= global->hitfinderMinPixCount)
+			hit = hitfinder1(global, eventData,detID);
+			if(eventData->nPeaks >= global->hitfinderMinPixCount)
 				hit = 1;
-			
-			eventData->peakNpix = nat;
-			eventData->nPeaks = nat;
-			eventData->peakTotal = total;
 			break;
 			
 			
 		case 2 :	//	integrated intensity above threshold
-			for(long i=0;i<pix_nn;i++){
-				if(temp[i] > global->hitfinderADC){
-					total += temp[i];
-					nat++;
-				}
-			}
-			if(total >= global->hitfinderTAT) 
+			hit = hitfinder1(global, eventData,detID);
+			if(eventData->peakTotal >= global->hitfinderTAT)
 				hit = 1;
-			
-			eventData->peakNpix = nat;
-			eventData->nPeaks = nat;
-			eventData->peakTotal = total;
 			break;
+
 			
 		case 3 : 	// Count number of Bragg peaks
 			hit = peakfinder3(global, eventData, detID);			
@@ -233,11 +227,72 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 }
 
+/*
+ *	Hitfinder #1
+ *	Count the number of pixels above ADC threshold
+ */
+
+int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
+
+	long		nat, hit;
+	float		total;
+	long		pix_nn = global->detector[detID].pix_nn;
+	
+	
+	/*
+	 *	Create a buffer for image data so we don't nuke the main image by mistake
+	 */	
+	float *temp = (float*) calloc(pix_nn, sizeof(float));
+	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	
+	
+	/*
+	 *	Apply peak search mask
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	if(global->hitfinderUsePeakmask) {
+		for(long i=0;i<pix_nn;i++){
+			temp[i] *= global->detector[detID].peakmask[i];
+		}
+	}
+	
+	/*
+	 *	Apply other bad region masks
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	// Combined mask of regions to ignore
+	int* mask = (int *) calloc(pix_nn, sizeof(int) );
+	memset(mask, 1, pix_nn*sizeof(int));
+	for (long i=0; i<pix_nn; i++) {
+        mask[i] =  global->hitfinderResMask[i];
+		mask[i] *= global->detector[detID].hotpixelmask[i];
+		mask[i] *= global->detector[detID].badpixelmask[i];
+		mask[i] *= eventData->detector[detID].saturatedPixelMask[i];
+		temp[i] *= mask[i];
+	}
+	
+	
+	for(long i=0;i<pix_nn;i++){
+		if(temp[i] > global->hitfinderADC){
+			total += temp[i];
+			nat++;
+		}
+	}
+	if(nat >= global->hitfinderMinPixCount)
+		hit = 1;
+	
+	eventData->peakNpix = nat;
+	eventData->nPeaks = nat;
+	eventData->peakTotal = total;
+	
+	return hit;
+}
+
 
 
 /*
  *	Peakfinder 3
- *	Search of connected pixels above threshold
+ *	Count peaks by searching for connected pixels above threshold
  *	Anton Barty
  */
 int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
@@ -273,31 +328,46 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long thisx;
 	long thisy;
 	long fs, ss;
-	//float grad;
-	//float lbg, imbg; /* local background nearby peak */
-	//float *lbg_buffer;
-	//int fsmin, fsmax, ssmin, ssmax;
-	//int lbg_ss, lbg_fs, lbg_e;
-	//int thisfs, thisss;
 	float mingrad = global->hitfinderMinGradient*2;
 	mingrad *= mingrad;
-	//double dx1, dx2, dy1, dy2;
-	//double dxs, dys;
 	
 	nat = 0;
 	counter = 0;
 	total = 0.0;
 	
-	// Combined mask of all areas to ignore
-	int *mask = (int *) calloc(pix_nn, sizeof(int) );
-	memcpy(mask,global->hitfinderResMask,pix_nn*sizeof(int));
-	for (long i=0; i<pix_nn; i++) 
-        mask[i] *= global->detector[detID].hotpixelmask[i] * global->detector[detID].badpixelmask[i] * eventData->detector[detID].saturatedPixelMask[i] * global->detector[detID].peakmask[i];
 	
-	// zero out bad pixels in temporary intensity map
-	float* temp = (float *) calloc(pix_nn,sizeof(float));
-	for (long i=0; i<pix_nn; i++) 
-        temp[i] = eventData->detector[detID].corrected_data[i]*mask[i];
+	/*
+	 *	Create a buffer for image data so we don't nuke the main image by mistake
+	 */
+	float *temp = (float*) calloc(pix_nn, sizeof(float));
+	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	
+	
+	/*
+	 *	Apply peak search mask
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	if(global->hitfinderUsePeakmask) {
+		for(long i=0;i<pix_nn;i++){
+			temp[i] *= global->detector[detID].peakmask[i];
+		}
+	}	
+	
+	/*
+	 *	Apply other bad region masks
+	 *	(multiply data by 0 to ignore regions)
+	 */
+	// Combined mask of regions to ignore
+	int* mask = (int *) calloc(pix_nn, sizeof(int) );
+	memset(mask, 1, pix_nn*sizeof(int));
+	for (long i=0; i<pix_nn; i++) {
+        mask[i] =  global->hitfinderResMask[i];
+		mask[i] *= global->detector[detID].hotpixelmask[i];
+		mask[i] *= global->detector[detID].badpixelmask[i];
+		mask[i] *= eventData->detector[detID].saturatedPixelMask[i];
+		temp[i] *= mask[i];
+	}
+	
 	
     
 	// Loop over modules (8x8 array)
@@ -318,31 +388,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 						exit(1);
 					}
 					
-					if(temp[e] > global->hitfinderADC){
-						
-                        // Rick's gradient test (if minGradient>0)
-                        /*
-						if ( global->hitfinderMinGradient > 0 ){
-							
-							// Get gradients 
-							dx1 = temp[e] - temp[e+1];
-							dx2 = temp[e-1] - temp[e];
-							dy1 = temp[e] - temp[e+global->pix_nx];
-							dy2 = temp[e-global->pix_nx] - temp[e];
-							
-							// Average gradient measurements from both sides 
-							dxs = ((dx1*dx1) + (dx2*dx2)) / 2;
-							dys = ((dy1*dy1) + (dy2*dy2)) / 2;
-							
-							// Calculate overall gradient 
-							grad = dxs + dys;
-							
-                            if ( grad < global->hitfinderMinGradient ) 
-                               continue;
-						}
-                        */	
-						
-						
+					if(temp[e] > global->hitfinderADC){						
 						// This might be the start of a peak - start searching
 						inx[0] = i;
 						iny[0] = j;
@@ -458,7 +504,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
                             
                             
                             // Skip this 'peak' if signal to noise criterion is not met 
-                            if( localSigma*global->hitfinderMinSNR > totI)
+                            if( totI < localSigma*global->hitfinderMinSNR )
                                 continue;
                         }
                         
