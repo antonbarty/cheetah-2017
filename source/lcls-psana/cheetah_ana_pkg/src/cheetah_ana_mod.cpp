@@ -488,8 +488,10 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
-		//! get beamOn
-		bool beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
+	//! get beamOn
+	bool beamOn;
+	if (data3.get()) {
+		beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
 		if (verbose) {
 			cout << "***** beamOn: " << beamOn << endl;
 		}
@@ -513,7 +515,7 @@ namespace cheetah_ana_pkg {
 			 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
 		}
 		// laserSwitch should be as large as count (50% on and off)
-
+	}
 
 		//!! get CsPadData
 		for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
