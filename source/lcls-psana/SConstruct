@@ -3,7 +3,7 @@
 #
 # Main SCons script for SIT release building
 #
-# $Id: SConstruct.main 4158 2012-07-16 20:57:23Z salnikov@SLAC.STANFORD.EDU $
+# $Id: SConstruct.main 5205 2013-01-28 23:51:50Z salnikov@SLAC.STANFORD.EDU $
 #
 #===============================================================================
 
@@ -42,6 +42,9 @@ if os.environ["SIT_RELEASE"] != test_rel:
 #
 for dirs in [("SConsTools/src", "SConsTools"), ("SConsTools/src/tools", "SConsTools/tools")]:
     if os.path.isdir(dirs[0]):
+
+        # python tends to remember empty directories, reset its cache
+        sys.path_importer_cache = {}
 
         # list of python files in source directory
         pys = set(f for f in os.listdir(dirs[0]) if os.path.splitext(f)[1] == ".py")
@@ -200,6 +203,7 @@ if 'psddl' in packages:
 if 'psana' in packages:
     docTargets.append(env.Command('doc/psana-doxy/html/index.html', env.Dir('psana'), "doxy-driver -m psana doc/psana-doxy/"))
     docTargets.append(env.Command('doc/psana-modules-doxy/html/index.html', env.Dir('psana'), "doxy-driver -m psana-modules doc/psana-modules-doxy/"))
+    docTargets.append(env.Command('doc/psana-ref/html/index.html', env.Dir('psana'), "pydoc-driver -p psana -Q doc/psana-ref/html psana _psana"))
 if 'pyana' in packages:
     docTargets.append(env.Command('doc/pyana-ref/html/index.html', env.Dir('pyana'), "pydoc-driver -p pyana -Q doc/pyana-ref/html pyana _pdsdata pypdsdata"))
 env.Alias('doc', docTargets)

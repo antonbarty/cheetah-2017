@@ -254,7 +254,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
             while (global->nActiveThreads > 0) 
                 usleep(10000);
             
-            printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
+            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
             if ( isnan(eventData->wavelengthA ) ) {
                 printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
             }	

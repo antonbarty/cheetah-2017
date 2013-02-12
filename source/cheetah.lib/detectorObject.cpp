@@ -551,27 +551,29 @@ bounds:
  *  (called whenever detector has moved)
  */
 void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
-    long i;
-    float   x, y, z, r;
-    float   kx,ky,kz,kr;
-    float   res,minres,maxres;
-
-	minres = 99999999;
-	maxres = -99999999;
+    double   x, y, z, r;
+    double   kx,ky,kz,kr;
+    double   res,minres,maxres;
+	double	 sin_theta;
+	
+	minres = 100000;
+	maxres = 0.0;
 
     printf("Recalculating K-space coordinates\n");
 
-    for ( i=0; i<pix_nn; i++ ) {
+    for (long i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
         y = pix_y[i]*pixelSize;
         z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
-        
         r = sqrt(x*x + y*y + z*z);
-        kx = x/r/wavelengthA;
-        ky = y/r/wavelengthA;
+		
+        kx = (x/r)/wavelengthA;
+        ky = (y/r)/wavelengthA;
         kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
         kr = sqrt(kx*kx + ky*ky + kz*kz);
-        res = 1.0/kr;
+        //res = 1.0/kr;
+		sin_theta = sqrt(x*x+y*y)/r;
+		res = wavelengthA/(sin_theta);
         
         pix_kx[i] = kx;
         pix_ky[i] = ky;
@@ -579,21 +581,21 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         pix_kr[i] = kr;
         pix_res[i] = res;
         
-		if ( res < minres ) minres = res;
-		if ( res > maxres ) maxres = res;
+		if ( res < minres )
+			minres = res;
+		if ( res > maxres )
+			maxres = res;
         
-        // Check whether resolution limits still make sense.
-        if ( global->hitfinderLimitRes == 1 ) {
-            if ( ( res < global->hitfinderMinRes ) && (res > global->hitfinderMaxRes) ) {
-                global->hitfinderResMask[i] = 1;
-            } 
-            else {
-                global->hitfinderResMask[i] = 0;
-            }
-        }
+		
+        // Generate resolution limit mask
+		// (resolution in PIXELS)
+		if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+			global->hitfinderResMask[i] = 1;
+		else
+			global->hitfinderResMask[i] = 0;
     }
 
-	printf("\tCurrent resolution (i.e. d-spacing) range is %.1f - %.1f A\n",minres,maxres);
+	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n",minres,maxres);
 
 }
 
