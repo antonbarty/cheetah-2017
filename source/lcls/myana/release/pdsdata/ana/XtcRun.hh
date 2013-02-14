@@ -51,7 +51,6 @@ private:
   ClockTime _end;
 };
 
-
 } // namespace Ana
 } // namespace Pds
 

@@ -647,3 +647,4 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	H5Fclose(fh);
 }
+

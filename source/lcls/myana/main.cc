@@ -107,7 +107,6 @@ using std::auto_ptr;
 using namespace Pds;
 using namespace Ana;
 
-
 static string GenerateCtrlPvHashKey( const char* pvName, int arrayIndex);
 
 class XtcWriter {
@@ -2530,7 +2529,6 @@ void makeoutfilename(char* filename, char* outfilename)
   strncpy(outfilename+end-start+1,".root",6);
 }
 
-
 static void dump(Dgram* dg, unsigned int uCurCalib, int iSlice, int64_t i64Offset)
 {
   char buff[128];
@@ -3232,15 +3230,12 @@ int main(int argc, char *argv[])
 
   char outfile[200];
   char filename[200];  
-
   if (xtcname)
     makeoutfilename(xtcname, outfile);
   else if (filelist)
     makeoutfilename(filelist, outfile);
   else if (runPrefix)
     makeoutfilename(runPrefix, outfile);
-
-
 
 //  printf("Opening ROOT output file %s\n", outfile);
 //  TFile *out;

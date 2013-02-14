@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 
 #include "pdsdata/ana/XtcSlice.hh"
-#include "pdsdata/ana/XtcRun.hh"
 
 namespace Pds
 {  
@@ -82,7 +81,6 @@ bool XtcSlice::_open(int64_t i64Offset)
       
   const char* fname = _current->c_str();
   _fd = ::open(fname,O_LARGEFILE,O_RDONLY);
-  fprintf(stderr,"**********Opening %s\n***",fname);
   if (_fd == -1) {
     char buff[256];
     sprintf(buff,"Error opening file %s\n",fname);

@@ -7,20 +7,18 @@
 //
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 #include <hdf5.h>
 #include <math.h>
 #include <pthread.h>
 #include <limits>
 #include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
 #include <fenv.h>
 #include <unistd.h>
 
 #include "cheetah.h"
-
-
 
 
 /*
@@ -37,7 +35,6 @@ void cheetahInit(cGlobal *global) {
     global->writeConfigurationLog();
     printf("Cheetah clean initialisation\n");
     
-
 }
 
 /*
@@ -310,7 +307,6 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
 /*
  *  libCheetah event processing function (multithreaded)
  */
-
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
     
@@ -320,6 +316,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     cheetahUpdateGlobal(global, eventData);
     
 
+    
     /*
      *  I/O speed test
      *  How fast is processEvent called?

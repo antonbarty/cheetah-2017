@@ -46,7 +46,6 @@ static Pds::CsPad::ConfigV2 configV2;
 static Pds::CsPad::ConfigV3 configV3;
 static Pds::CsPad::ConfigV4 configV4;
 
-
 // Cheetah specific
 Pds::DetInfo::Device        detectorType[MAX_DETECTORS];
 Pds::DetInfo::Detector      detectorPdsDetInfo[MAX_DETECTORS];
