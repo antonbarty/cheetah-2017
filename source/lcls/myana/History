@@ -1,7 +1,0 @@
-2011-Apr-25	weaver	Changed XtcRun to a multi-threaded model for reading xtc files
-			- one thread per slice plus one thread for analysis.
-			Added use of PNCCD::ConfigV2.  Added "event shifting" (-O option)
-			and "split event recovery" (-S option).
-			Added Post-Run3 metrology to example/CspadGeometry.
-			Added a parameter to example/CspadCorrector frame noise pedestal 
-			detection.
