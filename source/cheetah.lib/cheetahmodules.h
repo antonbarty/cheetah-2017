@@ -49,7 +49,9 @@ void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 
-
+// saveCXI.cpp
+void writeCXI(cEventData *info, cGlobal *global);
+void closeCXIFiles(cGlobal * global);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);

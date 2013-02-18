@@ -369,7 +369,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		long i;
 		char * pixelmasks = (char *) calloc(global->detector[0].pix_nn,sizeof(char));
-		for (i=0; i<global->detector[0].pix_nn; i++) {
+	       for (i=0; i<global->detector[0].pix_nn; i++) {
 			pixelmasks[i] = 0; // default: all bits are equal to 1
 			if ( global->detector[0].badpixelmask[i] == 0 )
 				pixelmasks[i] |= (1 << 0);

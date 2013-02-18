@@ -7,12 +7,14 @@
  *
  */
 
+#ifndef CHEETAHGLOBAL_H
+#define CHEETAHGLOBAL_H
+#include "detectorObject.h"
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
 #define MAX_EPICS_PVS 10
 #define MAX_EPICS_PV_NAME_LENGTH 512
-
 
 /** @brief Global variables.
  *
@@ -31,7 +33,7 @@ public:
 	/** @brief Path to the global configuration file */
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
-
+	char     currentCXIFileName[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 
@@ -40,6 +42,8 @@ public:
 
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
+
+	long frameNumber;
 
 	/** @brief Detector settings that don't change from shot to shot. */
 	cPixelDetectorCommon detector[MAX_DETECTORS];
@@ -244,8 +248,7 @@ public:
 	pthread_mutex_t  peaksfp_mutex;
 	pthread_mutex_t  subdir_mutex;
 
-
-
+	bool oneFilePerImage;
 
 	/*
 	 *	Common variables
@@ -313,3 +316,4 @@ private:
 	int parseConfigTag(char*, char*);
 
 };
+#endif

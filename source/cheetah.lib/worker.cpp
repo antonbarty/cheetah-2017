@@ -244,18 +244,23 @@ void *worker(void *threadarg) {
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
 	save:
-	if(hit && global->savehits) {
-		writeHDF5(eventData, global);
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+    if(hit && global->savehits) {
+      if(global->oneFilePerImage){
+        writeHDF5(eventData, global);
+      }else{
+        writeCXI(eventData, global);
+      }
+      printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+    }else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
+      if(global->oneFilePerImage){
+         writeHDF5(eventData, global);
+      }else{
+        writeCXI(eventData, global);
+      }
+      printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+    }else{
+      printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
     }
-
-	else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
-		writeHDF5(eventData, global);
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
-    }
-	else
-		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
-
     
     
 	/*

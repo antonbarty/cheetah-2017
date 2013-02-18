@@ -13,7 +13,8 @@
 //#include "cspad/CspadTemp.hh"
 //#include "cspad/CspadCorrector.hh"
 //#include "cspad/CspadGeometry.hh"
-
+#ifndef DETECTOROBJECT_H
+#define DETECTOROBJECT_H
 
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
@@ -261,4 +262,4 @@ public:
 
 };
 
-
+#endif

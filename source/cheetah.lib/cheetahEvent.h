@@ -11,6 +11,8 @@
 
 
 
+#ifndef CHEETAHEVENT_H
+#define CHEETAHEVENT_H
 
 /*
  *	Structure used for passing information to worker threads
@@ -20,9 +22,11 @@ class cEventData {
 public:
 	// Reference to common global structure
 	cGlobal		*pGlobal;
-	int			busy;
-	long        threadNum;
-	long        frameNumber;
+	int		busy;
+	long		threadNum;
+	long            frameNumber;
+	long            frameNum;
+
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
@@ -71,6 +75,8 @@ public:
 	char		timeString[1024];
 	char		eventname[1024];
 	char		eventSubdir[1024];
+	char            cxiFilename[1024];
+
 	bool		beamOn;
 	unsigned	runNumber;
 
@@ -118,5 +124,5 @@ public:
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
 
-
+#endif
 

@@ -70,14 +70,14 @@ $(MYANADIR)/main.o: $(MYANADIR)/main.cc $(MYANADIR)/myana.hh $(MYANADIR)/main.hh
 #	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
 $(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh
 	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
-	
+
 myana:
 $(MYANADIR)/myana:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
 	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana.cc
 $(MYANADIR)/myana_morefeatures:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
 	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana_morefeatures.cc
 
-	
+
 
 # Cheetah library
 cheetah.lib: cheetah.o libcheetah.o worker.o setup.o data2d.o median.o hitfinders.o detectorObject.o detectorCorrection.o backgroundCorrection.o powder.o radialAverage.o saveFrame.o
@@ -111,7 +111,7 @@ backgroundCorrection.o: backgroundCorrection.cpp cheetah.h cheetahEvent.h cheeta
 
 powder.o: powder.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
-    
+
 radialAverage.o: radialAverage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
@@ -121,13 +121,16 @@ saveFrame.o: saveFrame.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObje
 assemble2DImage.o: assemble2DImage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
+saveCXI.o: saveCXI.cpp saveCXI.h
+	$(CPP) $(CFLAGS) $<
 
 cheetah-myana.o: cheetah-myana.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
 # Cheetah
-cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o 
+cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o saveCXI.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
-libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o
-	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o 
+libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
+        gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
+

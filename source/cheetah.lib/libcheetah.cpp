@@ -26,12 +26,12 @@
 void cheetahInit(cGlobal *global) {
     
     global->self = global;
-	//global->defaultConfiguration();
-	global->parseConfigFile(global->configFile);
-
-	global->setup();
-	global->writeInitialLog();
-	global->writeConfigurationLog();
+    //global->defaultConfiguration();
+    global->parseConfigFile(global->configFile);
+    
+    global->setup();
+    global->writeInitialLog();
+    global->writeConfigurationLog();
     printf("Cheetah clean initialisation\n");
     
 }
@@ -312,8 +312,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *	Remember to update global variables 
 	 */
     cheetahUpdateGlobal(global, eventData);
+    
 
-  
     
     /*
      *  I/O speed test
@@ -360,21 +360,19 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_init(&threadAttribute);
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
         
-		// Create a new worker thread for this data frame
+        // Create a new worker thread for this data frame
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
-		if (returnStatus == 0) { // creation successful
-	        // Increment threadpool counter
-    	    pthread_mutex_lock(&global->nActiveThreads_mutex);
-        	global->nActiveThreads += 1;
-        	global->threadCounter += 1;
-        	pthread_mutex_unlock(&global->nActiveThreads_mutex);
-		}
-        else {
-            printf("Error: thread creation failed (frame skipped)\n");
+	if (returnStatus == 0) { // creation successful
+	  // Increment threadpool counter
+	  pthread_mutex_lock(&global->nActiveThreads_mutex);
+	  global->nActiveThreads += 1;
+	  global->threadCounter += 1;
+	  pthread_mutex_unlock(&global->nActiveThreads_mutex);
+	}else{
+	  printf("Error: thread creation failed (frame skipped)\n");
         }
-
         pthread_attr_destroy(&threadAttribute);
     }
 	
@@ -406,31 +404,34 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 void cheetahExit(cGlobal *global) {
     
     global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-	global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
-	printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
-	printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
-	
-	/*
-	 *	Wait for all worker threads to finish
-	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
-	 */	
-	time_t	tstart, tnow;
-	time(&tstart);
-	double	dtime;
-	float	maxwait = 10*60.;
 
-	while(global->nActiveThreads > 0) {
-		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-		usleep(100000);
-		time(&tnow);
-		dtime = difftime(tnow, tstart);
-		if(dtime > maxwait) {
-			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
-			printf("\tGiving up and exiting anyway\n");
-			break;
-		}
-	}
-	
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
+    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
+
+    /*
+     *	Wait for all worker threads to finish
+     *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+     */
+    time_t	tstart, tnow;
+    time(&tstart);
+    double	dtime;
+    float	maxwait = 10*60.;
+
+    while(global->nActiveThreads > 0) {
+      printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+      usleep(100000);
+      time(&tnow);
+      dtime = difftime(tnow, tstart);
+      if(dtime > maxwait) {
+        printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
+        printf("\tGiving up and exiting anyway\n");
+        break;
+      }
+    }
+    
+    // Close all CXI files
+    closeCXIFiles(global);
 	
 	// Save powder patterns
     for(long detID=0; detID<global->nDetectors; detID++) {
