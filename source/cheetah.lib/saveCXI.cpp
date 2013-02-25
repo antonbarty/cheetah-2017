@@ -380,10 +380,10 @@ static void  closeCXI(CXI::File * cxi){
 
 void closeCXIFiles(cGlobal * global){
 #if H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 8 && H5_VERS_RELEASE < 9
-#warn "HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n"
-#warn "Please update your HDF5 to get properly truncated output files.\n"
+#warning "HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n"
+#warning "Please update your HDF5 to get properly truncated output files.\n"
   fprintf(stderr,"HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n");
-  fprintf(stderr,"Please update your HDF5 to get properly truncated output files.\n")
+  fprintf(stderr,"Please update your HDF5 to get properly truncated output files.\n");
 #else
   pthread_mutex_lock(&global->framefp_mutex);
   /* Go through each file and resize them to their right size */
