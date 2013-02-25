@@ -394,6 +394,7 @@ void closeCXIFiles(cGlobal * global){
   openFilenames.clear();
   pthread_mutex_unlock(&global->framefp_mutex);
 #endif
+  H5close();
 }
 
 void writeCXI(cEventData *info, cGlobal *global ){

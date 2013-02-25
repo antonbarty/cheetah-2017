@@ -36,6 +36,7 @@ void cheetahInit(cGlobal *global) {
     
 }
 
+
 /*
  *  libCheetah function for start of a new run
  */
