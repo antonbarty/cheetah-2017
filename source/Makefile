@@ -132,5 +132,5 @@ cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfind
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
-        gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
+	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
 
