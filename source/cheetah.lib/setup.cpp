@@ -103,6 +103,13 @@ cGlobal::cGlobal(void) {
 	//tofType = Pds::DetInfo::Acqiris;
 	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 
+	//RBEAN
+	// energy spectrum default configuration
+	espectrum1D = 1;
+	spectiltang = 0;
+	espectrumLength = 1080;
+	//RBEANend
+
 	// Powder pattern generation
 	nPowderClasses = 2;
 	usePowderThresh = 0;
