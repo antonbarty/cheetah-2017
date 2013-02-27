@@ -238,8 +238,14 @@ void *worker(void *threadarg) {
 	 */
     addToPowder(eventData, global);
     
+    //RBEAN
+    /*
+     * calculate the one dimesional beam spectrum
+     */
+    integrateSpectrum(eventData, global);
+    //RBEANend
     
-    	
+    
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
