@@ -40,6 +40,10 @@ public:
 	int				pulnixFail;
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
+    
+    //RBEAN
+    double          *energySpectrum1D;
+    //RBEANend
 
 	// Hit finding
 	int			hit;

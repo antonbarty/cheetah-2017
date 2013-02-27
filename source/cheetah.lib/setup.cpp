@@ -106,7 +106,7 @@ cGlobal::cGlobal(void) {
 	//RBEAN
 	// energy spectrum default configuration
 	espectrum1D = 1;
-	spectiltang = 0;
+	espectiltang = 0;
 	espectrumLength = 1080;
 	//RBEANend
 

@@ -149,7 +149,7 @@ public:
     /** @brief Toggle energy spectrum creation. */
     int      espectrum1D;
     /** @brief Angle of spectra from horizontal (clockwise). */
-    int      spectiltang;
+    int      espectiltang;
     /** @brief Length in pixels of energy spectrum (same as pulnixcamera height). */
     int      espectrumLength;
     //endRBEAN
