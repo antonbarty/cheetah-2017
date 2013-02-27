@@ -116,8 +116,11 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
-
-	
+    //RBEAN
+    int spectrumLength = global->espectrumLength;
+    eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
+	//RBEANend
+    
     // Return
     return eventData;
 }
