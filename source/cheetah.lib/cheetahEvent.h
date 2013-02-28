@@ -43,6 +43,7 @@ public:
     
     //RBEAN
     double          *energySpectrum1D;
+    int             energySpectrumExist;
     //RBEANend
 
 	// Hit finding

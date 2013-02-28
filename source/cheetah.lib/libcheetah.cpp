@@ -119,6 +119,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
     //RBEAN
     int spectrumLength = global->espectrumLength;
     eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
+    eventData->energySpectrumExist = 0;
 	//RBEANend
     
     // Return

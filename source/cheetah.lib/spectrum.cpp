@@ -35,6 +35,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     int spectra = global->espectrum1D;
     
     if(hit && !camfail && spectra && pulnixWidth == 900 && pulnixHeight == 1080){
+        eventData->energySpectrumExist = 1;
         for(long i=0; i<pulnixHeight; i++){
             eventData->energySpectrum1D[i] = 1;
         }
