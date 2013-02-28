@@ -266,7 +266,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
         size[0] = global->espectrumLength;
         
         dataspace_id = H5Screate_simple(1, size, NULL);
-        dataset_id = H5Dcreate(gid, "energySpectrum", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+        dataset_id = H5Dcreate(gid, "energySpectrum", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->energySpectrum1D);
         H5Dclose(dataset_id);
         H5Sclose(dataspace_id);
