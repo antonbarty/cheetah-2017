@@ -51,10 +51,24 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 
 // integrate region of spectrum into single line and output
 void integrateSpectrum(cEventData *eventData, cGlobal *global, int pulnixWidth,int pulnixHeight) {
-    
-    for(long i=0; i<pulnixHeight; i++){
-        eventData->energySpectrum1D[i] = eventData->pulnixImage[i];
+    float PIE = 3.141;
+    float ttilt = tanf(global->espectiltang*PIE/180);
+    int pulindex;
+    int newind;
+
+    for (long i=0; i<pulnixHeight; i++) {
+        for (long j=0; j<pulnixWidth; j++) {
+            newind = i - ceilf(j*ttilt);        // index of the integrated array, must be integer
+            if (newind >= 0 && newind < pulnixHeight) {
+                pulindex = i*pulnixWidth + j;   // index of the 2D camera array
+                eventData->energySpectrum1D[newind]+= eventData->pulnixImage[pulindex];
+            }
+        }
     }
+    
+    //for(long i=0; i<pulnixHeight; i++){
+    //    eventData->energySpectrum1D[i] = eventData->pulnixImage[i];
+    //}
     printf("======================================================\n");
     printf("spectrum out\n");
     printf("======================================================\n");
