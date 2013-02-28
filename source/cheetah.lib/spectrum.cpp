@@ -15,14 +15,14 @@
 #include <stdlib.h>
 
 //#include "spectrum.h"
-//#include "detectorObject.h"
+#include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
 //#include "median.h"
 
 
-//NOT YET CALLED BY ANYTHING
+// Called by worker @ line 245
 
 // proceed if event is a 'hit', spectrum is desired & camera sucesfully outputs data
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
@@ -35,6 +35,9 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     int spectra = global->espectrum1D;
     
     if(hit && !camfail && spectra && pulnixWidth == 900 && pulnixHeight == 1080){
+        for(long i=0; i<pulnixHeight; i++){
+            eventData->energySpectrum1D[i] = 1;
+        }
         printf("======================================================\n");
         printf("spectrum out\n");
         printf("======================================================\n");
