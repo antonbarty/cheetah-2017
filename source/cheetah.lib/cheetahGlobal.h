@@ -251,6 +251,7 @@ public:
 	pthread_mutex_t  peaksfp_mutex;
 	pthread_mutex_t  subdir_mutex;
     pthread_mutex_t  nespechits_mutex;
+    pthread_mutex_t  espectrumRun_mutex;
 
 
 
@@ -275,7 +276,10 @@ public:
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;
+    //RBEAN
     long     nespechits;
+    double  *espectrumRun;
+    //RBEANend
 
 	time_t   tstart, tend;
 	time_t   tlast, tnow;

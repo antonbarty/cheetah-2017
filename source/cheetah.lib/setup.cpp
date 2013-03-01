@@ -221,6 +221,16 @@ void cGlobal::setup() {
 		hitfinderResMask[j] = 1;
 	}
 
+    //RBEAN
+    /*
+     * Set up array for run integrated energy spectrum
+     */
+    espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
+    for(long i=0; i<espectrumLength; i++) {
+        espectrumRun[i] = 0;
+    }
+    //RBEANend
+    
 
 	/*
 	 * Set up arrays for powder classes and radial stacks
@@ -251,6 +261,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	pthread_mutex_init(&subdir_mutex, NULL);
     pthread_mutex_init(&nespechits_mutex, NULL);
+    pthread_mutex_init(&espectrumRun_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 

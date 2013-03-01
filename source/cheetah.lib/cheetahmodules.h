@@ -62,6 +62,7 @@ int  hitfinder(cEventData*, cGlobal*);
 //RBEAN
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void integrateRunSpectrum(cEventData*, cGlobal*);
 //RBEANend
 
 

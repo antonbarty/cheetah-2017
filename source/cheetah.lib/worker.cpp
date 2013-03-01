@@ -243,6 +243,7 @@ void *worker(void *threadarg) {
      * calculate the one dimesional beam spectrum
      */
     integrateSpectrum(eventData, global);
+    integrateRunSpectrum(eventData, global);
     //RBEANend
     
     
