@@ -250,6 +250,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&powderfp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	pthread_mutex_init(&subdir_mutex, NULL);
+    pthread_mutex_init(&nespechits_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 
@@ -321,6 +322,7 @@ void cGlobal::setup() {
 	npowderBlanks = 0;
 	nhits = 0;
 	nrecenthits = 0;
+    nespechits = 0;
 	nprocessedframes = 0;
 	nrecentprocessedframes = 0;
 	lastclock = clock()-10;
@@ -651,6 +653,18 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertofthresh")) {
 		hitfinderTOFThresh = atof(value);
 	}
+    //RBEAN
+    // Energy spectrum parameters
+    else if (!strcmp(tag, "espectiltang")) {
+        espectiltang = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrum1D")) {
+        espectrum1D = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumLength")) {
+        espectrumLength = atoi(value);
+    }
+    //RBEANend
 	// Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);

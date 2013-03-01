@@ -250,6 +250,7 @@ public:
 	pthread_mutex_t  powderfp_mutex;
 	pthread_mutex_t  peaksfp_mutex;
 	pthread_mutex_t  subdir_mutex;
+    pthread_mutex_t  nespechits_mutex;
 
 
 
@@ -270,11 +271,11 @@ public:
 
 	long     npowderHits;
 	long     npowderBlanks;
-
 	long     nprocessedframes;
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;
+    long     nespechits;
 
 	time_t   tstart, tend;
 	time_t   tlast, tnow;
