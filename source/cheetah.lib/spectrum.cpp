@@ -73,12 +73,16 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int pulnixWidth,i
 void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 
     // Update integrated run spectrum
-    if(eventData->energySpectrumExist) {
+    if(eventData->hit && eventData->energySpectrumExist) {
         pthread_mutex_lock(&global->espectrumRun_mutex);
         for (long i=0; i<global->espectrumLength; i++) {
             global->espectrumRun[i] += eventData->energySpectrum1D[i];
         }
         pthread_mutex_unlock(&global->espectrumRun_mutex);
+        printf("======================================================\n");
+        printf("integrated run spectrum updated\n");
+        printf("======================================================\n");
+        return;
     }
     
     // Update spectrum hit counter
@@ -87,9 +91,27 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 		global->nespechits++;
 		pthread_mutex_unlock(&global->nespechits_mutex);
 	}
+}
+
+void saveIntegratedRunSpectrum(cGlobal *global) {
+    
+    pthread_mutex_lock(&global->espectrumRun_mutex);
+    pthread_mutex_lock(&global->nespechits_mutex);
+    
+    char	filename[1024];
+    
+    sprintf(filename,"r%04u-integratedEnergySpectrum.h5", global->runNumber);
+    printf("Saving run-integrated energy spectrum: %s\n", filename);
+    
+    writeSimpleHDF5onedim(filename, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE);
+    
+    pthread_mutex_unlock(&global->espectrumRun_mutex);
+    pthread_mutex_unlock(&global->nespechits_mutex);
+    
     printf("======================================================\n");
-    printf("integrated run spectrum updated\n");
+    printf("integrated run spectrum output\n");
     printf("======================================================\n");
     return;
+    
 }
 

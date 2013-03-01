@@ -709,3 +709,69 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	H5Fclose(fh);
 }
 
+void writeSimpleHDF5onedim(const char *filename, const void *data, int length, int type)
+{
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	herr_t r;
+	hsize_t size[1];
+	hsize_t max_size[1];
+	
+	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if ( fh < 0 ) {
+		ERROR("Couldn't create file: %s\n", filename);
+	}
+	
+	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gh < 0 ) {
+		ERROR("Couldn't create group\n");
+		H5Fclose(fh);
+	}
+	
+	size[0] = length;
+	sh = H5Screate_simple(1, size, NULL);
+	
+	dh = H5Dcreate(gh, "data", type, sh,
+	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( dh < 0 ) {
+		ERROR("Couldn't create dataset\n");
+		H5Fclose(fh);
+	}
+	
+	/* Muppet check */
+	H5Sget_simple_extent_dims(sh, size, max_size);
+	
+	r = H5Dwrite(dh, type, H5S_ALL,
+	             H5S_ALL, H5P_DEFAULT, data);
+	if ( r < 0 ) {
+		ERROR("Couldn't write data\n");
+		H5Dclose(dh);
+		H5Fclose(fh);
+	}
+	
+	H5Gclose(gh);
+	H5Dclose(dh);
+	
+	
+	/*
+	 *	Clean up stale HDF5 links
+	 *		(thanks Tom/Filipe)
+	 */
+	int n_ids;
+	hid_t ids[256];
+	n_ids = H5Fget_obj_ids(fh, H5F_OBJ_ALL, 256, ids);
+	for ( int i=0; i<n_ids; i++ ) {
+		hid_t id;
+		H5I_type_t type;
+		id = ids[i];
+		type = H5Iget_type(id);
+		if ( type == H5I_GROUP ) H5Gclose(id);
+		if ( type == H5I_DATASET ) H5Dclose(id);
+		if ( type == H5I_DATATYPE ) H5Tclose(id);
+		if ( type == H5I_DATASPACE ) H5Sclose(id);
+		if ( type == H5I_ATTR ) H5Aclose(id);
+	}
+	
+	
+	H5Fclose(fh);
+}
+

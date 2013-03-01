@@ -442,6 +442,10 @@ void cheetahExit(cGlobal *global) {
     }
     saveRadialStacks(global);
 	global->writeFinalLog();
+    
+    // Save integrated run spectrum
+    saveIntegratedRunSpectrum(global);
+    
 	
 	// Hitrate?
 	printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
@@ -477,6 +481,8 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->peaksfp_mutex);
 	pthread_mutex_destroy(&global->powderfp_mutex);
 	pthread_mutex_destroy(&global->subdir_mutex);
+    pthread_mutex_destroy(&global->espectrumRun_mutex);
+    pthread_mutex_destroy(&global->nespechits_mutex);
 
     
     printf("Cheetah clean exit\n");
