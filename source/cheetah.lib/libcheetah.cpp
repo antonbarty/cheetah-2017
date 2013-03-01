@@ -254,7 +254,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
             while (global->nActiveThreads > 0) 
                 usleep(10000);
             
-            printf("MESSAGE: Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
+            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
             if ( isnan(eventData->wavelengthA ) ) {
                 printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
             }	
@@ -391,9 +391,9 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
         for(long detID=0; detID<global->nDetectors; detID++) {
             saveRunningSums(global, detID);
-            global->updateLogfile();
         }
         saveRadialStacks(global);
+		global->updateLogfile();
 	}
 	
 }
@@ -410,10 +410,25 @@ void cheetahExit(cGlobal *global) {
 	printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
 	printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
 	
-	// Wait for threads to finish
+	/*
+	 *	Wait for all worker threads to finish
+	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+	 */	
+	time_t	tstart, tnow;
+	time(&tstart);
+	double	dtime;
+	float	maxwait = 10*60.;
+
 	while(global->nActiveThreads > 0) {
 		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
 		usleep(100000);
+		time(&tnow);
+		dtime = difftime(tnow, tstart);
+		if(dtime > maxwait) {
+			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
+			printf("\tGiving up and exiting anyway\n");
+			break;
+		}
 	}
 	
 	

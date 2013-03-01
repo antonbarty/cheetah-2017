@@ -83,7 +83,7 @@ static int histOffset = 500;	// Also store minus pixel values
 int histLength = 10000;
 int pickR = 0;
 int pickC = 0;
-
+int runNumber = 0;
 static cGlobal cheetahGlobal;
 char detZ[] = "CXI:DS1:MMS:06.RBV";
 // Subregion rectangle
@@ -115,7 +115,7 @@ vector<double> pulseEnergy;
 vector<double> fluores;
 vector<double> meanFluores;
 vector<double> stdFluores;
-vector<int> runNumber;
+vector<int> runNumbers;
 vector<int> numImages;
 vector<double> hist(histLength,0);
 vector<double> meanAsic0; // upper left
@@ -170,20 +170,13 @@ void readinDark(string darkFile, vector<vector<double> >& dark){
 	if (infConfig.is_open()) {
 		while (!infConfig.eof()) {
 			getline(infConfig,input_buffer);
-			//cout << "****" << input_buffer << endl;
 			istringstream iss( input_buffer );
   			string word;
  			cntrC = 0; // counter Col
 			while (getline( iss, word, ' ' )){
-    			//cout << "word " << cntrC << ": " << trim( word ) << '\n';
 				trim(word);
-//				if (subtractImage || lookAtSubregion || subtractNGainImage){
-					dark[cntrC][cntrR] = atof(word.c_str()); // 388 x 185
-					// cntrC=185 and cntrR=388
-//				}
-//				if (sumSubsectionMinusDarkCommonMode ||sumSubsectionMinusDark || generateHistogram || generateDarkFluctuation) {
-//					darkSubregion[cntrC][cntrR] = atof(word.c_str());
-//				}
+				dark[cntrC][cntrR] = atof(word.c_str()); // 388 x 185
+				// cntrC=185 and cntrR=388
 				cntrC++;
     		}
 			cntrR++;
@@ -202,14 +195,11 @@ void readinGain(string gainFile, vector<vector<double> >& gain){
 	if (infConfig.is_open()) {
 		while (!infConfig.eof()) {
 			getline(infConfig,input_buffer);
-			//cout << "****" << cntrR << ": " << input_buffer << endl;
 			istringstream iss( input_buffer );
   			string word;
  			cntrR = 0; // counter Row
 			while (getline( iss, word, ' ' )){
-    			//cout << "word " << cntrC << ": " << trim( word ) << '\n';
 				trim(word);
-				//cout << cntrR << " " << word << endl;
 				gain[cntrC][cntrR] = atof(word.c_str()); // 388 x 370
 				// cntrC=370 and cntrR=388
 				cntrR++;
@@ -254,17 +244,10 @@ chuck_ana_mod::~chuck_ana_mod (){}
 void chuck_ana_mod::beginJob(Event& evt, Env& env)
 {
 	cout << "begin beginJob" << endl;
-	//if (subtractImage || lookAtSubregion || subtractNGainImage) {
-		//readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark_region0.txt"); // 388 x 185
-		readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark_region.txt", darkRegion); // 388 x 185
-	//}
 
-	//if (sumSubsectionMinusDarkCommonMode || sumSubsectionMinusDark || generateHistogram || generateDarkFluctuation) {
-		readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark112_cspad2x2",darkSubregion); // 55 x 105
-	//}
-
+	readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark_region.txt", darkRegion); // 388 x 185
+	readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark112_cspad2x2",darkSubregion); // 55 x 105
 	readinGain("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/gainCoor_clean_v1_angle.txt",gainRegion); // 388 x 370
-	
 	readin1D("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/r110_cspad2x2_commonModeDark",commonMode);
 
 	cout << "done beginJob" << endl;
@@ -287,7 +270,20 @@ void chuck_ana_mod::beginRun(Event& evt, Env& env)
 	for (int i = 0; i < histLength; i++){
 		hist[i] = 0;
 	}
-	cout << "end beginRun" << endl;
+
+	// get RunNumber & EventTime
+  	PSTime::Time evtTime;
+  	boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
+  	if (eventId.get()) {
+		runNumber = eventId->run();
+    	evtTime = eventId->time();
+		if (verbose) {
+  			cout << "*** runNumber: " << runNumber << endl; 
+  			cout << "*** eventTime: " << evtTime << endl;
+		}
+  	}
+
+	cout << "Processing events ..." << endl;
 }
 
 /// Method which is called at the beginning of the calibration cycle
@@ -297,154 +293,170 @@ void chuck_ana_mod::beginCalibCycle(Event& evt, Env& env){}
 /// method, all other methods are optional
 void chuck_ana_mod::event(Event& evt, Env& env)
 {
-nevent++;
+	nevent++;
 
-if (generateMeanAsicDark) {
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		// added const
-		const ndarray<const int16_t, 3> data = elem1->data();
-		int asicHeight = dimY/2;
-		int numPix = dimX*asicHeight;
-		double mean0 = 0;
-		double mean1 = 0;
-		double mean2 = 0;
-		double mean3 = 0;
-		for (int i = 0; i < dimX; i++) {
-		for (int j = 0; j < asicHeight; j++) {
-			mean0 += data[i][j+asicHeight][0];
-			mean1 += data[i][j][0];
-			mean2 += data[i][j+asicHeight][1];
-			mean3 += data[i][j][1];
-		}
-		}
-		meanAsic0.push_back(mean0/numPix); // must add since it is flipped
-		meanAsic1.push_back(mean1/numPix);
-		meanAsic2.push_back(mean2/numPix);
-		meanAsic3.push_back(mean3/numPix);
-	}
-}
-
-if (generateDarkFluctuation) {
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		const ndarray<const int16_t, 3>& data = elem1->data();
-		pickC = 102; 	// pick a value between sx and ex, (40,145)
-		pickR = 223;	// pick a value between sy and ey, (210,265)
-		int k = 1;
-		fluores.push_back(data[pickC][pickR][k] - darkSubregion[pickC-sx][pickR-sy]);
-	}
-}
-
-if (generateHistogram) {
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		const ndarray<const int16_t, 3>& data = elem1->data();
-		int k = 1;
-		for (int i = sx; i < ex; i++) { // width
-		for (int j = sy; j < ey; j++) { // height
-			int val = int (ceil(data[i][j][k] - darkSubregion[i-sx][j-sy]));
-			if (val+histOffset <= histLength && val+histOffset >= 0) {
-				hist[val+histOffset] = hist[val+histOffset] + 1;
+	if (generateMeanAsicDark) {
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			// added const
+			const ndarray<const int16_t, 3> data = elem1->data();
+			int asicHeight = dimY/2;
+			int numPix = dimX*asicHeight;
+			double mean0 = 0;
+			double mean1 = 0;
+			double mean2 = 0;
+			double mean3 = 0;
+			for (int i = 0; i < dimX; i++) {
+				for (int j = 0; j < asicHeight; j++) {
+					mean0 += data[i][j+asicHeight][0];
+					mean1 += data[i][j][0];
+					mean2 += data[i][j+asicHeight][1];
+					mean3 += data[i][j][1];
+				}
 			}
+			meanAsic0.push_back(mean0/numPix); // must add since it is flipped
+			meanAsic1.push_back(mean1/numPix);
+			meanAsic2.push_back(mean2/numPix);
+			meanAsic3.push_back(mean3/numPix);
 		}
-		}
-		count++; // frame count
 	}
-}
 
-if (correctFluores) {
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		const ndarray<const int16_t, 3>& data = elem1->data();
-		int k = 1;
-		double sumPerShot = 0;
-		int goodPixPerShot = 0;
-		// fluores area
-		for (int i = sx; i < ex; i++) { // width
-		for (int j = sy; j < ey; j++) { // height
-			if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-				sumPerShot += ( data[i][j][k] - darkSubregion[i-sx][j-sy] - commonMode[nevent] ) / gainRegion[i+k*dimX][j];
-				goodPixPerShot++;
-			}
+	if (generateDarkFluctuation) {
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			const ndarray<const int16_t, 3>& data = elem1->data();
+			pickC = 102; 	// pick a value between sx and ex, (40,145)
+			pickR = 223;	// pick a value between sy and ey, (210,265)
+			int k = 1;
+			fluores.push_back(data[pickC][pickR][k] - darkSubregion[pickC-sx][pickR-sy]);
 		}
-		}
-		fluores.push_back(sumPerShot/(double)goodPixPerShot);
 	}
-}
 
-if (sumSubsectionMinusDarkCommonMode) {
-// Subsection: CsPad2x2 - Dark
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		double ev = getPhotonEnergyeV(evt, env);
-		double pulseEv = getPulseEnergymJ(evt, env);
-		nonzeroCount++;
-		const ndarray<const int16_t, 3>& data = elem1->data();
-		int k = 1;
-		double sumPerShot = 0;
-		int goodPixPerShot = 0;
-		// fluores area
-		for (int i = sx; i < ex; i++) { // width
-		for (int j = sy; j < ey; j++) { // height
-			if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-				sumPerShot += data[i][j][k] - darkSubregion[i-sx][j-sy];
-				goodPixPerShot++;
+	if (generateHistogram) {
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			const ndarray<const int16_t, 3>& data = elem1->data();
+			int k = 1;
+			for (int i = sx; i < ex; i++) { // width
+				for (int j = sy; j < ey; j++) { // height
+					int val = int (ceil(data[i][j][k] - darkSubregion[i-sx][j-sy]));
+					if (val+histOffset <= histLength && val+histOffset >= 0) {
+						hist[val+histOffset] = hist[val+histOffset] + 1;
+					}
+				}
 			}
+			count++; // frame count
 		}
-		}
-		fluores.push_back(sumPerShot/(double)goodPixPerShot);
-		photonEnergy.push_back(ev);
-		pulseEnergy.push_back(pulseEv);
-		sumPerShot = 0;
-		goodPixPerShot = 0;
-		// common mode dark area
-		for (int i = csx; i < cex; i++) { // width
-		for (int j = csy; j < cey; j++) { // height
-			if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-				sumPerShot += data[i][j][k];
-				goodPixPerShot++;
-			}
-		}
-		}
-		meanAsic3.push_back(sumPerShot/(double)goodPixPerShot);
 	}
-}
 
-if (sumSubsectionMinusDark) {
-// Subsection: CsPad2x2 - Dark
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		double ev = getPhotonEnergyeV(evt, env);
-		double pulseEv = getPulseEnergymJ(evt, env);
-		//if (ev > 0) { // sometimes ebeam data is not recorded
+	if (correctFluores) {
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			double ev = getPhotonEnergyeV(evt, env);
+			double pulseEv = getPulseEnergymJ(evt, env);
+			nonzeroCount++;
+			const ndarray<const int16_t, 3>& data = elem1->data();
+			int k = 1;
+			double sumPerShot = 0;
+			int goodPixPerShot = 0;
+			// fluores area
+			for (int i = sx; i < ex; i++) { // width
+				for (int j = sy; j < ey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += ( data[i][j][k] - darkSubregion[i-sx][j-sy] - commonMode[nevent] ) / gainRegion[i+k*dimX][j];
+						goodPixPerShot++;
+					}
+				}
+			}
+			fluores.push_back(sumPerShot/(double)goodPixPerShot);
+			photonEnergy.push_back(ev);
+			pulseEnergy.push_back(pulseEv);
+			sumPerShot = 0;
+			goodPixPerShot = 0;
+			// common mode dark area
+			for (int i = csx; i < cex; i++) { // width
+				for (int j = csy; j < cey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k];
+						goodPixPerShot++;
+					}
+				}
+			}
+			meanAsic3.push_back(sumPerShot/(double)goodPixPerShot);
+		}
+	}
+
+	if (sumSubsectionMinusDarkCommonMode) {
+	// Subsection: CsPad2x2 - Dark
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			double ev = getPhotonEnergyeV(evt, env);
+			double pulseEv = getPulseEnergymJ(evt, env);
+			nonzeroCount++;
+			const ndarray<const int16_t, 3>& data = elem1->data();
+			int k = 1;
+			double sumPerShot = 0;
+			int goodPixPerShot = 0;
+			// fluores area
+			for (int i = sx; i < ex; i++) { // width
+				for (int j = sy; j < ey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k] - darkSubregion[i-sx][j-sy];
+						goodPixPerShot++;
+					}
+				}
+			}
+			fluores.push_back(sumPerShot/(double)goodPixPerShot);
+			photonEnergy.push_back(ev);
+			pulseEnergy.push_back(pulseEv);
+			sumPerShot = 0;
+			goodPixPerShot = 0;
+			// common mode dark area
+			for (int i = csx; i < cex; i++) { // width
+				for (int j = csy; j < cey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k];
+						goodPixPerShot++;
+					}
+				}
+			}
+			meanAsic3.push_back(sumPerShot/(double)goodPixPerShot);
+		}
+	}
+
+	if (sumSubsectionMinusDark) {
+	// Subsection: CsPad2x2 - Dark
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			double ev = getPhotonEnergyeV(evt, env);
+			double pulseEv = getPulseEnergymJ(evt, env);
+			// sometimes ebeam data is not recorded
 			nonzeroCount++;
 			const ndarray<const int16_t, 3>& data = elem1->data();
 			int k = 1;
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
 			for (int i = sx; i < ex; i++) { // width
-			for (int j = sy; j < ey; j++) { // height
-				if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-					sumPerShot += data[i][j][k] - darkSubregion[i-sx][j-sy];
-					goodPixPerShot++;
+				for (int j = sy; j < ey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k] - darkSubregion[i-sx][j-sy];
+						goodPixPerShot++;
+					}
 				}
-			}
 			}
 			fluores.push_back(sumPerShot/(double)goodPixPerShot);
 			photonEnergy.push_back(ev);
 			pulseEnergy.push_back(pulseEv);
-		//}
+		}
 	}
-}
 
-if (generateDark) { // This works on a subregion
-// Darkcal: Sum subsection of CsPad2x2
-	shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
-	if (elem1.get()) {
-		double ev = getPhotonEnergyeV(evt, env);
-		double pulseEv = getPulseEnergymJ(evt, env);
-		//if (ev > 0) { // sometimes ebeam data is not recorded
+	if (generateDark) { // This works on a subregion
+	// Darkcal: Sum subsection of CsPad2x2
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			double ev = getPhotonEnergyeV(evt, env);
+			double pulseEv = getPulseEnergymJ(evt, env);
+			// sometimes ebeam data is not recorded
 			nonzeroCount++;
 			photonEnergy.push_back(ev);
 			pulseEnergy.push_back(pulseEv);
@@ -453,20 +465,19 @@ if (generateDark) { // This works on a subregion
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
 			for (int i = sx; i < ex; i++) { // width
-			for (int j = sy; j < ey; j++) { // height
-				darkSubregion[i-sx][j-sy] += data[i][j][k];
-				if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-					sumPerShot += data[i][j][k];
-					goodPixPerShot++;
+				for (int j = sy; j < ey; j++) { // height
+					darkSubregion[i-sx][j-sy] += data[i][j][k];
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k];
+						goodPixPerShot++;
+					}
 				}
-			}
-			}
+			}	
 			fluores.push_back(sumPerShot/(double)goodPixPerShot);
-		//}
+		}
 	}
-}
 
-if (lookAtSubregion) {
+	if (lookAtSubregion) {
 		ofstream outFile("cspad2x2_subregion.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -485,22 +496,22 @@ if (lookAtSubregion) {
 		}
 		outFile.close();
 		exit(1);
-}
-
-if (lookAtGain) {
-	ofstream outFile("cspad2x2_gain.txt");
-	for (int j = 0; j < dimY; j++) { // 388
-	for (int i = 0; i < 2*dimX; i++) { // 370
-		outFile << gainRegion[i][j] << " ";
 	}
-	outFile << endl;
-	}
-	outFile.close();
-	exit(1);
-}
 
-// Subtract a Fluorescence image by Dark then divide by gain
-if (subtractNGainImage) {
+	if (lookAtGain) {
+		ofstream outFile("cspad2x2_gain.txt");
+		for (int j = 0; j < dimY; j++) { // 388
+			for (int i = 0; i < 2*dimX; i++) { // 370
+				outFile << gainRegion[i][j] << " ";
+			}
+			outFile << endl;
+		}
+		outFile.close();
+		exit(1);
+	}
+
+	// Subtract a Fluorescence image by Dark then divide by gain
+	if (subtractNGainImage) {
 		ofstream outFile("cspad2x2_DarkSubtractedGain.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -515,11 +526,10 @@ if (subtractNGainImage) {
 		}
 		outFile.close();
 		exit(1);
-}
+	}
 
-// Subtract a Fluorescence image by Dark
-if (subtractImage) {
-		//ofstream outFile("cspad2x2_DarkSubtracted0.txt");
+	// Subtract a Fluorescence image by Dark
+	if (subtractImage) {
 		ofstream outFile("cspad2x2_DarkSubtracted.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -534,10 +544,10 @@ if (subtractImage) {
 		}
 		outFile.close();
 		exit(1);
-}
+	}
 
-// Print half of CsPad2x2 to file 
-if (outputImage) {
+	// Print half of CsPad2x2 to file 
+	if (outputImage) {
 		//ofstream outFile("fluores_region.txt"); // modify myPsana1 to r109
 		//ofstream outFile("fluores_region0.txt"); // modify myPsana1 to r109
 		//ofstream outFile("dark_region0.txt"); // modify myPsana1 to r117
@@ -555,8 +565,7 @@ if (outputImage) {
 		}
 		outFile.close();
 		exit(1);
-}
-
+	}
 }
   
 /// Method which is called at the end of the calibration cycle
@@ -569,14 +578,8 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 	if (generateMeanAsicDark) {
 		// Save stats
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-		}
 		stringstream sstm;
-		sstm << "dark" << run << "_cspad2x2_meanAsic";
+		sstm << "dark" << runNumber << "_cspad2x2_meanAsic";
 		string result = sstm.str();
 		ofstream outFile(result.c_str()); // modify myPsana1 to r117
 		// Print mean Asic
@@ -599,15 +602,9 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 	}
 
 	if (generateDarkFluctuation) {
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-		}
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << run << "_cspad2x2_darkPixelFluctuation" << pickR << "_" << pickC;
+		sstm << "r" << runNumber << "_cspad2x2_darkPixelFluctuation" << pickR << "_" << pickC;
 		string result = sstm.str();
   		ofstream outFlu(result.c_str()); // output fluorescence for all shots
   		for (unsigned i = 0; i < fluores.size(); i++ ) {
@@ -618,15 +615,9 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 	}
 
 	if (generateHistogram) {
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-		}
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << run << "_cspad2x2_pixelHistogram";
+		sstm << "r" << runNumber << "_cspad2x2_pixelHistogram";
 		string result = sstm.str();
   		ofstream outFlu(result.c_str()); // output fluorescence for all shots
 		//cout << "hist: " << hist.size() << endl;
@@ -639,33 +630,8 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 	}
 
 	if (correctFluores) {
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-		}
-		// Write out files
-		stringstream sstm;
-		sstm << "r" << run << "_cspad2x2_fluoresCorrect";
-		string result = sstm.str();
-  		ofstream outFlu(result.c_str()); // output fluorescence for all shots
-  		for (unsigned i = 0; i < fluores.size(); i++ ) {
-    		outFlu << fluores[i] << " ";
-		}
-  		outFlu << endl;
-		outFlu.close();
-	}
-
-	if (sumSubsectionMinusDarkCommonMode) {
 		// Save stats
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-			runNumber.push_back(run);
-		}
+		runNumbers.push_back(runNumber);
 		numImages.push_back(nonzeroCount);
 		// Calculate mean and stdev fluorescence
 		double sum = accumulate(fluores.begin(), fluores.end(), 0.0);		
@@ -679,7 +645,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << run << "_cspad2x2_fluores";
+		sstm << "r" << runNumber << "_cspad2x2_fluoresCorrect";
 		string result = sstm.str();
   		ofstream outFlu(result.c_str()); // output fluorescence for all shots
   		for (unsigned i = 0; i < fluores.size(); i++ ) {
@@ -690,7 +656,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "r" << run << "_cspad2x2_photonEnergy";
+		sstm << "r" << runNumber << "_cspad2x2_photonEnergy";
 		result = sstm.str();
 		ofstream outEV(result.c_str()); // output photon energy for all shots
   		for (unsigned i = 0; i < photonEnergy.size(); i++ ) {
@@ -701,7 +667,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "r" << run << "_cspad2x2_pulseEnergy";
+		sstm << "r" << runNumber << "_cspad2x2_pulseEnergy";
 		result = sstm.str();
 		ofstream outPulseEnergy(result.c_str()); // output pulse energy for all shots
 		for (unsigned i = 0; i < pulseEnergy.size(); i++ ) {
@@ -712,7 +678,69 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "r" << run << "_cspad2x2_commonModeDark";
+		sstm << "r" << runNumber << "_cspad2x2_commonModeDark";
+		result = sstm.str();
+  		ofstream outCM(result.c_str()); // output fluorescence for all shots
+		// Calculate mean common mode dark
+		sum = accumulate(meanAsic3.begin(), meanAsic3.end(), 0.0);		
+		mean = sum / meanAsic3.size();
+  		for (unsigned i = 0; i < meanAsic3.size(); i++ ) {
+    		outCM << meanAsic3[i] - mean << " ";
+		}
+  		outCM << endl;
+		outCM.close();
+	}
+
+	if (sumSubsectionMinusDarkCommonMode) {
+		// Save stats
+		runNumbers.push_back(runNumber);
+		numImages.push_back(nonzeroCount);
+		// Calculate mean and stdev fluorescence
+		double sum = accumulate(fluores.begin(), fluores.end(), 0.0);		
+		double mean = sum / fluores.size();
+
+		double sq_sum = inner_product(fluores.begin(), fluores.end(), fluores.begin(), 0.0);
+		double stdev = sqrt(sq_sum / fluores.size() - mean * mean);
+
+		meanFluores.push_back(mean);
+		stdFluores.push_back(stdev);
+
+		// Write out files
+		stringstream sstm;
+		sstm << "r" << runNumber << "_cspad2x2_fluores";
+		string result = sstm.str();
+  		ofstream outFlu(result.c_str()); // output fluorescence for all shots
+  		for (unsigned i = 0; i < fluores.size(); i++ ) {
+    		outFlu << fluores[i] << " ";
+		}
+  		outFlu << endl;
+		outFlu.close();
+
+		sstm.clear();
+		sstm.str("");
+		sstm << "r" << runNumber << "_cspad2x2_photonEnergy";
+		result = sstm.str();
+		ofstream outEV(result.c_str()); // output photon energy for all shots
+  		for (unsigned i = 0; i < photonEnergy.size(); i++ ) {
+    		outEV << photonEnergy[i] << " ";
+		}
+  		outEV << endl;
+		outEV.close();
+
+		sstm.clear();
+		sstm.str("");
+		sstm << "r" << runNumber << "_cspad2x2_pulseEnergy";
+		result = sstm.str();
+		ofstream outPulseEnergy(result.c_str()); // output pulse energy for all shots
+		for (unsigned i = 0; i < pulseEnergy.size(); i++ ) {
+    		outPulseEnergy << pulseEnergy[i] << " ";
+		}
+  		outPulseEnergy << endl;
+		outPulseEnergy.close();
+
+		sstm.clear();
+		sstm.str("");
+		sstm << "r" << runNumber << "_cspad2x2_commonModeDark";
 		result = sstm.str();
   		ofstream outCM(result.c_str()); // output fluorescence for all shots
 		// Calculate mean common mode dark
@@ -727,13 +755,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 	if (sumSubsectionMinusDark) {
 		// Save stats
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-			runNumber.push_back(run);
-		}
+		runNumbers.push_back(runNumber);
 		numImages.push_back(nonzeroCount);
 		// Calculate mean and stdev fluorescence
 		double sum = accumulate(fluores.begin(), fluores.end(), 0.0);		
@@ -747,7 +769,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << run << "_cspad2x2_fluores";
+		sstm << "r" << runNumber << "_cspad2x2_fluores";
 		string result = sstm.str();
   		ofstream outFlu(result.c_str()); // output fluorescence for all shots
   		for (unsigned i = 0; i < fluores.size(); i++ ) {
@@ -758,7 +780,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "r" << run << "_cspad2x2_photonEnergy";
+		sstm << "r" << runNumber << "_cspad2x2_photonEnergy";
 		result = sstm.str();
 		ofstream outEV(result.c_str()); // output photon energy for all shots
   		for (unsigned i = 0; i < photonEnergy.size(); i++ ) {
@@ -769,7 +791,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "r" << run << "_cspad2x2_pulseEnergy";
+		sstm << "r" << runNumber << "_cspad2x2_pulseEnergy";
 		result = sstm.str();
 		ofstream outPulseEnergy(result.c_str()); // output pulse energy for all shots
 		for (unsigned i = 0; i < pulseEnergy.size(); i++ ) {
@@ -781,14 +803,8 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 	if (generateDark) {
 		// Save stats
-		int run = 0;
-  		PSTime::Time evtTime;
-  		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
-  		if (eventId.get()) {
-			run = eventId->run();
-		}
 		stringstream sstm;
-		sstm << "dark" << run << "_cspad2x2";
+		sstm << "dark" << runNumber << "_cspad2x2";
 		string result = sstm.str();
 		ofstream outFile(result.c_str()); // modify myPsana1 to r117
 		// Print average dark subregion CsPad2x2
@@ -801,7 +817,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "dark" << run << "_cspad2x2_fluores";
+		sstm << "dark" << runNumber << "_cspad2x2_fluores";
 		result = sstm.str();
 		ofstream outFlu(result.c_str()); // modify myPsana1 to r117
 		for (int i = 0; i < nonzeroCount; i++) {
@@ -812,7 +828,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "dark" << run << "_cspad2x2_photonEnergy";
+		sstm << "dark" << runNumber << "_cspad2x2_photonEnergy";
 		result = sstm.str();
 		ofstream outEnergy(result.c_str()); // modify myPsana1 to r117
 		for (int i = 0; i < nonzeroCount; i++) {
@@ -823,7 +839,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
-		sstm << "dark" << run << "_cspad2x2_pulseEnergy";
+		sstm << "dark" << runNumber << "_cspad2x2_pulseEnergy";
 		result = sstm.str();
 		ofstream outPulseEnergy(result.c_str()); // output pulse energy for all shots
 		for (unsigned i = 0; i < pulseEnergy.size(); i++ ) {
@@ -839,18 +855,16 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 void chuck_ana_mod::endJob(Event& evt, Env& env)
 {
 	cout << "begin endJob" << endl;
-	if (sumSubsectionMinusDark) {
+	if (sumSubsectionMinusDark || sumSubsectionMinusDarkCommonMode || correctFluores) {
 		cout << "Writing out stats... " << endl;
 		outStats << "Stats: " << endl;
 		outStats << "runNumber	numImages	meanAvgPixValue	stdAvgPixValue" << endl;
 		for (int i = 0; i < runCount; i++) {
-			 outStats << setprecision(8) << runNumber[i] << "\t" << numImages[i] << "\t" << meanFluores[i] << "\t" << stdFluores[i] << endl;
+			 outStats << setprecision(8) << runNumbers[i] << "\t" << numImages[i] << "\t" << meanFluores[i] << "\t" << stdFluores[i] << endl;
 		}
 	}
-
 	// Close files
 	outStats.close();
-
 	cout << "done endJob" << endl;
 }
 

@@ -116,9 +116,8 @@ public:
 	 * hitfinderLocalBGThickness.*/
 	int      hitfinderLocalBGThickness;
 	/** @brief Toggle the useage of a resolution-based annulus mask. */
-	int      hitfinderLimitRes;
+	//int      hitfinderLimitRes;
 	/** @brief Minimum resolution to be considered in hitfinding.
-	 *
 	 * The units are angstroms.  "High" resolution is numerically low,
 	 * thus the minimum resolution should be larger than the maximum
 	 * resolution (sorry for the confusion...). */
@@ -131,7 +130,7 @@ public:
 	int     *hitfinderResMask;
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
-
+	
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -259,20 +258,6 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
-
-	//double			*powderRaw[MAX_POWDER_CLASSES];
-	//double			*powderRawSquared[MAX_POWDER_CLASSES];
-	//double			*powderAssembled[MAX_POWDER_CLASSES];
-	//pthread_mutex_t	powderRaw_mutex[MAX_POWDER_CLASSES];
-	//pthread_mutex_t	powderRawSquared_mutex[MAX_POWDER_CLASSES];
-	//pthread_mutex_t	powderAssembled_mutex[MAX_POWDER_CLASSES];
-
-    /*
-     *  Radial stacks
-     */
-	//long			radialStackCounter[MAX_POWDER_CLASSES];
-	//float			*radialAverageStack[MAX_POWDER_CLASSES];
-	//pthread_mutex_t	radialStack_mutex[MAX_POWDER_CLASSES];
 
 
 

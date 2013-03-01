@@ -82,11 +82,13 @@ cGlobal::cGlobal(void) {
 	hitfinderMinPeakSeparation = 50;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
-	hitfinderLocalBGThickness = 1;
-	hitfinderLimitRes = 0;
-	hitfinderMinRes = 1e20;
-	hitfinderMaxRes = 0;
+	hitfinderLocalBGThickness = 5;
+	//hitfinderLimitRes = 1;
+	hitfinderMinRes = 0;
+	hitfinderMaxRes = 1e10;
 	hitfinderMinSNR = 40;
+
+	
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -708,11 +710,11 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfinderminres")) {
 		hitfinderMinRes = atof(value);
-		hitfinderLimitRes = 1;
+		//hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
-		hitfinderLimitRes = 1;
+		//hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
@@ -835,7 +837,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
 	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
 	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
-	fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
+	//fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
