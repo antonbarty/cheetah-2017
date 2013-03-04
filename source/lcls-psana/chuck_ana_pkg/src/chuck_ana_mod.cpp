@@ -53,17 +53,17 @@
 // gainRegion 388 x 370
 	
 //#define m_lookAtCsPad2x1 0	// use to output a CsPad2x1 frame	(no region)
-#define subtractImage 0	// use to subtract dark frame from fluorescence frame (darkRegion)
-#define subtractNGainImage 0 // // use to subtract dark frame from fluorescence frame followed by gain correction (darkRegion)
-#define lookAtSubregion 0 // use to look at the position of the subregion wrt ASIC	(darkRegion)
-#define lookAtGain 0 // use to look at the position of gainmap	(no region)
-#define generateDark 0		// generate average dark	(no region)
-#define sumSubsectionMinusDark 0	// Dark corrected calculations (darkSubregion)
-#define sumSubsectionMinusDarkCommonMode 0	// Dark background and common mode corrected calculations (darkSubregion)
+//#define subtractImage 0	// use to subtract dark frame from fluorescence frame (darkRegion)
+//#define subtractNGainImage 0 // // use to subtract dark frame from fluorescence frame followed by gain correction (darkRegion)
+//#define lookAtSubregion 0 // use to look at the position of the subregion wrt ASIC	(darkRegion)
+//#define lookAtGain 0 // use to look at the position of gainmap	(no region)
+//#define generateDark 0		// generate average dark	(no region)
+//#define sumSubsectionMinusDark 0	// Dark corrected calculations (darkSubregion)
+//#define sumSubsectionMinusDarkCommonMode 0	// Dark background and common mode corrected calculations (darkSubregion)
 //#define correctFluores 1 // correct for dark, common mode and gain map
-#define generateHistogram 0		// histogram of all pixel values for a run (darkSubregion)
-#define generateDarkFluctuation 0	// fluctuation of a pixel shot to shot for a dark (darkSubregion)
-#define generateMeanAsicDark 0	// fluctuation of mean Asic shot to shot for dark run (no region)
+//#define generateHistogram 0		// histogram of all pixel values for a run (darkSubregion)
+//#define generateDarkFluctuation 0	// fluctuation of a pixel shot to shot for a dark (darkSubregion)
+//#define generateMeanAsicDark 0	// fluctuation of mean Asic shot to shot for dark run (no region)
 //-----------------------------------------------------------------------
 // Local Macros, Typedefs, Structures, Unions and Forward Declarations --
 //-----------------------------------------------------------------------
@@ -222,13 +222,18 @@ chuck_ana_mod::chuck_ana_mod (const std::string& name)
   , m_src()
 //  , m_maxEvents()
 //  , m_count(0)
-  , m_calculateDark(0)
+  , m_generateDark(0)
   , m_outputFluores(0)
+  , m_generateHistogram(0)
+  , m_generatePixelFluctuation(0)
+  , m_generateMeanAsicDark(0)
+  , m_lookAtCsPad2x1(0)
+  , m_lookAtGain(0)
+  , m_lookAtSubregion(0)
   , m_darkFile_388x185("")
   , m_darkSubRegionFile_55x105("")
   , m_gainmapFile_388x370("")
   , m_commonModeFile_1D("")
-  , m_lookAtCsPad2x1(0)
 {
     // get the values from configuration or use defaults
     //m_src = configStr("source", "DetInfo(:Acqiris)");
@@ -244,15 +249,21 @@ chuck_ana_mod::chuck_ana_mod (const std::string& name)
 	m_srcCam = configStr("cameraSource","DetInfo()");
   	m_src2x2 = configStr("source2x2", "DetInfo(:Cspad2x2)");
 
-	m_calculateDark = config("calculateDark");
+	m_generateDark = config("generateDark");
 	m_outputFluores = config("outputFluores");
-	m_lookAtCsPad2x1 = config("lookAtCsPad2x1");
+  	m_generateHistogram = config("generateHistogram");
+  	m_generatePixelFluctuation = config("generatePixelFluctuation");
+  	m_generateMeanAsicDark = config("generateMeanAsicDark");
+  	m_lookAtCsPad2x1 = config("lookAtCsPad2x1");
+  	m_lookAtGain = config("lookAtGain");
+  	m_lookAtSubregion = config("lookAtSubregion");
+	
 	m_darkFile_388x185 = configStr("darkFile_388x185");
 	m_darkSubRegionFile_55x105 = configStr("darkSubRegionFile_55x105");
 	m_gainmapFile_388x370 = configStr("gainmapFile_388x370");
 	m_commonModeFile_1D = configStr("commonModeFile_1D");
-	cout << "m_calculateDark: " << m_calculateDark << endl;
-	cout << "m_darkFile_388x185: " << m_darkFile_388x185 << endl;
+	//cout << "m_generateDark: " << m_generateDark << endl;
+	//cout << "m_darkFile_388x185: " << m_darkFile_388x185 << endl;
 }
 
 //--------------
@@ -269,10 +280,6 @@ void chuck_ana_mod::beginJob(Event& evt, Env& env)
 	readinDark(m_darkSubRegionFile_55x105, darkSubregion);
 	readinGain(m_gainmapFile_388x370, gainRegion);
 	readin1D(m_commonModeFile_1D, commonMode);
-//readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark_region.txt", darkRegion); // 388 x 185
-//	readinDark("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/dark112_cspad2x2",darkSubregion); // 55 x 105
-//	readinGain("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/gainCoor_clean_v1_angle.txt",gainRegion); // 388 x 370
-//	readin1D("/reg/neh/home3/yoon82/cheetah/source/lcls-psana/r110_cspad2x2_commonModeDark",commonMode);
 
 	cout << "done beginJob" << endl;
 }
@@ -319,7 +326,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 {
 	nevent++;
 
-	if (generateMeanAsicDark) {
+	if (m_generateMeanAsicDark) {
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
 			// added const
@@ -345,7 +352,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		}
 	}
 	// generate pixel fluctuation shot to shot
-	if (generateDarkFluctuation) {
+	if (m_generatePixelFluctuation) {
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
 			const ndarray<const int16_t, 3>& data = elem1->data();
@@ -356,7 +363,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		}
 	}
 	// histogram of pixel values for a run
-	if (generateHistogram) {
+	if (m_generateHistogram) {
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
 			const ndarray<const int16_t, 3>& data = elem1->data();
@@ -409,6 +416,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 			meanAsic3.push_back(sumPerShot/(double)goodPixPerShot); // average pixel value per shot
 		}
 	}
+/*
 // Discard
 	if (sumSubsectionMinusDarkCommonMode) {
 	// Subsection: CsPad2x2 - Dark
@@ -473,8 +481,8 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 			pulseEnergy.push_back(pulseEv);
 		}
 	}
-
-	if (generateDark) { // This works on a subregion
+*/
+	if (m_generateDark) { // This works on a subregion
 	// Darkcal: Sum subsection of CsPad2x2
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -501,7 +509,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		}
 	}
 
-	if (lookAtSubregion) {
+	if (m_lookAtSubregion) {
 		ofstream outFile("cspad2x2_subregion.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -522,7 +530,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		exit(1);
 	}
 
-	if (lookAtGain) {
+	if (m_lookAtGain) {
 		ofstream outFile("cspad2x2_gain.txt");
 		for (int j = 0; j < dimY; j++) { // 388
 			for (int i = 0; i < 2*dimX; i++) { // 370
@@ -533,10 +541,14 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		outFile.close();
 		exit(1);
 	}
-// Discard
+
 	// Subtract a Fluorescence image by Dark then divide by gain
-	if (subtractNGainImage) {
-		ofstream outFile("cspad2x2_DarkSubtractedGain.txt");
+	if (m_lookAtCsPad2x1) { //(subtractNGainImage) {
+		stringstream sstm;
+		sstm << "region_" << runNumber << ".txt";
+		string result = sstm.str();
+		ofstream outFile(result.c_str()); // modify myPsana1 to r117
+		//ofstream outFile("cspad2x2_DarkSubtractedGain.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
 			const ndarray<const int16_t, 3>& data = elem1->data();
@@ -551,6 +563,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		outFile.close();
 		exit(1);
 	}
+/*
 // Discard
 	// Subtract a Fluorescence image by Dark
 	if (subtractImage) {
@@ -594,6 +607,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		outFile.close();
 		exit(1);
 	}
+*/
 }
   
 /// Method which is called at the end of the calibration cycle
@@ -604,7 +618,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 {
 	cout << "begin endRun" << endl;
 
-	if (generateMeanAsicDark) {
+	if (m_generateMeanAsicDark) {
 		// Save stats
 		stringstream sstm;
 		sstm << "dark" << runNumber << "_cspad2x2_meanAsic";
@@ -629,7 +643,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		outFile << endl;
 	}
 
-	if (generateDarkFluctuation) {
+	if (m_generatePixelFluctuation) {
 		// Write out files
 		stringstream sstm;
 		sstm << "r" << runNumber << "_cspad2x2_darkPixelFluctuation" << pickR << "_" << pickC;
@@ -642,7 +656,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		outFlu.close();
 	}
 
-	if (generateHistogram) {
+	if (m_generateHistogram) {
 		// Write out files
 		stringstream sstm;
 		sstm << "r" << runNumber << "_cspad2x2_pixelHistogram";
@@ -718,6 +732,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
   		outCM << endl;
 		outCM.close();
 	}
+/*
 // Discard
 	if (sumSubsectionMinusDarkCommonMode) {
 		// Save stats
@@ -828,8 +843,8 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
   		outPulseEnergy << endl;
 		outPulseEnergy.close();
 	}
-
-	if (generateDark) {
+*/
+	if (m_generateDark) {
 		// Save stats
 		stringstream sstm;
 		sstm << "dark" << runNumber << "_cspad2x2";
@@ -845,6 +860,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		sstm.clear();
 		sstm.str("");
+/*
 // Discard
 		sstm << "dark" << runNumber << "_cspad2x2_fluores";
 		result = sstm.str();
@@ -876,6 +892,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		}
   		outPulseEnergy << endl;
 		outPulseEnergy.close();
+*/
 	}
 	cout << "done endRun" << endl;
 }
@@ -884,7 +901,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 void chuck_ana_mod::endJob(Event& evt, Env& env)
 {
 	cout << "begin endJob" << endl;
-	if (sumSubsectionMinusDark || sumSubsectionMinusDarkCommonMode || m_outputFluores) {
+	if (m_outputFluores) {
 		cout << "Writing out stats... " << endl;
 		outStats << "Stats: " << endl;
 		outStats << "runNumber	numImages	meanAvgPixValue	stdAvgPixValue" << endl;

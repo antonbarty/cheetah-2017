@@ -97,9 +97,14 @@ private:
   //unsigned m_maxEvents;
   //bool m_filter;
   //long m_count;
-  bool m_calculateDark;
+  bool m_generateDark;
   bool m_outputFluores;
+  bool m_generateHistogram;
+  bool m_generatePixelFluctuation;
+  bool m_generateMeanAsicDark;
   bool m_lookAtCsPad2x1;
+  bool m_lookAtGain;
+  bool m_lookAtSubregion;
   std::string m_darkFile_388x185;
   std::string m_darkSubRegionFile_55x105;
   std::string m_gainmapFile_388x370;
