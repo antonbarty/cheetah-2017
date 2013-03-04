@@ -122,6 +122,7 @@ vector<double> stdFluores;
 vector<int> runNumbers;
 vector<int> numImages;
 vector<double> hist(histLength,0);
+vector<double> meanAsic;
 vector<double> meanAsic0; // upper left
 vector<double> meanAsic1; // lower left
 vector<double> meanAsic2; // upper right
@@ -413,7 +414,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 					}
 				}
 			}
-			meanAsic3.push_back(sumPerShot/(double)goodPixPerShot); // average pixel value per shot
+			meanAsic.push_back(sumPerShot/(double)goodPixPerShot); // average pixel value per shot
 		}
 	}
 /*
@@ -724,10 +725,10 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		result = sstm.str();
   		ofstream outCM(result.c_str()); // output fluorescence for all shots
 		// Calculate mean common mode dark
-		sum = accumulate(meanAsic3.begin(), meanAsic3.end(), 0.0);		
-		mean = sum / meanAsic3.size();
-  		for (unsigned i = 0; i < meanAsic3.size(); i++ ) {
-    		outCM << meanAsic3[i] - mean << " ";
+		sum = accumulate(meanAsic.begin(), meanAsic.end(), 0.0);		
+		mean = sum / meanAsic.size();
+  		for (unsigned i = 0; i < meanAsic.size(); i++ ) {
+    		outCM << meanAsic[i] - mean << " ";
 		}
   		outCM << endl;
 		outCM.close();
