@@ -105,6 +105,7 @@ private:
   bool m_lookAtCsPad2x1;
   bool m_lookAtGain;
   bool m_lookAtSubregion;
+  bool m_lookAtSubregionSpectra;
   std::string m_darkFile_388x185;
   std::string m_darkSubRegionFile_55x105;
   std::string m_gainmapFile_388x370;
