@@ -93,13 +93,19 @@ protected:
 private:
 
   // Data members, this is for example purposes only
-  
   Source m_src;         // Data source set from config file
-  unsigned m_maxEvents;
-  bool m_filter;
-  long m_count;
+  //unsigned m_maxEvents;
+  //bool m_filter;
+  //long m_count;
+  bool m_calculateDark;
+  bool m_outputFluores;
+  bool m_lookAtCsPad2x1;
+  std::string m_darkFile_388x185;
+  std::string m_darkSubRegionFile_55x105;
+  std::string m_gainmapFile_388x370;
+  std::string m_commonModeFile_1D;
 
-// Data members
+  // Data members
   std::string m_key;
   Source m_srcEvr;
   Source m_srcBeam;
