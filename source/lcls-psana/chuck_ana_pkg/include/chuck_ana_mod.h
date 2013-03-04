@@ -98,6 +98,7 @@ private:
   //bool m_filter;
   //long m_count;
   bool m_generateDark;
+  bool m_generateCommonMode;
   bool m_outputFluores;
   bool m_generateHistogram;
   bool m_generatePixelFluctuation;

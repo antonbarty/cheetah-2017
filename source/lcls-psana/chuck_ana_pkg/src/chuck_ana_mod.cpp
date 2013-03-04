@@ -223,6 +223,7 @@ chuck_ana_mod::chuck_ana_mod (const std::string& name)
   , m_eventNumber(1)
 //  , m_count(0)
   , m_generateDark(0)
+  , m_generateCommonMode(0)
   , m_outputFluores(0)
   , m_generateHistogram(0)
   , m_generatePixelFluctuation(0)
@@ -251,6 +252,7 @@ chuck_ana_mod::chuck_ana_mod (const std::string& name)
   	m_src2x2 = configStr("source2x2", "DetInfo(:Cspad2x2)");
 
 	m_generateDark = config("generateDark");
+	m_generateCommonMode = config("generateCommonMode");
 	m_outputFluores = config("outputFluores");
   	m_generateHistogram = config("generateHistogram");
   	m_generatePixelFluctuation = config("generatePixelFluctuation");
@@ -281,8 +283,9 @@ void chuck_ana_mod::beginJob(Event& evt, Env& env)
 	readinDark(m_darkFile_388x185, darkRegion);
 	readinDark(m_darkSubRegionFile_55x105, darkSubregion);
 	readinGain(m_gainmapFile_388x370, gainRegion);
-	readin1D(m_commonModeFile_1D, commonMode);
-
+	if (!m_commonModeFile_1D.empty()){
+		readin1D(m_commonModeFile_1D, commonMode);
+	}
 	cout << "done beginJob" << endl;
 }
 
@@ -327,6 +330,7 @@ void chuck_ana_mod::beginCalibCycle(Event& evt, Env& env){}
 void chuck_ana_mod::event(Event& evt, Env& env)
 {
 	nevent++;
+	cout << nevent << " ";
 	if (m_generateMeanAsicDark) {
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -442,6 +446,27 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 				}
 			}	
 			fluores.push_back(sumPerShot/(double)goodPixPerShot);
+		}
+	}
+
+	if (m_generateCommonMode) {
+		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
+		if (elem1.get()) {
+			nonzeroCount++;
+			const ndarray<const int16_t, 3>& data = elem1->data();
+			int k = 1;
+			double sumPerShot = 0;
+			int goodPixPerShot = 0;
+			// common mode dark area
+			for (int i = csx; i < cex; i++) { // width
+				for (int j = csy; j < cey; j++) { // height
+					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+						sumPerShot += data[i][j][k];
+						goodPixPerShot++;
+					}
+				}
+			}
+			meanAsic.push_back(sumPerShot/(double)goodPixPerShot); // average pixel value per shot
 		}
 	}
 
@@ -661,10 +686,24 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 			}
 			outFile << endl;
 		}
-
-		sstm.clear();
-		sstm.str("");
 	}
+
+	if (m_generateCommonMode) {
+		// Write out files
+		stringstream sstm;
+		sstm << "r" << runNumber << "_cspad2x2_commonModeDark";
+		string result = sstm.str();
+  		ofstream outCM(result.c_str()); // output fluorescence for all shots
+		// Calculate mean common mode dark
+		double sum = accumulate(meanAsic.begin(), meanAsic.end(), 0.0);		
+		double mean = sum / meanAsic.size();
+  		for (unsigned i = 0; i < meanAsic.size(); i++ ) {
+    		outCM << meanAsic[i] - mean << " ";
+		}
+  		outCM << endl;
+		outCM.close();
+	}
+
 	cout << "done endRun" << endl;
 }
 
