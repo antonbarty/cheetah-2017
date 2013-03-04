@@ -140,13 +140,12 @@ bool eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
   return false;
 }
 
-string trim( const string& s )
-  {
+string trim( const string& s ){
   string result( s );
   result.erase( result.find_last_not_of( " " ) + 1 );
   result.erase( 0, result.find_first_not_of( " " ) );
   return result;
-  }
+}
 
 void readin1D(string vecFile, vector<double>& myVec){
 	cout << "Reading in common mode" << endl;
@@ -221,7 +220,7 @@ void readinGain(string gainFile, vector<vector<double> >& gain){
 chuck_ana_mod::chuck_ana_mod (const std::string& name)
   : Module(name)
   , m_src()
-//  , m_maxEvents()
+  , m_eventNumber(1)
 //  , m_count(0)
   , m_generateDark(0)
   , m_outputFluores(0)
@@ -238,7 +237,7 @@ chuck_ana_mod::chuck_ana_mod (const std::string& name)
 {
     // get the values from configuration or use defaults
     //m_src = configStr("source", "DetInfo(:Acqiris)");
-    //m_maxEvents = config("events");//, 32U);
+    m_eventNumber = config("eventNumber");//, 32U);
     //m_filter = config("filter", false);
 	m_key = configStr("inputKey", "");
 	m_src = configStr("source","DetInfo(:Cspad)");
@@ -326,7 +325,6 @@ void chuck_ana_mod::beginCalibCycle(Event& evt, Env& env){}
 void chuck_ana_mod::event(Event& evt, Env& env)
 {
 	nevent++;
-
 	if (m_generateMeanAsicDark) {
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -510,28 +508,28 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		}
 	}
 
-	if (m_lookAtSubregion) {
+	if (m_lookAtSubregion && m_eventNumber == nevent) {
 		ofstream outFile("cspad2x2_subregion.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
 			const ndarray<const int16_t, 3>& data = elem1->data();
 			for (int j = 0; j < dimY; j++) {
-			for (int i = 0; i < dimX; i++) {
-				int k = 1;
-				if ( i > sx && i < ex && j > sy && j < ey) {
-					outFile << 0 << " ";
-				} else {
-					outFile << data[i][j][k] - darkRegion[i][j] << " ";
+				for (int i = 0; i < dimX; i++) {
+					int k = 1;
+					if ( i > sx && i < ex && j > sy && j < ey) {
+						outFile << 0 << " ";
+					} else {
+						outFile << data[i][j][k] - darkRegion[i][j] << " ";
+					}
 				}
-			}
-			outFile << endl;
+				outFile << endl;
 			}
 		}
 		outFile.close();
 		exit(1);
 	}
 
-	if (m_lookAtGain) {
+	if (m_lookAtGain && m_eventNumber == nevent) {
 		ofstream outFile("cspad2x2_gain.txt");
 		for (int j = 0; j < dimY; j++) { // 388
 			for (int i = 0; i < 2*dimX; i++) { // 370
@@ -544,9 +542,9 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 	}
 
 	// Subtract a Fluorescence image by Dark then divide by gain
-	if (m_lookAtCsPad2x1) { //(subtractNGainImage) {
+	if (m_lookAtCsPad2x1 && m_eventNumber == nevent) { //(subtractNGainImage) {
 		stringstream sstm;
-		sstm << "region_" << runNumber << ".txt";
+		sstm << "cspad2x1_" << runNumber << ".txt";
 		string result = sstm.str();
 		ofstream outFile(result.c_str()); // modify myPsana1 to r117
 		//ofstream outFile("cspad2x2_DarkSubtractedGain.txt");

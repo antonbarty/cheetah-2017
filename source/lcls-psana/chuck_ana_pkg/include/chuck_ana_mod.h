@@ -94,7 +94,7 @@ private:
 
   // Data members, this is for example purposes only
   Source m_src;         // Data source set from config file
-  //unsigned m_maxEvents;
+  int m_eventNumber;
   //bool m_filter;
   //long m_count;
   bool m_generateDark;
