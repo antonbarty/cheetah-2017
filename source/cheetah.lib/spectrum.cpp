@@ -56,7 +56,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int pulnixWidth,i
 
     for (long i=0; i<pulnixHeight; i++) {
         for (long j=0; j<pulnixWidth; j++) {
-            newind = i - ceilf(j*ttilt);        // index of the integrated array, must be integer
+            newind = i + ceilf(j*ttilt);        // index of the integrated array, must be integer
             if (newind >= 0 && newind < pulnixHeight) {
                 pulindex = i*pulnixWidth + j;   // index of the 2D camera array
                 eventData->energySpectrum1D[newind]+= eventData->pulnixImage[pulindex];
@@ -94,15 +94,25 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 
 void saveIntegratedRunSpectrum(cGlobal *global) {
     
+    int maxindex = 0;
+    
     pthread_mutex_lock(&global->espectrumRun_mutex);
     pthread_mutex_lock(&global->nespechits_mutex);
     
     char	filename[1024];
+
+    for (int i=0; i<global->espectrumLength; i++) {
+        if (global->espectrumRun[i] > global->espectrumRun[maxindex]) {
+                maxindex = i;
+        }
+
+    }
     
     sprintf(filename,"r%04u-integratedEnergySpectrum.h5", global->runNumber);
     printf("Saving run-integrated energy spectrum: %s\n", filename);
     
-    writeSimpleHDF5onedim(filename, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE);
+    writeSpectrumInfoHDF5(filename, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE, &maxindex, 1, H5T_NATIVE_INT);
+    
     
     pthread_mutex_unlock(&global->espectrumRun_mutex);
     pthread_mutex_unlock(&global->nespechits_mutex);
