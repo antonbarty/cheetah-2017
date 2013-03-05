@@ -420,12 +420,29 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		free(peak_info);
 	}
 	
-	// Done with this group
+	if(info->energySpectrumExist) {
+        size[0] = 1;			// size[0] = length
+        dataspace_id = H5Screate_simple(1, size, NULL);
+        dataset_id = H5Dcreate(gid, "espectrum-tiltangle", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if ( dataset_id < 0 ) {
+            ERROR("%li: Couldn't create dataset\n", info->threadNum);
+            H5Fclose(hdf_fileID);
+            return;
+        }
+        hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->espectiltang);
+        if ( hdf_error < 0 ) {
+            ERROR("%li: Couldn't write data\n", info->threadNum);
+            H5Dclose(dataspace_id);
+            H5Fclose(hdf_fileID);
+            return;
+        }
+        H5Dclose(dataset_id);
+        H5Sclose(dataspace_id);
+	}
+    
+    // Done with /processing group
 	H5Gclose(gid);
 	H5Gclose(gidHitfinder);
-	
-	
-	
 	
 	/*
 	 *	Write LCLS event information

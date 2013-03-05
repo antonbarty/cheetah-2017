@@ -31,15 +31,14 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     int camfail = eventData->pulnixFail;
     int pulnixWidth = eventData->pulnixWidth;
     int pulnixHeight = eventData->pulnixHeight;
-//    unsigned short *camdata = eventData->pulnixImage;
     
     int spectra = global->espectrum1D;
     
     if(hit && !camfail && spectra && pulnixWidth == 900 && pulnixHeight == 1080){
         eventData->energySpectrumExist = 1;
-        printf("======================================================\n");
-        printf("event spectrum exists\n");
-        printf("======================================================\n");
+        //printf("======================================================\n");
+        //printf("event spectrum exists\n");
+        //printf("======================================================\n");
         
         integrateSpectrum(eventData,global,pulnixWidth,pulnixHeight);
         return;
@@ -64,9 +63,9 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int pulnixWidth,i
             }
         }
     }
-    printf("======================================================\n");
-    printf("event spectrum out\n");
-    printf("======================================================\n");
+    //printf("======================================================\n");
+    //printf("event spectrum out\n");
+    //printf("======================================================\n");
     return;
 }
 
@@ -79,9 +78,9 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
             global->espectrumRun[i] += eventData->energySpectrum1D[i];
         }
         pthread_mutex_unlock(&global->espectrumRun_mutex);
-        printf("======================================================\n");
-        printf("integrated run spectrum updated\n");
-        printf("======================================================\n");
+        //printf("======================================================\n");
+        //printf("integrated run spectrum updated\n");
+        //printf("======================================================\n");
         return;
     }
     
