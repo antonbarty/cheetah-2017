@@ -88,6 +88,7 @@ int histLength = 10000;
 int pickR = 0;
 int pickC = 0;
 int runNumber = 0;
+bool existCM = 0;
 static cGlobal cheetahGlobal;
 char detZ[] = "CXI:DS1:MMS:06.RBV";
 // Subregion rectangle
@@ -220,7 +221,7 @@ void readinGain(string gainFile, vector<vector<double> >& gain){
 chuck_ana_mod::chuck_ana_mod (const std::string& name)
   : Module(name)
   , m_src()
-  , m_eventNumber(1)
+  , m_eventNumber(0)
 //  , m_count(0)
   , m_generateDark(0)
   , m_generateCommonMode(0)
@@ -284,6 +285,7 @@ void chuck_ana_mod::beginJob(Event& evt, Env& env)
 	readinDark(m_darkSubRegionFile_55x105, darkSubregion);
 	readinGain(m_gainmapFile_388x370, gainRegion);
 	if (!m_commonModeFile_1D.empty()){
+		existCM = 1;
 		readin1D(m_commonModeFile_1D, commonMode);
 	}
 	cout << "done beginJob" << endl;
@@ -396,29 +398,28 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
 			// fluores area
-			for (int i = sx; i < ex; i++) { // width
-				for (int j = sy; j < ey; j++) { // height
-					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-						sumPerShot += ( data[i][j][k] - darkSubregion[i-sx][j-sy] - commonMode[nevent] ) / gainRegion[i+k*dimX][j];
-						goodPixPerShot++;
+			if (existCM) {
+				for (int i = sx; i < ex; i++) { // width
+					for (int j = sy; j < ey; j++) { // height
+						if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+							sumPerShot += ( data[i][j][k] - darkSubregion[i-sx][j-sy] - commonMode[nevent] ) / gainRegion[i+k*dimX][j];
+							goodPixPerShot++;
+						}
+					}
+				}
+			} else { // no common mode correction
+				for (int i = sx; i < ex; i++) { // width
+					for (int j = sy; j < ey; j++) { // height
+						if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
+							sumPerShot += ( data[i][j][k] - darkSubregion[i-sx][j-sy] ) / gainRegion[i+k*dimX][j];
+							goodPixPerShot++;
+						}
 					}
 				}
 			}
 			fluores.push_back(sumPerShot/(double)goodPixPerShot);
 			photonEnergy.push_back(ev);
 			pulseEnergy.push_back(pulseEv);
-			sumPerShot = 0;
-			goodPixPerShot = 0;
-			// common mode dark area
-			for (int i = csx; i < cex; i++) { // width
-				for (int j = csy; j < cey; j++) { // height
-					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
-						sumPerShot += data[i][j][k];
-						goodPixPerShot++;
-					}
-				}
-			}
-			meanAsic.push_back(sumPerShot/(double)goodPixPerShot); // average pixel value per shot
 		}
 	}
 
@@ -457,7 +458,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 			int k = 1;
 			double sumPerShot = 0;
 			int goodPixPerShot = 0;
-			// common mode dark area
+			// common mode from dark patch of cspad2x2
 			for (int i = csx; i < cex; i++) { // width
 				for (int j = csy; j < cey; j++) { // height
 					if (data[i][j][k] > 0 && data[i][j][k] < hotpixel) {
@@ -499,7 +500,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 		stringstream sstm;
 		sstm << "subregionSpectra_r" << runNumber << "_e" << nevent << ".txt";
 		string result = sstm.str();
-		ofstream outFile(result.c_str()); // modify myPsana1 to r117
+		ofstream outFile(result.c_str());
 		//ofstream outFile("cspad2x2_subregion.txt");
 		shared_ptr<Psana::CsPad2x2::ElementV1> elem1 = evt.get(m_src2x2, m_key);
 		if (elem1.get()) {
@@ -528,7 +529,7 @@ void chuck_ana_mod::event(Event& evt, Env& env)
 	}
 
 	// Subtract a Fluorescence image by Dark then divide by gain
-	if (m_lookAtCsPad2x1 && m_eventNumber == nevent) { //(subtractNGainImage) {
+	if (m_lookAtCsPad2x1 && m_eventNumber == nevent) {
 		stringstream sstm;
 		sstm << "cspad2x1_r" << runNumber << "_e" << nevent << ".txt";
 		string result = sstm.str();
@@ -563,7 +564,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		stringstream sstm;
 		sstm << "dark" << runNumber << "_cspad2x2_meanAsic";
 		string result = sstm.str();
-		ofstream outFile(result.c_str()); // modify myPsana1 to r117
+		ofstream outFile(result.c_str());
 		// Print mean Asic
 		for (unsigned i = 0; i < meanAsic0.size(); i++) { // number of frames
 			outFile << meanAsic0[i] << " ";
@@ -627,7 +628,11 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << runNumber << "_cspad2x2_fluoresCorrect";
+		if (existCM) {
+			sstm << "r" << runNumber << "_cspad2x2_fluores";
+		} else {
+			sstm << "r" << runNumber << "_cspad2x2_fluoresNoCM";
+		}
 		string result = sstm.str();
   		ofstream outFlu(result.c_str()); // output fluorescence for all shots
   		for (unsigned i = 0; i < fluores.size(); i++ ) {
@@ -657,20 +662,6 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 		}
   		outPulseEnergy << endl;
 		outPulseEnergy.close();
-
-		sstm.clear();
-		sstm.str("");
-		sstm << "r" << runNumber << "_cspad2x2_commonModeDark";
-		result = sstm.str();
-  		ofstream outCM(result.c_str()); // output fluorescence for all shots
-		// Calculate mean common mode dark
-		sum = accumulate(meanAsic.begin(), meanAsic.end(), 0.0);		
-		mean = sum / meanAsic.size();
-  		for (unsigned i = 0; i < meanAsic.size(); i++ ) {
-    		outCM << meanAsic[i] - mean << " ";
-		}
-  		outCM << endl;
-		outCM.close();
 	}
 
 	if (m_generateDark) {
@@ -691,7 +682,7 @@ void chuck_ana_mod::endRun(Event& evt, Env& env)
 	if (m_generateCommonMode) {
 		// Write out files
 		stringstream sstm;
-		sstm << "r" << runNumber << "_cspad2x2_commonModeDark";
+		sstm << "r" << runNumber << "_cspad2x2_commonMode";
 		string result = sstm.str();
   		ofstream outCM(result.c_str()); // output fluorescence for all shots
 		// Calculate mean common mode dark
