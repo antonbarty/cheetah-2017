@@ -257,6 +257,20 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}
+    
+    /*
+	 *	Save spectrum images (Opal2k CCD)
+	 */
+	if(info->specFail == 0) {
+		size[0] = info->specHeight;
+		size[1] = info->specWidth;
+        
+		dataspace_id = H5Screate_simple(2, size, size);
+		dataset_id = H5Dcreate(gid, "eSpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->specImage);
+		H5Dclose(dataset_id);
+		H5Sclose(dataspace_id);
+	}
 	
     //RBEAN
     /*

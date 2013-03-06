@@ -835,7 +835,7 @@ namespace cheetah_ana_pkg {
 		//		CxiSc1
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
 		eventData->pulnixFail = 1;
-		int usePulnix = 1;		// Ignore Pulnix camera
+		int usePulnix = 0;		// Ignore Pulnix camera
 		if (frmData.get() && usePulnix ) {
 			eventData->pulnixFail = 0;
 			eventData->pulnixWidth = frmData->width();
