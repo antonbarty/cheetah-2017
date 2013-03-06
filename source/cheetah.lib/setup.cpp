@@ -88,7 +88,6 @@ cGlobal::cGlobal(void) {
 	hitfinderMaxRes = 1e10;
 	hitfinderMinSNR = 40;
 
-	
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;

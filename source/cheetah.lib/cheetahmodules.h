@@ -59,13 +59,11 @@ void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long);
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 
-//RBEAN
+// spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
-//RBEANend
-
 
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);

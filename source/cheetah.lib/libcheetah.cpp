@@ -163,11 +163,18 @@ void cheetahDestroyEvent(cEventData *eventData) {
     if(eventData->pulnixFail == 0){ 
         free(eventData->pulnixImage);
     }
+    // Opal spectrum camera
+    if(eventData->specFail == 0){
+        free(eventData->specImage);
+    }
 	//TOF stuff.
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
 	}
+    
+    
+    
     
 	free(eventData);
 }

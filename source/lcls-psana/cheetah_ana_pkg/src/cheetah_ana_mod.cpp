@@ -92,6 +92,7 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
+        m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 	}
 
@@ -618,6 +619,32 @@ namespace cheetah_ana_pkg {
 				cout << endl;
 			}
 		}
+        
+        // get spectrum (Opal2k)
+		shared_ptr<Psana::Camera::FrameV1> specData = evt.get(m_srcSpec);
+		if (specData.get()) {
+			if (verbose) {
+				cout << "Camera::FrameV1: width=" << specData->width()
+                << " height=" << specData->height()
+                << " depth=" << specData->depth()
+                << " offset=" << specData->offset() ;
+                
+				const ndarray<const uint8_t, 2>& data8 = specData->data8();
+				if (not data8.empty()) {
+					cout << " data8=[" << int(data8[0][0])
+                    << ", " << int(data8[0][1])
+                    << ", " << int(data8[0][2]) << ", ...]";
+				}
+                
+				const ndarray<const uint16_t, 2>& data16 = specData->data16();
+				if (not data16.empty()) {
+					cout << " data16=[" << int(data16[0][0])
+                    << ", " << int(data16[0][1])
+                    << ", " << int(data16[0][2]) << ", ...]";
+				}  
+				cout << endl;
+			}
+		}
 				
 		
 		//	Copy all interesting information into worker thread structure if we got this far.
@@ -828,6 +855,35 @@ namespace cheetah_ana_pkg {
 			}  
 		}
 
+        //RBEAN
+        //	Copy Opal2k camera into Cheetah event for processing
+		//	energy spectrum analysis
+		//	current spectrum camera is at CxiEndstation.0:Opal2000.1
+		//  SLAC libraries are not thread safe: must copy data into event structure for processing
+		eventData->specFail = 1;
+		int useSpec = 1;		// Ignore Opal camera
+		if (specData.get() && useSpec) {
+			eventData->specFail = 0;
+			eventData->specWidth = specData->width();
+			eventData->specHeight = specData->height();
+            
+			const ndarray<const uint8_t, 2>& data8 = specData->data8();
+			if (not data8.empty()) {
+				cout << "Opal2k(uint8_t) will not be passed to Cheetah. Complain if you need this!" << endl;
+				//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
+				//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
+			}
+            
+			const ndarray<const uint16_t, 2>& data16 = specData->data16();
+			if (not data16.empty()) {
+				eventData->specImage = (uint16_t*) calloc(eventData->specWidth*eventData->specHeight, sizeof(uint16_t));
+				memcpy(eventData->specImage, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
+			}  
+		}
+        //RBEANend
+        
+        
+        
 		
 		// Update detector positions
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        

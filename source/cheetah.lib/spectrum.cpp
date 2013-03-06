@@ -28,38 +28,38 @@
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     
     int hit = eventData->hit;
-    int camfail = eventData->pulnixFail;
-    int pulnixWidth = eventData->pulnixWidth;
-    int pulnixHeight = eventData->pulnixHeight;
+    int opalfail = eventData->specFail;
+    int specWidth = eventData->specWidth;
+    int specHeight = eventData->specHeight;
     
     int spectra = global->espectrum1D;
     
-    if(hit && !camfail && spectra && pulnixWidth == 900 && pulnixHeight == 1080){
+    if(hit && !opalfail && spectra && specWidth == 900 && specHeight == 1080){
         eventData->energySpectrumExist = 1;
         //printf("======================================================\n");
         //printf("event spectrum exists\n");
         //printf("======================================================\n");
         
-        integrateSpectrum(eventData,global,pulnixWidth,pulnixHeight);
+        integrateSpectrum(eventData,global,specWidth,specHeight);
         return;
     }
 }
 
 
 // integrate region of spectrum into single line and output
-void integrateSpectrum(cEventData *eventData, cGlobal *global, int pulnixWidth,int pulnixHeight) {
+void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int specHeight) {
     
     float PIE = 3.141;
     float ttilt = tanf(global->espectiltang*PIE/180);
-    int pulindex;
+    int opalindex;
     int newind;
 
-    for (long i=0; i<pulnixHeight; i++) {
-        for (long j=0; j<pulnixWidth; j++) {
-            newind = i + ceilf(j*ttilt);        // index of the integrated array, must be integer
-            if (newind >= 0 && newind < pulnixHeight) {
-                pulindex = i*pulnixWidth + j;   // index of the 2D camera array
-                eventData->energySpectrum1D[newind]+= eventData->pulnixImage[pulindex];
+    for (long i=0; i<specHeight; i++) {
+        for (long j=0; j<specWidth; j++) {
+            newind = i + ceilf(j*ttilt);        // index of the integrated array, must be integer,!
+            if (newind >= 0 && newind < specHeight) {
+                opalindex = i*specWidth + j;   // index of the 2D camera array
+                eventData->energySpectrum1D[newind]+=eventData->specImage[opalindex];
             }
         }
     }
