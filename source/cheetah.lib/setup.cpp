@@ -102,12 +102,10 @@ cGlobal::cGlobal(void) {
 	//tofType = Pds::DetInfo::Acqiris;
 	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 
-	//RBEAN
 	// energy spectrum default configuration
 	espectrum1D = 1;
 	espectiltang = 0;
 	espectrumLength = 1080;
-	//RBEANend
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -220,7 +218,6 @@ void cGlobal::setup() {
 		hitfinderResMask[j] = 1;
 	}
 
-    //RBEAN
     /*
      * Set up array for run integrated energy spectrum
      */
@@ -228,9 +225,7 @@ void cGlobal::setup() {
     for(long i=0; i<espectrumLength; i++) {
         espectrumRun[i] = 0;
     }
-    //RBEANend
     
-
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -538,7 +533,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
 
 	if (exitCheetah != 0){
-		printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n",tag);
+		printf("ERROR: Exiting Cheetah due to unknown configuration keywords %s .\n",tag);
 		exit(0);
 	}
 
@@ -663,7 +658,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertofthresh")) {
 		hitfinderTOFThresh = atof(value);
 	}
-    //RBEAN
+
     // Energy spectrum parameters
     else if (!strcmp(tag, "espectiltang")) {
         espectiltang = atoi(value);
@@ -674,7 +669,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "espectrumLength")) {
         espectrumLength = atoi(value);
     }
-    //RBEANend
+
 	// Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);
@@ -845,6 +840,9 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
+    fprintf(fp, "espectrum1D=%d\n",espectrum1D);
+    fprintf(fp, "espectiltang=%d\n",espectiltang);
+    fprintf(fp, "espectrumLength=%d\n",espectrumLength);
 	//fprintf(fp, "cmFloor=%f\n",cmFloor);
 	//fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
@@ -933,7 +931,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped\n");
+	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
@@ -956,7 +954,6 @@ void cGlobal::writeInitialLog(void){
 	pthread_mutex_unlock(&peaksfp_mutex);
 
 }
-
 
 /*
  * Update log file
@@ -1072,6 +1069,7 @@ void cGlobal::writeFinalLog(void){
 	for(long i=0; i<nPowderClasses; i++) {
 		fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
 	}
+    fprintf(fp, "Number of energy spectra collected: %li\n",nespechits);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);

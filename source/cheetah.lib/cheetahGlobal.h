@@ -145,14 +145,12 @@ public:
 	/** @brief What's this? */
 	double   AcqSampleInterval;
     
-    //RBEAN
     /** @brief Toggle energy spectrum creation. */
     int      espectrum1D;
     /** @brief Angle of spectra from horizontal (clockwise). */
     int      espectiltang;
     /** @brief Length in pixels of energy spectrum (same as opal2k camera height). */
     int      espectrumLength;
-    //endRBEAN
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -269,18 +267,19 @@ public:
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
 
 
-
+    // counters updated with event data
 	long     npowderHits;
 	long     npowderBlanks;
 	long     nprocessedframes;
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;
-    //RBEAN
     long     nespechits;
+    
+    // variable to hold the updating run integrated spectrum
     double  *espectrumRun;
-    //RBEANend
-
+    
+    // time keeping
 	time_t   tstart, tend;
 	time_t   tlast, tnow;
 	clock_t  lastclock;

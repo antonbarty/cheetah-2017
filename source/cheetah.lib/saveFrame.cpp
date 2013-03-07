@@ -245,7 +245,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	}	
 	
 	/*
-	 *	Save microscope images (Pulnix CCD)
+	 *	Save microscope images (Pulnix CCD) as data/pulnixCCD
 	 */
 	if(info->pulnixFail == 0) {
 		size[0] = info->pulnixHeight;	
@@ -259,33 +259,31 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	}
     
     /*
-	 *	Save spectrum images (Opal2k CCD)
+	 *	Save energy spectrum images (Opal2k CCD) as data/energySpectrumCCD
 	 */
 	if(info->specFail == 0) {
 		size[0] = info->specHeight;
 		size[1] = info->specWidth;
         
 		dataspace_id = H5Screate_simple(2, size, size);
-		dataset_id = H5Dcreate(gid, "eSpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gid, "energySpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->specImage);
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}
 	
-    //RBEAN
     /*
-     *  Save energy spectrum data to HDF file
+     *  Save energy spectrum data to HDF file as data/energySpectrum1D
      */
     if(info->energySpectrumExist ==1) {
         size[0] = global->espectrumLength;
         
         dataspace_id = H5Screate_simple(1, size, NULL);
-        dataset_id = H5Dcreate(gid, "energySpectrum", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dataset_id = H5Dcreate(gid, "energySpectrum1D", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->energySpectrum1D);
         H5Dclose(dataset_id);
         H5Sclose(dataspace_id);
     }
-    //RBEANend
 	
 	
 	// Done with the /data group
@@ -434,10 +432,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		free(peak_info);
 	}
 	
-	if(info->energySpectrumExist) {
+    /*
+     *  Save energy spectrum tilt angle value to HDF file as processing/energySpectrum-tilt
+     */
+    if(info->energySpectrumExist) {
         size[0] = 1;			// size[0] = length
         dataspace_id = H5Screate_simple(1, size, NULL);
-        dataset_id = H5Dcreate(gid, "espectrum-tiltangle", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dataset_id = H5Dcreate(gid, "energySpectrum-tilt", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         if ( dataset_id < 0 ) {
             ERROR("%li: Couldn't create dataset\n", info->threadNum);
             H5Fclose(hdf_fileID);
@@ -752,7 +753,8 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
 		ERROR("Couldn't create file: %s\n", filename);
 	}
 	
-	gh = H5Gcreate(fh, "eSpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	// create group energySpectrum
+    gh = H5Gcreate(fh, "energySpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
 		ERROR("Couldn't create group\n");
 		H5Fclose(fh);
@@ -761,7 +763,8 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
 	size[0] = length1;
 	sh = H5Screate_simple(1, size, NULL);
 	
-	dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
+	// save run integrated energy spectrum in HDF5 as energySpectrum/runIntegratedEnergySpectrum
+    dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
@@ -781,6 +784,7 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
     H5Dclose(dh);
     H5Sclose(sh);
     
+    // save index of max integrated value in HDF5 as energySpectrum/runIntegratedEnergySpectrum_maxindex
     size[0] = length2;
 	sh = H5Screate_simple(1, size, NULL);
     dh = H5Dcreate(gh, "runIntegratedEnergySpectrum_maxindex", type2, sh,

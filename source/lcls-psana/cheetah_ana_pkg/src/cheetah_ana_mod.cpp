@@ -855,7 +855,6 @@ namespace cheetah_ana_pkg {
 			}  
 		}
 
-        //RBEAN
         //	Copy Opal2k camera into Cheetah event for processing
 		//	energy spectrum analysis
 		//	current spectrum camera is at CxiEndstation.0:Opal2000.1
@@ -880,10 +879,7 @@ namespace cheetah_ana_pkg {
 				memcpy(eventData->specImage, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
 			}  
 		}
-        //RBEANend
-        
-        
-        
+
 		
 		// Update detector positions
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        

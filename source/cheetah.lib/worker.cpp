@@ -238,14 +238,11 @@ void *worker(void *threadarg) {
 	 */
     addToPowder(eventData, global);
     
-    //RBEAN
     /*
      * calculate the one dimesional beam spectrum
      */
     integrateSpectrum(eventData, global);
     integrateRunSpectrum(eventData, global);
-    //RBEANend
-    
     
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
@@ -279,12 +276,12 @@ void *worker(void *threadarg) {
 	 *	Write out information on each frame to a log file
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
+	fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
 	pthread_mutex_unlock(&global->framefp_mutex);
 
 	// Keep track of what has gone into each image class
 	pthread_mutex_lock(&global->powderfp_mutex);
-	fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
+	fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
 	pthread_mutex_unlock(&global->powderfp_mutex);
 
 

@@ -48,7 +48,7 @@ void cheetahNewRun(cGlobal *global) {
                 fclose(global->powderlogfp[i]);
             sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
             global->powderlogfp[i] = fopen(filename, "w");        
-            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
         }
     }
 }
@@ -116,11 +116,12 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
-    //RBEAN
+    /*
+	 *	Create arrays for energy spectrum data
+	 */
     int spectrumLength = global->espectrumLength;
     eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
     eventData->energySpectrumExist = 0;
-	//RBEANend
     
     // Return
     return eventData;

@@ -47,8 +47,9 @@ public:
     unsigned short  *specImage;
     
     // energy spectrum data
-    double          *energySpectrum1D;
     int             energySpectrumExist;
+    double          *energySpectrum1D;
+
 
 	// Hit finding
 	int			hit;

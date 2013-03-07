@@ -14,19 +14,14 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
-//#include "spectrum.h"
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
-//#include "median.h"
 
 
-// Called by worker @ line 245
-
-// proceed if event is a 'hit', spectrum is desired & camera sucesfully outputs data
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
-    
+    // proceed if event is a 'hit', spectrum data exists & spectrum required    
     int hit = eventData->hit;
     int opalfail = eventData->specFail;
     int specWidth = eventData->specWidth;
@@ -34,20 +29,17 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     
     int spectra = global->espectrum1D;
     
-    if(hit && !opalfail && spectra && specWidth == 900 && specHeight == 1080){
+    if(hit && !opalfail && spectra){
         eventData->energySpectrumExist = 1;
-        //printf("======================================================\n");
-        //printf("event spectrum exists\n");
-        //printf("======================================================\n");
-        
         integrateSpectrum(eventData,global,specWidth,specHeight);
         return;
     }
 }
 
 
-// integrate region of spectrum into single line and output
+
 void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int specHeight) {
+    // integrate spectrum into single line and output to event data
     
     float PIE = 3.141;
     float ttilt = tanf(global->espectiltang*PIE/180);
@@ -63,9 +55,6 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
             }
         }
     }
-    //printf("======================================================\n");
-    //printf("event spectrum out\n");
-    //printf("======================================================\n");
     return;
 }
 
@@ -78,9 +67,6 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
             global->espectrumRun[i] += eventData->energySpectrum1D[i];
         }
         pthread_mutex_unlock(&global->espectrumRun_mutex);
-        //printf("======================================================\n");
-        //printf("integrated run spectrum updated\n");
-        //printf("======================================================\n");
         return;
     }
     
@@ -93,14 +79,15 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 }
 
 void saveIntegratedRunSpectrum(cGlobal *global) {
-    
+    // save integrated spectrum in HDF5
     int maxindex = 0;
     
     pthread_mutex_lock(&global->espectrumRun_mutex);
     pthread_mutex_lock(&global->nespechits_mutex);
     
     char	filename[1024];
-
+    
+    // find maximum of integrated array
     for (int i=0; i<global->espectrumLength; i++) {
         if (global->espectrumRun[i] > global->espectrumRun[maxindex]) {
                 maxindex = i;
@@ -112,14 +99,9 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
     printf("Saving run-integrated energy spectrum: %s\n", filename);
     
     writeSpectrumInfoHDF5(filename, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE, &maxindex, 1, H5T_NATIVE_INT);
-    
-    
+
     pthread_mutex_unlock(&global->espectrumRun_mutex);
     pthread_mutex_unlock(&global->nespechits_mutex);
-    
-    printf("======================================================\n");
-    printf("integrated run spectrum output\n");
-    printf("======================================================\n");
     return;
     
 }
