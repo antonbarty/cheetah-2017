@@ -32,8 +32,8 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     if(hit && !opalfail && spectra){
         eventData->energySpectrumExist = 1;
         integrateSpectrum(eventData,global,specWidth,specHeight);
-        return;
     }
+    return;
 }
 
 
@@ -67,7 +67,6 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
             global->espectrumRun[i] += eventData->energySpectrum1D[i];
         }
         pthread_mutex_unlock(&global->espectrumRun_mutex);
-        return;
     }
     
     // Update spectrum hit counter
@@ -76,6 +75,7 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 		global->nespechits++;
 		pthread_mutex_unlock(&global->nespechits_mutex);
 	}
+    return;
 }
 
 void saveIntegratedRunSpectrum(cGlobal *global) {
