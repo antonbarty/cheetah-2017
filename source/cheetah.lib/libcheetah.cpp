@@ -48,7 +48,7 @@ void cheetahNewRun(cGlobal *global) {
                 fclose(global->powderlogfp[i]);
             sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
             global->powderlogfp[i] = fopen(filename, "w");        
-            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
         }
     }
 }
@@ -116,8 +116,13 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
-
-	
+    /*
+	 *	Create arrays for energy spectrum data
+	 */
+    int spectrumLength = global->espectrumLength;
+    eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
+    eventData->energySpectrumExist = 0;
+    
     // Return
     return eventData;
 }
@@ -159,11 +164,18 @@ void cheetahDestroyEvent(cEventData *eventData) {
     if(eventData->pulnixFail == 0){ 
         free(eventData->pulnixImage);
     }
+    // Opal spectrum camera
+    if(eventData->specFail == 0){
+        free(eventData->specImage);
+    }
 	//TOF stuff.
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
 	}
+    
+    
+    
     
 	free(eventData);
 }
@@ -438,6 +450,10 @@ void cheetahExit(cGlobal *global) {
     }
     saveRadialStacks(global);
 	global->writeFinalLog();
+    
+    // Save integrated run spectrum
+    saveIntegratedRunSpectrum(global);
+    
 	
 	// Hitrate?
 	printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
@@ -473,6 +489,8 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->peaksfp_mutex);
 	pthread_mutex_destroy(&global->powderfp_mutex);
 	pthread_mutex_destroy(&global->subdir_mutex);
+    pthread_mutex_destroy(&global->espectrumRun_mutex);
+    pthread_mutex_destroy(&global->nespechits_mutex);
 
     
     printf("Cheetah clean exit\n");

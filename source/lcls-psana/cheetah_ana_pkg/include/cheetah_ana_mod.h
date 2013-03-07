@@ -93,6 +93,7 @@ private:
   Source m_srcCav;
   Source m_srcAcq;
   Source m_srcCam;
+  Source m_srcSpec;
   Source m_srcPnccd0;
   Source m_srcPnccd1;
 };

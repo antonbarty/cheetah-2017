@@ -48,7 +48,7 @@ void nameEvent(cEventData*, cGlobal*);
 void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
-
+void writeSpectrumInfoHDF5(const char*, const void*, int, int, const void*, int, int);
 
 
 // assemble2DImage.cpp
@@ -59,6 +59,11 @@ void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long);
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 
+// spectrum.cpp
+void integrateSpectrum(cEventData*, cGlobal*);
+void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void integrateRunSpectrum(cEventData*, cGlobal*);
+void saveIntegratedRunSpectrum(cGlobal*);
 
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);

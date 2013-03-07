@@ -36,10 +36,20 @@ public:
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
 	
-	// 120Hz visible camera
+	// Pulnix 120Hz visible camera
 	int				pulnixFail;
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
+    
+    // Opal2k energy spectrum camera
+    int             specFail;
+    int             specWidth, specHeight;
+    unsigned short  *specImage;
+    
+    // energy spectrum data
+    int             energySpectrumExist;
+    double          *energySpectrum1D;
+
 
 	// Hit finding
 	int			hit;
