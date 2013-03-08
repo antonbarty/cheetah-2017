@@ -291,20 +291,23 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 								continue;
 							
 							// Element in asic buffer
-							e = (j+jj)*pix_nx;
+							e = (j+jj)*asic_nx;
 							e += i+ii;
-							
-							// Element in data array
-							//ee = (j+jj+mj*asic_ny)*pix_nx;
-							//ee += i+ii+mi*asic_nx;
-							
 							if(e < 0 || e >= asic_nn){
 								printf("Error: Array bounds error: e = %li > %li\n",e,asic_nn);
 								continue;
 							}
-							
-							//median_buffer[counter] = data[ee];
 							median_buffer[counter] = asic_buffer[e];
+							
+							// Element in raw data array
+							//ee = (j+jj+mj*asic_ny)*pix_nx;
+							//ee += i+ii+mi*asic_nx;
+							//if(ee < 0 || ee >= pix_nn){
+							//	printf("Error: Array bounds error: e = %li > %li\n",e,pix_nn);
+							//	continue;
+							//}
+							//median_buffer[counter] = data[ee];
+							
 							counter++;
 						}
 					}
