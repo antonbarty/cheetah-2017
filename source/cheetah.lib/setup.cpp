@@ -106,6 +106,7 @@ cGlobal::cGlobal(void) {
 	espectrum1D = 1;
 	espectiltang = 0;
 	espectrumLength = 1080;
+    espectrumWidth = 900;
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -226,6 +227,16 @@ void cGlobal::setup() {
         espectrumRun[i] = 0;
     }
     
+    /*
+     * Set up buffer array for calculation of energy spectrum background
+     */
+    espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+    for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+        espectrumBuffer[i] = 0;
+    }
+    
+     
+     
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -256,6 +267,7 @@ void cGlobal::setup() {
 	pthread_mutex_init(&subdir_mutex, NULL);
     pthread_mutex_init(&nespechits_mutex, NULL);
     pthread_mutex_init(&espectrumRun_mutex, NULL);
+    pthread_mutex_init(&espectrumBuffer_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 

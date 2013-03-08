@@ -149,8 +149,10 @@ public:
     int      espectrum1D;
     /** @brief Angle of spectra from horizontal (clockwise). */
     int      espectiltang;
-    /** @brief Length in pixels of energy spectrum (same as opal2k camera height). */
+    /** @brief Length in pixels of energy spectrum (same as spectrum camera height). */
     int      espectrumLength;
+    /** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
+    int      espectrumWidth;
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -250,6 +252,7 @@ public:
 	pthread_mutex_t  subdir_mutex;
     pthread_mutex_t  nespechits_mutex;
     pthread_mutex_t  espectrumRun_mutex;
+    pthread_mutex_t  espectrumBuffer_mutex;
 
 
 
@@ -278,6 +281,7 @@ public:
     
     // variable to hold the updating run integrated spectrum
     double  *espectrumRun;
+    double  *espectrumBuffer;
     
     // time keeping
 	time_t   tstart, tend;

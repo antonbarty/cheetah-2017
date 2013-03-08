@@ -29,13 +29,16 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
     
     int spectra = global->espectrum1D;
     
+    if(global->generateDarkcal && !opalfail && spectra){
+        eventData->energySpectrumExist = 1;
+        genSpectrumBackground(eventData,global,specWidth,specHeight);
+    }
     if(hit && !opalfail && spectra){
         eventData->energySpectrumExist = 1;
         integrateSpectrum(eventData,global,specWidth,specHeight);
     }
     return;
 }
-
 
 
 void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int specHeight) {
@@ -58,6 +61,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
     return;
 }
 
+
 void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 
     // Update integrated run spectrum
@@ -78,21 +82,55 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
     return;
 }
 
-void saveIntegratedRunSpectrum(cGlobal *global) {
-    // save integrated spectrum in HDF5
-    int maxindex = 0;
+
+void genSpectrumBackground(cEventData *eventData, cGlobal *global, int specWidth, int specHeight) {
+    // Generate background for spectrum detector
+    int spectrumpix = specWidth*specHeight;
     
+    pthread_mutex_lock(&global->espectrumBuffer_mutex);
+    for (int i=0; i<spectrumpix; i++) {
+        global->espectrumBuffer[i]+=eventData->specImage[i];
+    }
+    pthread_mutex_unlock(&global->espectrumBuffer_mutex);
+    pthread_mutex_lock(&global->nespechits_mutex);
+    global->nespechits++;
+    pthread_mutex_unlock(&global->nespechits_mutex);
+    return;
+}
+
+
+void saveIntegratedRunSpectrum(cGlobal *global) {
+
+    int     spectrumpix = global->espectrumWidth*global->espectrumLength;
+    double *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
+    char	filename[1024];
+    int     maxindex = 0;
+    
+    // compute spectrum camera darkcal and save to HDF5
+    if(global->generateDarkcal){
+        pthread_mutex_lock(&global->espectrumRun_mutex);
+        pthread_mutex_lock(&global->nespechits_mutex);
+        for(int i=0; i<spectrumpix; i++) {
+            espectrumDark[i] = global->espectrumBuffer[i]/global->nespechits;
+        }
+        
+        sprintf(filename,"r%04u-energySpectrum-darkcal.h5", global->runNumber);
+        printf("Saving energy spectrum darkcal to file: %s\n", filename);
+        
+        writeSimpleHDF5(filename, espectrumDark, global->espectrumWidth, global->espectrumLength, H5T_NATIVE_DOUBLE);
+        
+        free(espectrumDark);
+        return;
+    }
+    
+    // find maximum of run integrated spectum array and save both to HDF5
     pthread_mutex_lock(&global->espectrumRun_mutex);
     pthread_mutex_lock(&global->nespechits_mutex);
     
-    char	filename[1024];
-    
-    // find maximum of integrated array
     for (int i=0; i<global->espectrumLength; i++) {
         if (global->espectrumRun[i] > global->espectrumRun[maxindex]) {
                 maxindex = i;
         }
-
     }
     
     sprintf(filename,"r%04u-integratedEnergySpectrum.h5", global->runNumber);
@@ -105,4 +143,96 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
     return;
     
 }
+
+
+//------------------------------------------------------------------------------
+//// code gathered for background subtraction
+//void subtractDarkcal(cEventData *eventData, cGlobal *global) {
+//	DETECTOR_LOOP {
+//		if(global->detector[detID].useDarkcalSubtraction) {
+//			long	pix_nn = global->detector[detID].pix_nn;
+//			float	*data = eventData->detector[detID].corrected_data;
+//			float	*darkcal = global->detector[detID].darkcal;
+//            
+//			subtractDarkcal(data, darkcal, pix_nn);
+//		}
+//	}
+//}
+//
+//void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
+//	for(long i=0; i<pix_nn; i++) {
+//		data[i] -= darkcal[i];
+//	}
+//}//--------------
+
+//void saveDarkcal(cGlobal *global, int detID) {
+//	
+//	// Dereference common variables
+//    cPixelDetectorCommon     *detector = &(global->detector[detID]);
+//	long	pix_nn = detector->pix_nn;
+//	char	filename[1024];
+//	
+//	printf("Processing darkcal\n");
+//	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
+//	float *buffer = (float*) calloc(pix_nn, sizeof(float));
+//	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
+//	for(long i=0; i<pix_nn; i++)
+//		buffer[i] = detector->powderRaw[0][i]/detector->nPowderFrames[0];
+//	pthread_mutex_unlock(&detector->powderRaw_mutex[0]);
+//	printf("Saving darkcal to file: %s\n", filename);
+//	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
+//	free(buffer);
+//}
+////-------------------------------
+/*
+ *	Read in darkcal file
+ */
+//void cPixelDetectorCommon::readDarkcal(char *filename){
+//	
+//	// Create memory space and pad with zeros
+//	darkcal = (float*) calloc(pix_nn, sizeof(float));
+//    for(long i=0; i<pix_nn; i++)
+//        darkcal[i] = 0;
+//    
+//	// Do we need a darkcal file?
+//	if (useDarkcalSubtraction == 0){
+//		return;
+//	}
+//	
+//	// Check if a darkcal file has been specified
+//	if ( strcmp(filename,"") == 0 ){
+//		printf("Darkcal file path was not specified.\n");
+//		exit(1);
+//	}
+//    
+//	printf("Reading darkcal configuration:\n");
+//	printf("\t%s\n",filename);
+//    
+//	// Check whether file exists!
+//	FILE* fp = fopen(filename, "r");
+//	if (fp) 	// file exists
+//		fclose(fp);
+//	else {		// file doesn't exist
+//		printf("\tDarkcal file does not exist: %s\n",filename);
+//		printf("\tAborting...\n");
+//		exit(1);
+//	}
+//	
+//	
+//	// Read darkcal data from file
+//	cData2d		temp2d;
+//	temp2d.readHDF5(filename);
+//	
+//	// Correct geometry?
+//	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+//		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+//		printf("\tAborting...\n");
+//		exit(1);
+//	}
+//	
+//	// Copy into darkcal array
+//	for(long i=0;i<pix_nn;i++)
+//		darkcal[i] = temp2d.data[i];
+//	
+//}
 

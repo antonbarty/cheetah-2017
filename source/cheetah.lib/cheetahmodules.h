@@ -62,8 +62,10 @@ int  hitfinder(cEventData*, cGlobal*);
 // spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void genSpectrumBackground(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
+
 
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
