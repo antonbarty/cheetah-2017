@@ -171,10 +171,10 @@ void *worker(void *threadarg) {
     
 
 	/*
-     *  Fix pnCCD errors:
+	 *  Fix pnCCD errors:
 	 *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
-     *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-     *  (these corrections will be automatically skipped for any non-pnCCD detector)
+	 *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+	 *  (these corrections will be automatically skipped for any non-pnCCD detector)
 	 */
 	pnccdOffsetCorrection(eventData, global);
     pnccdFixWiringError(eventData, global);
