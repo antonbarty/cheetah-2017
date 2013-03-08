@@ -231,13 +231,15 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	long	pix_nx = asic_nx*nasics_x;
 	long	pix_ny = asic_ny*nasics_y;
 	long	pix_nn = pix_nx*pix_ny;
+	long	asic_nn = asic_nx*asic_ny;
 	
 	
-	// Subunit size
+	// Median window size
 	long nn = (2*radius+1);
 	nn=nn*nn;
 	
-	float	*buffer = (float*) calloc(nn, sizeof(float));
+	float	*asic_buffer = (float*) calloc(asic_nn, sizeof(float));
+	float	*median_buffer = (float*) calloc(nn, sizeof(float));
 	float	*localBg = (float*) calloc(pix_nn, sizeof(float)); 
 	
 	
@@ -250,16 +252,29 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	
 	
 	// Loop over ASIC modules 
-	for(long mi=0; mi<nasics_x; mi++){
-		for(long mj=0; mj<nasics_y; mj++){
+	for(long mj=0; mj<nasics_y; mj++){
+		for(long mi=0; mi<nasics_x; mi++){
+			
+			// Extract buffer of ASIC values (small array is cache friendly)
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					
+					// Element in ASIC buffer
+					e = i+j*asic_nx;
+					
+					// Element in data array
+					ee = (j+mj*asic_ny)*pix_nx;
+					ee += i+mi*asic_nx;
+					
+					asic_buffer[e] = data[ee];
+				}
+			}
 			
 			// Loop over pixels within a module
 			for(long j=0; j<asic_ny; j++){
 				for(long i=0; i<asic_nx; i++){
 					
 					counter = 0;
-					e = (j+mj*asic_ny)*pix_nx;
-					e += i+mi*asic_nx;
 					
 					// Loop over median window
 					for(long jj=-radius; jj<=radius; jj++){
@@ -275,19 +290,32 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 							if((j+jj) >= asic_ny)
 								continue;
 							
-							ee = (j+jj+mj*asic_ny)*pix_nx;
-							ee += i+ii+mi*asic_nx;
-							
-							if(ee < 0 || ee >= pix_nn){
-								printf("Error: Array bounds error: e = %li > %li\n",e,pix_nn);
+							// Element in asic buffer
+							e = (j+jj)*asic_nx;
+							e += i+ii;
+							if(e < 0 || e >= asic_nn){
+								printf("Error: Array bounds error: e = %li > %li\n",e,asic_nn);
 								continue;
 							}
+							median_buffer[counter] = asic_buffer[e];
 							
-							buffer[counter] = data[ee];
+							// Element in raw data array
+							//ee = (j+jj+mj*asic_ny)*pix_nx;
+							//ee += i+ii+mi*asic_nx;
+							//if(ee < 0 || ee >= pix_nn){
+							//	printf("Error: Array bounds error: e = %li > %li\n",e,pix_nn);
+							//	continue;
+							//}
+							//median_buffer[counter] = data[ee];
+							
 							counter++;
 						}
 					}
 					
+					// Element in data array
+					ee = (j+mj*asic_ny)*pix_nx;
+					ee += i+mi*asic_nx;
+
 					// No elements -> trap an error
 					if(counter == 0) {
 						printf("Error: Local background counter == 0\n");
@@ -300,7 +328,7 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 					}
 					
 					// Find median value
-					localBg[e] = kth_smallest(buffer, counter, counter/2);
+					localBg[ee] = kth_smallest(median_buffer, counter, counter/2);
 				}
 			}
 		}
@@ -317,7 +345,8 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	
 	// Cleanup
 	free(localBg);
-	free(buffer);
+	free(asic_buffer);
+	free(median_buffer);
 }
 
 
