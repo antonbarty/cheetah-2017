@@ -146,17 +146,17 @@ public:
 	double   AcqSampleInterval;
     
     /** @brief Toggle energy spectrum creation. */
-    int      espectrum1D;
+	int      espectrum1D;
     /** @brief Angle of spectra from horizontal (clockwise). */
-    int      espectiltang;
+	int      espectiltang;
     /** @brief Length in pixels of energy spectrum (same as spectrum camera height). */
-    int      espectrumLength;
+	int      espectrumLength;
     /** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
-    int      espectrumWidth;
+	int      espectrumWidth;
     /** @brief Toggle energy spectrum dark correction. */
-    int      espectrumDarkSubtract;
+	int      espectrumDarkSubtract;
     /** @brief File name of energy spectrum dark calibration file. */
-    char     espectrumDarkFile[MAX_FILENAME_LENGTH];
+	char     espectrumDarkFile[MAX_FILENAME_LENGTH];
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -164,6 +164,7 @@ public:
 	int      powderSumBlanks;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
+	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
 
 

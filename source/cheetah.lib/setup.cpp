@@ -546,7 +546,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 
 		if (fail != 0){
-			printf("ERROR: The keyword %s is not regognized.\n",tag);
+			printf("ERROR: The keyword %s is not recognized.\n",tag);
 			exitCheetah = 1;
 		}
 
@@ -694,7 +694,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "espectrumdarksubtract")) {
         espectrumDarkSubtract = atoi(value);
     }
-    else if (!strcmp(tag, "epsectrumdarkfile")) {
+    else if (!strcmp(tag, "espectrumdarkfile")) {
 		strcpy(espectrumDarkFile, value);
     }
 	
