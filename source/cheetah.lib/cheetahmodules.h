@@ -65,6 +65,7 @@ void integrateSpectrum(cEventData*, cGlobal*, int, int);
 void genSpectrumBackground(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
+void readSpectrumDarkcal(cGlobal*, char *);
 
 
 // powder.cpp

@@ -22,7 +22,7 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
-
+#include "cheetahmodules.h"
 
 /*
  *	Default settings/configuration
@@ -107,6 +107,8 @@ cGlobal::cGlobal(void) {
 	espectiltang = 0;
 	espectrumLength = 1080;
     espectrumWidth = 900;
+    espectrumDarkSubtract = 0;
+    strcpy(espectrumDarkFile, "No_file_specified");
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -184,7 +186,6 @@ void cGlobal::setup() {
 	}
 	
 
-
 	/*
 	 * How many types of powder pattern do we need?
 	 */
@@ -234,9 +235,17 @@ void cGlobal::setup() {
     for(long i=0; i<espectrumLength*espectrumWidth; i++) {
         espectrumBuffer[i] = 0;
     }
+
+    /*
+     * Set up Darkcal array for holding energy spectrum background
+     */
+    espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+    for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+        espectrumDarkcal[i] = 0;
+    }
     
-     
-     
+    readSpectrumDarkcal(self, espectrumDarkFile);
+  
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -282,6 +291,7 @@ void cGlobal::setup() {
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
+        
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
@@ -680,6 +690,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     }
     else if (!strcmp(tag, "espectrumLength")) {
         espectrumLength = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumDarkSubtract")) {
+        espectrumDarkSubtract = atoi(value);
     }
 
 	// Radial average stacks

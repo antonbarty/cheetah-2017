@@ -153,6 +153,10 @@ public:
     int      espectrumLength;
     /** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
     int      espectrumWidth;
+    /** @brief Toggle energy spectrum dark correction. */
+    int      espectrumDarkSubtract;
+    /** @brief File name of energy spectrum dark calibration file. */
+    char     espectrumDarkFile[MAX_FILENAME_LENGTH];
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -282,6 +286,7 @@ public:
     // variable to hold the updating run integrated spectrum
     double  *espectrumRun;
     double  *espectrumBuffer;
+    double  *espectrumDarkcal;
     
     // time keeping
 	time_t   tstart, tend;

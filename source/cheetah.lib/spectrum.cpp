@@ -18,6 +18,7 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
+#include "data2d.h"
 
 
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
@@ -55,6 +56,9 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
             if (newind >= 0 && newind < specHeight) {
                 opalindex = i*specWidth + j;   // index of the 2D camera array
                 eventData->energySpectrum1D[newind]+=eventData->specImage[opalindex];
+                if (global->espectrumDarkSubtract) {
+                    eventData->energySpectrum1D[newind]-=global->espectrumDarkcal[opalindex];
+                }
             }
         }
     }
@@ -74,7 +78,7 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
     }
     
     // Update spectrum hit counter
-	if(eventData->energySpectrumExist) {
+	if(eventData->energySpectrumExist && !global->generateDarkcal) {
 		pthread_mutex_lock(&global->nespechits_mutex);
 		global->nespechits++;
 		pthread_mutex_unlock(&global->nespechits_mutex);
@@ -144,6 +148,43 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
     
 }
 
+void readSpectrumDarkcal(cGlobal *global, char *filename) {
+    
+    int spectrumpix = global->espectrumLength*global->espectrumWidth;
+    
+    // Do we need a darkcal file?
+	if (global->espectrumDarkSubtract == 0){
+		return;
+	}
+    
+    // Check if a darkcal file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("spectrum camera Darkcal file path was not specified.\n");
+		exit(1);
+	}
+    
+    // Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tenergy spectrum Darkcal file does not exist: %s\n",filename);
+		printf("\tAborting...\n");
+		exit(1);
+	}
+    
+    // Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+    // Copy into darkcal array
+    for(long i=0; i<spectrumpix; i++) {
+        global->espectrumDarkcal[i] =  temp2d.data[i];
+    }
+    printf("\tdarkcal file read successfully\n");
+    return;
+}
+    
+
 
 //------------------------------------------------------------------------------
 //// code gathered for background subtraction
@@ -165,74 +206,5 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 //	}
 //}//--------------
 
-//void saveDarkcal(cGlobal *global, int detID) {
-//	
-//	// Dereference common variables
-//    cPixelDetectorCommon     *detector = &(global->detector[detID]);
-//	long	pix_nn = detector->pix_nn;
-//	char	filename[1024];
-//	
-//	printf("Processing darkcal\n");
-//	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
-//	float *buffer = (float*) calloc(pix_nn, sizeof(float));
-//	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
-//	for(long i=0; i<pix_nn; i++)
-//		buffer[i] = detector->powderRaw[0][i]/detector->nPowderFrames[0];
-//	pthread_mutex_unlock(&detector->powderRaw_mutex[0]);
-//	printf("Saving darkcal to file: %s\n", filename);
-//	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
-//	free(buffer);
-//}
-////-------------------------------
-/*
- *	Read in darkcal file
- */
-//void cPixelDetectorCommon::readDarkcal(char *filename){
-//	
-//	// Create memory space and pad with zeros
-//	darkcal = (float*) calloc(pix_nn, sizeof(float));
-//    for(long i=0; i<pix_nn; i++)
-//        darkcal[i] = 0;
-//    
-//	// Do we need a darkcal file?
-//	if (useDarkcalSubtraction == 0){
-//		return;
-//	}
-//	
-//	// Check if a darkcal file has been specified
-//	if ( strcmp(filename,"") == 0 ){
-//		printf("Darkcal file path was not specified.\n");
-//		exit(1);
-//	}
-//    
-//	printf("Reading darkcal configuration:\n");
-//	printf("\t%s\n",filename);
-//    
-//	// Check whether file exists!
-//	FILE* fp = fopen(filename, "r");
-//	if (fp) 	// file exists
-//		fclose(fp);
-//	else {		// file doesn't exist
-//		printf("\tDarkcal file does not exist: %s\n",filename);
-//		printf("\tAborting...\n");
-//		exit(1);
-//	}
-//	
-//	
-//	// Read darkcal data from file
-//	cData2d		temp2d;
-//	temp2d.readHDF5(filename);
-//	
-//	// Correct geometry?
-//	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
-//		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
-//		printf("\tAborting...\n");
-//		exit(1);
-//	}
-//	
-//	// Copy into darkcal array
-//	for(long i=0;i<pix_nn;i++)
-//		darkcal[i] = temp2d.data[i];
-//	
-//}
+
 
