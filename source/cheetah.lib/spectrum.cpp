@@ -107,8 +107,13 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 
     int     spectrumpix = global->espectrumWidth*global->espectrumLength;
     double *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
+	double *espectrumScale = (double*) calloc(global->espectrumLength, sizeof(double));
     char	filename[1024];
     int     maxindex = 0;
+	int     evspread = global->espectrumSpreadeV;
+	double  pixincrement = evspread/(global->espectrumLength-1);
+	double  beamAveV = global->meanPhotonEnergyeV;
+	double  eVoffset = beamAveV - maxindex*pixincrement;
     
     // compute spectrum camera darkcal and save to HDF5
     if(global->generateDarkcal){
@@ -136,11 +141,15 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
                 maxindex = i;
         }
     }
+	
+	for (int i=0; i<global->espectrumLength; i++) {
+		espectrumScale[i]=i*evspread + eVoffset;
+	}
     
     sprintf(filename,"r%04u-integratedEnergySpectrum.h5", global->runNumber);
     printf("Saving run-integrated energy spectrum: %s\n", filename);
     
-    writeSpectrumInfoHDF5(filename, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE, &maxindex, 1, H5T_NATIVE_INT);
+    writeSpectrumInfoHDF5(filename, espectrumScale, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE, &maxindex, 1, H5T_NATIVE_INT);
 
     pthread_mutex_unlock(&global->espectrumRun_mutex);
     pthread_mutex_unlock(&global->nespechits_mutex);

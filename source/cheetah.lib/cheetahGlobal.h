@@ -153,10 +153,13 @@ public:
 	int      espectrumLength;
     /** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
 	int      espectrumWidth;
-    /** @brief Toggle energy spectrum dark correction. */
+	/** @brief spread in eV of energy spectrum detector (40eV for the current setup). */
+	int      espectrumSpreadeV;
+	/** @brief Toggle energy spectrum dark correction. */
 	int      espectrumDarkSubtract;
     /** @brief File name of energy spectrum dark calibration file. */
 	char     espectrumDarkFile[MAX_FILENAME_LENGTH];
+	
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;

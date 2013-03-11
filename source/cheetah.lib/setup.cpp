@@ -108,6 +108,7 @@ cGlobal::cGlobal(void) {
 	espectrumLength = 1080;
     espectrumWidth = 900;
     espectrumDarkSubtract = 0;
+	espectrumSpreadeV = 40;
     strcpy(espectrumDarkFile, "No_file_specified");
 
 	// Powder pattern generation
