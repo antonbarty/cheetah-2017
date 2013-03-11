@@ -52,7 +52,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
 
     for (long i=0; i<specHeight; i++) {
         for (long j=0; j<specWidth; j++) {
-            newind = i + ceilf(j*ttilt);        // index of the integrated array, must be integer,!
+            newind = i + (int) ceilf(j*ttilt);        // index of the integrated array, must be integer,!
             if (newind >= 0 && newind < specHeight) {
                 opalindex = i*specWidth + j;   // index of the 2D camera array
                 eventData->energySpectrum1D[newind]+=eventData->specImage[opalindex];
@@ -144,7 +144,7 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 
     pthread_mutex_unlock(&global->espectrumRun_mutex);
     pthread_mutex_unlock(&global->nespechits_mutex);
-    return;
+	return;
     
 }
 
@@ -168,43 +168,20 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("\tenergy spectrum Darkcal file does not exist: %s\n",filename);
+		printf("\tspecified energy spectrum Darkcal file does not exist: %s\n",filename);
 		printf("\tAborting...\n");
 		exit(1);
 	}
     
-    // Read darkcal data from file
+	printf("Reading energy spectrum Darkcal file:\n");
+	printf("\t%s\n",filename);
+	
+	// Read darkcal data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
     // Copy into darkcal array
-    for(long i=0; i<spectrumpix; i++) {
-        global->espectrumDarkcal[i] =  temp2d.data[i];
+	for(long i=0; i<spectrumpix; i++) {
+		global->espectrumDarkcal[i] =  temp2d.data[i];
     }
-    printf("\tdarkcal file read successfully\n");
     return;
 }
-    
-
-
-//------------------------------------------------------------------------------
-//// code gathered for background subtraction
-//void subtractDarkcal(cEventData *eventData, cGlobal *global) {
-//	DETECTOR_LOOP {
-//		if(global->detector[detID].useDarkcalSubtraction) {
-//			long	pix_nn = global->detector[detID].pix_nn;
-//			float	*data = eventData->detector[detID].corrected_data;
-//			float	*darkcal = global->detector[detID].darkcal;
-//            
-//			subtractDarkcal(data, darkcal, pix_nn);
-//		}
-//	}
-//}
-//
-//void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
-//	for(long i=0; i<pix_nn; i++) {
-//		data[i] -= darkcal[i];
-//	}
-//}//--------------
-
-
-

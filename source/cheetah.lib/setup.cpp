@@ -685,17 +685,21 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "espectiltang")) {
         espectiltang = atoi(value);
     }
-    else if (!strcmp(tag, "espectrum1D")) {
+    else if (!strcmp(tag, "espectrum1d")) {
         espectrum1D = atoi(value);
     }
-    else if (!strcmp(tag, "espectrumLength")) {
+    else if (!strcmp(tag, "espectrumlength")) {
         espectrumLength = atoi(value);
     }
-    else if (!strcmp(tag, "espectrumDarkSubtract")) {
+    else if (!strcmp(tag, "espectrumdarksubtract")) {
         espectrumDarkSubtract = atoi(value);
     }
-
-	// Radial average stacks
+    else if (!strcmp(tag, "epsectrumdarkfile")) {
+		strcpy(espectrumDarkFile, value);
+    }
+	
+    
+    // Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);
 	}
