@@ -743,7 +743,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 
 void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {
 	
-    hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
 	hsize_t size[1];
 	hsize_t max_size[1];
@@ -754,7 +754,7 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *
 	}
 	
 	// create group energySpectrum
-    gh = H5Gcreate(fh, "energySpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	gh = H5Gcreate(fh, "energySpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
 		ERROR("Couldn't create group\n");
 		H5Fclose(fh);
@@ -764,14 +764,14 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *
 	sh = H5Screate_simple(1, size, NULL);
 	
 	// save run integrated energy spectrum in HDF5 as energySpectrum/runIntegratedEnergySpectrum
-    dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
+	dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
 	}
 	
-    /* Muppet check */
+	/* Muppet check */
 	H5Sget_simple_extent_dims(sh, size, max_size);
 	
 	r = H5Dwrite(dh, type1, H5S_ALL, H5S_ALL, H5P_DEFAULT, data1);
@@ -780,12 +780,14 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}
-    
-    H5Dclose(dh);
-    H5Sclose(sh);
-    
+	
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	size[0] = length1;
+	sh = H5Screate_simple(1, size, NULL);
 	// save run integrated energy spectrum scale in HDF5 as energySpectrum/runIntegratedEnergyScale
-    dh = H5Dcreate(gh, "runIntegratedEnergyScale", type1, sh,
+	dh = H5Dcreate(gh, "runIntegratedEnergyScale", type1, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
@@ -801,30 +803,30 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}
-    
-    H5Dclose(dh);
-    H5Sclose(sh);
 	
-    // save index of max integrated value in HDF5 as energySpectrum/runIntegratedEnergySpectrum_maxindex
-    size[0] = length2;
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	// save index of max integrated value in HDF5 as energySpectrum/runIntegratedEnergySpectrum_maxindex
+	size[0] = length2;
 	sh = H5Screate_simple(1, size, NULL);
-    dh = H5Dcreate(gh, "runIntegratedEnergySpectrum_maxindex", type2, sh,
+	dh = H5Dcreate(gh, "runIntegratedEnergySpectrum_maxindex", type2, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
 	}
-    r = H5Dwrite(dh, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, data2);
+	r = H5Dwrite(dh, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, data2);
 	if ( r < 0 ) {
 		ERROR("Couldn't write data\n");
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}
-    
+	
 	//H5Gclose(gh);
 	H5Dclose(dh);
-    H5Sclose(sh);
-    H5Gclose(gh);
+	H5Sclose(sh);
+	H5Gclose(gh);
     
 	/*
 	 *	Clean up stale HDF5 links

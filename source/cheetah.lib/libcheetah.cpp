@@ -25,32 +25,31 @@
  */
 void cheetahInit(cGlobal *global) {
     
-    global->self = global;
+	global->self = global;
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
 
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
-    printf("Cheetah clean initialisation\n");
-    
+	printf("Cheetah clean initialisation\n");
 }
 
 /*
  *  libCheetah function for start of a new run
  */
 void cheetahNewRun(cGlobal *global) {
-    // Reset the powder log files
-    if(global->runNumber > 0) {
-        for(long i=0; i<global->nPowderClasses; i++) {
-            char	filename[1024];
-            if(global->powderlogfp[i] != NULL)
-                fclose(global->powderlogfp[i]);
-            sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
-            global->powderlogfp[i] = fopen(filename, "w");        
-            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
-        }
-    }
+	// Reset the powder log files
+	if(global->runNumber > 0) {
+		for(long i=0; i<global->nPowderClasses; i++) {
+			char	filename[1024];
+			if(global->powderlogfp[i] != NULL)
+				fclose(global->powderlogfp[i]);
+			sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
+			global->powderlogfp[i] = fopen(filename, "w");
+			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+		}
+	}
 }
 
 
@@ -64,8 +63,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
     /*
 	 *	Create new event structure
 	 */
-    cEventData	*eventData;
-    eventData = (cEventData*) malloc(sizeof(cEventData));
+	cEventData	*eventData;
+	eventData = (cEventData*) malloc(sizeof(cEventData));
 	eventData->pGlobal = global;
 
     /*
@@ -116,15 +115,15 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
-    /*
+	/*
 	 *	Create arrays for energy spectrum data
 	 */
-    int spectrumLength = global->espectrumLength;
-    eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
-    eventData->energySpectrumExist = 0;
-    
-    // Return
-    return eventData;
+	int spectrumLength = global->espectrumLength;
+	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
+	eventData->energySpectrumExist = 0;
+	
+	// Return
+	return eventData;
 }
 
 
@@ -161,13 +160,13 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	
 	
 	// Pulnix external camera
-    if(eventData->pulnixFail == 0){ 
-        free(eventData->pulnixImage);
-    }
-    // Opal spectrum camera
-    if(eventData->specFail == 0){
-        free(eventData->specImage);
-    }
+	if(eventData->pulnixFail == 0){
+		free(eventData->pulnixImage);
+	}
+	// Opal spectrum camera
+	if(eventData->specFail == 0){
+		free(eventData->specImage);
+	}
 	//TOF stuff.
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
@@ -450,9 +449,9 @@ void cheetahExit(cGlobal *global) {
     }
     saveRadialStacks(global);
 	global->writeFinalLog();
-    
-    // Save integrated run spectrum
-    saveIntegratedRunSpectrum(global);
+	
+	// Save integrated run spectrum
+	saveIntegratedRunSpectrum(global);
     
 	
 	// Hitrate?
@@ -489,8 +488,8 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->peaksfp_mutex);
 	pthread_mutex_destroy(&global->powderfp_mutex);
 	pthread_mutex_destroy(&global->subdir_mutex);
-    pthread_mutex_destroy(&global->espectrumRun_mutex);
-    pthread_mutex_destroy(&global->nespechits_mutex);
+	pthread_mutex_destroy(&global->espectrumRun_mutex);
+	pthread_mutex_destroy(&global->nespechits_mutex);
 
     
     printf("Cheetah clean exit\n");

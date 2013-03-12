@@ -106,10 +106,10 @@ cGlobal::cGlobal(void) {
 	espectrum1D = 1;
 	espectiltang = 0;
 	espectrumLength = 1080;
-    espectrumWidth = 900;
-    espectrumDarkSubtract = 0;
+	espectrumWidth = 900;
+	espectrumDarkSubtract = 0;
 	espectrumSpreadeV = 40;
-    strcpy(espectrumDarkFile, "No_file_specified");
+	strcpy(espectrumDarkFile, "No_file_specified");
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -221,32 +221,32 @@ void cGlobal::setup() {
 		hitfinderResMask[j] = 1;
 	}
 
-    /*
-     * Set up array for run integrated energy spectrum
-     */
-    espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
-    for(long i=0; i<espectrumLength; i++) {
-        espectrumRun[i] = 0;
-    }
-    
-    /*
-     * Set up buffer array for calculation of energy spectrum background
-     */
-    espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-    for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-        espectrumBuffer[i] = 0;
-    }
+	/*
+	 * Set up array for run integrated energy spectrum
+	 */
+	espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
+	for(long i=0; i<espectrumLength; i++) {
+		espectrumRun[i] = 0;
+	}
+	
+	/*
+	 * Set up buffer array for calculation of energy spectrum background
+	 */
+	espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+	for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+		espectrumBuffer[i] = 0;
+	}
 
-    /*
-     * Set up Darkcal array for holding energy spectrum background
-     */
-    espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-    for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-        espectrumDarkcal[i] = 0;
-    }
-    
-    readSpectrumDarkcal(self, espectrumDarkFile);
-  
+	/*
+	 * Set up Darkcal array for holding energy spectrum background
+	 */
+	espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+	for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+		espectrumDarkcal[i] = 0;
+	}
+	
+	readSpectrumDarkcal(self, espectrumDarkFile);
+	
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -275,9 +275,9 @@ void cGlobal::setup() {
 	pthread_mutex_init(&powderfp_mutex, NULL);
 	pthread_mutex_init(&peaksfp_mutex, NULL);
 	pthread_mutex_init(&subdir_mutex, NULL);
-    pthread_mutex_init(&nespechits_mutex, NULL);
-    pthread_mutex_init(&espectrumRun_mutex, NULL);
-    pthread_mutex_init(&espectrumBuffer_mutex, NULL);
+	pthread_mutex_init(&nespechits_mutex, NULL);
+	pthread_mutex_init(&espectrumRun_mutex, NULL);
+	pthread_mutex_init(&espectrumBuffer_mutex, NULL);
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
 
@@ -350,7 +350,7 @@ void cGlobal::setup() {
 	npowderBlanks = 0;
 	nhits = 0;
 	nrecenthits = 0;
-    nespechits = 0;
+	nespechits = 0;
 	nprocessedframes = 0;
 	nrecentprocessedframes = 0;
 	lastclock = clock()-10;
@@ -682,24 +682,25 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderTOFThresh = atof(value);
 	}
 
-    // Energy spectrum parameters
-    else if (!strcmp(tag, "espectiltang")) {
-        espectiltang = atoi(value);
-    }
-    else if (!strcmp(tag, "espectrum1d")) {
-        espectrum1D = atoi(value);
-    }
-    else if (!strcmp(tag, "espectrumlength")) {
-        espectrumLength = atoi(value);
-    }
-    else if (!strcmp(tag, "espectrumdarksubtract")) {
-        espectrumDarkSubtract = atoi(value);
-    }
+	// Energy spectrum parameters
+	else if (!strcmp(tag, "espectiltang")) {
+		espectiltang = atoi(value);
+	}
+	else if (!strcmp(tag, "espectrum1d")) {
+		espectrum1D = atoi(value);
+	}
+	else if (!strcmp(tag, "espectrumlength")) {
+		espectrumLength = atoi(value);
+	}
+	else if (!strcmp(tag, "espectrumdarksubtract")) {
+		espectrumDarkSubtract = atoi(value);
+	}
     else if (!strcmp(tag, "espectrumdarkfile")) {
 		strcpy(espectrumDarkFile, value);
-    }
-	
-    
+	}
+	else if (!strcmp(tag, "espectrumspreadev")) {
+		espectrumSpreadeV = atoi(value);
+	}
     // Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);
@@ -870,9 +871,9 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
-    fprintf(fp, "espectrum1D=%d\n",espectrum1D);
-    fprintf(fp, "espectiltang=%d\n",espectiltang);
-    fprintf(fp, "espectrumLength=%d\n",espectrumLength);
+	fprintf(fp, "espectrum1D=%d\n",espectrum1D);
+	fprintf(fp, "espectiltang=%d\n",espectiltang);
+	fprintf(fp, "espectrumLength=%d\n",espectrumLength);
 	//fprintf(fp, "cmFloor=%f\n",cmFloor);
 	//fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
@@ -1099,7 +1100,7 @@ void cGlobal::writeFinalLog(void){
 	for(long i=0; i<nPowderClasses; i++) {
 		fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
 	}
-    fprintf(fp, "Number of energy spectra collected: %li\n",nespechits);
+	fprintf(fp, "Number of energy spectra collected: %li\n",nespechits);
 	fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
 	fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
 	fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
