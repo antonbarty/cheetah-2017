@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # you should only need to modify the following four lines
-CHEETAHDIR=$HOME/cheetah	# Your cheetah directory
+CHEETAHDIR=$PWD	# Your cheetah directory
 export INSTALLDIR=$HOME/local	# Your local installation directory
 export HDF5DIR=$HOME/local
 export LIBPATH=$HOME/local/lib
@@ -11,9 +11,9 @@ export LIBPATH=$HOME/local/lib
 ########################
 
 cd $CHEETAHDIR/source/lcls-psana
+addpkg psana
 relupgrade ana-current
 . /reg/g/psdm/bin/sit_setup.sh
-export LIBPATH=$HOME/local/lib
 scons -c
 scons
 
@@ -22,7 +22,7 @@ scons
 ########################
 
 export LD_LIBRARY_PATH="$INSTALLDIR/lib:$HDF5DIR/lib"
-export LD_LIBRARY_PATH="$CHEETAHDIR/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux:$LD_LIBRARY_PATH"
+#export LD_LIBRARY_PATH="$CHEETAHDIR/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux:$LD_LIBRARY_PATH"
 export LD_RUN_PATH=$LD_LIBRARY_PATH
 
 # build libcheetah
@@ -48,7 +48,6 @@ cp hitfinder quickview framesorter $INSTALLDIR/scripts
 # PSANA
 ########################
 
-export LIBPATH=/reg/neh/home3/yoon82/local/lib:$LIBPATH
 
 cd $CHEETAHDIR/source/lcls-psana
 
