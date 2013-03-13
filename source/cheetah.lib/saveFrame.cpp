@@ -285,6 +285,18 @@ void writeHDF5(cEventData *info, cGlobal *global){
         H5Sclose(dataspace_id);
     }
 	
+	/*
+     *  Save energy scale data to HDF file as data/energySpectrumScale
+     */
+    if(info->energySpectrumExist ==1) {
+        size[0] = global->espectrumLength;
+        
+        dataspace_id = H5Screate_simple(1, size, NULL);
+        dataset_id = H5Dcreate(gid, "energySpectrumScale", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, global->espectrumScale);
+        H5Dclose(dataset_id);
+        H5Sclose(dataspace_id);
+    }
 	
 	// Done with the /data group
 	H5Gclose(gid);
@@ -741,9 +753,9 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	H5Fclose(fh);
 }
 
-void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {
+void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {
 	
-    hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
 	hsize_t size[1];
 	hsize_t max_size[1];
@@ -754,7 +766,7 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
 	}
 	
 	// create group energySpectrum
-    gh = H5Gcreate(fh, "energySpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	gh = H5Gcreate(fh, "energySpectrum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gh < 0 ) {
 		ERROR("Couldn't create group\n");
 		H5Fclose(fh);
@@ -764,7 +776,30 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
 	sh = H5Screate_simple(1, size, NULL);
 	
 	// save run integrated energy spectrum in HDF5 as energySpectrum/runIntegratedEnergySpectrum
-    dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
+	dh = H5Dcreate(gh, "runIntegratedEnergySpectrum", type1, sh,
+	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( dh < 0 ) {
+		ERROR("Couldn't create dataset\n");
+		H5Fclose(fh);
+	}
+	
+	/* Muppet check */
+	H5Sget_simple_extent_dims(sh, size, max_size);
+	
+	r = H5Dwrite(dh, type1, H5S_ALL, H5S_ALL, H5P_DEFAULT, data1);
+	if ( r < 0 ) {
+		ERROR("Couldn't write data\n");
+		H5Dclose(dh);
+		H5Fclose(fh);
+	}
+	
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	size[0] = length1;
+	sh = H5Screate_simple(1, size, NULL);
+	// save run integrated energy spectrum scale in HDF5 as energySpectrum/runIntegratedEnergyScale
+	dh = H5Dcreate(gh, "runIntegratedEnergyScale", type1, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
@@ -774,36 +809,36 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data1, int length1,
     /* Muppet check */
 	H5Sget_simple_extent_dims(sh, size, max_size);
 	
-	r = H5Dwrite(dh, type1, H5S_ALL, H5S_ALL, H5P_DEFAULT, data1);
+	r = H5Dwrite(dh, type1, H5S_ALL, H5S_ALL, H5P_DEFAULT, data0);
 	if ( r < 0 ) {
 		ERROR("Couldn't write data\n");
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}
-    
-    H5Dclose(dh);
-    H5Sclose(sh);
-    
-    // save index of max integrated value in HDF5 as energySpectrum/runIntegratedEnergySpectrum_maxindex
-    size[0] = length2;
+	
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	// save index of max integrated value in HDF5 as energySpectrum/runIntegratedEnergySpectrum_maxindex
+	size[0] = length2;
 	sh = H5Screate_simple(1, size, NULL);
-    dh = H5Dcreate(gh, "runIntegratedEnergySpectrum_maxindex", type2, sh,
+	dh = H5Dcreate(gh, "runIntegratedEnergySpectrum_maxindex", type2, sh,
 	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
 	}
-    r = H5Dwrite(dh, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, data2);
+	r = H5Dwrite(dh, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, data2);
 	if ( r < 0 ) {
 		ERROR("Couldn't write data\n");
 		H5Dclose(dh);
 		H5Fclose(fh);
 	}
-    
+	
 	//H5Gclose(gh);
 	H5Dclose(dh);
-    H5Sclose(sh);
-    H5Gclose(gh);
+	H5Sclose(sh);
+	H5Gclose(gh);
     
 	/*
 	 *	Clean up stale HDF5 links

@@ -40,15 +40,15 @@ public:
 	int				pulnixFail;
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
-    
-    // Opal2k energy spectrum camera
-    int             specFail;
-    int             specWidth, specHeight;
-    unsigned short  *specImage;
-    
-    // energy spectrum data
-    int             energySpectrumExist;
-    double          *energySpectrum1D;
+	
+	// Opal2k energy spectrum camera
+	int             specFail;
+	int             specWidth, specHeight;
+	unsigned short  *specImage;
+	
+	// energy spectrum data
+	int             energySpectrumExist;
+	double          *energySpectrum1D;
 
 
 	// Hit finding

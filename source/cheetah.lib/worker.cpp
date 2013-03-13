@@ -300,8 +300,8 @@ void *worker(void *threadarg) {
 	else
 		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
-    
-    
+
+
 	/*
 	 *	If this is a hit, write out peak info to peak list file
 	 */
