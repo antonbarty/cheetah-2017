@@ -159,7 +159,9 @@ public:
 	int      espectrumDarkSubtract;
 	/** @brief File name of energy spectrum dark calibration file. */
 	char     espectrumDarkFile[MAX_FILENAME_LENGTH];
-	
+	/** @brief File name of energy spectrum scale calibration file. */
+	char     espectrumScaleFile[MAX_FILENAME_LENGTH];
+
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -291,6 +293,7 @@ public:
 	double  *espectrumRun;
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;
+	double  *espectrumScale;
 	
 	// time keeping
 	time_t   tstart, tend;

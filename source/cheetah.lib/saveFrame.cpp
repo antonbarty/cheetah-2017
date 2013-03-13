@@ -285,6 +285,18 @@ void writeHDF5(cEventData *info, cGlobal *global){
         H5Sclose(dataspace_id);
     }
 	
+	/*
+     *  Save energy scale data to HDF file as data/energySpectrumScale
+     */
+    if(info->energySpectrumExist ==1) {
+        size[0] = global->espectrumLength;
+        
+        dataspace_id = H5Screate_simple(1, size, NULL);
+        dataset_id = H5Dcreate(gid, "energySpectrumScale", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, global->espectrumScale);
+        H5Dclose(dataset_id);
+        H5Sclose(dataspace_id);
+    }
 	
 	// Done with the /data group
 	H5Gclose(gid);

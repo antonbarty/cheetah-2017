@@ -110,6 +110,7 @@ cGlobal::cGlobal(void) {
 	espectrumDarkSubtract = 0;
 	espectrumSpreadeV = 40;
 	strcpy(espectrumDarkFile, "No_file_specified");
+	strcpy(espectrumScaleFile, "No_file_specified");
 
 	// Powder pattern generation
 	nPowderClasses = 2;
@@ -245,7 +246,17 @@ void cGlobal::setup() {
 		espectrumDarkcal[i] = 0;
 	}
 	
+	/*
+	 * Set up array for holding energy spectrum scale
+	 */
+	espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
+	for(long i=0; i<espectrumLength; i++) {
+		espectrumScale[i] = 0;
+	}
+	
 	readSpectrumDarkcal(self, espectrumDarkFile);
+	readSpectrumEnergyScale(self, espectrumScaleFile);
+	
 	
 	/*
 	 * Set up arrays for powder classes and radial stacks
@@ -695,12 +706,16 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "espectrumdarksubtract")) {
 		espectrumDarkSubtract = atoi(value);
 	}
-    else if (!strcmp(tag, "espectrumdarkfile")) {
-		strcpy(espectrumDarkFile, value);
-	}
 	else if (!strcmp(tag, "espectrumspreadev")) {
 		espectrumSpreadeV = atoi(value);
 	}
+    else if (!strcmp(tag, "espectrumdarkfile")) {
+		strcpy(espectrumDarkFile, value);
+	}
+	else if (!strcmp(tag, "espectrumscalefile")) {
+		strcpy(espectrumScaleFile, value);
+	}
+
     // Radial average stacks
 	else if (!strcmp(tag, "saveradialstacks")) {
 		saveRadialStacks = atoi(value);

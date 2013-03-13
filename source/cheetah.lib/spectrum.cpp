@@ -163,13 +163,13 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 	if (global->espectrumDarkSubtract == 0){
 		return;
 	}
-
+	
 	// Check if a darkcal file has been specified
 	if ( strcmp(filename,"") == 0 ){
 		printf("spectrum camera Darkcal file path was not specified.\n");
 		exit(1);
 	}
-
+	
 	// Check whether file exists!
 	FILE* fp = fopen(filename, "r");
 	if (fp) 	// file exists
@@ -190,5 +190,108 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 	for(long i=0; i<spectrumpix; i++) {
 		global->espectrumDarkcal[i] =  temp2d.data[i];
 	}
+	return;
+}
+
+void readSpectrumEnergyScale(cGlobal *global, char *filename) {
+	
+	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
+	char        groupname[1024];
+	char        fieldname[1024];
+	hid_t       file_id;
+	hid_t       datagroup_id;
+	hid_t       dataset_id;
+	hid_t       dataspace_id;
+	hid_t       datatype_id;
+	H5T_class_t dataclass;
+	size_t      size;
+	
+	int ndims;
+	
+	sprintf(groupname, "energySpectrum");
+	sprintf(fieldname, "runIntegratedEnergyScale");
+	// Check if an energy scale calibration file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("spectrum energy scale calibration file path was not specified\n");
+		printf("spectra will be output with default (0) energy scale\n");
+		return;
+	}
+	
+	// Check whether file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("specified energy scale calibration file does not exist: %s\n",filename);
+		printf("spectra will be output with default (0) energy scale\n");
+		return;
+	}
+	
+	printf("Reading energy spectrum scale calibration file:\n");
+	printf("\t%s\n",filename);
+	
+	// Open the file
+	file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
+	if(file_id < 0){
+		printf("ERROR: Could not open file %s\n",filename);
+		printf("spectra will be output with default (0) energy scale\n");
+		return;
+	}
+	
+	// Open the dataset
+	datagroup_id = H5Gopen1(file_id, groupname);
+	dataset_id = H5Dopen1(datagroup_id, fieldname);
+	dataspace_id = H5Dget_space(dataset_id);
+	
+	// Test if correct dimensions / size
+	ndims = H5Sget_simple_extent_ndims(dataspace_id);
+	if(ndims != 1) {
+		printf("the specified file does not have the correct dimensions for energy scale calibration, ndims=%i\n",ndims);
+		printf("spectra will be output with default (0) energy scale\n");
+		return;
+	}
+	hsize_t dims[ndims];
+	H5Sget_simple_extent_dims(dataspace_id,dims,NULL);
+	if (!dims[0]==1 || !dims[1]==global->espectrumLength) {
+		printf("the specified file does not have the correct dimensions for energy scale calibration\n");
+		printf("spectra will be output with default (0) energy scale\n");
+		return;
+	}
+	
+	datatype_id =  H5Dget_type(dataset_id);
+	dataclass = H5Tget_class(datatype_id);
+	size = H5Tget_size(datatype_id);
+		
+	H5Dread(dataset_id, datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, energyscale);
+	for(int i=0; i<global->espectrumLength; i++) {
+		global->espectrumScale[i] = energyscale[i];
+	}
+	free(energyscale);
+	
+	// Close and cleanup
+	H5Dclose(dataset_id);
+	H5Gclose(datagroup_id);
+	
+	// Cleanup stale IDs
+	hid_t ids[256];
+	int n_ids = H5Fget_obj_ids(file_id, H5F_OBJ_ALL, 256, ids);
+	for (long i=0; i<n_ids; i++ ) {
+		
+		hid_t id;
+		H5I_type_t type;
+		id = ids[i];
+		type = H5Iget_type(id);
+		if ( type == H5I_GROUP )
+			H5Gclose(id);
+		if ( type == H5I_DATASET )
+			H5Dclose(id);
+		if ( type == H5I_DATASPACE )
+			H5Sclose(id);
+		//if ( type == H5I_DATATYPE )
+		//	H5Dclose(id);
+	}
+	
+	H5Fclose(file_id);
+	printf("energy spectrum scale calibration file read successfull:\n");
 	return;
 }
