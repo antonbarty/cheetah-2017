@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export CHEETAHDIR=$HOME/software/cheetah/	# CHEETAH DIRECTORY
+export LD_LIBRARY_PATH=$CHEETAHDIR/source/lcls-psana/build/x86_64-rhel5-gcc41-opt/cheetah_ana_pkg:$LD_LIBRARY_PATH # PSANA
+export PSANA_CONFIG=$CONFIGDIR/ini/other/psana.cfg
+
+hitfinder -n 100 -r 318 -t dark -i dark.ini -p	# -p for PSANA CHEETAH
+
