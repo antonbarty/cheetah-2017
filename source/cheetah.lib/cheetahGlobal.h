@@ -145,12 +145,23 @@ public:
 	/** @brief What's this? */
 	double   AcqSampleInterval;
     
-    /** @brief Toggle energy spectrum creation. */
-    int      espectrum1D;
-    /** @brief Angle of spectra from horizontal (clockwise). */
-    int      espectiltang;
-    /** @brief Length in pixels of energy spectrum (same as opal2k camera height). */
-    int      espectrumLength;
+	/** @brief Toggle energy spectrum creation. */
+	int      espectrum1D;
+	/** @brief Angle of spectra from horizontal (clockwise). */
+	int      espectiltang;
+	/** @brief Length in pixels of energy spectrum (same as spectrum camera height). */
+	int      espectrumLength;
+	/** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
+	int      espectrumWidth;
+	/** @brief spread in eV of energy spectrum detector (40eV for the current setup). */
+	int      espectrumSpreadeV;
+	/** @brief Toggle energy spectrum dark correction. */
+	int      espectrumDarkSubtract;
+	/** @brief File name of energy spectrum dark calibration file. */
+	char     espectrumDarkFile[MAX_FILENAME_LENGTH];
+	/** @brief File name of energy spectrum scale calibration file. */
+	char     espectrumScaleFile[MAX_FILENAME_LENGTH];
+
 
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
@@ -158,6 +169,7 @@ public:
 	int      powderSumBlanks;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
+	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
 
 
@@ -250,6 +262,7 @@ public:
 	pthread_mutex_t  subdir_mutex;
     pthread_mutex_t  nespechits_mutex;
     pthread_mutex_t  espectrumRun_mutex;
+    pthread_mutex_t  espectrumBuffer_mutex;
 
 
 
@@ -276,10 +289,13 @@ public:
 	long     nrecenthits;
     long     nespechits;
     
-    // variable to hold the updating run integrated spectrum
-    double  *espectrumRun;
-    
-    // time keeping
+	// variable to hold the updating run integrated spectrum
+	double  *espectrumRun;
+	double  *espectrumBuffer;
+	double  *espectrumDarkcal;
+	double  *espectrumScale;
+	
+	// time keeping
 	time_t   tstart, tend;
 	time_t   tlast, tnow;
 	clock_t  lastclock;
