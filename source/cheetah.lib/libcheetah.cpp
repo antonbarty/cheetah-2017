@@ -25,7 +25,6 @@
  */
 void cheetahInit(cGlobal *global) {
     
-<<<<<<< HEAD
 	global->self = global;
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
@@ -34,17 +33,6 @@ void cheetahInit(cGlobal *global) {
 	global->writeInitialLog();
 	global->writeConfigurationLog();
 	printf("Cheetah clean initialisation\n");
-=======
-    global->self = global;
-    //global->defaultConfiguration();
-    global->parseConfigFile(global->configFile);
-    
-    global->setup();
-    global->writeInitialLog();
-    global->writeConfigurationLog();
-    printf("Cheetah clean initialisation\n");
-    
->>>>>>> d8bc3e43b32246f06ced2174efcc995b1df333c9
 }
 
 
@@ -426,7 +414,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
  *  libCheetah shutdown function
  */
 void cheetahExit(cGlobal *global) {
-    
+	
     global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
 
     global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
@@ -438,7 +426,7 @@ void cheetahExit(cGlobal *global) {
      *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
      */
     time_t	tstart, tnow;
-    time(&tstart);
+	time(&tstart);
     double	dtime;
     float	maxwait = 10*60.;
 

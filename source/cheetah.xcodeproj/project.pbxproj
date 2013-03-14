@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		4D0EFCAD15DA87010082B016 /* assemble2DImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */; };
+		4D2E18B216F26ADD003AD355 /* saveCXI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D2E18AF16F26ADD003AD355 /* saveCXI.cpp */; };
+		4D2E18B316F26ADD003AD355 /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D2E18B116F26ADD003AD355 /* spectrum.cpp */; };
 		4D3B885112FF49F500B7ABD9 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 4D3B885012FF49F500B7ABD9 /* Makefile */; };
 		4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */; };
 		4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */; };
@@ -41,6 +43,9 @@
 
 /* Begin PBXFileReference section */
 		4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = assemble2DImage.cpp; sourceTree = "<group>"; };
+		4D2E18AF16F26ADD003AD355 /* saveCXI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = saveCXI.cpp; sourceTree = "<group>"; };
+		4D2E18B016F26ADD003AD355 /* saveCXI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = saveCXI.h; sourceTree = "<group>"; };
+		4D2E18B116F26ADD003AD355 /* spectrum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = spectrum.cpp; sourceTree = "<group>"; };
 		4D3B885012FF49F500B7ABD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		4D4E55EE15B4605E0008DC15 /* cheetah-myana.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "cheetah-myana.cpp"; sourceTree = "<group>"; };
 		4D4E55F015B461680008DC15 /* cheetah_ana_mod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheetah_ana_mod.cpp; path = "lcls-psana/cheetah_ana_pkg/src/cheetah_ana_mod.cpp"; sourceTree = "<group>"; };
@@ -121,6 +126,9 @@
 				4DB5DD3115382D8E00EBE8AA /* detectorObject.h */,
 				4DB5DD3315382D8E00EBE8AA /* hitfinders.h */,
 				4DB5DD3615382D8E00EBE8AA /* median.h */,
+				4D2E18AF16F26ADD003AD355 /* saveCXI.cpp */,
+				4D2E18B016F26ADD003AD355 /* saveCXI.h */,
+				4D2E18B116F26ADD003AD355 /* spectrum.cpp */,
 				4DB5DD3415382D8E00EBE8AA /* libcheetah.cpp */,
 				4D0EFCAC15DA87010082B016 /* assemble2DImage.cpp */,
 				4DB5DD2D15382D8E00EBE8AA /* data2d.cpp */,
@@ -215,6 +223,8 @@
 				4D4E55EF15B4605E0008DC15 /* cheetah-myana.cpp in Sources */,
 				4D4E55F115B461680008DC15 /* cheetah_ana_mod.cpp in Sources */,
 				4D0EFCAD15DA87010082B016 /* assemble2DImage.cpp in Sources */,
+				4D2E18B216F26ADD003AD355 /* saveCXI.cpp in Sources */,
+				4D2E18B316F26ADD003AD355 /* spectrum.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

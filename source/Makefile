@@ -112,12 +112,9 @@ backgroundCorrection.o: backgroundCorrection.cpp cheetah.h cheetahEvent.h cheeta
 powder.o: powder.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-<<<<<<< HEAD
 spectrum.o: spectrum.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
-=======
->>>>>>> d8bc3e43b32246f06ced2174efcc995b1df333c9
 radialAverage.o: radialAverage.cpp cheetah.h cheetahEvent.h cheetahGlobal.h detectorObject.h
 	$(CPP) $(CFLAGS) $<
 
@@ -134,17 +131,9 @@ cheetah-myana.o: cheetah-myana.cpp cheetah.h cheetahEvent.h cheetahGlobal.h dete
 	$(CPP) $(CFLAGS) $<
 
 # Cheetah
-<<<<<<< HEAD
-cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o spectrum.o $(MYANADIR)/main.o 
-	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
-
-libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o spectrum.o
-	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveFrame.o setup.o worker.o spectrum.o
-=======
 cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o saveCXI.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o  $(MYANADIR)/main.o
 	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
 libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
-	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
+	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o spectrum.o
 
->>>>>>> d8bc3e43b32246f06ced2174efcc995b1df333c9

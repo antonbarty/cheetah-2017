@@ -305,7 +305,6 @@ void *worker(void *threadarg) {
     }else{
       printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
     }
-<<<<<<< HEAD
 
 	else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
 		writeHDF5(eventData, global);
@@ -315,11 +314,6 @@ void *worker(void *threadarg) {
 		printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
 
 
-
-=======
-    
-    
->>>>>>> d8bc3e43b32246f06ced2174efcc995b1df333c9
 	/*
 	 *	If this is a hit, write out peak info to peak list file
 	 */
