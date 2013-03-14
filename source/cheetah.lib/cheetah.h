@@ -6,7 +6,8 @@
 //  Copyright (c) 2012 CFEL. All rights reserved.
 //
 
-
+#ifndef CHEETAH_H
+#define CHEETAH_H
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
@@ -23,3 +24,4 @@ void cheetahProcessEventMultithreaded(cGlobal *, cEventData *);
 void cheetahDestroyEvent(cEventData *);
 void cheetahExit(cGlobal *);
 void cheetahUpdateGlobal(cGlobal *, cEventData *);
+#endif

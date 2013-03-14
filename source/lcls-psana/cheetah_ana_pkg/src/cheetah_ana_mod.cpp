@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <signal.h>
 //-------------------------------
 // Collaborating Class Headers --
 //-------------------------------
@@ -52,6 +53,7 @@ using namespace cheetah_ana_pkg;
 using namespace std;
 PSANA_MODULE_FACTORY(cheetah_ana_mod)
 
+
 //		----------------------------------------
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
@@ -61,6 +63,24 @@ namespace cheetah_ana_pkg {
 	static int laserSwitch = 0;
 	static int prevLaser = 0;
 	static time_t startT = 0;
+
+
+        void sig_handler(int signo)
+	{
+	  if (signo == SIGINT){
+	    // Wait for threads to finish
+	    while(cheetahGlobal.nActiveThreads > 0) {
+	      printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
+	      usleep(100000);
+	    }
+	    printf("Attempting to close CXIs cleanly\n");
+	    closeCXIFiles(&cheetahGlobal);
+	    signal(SIGINT,SIG_DFL);
+	    kill(getpid(),SIGINT);
+	    
+	  }
+	}
+
 
 	// Event code present?
 	template <typename T>
@@ -110,6 +130,10 @@ namespace cheetah_ana_pkg {
 		cout << "*** beginJob ***" << endl;
 		time(&startT);
 		cheetahInit(&cheetahGlobal);
+		if(!cheetahGlobal.oneFilePerImage){
+		  signal(SIGINT, sig_handler);
+		}
+
 	}
 
 	
@@ -117,6 +141,7 @@ namespace cheetah_ana_pkg {
 	///	Pass new run information to Cheetah
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
+	cout << "Experiment = " << env.experiment() << endl;
 	cout << "*** beginRun ***" << endl;
 		int runNumber = 0;
 		PSTime::Time evtTime;
@@ -888,6 +913,8 @@ namespace cheetah_ana_pkg {
 			eventData->detector[detID].detectorZ = detectorPosition[detID];
 		}
 
+		// Set CXI name				
+		sprintf(eventData->cxiFilename,"e%d-r%04d.cxi",env.expNum(),eventData->runNumber);
 		// Call cheetah
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
 	}
