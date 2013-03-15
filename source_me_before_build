@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd ${cheetahdir}/source/lcls-psana
+
+relupgrade ana-current
+sit_setup
+
+export CHEETAH=psana
+
+cd ${cheetahdir}

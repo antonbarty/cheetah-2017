@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# build-all script no mod version
+
+# required by the libcheetah makefile
+export HDF5DIR=${hdf5installdir}
+export CHEETAHDIR=${cheetahdir}
+export LIBPATH=${installdir}/lib
+
+# libcheetah build
+# 1. remove previous versions of libraries
+cd ${LIBPATH}
+rm libcheetah.s*
+
+# 2. build libcheetah libraries
+cd ${CHEETAHDIR}/source
+make clean 
+make libcheetah
+
+# 3. move compiled libraries to install folder
+mkdir -p $installdir
+cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1.0 
+cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1 
+cp libcheetah.so.1.0 $LIBPATH/libcheetah.so
+
+# 4. remove original from cheetah/source
+rm libcheetah.so.1.0
+
+# psana modules build
+
+# 1. go to lcls-psana folder
+cd ${CHEETAHDIR}/source/lcls-psana
+
+# 2. build psana modules
+
+scons -c
+scons
