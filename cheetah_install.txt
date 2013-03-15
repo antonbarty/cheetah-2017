@@ -53,6 +53,9 @@ STEP 2
 # must also be in the PATH and LD_LIBRARY_PATH
 # an example .profile file with the necessary lines is given below which 
 # also sources the environment file created in STEP 1
+# if you already have an existing cheetah directory in $PATH that is not the one in 
+# the environment file above then exit and log back in so that $PATH only contains
+# the new cheetah directory
 # source the modified .profile file
 
 	.profile
@@ -165,6 +168,7 @@ STEP 4
 
 	# 3. move compiled libraries to install folder
 	mkdir -p $installdir
+	mkdir -p $LIBPATH
 	cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1.0
 	cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1
 	cp libcheetah.so.1.0 $LIBPATH/libcheetah.so

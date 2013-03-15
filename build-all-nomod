@@ -19,6 +19,7 @@ make libcheetah
 
 # 3. move compiled libraries to install folder
 mkdir -p $installdir
+mkdir -p $LIBPATH
 cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1.0 
 cp libcheetah.so.1.0 $LIBPATH/libcheetah.so.1 
 cp libcheetah.so.1.0 $LIBPATH/libcheetah.so
