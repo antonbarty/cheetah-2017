@@ -1,0 +1,65 @@
+Extracting beam energy spectrum data with Cheetah
+
+Richard Bean 15/03/2013
+richard.bean@cfel.de
+
+-----------------------------------------------------------------------------------------------------------
+user inputs in the cheetah .ini file
+
+flags
+
+espectrum1D:           flag for output of the 1D integrated energy spectrum, 1 yes, 0 no
+espectrumDarkSubtract: flag for subtraction of dark background, 1 yes, 0 no
+
+values
+
+espectrumTiltAng:      angle of the spectrum streaks with respect to horizontal +ve defined as clockwise rotation
+espectrumLength:       length of the energy axis of the spectrum CCD in pixels (defaults to 1080)
+espectrumWidth:        width of the beam profile axis of the spectrum CCD in pixels (defaults to 900)
+epectrumSpreadeV:      energy range in eV collected in the detector (defaults to 40)
+
+file paths
+
+espectrumDarkfile:     file path of the dark file calibration, darkfile is created when hitfinder -d darkcal flag set
+espectrumScalefile:    file path of the calibrated energy scale, eg integratedEnergySpectrumFile from previous run
+
+-------------------------------------------------------------------------------------------------------------
+
+output fields in hdf5 files
+
+every event: eg. 'LCLS_2013_Feb12_r0194_053143_172cb.h5'
+
+data/energySpectrumCCD
+data/energySpectrum1D
+data/energySpectrumScale
+processing/energySpectrum-tilt
+
+end of run integrated spectrum file: eg "r0194-integratedEnergySpectrum.h5"
+
+energySpectrum/runIntegratedEnergySpectrum
+energySpectrum/runIntegratedEnergySpectrum-maxindex
+energySpectrum/runIntegratedEnergyScale
+
+----------------------------------------------------------------------------------------------------------------
+instructions:
+
+If the correct camera address is set in the cheetah config file, something like:
+spectrumSource = DetInfo(CxiEndstation.0:Opal2000.1)
+the Opal CCD camera is read into the event data stream and the resulting 2D image is written to the event hdf5 file in the location "data/energySpectrumCCD"
+
+If the "espectrum1D flag" is set to "1", the spectrum is integrated across the 2D camera array and saved to the event hdf5 file in location "data/energySpectrum1D". The length of the spectrum is output as the same length as the number of pixels in the spectrum camera in the energy spread direction. This is set by the "espectrumLength" input with a default of 1080. The 1D spectra are only calculated when the event is declared a 'hit' by cheetah.
+
+Tilt of the spectral stripes with respect to the CCD axes is taken into account with the parameter "espectrumTiltAng" which must be set by the user and is likely to change whenever the energy changes or the beamline setup changes. The convention for this angle is taken as positive rotations being clockwise with respect to the horizontal. the default angle is "0". The angle used is also saved into the hdf file in location "processing/energySpectrum-tilt"
+
+In a dark calibration run, the dark intensities in each pixel of the spectrum detector are averaged across the run and placed into an HDF file similar to the cspad detector darkcal files named for example "r0207-energySpectrum-darkcal.h5" with data in the field "/data/data". If the "espectrumDarkSubtract" flag is set to "1" the background is placed in "global->espectrumDarkcal" and subtracted from the integrated spectrum at each event. The darkcal filename and path is passed to cheetah using the tag:"espectrumDarkfile" in the .ini file
+
+At the end of a cheetah run the spectra from 'hits' are summed to create a run-integrated spectrum which is saved to an hdf5 file in the run hdf5 directory. This file is named for example "r0194-integratedEnergySpectrum.h5". The file contains the integrated spectrum in field "energySpectrum/runIntegratedEnergySpectrum", the pixel index of the maximum value of the run-integrated spectrum in field "energySpectrum/runIntegratedEnergySpectrum-maxindex" and the calibrated energy scale in field "energySpectrum/runIntegratedEnergyScale". A message reports if the creation of the file was successful.
+
+The energy scale is calibrated by offsetting the eV range of the camera by assigning the average photon energy (as reported by cheetah) to the maximum value of the run-integrated spectrum. The calibrated energy scale from the "r0194-integratedEnergySpectrum.h5" file can be given as an input to subsequent runs with the tag "espectrumScalefile". This scale is then output in the event hdf5 files in the field "data/energySpectrumScale". If no scale file is named a default scale of "0" everywhere is output to avoid confusion. The eV spread of the camera is input with the tag "epectrumSpreadeV" with a default value of 40.
+
+The scale output with the run-integrated spectrum at the end of the run is independent of the file given by the "espectrumScalefile" tag.
+
+!CAUTION! the only 'correct' scale calibration is the one calculated from the events within the run itself. The correct calibration can be added to each event by running cheetah twice, once to calculate the scale calibration and the second time to add this correct scale to all the individual event hdf files. If you do this you must use a different hitfinder -t tag or move the run-integrated spectrum file eg "r0194-integratedEnergySpectrum.h5" so it is not deleted with the hitfinder -O tag (force overwrite).
+If the energy changes and you use the same energy scale file you will get the wrong scales output with the event hdf5's. The scale inside the run-integrated spectrum output at the end of the run is still correct.
+------------------------------------------------------------------------------------------------------------------
+

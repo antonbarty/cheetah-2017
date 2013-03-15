@@ -148,12 +148,12 @@ public:
 	/** @brief Toggle energy spectrum creation. */
 	int      espectrum1D;
 	/** @brief Angle of spectra from horizontal (clockwise). */
-	int      espectiltang;
+	double   espectrumTiltAng;
 	/** @brief Length in pixels of energy spectrum (same as spectrum camera height). */
 	int      espectrumLength;
 	/** @brief Width in pixels of energy spectrum (same as spectrum camera width). */
 	int      espectrumWidth;
-	/** @brief spread in eV of energy spectrum detector (40eV for the current setup). */
+	/** @brief Spread in eV of energy spectrum detector (40eV for the current setup). */
 	int      espectrumSpreadeV;
 	/** @brief Toggle energy spectrum dark correction. */
 	int      espectrumDarkSubtract;
@@ -197,7 +197,7 @@ public:
 	int      savehits;
 	/** @brief Toggle the writing of raw images in hdf5 files. */
 	int      saveRaw;
-	/** @brief Toggle the writing of assembled (i.e. interpolatee) images. */
+	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
 	/**
 	 * @brief Force the writing of hdf5 files (ignoring hit status).

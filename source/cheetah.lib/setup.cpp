@@ -104,7 +104,7 @@ cGlobal::cGlobal(void) {
 
 	// energy spectrum default configuration
 	espectrum1D = 1;
-	espectiltang = 0;
+	espectrumTiltAng = 0;
 	espectrumLength = 1080;
 	espectrumWidth = 900;
 	espectrumDarkSubtract = 0;
@@ -694,8 +694,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 
 	// Energy spectrum parameters
-	else if (!strcmp(tag, "espectiltang")) {
-		espectiltang = atoi(value);
+	else if (!strcmp(tag, "espectrumtiltang")) {
+		espectrumTiltAng = atoi(value);
 	}
 	else if (!strcmp(tag, "espectrum1d")) {
 		espectrum1D = atoi(value);
@@ -887,15 +887,19 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
 	fprintf(fp, "espectrum1D=%d\n",espectrum1D);
-	fprintf(fp, "espectiltang=%d\n",espectiltang);
+	fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
 	fprintf(fp, "espectrumLength=%d\n",espectrumLength);
+	fprintf(fp, "espectrumSpreadeV=%d\n",espectrumSpreadeV);
+	fprintf(fp, "espectrumDarkSubtract=%d\n",espectrumDarkSubtract);
+	fprintf(fp, "espectrumDarkFile=%s\n",espectrumDarkFile);
+	fprintf(fp, "espectrumScaleFile=%s\n",espectrumScaleFile);
 	//fprintf(fp, "cmFloor=%f\n",cmFloor);
 	//fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
 	fprintf(fp, "debugLevel=%d\n",debugLevel);
 	//fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
 	//fprintf(fp, "hotpixADC=%d\n",hotpixADC);
 	//fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
-	fprintf(fp, "powderThresh=%d\n",powderthresh);
+	fprintf(fp, "powderThresh=%f\n",powderthresh);
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);

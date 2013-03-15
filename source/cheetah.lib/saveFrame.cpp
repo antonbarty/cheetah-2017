@@ -450,13 +450,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
     if(info->energySpectrumExist) {
         size[0] = 1;			// size[0] = length
         dataspace_id = H5Screate_simple(1, size, NULL);
-        dataset_id = H5Dcreate(gid, "energySpectrum-tilt", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dataset_id = H5Dcreate(gid, "energySpectrum-tilt", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         if ( dataset_id < 0 ) {
             ERROR("%li: Couldn't create dataset\n", info->threadNum);
             H5Fclose(hdf_fileID);
             return;
         }
-        hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->espectiltang);
+        hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->espectrumTiltAng);
         if ( hdf_error < 0 ) {
             ERROR("%li: Couldn't write data\n", info->threadNum);
             H5Dclose(dataspace_id);

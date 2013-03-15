@@ -45,7 +45,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int specHeight) {
 	// integrate spectrum into single line and output to event data
 	float PIE = 3.141;
-	float ttilt = tanf(global->espectiltang*PIE/180);
+	float ttilt = tanf(global->espectrumTiltAng*PIE/180);
 	int opalindex;
 	int newind;
 
@@ -292,6 +292,6 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	}
 	
 	H5Fclose(file_id);
-	printf("energy spectrum scale calibration file read successfull:\n");
+	printf("energy spectrum scale calibration file read successful:\n");
 	return;
 }
