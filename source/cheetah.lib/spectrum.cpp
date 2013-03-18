@@ -127,6 +127,8 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
         
 		writeSimpleHDF5(filename, espectrumDark, global->espectrumWidth, global->espectrumLength, H5T_NATIVE_DOUBLE);
 
+		pthread_mutex_unlock(&global->espectrumRun_mutex);
+		pthread_mutex_unlock(&global->nespechits_mutex);
 		free(espectrumDark);
 		return;
 	}

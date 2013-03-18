@@ -6,44 +6,29 @@ richard.bean@cfel.de
 ------
 STEP 1
 ------
-# create an environment setup file for the paticular experiment
+# create an environment setup file for the particular experiment
 
 # The cheetah installation needs to know the location of a threadsafe 
 # HDF5 installation, the location of the cheetah base directory and 
 # the install directory where you intend the cheetah installation to end up.
-# Of course other installations can also live inside the same install directory
-# the PSANA_CONFIG path specifies where psana gets detector adderesses etc.
-# that are passed to various psana modules
+# Of course other installations can also live inside the same install directory.
 
-# an example profile is shown below, the lines under # for cheetah are needed
+# An example environment setup is shown below, showing only lines required for
+# the cheetah installation. Other lines should be added for hitfinder (a script
+# which runs cheetah), details are given elsewhere.
+
 # source the environment setup file
 
 	set_environment_feb13	
-	----------------------------------------------------
+	---------------------------------------------------------------
 	#!/bin/bash
 
 	# for cheetah
 	export hdf5installdir="/reg/d/psdm/CXI/cxi76713/scratch/install"
-	export cheetahdir="/reg/neh/home3/rjbean/cheetahgithub/cheetah"
-	export installdir="/reg/neh/home3/rjbean/cheetahgithub/cheetah"
-	export PSANA_CONFIG="/reg/g/psdm/CXI/cxi76713/res/process/psana/psana.cfg"
+	export cheetahdir="/reg/neh/home3/rjbean/cheetah"
+	export installdir="/reg/neh/home3/rjbean/software/cheetah"
 
-	# for convenience
-	export expdir="/reg/d/psdm/cxi/cxi76713"
-	export scratch="${expdir}/scratch"
-
-	# for hitfinder
-	export XTCDIR="/reg/d/psdm/cxi/cxi76713/xtc"
-	export H5DIR="${scratch}/hdf5"
-	export CONFIGDIR="$expdir/scratch/rbean/config"
-	export HITFINDER="${cheetahdir}/scripts/hitfinder"
-	export INIDIR=$CONFIGDIR/ini
-	export TMPDIR=$HOME/tmp
-
-	# for CrystFEL
-	BEAMDIR=$expdir/scratch/config/beam
-	GEOMDIR=$expdir/res/geometry
-	-----------------------------------------------------
+	---------------------------------------------------------------
 
 
 ------
@@ -51,11 +36,11 @@ STEP 2
 ------
 # the cheetah source files, the installed libraries and the hdf5 libraries
 # must also be in the PATH and LD_LIBRARY_PATH
-# an example .profile file with the necessary lines is given below which 
-# also sources the environment file created in STEP 1
-# if you already have an existing cheetah directory in $PATH that is not the one in 
-# the environment file above then exit and log back in so that $PATH only contains
-# the new cheetah directory
+# an example .profile file with the necessary lines is given below which also
+# sources the environment file created in STEP 1
+# if you already have an existing cheetah directory in $PATH that is not the one
+# in the environment file above then exit and log back in so that $PATH only
+# contains the new cheetah directory
 # source the modified .profile file
 
 	.profile
@@ -98,13 +83,13 @@ STEP 2
 	echo -e ${LD_LIBRARY_PATH//:/\\n}
 	-----------------------------------------------------------------------------
 
-# if you are running a completely clean installation some of the libraires pointed
-# to will not yet exist so a re-source of profile will be needed after the cheetah install
+# if you are running a completely clean installation some of the libraries pointed
+# to will not yet exist so a re-source of profile may be needed after the cheetah install
 
 # if you look at your PATH and LD_LIBRARY_PATH at this point you will see
 # /reg/g/psdm/sw/releases/ana-current/arch/x86_64-rhel5-gcc41-opt/bin and ..../lib respectively
 # these are updated later to a specific release eg /sw/releases/ana-0.9.17/arch/x.......
-# which is neccesary for cheetah/psana to work 
+# which is necessary for cheetah/psana to run 
 
 
 ------
@@ -129,12 +114,12 @@ STEP 3
 	----------------------------------------------
 
 
-# the sit_setup command adds the path of the most recent SLAC release version of psana to LD_LIBARARY_PATH
-# the script must be sourced so that the environment variable escapes the script
-# if you type: "which psana" after this step, the path should have a specific numbered psana release
-# the same numbered release is also added to your $LD_LIBRARY_PATH
-# the export CHEETAH=psana line points hitfinder to run the SLAC pre-compiled psana with the 
-# matching release number as opposed to any locally installed version 
+# the sit_setup command adds the path of the most recent SLAC release version of psana 
+# to LD_LIBARARY_PATH the script must be sourced so that the environment variable escapes 
+# the script if you type: "which psana" after this step, the path should have a specific 
+# numbered psana release, the same numbered release is also added to your $LD_LIBRARY_PATH
+# the export CHEETAH=psana line points hitfinder to run the SLAC pre-compiled psana with
+# the matching release number as opposed to any locally installed version. 
 
 ------
 STEP 4 
@@ -198,20 +183,20 @@ STEP 5
 
 # type:
 	which psana
-# this will give you the current psana path. In order for cheetah to work this must have a specific release name, 
-# the defualt in the path when you log in is this:
+# this will give you the current psana path. In order for cheetah to work this must have 
+# a specific release name. The default in the path when you log in is this:
 /reg/g/psdm/sw/releases/ana-current/arch/x86_64-rhel5-gcc41-opt/bin
 # it needs to be eg this:
 /reg/g/psdm/sw/releases/ana-0.9.1/arch/x86_64-rhel5-gcc41-opt/bin
-# this can be solved by first going to cheetah/source/lcls-psana and doing
+# this can be solved by first going to cheetah/source/lcls-psana and typing
 	rel_upgrade ana_current
 	sit_setup
-# if the release number you get from this is different from the one with which you built the cheetah-ana-mod library
-# then you need to run the build-all-nomod script again
+# if the release number you get from this is different from the one with which you built
+# the cheetah-ana-mod library then you need to run the build-all-nomod script again
 
-
-# if cheetah says it is not executeable
-# type: export CHEETAH=psana	
+# if cheetah says it is not executable
+# type: 
+	export CHEETAH=psana	
 # remembering that the psana path must mention a specific release
 
 ----------------------------------------------------------------------------------------------------------------------
