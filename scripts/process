@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# for convenience
+# Real data
+export expdir="/reg/d/psdm/cxi/cxi76713"
+export scratch="${expdir}/scratch"
+
+#export cheetahdir="${scratch}/install/cheetah"
+export cheetahdir="/reg/neh/home1/barty/c/cheetah"
+
+# for hitfinder
+#export XTCDIR="/reg/d/ana11/cxi/data/Feb2013calib"
+export XTCDIR="${expdir}/xtc"
+export H5DIR="${scratch}/anton"
+export CONFIGDIR="${scratch}/res/process"
+export CHEETAH="${cheetahdir}/source/lcls-psana/arch/x86_64-rhel5-gcc41-opt/bin/psana"
+export HITFINDER="${scratch}/process/hitfinder"
+
+# needed for psana
+export PSANA_CONFIG="${CONFIGDIR}/psana/psana.cfg"
+
+# psana needs this (something wrong with build paths)
+export LD_LIBRARY_PATH="${cheetahdir}/source/lcls-psana/arch/x86_64-rhel5-gcc41-opt/lib"
+export LD_LIBRARY_PATH="/reg/g/psdm/sw/releases/ana-current/arch/x86_64-rhel5-gcc41-opt/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="${cheetahdir}/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/reg/neh/home1/barty/hdf5/lib/:$LD_LIBRARY_PATH"
+
+export HDF5_DISABLE_VERSION_CHECK=1
+
+
+echo $LD_LIBRARY_PATH
+#$HITFINDER -O -p -t auto -r $1 -j 5 -i process.ini
+$HITFINDER -q -O -p -t ab -r $1 -j 10 -i $2 
+#$HITFINDER  -O -p -t ab -r $1 -j 10 -i $2 

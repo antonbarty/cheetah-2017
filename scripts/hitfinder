@@ -193,7 +193,7 @@ INIFILE=$(readlink -f $INIFILE)
 echo "Using this ini file: $INIFILE"
 
 # output from cheetah will go here
-LOGFILE=$SAVEDIR/cheetah.log
+LOGFILE=$SAVEDIR/bsub.log
 
 # let me know what's about to happen
 echo "Will search for xtc data here: $XTCDIR"
@@ -207,7 +207,6 @@ if [ ! -d $SAVEDIR ]; then
 
 	echo "Creating hdf5 data directory"
 	mkdir $SAVEDIR
-	[ -d $SAVEDIR ] || UERROR "Couldn't create the directory $SAVEDIR"
 	echo "Moving to hdf5 data directory"
 	cd $SAVEDIR
 
@@ -225,12 +224,13 @@ else
 	echo "Moving to existing data directory $SAVEDIR"
 	cd $SAVEDIR
 	echo "Deleting previous $SCRIPTNAME files"
-	rm -f *.h5 \
-			*.ini \
-			*.out \
-			*.log \
-			*.txt 
-	      &> /dev/null
+	rm -f 	*.h5 \
+		*.ini \
+		*.out \
+		*.log \
+		*.txt 
+	      	&> /dev/null
+	rm -rf data* &> /dev/null
 fi
 
 # Create configuration files
@@ -266,7 +266,9 @@ else
 fi
 
 if [ $QUE ]; then
-	FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	#FULLCOMMAND="bsub -q psfehmpiq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	FULLCOMMAND="bsub -q psfehmpiq -n 10 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	#FULLCOMMAND="bsub -q psfehq -n 6 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	echo $FULLCOMMAND
 	$FULLCOMMAND
 	echo "$SCRIPTNAME job sent to queue"
