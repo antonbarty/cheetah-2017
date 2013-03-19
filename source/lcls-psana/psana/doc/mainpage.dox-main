@@ -1,0 +1,12 @@
+/**
+ *  @mainpage Psana Framework Reference Documentation
+ *  
+ *  
+ *  These pages incude doxygen-genrated reference documentation for 
+ *  classes constituting psana analysis framework. Good place to start 
+ *  exploring this reference is the "Modules" tab.
+ *  
+ *  Psana User Manual which has examples of using the classes
+ *  defined in these packages is located at 
+ *  https://confluence.slac.stanford.edu/display/PCDS/Psana+User+Manual
+ */

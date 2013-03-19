@@ -1,0 +1,77 @@
+10
+
+dir
+5790
+https://pswww.slac.stanford.edu/svn/psdmrepo/psana/tags/V00-08-02
+https://pswww.slac.stanford.edu/svn/psdmrepo
+
+
+
+2013-03-05T04:29:02.747130Z
+5621
+salnikov@SLAC.STANFORD.EDU
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+b967ad99-d558-0410-b138-e0f6c56caec7
+
+test
+dir
+
+app
+dir
+
+include
+dir
+
+doc
+dir
+
+src
+dir
+
+SConscript
+file
+
+
+
+
+2013-03-19T09:28:42.000000Z
+837a422065fc49af0cf918260c19db7b
+2012-09-12T00:18:42.628164Z
+4451
+salnikov@SLAC.STANFORD.EDU
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1255
+
