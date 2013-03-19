@@ -134,6 +134,6 @@ saveCXI.o: saveCXI.cpp saveCXI.h
 #cheetah: cheetah-myana.o libcheetah.o assemble2DImage.o setup.o median.o hitfinders.o detectorObject.o powder.o radialAverage.o saveFrame.o detectorCorrection.o backgroundCorrection.o worker.o data2d.o spectrum.o $(MYANADIR)/main.o 
 #	$(LD) $(CPP_LD_FLAGS) $(LD_FLAGS) -o $@ $^
 
-libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o
+libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o spectrum.o
 	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o spectrum.o
 
