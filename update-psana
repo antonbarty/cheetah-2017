@@ -7,6 +7,13 @@ cd source/lcls-psana
 relupgrade ana-current
 scons -c
 
+# In extreme cases, relupgrade ana-current may not work and it may be necessary to re-load the psana modules
+# In that case, delete the directory 'psana' and re-add it using
+# > addpkg psana
+# See: 
+#     https://confluence.slac.stanford.edu/display/PCDS/Analysis+Workbook.+Quick+Tour
+#     https://confluence.slac.stanford.edu/pages/viewpage.action?pageId=102860870
+
 #. /reg/g/psdm/bin/sit_setup.sh
 sit_setup
 scons -c
