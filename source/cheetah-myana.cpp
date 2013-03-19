@@ -28,6 +28,8 @@
 #include <limits>
 #include <stdint.h>
 #include <unistd.h>
+#include <iostream>
+#include <signal.h>
 
 
 #include "cheetah.h"
@@ -53,15 +55,33 @@ unsigned                    asicMask[MAX_DETECTORS];
 Pds::DetInfo::Device		tofType;
 Pds::DetInfo::Detector		tofPdsDetInfo;
 
-
+static std::string getCXIfromXTC(std::string filename);
 
 using namespace Pds;
+
+void sig_handler(int signo)
+{
+  if (signo == SIGINT){
+    // Wait for threads to finish
+    while(cheetahGlobal.nActiveThreads > 0) {
+      printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
+      usleep(100000);
+    }
+    printf("Attempting to close CXIs cleanly\n");
+    closeCXIFiles(&cheetahGlobal);
+    H5close();
+    signal(SIGINT,SIG_DFL);
+    kill(getpid(),SIGINT);
+    
+  }
+}
+
 /*
  *	Return true or false if a given event code is present
  */
 bool eventCodePresent(int EvrCode)
 {
-	int nfifo = getEvrDataNumber();
+        int nfifo = getEvrDataNumber();	
 	for(int i=0; i<nfifo; i++) {
 		unsigned eventCode, fiducial, timestamp;
 		if (getEvrData(i,eventCode,fiducial,timestamp)) 
@@ -75,9 +95,8 @@ bool eventCodePresent(int EvrCode)
 /*
  *	Beam on or off??
  */
-static bool beamOn()
-{
-	return eventCodePresent(140);
+static bool beamOn(){
+        return eventCodePresent(140);
 }
 
 /*
@@ -98,6 +117,11 @@ void beginjob() {
 	 *	Initialise libCheetah
 	 */
     cheetahInit(&cheetahGlobal);
+
+    /* catch SIGINT and handle appropriately */
+    if(!cheetahGlobal.oneFilePerImage){
+      signal(SIGINT, sig_handler);
+    }
 
     
 	/*
@@ -248,7 +272,7 @@ void beginrun()
 	 *	Pass new run information to Cheetah
 	 */
 	cheetahGlobal.runNumber = getRunNumber();
-    cheetahNewRun(&cheetahGlobal);
+	cheetahNewRun(&cheetahGlobal);
 }
 
 
@@ -321,6 +345,19 @@ void event() {
 	unsigned runNumber;
 	runNumber = getRunNumber();
 	
+	if(!cheetahGlobal.oneFilePerImage){
+	  std::string cxiFilename = getCXIfromXTC(getXTCFilename());
+	  if(cxiFilename.compare(cheetahGlobal.currentCXIFileName)!=0){
+	    while(cheetahGlobal.nActiveThreads > 0){
+	      printf("Waiting for %li worker threads to terminate for new ones\n", cheetahGlobal.nActiveThreads);
+	      usleep(100000);
+	    }
+	    if(strcmp(cheetahGlobal.currentCXIFileName,"") != 0){
+	      closeCXIFiles(&cheetahGlobal);
+	    }
+	    strcpy(cheetahGlobal.currentCXIFileName,cxiFilename.c_str());
+	  }
+	}
 	
 	/*
 	 * Get event time information
@@ -828,4 +865,21 @@ void endjob()
 	 */
     cheetahExit(&cheetahGlobal);
 	exit(1);
+}
+
+
+
+
+/* Change file extension from .xtc to .cxi */
+static std::string getCXIfromXTC(std::string filename){
+  size_t end,start;
+  start = filename.find_last_of("/");
+  if(start == std::string::npos){
+    start = 0;
+  }else{
+    start++;
+  }
+  end = filename.find_last_of("-s");
+  std::string sub =filename.substr(start,end-start+1-5)  + ".cxi";
+  return sub;
 }

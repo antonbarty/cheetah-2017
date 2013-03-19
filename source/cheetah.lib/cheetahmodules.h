@@ -51,6 +51,10 @@ void writeSimpleHDF5(const char*, const void*, int, int, int);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
 
+// saveCXI.cpp
+void writeCXI(cEventData *info, cGlobal *global);
+void closeCXIFiles(cGlobal * global);
+
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long);
