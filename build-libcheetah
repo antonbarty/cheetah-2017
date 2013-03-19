@@ -10,11 +10,12 @@ export LD_LIBRARY_PATH="/reg/neh/home1/barty/lib:/reg/neh/home1/barty/c/cheetah/
 export LD_RUN_PATH="/reg/neh/home1/barty/lib:/reg/neh/home1/barty/c/cheetah/source/lcls/myana/release/build/pdsdata/lib/x86_64-linux"
 
 cd source
-#make cheetah
 make libcheetah
 
+# needed only for myana version
+#make cheetah
 #cp cheetah /reg/d/psdm/cxi/cxi54312/scratch/programs/bin/cheetah-rick
-cp cheetah /reg/neh/home1/barty/bin
+#cp cheetah /reg/neh/home1/barty/bin
 
 rm /reg/neh/home1/barty/lib/libcheetah*
 rm /reg/neh/home1/barty/c/cheetah/lib/libcheetah*
