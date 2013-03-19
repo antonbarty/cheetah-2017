@@ -915,7 +915,7 @@ namespace cheetah_ana_pkg {
 
 		// Set CXI name				
 		//sprintf(eventData->cxiFilename,"e%d-r%04d.cxi",env.expNum(),eventData->runNumber);
-		sprintf(eventData->cxiFilename,"%s-r%04d.cxidb",env.experiment(),eventData->runNumber);
+		sprintf(eventData->cxiFilename,"%s-r%04d.cxidb", env.experiment().c_str(),eventData->runNumber);
         
 		// Call cheetah
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
