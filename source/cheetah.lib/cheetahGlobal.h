@@ -211,6 +211,9 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+    
+    bool saveCXIDB;
+
 
 	/** @brief Toggle the verbosity of Cheetah. */
 	int      debugLevel;
@@ -268,7 +271,6 @@ public:
     pthread_mutex_t  espectrumRun_mutex;
     pthread_mutex_t  espectrumBuffer_mutex;
 
-	bool oneFilePerImage;
 
 	/*
 	 *	Common variables
