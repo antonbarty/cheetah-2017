@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Sample build file for psana front-end
+# will need to be modified for each person (or the script improved)
+
+
+cd source/lcls-psana
+
+# In case of errors, add:
+#relupgrade ana-current
+#scons -c
+# or
+# addpkg psana
+
+. /reg/g/psdm/bin/sit_setup.sh
+
+export LIBPATH=/reg/neh/home1/barty/lib
+
+#scons -c
+scons
+
+
