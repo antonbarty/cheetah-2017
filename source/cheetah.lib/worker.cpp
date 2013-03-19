@@ -289,20 +289,20 @@ void *worker(void *threadarg) {
 	 */
 	save:
     if(hit && global->savehits) {
-        if(global->oneFilePerImage){
-            writeHDF5(eventData, global);
+        if(global->saveCXIDB==1){
+            writeCXI(eventData, global);
         }
         else {
-            writeCXI(eventData, global);
+            writeHDF5(eventData, global);
         }
         printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
     else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
-        if(global->oneFilePerImage){
-            writeHDF5(eventData, global);
+        if(global->saveCXIDB==1){
+            writeCXI(eventData, global);
         }
         else{
-            writeCXI(eventData, global);
+            writeHDF5(eventData, global);
         }
         printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
