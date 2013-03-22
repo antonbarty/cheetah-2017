@@ -94,9 +94,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		mask[i] *= global->detector[detID].hotpixelmask[i];
 		mask[i] *= global->detector[detID].badpixelmask[i];
 		mask[i] *= eventData->detector[detID].saturatedPixelMask[i];
+	}
+	for (long i=0; i<pix_nn; i++) {
 		temp[i] *= mask[i];
 	}
-	
     
 	/*
 	 *	Use one of various hitfinder algorithms

@@ -105,6 +105,10 @@ function fel_randomimage_findpeaks, data, pState
 	adc_thresh = (*pstate).peaks_ADC
 	minpix = (*pstate).peaks_minpix
 	maxpix = (*pstate).peaks_maxpix
+	peaks_minsnr = (*pstate).peaks_minsnr 
+	peaks_minres = (*pstate).peaks_minres
+	peaks_maxres = (*pstate).peaks_maxres
+
 
 	;; Array for peak information
 	maxpeaks = 500
@@ -123,7 +127,7 @@ function fel_randomimage_findpeaks, data, pState
 	temp = data
 	temp -= m	
 
-	region = label_region(temp gt adc_thresh, /all)
+	region = label_region(temp gt adc_thresh, /all, /ulong)
 	h = histogram(region, reverse_indices=r)
 	
 	for i=0L, n_elements(h)-1 do begin
@@ -148,10 +152,29 @@ function fel_randomimage_findpeaks, data, pState
 		py = reform(pxy[1,*])
 		
 		;; Centroid of region i
-		centroid_x = mean(px)
-		centroid_y = mean(py)
-		;centroid_x = total(px*q)/total(q)
-		;centroid_y = total(py*q)/total(q)
+		centroid_x = total(px*q)/total(q)
+		centroid_y = total(py*q)/total(q)
+
+		
+
+		;; Reject based on peak radius
+		newpeakx = (*pstate).pixmap_x[centroid_x,centroid_y]/(*pstate).pixmap_dx
+		newpeaky = (*pstate).pixmap_y[centroid_x,centroid_y]/(*pstate).pixmap_dx
+		newpeakr = sqrt(newpeakx*newpeakx + newpeaky*newpeaky)
+		if newpeakr gt peaks_maxres then continue
+		if newpeakr lt peaks_minres then continue
+		
+		;; Reject based on signal:noise
+		if peaks_minsnr ne 0 then begin
+			region_xl = max([0, centroid_x-2*lbg])
+			region_xh = min([s[0], centroid_x+2*lbg])-1
+			region_yl = max([0, centroid_y-2*lbg])
+			region_yh = min([s[1], centroid_y+2*lbg])-1
+			sd = stddev(data[region_xl:region_xh, region_yl:region_yh])
+			ipeak = max(q)
+			snr = ipeak/sd
+		 	if snr lt peaks_minsnr then continue
+		endif	
 		
 		peakx[peakcounter] = centroid_x
 		peaky[peakcounter] = centroid_y
@@ -503,19 +526,24 @@ pro fel_randomimage_event, ev
 			(*pstate).findPeaks = 0
 			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
 			widget_control, sState.menu_findPeaks, set_button = 0
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
 		end
 		sState.menu_findPeaks : begin
 			(*pstate).findPeaks = 1-sState.findPeaks
 			(*pstate).circleHDF5Peaks = 0
 			widget_control, sState.menu_findPeaks, set_button = (*pstate).findPeaks
 			widget_control, sState.menu_circleHDF5Peaks, set_button = 0
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
 		end
 
 		;; Display with local background
 		sState.menu_localBackground : begin
 			(*pstate).display_localbackground = 1-sState.display_localbackground
-			widget_control, sState.menu_localBackground, set_button = (*pstate).display_localbackground
-	
+			widget_control, sState.menu_localBackground, set_button = (*pstate).display_localbackground	
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
@@ -591,26 +619,34 @@ pro fel_randomimage_event, ev
 		
 		end
 
+
+
 		;;
 		;; Change peak finding parameters
 		;;
 		sState.menu_peakfinding : begin
 			desc = [ 	'1, base, , column', $
-						'0, float, '+string(sState.peaks_localbackground)+', label_left=Local background radius:, width=10, tag=peaks_localbackground', $
-						'0, float, '+string(sState.peaks_ADC)+', label_left=Threshold ADC:, width=10, tag=peaks_ADC', $
-						'0, float, '+string(sState.peaks_minpix)+', label_left=Minimum number of pixels:, width=10, tag=peaks_minpix', $
-						'2, float, '+string(sState.peaks_maxpix)+', label_left=Maximum number of pixels:, width=10, tag=peaks_maxpix', $
+						'0, float, '+string(sState.peaks_localbackground)+', label_left=LocalBackgroundRadius:, width=10, tag=peaks_localbackground', $
+						'0, float, '+string(sState.peaks_ADC)+', label_left=Intensity threshold (HitfinderADC):, width=10, tag=peaks_ADC', $
+						'0, float, '+string(sState.peaks_minpix)+', label_left=Minimum pixels per peak (hitfinderMinPixCount):, width=10, tag=peaks_minpix', $
+						'0, float, '+string(sState.peaks_maxpix)+', label_left=Maximum pixels per peak (hitfinderMaxPixCount):, width=10, tag=peaks_maxpix', $
+						'0, float, '+string(sState.peaks_minsnr)+', label_left=Minimum signal-to-noise ratio (I/sigma) (hitfinderMinSNR):, width=10, tag=peaks_minsnr', $
+						'0, float, '+string(sState.peaks_minres)+', label_left=Inner region radius (hitfinderMinRes):, width=10, tag=peaks_minres', $
+						'2, float, '+string(sState.peaks_maxres)+', label_left=Outer region radius (hitfinderMaxRes):, width=10, tag=peaks_maxres', $
 						'1, base,, row', $
 						'0, button, OK, Quit, Tag=OK', $
 						'2, button, Cancel, Quit' $
 			]
-			a = cw_form(desc, /column, title='Image display')
+			a = cw_form(desc, /column, title='Peakfinder settings')
 			
 			if a.OK eq 1 then begin		
 				(*pstate).peaks_localbackground = a.peaks_localbackground
 				(*pstate).peaks_ADC = a.peaks_ADC
 				(*pstate).peaks_minpix = a.peaks_minpix
 				(*pstate).peaks_maxpix = a.peaks_maxpix
+				(*pstate).peaks_minsnr = a.peaks_minsnr
+				(*pstate).peaks_minres = a.peaks_minres
+				(*pstate).peaks_maxres = a.peaks_maxres
 			endif
 
 			file = *sState.pfile
@@ -877,6 +913,10 @@ pro fel_randomimage, pixmap=pixmap
 				  peaks_ADC : 300, $
 				  peaks_minpix : 3, $
 				  peaks_maxpix : 20, $
+				  peaks_minsnr : 0., $
+				  peaks_minres : 0, $
+				  peaks_maxres : 1300, $
+
 				  display_localbackground : 0, $
 				  
 				  button_updatefiles : button_updatefiles, $
