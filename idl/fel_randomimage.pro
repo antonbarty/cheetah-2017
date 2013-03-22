@@ -5,7 +5,7 @@
 ;;	Anton Barty, 2007-2008
 ;;
 
-function fel_randomimage_peakcircles, filename, image, pState
+function fel_randomimage_peakcircles, filename, image, pState, peakx, peaky
 
 	;; Image of overlaid circles
 	d = size(image,/dim)
@@ -17,9 +17,8 @@ function fel_randomimage_peakcircles, filename, image, pState
 	circle = r ge 5 AND r lt 6
 
 	;; Read peak info
-	peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
-	peakx = long(reform(peakinfo(0,*)))
-	peaky = long(reform(peakinfo(1,*)))
+	peakx = long(reform(peakx))
+	peaky = long(reform(peaky))
 	npeaks = n_elements(peakx)
 	
 	;; No peaks, give up
@@ -65,6 +64,112 @@ function fel_randomimage_peakcircles, filename, image, pState
 end
 
 
+;; Note: this routine is hard coded for CSpad data!!!
+function fel_randomimage_localbackground, data, radius
+
+	if radius le 0 then begin
+		return, 0
+	endif
+	
+	
+	s = size(data, /dim)
+	if s[0] eq 1552 AND s[1] eq 1480 then cspad=1
+	
+	width = 2*radius+1
+		
+	if cspad then begin
+		cspadx = 194
+		cspady = 185
+		m = fltarr(s[0],s[1])
+		
+		for i=0, 7 do begin
+			for j = 0, 7 do begin
+				region = data[i*cspadx:(i+1)*cspadx-1, j*cspady:(j+1)*cspady-1]
+				mm = median(region, width)
+				m[i*cspadx,j*cspady] = mm
+			endfor
+		endfor		
+	endif $
+	else begin
+		m = median(data, width)
+	endelse
+
+	return, m
+
+end
+
+
+function fel_randomimage_findpeaks, data, pState
+
+	lbg = (*pstate).peaks_localbackground 
+	adc_thresh = (*pstate).peaks_ADC
+	minpix = (*pstate).peaks_minpix
+	maxpix = (*pstate).peaks_maxpix
+
+	;; Array for peak information
+	maxpeaks = 500
+	peakx = fltarr(maxpeaks)
+	peaky = fltarr(maxpeaks)
+	peakcounter = 0
+	
+	s = size(data, /dim)
+
+	;; Subtract local background here
+	;; That this has already been done if (*pstate).display_localbackground eq 1!!!
+	m = 0
+	if (*pstate).display_localbackground ne 1 then begin
+		m = fel_randomimage_localbackground(data, lbg) 
+	endif
+	temp = data
+	temp -= m	
+
+	region = label_region(temp gt adc_thresh, /all)
+	h = histogram(region, reverse_indices=r)
+	
+	for i=0L, n_elements(h)-1 do begin
+	
+		if h[i] lt minpix then continue
+		if h[i] gt maxpix then continue
+		
+		if peakcounter ge maxpeaks-1 then begin
+			print,'More than allowed number of peaks found: ', maxpeaks
+			break
+		endif
+		
+		;Find subscripts of members of region i.
+		p = r[r[i]:r[i+1]-1]
+		
+	   ; Pixels of region i
+   		q = data[p]
+	
+		; xy indices of region i	
+		pxy = array_indices(data, p)
+		px = reform(pxy[0,*])
+		py = reform(pxy[1,*])
+		
+		;; Centroid of region i
+		centroid_x = mean(px)
+		centroid_y = mean(py)
+		;centroid_x = total(px*q)/total(q)
+		;centroid_y = total(py*q)/total(q)
+		
+		peakx[peakcounter] = centroid_x
+		peaky[peakcounter] = centroid_y
+		peakcounter += 1
+
+	endfor
+	
+	if peakcounter ne 0 then peakcounter -= 1
+	peakx = peakx[0:peakcounter]
+	peaky = peaky[0:peakcounter]
+	
+	out = transpose([[peakx],[peaky]])
+
+	return, out
+
+end
+
+
 pro fel_randomimage_displayImage, filename, pState, image
 
 		catch, error
@@ -81,6 +186,23 @@ pro fel_randomimage_displayImage, filename, pState, image
 		title = file_basename(filename)
 		data = float(data)
 		
+		;; Apply local background to display image?
+		if (*pstate).display_localbackground eq 1 then begin
+				lbg = (*pstate).peaks_localbackground 
+				m = fel_randomimage_localbackground(data, lbg) 
+				data -= m
+		endif
+		
+
+		;; Find or load peaks
+		if (*pState).circleHDF5Peaks then begin
+			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
+		endif
+		if (*pState).findPeaks then begin
+			peakinfo = fel_randomimage_findpeaks(data, pState)
+		endif
+
+		
 		
 		;; Apply pixel map
 		if (*pstate).use_pixmap then begin
@@ -89,16 +211,19 @@ pro fel_randomimage_displayImage, filename, pState, image
 		else $
 			image = data
 
+		;; Rescale image
 		image = (image>0)
 		image = image < (*pState).image_max
 
-		if (*pState).circlePeaks then begin
-			circles = fel_randomimage_peakcircles(filename, image, pState)
-			m = max(image) 
-			
+		if (*pState).circleHDF5Peaks OR (*pState).findPeaks then begin
+			peakx = long(reform(peakinfo(0,*)))
+			peaky = long(reform(peakinfo(1,*)))
+			print,'Peaks found: ', n_elements(peakx)
+
+			circles = fel_randomimage_peakcircles(filename, image, pState, peakx, peaky)
+			m = max(image) 			
 			image += (m*circles)
 			image = image < m
-			
 		endif
 
 		
@@ -373,14 +498,30 @@ pro fel_randomimage_event, ev
 		;;
 		;;	Circle peaks?
 		;;
-		sState.menu_circlePeaks : begin
-			(*pstate).circlePeaks = 1-sState.circlePeaks
-			widget_control, sState.menu_circlePeaks, set_button = (*pstate).circlePeaks
+		sState.menu_circleHDF5Peaks : begin
+			(*pstate).circleHDF5Peaks = 1-sState.circleHDF5Peaks
+			(*pstate).findPeaks = 0
+			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
+			widget_control, sState.menu_findPeaks, set_button = 0
 		end
-		sState.menu_centeredPeaks : begin
-			(*pstate).centeredPeaks = 1-sState.centeredPeaks
-			widget_control, sState.menu_centeredPeaks, set_button = (*pstate).centeredPeaks
+		sState.menu_findPeaks : begin
+			(*pstate).findPeaks = 1-sState.findPeaks
+			(*pstate).circleHDF5Peaks = 0
+			widget_control, sState.menu_findPeaks, set_button = (*pstate).findPeaks
+			widget_control, sState.menu_circleHDF5Peaks, set_button = 0
 		end
+
+		;; Display with local background
+		sState.menu_localBackground : begin
+			(*pstate).display_localbackground = 1-sState.display_localbackground
+			widget_control, sState.menu_localBackground, set_button = (*pstate).display_localbackground
+	
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			fel_randomimage_displayImage, filename, pState
+		end
+		
 		
 		;;
 		;;	Profiles
@@ -429,12 +570,11 @@ pro fel_randomimage_event, ev
 						'0, float, '+string(sState.image_gamma)+', label_left=Gamma:, width=10, tag=image_gamma', $
 						'0, float, '+string(sState.image_boost)+', label_left=Boost:, width=10, tag=image_boost', $
 						'0, float, '+string(sState.image_max)+', label_left=Max value:, width=10, tag=image_max', $
-						'2, text, '+string(sState.h5field)+', label_left=HDF5 field:, width=10, tag=h5field', $
+						'2, text, '+string(sState.h5field)+', label_left=HDF5 field:, width=50, tag=h5field', $
 						'1, base,, row', $
 						'0, button, OK, Quit, Tag=OK', $
 						'2, button, Cancel, Quit' $
-			]
-		
+			]		
 			a = cw_form(desc, /column, title='Image display')
 			
 			if a.OK eq 1 then begin		
@@ -450,6 +590,35 @@ pro fel_randomimage_event, ev
 			fel_randomimage_displayImage, filename, pState
 		
 		end
+
+		;;
+		;; Change peak finding parameters
+		;;
+		sState.menu_peakfinding : begin
+			desc = [ 	'1, base, , column', $
+						'0, float, '+string(sState.peaks_localbackground)+', label_left=Local background radius:, width=10, tag=peaks_localbackground', $
+						'0, float, '+string(sState.peaks_ADC)+', label_left=Threshold ADC:, width=10, tag=peaks_ADC', $
+						'0, float, '+string(sState.peaks_minpix)+', label_left=Minimum number of pixels:, width=10, tag=peaks_minpix', $
+						'2, float, '+string(sState.peaks_maxpix)+', label_left=Maximum number of pixels:, width=10, tag=peaks_maxpix', $
+						'1, base,, row', $
+						'0, button, OK, Quit, Tag=OK', $
+						'2, button, Cancel, Quit' $
+			]
+			a = cw_form(desc, /column, title='Image display')
+			
+			if a.OK eq 1 then begin		
+				(*pstate).peaks_localbackground = a.peaks_localbackground
+				(*pstate).peaks_ADC = a.peaks_ADC
+				(*pstate).peaks_minpix = a.peaks_minpix
+				(*pstate).peaks_maxpix = a.peaks_maxpix
+			endif
+
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			fel_randomimage_displayImage, filename, pState
+		end
+		
 
 		;; Load geometry
 		sState.menu_geom : begin
@@ -582,7 +751,6 @@ pro fel_randomimage, pixmap=pixmap
 	;; Create inverse-BW colour table (X-ray film style)
 	loadct, 0, rgb_table=bw, /silent
 	invbw = reverse(bw, 1)
-	modifyct, 41, 'Inverse B-W', invbw[*,0], invbw[*,1], invbw[*,2]
 
 	;; Load colour table names
 	loadct, 0, /silent
@@ -610,9 +778,12 @@ pro fel_randomimage, pixmap=pixmap
 		
 	;;	Create analysis menu
 	mbanalysis = widget_button(bar, value='Analysis')
-	mbanalysis_imagescaling = widget_button(mbanalysis, value='Image display')
-	mbanalysis_circlePeaks = widget_button(mbanalysis, value='Circle peaks', /checked)
+	mbanalysis_imagescaling = widget_button(mbanalysis, value='Image display settings')
+	mbanalysis_circleHDF5Peaks = widget_button(mbanalysis, value='Circle HDF5 peaks', /checked)
+	mbanalysis_findPeaks = widget_button(mbanalysis, value='Circle found peaks', /checked)
+	mbanalysis_peakfinding = widget_button(mbanalysis, value='Peak finding settings')
 	mbanalysis_centeredPeaks = widget_button(mbanalysis, value='Peaks relative to image centre', /checked)
+	mbanalysis_displayLocalBackground = widget_button(mbanalysis, value='Display with local background subtraction', /checked)
 	mbanalysis_profiles = widget_button(mbanalysis, value='Profiles')
 	mbanalysis_ROI = widget_button(mbanalysis, value='ROI statistics')
 	mbanalysis_refresh = widget_button(mbanalysis, value='Refresh image')
@@ -657,8 +828,8 @@ pro fel_randomimage, pixmap=pixmap
 				  currentFile : filename, $
 				  currentFileNum : 0L, $
 				  h5field : "data/data", $
-				  image_gamma : 0.25, $
-				  image_boost : 1., $
+				  image_gamma : 1.0, $
+				  image_boost : 5., $
 				  image_max : 32000., $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
@@ -669,7 +840,8 @@ pro fel_randomimage, pixmap=pixmap
 				  dir : dir, $
 				  autoShuffle : 0, $
 				  autoNext : 0, $
-				  circlePeaks : 0, $
+				  circleHDF5Peaks : 0, $
+				  findPeaks : 0, $
 				  centeredPeaks : 0, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
@@ -691,11 +863,21 @@ pro fel_randomimage, pixmap=pixmap
 				  menu_newdir : mbfile_newdir, $ 
 				  menu_updtefiles : mbfile_updatefilelist, $
 				  menu_display: mbanalysis_imagescaling, $
+				  menu_peakfinding : mbanalysis_peakfinding, $
 				  menu_profiles : mbanalysis_profiles, $
 				  menu_ROIstats : mbanalysis_ROI, $
 				  menu_refresh : mbanalysis_refresh, $
-				  menu_circlePeaks : mbanalysis_circlePeaks, $
+				  menu_circleHDF5Peaks : mbanalysis_circleHDF5Peaks, $
 				  menu_centeredPeaks : mbanalysis_centeredPeaks, $
+				  menu_findPeaks :  mbanalysis_findPeaks, $
+				  menu_localBackground : mbanalysis_displayLocalBackground, $
+				  
+
+				  peaks_localbackground : 2, $
+				  peaks_ADC : 300, $
+				  peaks_minpix : 3, $
+				  peaks_maxpix : 20, $
+				  display_localbackground : 0, $
 				  
 				  button_updatefiles : button_updatefiles, $
 				  button_refresh : button_updateimage, $
@@ -716,6 +898,7 @@ pro fel_randomimage, pixmap=pixmap
  		device, retain=3, decomposed=0
  	
  		wset, slide_window
+ 		loadct, 4, /silent
 	    tvscl, image
 		WIDGET_CONTROL, scroll, SET_DRAW_VIEW=[(s[0]-xview)/2, (s[0]-yview)/2]
 		
