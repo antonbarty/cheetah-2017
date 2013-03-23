@@ -593,13 +593,17 @@ pro fel_randomimage_event, ev
 		;;	Refresh image (clears ROI)
 		;;
 		sState.menu_refresh : begin
-			WSET, sState.slideWin
-			tvscl, sState.image
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			fel_randomimage_displayImage, filename, pState
 		end
 		
 		sState.button_refresh : begin
-			WSET, sState.slideWin
-			tvscl, sState.image
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			fel_randomimage_displayImage, filename, pState
 		end
 
 
