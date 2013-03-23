@@ -79,7 +79,7 @@ cGlobal::cGlobal(void) {
 	strcpy(peaksearchFile, "No_file_specified");
 	savePeakInfo = 0;
 	hitfinderCheckPeakSeparation = 0;
-	hitfinderMinPeakSeparation = 50;
+	hitfinderMinPeakSeparation = 0;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
 	hitfinderLocalBGThickness = 5;

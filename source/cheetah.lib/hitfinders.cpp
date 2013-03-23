@@ -1010,25 +1010,30 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 		}}	
 
 
-	/* Final round of killing peaks */
-	for ( p1=0;    p1 < counter; p1++) {
-	for ( p2=p1+1; p2 < counter; p2++) {
-		/* Distance to neighbor peak */
-		dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) + 
-		pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
-		if ( dist <= global->hitfinderMinPeakSeparation ) {
-			if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
-				killpeak[p2] = 1;
-			} else {
-				killpeak[p1] = 1;
+	/* 
+	 *	Final round of killing peaks 
+	 */
+	// Find peaks that are too close together
+	if(global->hitfinderMinPeakSeparation > 0 ) {
+		for ( p1=0; p1 < counter; p1++) {
+			for ( p2=p1+1; p2 < counter; p2++) {
+				/* Distance to neighbor peak */
+				dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) + pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
+				if ( dist <= global->hitfinderMinPeakSeparation ) {
+					if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
+						killpeak[p2] = 1;
+					}
+					else {
+						killpeak[p1] = 1;
+					}
+				} 
 			}
-		} 
-	}}
+		}
+	}
 	
 	counter2 = 0;
-	for ( p=0;    p < counter; p++) {
+	for ( p=0; p < counter; p++) {
 		if (killpeak[p] == 0) {
-			counter2++;
 			eventData->peak_intensity[counter2] = eventData->peak_intensity[p];
 			eventData->peak_com_x[counter2] = eventData->peak_com_x[p];
 			eventData->peak_com_y[counter2] = eventData->peak_com_y[p];
@@ -1038,14 +1043,12 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 			eventData->peak_com_x_assembled[counter2] = eventData->peak_com_x_assembled[p];
 			eventData->peak_com_y_assembled[counter2] = eventData->peak_com_y_assembled[p];
 			eventData->peak_com_r_assembled[counter2] = eventData->peak_com_r_assembled[p];
+			counter2++;
 		}
-	}	
-
-
+	}
 	eventData->nPeaks = counter2;
 	
-	if(eventData->nPeaks >= global->hitfinderNpeaks && 
-	   eventData->nPeaks <= global->hitfinderNpeaksMax)
+	if(eventData->nPeaks >= global->hitfinderNpeaks && eventData->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
 	
 nohit:
