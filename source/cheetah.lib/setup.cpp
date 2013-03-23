@@ -162,7 +162,7 @@ cGlobal::cGlobal(void) {
 	laserPumpScheme = 0;
 
 	// Do not output 1 HDF5 per image by default
-	saveCXIDB = 1;
+	saveCXIDB = 0;
 	strcpy(currentCXIFileName, "");
 }
 
