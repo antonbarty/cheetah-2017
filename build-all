@@ -39,8 +39,9 @@ cp hitfinder quickview framesorter $INSTALLDIR/scripts
 # (This step could be skipped if psana version is up to date)
 ########################
 cd $CHEETAHDIR/source/lcls-psana
-addpkg psana
+. /reg/g/psdm/bin/sit_setup.sh
 relupgrade ana-current
+addpkg psana
 . /reg/g/psdm/bin/sit_setup.sh
 scons -c
 scons
