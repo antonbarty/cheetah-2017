@@ -806,7 +806,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "laserpumpscheme")) {
 		laserPumpScheme = atoi(value);
 	}
-	else if (!strcmp(tag, "saveCXIDB")) {
+	else if (!strcmp(tag, "savecxidb")) {
 	  saveCXIDB = atoi(value);
 	}
 	// Unknown tags
