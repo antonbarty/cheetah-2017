@@ -7,18 +7,8 @@ export HDF5DIR=$HOME/local
 export LIBPATH=$HOME/local/lib
 
 ########################
-# LATEST PSANA
-########################
-
-cd $CHEETAHDIR/source/lcls-psana
-addpkg psana
-relupgrade ana-current
-. /reg/g/psdm/bin/sit_setup.sh
-scons -c
-scons
-
-########################
 # LIBCHEETAH
+# (do this first)
 ########################
 
 export LD_LIBRARY_PATH="$INSTALLDIR/lib:$HDF5DIR/lib"
@@ -45,11 +35,19 @@ cd $CHEETAHDIR/scripts
 cp hitfinder quickview framesorter $INSTALLDIR/scripts
 
 ########################
-# PSANA
+# GET LATEST PSANA
+# (This step could be skipped if psana version is up to date)
 ########################
-
-
 cd $CHEETAHDIR/source/lcls-psana
+addpkg psana
+relupgrade ana-current
+. /reg/g/psdm/bin/sit_setup.sh
+scons -c
+scons
 
+########################
+# RECOMPILE PSANA
+########################
+cd $CHEETAHDIR/source/lcls-psana
 . /reg/g/psdm/bin/sit_setup.sh
 scons	# Do not scons -c here
