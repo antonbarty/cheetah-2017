@@ -82,6 +82,7 @@ function fel_randomimage_localbackground, data, radius
 		cspady = 185
 		m = fltarr(s[0],s[1])
 		
+		;; Subtract medians asic-wise
 		for i=0, 7 do begin
 			for j = 0, 7 do begin
 				region = data[i*cspadx:(i+1)*cspadx-1, j*cspady:(j+1)*cspady-1]
@@ -89,6 +90,14 @@ function fel_randomimage_localbackground, data, radius
 				m[i*cspadx,j*cspady] = mm
 			endfor
 		endfor		
+		
+		;; Ignore the bright ASIC edges (set background=data and these points will become 0)
+		for i=0, 7 do begin
+			m[*, i*cspady] = data[*,i*cspady]
+			m[*, (i+1)*cspady-1] = data[*, (i+1)*cspady-1]
+			m[i*cspadx, *] = data[i*cspadx,*]
+			m[(i+1)*cspadx-1, *] = data[(i+1)*cspadx-1,*]
+		endfor
 	endif $
 	else begin
 		m = median(data, width)
@@ -111,7 +120,7 @@ function fel_randomimage_findpeaks, data, pState
 
 
 	;; Array for peak information
-	maxpeaks = 500
+	maxpeaks = 5000
 	peakx = fltarr(maxpeaks)
 	peaky = fltarr(maxpeaks)
 	peakcounter = 0
@@ -129,6 +138,7 @@ function fel_randomimage_findpeaks, data, pState
 
 	region = label_region(temp gt adc_thresh, /all, /ulong)
 	h = histogram(region, reverse_indices=r)
+	indices = lindgen(s[0],s[1])
 	
 	for i=0L, n_elements(h)-1 do begin
 	
@@ -164,14 +174,17 @@ function fel_randomimage_findpeaks, data, pState
 		if newpeakr gt peaks_maxres then continue
 		if newpeakr lt peaks_minres then continue
 		
-		;; Reject based on signal:noise
+		;; Reject based on signal:noise (not including peak)
 		if peaks_minsnr ne 0 then begin
 			region_xl = max([0, centroid_x-2*lbg])
-			region_xh = min([s[0], centroid_x+2*lbg])-1
+			region_xh = min([s[0]-1, centroid_x+2*lbg])
 			region_yl = max([0, centroid_y-2*lbg])
-			region_yh = min([s[1], centroid_y+2*lbg])-1
-			sd = stddev(data[region_xl:region_xh, region_yl:region_yh])
-			ipeak = max(q)
+			region_yh = min([s[1]-1, centroid_y+2*lbg])
+			;sd = stddev(temp[region_xl:region_xh, region_yl:region_yh] < adc_thresh)
+			in = indices[region_xl:region_xh, region_yl:region_yh]
+			in = in[where(temp[in] lt adc_thresh)]
+			sd = stddev(temp[in])
+			ipeak = max(temp[p])
 			snr = ipeak/sd
 		 	if snr lt peaks_minsnr then continue
 		endif	
@@ -627,7 +640,7 @@ pro fel_randomimage_event, ev
 		sState.menu_peakfinding : begin
 			desc = [ 	'1, base, , column', $
 						'0, float, '+string(sState.peaks_localbackground)+', label_left=LocalBackgroundRadius:, width=10, tag=peaks_localbackground', $
-						'0, float, '+string(sState.peaks_ADC)+', label_left=Intensity threshold (HitfinderADC):, width=10, tag=peaks_ADC', $
+						'0, float, '+string(sState.peaks_ADC)+', label_left=Intensity threshold (hitfinderADC):, width=10, tag=peaks_ADC', $
 						'0, float, '+string(sState.peaks_minpix)+', label_left=Minimum pixels per peak (hitfinderMinPixCount):, width=10, tag=peaks_minpix', $
 						'0, float, '+string(sState.peaks_maxpix)+', label_left=Maximum pixels per peak (hitfinderMaxPixCount):, width=10, tag=peaks_maxpix', $
 						'0, float, '+string(sState.peaks_minsnr)+', label_left=Minimum signal-to-noise ratio (I/sigma) (hitfinderMinSNR):, width=10, tag=peaks_minsnr', $
