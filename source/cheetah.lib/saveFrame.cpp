@@ -321,14 +321,16 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		return;
 	}
 	
-	long	maxNpeaks = 1000;
+	long maxNpeaks = 500;
+	if(info->nPeaks > maxNpeaks) maxNpeaks = info->nPeaks;
+
 	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
 		//size[0] = info->nPeaks;			// size[0] = height
 		size[0] = maxNpeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
 		max_size[0] = maxNpeaks;
 		max_size[1] = 4;
-		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
+		double *peak_info = (double *) calloc(4*maxNpeaks, sizeof(double));
 		
 		// Zero out unused peaks
 		for(long i=0; i< 4*size[0]; i++) {
@@ -336,8 +338,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		
 		// Save peak info in Assembled layout
-		for (int i=0; i<info->nPeaks;i++){
-			peak_info[i*4] = info->peak_com_x_assembled[i];
+		for (long i=0; i<info->nPeaks;i++){
+			peak_info[i*4+0] = info->peak_com_x_assembled[i];
 			peak_info[i*4+1] = info->peak_com_y_assembled[i];
 			peak_info[i*4+2] = info->peak_intensity[i];
 			peak_info[i*4+3] = info->peak_npix[i];
@@ -362,8 +364,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		
 		// Save peak info in Raw layout
-		for (int i=0; i<info->nPeaks;i++){
-			peak_info[i*4] = info->peak_com_x[i];
+		for (long i=0; i<info->nPeaks;i++){
+			peak_info[i*4+0] = info->peak_com_x[i];
 			peak_info[i*4+1] = info->peak_com_y[i];
 			peak_info[i*4+2] = info->peak_intensity[i];
 			peak_info[i*4+3] = info->peak_npix[i];
