@@ -320,15 +320,20 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		H5Fclose(hdf_fileID);
 		return;
 	}
-	
+	long	maxNpeaks = 1000;
 	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
-		size[0] = info->nPeaks;			// size[0] = height
+		//size[0] = info->nPeaks;			// size[0] = height
+		size[0] = maxNpeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
-		//max_size[0] = info->nPeaks;
-		max_size[0] = H5S_UNLIMITED;
+		max_size[0] = maxNpeaks;
 		max_size[1] = 4;
 		
-		double *peak_info = (double *) calloc(4*info->nPeaks, sizeof(double));
+		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
+		for(long i=0; i< size[0]; i++) {
+			for(long j=0; j<4; j++) {
+				peak_info[i*4+j] = 0;
+			}
+		}
 		
 		// Save peak info in Assembled layout
 		for (int i=0; i<info->nPeaks;i++){
