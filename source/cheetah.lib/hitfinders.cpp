@@ -11,13 +11,11 @@
 #include "cheetahEvent.h"
 #include "median.h"
 #include "hitfinders.h"
+#include "peakfinders.h"
 
 
 // Peakfinders local to this routine
 int hitfinder1(cGlobal*, cEventData*, int);
-int peakfinder3(cGlobal*, cEventData*, int);
-int peakfinder5(cGlobal*, cEventData*, int);
-int peakfinder6(cGlobal*, cEventData*, int);
 
 
 
@@ -33,8 +31,6 @@ int peakfinder6(cGlobal*, cEventData*, int);
  *      7 - Laser on event code (usually EVR41)
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
-	
-	
 	
 	// Dereference stuff
 	int			detID = global->hitfinderDetector;
@@ -71,16 +67,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	
-	/*
-	 *	Apply peak search mask
-	 *	(multiply data by 0 to ignore regions)
-	 */
-	if(global->hitfinderUsePeakmask) {
-		for(long i=0;i<pix_nn;i++){
-			temp[i] *= global->detector[detID].peakmask[i]; 
-		}
-	}
-	
 	
 	/*
 	 *	Apply other bad region masks
@@ -94,7 +80,9 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		mask[i] *= global->detector[detID].hotpixelmask[i];
 		mask[i] *= global->detector[detID].badpixelmask[i];
 		mask[i] *= eventData->detector[detID].saturatedPixelMask[i];
+		mask[i] *= global->detector[detID].peakmask[i];
 	}
+	// Apply peak search mask (multiply data in ignored regions by 0)
 	for (long i=0; i<pix_nn; i++) {
 		temp[i] *= mask[i];
 	}
