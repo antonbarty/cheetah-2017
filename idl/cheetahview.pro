@@ -5,7 +5,7 @@
 ;;	Anton Barty, 2007-2008
 ;;
 
-function fel_randomimage_peakcircles, filename, image, pState, peakx, peaky
+function cheetah_peakcircles, filename, image, pState, peakx, peaky
 
 	;; Image of overlaid circles
 	d = size(image,/dim)
@@ -65,7 +65,7 @@ end
 
 
 ;; Note: this routine is hard coded for CSpad data!!!
-function fel_randomimage_localbackground, data, radius
+function cheetah_localbackground, data, radius
 
 	if radius le 0 then begin
 		return, 0
@@ -108,7 +108,7 @@ function fel_randomimage_localbackground, data, radius
 end
 
 
-function fel_randomimage_findpeaks, data, pState
+function cheetah_findpeaks, data, pState
 
 	lbg = (*pstate).peaks_localbackground 
 	adc_thresh = (*pstate).peaks_ADC
@@ -123,6 +123,8 @@ function fel_randomimage_findpeaks, data, pState
 	maxpeaks = 5000
 	peakx = fltarr(maxpeaks)
 	peaky = fltarr(maxpeaks)
+	peaktotal = fltarr(maxpeaks)
+	peakpix = fltarr(maxpeaks)
 	peakcounter = 0
 	
 	s = size(data, /dim)
@@ -131,7 +133,7 @@ function fel_randomimage_findpeaks, data, pState
 	;; That this has already been done if (*pstate).display_localbackground eq 1!!!
 	m = 0
 	if (*pstate).display_localbackground ne 1 then begin
-		m = fel_randomimage_localbackground(data, lbg) 
+		m = cheetah_localbackground(data, lbg) 
 	endif
 	temp = data
 	temp -= m	
@@ -142,8 +144,9 @@ function fel_randomimage_findpeaks, data, pState
 	
 	for i=0L, n_elements(h)-1 do begin
 	
-		if h[i] lt minpix then continue
-		if h[i] gt maxpix then continue
+		npix = h[i]
+		if npix lt minpix then continue
+		if npix gt maxpix then continue
 		
 		if peakcounter ge maxpeaks-1 then begin
 			print,'More than allowed number of peaks found: ', maxpeaks
@@ -164,7 +167,7 @@ function fel_randomimage_findpeaks, data, pState
 		;; Centroid of region i
 		centroid_x = total(px*q)/total(q)
 		centroid_y = total(py*q)/total(q)
-
+		ptotal = total(temp[p])
 		
 
 		;; Reject based on peak radius
@@ -191,6 +194,8 @@ function fel_randomimage_findpeaks, data, pState
 		
 		peakx[peakcounter] = centroid_x
 		peaky[peakcounter] = centroid_y
+		peaktotal[peakcounter] = ptotal
+		peakpix[peakcounter] = npix
 		peakcounter += 1
 
 	endfor
@@ -198,15 +203,24 @@ function fel_randomimage_findpeaks, data, pState
 	if peakcounter ne 0 then peakcounter -= 1
 	peakx = peakx[0:peakcounter]
 	peaky = peaky[0:peakcounter]
+	peaktotal = peaktotal[0:peakcounter]
+	peakpix = peakpix[0:peakcounter]
 	
-	out = transpose([[peakx],[peaky]])
+	out = transpose([[peakx],[peaky],[peaktotal],[peakpix]])
 
 	return, out
 
 end
 
 
-pro fel_randomimage_displayImage, filename, pState, image
+pro cheetah_displayImage, pState, image
+
+		;; Retrieve file info
+		file = *(*pState).pfile
+		i = (*pState).currentFileNum
+		filename = file[i]
+		(*pState).currentFile = filename
+
 
 		catch, error
 
@@ -225,21 +239,19 @@ pro fel_randomimage_displayImage, filename, pState, image
 		;; Apply local background to display image?
 		if (*pstate).display_localbackground eq 1 then begin
 				lbg = (*pstate).peaks_localbackground 
-				m = fel_randomimage_localbackground(data, lbg) 
+				m = cheetah_localbackground(data, lbg) 
 				data -= m
 		endif
 		
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
+			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo')
 		endif
 		if (*pState).findPeaks then begin
-			peakinfo = fel_randomimage_findpeaks(data, pState)
+			peakinfo = cheetah_findpeaks(data, pState)
 		endif
 
-		
-		
 		;; Apply pixel map
 		if (*pstate).use_pixmap then begin
 			image = pixelRemap(data, (*pstate).pixmap_x, (*pstate).pixmap_y, (*pstate).pixmap_dx)
@@ -254,9 +266,12 @@ pro fel_randomimage_displayImage, filename, pState, image
 		if (*pState).circleHDF5Peaks OR (*pState).findPeaks then begin
 			peakx = long(reform(peakinfo(0,*)))
 			peaky = long(reform(peakinfo(1,*)))
+			in = where(peakx ne 0 AND peaky ne 0)
+			peakx = peakx[in]
+			peaky = peaky[in]
 			print,'Peaks found: ', n_elements(peakx)
 
-			circles = fel_randomimage_peakcircles(filename, image, pState, peakx, peaky)
+			circles = cheetah_peakcircles(filename, image, pState, peakx, peaky)
 			m = max(image) 			
 			image += (m*circles)
 			image = image < m
@@ -283,13 +298,103 @@ pro fel_randomimage_displayImage, filename, pState, image
 		str = strcompress(string('(image',thisfile,' of ',numfiles,')'))
 		widget_control, (*pState).status_label, set_value=str
 
+
+		;; Save peak list
+		if (*pState).findPeaks then begin
+			if (*pstate).savePeaks then begin
+				cheetah_overwritePeaks, filename, peakinfo
+			endif
+		endif
+
+
 		;; Turn off error handler
 		catch, /cancel
+
+
 
 end
 
 
-pro fel_randomimage_event, ev
+pro cheetah_overwritePeaks, filename, peakinfo
+
+	print, 'Saving found peaks back into HDF5 file '
+	s = size(peakinfo, /dim)
+	if n_elements(s) ne 2 then return
+	
+	file_id = H5F_OPEN(filename, /write) 
+	
+	;; Determine whether peakinfo-refined field exists.
+	;; If the field exists, we need to use H5D_OPEN
+	;; If the field does not exist, H5D_OPEN will crash and we need to use H5D_CREATE_SIMPLE instead
+	;; Finding out this information is a little tricky (!)
+	
+	;h5_fields = h5_parse(file_id, 'processing/hitfinder', file=filename)
+	;names = tag_names(h5_fields)
+
+	;;peaklink = h5g_get_linkval(file_id,'processing/hitfinder/peakinfo')
+	;;if peaklink eq '/processing/hitfinder/peakinfo-raw' then field_present=0 else field_present=1
+
+	h5_fields = h5_parse(filename)
+	names = tag_names(h5_fields.processing.hitfinder)
+	w = where(names eq 'PEAKINFO_REFINED')
+	if w[0] eq -1 then field_present=0 else field_present=1
+
+
+	;; If field already defined - figure out how big it is and resize the array accordingly
+	if field_present then begin
+		print, 'peakinfo_refined is already defined:'
+	 	dataset_id = H5D_OPEN(file_id, 'processing/hitfinder/peakinfo-refined') 
+		raw_dataset_id = H5D_GET_SPACE(dataset_id)
+		raw_dims = H5S_GET_SIMPLE_EXTENT_DIMS(raw_dataset_id)
+		snew = size(peakinfo,/dim)
+		msg = strcompress(string('Existing peak list is ',raw_dims[1],' long, New peak list is ', snew[1], ' long'))
+		print, msg
+		;print,'Peakinfo_refined is: ', raw_dims
+		;print,'New peak list is: ', size(peakinfo,/dim)
+	
+		if s[1] le raw_dims[1] then begin
+			print,'Array will be zero padded'
+			temp = dblarr(raw_dims)
+			temp[0,0] = peakinfo
+		endif $
+		else begin
+			print,strcompress(string('Peak list truncated to H5 container size: ( best ', raw_dims[1],' peaks saved )'))
+			val = reform(peakinfo[3,*])
+			srt = reverse(sort(val))
+			peakinfo[*,*] = peakinfo[*,srt]
+			temp = double(peakinfo[*,0:raw_dims[1]-1])
+		endelse
+
+		H5D_WRITE,dataset_id, temp, file_space_id=raw_dataset_id  		
+		H5S_CLOSE, raw_dataset_id
+		H5D_CLOSE,dataset_id   
+		
+	endif $
+	
+	else begin
+			print,'Creating new hdf5 field: processing/hitfinder/peakinfo-refined to hold up to 1000 peaks'
+			temp = dblarr(4,1000)
+			temp[0,0] = peakinfo
+			datatype_id = H5T_IDL_CREATE(temp) 
+			dataspace_id = H5S_CREATE_SIMPLE(size(temp,/DIMENSIONS), max_dimensions=[4,-1]) 
+			dataset_id = H5D_CREATE(file_id,'processing/hitfinder/peakinfo-refined', datatype_id, dataspace_id,  CHUNK_DIMENSIONS=[4,50] ) 
+			H5D_WRITE, dataset_id, temp
+			H5D_CLOSE,dataset_id   
+			H5S_CLOSE,dataspace_id 
+			H5T_CLOSE,datatype_id 
+	endelse
+
+	;; Fix up symbolic links
+	H5G_UNLINK, file_id, 'processing/hitfinder/peakinfo'
+	H5G_LINK, file_id, 'processing/hitfinder/peakinfo-refined', 'processing/hitfinder/peakinfo'	
+
+	H5F_CLOSE, file_id 
+
+end
+
+
+
+pro cheetah_event, ev
 
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
   	sState = *pState
@@ -354,7 +459,7 @@ pro fel_randomimage_event, ev
 		;;	Save image
 		;;
 		sState.menu_save : begin
-			fel_randomimage_displayImage, sState.currentFile, pState, image
+			cheetah_displayImage, pState, image
 
 			outfile = file_basename(sState.currentFile)
 			outfile = strmid(outfile, 0, strlen(outfile)-3)+'.png'
@@ -398,7 +503,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 
 			;; Again?			
 			if (*pstate).autoNext eq 1 then $
@@ -421,7 +526,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 
 
@@ -438,7 +543,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 			
 			;; Again?			
 			if (*pstate).autoShuffle eq 1 then $
@@ -505,7 +610,7 @@ pro fel_randomimage_event, ev
 			(*pState).dir = newdir
 			(*pState).currentFileNum = 0
 
-			fel_randomimage_displayImage, file[0], pState
+			cheetah_displayImage, pState
 		end
 				
 		
@@ -527,7 +632,7 @@ pro fel_randomimage_event, ev
 			(*pState).currentFileNum = n_elements(file)-1
 
 
-			fel_randomimage_displayImage, file[(*pState).currentFileNum], pState
+			cheetah_displayImage, pState
 
 		end
 		
@@ -537,8 +642,10 @@ pro fel_randomimage_event, ev
 		sState.menu_circleHDF5Peaks : begin
 			(*pstate).circleHDF5Peaks = 1-sState.circleHDF5Peaks
 			(*pstate).findPeaks = 0
+			(*pstate).savePeaks = 0
 			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
 			widget_control, sState.menu_findPeaks, set_button = 0
+			widget_control, sState.menu_savePeaks, set_button = 0
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
@@ -553,14 +660,16 @@ pro fel_randomimage_event, ev
 			filename = file[i]
 		end
 
+		sState.menu_savePeaks : begin
+			(*pstate).savePeaks = 1-sState.savePeaks
+			widget_control, sState.menu_savePeaks, set_button = (*pstate).savePeaks
+		end
+		
 		;; Display with local background
 		sState.menu_localBackground : begin
 			(*pstate).display_localbackground = 1-sState.display_localbackground
 			widget_control, sState.menu_localBackground, set_button = (*pstate).display_localbackground	
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 		
@@ -593,17 +702,27 @@ pro fel_randomimage_event, ev
 		;;	Refresh image (clears ROI)
 		;;
 		sState.menu_refresh : begin
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 		sState.button_refresh : begin
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
+		end
+
+		;;
+		;; Process all images
+		;;
+		sState.menu_processall : begin
+			res = dialog_message('Do you really want to do this?  This command will automatically step through each image once and could take some time to complete.', /cancel, /default_cancel)
+
+			if res eq 'OK' then begin
+				file = *sState.pfile
+				nfiles = n_elements(file)
+				for i=0L, nfiles-1 do begin
+					(*pState).currentFileNum = i
+					cheetah_displayImage, pState
+				endfor
+			endif
 		end
 
 
@@ -629,10 +748,7 @@ pro fel_randomimage_event, ev
 				(*pstate).h5field = a.h5field
 			endif
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 		
 		end
 
@@ -666,10 +782,7 @@ pro fel_randomimage_event, ev
 				(*pstate).peaks_maxres = a.peaks_maxres
 			endif
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 
@@ -696,12 +809,7 @@ pro fel_randomimage_event, ev
 			new_ysize = min([screensize[1],s[1]])
 			WIDGET_CONTROL, sState.scroll, xsize=new_xsize, ysize=new_ysize, draw_xsize=s[0],draw_ysize=s[1]
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
-
-
+			cheetah_displayImage, pState
 		end
 		
 		;; Colour map
@@ -715,15 +823,28 @@ pro fel_randomimage_event, ev
 				widget_control, ((*pstate).ColourListID)[ev.value], SET_BUTTON=1
 			endelse
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
-
+			cheetah_displayImage, pState
 		end
 
 
+		sState.menu_cdiDefaults : begin
+			loadct, 4, /silent		
+			(*pstate).colour_table = 4
+			(*pstate).image_gamma = 0.25
+			(*pstate).image_boost = 2
+			cheetah_displayImage, pState
+		end
 
+
+		sState.menu_crystDefaults : begin
+			loadct, 41, /silent		
+			(*pstate).colour_table = 41
+			(*pstate).image_gamma = 1
+			(*pstate).image_boost = 5
+			cheetah_displayImage, pState
+		end
+		
+		
 
 		else: begin
 		end
@@ -736,7 +857,7 @@ end
 
 
 
-pro fel_randomimage, pixmap=pixmap
+pro cheetahview, pixmap=pixmap
 
 	;;	Select data directory
 	dir = dialog_pickfile(/directory, title='Select data directory')
@@ -831,15 +952,33 @@ pro fel_randomimage, pixmap=pixmap
 		
 	;;	Create analysis menu
 	mbanalysis = widget_button(bar, value='Analysis')
-	mbanalysis_imagescaling = widget_button(mbanalysis, value='Image display settings')
-	mbanalysis_circleHDF5Peaks = widget_button(mbanalysis, value='Circle HDF5 peaks', /checked)
-	mbanalysis_findPeaks = widget_button(mbanalysis, value='Circle found peaks', /checked)
-	mbanalysis_peakfinding = widget_button(mbanalysis, value='Peak finding settings')
-	mbanalysis_centeredPeaks = widget_button(mbanalysis, value='Peaks relative to image centre', /checked)
-	mbanalysis_displayLocalBackground = widget_button(mbanalysis, value='Display with local background subtraction', /checked)
 	mbanalysis_profiles = widget_button(mbanalysis, value='Profiles')
 	mbanalysis_ROI = widget_button(mbanalysis, value='ROI statistics')
 	mbanalysis_refresh = widget_button(mbanalysis, value='Refresh image')
+	mbanalysis_processall = widget_button(mbanalysis, value='Process all images')
+
+
+	;; Create particles menu
+	mbcdi = widget_button(bar, value='CDI')
+	mbanalysis_cdidefaults = widget_button(mbcdi, value='Default cdi display settings')
+
+	;;	Create crystals menu
+	mbcryst = widget_button(bar, value='Crystals')
+	mbanalysis_crystdefaults = widget_button(mbcryst, value='Default crystal display settings')
+	mbanalysis_circleHDF5Peaks = widget_button(mbcryst, value='Circle HDF5 peaks', /checked)
+	mbanalysis_findPeaks = widget_button(mbcryst, value='Circle IDL found peaks', /checked)
+	mbanalysis_peakfinding = widget_button(mbcryst, value='Peak finding settings')
+	mbanalysis_savePeaks = widget_button(mbcryst, value='Save IDL found peaks to H5 file', /checked)
+	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked)
+	mbanalysis_displayLocalBackground = widget_button(mbcryst, value='Display with local background subtraction', /checked)
+
+
+	mbview = widget_button(bar, value='View')
+	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
+	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=0, /separator)
+	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=0)
+	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=0)
+	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=0)
 
 
 	;; Create action buttons
@@ -895,6 +1034,7 @@ pro fel_randomimage, pixmap=pixmap
 				  autoNext : 0, $
 				  circleHDF5Peaks : 0, $
 				  findPeaks : 0, $
+				  savePeaks : 0, $
 				  centeredPeaks : 0, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
@@ -924,6 +1064,10 @@ pro fel_randomimage, pixmap=pixmap
 				  menu_centeredPeaks : mbanalysis_centeredPeaks, $
 				  menu_findPeaks :  mbanalysis_findPeaks, $
 				  menu_localBackground : mbanalysis_displayLocalBackground, $
+				  menu_savePeaks : mbanalysis_savePeaks, $
+				  menu_cdiDefaults : mbanalysis_cdidefaults, $
+				  menu_crystDefaults : mbanalysis_crystdefaults, $
+				  menu_processall : mbanalysis_processall, $
 				  
 
 				  peaks_localbackground : 2, $
@@ -962,7 +1106,7 @@ pro fel_randomimage, pixmap=pixmap
 		if oldwin ne -1 then $
 			wset, oldwin
 
-    	XMANAGER, 'fel_randomimage', base, event='fel_randomimage_event', /NO_BLOCK
+    	XMANAGER, 'cheetah', base, event='cheetah_event', /NO_BLOCK
     	
 		thisfile = (*pState).currentFileNum+1
 		numfiles = n_elements(*((*pstate).pfile))

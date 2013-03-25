@@ -105,7 +105,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	hid_t		datatype;
 	hsize_t 	size[2],max_size[2];
 	herr_t		hdf_error;
-	hid_t   	gid, gidHitfinder;
+	hid_t   	gid, gidCheetah;
 	//char 		fieldname[100]; 
 	char        fieldID[1023];
 
@@ -314,21 +314,21 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		H5Fclose(hdf_fileID);
 		return;
 	}
-	gidHitfinder = H5Gcreate(gid, "hitfinder", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	gidCheetah = H5Gcreate(gid, "cheetah", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if ( gid < 0 ) {
 		ERROR("%li: Couldn't create group\n", info->threadNum);
 		H5Fclose(hdf_fileID);
 		return;
 	}
+	hdf_error = H5Lcreate_soft( "/processing/cheetah", hdf_fileID, "/processing/hitfinder",0,0);
+
 	
 	// HDF5 version does not support extensible data types -> force it to be big instead
 	
 	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
 		hsize_t	maxNpeaks = 500;
-		if(info->nPeaks > maxNpeaks)
-			maxNpeaks = info->nPeaks;
-
-		//size[0] = info->nPeaks;			// size[0] = height
+		maxNpeaks = info->nPeaks;
+		//size[0] = info->nPeaks;		// size[0] = height
 		size[0] = maxNpeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
 		//max_size[0] = H5S_UNLIMITED;
@@ -351,7 +351,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gidCheetah, "peakinfo-assembled", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -377,7 +377,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gidHitfinder, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gidCheetah, "peakinfo-raw", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -436,7 +436,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		max_size[0] = global->detector[0].pix_ny;
 		max_size[1] = global->detector[0].pix_nx;
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gidCheetah, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			ERROR("%li: Couldn't create dataset\n", info->threadNum);
 			H5Fclose(hdf_fileID);
@@ -464,7 +464,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
     if(info->energySpectrumExist) {
         size[0] = 1;			// size[0] = length
         dataspace_id = H5Screate_simple(1, size, NULL);
-        dataset_id = H5Dcreate(gid, "energySpectrum-tilt", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dataset_id = H5Dcreate(gidCheetah, "energySpectrum-tilt", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         if ( dataset_id < 0 ) {
             ERROR("%li: Couldn't create dataset\n", info->threadNum);
             H5Fclose(hdf_fileID);
@@ -483,7 +483,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
     
     // Done with /processing group
 	H5Gclose(gid);
-	H5Gclose(gidHitfinder);
+	H5Gclose(gidCheetah);
 	
 	/*
 	 *	Write LCLS event information
