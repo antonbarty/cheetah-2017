@@ -123,6 +123,8 @@ function fel_randomimage_findpeaks, data, pState
 	maxpeaks = 5000
 	peakx = fltarr(maxpeaks)
 	peaky = fltarr(maxpeaks)
+	peaktotal = fltarr(maxpeaks)
+	peakpix = fltarr(maxpeaks)
 	peakcounter = 0
 	
 	s = size(data, /dim)
@@ -142,8 +144,9 @@ function fel_randomimage_findpeaks, data, pState
 	
 	for i=0L, n_elements(h)-1 do begin
 	
-		if h[i] lt minpix then continue
-		if h[i] gt maxpix then continue
+		npix = h[i]
+		if npix lt minpix then continue
+		if npix gt maxpix then continue
 		
 		if peakcounter ge maxpeaks-1 then begin
 			print,'More than allowed number of peaks found: ', maxpeaks
@@ -164,7 +167,7 @@ function fel_randomimage_findpeaks, data, pState
 		;; Centroid of region i
 		centroid_x = total(px*q)/total(q)
 		centroid_y = total(py*q)/total(q)
-
+		ptotal = total(temp[p])
 		
 
 		;; Reject based on peak radius
@@ -191,6 +194,8 @@ function fel_randomimage_findpeaks, data, pState
 		
 		peakx[peakcounter] = centroid_x
 		peaky[peakcounter] = centroid_y
+		peaktotal[peakcounter] = ptotal
+		peakpix[peakcounter] = npix
 		peakcounter += 1
 
 	endfor
@@ -198,8 +203,10 @@ function fel_randomimage_findpeaks, data, pState
 	if peakcounter ne 0 then peakcounter -= 1
 	peakx = peakx[0:peakcounter]
 	peaky = peaky[0:peakcounter]
+	peaktotal = peaktotal[0:peakcounter]
+	peakpix = peakpix[0:peakcounter]
 	
-	out = transpose([[peakx],[peaky]])
+	out = transpose([[peakx],[peaky],[peaktotal],[peakpix]])
 
 	return, out
 
@@ -232,14 +239,12 @@ pro fel_randomimage_displayImage, filename, pState, image
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
+			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo')
 		endif
 		if (*pState).findPeaks then begin
 			peakinfo = fel_randomimage_findpeaks(data, pState)
 		endif
 
-		
-		
 		;; Apply pixel map
 		if (*pstate).use_pixmap then begin
 			image = pixelRemap(data, (*pstate).pixmap_x, (*pstate).pixmap_y, (*pstate).pixmap_dx)
@@ -254,6 +259,9 @@ pro fel_randomimage_displayImage, filename, pState, image
 		if (*pState).circleHDF5Peaks OR (*pState).findPeaks then begin
 			peakx = long(reform(peakinfo(0,*)))
 			peaky = long(reform(peakinfo(1,*)))
+			in = where(peakx ne 0 AND peaky ne 0)
+			peakx = peakx[in]
+			peaky = peaky[in]
 			print,'Peaks found: ', n_elements(peakx)
 
 			circles = fel_randomimage_peakcircles(filename, image, pState, peakx, peaky)
@@ -283,10 +291,100 @@ pro fel_randomimage_displayImage, filename, pState, image
 		str = strcompress(string('(image',thisfile,' of ',numfiles,')'))
 		widget_control, (*pState).status_label, set_value=str
 
+
+		;; Save peak list
+		if (*pState).findPeaks then begin
+			if (*pstate).savePeaks then begin
+				fel_randomimage_overwritePeaks, filename, peakinfo
+			endif
+		endif
+
+
 		;; Turn off error handler
 		catch, /cancel
 
+
+
 end
+
+
+pro fel_randomimage_overwritePeaks, filename, peakinfo
+
+	print, 'Saving found peaks back into HDF5 file '
+	s = size(peakinfo, /dim)
+	if n_elements(s) ne 2 then return
+	
+	file_id = H5F_OPEN(filename, /write) 
+	
+	;; Determine whether peakinfo-refined field exists.
+	;; If the field exists, we need to use H5D_OPEN
+	;; If the field does not exist, H5D_OPEN will crash and we need to use H5D_CREATE_SIMPLE instead
+	;; Finding out this information is a little tricky (!)
+	
+	;h5_fields = h5_parse(file_id, 'processing/hitfinder', file=filename)
+	;names = tag_names(h5_fields)
+
+	;;peaklink = h5g_get_linkval(file_id,'processing/hitfinder/peakinfo')
+	;;if peaklink eq '/processing/hitfinder/peakinfo-raw' then field_present=0 else field_present=1
+
+	h5_fields = h5_parse(filename)
+	names = tag_names(h5_fields.processing.hitfinder)
+	w = where(names eq 'PEAKINFO_REFINED')
+	if w[0] eq -1 then field_present=0 else field_present=1
+
+
+	;; If field already defined - figure out how big it is and resize the array accordingly
+	if field_present then begin
+		print, 'peakinfo_refined is already defined:'
+	 	dataset_id = H5D_OPEN(file_id, 'processing/hitfinder/peakinfo-refined') 
+		raw_dataset_id = H5D_GET_SPACE(dataset_id)
+		raw_dims = H5S_GET_SIMPLE_EXTENT_DIMS(raw_dataset_id)
+		snew = size(peakinfo,/dim)
+		msg = strcompress(string('Existing peak list is ',raw_dims[1],' long, New peak list is ', snew[1], ' long'))
+		print, msg
+		;print,'Peakinfo_refined is: ', raw_dims
+		;print,'New peak list is: ', size(peakinfo,/dim)
+	
+		if s[1] le raw_dims[1] then begin
+			print,'Array will be zero padded'
+			temp = dblarr(raw_dims)
+			temp[0,0] = peakinfo
+		endif $
+		else begin
+			print,strcompress(string('Peak list truncated to H5 container size: ( best ', raw_dims[1],' peaks saved )'))
+			val = reform(peakinfo[3,*])
+			srt = reverse(sort(val))
+			peakinfo[*,*] = peakinfo[*,srt]
+			temp = double(peakinfo[*,0:raw_dims[1]-1])
+		endelse
+
+		H5D_WRITE,dataset_id, temp, file_space_id=raw_dataset_id  		
+		H5S_CLOSE, raw_dataset_id
+		H5D_CLOSE,dataset_id   
+		
+	endif $
+	
+	else begin
+			print,'Creating new hdf5 field: processing/hitfinder/peakinfo-refined to hold up to 1000 peaks'
+			temp = dblarr(4,1000)
+			temp[0,0] = peakinfo
+			datatype_id = H5T_IDL_CREATE(temp) 
+			dataspace_id = H5S_CREATE_SIMPLE(size(temp,/DIMENSIONS), max_dimensions=[4,-1]) 
+			dataset_id = H5D_CREATE(file_id,'processing/hitfinder/peakinfo-refined', datatype_id, dataspace_id,  CHUNK_DIMENSIONS=[4,50] ) 
+			H5D_WRITE, dataset_id, temp
+			H5D_CLOSE,dataset_id   
+			H5S_CLOSE,dataspace_id 
+			H5T_CLOSE,datatype_id 
+	endelse
+
+	;; Fix up symbolic links
+	H5G_UNLINK, file_id, 'processing/hitfinder/peakinfo'
+	H5G_LINK, file_id, 'processing/hitfinder/peakinfo-refined', 'processing/hitfinder/peakinfo'	
+
+	H5F_CLOSE, file_id 
+
+end
+
 
 
 pro fel_randomimage_event, ev
@@ -537,8 +635,10 @@ pro fel_randomimage_event, ev
 		sState.menu_circleHDF5Peaks : begin
 			(*pstate).circleHDF5Peaks = 1-sState.circleHDF5Peaks
 			(*pstate).findPeaks = 0
+			(*pstate).savePeaks = 0
 			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
 			widget_control, sState.menu_findPeaks, set_button = 0
+			widget_control, sState.menu_savePeaks, set_button = 0
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
@@ -553,6 +653,11 @@ pro fel_randomimage_event, ev
 			filename = file[i]
 		end
 
+		sState.menu_savePeaks : begin
+			(*pstate).savePeaks = 1-sState.savePeaks
+			widget_control, sState.menu_savePeaks, set_button = (*pstate).savePeaks
+		end
+		
 		;; Display with local background
 		sState.menu_localBackground : begin
 			(*pstate).display_localbackground = 1-sState.display_localbackground
@@ -833,8 +938,9 @@ pro fel_randomimage, pixmap=pixmap
 	mbanalysis = widget_button(bar, value='Analysis')
 	mbanalysis_imagescaling = widget_button(mbanalysis, value='Image display settings')
 	mbanalysis_circleHDF5Peaks = widget_button(mbanalysis, value='Circle HDF5 peaks', /checked)
-	mbanalysis_findPeaks = widget_button(mbanalysis, value='Circle found peaks', /checked)
+	mbanalysis_findPeaks = widget_button(mbanalysis, value='Circle IDL found peaks', /checked)
 	mbanalysis_peakfinding = widget_button(mbanalysis, value='Peak finding settings')
+	mbanalysis_savePeaks = widget_button(mbanalysis, value='Save IDL found peaks to H5 file', /checked)
 	mbanalysis_centeredPeaks = widget_button(mbanalysis, value='Peaks relative to image centre', /checked)
 	mbanalysis_displayLocalBackground = widget_button(mbanalysis, value='Display with local background subtraction', /checked)
 	mbanalysis_profiles = widget_button(mbanalysis, value='Profiles')
@@ -895,6 +1001,7 @@ pro fel_randomimage, pixmap=pixmap
 				  autoNext : 0, $
 				  circleHDF5Peaks : 0, $
 				  findPeaks : 0, $
+				  savePeaks : 0, $
 				  centeredPeaks : 0, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
@@ -924,6 +1031,7 @@ pro fel_randomimage, pixmap=pixmap
 				  menu_centeredPeaks : mbanalysis_centeredPeaks, $
 				  menu_findPeaks :  mbanalysis_findPeaks, $
 				  menu_localBackground : mbanalysis_displayLocalBackground, $
+				  menu_savePeaks : mbanalysis_savePeaks, $
 				  
 
 				  peaks_localbackground : 2, $
