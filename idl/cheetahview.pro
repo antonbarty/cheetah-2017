@@ -213,7 +213,14 @@ function cheetah_findpeaks, data, pState
 end
 
 
-pro cheetah_displayImage, filename, pState, image
+pro cheetah_displayImage, pState, image
+
+		;; Retrieve file info
+		file = *(*pState).pfile
+		i = (*pState).currentFileNum
+		filename = file[i]
+		(*pState).currentFile = filename
+
 
 		catch, error
 
@@ -452,7 +459,7 @@ pro cheetah_event, ev
 		;;	Save image
 		;;
 		sState.menu_save : begin
-			cheetah_displayImage, sState.currentFile, pState, image
+			cheetah_displayImage, pState, image
 
 			outfile = file_basename(sState.currentFile)
 			outfile = strmid(outfile, 0, strlen(outfile)-3)+'.png'
@@ -496,7 +503,7 @@ pro cheetah_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 
 			;; Again?			
 			if (*pstate).autoNext eq 1 then $
@@ -519,7 +526,7 @@ pro cheetah_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 
 
@@ -536,7 +543,7 @@ pro cheetah_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 			
 			;; Again?			
 			if (*pstate).autoShuffle eq 1 then $
@@ -603,7 +610,7 @@ pro cheetah_event, ev
 			(*pState).dir = newdir
 			(*pState).currentFileNum = 0
 
-			cheetah_displayImage, file[0], pState
+			cheetah_displayImage, pState
 		end
 				
 		
@@ -625,7 +632,7 @@ pro cheetah_event, ev
 			(*pState).currentFileNum = n_elements(file)-1
 
 
-			cheetah_displayImage, file[(*pState).currentFileNum], pState
+			cheetah_displayImage, pState
 
 		end
 		
@@ -662,10 +669,7 @@ pro cheetah_event, ev
 		sState.menu_localBackground : begin
 			(*pstate).display_localbackground = 1-sState.display_localbackground
 			widget_control, sState.menu_localBackground, set_button = (*pstate).display_localbackground	
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 		
@@ -698,17 +702,27 @@ pro cheetah_event, ev
 		;;	Refresh image (clears ROI)
 		;;
 		sState.menu_refresh : begin
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 		sState.button_refresh : begin
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
+		end
+
+		;;
+		;; Process all images
+		;;
+		sState.menu_processall : begin
+			res = dialog_message('Do you really want to do this?  This command will automatically step through each image once and could take some time to complete.', /cancel, /default_cancel)
+
+			if res eq 'OK' then begin
+				file = *sState.pfile
+				nfiles = n_elements(file)
+				for i=0L, nfiles-1 do begin
+					(*pState).currentFileNum = i
+					cheetah_displayImage, pState
+				endfor
+			endif
 		end
 
 
@@ -734,10 +748,7 @@ pro cheetah_event, ev
 				(*pstate).h5field = a.h5field
 			endif
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		
 		end
 
@@ -771,10 +782,7 @@ pro cheetah_event, ev
 				(*pstate).peaks_maxres = a.peaks_maxres
 			endif
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 
@@ -801,12 +809,7 @@ pro cheetah_event, ev
 			new_ysize = min([screensize[1],s[1]])
 			WIDGET_CONTROL, sState.scroll, xsize=new_xsize, ysize=new_ysize, draw_xsize=s[0],draw_ysize=s[1]
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
-
-
+			cheetah_displayImage, pState
 		end
 		
 		;; Colour map
@@ -820,11 +823,7 @@ pro cheetah_event, ev
 				widget_control, ((*pstate).ColourListID)[ev.value], SET_BUTTON=1
 			endelse
 
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
-
+			cheetah_displayImage, pState
 		end
 
 
@@ -833,10 +832,7 @@ pro cheetah_event, ev
 			(*pstate).colour_table = 4
 			(*pstate).image_gamma = 0.25
 			(*pstate).image_boost = 2
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 
 
@@ -845,10 +841,7 @@ pro cheetah_event, ev
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
 			(*pstate).image_boost = 5
-			file = *sState.pfile
-			i = sState.currentFileNum
-			filename = file[i]
-			cheetah_displayImage, filename, pState
+			cheetah_displayImage, pState
 		end
 		
 		
@@ -962,6 +955,7 @@ pro cheetahview, pixmap=pixmap
 	mbanalysis_profiles = widget_button(mbanalysis, value='Profiles')
 	mbanalysis_ROI = widget_button(mbanalysis, value='ROI statistics')
 	mbanalysis_refresh = widget_button(mbanalysis, value='Refresh image')
+	mbanalysis_processall = widget_button(mbanalysis, value='Process all images')
 
 
 	;; Create particles menu
@@ -1073,6 +1067,7 @@ pro cheetahview, pixmap=pixmap
 				  menu_savePeaks : mbanalysis_savePeaks, $
 				  menu_cdiDefaults : mbanalysis_cdidefaults, $
 				  menu_crystDefaults : mbanalysis_crystdefaults, $
+				  menu_processall : mbanalysis_processall, $
 				  
 
 				  peaks_localbackground : 2, $
