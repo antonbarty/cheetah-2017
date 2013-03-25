@@ -5,7 +5,7 @@
 ;;	Anton Barty, 2007-2008
 ;;
 
-function fel_randomimage_peakcircles, filename, image, pState, peakx, peaky
+function cheetah_peakcircles, filename, image, pState, peakx, peaky
 
 	;; Image of overlaid circles
 	d = size(image,/dim)
@@ -65,7 +65,7 @@ end
 
 
 ;; Note: this routine is hard coded for CSpad data!!!
-function fel_randomimage_localbackground, data, radius
+function cheetah_localbackground, data, radius
 
 	if radius le 0 then begin
 		return, 0
@@ -108,7 +108,7 @@ function fel_randomimage_localbackground, data, radius
 end
 
 
-function fel_randomimage_findpeaks, data, pState
+function cheetah_findpeaks, data, pState
 
 	lbg = (*pstate).peaks_localbackground 
 	adc_thresh = (*pstate).peaks_ADC
@@ -133,7 +133,7 @@ function fel_randomimage_findpeaks, data, pState
 	;; That this has already been done if (*pstate).display_localbackground eq 1!!!
 	m = 0
 	if (*pstate).display_localbackground ne 1 then begin
-		m = fel_randomimage_localbackground(data, lbg) 
+		m = cheetah_localbackground(data, lbg) 
 	endif
 	temp = data
 	temp -= m	
@@ -213,7 +213,7 @@ function fel_randomimage_findpeaks, data, pState
 end
 
 
-pro fel_randomimage_displayImage, filename, pState, image
+pro cheetah_displayImage, filename, pState, image
 
 		catch, error
 
@@ -232,7 +232,7 @@ pro fel_randomimage_displayImage, filename, pState, image
 		;; Apply local background to display image?
 		if (*pstate).display_localbackground eq 1 then begin
 				lbg = (*pstate).peaks_localbackground 
-				m = fel_randomimage_localbackground(data, lbg) 
+				m = cheetah_localbackground(data, lbg) 
 				data -= m
 		endif
 		
@@ -242,7 +242,7 @@ pro fel_randomimage_displayImage, filename, pState, image
 			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo')
 		endif
 		if (*pState).findPeaks then begin
-			peakinfo = fel_randomimage_findpeaks(data, pState)
+			peakinfo = cheetah_findpeaks(data, pState)
 		endif
 
 		;; Apply pixel map
@@ -264,7 +264,7 @@ pro fel_randomimage_displayImage, filename, pState, image
 			peaky = peaky[in]
 			print,'Peaks found: ', n_elements(peakx)
 
-			circles = fel_randomimage_peakcircles(filename, image, pState, peakx, peaky)
+			circles = cheetah_peakcircles(filename, image, pState, peakx, peaky)
 			m = max(image) 			
 			image += (m*circles)
 			image = image < m
@@ -295,7 +295,7 @@ pro fel_randomimage_displayImage, filename, pState, image
 		;; Save peak list
 		if (*pState).findPeaks then begin
 			if (*pstate).savePeaks then begin
-				fel_randomimage_overwritePeaks, filename, peakinfo
+				cheetah_overwritePeaks, filename, peakinfo
 			endif
 		endif
 
@@ -308,7 +308,7 @@ pro fel_randomimage_displayImage, filename, pState, image
 end
 
 
-pro fel_randomimage_overwritePeaks, filename, peakinfo
+pro cheetah_overwritePeaks, filename, peakinfo
 
 	print, 'Saving found peaks back into HDF5 file '
 	s = size(peakinfo, /dim)
@@ -387,7 +387,7 @@ end
 
 
 
-pro fel_randomimage_event, ev
+pro cheetah_event, ev
 
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
   	sState = *pState
@@ -452,7 +452,7 @@ pro fel_randomimage_event, ev
 		;;	Save image
 		;;
 		sState.menu_save : begin
-			fel_randomimage_displayImage, sState.currentFile, pState, image
+			cheetah_displayImage, sState.currentFile, pState, image
 
 			outfile = file_basename(sState.currentFile)
 			outfile = strmid(outfile, 0, strlen(outfile)-3)+'.png'
@@ -496,7 +496,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 
 			;; Again?			
 			if (*pstate).autoNext eq 1 then $
@@ -519,7 +519,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		end
 
 
@@ -536,7 +536,7 @@ pro fel_randomimage_event, ev
 			;; Display it
 			(*pState).currentFile = filename
 			(*pState).currentFileNum = i
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 			
 			;; Again?			
 			if (*pstate).autoShuffle eq 1 then $
@@ -603,7 +603,7 @@ pro fel_randomimage_event, ev
 			(*pState).dir = newdir
 			(*pState).currentFileNum = 0
 
-			fel_randomimage_displayImage, file[0], pState
+			cheetah_displayImage, file[0], pState
 		end
 				
 		
@@ -625,7 +625,7 @@ pro fel_randomimage_event, ev
 			(*pState).currentFileNum = n_elements(file)-1
 
 
-			fel_randomimage_displayImage, file[(*pState).currentFileNum], pState
+			cheetah_displayImage, file[(*pState).currentFileNum], pState
 
 		end
 		
@@ -665,7 +665,7 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		end
 		
 		
@@ -701,14 +701,14 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		end
 		
 		sState.button_refresh : begin
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		end
 
 
@@ -737,7 +737,7 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		
 		end
 
@@ -774,7 +774,7 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 		end
 		
 
@@ -804,7 +804,7 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 
 
 		end
@@ -823,7 +823,7 @@ pro fel_randomimage_event, ev
 			file = *sState.pfile
 			i = sState.currentFileNum
 			filename = file[i]
-			fel_randomimage_displayImage, filename, pState
+			cheetah_displayImage, filename, pState
 
 		end
 
@@ -841,7 +841,7 @@ end
 
 
 
-pro fel_randomimage, pixmap=pixmap
+pro cheetahview, pixmap=pixmap
 
 	;;	Select data directory
 	dir = dialog_pickfile(/directory, title='Select data directory')
@@ -1070,7 +1070,7 @@ pro fel_randomimage, pixmap=pixmap
 		if oldwin ne -1 then $
 			wset, oldwin
 
-    	XMANAGER, 'fel_randomimage', base, event='fel_randomimage_event', /NO_BLOCK
+    	XMANAGER, 'cheetah', base, event='cheetah_event', /NO_BLOCK
     	
 		thisfile = (*pState).currentFileNum+1
 		numfiles = n_elements(*((*pstate).pfile))
