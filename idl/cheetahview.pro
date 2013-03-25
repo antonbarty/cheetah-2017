@@ -828,7 +828,30 @@ pro cheetah_event, ev
 		end
 
 
+		sState.menu_cdiDefaults : begin
+			loadct, 4, /silent		
+			(*pstate).colour_table = 4
+			(*pstate).image_gamma = 0.25
+			(*pstate).image_boost = 2
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			cheetah_displayImage, filename, pState
+		end
 
+
+		sState.menu_crystDefaults : begin
+			loadct, 41, /silent		
+			(*pstate).colour_table = 41
+			(*pstate).image_gamma = 1
+			(*pstate).image_boost = 5
+			file = *sState.pfile
+			i = sState.currentFileNum
+			filename = file[i]
+			cheetah_displayImage, filename, pState
+		end
+		
+		
 
 		else: begin
 		end
@@ -936,16 +959,32 @@ pro cheetahview, pixmap=pixmap
 		
 	;;	Create analysis menu
 	mbanalysis = widget_button(bar, value='Analysis')
-	mbanalysis_imagescaling = widget_button(mbanalysis, value='Image display settings')
-	mbanalysis_circleHDF5Peaks = widget_button(mbanalysis, value='Circle HDF5 peaks', /checked)
-	mbanalysis_findPeaks = widget_button(mbanalysis, value='Circle IDL found peaks', /checked)
-	mbanalysis_peakfinding = widget_button(mbanalysis, value='Peak finding settings')
-	mbanalysis_savePeaks = widget_button(mbanalysis, value='Save IDL found peaks to H5 file', /checked)
-	mbanalysis_centeredPeaks = widget_button(mbanalysis, value='Peaks relative to image centre', /checked)
-	mbanalysis_displayLocalBackground = widget_button(mbanalysis, value='Display with local background subtraction', /checked)
 	mbanalysis_profiles = widget_button(mbanalysis, value='Profiles')
 	mbanalysis_ROI = widget_button(mbanalysis, value='ROI statistics')
 	mbanalysis_refresh = widget_button(mbanalysis, value='Refresh image')
+
+
+	;; Create particles menu
+	mbcdi = widget_button(bar, value='CDI')
+	mbanalysis_cdidefaults = widget_button(mbcdi, value='Default cdi display settings')
+
+	;;	Create crystals menu
+	mbcryst = widget_button(bar, value='Crystals')
+	mbanalysis_crystdefaults = widget_button(mbcryst, value='Default crystal display settings')
+	mbanalysis_circleHDF5Peaks = widget_button(mbcryst, value='Circle HDF5 peaks', /checked)
+	mbanalysis_findPeaks = widget_button(mbcryst, value='Circle IDL found peaks', /checked)
+	mbanalysis_peakfinding = widget_button(mbcryst, value='Peak finding settings')
+	mbanalysis_savePeaks = widget_button(mbcryst, value='Save IDL found peaks to H5 file', /checked)
+	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked)
+	mbanalysis_displayLocalBackground = widget_button(mbcryst, value='Display with local background subtraction', /checked)
+
+
+	mbview = widget_button(bar, value='View')
+	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
+	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=0, /separator)
+	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=0)
+	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=0)
+	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=0)
 
 
 	;; Create action buttons
@@ -1032,6 +1071,8 @@ pro cheetahview, pixmap=pixmap
 				  menu_findPeaks :  mbanalysis_findPeaks, $
 				  menu_localBackground : mbanalysis_displayLocalBackground, $
 				  menu_savePeaks : mbanalysis_savePeaks, $
+				  menu_cdiDefaults : mbanalysis_cdidefaults, $
+				  menu_crystDefaults : mbanalysis_crystdefaults, $
 				  
 
 				  peaks_localbackground : 2, $
