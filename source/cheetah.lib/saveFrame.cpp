@@ -320,7 +320,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		H5Fclose(hdf_fileID);
 		return;
 	}
-	hdf_error = H5Lcreate_hard( "/processing/cheetah", hdf_fileID, "/processing/hitfinder",0,0);
+	hdf_error = H5Lcreate_hard(hdf_fileID, "/processing/cheetah", hdf_fileID, "/processing/hitfinder",0,0);
 
 	
 	// HDF5 version does not support extensible data types -> force it to be big instead
