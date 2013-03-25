@@ -321,18 +321,21 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		return;
 	}
 	
-	long maxNpeaks = 500;
-	if(info->nPeaks > maxNpeaks) maxNpeaks = info->nPeaks;
-
 	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
+		hsize_t	maxNpeaks = 500;
+		maxNpeaks = info->nPeaks;
+		
+		//size[0] = info->nPeaks;		// size[0] = height
 		size[0] = maxNpeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
+		//max_size[0] = H5S_UNLIMITED;
+		//max_size[0] = info->nPeaks;
 		max_size[0] = maxNpeaks;
 		max_size[1] = 4;
-		double *peak_info = (double *) calloc(4*maxNpeaks, sizeof(double));
+		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
 		
-		// Zero out unused peaks
-		for(long i=0; i< 4*maxNpeaks; i++) {
+		// Set all unused peaks to 0
+		for(long i=0; i< 4*size[0]; i++) {
 			peak_info[i] = 0;
 		}
 		
