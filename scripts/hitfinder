@@ -21,6 +21,12 @@ OVERWRITE="NO"
 [ $CONFIGDIR ] || CONFIGDIR="."
 [ $PSANA_CONFIG ] || PSANA_CONFIG="psana.cfg"
 
+# Make sure directories end with /. It's necessary for find to work
+H5DIR=${H5DIR}/
+XTCDIR=${XTCDIR}/
+CONFIGDIR=${CONFIGDIR}/
+
+
 # get options:
 while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
 	case $OPTION in
