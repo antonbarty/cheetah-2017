@@ -13,6 +13,18 @@ endif(rhel5)
 
 set(ANA_ARCH "x86_64-${arch}-gcc44-opt" CACHE STRING "ana architecture to be used")
 
-find_library(ANA_ErrSvc_LIBRARY ErrSvc ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/lib/)
+LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt acqdata andordata bld camdata compressdata controldata
+  cspad2x2data cspaddata encoderdata epics evrdata fccddata fexampdata flidata gsc16aidata indexdata
+  ipimbdata lusidata oceanopticsdata opal1kdata orcadata phasicsdata pnccddata princetondata pulnixdata
+  quartzdata timepixdata usdusbdata xampsdata xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
+  psddl_psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
+  m dl)
 
-mark_as_advanced(ANA_ErrSvc_LIBRARY)
+foreach(ana_lib IN LISTS ana_libs)
+	message(STATUS "locating ${ana_lib}")
+	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/lib/)
+	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
+	LIST(APPEND PSANA_LIBRARIES ANA_${ana_lib}_LIBRARY)
+endforeach(ana_lib)
+
+
