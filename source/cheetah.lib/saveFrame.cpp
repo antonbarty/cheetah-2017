@@ -155,11 +155,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		  H5Dclose(dataset_id);
 		  H5Sclose(dataspace_id);
 		  // pixelmask
+		  dataspace_id = H5Screate_simple(2, size, max_size);
 		  if(global->savePixelmask){
 		    sprintf(fieldID, "assembledpixelmask%li", detID);
 		    dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		    if ( dataset_id < 0 ) {
-		      ERROR("%li: Couldn't create dataset\n", info->threadNum);
+		      ERROR("%li: Couldn't create datasetkkkkkkkkkkkk\n", info->threadNum);
 		      H5Fclose(hdf_fileID);
 		      return;
 		    }
@@ -203,6 +204,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			H5Dclose(dataset_id);
 			H5Sclose(dataspace_id);
 			// pixelmask
+			dataspace_id = H5Screate_simple(2, size, max_size);
 			if(global->savePixelmask){
 			  sprintf(fieldID, "pixelmask%li", detID);
 			  dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);

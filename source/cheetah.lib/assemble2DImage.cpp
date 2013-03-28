@@ -30,7 +30,8 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
         float		*pix_y = global->detector[detID].pix_y;
         float		*corrected_data = eventData->detector[detID].corrected_data;
         int16_t		*image = eventData->detector[detID].image;
-        assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, global->assembleMode);
+	int             assembleMode = global->assembleMode;
+        assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleMode);
     }
 }
 
@@ -43,9 +44,10 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
         long		image_nn = global->detector[detID].image_nn;
         float		*pix_x = global->detector[detID].pix_x;
         float		*pix_y = global->detector[detID].pix_y;
-	uint16_t        *pixelmask = global->detector[detID].pixelmask;
-	uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;        
-	assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, global->assembleMode);
+	uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
+	uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+	int             assembleMode = global->assembleMode;
+	assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleMode);
     }
 }
 
@@ -150,6 +152,12 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     free(weight);
   }
   else if(assembleMode == ASSEMBLE_MODE_PICK_NEAREST){
+
+    // Loop through all pixels and interpolate onto regular grid
+    float	x, y;
+    long	ix, iy;
+    long	image_index;
+
     
     for(long i=0;i<pix_nn;i++){
       // Pixel location with (0,0) at array element (0,0) in bottom left corner
@@ -162,12 +170,12 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
 
       image_index = ix + image_nx*iy;
       // Check for int16 overflow
-      if(lrint(data[i]) > 32767) 
+      if(lrint(corrected_data[i]) > 32767) 
 	image[image_index]=32767;
-      else if(lrint(data[i]) < -32767) 
+      else if(lrint(corrected_data[i]) < -32767) 
 	image[image_index]=-32767;
       else
-	image[image_index]= (int16_t) lrint(data[i]);
+	image[image_index]= (int16_t) lrint(corrected_data[i]);
     }
   }	
 }
@@ -236,6 +244,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
       iy = (long) round(y);
 
       image_index = ix + image_nx*iy;
-      assembled_mask[image_index]=mask[i]    
+      assembled_mask[image_index]=original_mask[i];
+    }
   }
 }

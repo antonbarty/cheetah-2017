@@ -273,9 +273,13 @@ if [ $QUE ]; then
 	$FULLCOMMAND
 	echo "$SCRIPTNAME job sent to queue"
 else
+	echo "1"
 	FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
+	echo "2"
 	echo $FULLCOMMAND
+	echo "3"
 	$FULLCOMMAND
+	echo "4"
 	echo "$SCRIPTNAME has finished"
 fi
 

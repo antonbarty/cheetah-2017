@@ -41,7 +41,8 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;
-	
+	uint16_t        *mask = eventData->detector[detID].pixelmask;
+
 	long	nat;
 	long	counter;
 	int		hit=0;
@@ -77,7 +78,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	 */
 	if(global->hitfinderUsePeakmask) {
 		for(long i=0;i<pix_nn;i++){
-		  temp[i] *= (global->detector[detID].pixelmask_dyn[i] & PIXEL_IS_IN_PEAKMASK); 
+		  temp[i] *= (eventData->detector[detID].pixelmask[i] & PIXEL_IS_IN_PEAKMASK); 
 		}
 	}
 	
@@ -232,7 +233,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 	long		nat, hit;
 	float		total;
 	long		pix_nn = global->detector[detID].pix_nn;
-	uint16_t         *mask = global->detector[detID].pixelmask_dyn;
+	uint16_t         *mask = eventData->detector[detID].pixelmask;
 	
 	/*
 	 *	Create a buffer for image data so we don't nuke the main image by mistake
@@ -302,7 +303,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long		asic_ny = global->detector[detID].asic_ny;
 	long		nasics_x = global->detector[detID].nasics_x;
 	long		nasics_y = global->detector[detID].nasics_y;
-	uint16_t         *mask = global->detector[detID].pixelmask_dyn;
+	uint16_t         *mask = eventData->detector[detID].pixelmask;
 
 	// Variables for this hitfinder
 	long	nat, lastnat;
@@ -581,7 +582,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 	int   thisfs, thisss;
 	float mingrad = global->hitfinderMinGradient*2;
 	mingrad *= mingrad;
-	uint16_t *mask = global->detector[detID].pixelmask_dyn;
+	uint16_t *mask = eventData->detector[detID].pixelmask;
 
 	/* Combined mask */
 	int16_t * cmask = (int16_t *) calloc(global->detector[detID].pix_nn, sizeof(int16_t) );
@@ -606,7 +607,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 		fs = i+mi*global->detector[detID].asic_nx;
 		e = ss*global->detector[detID].pix_nx + fs;
 
-		if ( ~(mask[e] & PIXEL_IS_BELOW_REOLUTION_LIMIT) ) continue;
+		if ( ~(mask[e] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS) ) continue;
 
 		if ( temp[e] < global->hitfinderADC ) continue;
 
@@ -827,6 +828,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	int peakindex,newpeak;
 	float dist, itot, ftot, stot;	
 	float thisI,snr,bg,bgsig;
+	uint16_t *mask = eventData->detector[detID].pixelmask;
 	
 	/* For counting neighbor pixels */
 	int * nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));	

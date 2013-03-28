@@ -188,7 +188,7 @@ void cGlobal::setup() {
 		detector[i].readDetectorGeometry(detector[i].geometryFile);
 		detector[i].readDarkcal(detector[i].darkcalFile);
 		detector[i].readGaincal(detector[i].gaincalFile);
-		detector[i].pixelmask_shared = (unit16_t*) calloc(detector[i].pix_nn,sizeof(unit16_t));
+		detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
 		detector[i].readPeakmask(self, peaksearchFile);
 		detector[i].readBadpixelMask(detector[i].badpixelFile);
 		detector[i].readBaddataMask(detector[i].baddataFile);
@@ -571,8 +571,8 @@ void cGlobal::parseConfigFile(char* filename) {
 
 
 	if (exitCheetah != 0){
-		printf("ERROR: Exiting Cheetah due to unknown configuration keywords %s .\n",tag);
-		exit(0);
+	  printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
+	  exit(0);
 	}
 
 	printf("Configured %d detectors\n",nDetectors);
@@ -664,12 +664,18 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		       "now known as powderSumHits and powderSumBlanks.\n"
 		       "Modify your ini file and try again...\n");
 		fail = 1;
-    }
+	}
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
+	}
+	else if (!strcmp(tag, "assemblemode")) {
+		assembleMode = atoi(value);
+	}
+	else if (!strcmp(tag, "savepixelmask")) {
+		savePixelmask = atoi(value);
 	}
 	else if (!strcmp(tag, "hdf5dump")) {
 		hdf5dump = atoi(value);
@@ -713,7 +719,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "espectrumspreadev")) {
 		espectrumSpreadeV = atoi(value);
 	}
-    else if (!strcmp(tag, "espectrumdarkfile")) {
+	else if (!strcmp(tag, "espectrumdarkfile")) {
 		strcpy(espectrumDarkFile, value);
 	}
 	else if (!strcmp(tag, "espectrumscalefile")) {
@@ -872,10 +878,12 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
+	fprintf(fp, "assembleMode=%d\n",assembleMode);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
 	//fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
 	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
 	fprintf(fp, "saveInterval=%d\n",saveInterval);
+	fprintf(fp, "savePixelmask=%d\n",savePixelmask);
 	//fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
 	//fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
 	//fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);

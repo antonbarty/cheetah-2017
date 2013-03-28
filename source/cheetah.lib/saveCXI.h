@@ -34,8 +34,9 @@ typedef struct{
 typedef struct{
   /* ID of the group itself */
   hid_t self;
-
   hid_t data;
+  hid_t mask;
+  hid_t mask_shared;
   hid_t thumbnail;
   hid_t dataType;
   hid_t dataSpace;

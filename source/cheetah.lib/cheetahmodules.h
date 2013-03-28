@@ -21,7 +21,7 @@ void applyBadPixelMask(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
-long calculateHotPixelMask(int16_t*, uint16_t*, long, long, long);
+long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
@@ -54,6 +54,7 @@ void closeCXIFiles(cGlobal * global);
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
+void assemble2Dmask(cEventData*, cGlobal*);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
 // hitfinders.cpp

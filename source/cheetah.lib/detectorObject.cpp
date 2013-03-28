@@ -586,9 +586,9 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         // Generate resolution limit mask
 		// (resolution in PIXELS)
 		if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
-		  global->pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+		  pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 		else
-		  global->pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+		  pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
     }
 
 	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
@@ -878,10 +878,10 @@ void cPixelDetectorCommon::readBaddataMask(char *filename){
 	// Copy back into array
 	for(long i=0;i<pix_nn;i++){
 	  if((int) temp2d.data[i]==1){
-	    pixelmask_shared[i] |= PIXEL_TO_BE_IGNORED;
+	    pixelmask_shared[i] |= PIXEL_IS_TO_BE_IGNORED;
 	  }
 	  else{
-	    pixelmask_shared[i] &= ~PIXEL_TO_BE_IGNORED;
+	    pixelmask_shared[i] &= ~PIXEL_IS_TO_BE_IGNORED;
 	  }
 	}
 }

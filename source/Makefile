@@ -31,7 +31,6 @@ CRYSTFELDIR		?= /specify/this/elsewhere
 #HDF5DIR 		?= /cfel/common
 #CHEETAHDIR      ?= /cfel/user/barty/c/cheetah-test
 
-
 LIBCHEETAHDIR   ?= $(CHEETAHDIR)/cheetah.lib
 MYANADIR		?= lcls/myana
 LCLSDIR 		?= $(CHEETAHDIR)/source/lcls/myana/release
@@ -70,7 +69,7 @@ remake: clean all
 #	$(CPP) $(CFLAGS) -o $(MYANADIR)/XtcRun.o $<
 #$(MYANADIR)/SplitEventQ.o: $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh
 #	$(CPP) $(CFLAGS) -o $(MYANADIR)/SplitEventQ.o $<
-	
+
 #myana:
 #$(MYANADIR)/myana:  $(MYANADIR)/SplitEventQ.cc $(MYANADIR)/SplitEventQ.hh $(MYANADIR)/main.hh $(MYANADIR)/myana.cc
 #	$(CPP) $(CFLAGS) -o $< $(MYANADIR)/myana.cc
@@ -136,4 +135,6 @@ saveCXI.o: saveCXI.cpp saveCXI.h
 
 libcheetah: backgroundCorrection.o data2d.o detectorCorrection.o assemble2DImage.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o spectrum.o
 	gcc -shared -Wl,-soname,libcheetah.so.1 -o libcheetah.so.1.0 backgroundCorrection.o assemble2DImage.o data2d.o detectorCorrection.o detectorObject.o hitfinders.o libcheetah.o median.o powder.o radialAverage.o saveCXI.o saveFrame.o setup.o worker.o spectrum.o
-
+	rm libcheetah.so.1 libcheetah.so
+	ln -s libcheetah.so.1.0 libcheetah.so.1
+	ln -s libcheetah.so.1.0 libcheetah.so

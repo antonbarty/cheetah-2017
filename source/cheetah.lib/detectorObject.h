@@ -27,6 +27,7 @@
  * - All options are dominantly inherited during assembly and pixel integration (see assembleImage.cpp)
  * - The default value for all options is "false"
  */
+static const uint16_t PIXEL_IS_PERFECT = 0;                 // Remember to change this value if necessary after adding a new option
 static const uint16_t PIXEL_IS_INVALID = 1;                 // bit 0
 static const uint16_t PIXEL_IS_SATURATED = 2;               // bit 1
 static const uint16_t PIXEL_IS_HOT = 4;                     // bit 2
@@ -36,6 +37,10 @@ static const uint16_t PIXEL_IS_IN_PEAKMASK = 32;            // bit 5
 static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
+
+
+
+
 
 /*
  * Assemble modes (see assemble2Dimage.cpp)

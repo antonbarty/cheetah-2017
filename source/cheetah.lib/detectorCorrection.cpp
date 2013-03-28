@@ -79,9 +79,9 @@ void applyBadPixelMask(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
 		if(global->detector[detID].useBadPixelMask) {
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = global->detector[detID].pixelmask;
+			long	 pix_nn = global->detector[detID].pix_nn;
+			float	 *data = eventData->detector[detID].corrected_data;
+			uint16_t *mask = eventData->detector[detID].pixelmask;
 
 			applyBadPixelMask(data, mask, pix_nn);
 		}
@@ -116,7 +116,7 @@ void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 			// Dereference datector arrays
 			float		threshold = global->detector[detID].cmFloor;
 			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t		*mask = global->detector[detID].pixelmask;
+			uint16_t	*mask = eventData->detector[detID].pixelmask;
 			long		asic_nx = global->detector[detID].asic_nx;
 			long		asic_ny = global->detector[detID].asic_ny;
 			long		nasics_x = global->detector[detID].nasics_x;
@@ -199,7 +199,7 @@ void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 			
 			// Dereference datector arrays
 			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = global->detector[detID].pixelmask;
+			uint16_t	*mask = eventData->detector[detID].pixelmask;
 			long		asic_nx = global->detector[detID].asic_nx;
 			long		asic_ny = global->detector[detID].asic_ny;
 			long		nasics_x = global->detector[detID].nasics_x;
@@ -264,7 +264,7 @@ void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
         if(global->detector[detID].cspadSubtractBehindWires) {
 			float		threshold = global->detector[detID].cmFloor;
 			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t      	*mask = global->detector[detID].pixelmask;
+			uint16_t      	*mask = eventData->detector[detID].pixelmask;
 			long		asic_nx = global->detector[detID].asic_nx;
 			long		asic_ny = global->detector[detID].asic_ny;
 			long		nasics_x = global->detector[detID].nasics_x;
@@ -345,7 +345,7 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 			long	hotpixCounter = global->detector[detID].hotpixCounter;
 			float	*frameData = eventData->detector[detID].corrected_data;
 			int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
-			uint16_t *mask = global->detector[detID].pixelmask;
+			uint16_t *mask = eventData->detector[detID].pixelmask;
 
 
 			/*
@@ -408,7 +408,7 @@ void calculateHotPixelMask(cGlobal *global){
 				int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
 				long	threshold = lrint(bufferDepth*hotpixFrequency);
 				long	pix_nn = global->detector[detID].pix_nn;
-				uint16_t *mask = global->detector[detID].pixelmask;
+				uint16_t *mask = global->detector[detID].pixelmask_shared;
 				int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
 				
 
@@ -416,7 +416,7 @@ void calculateHotPixelMask(cGlobal *global){
 					pthread_mutex_lock(&global->hotpixel_mutex);
 
 				printf("Recalculating detector %li hot pixel mask at %li/%i\n",detID, threshold, bufferDepth);	
-				nhot = calculateHotPixelMask(mask, frameBuffer, threshold, bufferDepth, pix_nn);
+				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
 
                 if(lockThreads)
 					pthread_mutex_unlock(&global->hotpixel_mutex);

@@ -3,7 +3,7 @@
 #
 # Main SCons script for SIT release building
 #
-# $Id: SConstruct.main 5624 2013-03-05 17:08:36Z salnikov@SLAC.STANFORD.EDU $
+# $Id: SConstruct.main 5205 2013-01-28 23:51:50Z salnikov@SLAC.STANFORD.EDU $
 #
 #===============================================================================
 
@@ -15,7 +15,7 @@ from os.path import join as pjoin
 cwd = os.getcwd()
 
 #   check that all required envvars are defined
-for var in ["SIT_ARCH", "SIT_ROOT", "SIT_RELEASE"]:
+for var in ["SIT_ARCH", "SIT_RELEASE"]:
     if not os.environ.get(var, None):
         print >> sys.stderr, "Environment variable %s is not defined" % var
         Exit(2)
@@ -203,7 +203,7 @@ if 'psddl' in packages:
 if 'psana' in packages:
     docTargets.append(env.Command('doc/psana-doxy/html/index.html', env.Dir('psana'), "doxy-driver -m psana doc/psana-doxy/"))
     docTargets.append(env.Command('doc/psana-modules-doxy/html/index.html', env.Dir('psana'), "doxy-driver -m psana-modules doc/psana-modules-doxy/"))
-    docTargets.append(env.Command('doc/psana-ref/html/index.html', env.Dir('psana'), "pydoc-driver -p psana -Q doc/psana-ref/html psana"))
+    docTargets.append(env.Command('doc/psana-ref/html/index.html', env.Dir('psana'), "pydoc-driver -p psana -Q doc/psana-ref/html psana _psana"))
 if 'pyana' in packages:
     docTargets.append(env.Command('doc/pyana-ref/html/index.html', env.Dir('pyana'), "pydoc-driver -p pyana -Q doc/pyana-ref/html pyana _pdsdata pypdsdata"))
 env.Alias('doc', docTargets)
