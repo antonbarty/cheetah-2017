@@ -92,8 +92,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
 		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].saturatedPixelMask = (int16_t *) calloc(pix_nn,sizeof(int16_t));
 		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		eventData->detector[detID].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 		
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
@@ -144,9 +145,10 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].detector_corrected_data);
 		free(eventData->detector[detID].corrected_data_int16);
 		free(eventData->detector[detID].image);
+		free(eventData->detector[detID].pixelmask);
+		free(eventData->detector[detID].image_pixelmask);
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
-		free(eventData->detector[detID].saturatedPixelMask);
 	}
 	free(eventData->peak_com_index);
 	free(eventData->peak_com_x);
@@ -463,11 +465,8 @@ void cheetahExit(cGlobal *global) {
 	// Cleanup
 	for(long i=0; i<global->nDetectors; i++) {
 		free(global->detector[i].darkcal);
-		free(global->detector[i].hotpixelmask);
-		free(global->detector[i].wiremask);
 		free(global->detector[i].selfdark);
 		free(global->detector[i].gaincal);
-		free(global->detector[i].peakmask);
 		free(global->detector[i].bg_buffer);
 		free(global->detector[i].hotpix_buffer);
         

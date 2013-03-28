@@ -123,12 +123,16 @@ cGlobal::cGlobal(void) {
 	saveRadialStacks=0;
 	radialStackSize=10000;
 
+	// Assemble options
+	assembleMode = ASSEMBLE_MODE_DEFAULT;
+
 	// Saving options
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
 	hdf5dump = 0;
 	saveInterval = 1000;
+	savePixelmask = 0;
 
 	// Peak lists
 	savePeakList = 1;
@@ -184,6 +188,7 @@ void cGlobal::setup() {
 		detector[i].readDetectorGeometry(detector[i].geometryFile);
 		detector[i].readDarkcal(detector[i].darkcalFile);
 		detector[i].readGaincal(detector[i].gaincalFile);
+		detector[i].pixelmask_shared = (unit16_t*) calloc(detector[i].pix_nn,sizeof(unit16_t));
 		detector[i].readPeakmask(self, peaksearchFile);
 		detector[i].readBadpixelMask(detector[i].badpixelFile);
 		detector[i].readBaddataMask(detector[i].baddataFile);
@@ -218,11 +223,6 @@ void cGlobal::setup() {
 	 */
 	for(long i=0; i<nDetectors; i++) {
 		detector[i].allocatePowderMemory(self);
-	}
-
-	hitfinderResMask = (int	*) calloc(detector[0].pix_nn, sizeof(int));
-	for(long j=0; j<detector[0].pix_nn; j++) {
-		hitfinderResMask[j] = 1;
 	}
 
 	/*
@@ -347,6 +347,7 @@ void cGlobal::setup() {
 		}
 	}
 
+	// Why?
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}

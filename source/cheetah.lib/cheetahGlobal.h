@@ -203,6 +203,10 @@ public:
 	int      saveRaw;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
+	/** @brief Toggle assemble mode (0: weight nearest 4 pixels, 1: pick value of nearest pixel).*/
+	int      assembleMode;
+	/** @brief Toggle the writing of individual pixelmask. */
+	int      savePixelmask;
 	/**
 	 * @brief Force the writing of hdf5 files (ignoring hit status).
 	 *

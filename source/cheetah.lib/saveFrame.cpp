@@ -132,30 +132,51 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	if(global->saveAssembled) {
 		char fieldID[1023];
 		DETECTOR_LOOP {
-			size[0] = global->detector[detID].image_nx;	// size[0] = height
-			size[1] = global->detector[detID].image_nx;	// size[1] = width
-			max_size[0] = global->detector[detID].image_nx;
-			max_size[1] = global->detector[detID].image_nx;
-			dataspace_id = H5Screate_simple(2, size, max_size);
-			sprintf(fieldID, "assembleddata%li", detID);
-			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			if ( dataset_id < 0 ) {
-				ERROR("%li: Couldn't create dataset\n", info->threadNum);
-				H5Fclose(hdf_fileID);
-				return;
-			}
-			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
-			if ( hdf_error < 0 ) {
-				ERROR("%li: Couldn't write data\n", info->threadNum);
-				H5Dclose(dataspace_id);
-				H5Fclose(hdf_fileID);
-				return;
-			}
-			H5Dclose(dataset_id);
-			H5Sclose(dataspace_id);
+		  // data
+		  size[0] = global->detector[detID].image_nx;	// size[0] = height
+		  size[1] = global->detector[detID].image_nx;	// size[1] = width
+		  max_size[0] = global->detector[detID].image_nx;
+		  max_size[1] = global->detector[detID].image_nx;
+		  dataspace_id = H5Screate_simple(2, size, max_size);
+		  sprintf(fieldID, "assembleddata%li", detID);
+		  dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		  if ( dataset_id < 0 ) {
+		    ERROR("%li: Couldn't create dataset\n", info->threadNum);
+		    H5Fclose(hdf_fileID);
+		    return;
+		  }
+		  hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+		  if ( hdf_error < 0 ) {
+		    ERROR("%li: Couldn't write data\n", info->threadNum);
+		    H5Dclose(dataspace_id);
+		    H5Fclose(hdf_fileID);
+		    return;
+		  }
+		  H5Dclose(dataset_id);
+		  H5Sclose(dataspace_id);
+		  // pixelmask
+		  if(global->savePixelmask){
+		    sprintf(fieldID, "assembledpixelmask%li", detID);
+		    dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		    if ( dataset_id < 0 ) {
+		      ERROR("%li: Couldn't create dataset\n", info->threadNum);
+		      H5Fclose(hdf_fileID);
+		      return;
+		    }
+		    hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image_pixelmask);
+		    if ( hdf_error < 0 ) {
+		      ERROR("%li: Couldn't write data\n", info->threadNum);
+		      H5Dclose(dataspace_id);
+		      H5Fclose(hdf_fileID);
+		      return;
+		    }
+		    H5Dclose(dataset_id);
+		    H5Sclose(dataspace_id);
+		  }
+
 		}	
 	}
-	// Save raw data
+	// Save raw data (and pixelmask)
 	if(global->saveRaw) {
 		char fieldID[1023];
 		DETECTOR_LOOP {
@@ -164,6 +185,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			max_size[0] = global->detector[detID].pix_ny;
 			max_size[1] = global->detector[detID].pix_nx;
 			dataspace_id = H5Screate_simple(2, size, max_size);
+			// rawdata
 			sprintf(fieldID, "rawdata%li", detID);
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 			if ( dataset_id < 0 ) {
@@ -180,6 +202,25 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			}
 			H5Dclose(dataset_id);
 			H5Sclose(dataspace_id);
+			// pixelmask
+			if(global->savePixelmask){
+			  sprintf(fieldID, "pixelmask%li", detID);
+			  dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			  if ( dataset_id < 0 ) {
+			    ERROR("%li: Couldn't create dataset\n", info->threadNum);
+			    H5Fclose(hdf_fileID);
+			    return;
+			  }
+			  hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].pixelmask);
+			  if ( hdf_error < 0 ) {
+			    ERROR("%li: Couldn't write data\n", info->threadNum);
+			    H5Dclose(dataspace_id);
+			    H5Fclose(hdf_fileID);
+			    return;
+			  }
+			  H5Dclose(dataset_id);
+			  H5Sclose(dataspace_id);
+			}
 		}
 	}
 		
@@ -397,61 +438,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		else {
 			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
-		}
+		}		
 		
-		
-		
-		/*
-		 * Save pixelmaps
-		 * Here's the plan so far:
-		 *    Pixelmaps are saved as an 8-bit unsigned int array in the hdf5 file
-		 *    All bits set to 0 by default.  A pixel is flagged by setting the bit to 1.
-		 *    Bit 0: if equal to 1, this is a "bad pixel".
-		 *    Bit 1: if equal to 1, this is a "hot pixel".
-		 *    Bit 2: if equal to 1, this is a "saturated pixel".
-		 *    Bit 3: unused
-		 *    Bit 4: unused
-		 *    Bit 5: unused
-		 *    Bit 6: unused
-		 *    Bit 7: if equal to 1, this pixel is bad for miscellaneous reasions (e.g. ice rings).  
-		 */	
-		
-		long i;
-		char * pixelmasks = (char *) calloc(global->detector[0].pix_nn,sizeof(char));
-	       for (i=0; i<global->detector[0].pix_nn; i++) {
-			pixelmasks[i] = 0; // default: all bits are equal to 1
-			if ( global->detector[0].badpixelmask[i] == 0 )
-				pixelmasks[i] |= (1 << 0);
-			if ( global->detector[0].hotpixelmask[i] == 0 ) // Should use a mutex lock here...
-				pixelmasks[i] |= (1 << 1);
-			if ( info->detector[0].saturatedPixelMask[i] == 0 )
-				pixelmasks[i] |= (1 << 2);		
-		}
-		
-		size[0] = global->detector[0].pix_ny;	// size[0] = height
-		size[1] = global->detector[0].pix_nx;	// size[1] = width
-		max_size[0] = global->detector[0].pix_ny;
-		max_size[1] = global->detector[0].pix_nx;
-		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "pixelmasks", H5T_NATIVE_CHAR, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if ( dataset_id < 0 ) {
-			ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_CHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixelmasks);
-		if ( hdf_error < 0 ) {
-			ERROR("%li: Couldn't write data\n", info->threadNum);
-			H5Dclose(dataspace_id);
-			H5Fclose(hdf_fileID);
-			return;
-		}
-		H5Dclose(dataset_id);
-		H5Sclose(dataspace_id);
-		
-		
-		
-		free(pixelmasks);
 		free(peak_info);
 	}
 	

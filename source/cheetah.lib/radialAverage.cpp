@@ -41,7 +41,8 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
         int     *mask = (int *) calloc(pix_nn, sizeof(int));
         for(long i=0; i<pix_nn; i++){
             mask[i] = 1;
-            if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+            if(((global->detector[detID].pixelmask[i] & PIXEL_IS_BAD)) *
+	       ((global->detector[detID].pixelmask[i] & PIXEL_IS_TO_BE_IGNORED)))
                 mask[i] = 0;
         }
         
@@ -107,7 +108,8 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	for(long i=0; i<pix_nn; i++){
 
         // Don't count bad pixels in radial average
-        if(global->detector[detID].badpixelmask[i]==0 || global->detector[detID].baddatamask[i]==0)
+	  if(((global->detector[detID].pixelmask[i] & PIXEL_IS_BAD)) *
+	     ((global->detector[detID].pixelmask[i] & PIXEL_IS_TO_BE_IGNORED)))
             continue;
         
 		rbin = lrint(global->detector[detID].pix_r[i]);

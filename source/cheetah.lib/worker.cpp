@@ -63,20 +63,21 @@ void *worker(void *threadarg) {
 	 */
 	nameEvent(eventData, global);
 	
-
-	
-	/*
-	 *	Copy raw detector data into corrected array as starting point for corrections
-	 */
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-			eventData->detector[detID].saturatedPixelMask[i] = 1;
-		}
+	  /*
+	   *	Copy pixelmask_shared into pixelmask for this event
+	   */
+	  for(long i=0;i<global->detector[detID].pix_nn;i++){
+	    eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
+	  }
+	  /*
+	   *	Copy raw detector data into corrected array as starting point for corrections
+	   */
+	  for(long i=0;i<global->detector[detID].pix_nn;i++){
+	    eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+	  }
 	}
-
-
-
+	
 	/*
 	 * Check for saturated pixels before applying any other corrections
 	 */
@@ -262,8 +263,8 @@ void *worker(void *threadarg) {
 	 *	Assemble quadrants into a 'realistic' 2D image
 	 */
     assemble2Dimage(eventData, global);
+    assemble2Dmask(eventData, global);
 
-	
 	/*
 	 *	Calculate radial average
      *  Maintain radial average stack

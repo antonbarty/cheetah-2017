@@ -355,13 +355,13 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 /*
  * Make a saturated pixel mask
  */
-void checkSaturatedPixels(uint16_t *raw_data, int16_t *saturatedPixelMask, long pix_nn, long pixelSaturationADC) {
+void checkSaturatedPixels(uint16_t *raw_data, uint16_t *mask, long pix_nn, long pixelSaturationADC) {
 	
 	for(long i=0; i<pix_nn; i++) { 
 		if ( raw_data[i] >= pixelSaturationADC) 
-			saturatedPixelMask[i] = 0;
+		  mask[i] |= PIXEL_IS_SATURATED;
 		else
-			saturatedPixelMask[i] = 1;
+		  mask[i] &= ~PIXEL_IS_SATURATED;
 	}
 }
 
@@ -369,14 +369,14 @@ void checkSaturatedPixels(uint16_t *raw_data, int16_t *saturatedPixelMask, long 
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 
     DETECTOR_LOOP {
-        if ( global->detector[detID].maskSaturatedPixels == 1 ) {
+      if ( global->detector[detID].maskSaturatedPixels == 1 ) {
 			
 			uint16_t	*raw_data = eventData->detector[detID].raw_data;
-			int16_t		*saturatedPixelMask = eventData->detector[detID].saturatedPixelMask;
+			uint16_t	*mask = eventData->detector[detID].pixelmask;
 			long		nn = global->detector[detID].pix_nn;
 			long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
 			
-			checkSaturatedPixels(raw_data, saturatedPixelMask, nn, pixelSaturationADC);
+			checkSaturatedPixels(raw_data, mask, nn, pixelSaturationADC);
 		}
 	}	
 }

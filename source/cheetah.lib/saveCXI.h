@@ -20,9 +20,10 @@ namespace CXI{
 
 typedef struct{
     hid_t self;
-
     hid_t distance;
     hid_t data;
+    hid_t mask;
+    hid_t mask_shared;
     hid_t thumbnail;
     hid_t description;
     hid_t xPixelSize;

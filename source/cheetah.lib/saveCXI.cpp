@@ -64,7 +64,7 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   H5Awrite(attr,datatype,axis);
   H5Aclose(attr);
-  return dataset;    
+  return dataset;
 }
 
 template <class T> 
@@ -114,6 +114,7 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
   H5Sclose(memspace);
   H5Sclose(dataspace);
 }
+
 
 /* Create a 2D stack. The fastest changing dimension is along the width */
 static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
@@ -182,6 +183,14 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
   H5Sclose(dataspace);
 }
 
+static hid_t create2DImage(const char *name, hid_t loc, int width, int height, hid_t dataType){
+  hsize_t dims[2] = {height,width};
+  hsize_t maxdims[2] = {height,width};
+  hid_t dataspace = H5Screate_simple(2, dims, dims);
+  hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  return dataset;    
+}
+
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   /* FM: This is probably wrong */
   hid_t datatype = H5Tcopy(H5T_C_S1);
@@ -239,10 +248,47 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
   H5Sclose(dataspace);
 }
 
+/*
+
+CXI file skeleton
+
+|
+LCLS
+|  |
+|  |-... (just copied from XTC)
+|
+entry_1
+   |
+   |- data_1 ---------
+   |                  |
+   |- instrument_1    | symlink
+   |   |              |
+   |   |-detector_1 <-----------------------------
+   |   |   |                                      |
+   |   |   |- data [raw data, 3D array]           |
+   |   |   |- (mask) [raw masks, 3D array]        |
+   |   |   |- mask_shared [raw mask, 2D array]    | 
+   |   |   |- ...                                 | symlink
+   |   .   .                                      |
+   |                                              |
+   |- (image_1)                                   |
+   |    |                                         |
+   |    |- detector_1 ----------------------------
+   |    |- data [assembled data, 3D array]
+   |    |- (mask) [assembled masks, 3D array]
+   |    |- mask_shared [assembled mask, 2D array] 
+   |    |- ...
+   |    .
+   .    
+ 
+*/
+
+
 static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   /* Creates the initial skeleton for the CXI file.
      We'll rely on HDF5 automatic error reporting. It's usually loud enough.
   */
+
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
   cxi->self = fid;
@@ -256,55 +302,90 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   H5Dwrite (dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &CXI::version);
 
   /* /entry_1 */
-  cxi->entry.self = H5Gcreate(cxi->self, "/entry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Gcreate(cxi->entry.self, "data_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Lcreate_soft("/entry_1/instrument_1/detector_1/data",cxi->entry.self,"data_1/data",H5P_DEFAULT,H5P_DEFAULT);
-  
-  H5Gcreate(cxi->entry.self, "data_2", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Lcreate_soft("/entry_1/instrument_1/detector_2/data",cxi->entry.self,"data_2/data",H5P_DEFAULT,H5P_DEFAULT);
 
-  cxi->entry.instrument.self = H5Gcreate(cxi->self, "/entry_1/instrument_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  cxi->entry.instrument.source.self = H5Gcreate(cxi->self, "/entry_1/instrument_1/source_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  // /entry_1
+  cxi->entry.self = H5Gcreate(cxi->self, sprintf("/entry_1",entryName), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-  H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
-  cxi->entry.instrument.source.energy = createScalarStack("energy",cxi->entry.instrument.source.self,H5T_NATIVE_DOUBLE);
-
+  // /entry_1/experiment_identifier
   cxi->entry.experimentIdentifier = createStringStack("experiment_identifier",cxi->entry.self);
+
+  // /entry_1/instrument_1
+  cxi->entry.instrument.self = H5Gcreate(cxi->self, "/entry_1/instrument_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+  // /entry_1/instrument_1/source_1
+  cxi->entry.instrument.source.self = H5Gcreate(cxi->self, sprintf("/entry_1/instrument_1/source_1",entryName,instrumentName), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  // /entry_1/instrument_1/source_1/energy
+  cxi->entry.instrument.source.energy = createScalarStack("energy",cxi->entry.instrument.source.self,H5T_NATIVE_DOUBLE);
+  // /entry_1/instrument_1/experiment_identifier -> /entry_1/experiment_identifier
+  H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
+
   DETECTOR_LOOP{
-    char detectorName[1024];
+    char detectorPath[1024];
+    char dataName[1024];
     char imageName[1024];
-    /* Raw images */
-    sprintf(detectorName,"detector_%ld",detID+1);
+    
+    // /entry_1/instrument_1/detector_i
+    sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld",detID+1)
     CXI::Detector d;
-    d.self = H5Gcreate(cxi->entry.instrument.self, detectorName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    d.self = H5Gcreate(cxi->entry.instrument.self, detectorPath, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    // /entry_1/data_i -> /entry_1/instrument_1/detector_i
+    sprintf(dataName,"data_%ld",detID+1)
+    H5Lcreate_soft(detectorPath,cxi->entry.self,dataName,H5P_DEFAULT,H5P_DEFAULT);
 
     d.distance = createScalarStack("distance", d.self,H5T_NATIVE_DOUBLE);
     d.description = createStringStack("description",d.self);
     d.xPixelSize = createScalarStack("x_pixel_size",d.self,H5T_NATIVE_DOUBLE);
     d.yPixelSize = createScalarStack("y_pixel_size",d.self,H5T_NATIVE_DOUBLE);
     
+    /* Raw images */
     if(global->saveRaw){
-
+      // /entry_1/instrument_1/detector_i/data
       d.data = create2DStack("data", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_STD_I16LE);
+      if(global->savePixelmask){
+	// /entry_1/instrument_1/detector_i/mask
+	d.mask = create2DStack("mask", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_NATIVE_UINT16);
+      }
+      // /entry_1/instrument_1/detector_i/mask_shared
+      d.mask_shared = create2DImage("mask_shared", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_NATIVE_UINT16);
+      H5Dwrite(d.mask_shared, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, global->detector[detID].pixelmask_shared);
+      // /entry_1/instrument_1/detector_i/thumbnail
       d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
+      // /entry_1/instrument_1/detector_i/experiment_identifier -> /entry_1/experiment_identifier
       H5Lcreate_soft("/entry_1/experiment_identifier",d.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
     }
     cxi->entry.instrument.detectors.push_back(d);
 
     /* Assembled images */
-    sprintf(imageName,"image_%ld",detID+1);
-    CXI::Image img;
-    img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(global->saveAssembled){
+      // /entry_1/image_i
+      sprintf(imageName,"/entry_1/image_%ld",detID+1);
+      CXI::Image img;
+      img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      // /entry_1/image_i/data
       img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_nx, H5T_STD_I16LE);
-      H5Lcreate_soft((std::string("/entry_1/instrument_1/") + detectorName).c_str(),img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
+      if(global->savePixelmask){
+	// /entry_1/image_i/mask
+	img.mask = create2DStack("mask", img.self, global->detector[detID].image_nx, global->detector[detID].image_nx, H5T_NATIVE_UINT16);
+      }
+      // /entry_1/image_i/mask_shared
+      d.mask_shared = create2DImage("mask_shared", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_NATIVE_UINT16);
+      global->detector[detID].pixelmask;   
+      H5Dwrite(d.mask_shared, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT,global->detector[detID].pixelmask);   
+      // /entry_1/image_i/detector_1
+      H5Lcreate_soft(detectorPath,img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
+      // /entry_1/image_i/source_1
       H5Lcreate_soft("/entry_1/instrument_1/source_1",img.self,"source_1",H5P_DEFAULT,H5P_DEFAULT);
+      // /entry_1/image_i/data_type
       img.dataType = createStringStack("data_type",img.self);
+      // /entry_1/image_i/data_space
       img.dataSpace = createStringStack("data_space",img.self);
+      // /entry_1/image_i/thumbnail
       img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_STD_I16LE);
+      // /entry_1/image_i/experiment_identifier
       H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
     }
     cxi->entry.images.push_back(img);
+
   }
 
   cxi->lcls.self = H5Gcreate(cxi->self, "LCLS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -422,6 +503,9 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
     if(global->saveAssembled){
       write2DToStack(cxi->entry.images[detID].data,stackSlice,info->detector[detID].image);
+      if(global->savePixelmask){
+	write2DToStack(cxi->entry.images[detID].mask,stackSlice,info->detector[detID].image_pixelmask);
+      }
       int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_nx,CXI::thumbnailScale);
       write2DToStack(cxi->entry.images[detID].thumbnail,stackSlice,thumbnail);
       writeStringToStack(cxi->entry.images[detID].dataType,stackSlice,"intensities");
@@ -430,6 +514,9 @@ void writeCXI(cEventData *info, cGlobal *global ){
     }
     if(global->saveRaw){
       write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
+      if(global->savePixelmask){
+	write2DToStack(cxi->entry.instrument.detector[detID].mask,stackSlice,info->detector[detID].mask);
+      }
       int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
       write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
       delete thumbnail;
@@ -467,4 +554,3 @@ void writeCXI(cEventData *info, cGlobal *global ){
   writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
   printf("r%04u:%li (%2.1f Hz): Writing %s to %s slice %d\n",global->runNumber, info->threadNum,global->datarate, info->eventname, info->cxiFilename, stackSlice);
 }
-

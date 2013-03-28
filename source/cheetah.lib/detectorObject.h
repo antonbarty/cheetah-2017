@@ -20,6 +20,31 @@
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
 
+/*
+ * Bits for pixel masks
+ * Oriented along conventions defined for CXI file format ( https://github.com/FilipeMaia/CXI/raw/master/cxi_file_format.pdf )
+ * CONVENTIONS:
+ * - All options are dominantly inherited during assembly and pixel integration (see assembleImage.cpp)
+ * - The default value for all options is "false"
+ */
+static const uint16_t PIXEL_IS_INVALID = 1;                 // bit 0
+static const uint16_t PIXEL_IS_SATURATED = 2;               // bit 1
+static const uint16_t PIXEL_IS_HOT = 4;                     // bit 2
+static const uint16_t PIXEL_IS_DEAD = 8;                    // bit 3
+static const uint16_t PIXEL_IS_SHADOWED = 16;               // bit 4
+static const uint16_t PIXEL_IS_IN_PEAKMASK = 32;            // bit 5
+static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
+static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
+static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
+
+/*
+ * Assemble modes (see assemble2Dimage.cpp)
+ */
+static const int ASSEMBLE_MODE_INTEGRATE_2X2 = 0; 
+static const int ASSEMBLE_MODE_PICK_NEAREST = 1; 
+static const int ASSEMBLE_MODE_DEFAULT = ASSEMBLE_MODE_INTEGRATE_2X2;
+
+
 
 /*
  * Detector geometries
@@ -185,16 +210,12 @@ public:
 	/*
 	 * Arrays for all sorts of stuff
 	 */
-	int16_t   *peakmask;
-	int16_t   *badpixelmask;
-	int16_t   *baddatamask;
 	int16_t   *bg_buffer;
 	int16_t   *hotpix_buffer;
-	int16_t   *hotpixelmask;
-	int16_t   *wiremask;
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;
+	uint16_t  *pixelmask_shared;
 
 
 	/*
@@ -251,13 +272,14 @@ public:
 	
 	int       cspad_fail;
 	uint16_t  *raw_data;
+	uint16_t  *pixelmask;
 	float     *corrected_data;
 	float     *detector_corrected_data;
 	int16_t   *corrected_data_int16;
 	int16_t   *image;
+	uint16_t  *image_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
-	int16_t   *saturatedPixelMask;
 	double    detectorZ;
 
 };

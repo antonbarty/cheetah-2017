@@ -352,12 +352,8 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     selfdark = (float*) calloc(pix_nn, sizeof(float));
     bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
     hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-    hotpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-    wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
     for(long j=0; j<pix_nn; j++) {
         selfdark[j] = 0;
-        hotpixelmask[j] = 1;
-        wiremask[j] = 1;
     }
     
     // Powder sums and mutexes
@@ -590,9 +586,9 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         // Generate resolution limit mask
 		// (resolution in PIXELS)
 		if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
-			global->hitfinderResMask[i] = 1;
+		  global->pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 		else
-			global->hitfinderResMask[i] = 0;
+		  global->pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
     }
 
 	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
@@ -727,12 +723,7 @@ void cPixelDetectorCommon::readGaincal(char *filename){
  *	Read in peaksearch mask
  */
 void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
-	
-	// Create memory space and default to searching for peaks everywhere
-	peakmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		peakmask[i] = 1;
-	
+		
 	// Do we even need a peakmask file?
 	if ( global->hitfinderUsePeakmask == 0 ){
 		return;
@@ -771,25 +762,22 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
 		exit(1);
 	} 
 	
-	
-	// Copy into darkcal array
-	for(long i=0;i<pix_nn;i++)
-		peakmask[i] = (int16_t) temp2d.data[i];
+		for(long i=0;i<pix_nn;i++){
+	  if((int) temp2d.data[i]==1){
+	    pixelmask_shared[i] |= PIXEL_IS_IN_PEAKMASK;
+	  }
+	  else{
+	    pixelmask_shared[i] &= ~PIXEL_IS_IN_PEAKMASK;
+	  }
+	}
 }
-
 
 /*
  *	Read in bad pixel mask
  *  (Pixels will be set to zero before any analysis and when data is exported)
  */
 void cPixelDetectorCommon::readBadpixelMask(char *filename){
-	
-	
-	// Create memory space and default to searching for peaks everywhere
-	badpixelmask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		badpixelmask[i] = 1;
-	
+     	
 	
 	// Do we need a bad pixel map?
 	if ( useBadPixelMask == 0 ){
@@ -831,8 +819,14 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	
 	
 	// Copy back into array
-	for(long i=0;i<pix_nn;i++)
-		badpixelmask[i] = (int16_t) temp2d.data[i];
+	for(long i=0;i<pix_nn;i++){
+	  if((int) temp2d.data[i]==1){
+	    pixelmask_shared[i] |= PIXEL_IS_BAD;
+	  }
+	  else{
+	    pixelmask_shared[i] &= ~PIXEL_IS_BAD;
+	  }
+	}
 }
 
 /*
@@ -841,13 +835,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
  */
 void cPixelDetectorCommon::readBaddataMask(char *filename){
 	
-	
-	// Create memory space and default to searching for peaks everywhere
-	baddatamask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		baddatamask[i] = 1;
-	
-	
+		
 	// Do we need a bad pixel map?
 	if ( useBadDataMask == 0 ){
 		return;
@@ -888,8 +876,14 @@ void cPixelDetectorCommon::readBaddataMask(char *filename){
 	
 	
 	// Copy back into array
-	for(long i=0;i<pix_nn;i++)
-		baddatamask[i] = (int16_t) temp2d.data[i];
+	for(long i=0;i<pix_nn;i++){
+	  if((int) temp2d.data[i]==1){
+	    pixelmask_shared[i] |= PIXEL_TO_BE_IGNORED;
+	  }
+	  else{
+	    pixelmask_shared[i] &= ~PIXEL_TO_BE_IGNORED;
+	  }
+	}
 }
 
 
@@ -898,11 +892,6 @@ void cPixelDetectorCommon::readBaddataMask(char *filename){
  */
 void cPixelDetectorCommon::readWireMask(char *filename){
 	
-
-	// Create memory space and default to searching for peaks everywhere
-	wiremask = (int16_t*) calloc(pix_nn, sizeof(int16_t));
-	for(long i=0;i<pix_nn;i++)
-		wiremask[i] = 1;
 	
 	// Do we need this file?
 	if ( cspadSubtractBehindWires == 0 ){
@@ -946,8 +935,15 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	
 	
 	// Copy into darkcal array
-	for(long i=0;i<pix_nn;i++)
-		wiremask[i] = (int16_t) temp2d.data[i];
+	for(long i=0;i<pix_nn;i++){
+	  if((int) temp2d.data[i]==1){
+	    pixelmask_shared[i] |= PIXEL_IS_SHADOWED;
+	  }
+	  else{
+	    pixelmask_shared[i] &= ~PIXEL_IS_SHADOWED;
+	  }
+	}
+
 }
 
 cPixelDetectorEvent::cPixelDetectorEvent() {
