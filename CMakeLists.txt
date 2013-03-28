@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 2.6)
+
+PROJECT (cheetah)
+
+#SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+IF(CMAKE_COMPILER_IS_GNUCC)
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
+ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
+
+
+SET(BUILD_LIBCHEETAH ON CACHE BOOL "If ON build libcheetah. Otherwise skip it.")
+SET(BUILD_CHEETAH_ANA_MOD ON CACHE BOOL "If ON build cheetah_ana_mod. Otherwise skip it.")
+#SET(BUILD_CHEETAH_MYANA OFF CACHE BOOL "If ON build cheetah_myana. Otherwise skip it.")
+
+if(BUILD_LIBCHEETAH)
+ADD_SUBDIRECTORY(libcheetah)
+endif(BUILD_LIBCHEETAH)
+
+if(BUILD_CHEETAH_ANA_MOD)
+ADD_SUBDIRECTORY(cheetah_ana_mod)
+endif(BUILD_CHEETAH_ANA_MOD)
+
+#if(BUILD_CHEETAH_MYANA)
+#ADD_SUBDIRECTORY(cheetah_myana)
+#endif(BUILD_CHEETAH_MYANA)
+
