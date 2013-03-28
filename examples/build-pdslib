@@ -1,8 +1,0 @@
-#!/bin/bash
-
-CHEETAHDIR=/reg/neh/home/rkirian/software/cheetah
-
-# Make LCLS pds libraries
-cd $CHEETAHDIR/source/lcls/myana/release/pdsdata
-make x86_64-linux
-

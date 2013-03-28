@@ -1,0 +1,22 @@
+
+find_package(PSANA REQUIRED)
+
+file(GLOB sources "src/*.cpp")
+
+INCLUDE_DIRECTORIES("include")
+
+ADD_LIBRARY(cheetah_ana_mod SHARED ${sources})
+
+TARGET_LINK_LIBRARIES(cheetah_ana_mod ${PSANA_LIBRARIES})
+
+set_target_properties(
+ cheetah_ana_mod
+ PROPERTIES SOVERSION 1
+ VERSION 1
+ INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+INSTALL(TARGETS cheetah_ana_mod
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
