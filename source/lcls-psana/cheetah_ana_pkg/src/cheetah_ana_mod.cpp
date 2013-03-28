@@ -130,7 +130,7 @@ namespace cheetah_ana_pkg {
 		cout << "*** beginJob ***" << endl;
 		time(&startT);
 		cheetahInit(&cheetahGlobal);
-		if(cheetahGlobal.saveCXIDB){
+		if(cheetahGlobal.saveCXI){
 		  signal(SIGINT, sig_handler);
 		}
 

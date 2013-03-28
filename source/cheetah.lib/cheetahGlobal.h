@@ -212,7 +212,7 @@ public:
 	 */
 	int      hdf5dump;
     
-    bool saveCXIDB;
+    bool saveCXI;
 
 
 	/** @brief Toggle the verbosity of Cheetah. */
