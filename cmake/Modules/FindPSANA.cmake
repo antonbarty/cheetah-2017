@@ -24,7 +24,8 @@ foreach(ana_lib IN LISTS ana_libs)
 	message(STATUS "locating ${ana_lib}")
 	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/lib/)
 	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
-	LIST(APPEND PSANA_LIBRARIES ANA_${ana_lib}_LIBRARY)
+	LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
 endforeach(ana_lib)
 
+LIST(APPEND PSANA_INCLUDES ${ANA_CURRENT_ROOT}/include ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/geninc)
 

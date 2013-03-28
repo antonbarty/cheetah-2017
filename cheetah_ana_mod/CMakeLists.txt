@@ -4,7 +4,7 @@ find_package(PSANA REQUIRED)
 file(GLOB sources "src/*.cpp")
 
 INCLUDE_DIRECTORIES("include")
-INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/libcheetah/include")
+INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/libcheetah/include" ${PSANA_INCLUDES})
 
 ADD_LIBRARY(cheetah_ana_mod SHARED ${sources})
 
