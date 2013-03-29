@@ -1,0 +1,20 @@
+
+find_package(PSANA REQUIRED)
+#find_package(Cheetah REQUIRED)
+#find_package(HDF5 REQUIRED)
+
+file(GLOB sources "${ANA_CURRENT_ROOT}/psana/app/*.cpp")
+
+INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
+
+# This is here so that psana can find cheetah_ana_pkg
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${CMAKE_BINARY_DIR}/cheetah_ana_pkg") 
+ADD_EXECUTABLE(psana ${sources})
+
+TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES})
+
+
+INSTALL(TARGETS psana
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
