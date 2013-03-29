@@ -9,6 +9,7 @@ mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY)
 file(GLOB sources "src/*.cpp")
 
 include_directories("include")
+include_directories(${HDF5_INCLUDE_DIR})
 
 add_library(cheetah SHARED ${sources})
 
