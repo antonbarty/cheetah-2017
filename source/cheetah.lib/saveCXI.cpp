@@ -485,7 +485,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(info->cxiFilename, global);
   int stackSlice = getStackSlice(cxi);
-  printf("Writting CXI file for stack slice number %ld \n", stackSlice);
+  //printf("Writing to CXI file for stack slice number %ld \n", stackSlice);
   
   double en = info->photonEnergyeV * 1.60217646e-19;
   writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);
