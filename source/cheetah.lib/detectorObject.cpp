@@ -23,6 +23,8 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 
+
+
 /*
  *	Set default values to something reasonable for CSPAD at CXI 
  */
@@ -762,7 +764,7 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
 		exit(1);
 	} 
 	
-		for(long i=0;i<pix_nn;i++){
+	for(long i=0;i<pix_nn;i++){
 	  if((int) temp2d.data[i]==1){
 	    pixelmask_shared[i] |= PIXEL_IS_IN_PEAKMASK;
 	  }
@@ -951,3 +953,4 @@ cPixelDetectorEvent::cPixelDetectorEvent() {
 	detectorZ=0;
 
 }
+

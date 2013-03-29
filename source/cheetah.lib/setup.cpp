@@ -843,7 +843,7 @@ void cGlobal::writeConfigurationLog(void){
 	// Open file
 	fp = fopen(configOutFile,"w");
 	if(fp == NULL) {
-		printf("Error: Can not open %s for writing\n",configOutFile);
+	  printf("Error: Can not open %s for writing\n",configOutFile);
 		printf("Aborting...");
 		exit(1);
 	}

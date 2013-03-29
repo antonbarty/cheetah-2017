@@ -90,7 +90,7 @@ void applyBadPixelMask(cEventData *eventData, cGlobal *global){
 
 void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
 	for(long i=0; i<pix_nn; i++) {
-	  data[i] *= ~(mask[i] & PIXEL_IS_BAD); 
+	  data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
 	}
 }
 
@@ -154,7 +154,7 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 				for(long i=0; i<asic_nx; i++){
 					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					e += i + mi*asic_nx;
-					if(~(mask[e] & PIXEL_IS_BAD)) {
+					if( isBitOptionUnset(mask[e],PIXEL_IS_BAD) ) {
 					  buffer[counter++] = data[e];
 					}
 				}
@@ -298,7 +298,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 				for(long i=0; i<asic_nx; i++){
 					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					p += i + mi*asic_nx;
-					if(mask[i] & PIXEL_IS_SHADOWED) {
+					if( isBitOptionUnset(mask[i],PIXEL_IS_SHADOWED) ){
 						buffer[counter] = data[p];
 						counter++;
 					}
@@ -373,7 +373,7 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 			 *	Then apply the current hot pixel mask 
 			 */
 			for(long i=0; i<pix_nn; i++){
-			  frameData[i] *= ~(mask[i] & PIXEL_IS_HOT);
+			  frameData[i] *= isBitOptionUnset(mask[i],PIXEL_IS_HOT);
 			}
 			eventData->nHot = global->detector[detID].nhot;
 
@@ -468,21 +468,21 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
     This is what the detector map looks like:
  
  
-     insensitive pixels at the edge
-     |                 | 
-     v                 v 
-     --------- ---------
-     read out <- |       | |       | -> read-out
-     <- |  q=0  | |  q=1  | ->
-     <- |       | |       | ->
-     <- | - - - |x| - - - | ->
-     <- |       | |       | ->
-     <- |  q=2  | |  q=3  | ->
-     <- |       | |       | ->
-     --------- ---------
-     ^                 ^
-     |                 | 
-     insensitive pixels at the edge
+        insensitive pixels at the edge
+             |                 | 
+             v                 v 
+             --------- ---------
+ read out <- |       | |       | -> read-out
+          <- |  q=0  | |  q=1  | ->
+          <- |       | |       | ->
+          <- | - - - |x| - - - | ->
+          <- |       | |       | ->
+          <- |  q=2  | |  q=3  | ->
+          <- |       | |       | ->
+             --------- ---------
+             ^                 ^
+             |                 | 
+        insensitive pixels at the edge
 
 */
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){

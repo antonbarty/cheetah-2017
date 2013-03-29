@@ -21,6 +21,29 @@
 #define MAX_FILENAME_LENGTH 1024
 
 /*
+ * Detector geometries
+ */
+//	CSPAD	//
+static const unsigned  CSPAD_ASIC_NX = 194;  // ASIC nx = extent of one ASIC in x
+static const unsigned  CSPAD_ASIC_NY = 185;  // ASIC ny = extent of one ASIC in y
+static const unsigned  CSPAD_nASICS_X = 8;   // 8 ASICs across in raw data stream
+static const unsigned  CSPAD_nASICS_Y = 8;   // 8 ASICs down in raw data stresm
+
+//	PNCCD	//
+static const unsigned  PNCCD_ASIC_NX = 512;	// ASIC nx = extent of one ASIC in x
+static const unsigned  PNCCD_ASIC_NY = 512;	// ASIC ny = extent of one ASIC in y
+static const unsigned  PNCCD_nASICS_X = 2;		// 2 ASICs across in raw data stream
+static const unsigned  PNCCD_nASICS_Y = 2;		// 2 ASICs down in raw data stresm
+
+
+static const unsigned int cbufsize = 1024;
+
+/*
+ * Pixelmasks
+ */
+
+
+/*
  * Bits for pixel masks
  * Oriented along conventions defined for CXI file format ( https://github.com/FilipeMaia/CXI/raw/master/cxi_file_format.pdf )
  * CONVENTIONS:
@@ -38,8 +61,14 @@ static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 
-
-
+// for combined options
+inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
+inline bool isNoneOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)==0);}
+inline bool isAnyOfBitOptionsUnset(uint16_t value, uint16_t option) {return ((value & option)!=option);}
+inline bool isNoneOfBitOptionsUnset(uint16_t value, uint16_t option) {return ((value & option)==option);}
+// for single options
+inline bool isBitOptionSet(uint16_t value, uint16_t option) {return isNoneOfBitOptionsUnset(value,option);}
+inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBitOptionsSet(value,option);}
 
 
 /*
@@ -49,25 +78,6 @@ static const int ASSEMBLE_MODE_INTEGRATE_2X2 = 0;
 static const int ASSEMBLE_MODE_PICK_NEAREST = 1; 
 static const int ASSEMBLE_MODE_DEFAULT = ASSEMBLE_MODE_INTEGRATE_2X2;
 
-
-
-/*
- * Detector geometries
- */
-//	CSPAD	//
-static const unsigned  CSPAD_ASIC_NX = 194;  // ASIC nx = extent of one ASIC in x
-static const unsigned  CSPAD_ASIC_NY = 185;  // ASIC ny = extent of one ASIC in y
-static const unsigned  CSPAD_nASICS_X = 8;   // 8 ASICs across in raw data stream
-static const unsigned  CSPAD_nASICS_Y = 8;   // 8 ASICs down in raw data stresm
-
-//	PNCCD	//
-static const unsigned  PNCCD_ASIC_NX = 512;	// ASIC nx = extent of one ASIC in x
-static const unsigned  PNCCD_ASIC_NY = 512;	// ASIC ny = extent of one ASIC in y
-static const unsigned  PNCCD_nASICS_X = 2;		// 2 ASICs across in raw data stream
-static const unsigned  PNCCD_nASICS_Y = 2;		// 2 ASICs down in raw data stresm
-
-
-static const unsigned int cbufsize = 1024;
 
 
 #define DETECTOR_LOOP for(long detID=0; detID < global->nDetectors; detID++)

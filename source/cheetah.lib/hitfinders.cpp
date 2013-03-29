@@ -71,28 +71,16 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
 	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
+
+	// combine pixelmask bits
+	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
 	
 	/*
-	 *	Apply peak search mask
+	 *	Apply masks
 	 *	(multiply data by 0 to ignore regions)
 	 */
-	if(global->hitfinderUsePeakmask) {
-		for(long i=0;i<pix_nn;i++){
-		  temp[i] *= (eventData->detector[detID].pixelmask[i] & PIXEL_IS_IN_PEAKMASK); 
-		}
-	}
-	
-	
-	/*
-	 *	Apply other bad region masks
-	 *	(multiply data by 0 to ignore regions)
-	 */
-	for (long i=0; i<pix_nn; i++) {
-	  temp[i] *=
-	    ((mask[i] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS))*
-	    (~(mask[i] & PIXEL_IS_HOT))*
-	    (~(mask[i] & PIXEL_IS_BAD))*
-	    (~(mask[i] & PIXEL_IS_SATURATED));
+	for(long i=0;i<pix_nn;i++){
+	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
 	}
     
 	/*
@@ -242,26 +230,15 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	
-	/*
-	 *	Apply peak search mask
-	 *	(multiply data by 0 to ignore regions)
-	 */
-	if(global->hitfinderUsePeakmask) {
-		for(long i=0;i<pix_nn;i++){
-		  temp[i] *= (mask[i] & PIXEL_IS_IN_PEAKMASK);
-		}
-	}
+	// combine pixelmask bits
+	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
 	
 	/*
-	 *	Apply other bad region masks
+	 *	Apply masks
 	 *	(multiply data by 0 to ignore regions)
 	 */
-	for (long i=0; i<pix_nn; i++) {
-	  temp[i] *=
-	    ((mask[i] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS))*
-	    (~(mask[i] & PIXEL_IS_HOT))*
-	    (~(mask[i] & PIXEL_IS_BAD))*
-	    (~(mask[i] & PIXEL_IS_SATURATED));
+	for(long i=0;i<pix_nn;i++){
+	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
 	}
 	
 	
@@ -337,26 +314,15 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	
-	/*
-	 *	Apply peak search mask
-	 *	(multiply data by 0 to ignore regions)
-	 */
-	if(global->hitfinderUsePeakmask) {
-		for(long i=0;i<pix_nn;i++){
-		  temp[i] *= (mask[i] & PIXEL_IS_IN_PEAKMASK);
-		}
-	}	
+	// combine pixelmask bits
+	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
 	
 	/*
-	 *	Apply other bad region masks
+	 *	Apply masks
 	 *	(multiply data by 0 to ignore regions)
 	 */
-	for (long i=0; i<pix_nn; i++) {
-	  temp[i] *= 
-	    ((mask[i] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS))*
-	    (~(mask[i] & PIXEL_IS_HOT))*
-	    (~(mask[i] & PIXEL_IS_BAD))*
-	    (~(mask[i] & PIXEL_IS_SATURATED));
+	for(long i=0;i<pix_nn;i++){
+	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
 	}
 	
 	
@@ -583,19 +549,16 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 	float mingrad = global->hitfinderMinGradient*2;
 	mingrad *= mingrad;
 	uint16_t *mask = eventData->detector[detID].pixelmask;
-
-	/* Combined mask */
-	int16_t * cmask = (int16_t *) calloc(global->detector[detID].pix_nn, sizeof(int16_t) );
-	for (long i=0; i<global->detector[detID].pix_nn; i++) mask[i] = 
-	    ((mask[i] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS))*
-	    (~(mask[i] & PIXEL_IS_HOT))*
-	    (~(mask[i] & PIXEL_IS_BAD))*
-	    ((mask[i] & PIXEL_IS_IN_PEAKMASK))*
-	    (~(mask[i] & PIXEL_IS_SATURATED));
 	
 	// zero out bad pixels in temporary intensity map
 	float * temp = (float *) calloc(global->detector[detID].pix_nn,sizeof(float));
-	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = eventData->detector[detID].corrected_data[i]*cmask[i];
+
+	// combined mask
+	uint16_t combined_pixel_options = (PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED);
+
+	for (long i=0; i<global->detector[detID].pix_nn; i++){
+	  temp[i] = eventData->detector[detID].corrected_data[i]*isNoneOfBitOptionsSet(mask[i],combined_pixel_options);
+	}
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<global->detector[detID].nasics_y; mj++){
 	for(long mi=0; mi<global->detector[detID].nasics_x; mi++){	
@@ -607,7 +570,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 		fs = i+mi*global->detector[detID].asic_nx;
 		e = ss*global->detector[detID].pix_nx + fs;
 
-		if ( ~(mask[e] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS) ) continue;
+		if ( isBitOptionSet(mask[e],PIXEL_IS_OUT_OF_RESOLUTION_LIMITS) ) continue;
 
 		if ( temp[e] < global->hitfinderADC ) continue;
 
@@ -616,11 +579,11 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 			float dx1, dx2, dy1, dy2, dxs, dys;
 			
 			/* can't measure gradient where bad pixels present */
-			if ( mask[e] & PIXEL_IS_BAD ) continue;
-			if ( mask[e+1] & PIXEL_IS_BAD ) continue;
-			if ( mask[e-1] & PIXEL_IS_BAD ) continue;
-			if ( mask[e+global->detector[detID].pix_nx] & PIXEL_IS_BAD ) continue;
-			if ( mask[e-global->detector[detID].pix_nx] & PIXEL_IS_BAD ) continue;
+			if ( isBitOptionSet(mask[e],PIXEL_IS_BAD) ) continue;
+			if ( isBitOptionSet(mask[e+1],PIXEL_IS_BAD) ) continue;
+			if ( isBitOptionSet(mask[e-1],PIXEL_IS_BAD) ) continue;
+			if ( isBitOptionSet(mask[e+global->detector[detID].pix_nx],PIXEL_IS_BAD) ) continue;
+			if ( isBitOptionSet(mask[e-global->detector[detID].pix_nx],PIXEL_IS_BAD) ) continue;
 			
 			/* Get gradients */
 			dx1 = temp[e] - temp[e+1];
@@ -657,7 +620,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 				thisfs = i+mi*global->detector[detID].asic_nx;
 				lbg_e = thisss + thisfs;
 				/* check if we're ignoring this pixel*/ 
-				if ( ~(mask[lbg_e] & PIXEL_IS_BAD) ) {
+				if ( isBitOptionUnset(mask[lbg_e],PIXEL_IS_BAD) ) {
 					lbg_buffer[lbg_counter] = temp[lbg_e];
 					lbg_counter++;		
 				}
@@ -677,7 +640,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 		int badpix = 0;
 
 		// start counting bad pixels
-		if ( ~cmask[e] ) badpix += 1;
+		badpix += isAnyOfBitOptionsSet(mask[e],combined_pixel_options);
 
 		// Keep looping until the pixel count within this peak does not change
 		do {
@@ -700,7 +663,7 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 					e = thisx + thisy*global->detector[detID].pix_nx;
 					
 					// count bad pixels within or neighboring this peak
-					if ( ~mask[e] & PIXEL_IS_BAD ) badpix += 1;
+					badpix += isBitOptionSet(mask[e],PIXEL_IS_BAD);
 
 					// Above threshold?
 					imbg = temp[e] - lbg; /* "intensitiy minus background" */
@@ -806,7 +769,6 @@ int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 
 	free(inx); 			
 	free(iny);
-	free(cmask);
 	free(temp);
 
 	return(hit);
@@ -830,6 +792,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	float thisI,snr,bg,bgsig;
 	uint16_t *mask = eventData->detector[detID].pixelmask;
 	
+	
 	/* For counting neighbor pixels */
 	int * nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));	
 	int * killpeak = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
@@ -843,21 +806,20 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 		-stride - 1, -stride + 1};
 	
 	/* Combined mask */
-	int * cmask = (int *) calloc(global->detector[detID].pix_nn, sizeof(int) );
-	for (long i=0; i<global->detector[detID].pix_nn; i++) cmask[i] = 
-	    ((mask[i] & PIXEL_IS_OUT_OF_RESOLUTION_LIMITS))*
-	    (~(mask[i] & PIXEL_IS_HOT))*
-	    (~(mask[i] & PIXEL_IS_BAD))*
-	    ((mask[i] & PIXEL_IS_IN_PEAKMASK))*
-	    (~(mask[i] & PIXEL_IS_SATURATED));
+	uint16_t combined_pixel_options = (PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED);
 
 	/* Combined mask for pixel counting */
+	// natmask == 0 if pixel masked out (bad)
 	int * natmask = (int *) calloc(global->detector[detID].pix_nn, sizeof(int) );
-	memcpy(natmask,cmask,global->detector[detID].pix_nn*sizeof(int));
+	for(long i=0; i<global->detector[detID].pix_nn; i++){
+	  natmask[i] = isNoneOfBitOptionsSet(mask[i],combined_pixel_options);
+	}
 	
 	// zero out bad pixels in temporary intensity map
 	float * temp = (float *) calloc(global->detector[detID].pix_nn,sizeof(float));
-	for (long i=0; i<global->detector[detID].pix_nn; i++) temp[i] = eventData->detector[detID].corrected_data[i]*cmask[i];
+	for (long i=0; i<global->detector[detID].pix_nn; i++){
+	  temp[i] = eventData->detector[detID].corrected_data[i] * isNoneOfBitOptionsSet(mask[i],combined_pixel_options);
+	}
 	
 	// Loop over modules (8x8 array)
 	for(long mj=0; mj<global->detector[detID].nasics_y; mj++){
@@ -888,7 +850,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					for ( int k=0; k<8; k++ ) if ( temp[e] <= temp[e+shift[k]] ) continue;
 				
 					/* get SNR for this pixel */
-					fail = box_snr(temp, cmask, e, bgrad, global->hitfinderLocalBGThickness, stride, &snr, &bg, &bgsig);
+					fail = box_snr(temp, mask, combined_pixel_options, e, bgrad, global->hitfinderLocalBGThickness, stride, &snr, &bg, &bgsig);
 					if ( fail ) continue;
 
 					/* Check SNR threshold */
@@ -964,7 +926,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 						for ( cf=fs-bgrad; cf<=fs+bgrad; cf++) {
 							ce = cs*stride + cf;
 							if ( ce < 0 || ce > global->detector[detID].pix_nn ) continue;
-							if ( cmask[ce] == 0 ) continue;
+							if ( isAnyOfBitOptionsSet(mask[ce],combined_pixel_options) ) continue;
 							thisI = temp[ce] - bg;
 							itot += thisI;
 							ftot += thisI*(float)cf;
@@ -1044,7 +1006,6 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 nohit:
 	
 	free(nexte);
-	free(cmask);
 	free(natmask);
 	free(temp);
 	free(killpeak);	
@@ -1059,7 +1020,7 @@ nohit:
 /* Calculate signal-to-noise ratio for the central pixel, using a square 
  * concentric annulus */
 
-int box_snr(float * im, int * mask, int center, int radius, int thickness,
+int box_snr(float * im, uint16_t * mask, uint16_t combined_pixel_options, int center, int radius, int thickness,
             int stride, float * SNR, float * background, float * backgroundSigma)
 {
   
@@ -1095,7 +1056,10 @@ int box_snr(float * im, int * mask, int center, int radius, int thickness,
 			b = rightstart + q;
 			c = bottomstart - q*stride;
 			d = leftstart - q;
-			bgcount += mask[a] + mask[b] + mask[c] + mask[d];
+			bgcount += isNoneOfBitOptionsSet(mask[a],combined_pixel_options);
+			bgcount += isNoneOfBitOptionsSet(mask[b],combined_pixel_options);
+			bgcount += isNoneOfBitOptionsSet(mask[c],combined_pixel_options);
+			bgcount += isNoneOfBitOptionsSet(mask[d],combined_pixel_options);
 			bg += im[a] + im[b] + im[c] + im[d];
 			bgsq += im[a]*im[a] + im[b]*im[b] + 
 			im[c]*im[c] + im[d]*im[d];

@@ -40,10 +40,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
         // Mask for where to calculate average
         int     *mask = (int *) calloc(pix_nn, sizeof(int));
         for(long i=0; i<pix_nn; i++){
-            mask[i] = 1;
-            if(((eventData->detector[detID].pixelmask[i] & PIXEL_IS_BAD)) *
-	       ((eventData->detector[detID].pixelmask[i] & PIXEL_IS_TO_BE_IGNORED)))
-                mask[i] = 0;
+	  mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
         }
         
         calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
@@ -95,7 +92,7 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	
 	long	radial_nn = global->detector[detID].radial_nn;
 	long	pix_nn = global->detector[detID].pix_nn;
-    
+	uint16_t *mask = global->detector[detID].pixelmask_shared;
 	
 	// Zero arrays
 	for(long i=0; i<radial_nn; i++) {
@@ -108,17 +105,16 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	for(long i=0; i<pix_nn; i++){
 
         // Don't count bad pixels in radial average
-	  if(((global->detector[detID].pixelmask_shared[i] & PIXEL_IS_BAD)) *
-	     ((global->detector[detID].pixelmask_shared[i] & PIXEL_IS_TO_BE_IGNORED)))
+	  if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
             continue;
         
-		rbin = lrint(global->detector[detID].pix_r[i]);
+	  rbin = lrint(global->detector[detID].pix_r[i]);
 		
-		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
-		
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
+	  // Array bounds check (paranoia)
+	  if(rbin < 0) rbin = 0;
+	  
+	  radialAverage[rbin] += data[i];
+	  radialAverageCounter[rbin] += 1;
 	}
 	
 	// Divide by number of actual pixels in ring to get the average
@@ -147,8 +143,7 @@ void addToRadialAverageStack(cEventData *eventData, cGlobal *global){
 
     // Loop over all detectors
     DETECTOR_LOOP {
-        
-        addToRadialAverageStack(eventData, global, powderClass, detID);
+      addToRadialAverageStack(eventData, global, powderClass, detID);
     }
 
 }
