@@ -192,7 +192,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			eventData->peakDensity = (cutoff*np)/area;
 		}
 	   
-    } 
+	} 
 	
 	// Update central hit counter
 	if(hit) {
@@ -255,6 +255,8 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 	eventData->nPeaks = nat;
 	eventData->peakTotal = total;
 	
+	free(temp);
+
 	return hit;
 }
 
