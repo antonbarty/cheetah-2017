@@ -5,6 +5,7 @@ IF(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
 ELSE(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
 	find_path(ANA_SIT_DATA ExpNameDb  DOC "Path equivalent to $SIT_DATA")
 ENDIF(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
+
 file(READ /etc/redhat-release redhat_release)
 string(REGEX MATCH " 6\\." rhel6 ${redhat_release})
 string(REGEX MATCH " 5\\." rhel5 ${redhat_release})
