@@ -290,7 +290,7 @@ void *worker(void *threadarg) {
 	 */
  save:
     if((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0))){
-        if(global->saveCXIDB==1){
+        if(global->saveCXI==1){
             writeCXI(eventData, global);
         }
         else {

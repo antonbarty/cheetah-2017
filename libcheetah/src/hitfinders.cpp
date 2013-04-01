@@ -77,6 +77,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	 */
 	for(long i=0;i<pix_nn;i++){
 	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
+	}
     
 	/*
 	 *	Use one of various hitfinder algorithms
@@ -162,7 +163,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		   np = global->hitfinderNpeaksMax; 
 		kk = (long) floor(cutoff*np);
 	
-
+	
 
 		// Pixel radius resolution (bigger is better)
 		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
@@ -187,7 +188,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			eventData->peakDensity = (cutoff*np)/area;
 		}
 	   
-	} 
+	}
 	
 	// Update central hit counter
 	if(hit) {
