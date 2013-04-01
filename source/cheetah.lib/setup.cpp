@@ -166,7 +166,7 @@ cGlobal::cGlobal(void) {
 	laserPumpScheme = 0;
 
 	// Do not output 1 HDF5 per image by default
-	saveCXIDB = 0;
+	saveCXI = 0;
 	strcpy(currentCXIFileName, "");
 }
 
@@ -813,8 +813,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "laserpumpscheme")) {
 		laserPumpScheme = atoi(value);
 	}
-	else if (!strcmp(tag, "savecxidb")) {
-	  saveCXIDB = atoi(value);
+	else if (!strcmp(tag, "savecxi")) {
+	  saveCXI = atoi(value);
 	}
 	// Unknown tags
 	else {
@@ -935,7 +935,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
-	fprintf(fp, "saveCXIDB=%f\n",saveCXIDB);
+	fprintf(fp, "saveCXI=%f\n",saveCXI);
 	//fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
 	//fprintf(fp, "bgMemory=%li\n",bgMemory);
 	//fprintf(fp, "bgRecalc=%ld\n",bgRecalc);

@@ -119,7 +119,7 @@ void beginjob() {
     cheetahInit(&cheetahGlobal);
 
     /* catch SIGINT and handle appropriately */
-    if(cheetahGlobal.saveCXIDB){
+    if(cheetahGlobal.saveCXI){
       signal(SIGINT, sig_handler);
     }
 
@@ -345,7 +345,7 @@ void event() {
 	unsigned runNumber;
 	runNumber = getRunNumber();
 	
-	if(cheetahGlobal.saveCXIDB){
+	if(cheetahGlobal.saveCXI){
 	  std::string cxiFilename = getCXIfromXTC(getXTCFilename());
 	  if(cxiFilename.compare(cheetahGlobal.currentCXIFileName)!=0){
 	    while(cheetahGlobal.nActiveThreads > 0){

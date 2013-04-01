@@ -11,13 +11,11 @@
 #include "cheetahEvent.h"
 #include "median.h"
 #include "hitfinders.h"
+#include "peakfinders.h"
 
 
 // Peakfinders local to this routine
 int hitfinder1(cGlobal*, cEventData*, int);
-int peakfinder3(cGlobal*, cEventData*, int);
-int peakfinder5(cGlobal*, cEventData*, int);
-int peakfinder6(cGlobal*, cEventData*, int);
 
 
 
@@ -33,8 +31,6 @@ int peakfinder6(cGlobal*, cEventData*, int);
  *      7 - Laser on event code (usually EVR41)
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
-	
-	
 	
 	// Dereference stuff
 	int			detID = global->hitfinderDetector;
@@ -81,7 +77,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	 */
 	for(long i=0;i<pix_nn;i++){
 	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
-	}
     
 	/*
 	 *	Use one of various hitfinder algorithms

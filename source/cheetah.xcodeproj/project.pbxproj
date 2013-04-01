@@ -25,6 +25,7 @@
 		4DB5DD4715382D8E00EBE8AA /* saveFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD3915382D8E00EBE8AA /* saveFrame.cpp */; };
 		4DB5DD4815382D8E00EBE8AA /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD3A15382D8E00EBE8AA /* setup.cpp */; };
 		4DB5DD4915382D8E00EBE8AA /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB5DD3C15382D8E00EBE8AA /* worker.cpp */; };
+		4DCA82FE16FE038B006C7DA8 /* peakfinders.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DCA82FD16FE038B006C7DA8 /* peakfinders.cpp */; };
 		8DD76F6A0486A84900D96B5E /* cspad_cryst.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* cspad_cryst.1 */; };
 /* End PBXBuildFile section */
 
@@ -70,6 +71,8 @@
 		4DB5DD3915382D8E00EBE8AA /* saveFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = saveFrame.cpp; sourceTree = "<group>"; };
 		4DB5DD3A15382D8E00EBE8AA /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
 		4DB5DD3C15382D8E00EBE8AA /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
+		4DCA82FC16FE0370006C7DA8 /* peakfinders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = peakfinders.h; sourceTree = "<group>"; };
+		4DCA82FD16FE038B006C7DA8 /* peakfinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = peakfinders.cpp; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* cheetah */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cheetah; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859E8B029090EE04C91782 /* cspad_cryst.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = cspad_cryst.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -126,6 +129,7 @@
 				4DB5DD3115382D8E00EBE8AA /* detectorObject.h */,
 				4DB5DD3315382D8E00EBE8AA /* hitfinders.h */,
 				4DB5DD3615382D8E00EBE8AA /* median.h */,
+				4DCA82FC16FE0370006C7DA8 /* peakfinders.h */,
 				4D2E18B016F26ADD003AD355 /* saveCXI.h */,
 				4D2E18B116F26ADD003AD355 /* spectrum.cpp */,
 				4DB5DD3415382D8E00EBE8AA /* libcheetah.cpp */,
@@ -135,6 +139,7 @@
 				4DB5DD2F15382D8E00EBE8AA /* detectorCorrection.cpp */,
 				4DB5DD2815382D8E00EBE8AA /* backgroundCorrection.cpp */,
 				4DB5DD3215382D8E00EBE8AA /* hitfinders.cpp */,
+				4DCA82FD16FE038B006C7DA8 /* peakfinders.cpp */,
 				4DB5DD3515382D8E00EBE8AA /* median.cpp */,
 				4DB5DD3715382D8E00EBE8AA /* powder.cpp */,
 				4DB5DD3815382D8E00EBE8AA /* radialAverage.cpp */,
@@ -225,6 +230,7 @@
 				4D0EFCAD15DA87010082B016 /* assemble2DImage.cpp in Sources */,
 				4D2E18B216F26ADD003AD355 /* saveCXI.cpp in Sources */,
 				4D2E18B316F26ADD003AD355 /* spectrum.cpp in Sources */,
+				4DCA82FE16FE038B006C7DA8 /* peakfinders.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
