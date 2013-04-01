@@ -1,0 +1,35 @@
+To build cheetah you need cmake (and optionally ccmake). 
+
+If you're on psexport you can just do:
+export PATH=~filipe/cmake/bin:${PATH}
+
+Otherwise just ask your sysadmin to install it, or download the
+precompiled package:
+wget http://www.cmake.org/files/v2.8/cmake-2.8.10.2-Linux-i386.tar.gz
+
+Now that you have cmake we can start the build:
+
+- Create and go into a build directory:
+$ mkdir build
+$ cd build
+
+- Run ccmake
+$ ccmake ..
+
+- Press "c" to configure. 
+
+- It's possible that you have to specify ANA_CURRENT_ROOT manually. It should
+point to the ana-current directory, for example on psexport it is 
+/reg/g/psdm/sw/releases/ana-current/
+
+- You can also specify the CMAKE_INSTALL_PREFIX. I set mine to ~/usr
+- If everything went well you should be able to
+press "g" to generate the Makefiles.
+
+- Now just run make. This will build things and place the result in the
+build directory.
+$ make
+
+
+- If you want to install just do.
+$ make install
