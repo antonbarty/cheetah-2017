@@ -444,8 +444,10 @@ void cheetahExit(cGlobal *global) {
       }
     }
     
+    printf("Before closing\n");
     // Close all CXI files
     closeCXIFiles(global);
+    printf("After closing\n");
 	
 	// Save powder patterns
     for(long detID=0; detID<global->nDetectors; detID++) {

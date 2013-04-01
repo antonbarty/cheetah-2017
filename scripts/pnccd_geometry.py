@@ -9,32 +9,37 @@ import h5py,ConfigParser
 if len(sys.argv) < 2:
     print "ERROR: Specify configuration file."
     print "# Example configuration file"
+    print "[geometry]"
     print "pane1_dx = -10."
     print "pane1_dy = 1."
     print "pane2_dx = 0."
     print "pane2_dy = 234."
     print "pixel_offset = 1"
+    print "[arrangement]"
+    print "swap_axes=True"
+    print "rotation_in_degrees_ccw=180"
     exit(0)
 
 C = ConfigParser.ConfigParser()
 C.readfp(open(sys.argv[1],'r'))
 
-pane1_dx = C.get_float('pane1_dx',0.)
-pane1_dy = C.get_float('pane1_dy',0.)
-pane2_dx = C.get_float('pane2_dx',0.)
-pane2_dy = C.get_float('pane2_dy',0.)
-pixel_offset = C.get_int('pixel_offset',0)
+pane1_dx = C.getfloat('geometry','pane1_dx')
+pane1_dy = C.getfloat('geometry','pane1_dy')
+pane2_dx = C.getfloat('geometry','pane2_dx')
+pane2_dy = C.getfloat('geometry','pane2_dy')
+pixel_offset = C.getint('geometry','pixel_offset')
+swap_axes = C.getboolean('arrangement','swap_axes')
+rotation_in_degrees_ccw = C.getfloat('arrangement','rotation_in_degrees_ccw')
 
 N = 1024
 
 Xi,Yi = meshgrid(arange(N,dtype='int'),arange(N,dtype='int'))
-
   
 P1 = Yi<N/2
 P2 = P1==False
              
-X = array(Xi-(N-1)/2.),dtype='<f4')
-Y = array(Yi-(N-1)/2.),dtype='<f4')
+X = array(Xi-(N-1)/2.,dtype='<f4')
+Y = array(Yi-(N-1)/2.,dtype='<f4')
 Z = zeros(shape=(N,N),dtype='<f4')
 
 if pixel_offset > 0:
@@ -42,12 +47,27 @@ if pixel_offset > 0:
     X[Yi>=N/2] += pixel_offset
 
 # position pane1
-X[P1] += dx
-Y[P1] += dy
+X[P1] += pane1_dx
+Y[P1] += pane1_dy
 
 # position pane2
-X[P2] += dx
-Y[P2] += dy
+X[P2] += pane2_dx
+Y[P2] += pane2_dy
+
+if swap_axes:
+    Ynew = X.copy()
+    Xnew = Y.copy()
+    X = Xnew
+    Y = Ynew
+
+if rotation_in_degrees_ccw != 0.:
+    angle = rotation_in_degrees_ccw/360.*2*pi
+    Xnew = zeros_like(X)
+    Ynew = zeros_like(Y)
+    Xnew = X*cos(angle) - Y*sin(angle)
+    Ynew = Y*cos(angle) + X*sin(angle)
+    X = Xnew
+    Y = Ynew
 
 F = h5py.File('pixelmap.h5','w')
 F.create_dataset('x',(N,N),'<f4')

@@ -203,7 +203,7 @@ public:
 	int    bgIncludeHits;
 	int    bgNoBeamReset;
 	int    bgFiducialGlitchReset;
-	// Kill persistently hot pixels
+	// Identify persistently hot pixels
 	int    useAutoHotpixel;
 	int    hotpixADC;
 	int    hotpixMemory;
@@ -211,6 +211,8 @@ public:
 	float  hotpixFreq;
 	long   hotpixCounter;
 	long   nhot;
+	// Apply persistently hot pixels
+	int    applyAutoHotpixel;
 	long   last_hotpix_update;
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector

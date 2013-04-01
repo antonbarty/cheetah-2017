@@ -288,24 +288,15 @@ void *worker(void *threadarg) {
 	/*
 	 *	If this is a hit, write out to our favourite HDF5 format
 	 */
-	save:
-    if(hit && global->savehits) {
+ save:
+    if((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0))){
         if(global->saveCXIDB==1){
             writeCXI(eventData, global);
         }
         else {
             writeHDF5(eventData, global);
+	    printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
         }
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
-    }
-    else if((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0)) {
-        if(global->saveCXIDB==1){
-            writeCXI(eventData, global);
-        }
-        else{
-            writeHDF5(eventData, global);
-        }
-        printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
     }
     else {
         printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);

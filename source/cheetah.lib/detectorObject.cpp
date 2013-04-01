@@ -105,11 +105,13 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     useLocalBackgroundSubtraction = 0;
     localBackgroundRadius = 3;
 	
-    // Kill persistently hot pixels
+    // Identify persistently hot pixels
     useAutoHotpixel = 0;
     hotpixFreq = 0.9;
     hotpixADC = 1000;
     hotpixMemory = 50;
+    // Kill persistently hot pixels
+    applyAutoHotpixel = 0;
     
     // correction for PNCCD read out artifacts 
     usePnccdOffsetCorrection = 0;
@@ -252,10 +254,15 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hotpixfreq")) {
 		hotpixFreq = atof(value);
 		useAutoHotpixel = 1;
+		applyAutoHotpixel = 1;
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
 		hotpixADC = atoi(value);
 		useAutoHotpixel = 1;
+		applyAutoHotpixel = 1;
+	}
+	else if (!strcmp(tag, "applyautohotpixel")) {
+		applyAutoHotpixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotpixMemory = atoi(value);
@@ -588,9 +595,9 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         // Generate resolution limit mask
 		// (resolution in PIXELS)
 		if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
-		  pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-		else
 		  pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+		else
+		  pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
     }
 
 	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
