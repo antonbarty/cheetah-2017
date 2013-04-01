@@ -60,6 +60,10 @@ static const uint16_t PIXEL_IS_IN_PEAKMASK = 32;            // bit 5
 static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
+static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
+
+
+
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -242,10 +246,12 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
-	double   *powderRawSquared[MAX_POWDER_CLASSES];
+	double   *powderCorrected[MAX_POWDER_CLASSES];
+	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderRawSquared_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
 
 

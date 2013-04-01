@@ -444,24 +444,24 @@ void cheetahExit(cGlobal *global) {
       }
     }
     
-    printf("Before closing\n");
-    // Close all CXI files
-    closeCXIFiles(global);
-    printf("After closing\n");
 	
-	// Save powder patterns
+    // Save powder patterns
     for(long detID=0; detID<global->nDetectors; detID++) {
         saveRunningSums(global, detID);
     }
     saveRadialStacks(global);
 	global->writeFinalLog();
+
+    // Close all CXI files
+    closeCXIFiles(global);
+
 	
-	// Save integrated run spectrum
-	saveIntegratedRunSpectrum(global);
+    // Save integrated run spectrum
+    saveIntegratedRunSpectrum(global);
     
 	
-	// Hitrate?
-	printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+    // Hitrate?
+    printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
     
     
 	// Cleanup
@@ -474,11 +474,13 @@ void cheetahExit(cGlobal *global) {
         
         for(long j=0; j<global->nPowderClasses; j++) {
             free(global->detector[i].powderRaw[j]);
-            free(global->detector[i].powderRawSquared[j]);
+            free(global->detector[i].powderCorrected[j]);
+            free(global->detector[i].powderCorrectedSquared[j]);
             free(global->detector[i].powderAssembled[j]);
             free(global->detector[i].radialAverageStack[j]);
             pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
-            pthread_mutex_destroy(&global->detector[i].powderRawSquared_mutex[j]);
+            pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
+            pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
             pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
             pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
         }

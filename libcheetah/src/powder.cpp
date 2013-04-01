@@ -52,23 +52,33 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 
 	double  *buffer;
 	
-	
+	int k =0;
+	  printf("%i\n",k++);
+
 	// Raw data
 	pthread_mutex_lock(&global->detector[detID].powderRaw_mutex[powderClass]);
+	for(long i=0; i<pix_nn; i++) 
+	  global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].raw_data[i];
+	pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
+	  printf("%i\n",k++);
+
+	// Corrected data
+	pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
+	printf("C%i\n",k++);
 	if(!global->usePowderThresh) {
 		for(long i=0; i<pix_nn; i++) 
-			global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].corrected_data[i];
+			global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
 	}
 	else {
 		for(long i=0; i<pix_nn; i++) {
 			if(eventData->detector[detID].corrected_data[i] > global->powderthresh)
-				global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].corrected_data[i];
+				global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
 		}
 	}
-	pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
-	
-	
-	// Raw data squared (for calculating variance)
+	printf("C%i\n",k++);
+	pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);			
+	printf("C%i\n",k++);
+	// Corrected data squared (for calculating variance)
 	buffer = (double*) calloc(pix_nn, sizeof(double));
 	if(!global->usePowderThresh) {
 		for(long i=0; i<pix_nn; i++)
@@ -82,14 +92,17 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 				buffer[i] = 0;	
 		}	
 	}
-	pthread_mutex_lock(&global->detector[detID].powderRawSquared_mutex[powderClass]);
+	printf("CS%i\n",k++);
+	pthread_mutex_lock(&global->detector[detID].powderCorrectedSquared_mutex[powderClass]);
+	printf("CS%i\n",k++);
 	for(long i=0; i<pix_nn; i++) 
-		global->detector[detID].powderRawSquared[powderClass][i] += buffer[i];
-	pthread_mutex_unlock(&global->detector[detID].powderRawSquared_mutex[powderClass]);	
+		global->detector[detID].powderCorrectedSquared[powderClass][i] += buffer[i];
+	pthread_mutex_unlock(&global->detector[detID].powderCorrectedSquared_mutex[powderClass]);	
 	free(buffer);
 	
-	
+	  printf("CS%i\n",k++);	
 	// Assembled data
+	  printf("A%i\n",k++);	
 	pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
 	if(!global->usePowderThresh) {
 		for(long i=0; i<image_nn; i++)
@@ -101,16 +114,17 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 				global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
 		}
 	}
+	printf("A%i\n",k++);	
 	pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-	
+		  printf("%i\n",k++);
     // Increment counters
-	pthread_mutex_lock(&global->detector[detID].powderRaw_mutex[powderClass]);
+    pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
     global->detector[detID].nPowderFrames[powderClass] += 1;
     if(detID == 0)
         global->nPowderFrames[powderClass] += 1;
-	pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
+    pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);			
 
-	
+    printf("%i\n",k++);
 }
 
 
@@ -165,12 +179,19 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	// Raw data
 	//sprintf(filename,"%s-sumRaw.h5",filenamebase);
 	double *bufferRaw = (double*) calloc(pix_nn, sizeof(double));
-	double *radialAverage = (double*) calloc(radial_nn, sizeof(double));
-	double *radialAverageCounter = (double*) calloc(radial_nn, sizeof(double));
 	pthread_mutex_lock(&detector->powderRaw_mutex[powderType]);
 	memcpy(bufferRaw, detector->powderRaw[powderType], pix_nn*sizeof(double));
 	pthread_mutex_unlock(&detector->powderRaw_mutex[powderType]);
-	calculateRadialAverage(bufferRaw, radialAverage, radialAverageCounter, global, detID);
+
+	// Corrected data
+	//sprintf(filename,"%s-sumCorrected.h5",filenamebase);
+	double *bufferCorrected = (double*) calloc(pix_nn, sizeof(double));
+	double *radialAverage = (double*) calloc(radial_nn, sizeof(double));
+	double *radialAverageCounter = (double*) calloc(radial_nn, sizeof(double));
+	pthread_mutex_lock(&detector->powderCorrected_mutex[powderType]);
+	memcpy(bufferCorrected, detector->powderCorrected[powderType], pix_nn*sizeof(double));
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
+	calculateRadialAverage(bufferCorrected, radialAverage, radialAverageCounter, global, detID);
 
 	//writePowderData(filename, bufferRaw, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 	//free(bufferRaw);
@@ -185,25 +206,25 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	//writePowderData(filename, bufferAssembled, detector->image_nx, detector->image_nx, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 	
 	// Data squared (for calculation of variance)
-	//sprintf(filename,"%s-sumRawSquared.h5",filenamebase);
-	double *bufferRawSquared = (double*) calloc(pix_nn, sizeof(double));
+	//sprintf(filename,"%s-sumCorrectedSquared.h5",filenamebase);
+	double *bufferCorrectedSquared = (double*) calloc(pix_nn, sizeof(double));
 	double *radialAverageSquared = (double*) calloc(radial_nn, sizeof(double));
-	pthread_mutex_lock(&detector->powderRawSquared_mutex[powderType]);
-	memcpy(bufferRawSquared, detector->powderRawSquared[powderType], pix_nn*sizeof(double));
-	pthread_mutex_unlock(&detector->powderRawSquared_mutex[powderType]);
-	calculateRadialAverage(bufferRawSquared, radialAverageSquared, radialAverageCounter, global, detID);
-	//writePowderData(filename, bufferRawSquared, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
+	pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
+	memcpy(bufferCorrectedSquared, detector->powderCorrectedSquared[powderType], pix_nn*sizeof(double));
+	pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
+	calculateRadialAverage(bufferCorrectedSquared, radialAverageSquared, radialAverageCounter, global, detID);
+	//writePowderData(filename, bufferCorrectedSquared, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 	
 	// Sigma (variance)
-	//sprintf(filename,"%s-sumRawSigma.h5",filenamebase);
+	//sprintf(filename,"%s-sumCorrectedSigma.h5",filenamebase);
 	double *bufferSigma = (double*) calloc(pix_nn, sizeof(double));
 	double *radialAverageSigma = (double*) calloc(radial_nn, sizeof(double));
-	pthread_mutex_lock(&detector->powderRaw_mutex[powderType]);
-	pthread_mutex_lock(&detector->powderRawSquared_mutex[powderType]);
+	pthread_mutex_lock(&detector->powderCorrected_mutex[powderType]);
+	pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
 	for(long i=0; i<pix_nn; i++)
-		bufferSigma[i] = sqrt(bufferRawSquared[i]/detector->nPowderFrames[powderType] - (bufferRaw[i]*detector->powderRaw[powderType][i]/(detector->nPowderFrames[powderType]*detector->nPowderFrames[powderType])));
-	pthread_mutex_unlock(&detector->powderRaw_mutex[powderType]);
-	pthread_mutex_unlock(&detector->powderRawSquared_mutex[powderType]);
+		bufferSigma[i] = sqrt(bufferCorrectedSquared[i]/detector->nPowderFrames[powderType] - (bufferCorrected[i]*detector->powderCorrected[powderType][i]/(detector->nPowderFrames[powderType]*detector->nPowderFrames[powderType])));
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
+	pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
 	calculateRadialAverage(bufferSigma, radialAverageSigma, radialAverageCounter, global, detID);
 	//writePowderData(filename, bufferSigma, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 	
@@ -226,6 +247,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 		H5Fclose(fh);
 	}
 	
+	puts("Writing already to file!");
 	// Write image data in Raw layout
 	size[0] = detector->pix_ny;
 	size[1] = detector->pix_nx;
@@ -235,14 +257,18 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRaw);
 	H5Dclose(dh);
-	
-	//H5Sget_simple_extent_dims(sh, size, size);
-	dh = H5Dcreate(gh, "rawdatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRawSquared);
+
+	dh = H5Dcreate(gh, "correcteddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrected);
 	H5Dclose(dh);
 	
 	//H5Sget_simple_extent_dims(sh, size, size);
-	dh = H5Dcreate(gh, "rawdatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "correcteddatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSquared);
+	H5Dclose(dh);
+	
+	//H5Sget_simple_extent_dims(sh, size, size);
+	dh = H5Dcreate(gh, "correcteddatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferSigma);
 	H5Dclose(dh);
 	H5Sclose(sh);
@@ -323,8 +349,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
 	 *	Clean up stuff
 	 */
 	free(bufferRaw);
+	free(bufferCorrected);
 	free(bufferAssembled);
-	free(bufferRawSquared);
+	free(bufferCorrectedSquared);
 	free(bufferSigma);
 	free(radialAverage);
 	free(radialAverageSquared);
@@ -349,10 +376,10 @@ void saveDarkcal(cGlobal *global, int detID) {
 	printf("Processing darkcal\n");
 	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
-	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
+	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
 	for(long i=0; i<pix_nn; i++)
-		buffer[i] = detector->powderRaw[0][i]/detector->nPowderFrames[0];
-	pthread_mutex_unlock(&detector->powderRaw_mutex[0]);
+		buffer[i] = detector->powderCorrected[0][i]/detector->nPowderFrames[0];
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
 	printf("Saving darkcal to file: %s\n", filename);
 	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
 	free(buffer);
@@ -371,11 +398,11 @@ void saveGaincal(cGlobal *global, int detID) {
 	printf("Processing gaincal\n");
 	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
 	// Calculate average intensity per frame
-	pthread_mutex_lock(&detector->powderRaw_mutex[0]);
+	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
 	double *buffer = (double*) calloc(pix_nn, sizeof(double));
 	for(long i=0; i<pix_nn; i++)
-		buffer[i] = (detector->powderRaw[0][i]/detector->nPowderFrames[0]);
-	pthread_mutex_unlock(&detector->powderRaw_mutex[0]);
+		buffer[i] = (detector->powderCorrected[0][i]/detector->nPowderFrames[0]);
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
 	
 	// Find median value (this value will become gain=1)
 	float *buffer2 = (float*) calloc(pix_nn, sizeof(float));

@@ -280,6 +280,7 @@ if [ $QUE ]; then
 	echo "$SCRIPTNAME job sent to queue"
 else
 	#FULLCOMMAND="valgrind --leak-check=full $CHEETAH $ARGS" # >& $LOGFILE"
+	#FULLCOMMAND="valgrind $CHEETAH $ARGS" # >& $LOGFILE"
 	FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
 	echo $FULLCOMMAND
 	$FULLCOMMAND

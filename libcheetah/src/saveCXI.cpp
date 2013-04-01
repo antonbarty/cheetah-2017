@@ -183,12 +183,28 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
   H5Sclose(dataspace);
 }
 
-static hid_t create2DImage(const char *name, hid_t loc, int width, int height, hid_t dataType){
+template <class T> 
+static void add2DData(const char *name, hid_t loc, int width, int height, T *data){
   hsize_t dims[2] = {height,width};
   hsize_t maxdims[2] = {height,width};
+  hid_t datatype;
+
+  if(typeid(T) == typeid(int)){
+    datatype = H5T_NATIVE_INT32;
+  }else if(typeid(T) == typeid(double)){
+    datatype = H5T_NATIVE_DOUBLE;
+  }else if(typeid(T) == typeid(unsigned int)){
+    datatype = H5T_NATIVE_UINT32;
+  }else if(typeid(T) == typeid(unsigned short)){
+    datatype = H5T_NATIVE_UINT16;
+  }else if(typeid(T) == typeid(short)){
+    datatype = H5T_NATIVE_INT16;
+  }
   hid_t dataspace = H5Screate_simple(2, dims, dims);
-  hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  return dataset;    
+  hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);  
+  H5Dclose(dataset);
+  H5Sclose(dataspace);
 }
 
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
@@ -323,6 +339,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     char detectorPath[1024];
     char dataName[1024];
     char imageName[1024];
+    char sumName[1024];
     
     // /entry_1/instrument_1/detector_i
     sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld",detID+1);
@@ -346,8 +363,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	d.mask = create2DStack("mask", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_NATIVE_UINT16);
       }
       // /entry_1/instrument_1/detector_i/mask_shared
-      d.mask_shared = create2DImage("mask_shared", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_NATIVE_UINT16);
-      H5Dwrite(d.mask_shared, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, global->detector[detID].pixelmask_shared);
+      add2DData("mask_shared", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, global->detector[detID].pixelmask_shared);
       // /entry_1/instrument_1/detector_i/thumbnail
       d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
       // /entry_1/instrument_1/detector_i/experiment_identifier -> /entry_1/experiment_identifier
@@ -369,10 +385,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	img.mask = create2DStack("mask", img.self, global->detector[detID].image_nx, image_ny, H5T_NATIVE_UINT16);
       }
       // /entry_1/image_i/mask_shared
-      d.mask_shared = create2DImage("mask_shared", img.self, global->detector[detID].image_nx, image_ny, H5T_NATIVE_UINT16);
       uint16_t *image_pixelmask_shared = (uint16_t*) calloc(global->detector[detID].image_nn,sizeof(uint16_t));
       assemble2Dmask(image_pixelmask_shared, global->detector[detID].pixelmask_shared, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_nn, global->detector[detID].image_nx, global->detector[detID].image_nn, global->assembleMode);
-      H5Dwrite(d.mask_shared, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT,image_pixelmask_shared);   
+      add2DData("mask_shared", img.self, global->detector[detID].image_nx, image_ny, image_pixelmask_shared);
       // /entry_1/image_i/detector_1
       H5Lcreate_soft(detectorPath,img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
       // /entry_1/image_i/source_1
@@ -388,6 +403,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       cxi->entry.images.push_back(img);
       free(image_pixelmask_shared);
     }
+
+    
 
   }
 

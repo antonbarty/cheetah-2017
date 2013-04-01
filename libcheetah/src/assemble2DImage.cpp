@@ -194,7 +194,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
   long	image_index;
   
   for(long i=0;i<image_nn;i++){
-    assembled_mask[i] = 0;
+    assembled_mask[i] = PIXEL_IS_MISSING;
   }
        		
   if(assembleMode == ASSEMBLE_MODE_INTEGRATE_2X2){
@@ -214,21 +214,25 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
       if(ix>=0 && iy>=0 && ix<image_nx && iy<image_nx) {
 	image_index = ix + image_nx*iy;
 	assembled_mask[image_index] |= original_mask[i];
+	assembled_mask[image_index] &= ~PIXEL_IS_MISSING;
       }
       // (+1,0)
       if((ix+1)>=0 && iy>=0 && (ix+1)<image_nx && iy<image_nx) {
 	image_index = (ix+1) + image_nx*iy;
 	assembled_mask[image_index] |= original_mask[i];
+	assembled_mask[image_index] &= ~PIXEL_IS_MISSING;
       }
       // (0,+1)
       if(ix>=0 && (iy+1)>=0 && ix<image_nx && (iy+1)<image_nx) {
 	image_index = ix + image_nx*(iy+1);
 	assembled_mask[image_index] |= original_mask[i];
+	assembled_mask[image_index] &= ~PIXEL_IS_MISSING;
       }
       // (+1,+1)
       if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<image_nx && (iy+1)<image_nx) {
 	image_index = (ix+1) + image_nx*(iy+1);
 	assembled_mask[image_index] |= original_mask[i];
+	assembled_mask[image_index] &= ~PIXEL_IS_MISSING;
       }
     }
   }
@@ -244,7 +248,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
       iy = (long) round(y);
 
       image_index = ix + image_nx*iy;
-      assembled_mask[image_index]=original_mask[i];
+      assembled_mask[image_index] = original_mask[i];
     }
   }
 }
