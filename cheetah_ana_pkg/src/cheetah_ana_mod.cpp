@@ -101,6 +101,9 @@ namespace cheetah_ana_pkg {
 	  : Module(name)
 	{
 		cout << "*** Constructor ***" << endl;
+		/* If SIT_DATA is undefined set it to the builtin value */
+		setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
+
 		// get the values from configuration or use defaults
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");

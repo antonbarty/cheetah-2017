@@ -18,7 +18,7 @@ $ ccmake ..
 
 - Press "c" to configure. 
 
-- It's possible that you have to specify ANA_CURRENT_ROOT manually. It should
+- It's possible that you have to specify ANA_RELEASE manually. It should
 point to the ana-current directory, for example on psexport it is 
 /reg/g/psdm/sw/releases/ana-current/
 
