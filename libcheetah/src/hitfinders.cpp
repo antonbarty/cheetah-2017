@@ -214,46 +214,48 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 
 int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 
-	long		nat, hit;
-	float		total;
-	long		pix_nn = global->detector[detID].pix_nn;
-	uint16_t         *mask = eventData->detector[detID].pixelmask;
+  long		nat = 0;
+  long            hit = 0;
+  float		total;
+  long		pix_nn = global->detector[detID].pix_nn;
+  uint16_t         *mask = eventData->detector[detID].pixelmask;
 	
-	/*
-	 *	Create a buffer for image data so we don't nuke the main image by mistake
-	 */	
-	float *temp = (float*) calloc(pix_nn, sizeof(float));
-	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
-	
-	
-	// combine pixelmask bits
-	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
-	
-	/*
-	 *	Apply masks
-	 *	(multiply data by 0 to ignore regions)
-	 */
-	for(long i=0;i<pix_nn;i++){
-	  temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
-	}
+  /*
+   *	Create a buffer for image data so we don't nuke the main image by mistake
+   */	
+  float *temp = (float*) calloc(pix_nn, sizeof(float));
+  memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
 	
 	
-	for(long i=0;i<pix_nn;i++){
-		if(temp[i] > global->hitfinderADC){
-			total += temp[i];
-			nat++;
-		}
-	}
-	if(nat >= global->hitfinderMinPixCount)
-		hit = 1;
+  // combine pixelmask bits
+  uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
 	
-	eventData->peakNpix = nat;
-	eventData->nPeaks = nat;
-	eventData->peakTotal = total;
+  /*
+   *	Apply masks
+   *	(multiply data by 0 to ignore regions)
+   */
+  for(long i=0;i<pix_nn;i++){
+    temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
+  }
 	
-	free(temp);
+  for(long i=0;i<pix_nn;i++){
+    if(temp[i] > global->hitfinderADC){
+      total += temp[i];
+      nat++;
+    }
+  }
+  printf("Hitfinder: ADC Pixel count %i\n",nat);
+	
+  if(nat >= global->hitfinderMinPixCount)
+    hit = 1;
+	
+  eventData->peakNpix = nat;
+  eventData->nPeaks = nat;
+  eventData->peakTotal = total;
+	
+  free(temp);
 
-	return hit;
+  return hit;
 }
 
 

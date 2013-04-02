@@ -166,9 +166,6 @@ void *worker(void *threadarg) {
 	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
       updateBackgroundBuffer(eventData, global, detID); 
 		    
-      //printf("startFrames: %li<%li\n",eventData->threadNum,global->detector[detID].startFrames);
-      //printf("BG: %i: %li<%li\n",global->detector[detID].useSubtractPersistentBackground,global->detector[detID].bgCounter,global->detector[detID].bgMemory);
-      //printf("Hot: %i: %li,%li\n",global->detector[detID].useAutoHotpixel,global->detector[detID].hotpixCounter,global->detector[detID].hotpixRecalc);
       printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarate);
       goto cleanup;
     }
@@ -198,7 +195,6 @@ void *worker(void *threadarg) {
    *	Update running backround estimate based on non-hits
    */
   updateBackgroundBuffer(eventData, global, hit); 
-	
 	
 	
   /*
@@ -281,16 +277,14 @@ void *worker(void *threadarg) {
   /*
    *	Maintain a running sum of data (powder patterns)
    */
-  puts("Before...");
   addToPowder(eventData, global);
-  puts("After");
+
   /*
    * calculate the one dimesional beam spectrum
    */
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
-  puts("Before save...");    
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
@@ -301,13 +295,12 @@ void *worker(void *threadarg) {
     }
     else {
       writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1f Hz): Writing data to: %s\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname);
+      printf("r%04u:%li (%2.1f Hz): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname, eventData->nPeaks);
     }
   }
   else {
     printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
   }
-  puts("After save...");
 
 
 
@@ -325,7 +318,6 @@ void *worker(void *threadarg) {
    *	Write out information on each frame to a log file
    */
   pthread_mutex_lock(&global->framefp_mutex);
-  printf("A\n");
 
   fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
   pthread_mutex_unlock(&global->framefp_mutex);
@@ -335,10 +327,6 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
 
-
-
-  printf("End worker\n");
-	
 	
   /*
    *	Cleanup and exit
@@ -353,13 +341,10 @@ void *worker(void *threadarg) {
   if(eventData->useThreads == 1) {
     cheetahDestroyEvent(eventData);
     pthread_exit(NULL);
-    printf("B1\n");
   }
   else {
-    printf("B1\n");
     return(NULL);
   }
-  printf("End worker");
 }
 
 

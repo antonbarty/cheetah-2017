@@ -31,64 +31,64 @@
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 
-	DETECTOR_LOOP {
-        if(global->detector[detID].useSubtractPersistentBackground){
+  DETECTOR_LOOP {
+    if(global->detector[detID].useSubtractPersistentBackground){
 			
-			/*
-			 *	Subtract persistent background
-			 */
-			int		scaleBg = global->detector[detID].scaleBackground;
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			float	*background = global->detector[detID].selfdark;
+      /*
+       *	Subtract persistent background
+       */
+      int		scaleBg = global->detector[detID].scaleBackground;
+      long	pix_nn = global->detector[detID].pix_nn;
+      float	*frameData = eventData->detector[detID].corrected_data;
+      float	*background = global->detector[detID].selfdark;
 
-			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+      subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
 			
 			
-			/*
-			 *	Recalculate background from time to time
-			 */
-			int16_t *frameBuffer = global->detector[detID].bg_buffer; 
-			int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
-			long	bufferDepth = global->detector[detID].bgMemory;
-			long	bgCounter = global->detector[detID].bgCounter;
-			long	bgRecalc = global->detector[detID].bgRecalc;
-			long	lastUpdate = global->detector[detID].last_bg_update;
-			float	medianPoint = global->detector[detID].bgMedian;
-			long	threshold = lrint(bufferDepth*medianPoint);
+      /*
+       *	Recalculate background from time to time
+       */
+      int16_t *frameBuffer = global->detector[detID].bg_buffer; 
+      int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
+      long	bufferDepth = global->detector[detID].bgMemory;
+      long	bgCounter = global->detector[detID].bgCounter;
+      long	bgRecalc = global->detector[detID].bgRecalc;
+      long	lastUpdate = global->detector[detID].last_bg_update;
+      float	medianPoint = global->detector[detID].bgMedian;
+      long	threshold = lrint(bufferDepth*medianPoint);
 
-			// Lock threads for the first few cycles
-			if(bgCounter < 3*bgRecalc)
-				lockThreads = 1;
+      // Lock threads for the first few cycles
+      if(bgCounter < 3*bgRecalc)
+	lockThreads = 1;
 			
-            pthread_mutex_lock(&global->bgbuffer_mutex);
+      pthread_mutex_lock(&global->bgbuffer_mutex);
 
-            if( ((bgCounter % bgRecalc) == 0)  && bgCounter != lastUpdate ) {
-				if(lockThreads)
-					pthread_mutex_lock(&global->selfdark_mutex);
-				printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
-				global->detector[detID].last_bg_update = bgCounter;				
-				pthread_mutex_unlock(&global->bgbuffer_mutex);
-				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
-				if(lockThreads)
-					pthread_mutex_unlock(&global->selfdark_mutex);
-            }
-			else
-				pthread_mutex_unlock(&global->bgbuffer_mutex);
+      if( ((bgCounter % bgRecalc) == 0)  && bgCounter != lastUpdate ) {
+	if(lockThreads)
+	  pthread_mutex_lock(&global->selfdark_mutex);
+	printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
+	global->detector[detID].last_bg_update = bgCounter;				
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
+	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
+	if(lockThreads)
+	  pthread_mutex_unlock(&global->selfdark_mutex);
+      }
+      else
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
 			
 			
 			
-			/*
-			 *	Remember GMD values  (why is this here?)
-			 */
-			float	gmd;
-			pthread_mutex_lock(&global->selfdark_mutex);
-			gmd = (eventData->gmd21+eventData->gmd22)/2;
-			global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-			pthread_mutex_unlock(&global->selfdark_mutex);
+      /*
+       *	Remember GMD values  (why is this here?)
+       */
+      float	gmd;
+      pthread_mutex_lock(&global->selfdark_mutex);
+      gmd = (eventData->gmd21+eventData->gmd22)/2;
+      global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
+      pthread_mutex_unlock(&global->selfdark_mutex);
 
-        }
-    }	
+    }
+  }	
 }
 
 /*
