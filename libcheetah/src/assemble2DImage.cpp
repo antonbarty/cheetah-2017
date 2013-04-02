@@ -80,8 +80,8 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     
     for(long i=0;i<pix_nn;i++){
       // Pixel location with (0,0) at array element (0,0) in bottom left corner
-      x = pix_x[i] + image_nx/2;
-      y = pix_y[i] + image_nx/2;
+      x = pix_x[i] + image_nx/2.;
+      y = pix_y[i] + image_nx/2.;
       pixel_value = corrected_data[i];
 		
       // Split coordinate into integer and fractional parts
@@ -161,12 +161,12 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     
     for(long i=0;i<pix_nn;i++){
       // Pixel location with (0,0) at array element (0,0) in bottom left corner
-      x = pix_x[i] + image_nx/2;
-      y = pix_y[i] + image_nx/2;
+      x = pix_x[i] + image_nx/2.;
+      y = pix_y[i] + image_nx/2.;
       
       // Split coordinate into integer and fractional parts
-      ix = (long) round(x);
-      iy = (long) round(y);
+      ix = lrint(x);
+      iy = lrint(y);
 
       image_index = ix + image_nx*iy;
       // Check for int16 overflow
@@ -240,12 +240,12 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
     
     for(long i=0;i<pix_nn;i++){
       // Pixel location with (0,0) at array element (0,0) in bottom left corner
-      x = pix_x[i] + image_nx/2;
-      y = pix_y[i] + image_nx/2;
+      x = pix_x[i] + image_nx/2.;
+      y = pix_y[i] + image_nx/2.;
       
       // Split coordinate into integer and fractional parts
-      ix = (long) round(x);
-      iy = (long) round(y);
+      ix = lrint(x);
+      iy = lrint(y);
 
       image_index = ix + image_nx*iy;
       assembled_mask[image_index] = original_mask[i];
