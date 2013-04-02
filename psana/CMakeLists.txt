@@ -3,7 +3,7 @@ find_package(PSANA REQUIRED)
 #find_package(Cheetah REQUIRED)
 #find_package(HDF5 REQUIRED)
 
-file(GLOB sources "${ANA_CURRENT_ROOT}/psana/app/*.cpp")
+file(GLOB sources "${ANA_RELEASE}/psana/app/*.cpp")
 
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
 

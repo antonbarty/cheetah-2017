@@ -1,5 +1,10 @@
+find_file(ANA_RELEASE ana-current /opt/psana/g/psdm/portable/sw/releases/ /reg/g/psdm/sw/releases/ /cfel/common/slac/reg/g/psdm/portable/sw/releases/)
 
-find_file(ANA_CURRENT_ROOT ana-current /opt/psana/g/psdm/portable/sw/releases/ /reg/g/psdm/sw/releases/ /cfel/common/slac/reg/g/psdm/portable/sw/releases/)
+IF(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
+	SET(ANA_SIT_DATA ${ANA_RELEASE}/../../../data/ CACHE PATH "Path equivalent to $SIT_DATA")
+ELSE(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
+	find_path(ANA_SIT_DATA ExpNameDb  DOC "Path equivalent to $SIT_DATA")
+ENDIF(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
 
 file(READ /etc/redhat-release redhat_release)
 string(REGEX MATCH " 6\\." rhel6 ${redhat_release})
@@ -21,10 +26,9 @@ LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils acqdata andordata bld camda
 
 foreach(ana_lib IN LISTS ana_libs)
 	message(STATUS "locating ${ana_lib}")
-	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/lib/)
+	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/)
 	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
 	LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
 endforeach(ana_lib)
 
-LIST(APPEND PSANA_INCLUDES ${ANA_CURRENT_ROOT}/include ${ANA_CURRENT_ROOT}/arch/${ANA_ARCH}/geninc)
-
+LIST(APPEND PSANA_INCLUDES ${ANA_RELEASE}/include ${ANA_RELEASE}/arch/${ANA_ARCH}/geninc)
