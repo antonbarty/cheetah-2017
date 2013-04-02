@@ -61,6 +61,7 @@ static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
+static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
 
 
 
@@ -215,9 +216,18 @@ public:
 	float  hotpixFreq;
 	long   hotpixCounter;
 	long   nhot;
+	long   last_hotpix_update;
 	// Apply persistently hot pixels
 	int    applyAutoHotpixel;
-	long   last_hotpix_update;
+	// Identify persistently illuminated pixels (Halo)
+	int    useAutoHalopixel;
+	float  halopixMinDeviation;
+	int    halopixMemory;
+	int    halopixRecalc;
+	long   halopixCounter;
+	long   nhalo;
+	long   last_halopix_update;
+	// Start frames for calibration before output
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
 	int    usePnccdOffsetCorrection;
@@ -233,6 +243,7 @@ public:
 	 */
 	int16_t   *bg_buffer;
 	int16_t   *hotpix_buffer;
+	float   *halopix_buffer;
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;

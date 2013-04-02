@@ -4,7 +4,7 @@
 # Max Hantke
 
 from pylab import *
-import h5py,ConfigParser
+import h5py,ConfigParser,sys
 
 if len(sys.argv) < 2:
     print "WARNING: No configuration file specified. Assume the following settings:"

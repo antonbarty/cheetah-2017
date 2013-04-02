@@ -264,6 +264,7 @@ public:
 	pthread_t  *threadID;
 	pthread_mutex_t  nActiveThreads_mutex;
 	pthread_mutex_t  hotpixel_mutex;
+	pthread_mutex_t  halopixel_mutex;
 	pthread_mutex_t  selfdark_mutex;
 	pthread_mutex_t  bgbuffer_mutex;
 	pthread_mutex_t  nhits_mutex;

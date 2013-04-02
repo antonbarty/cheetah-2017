@@ -122,15 +122,7 @@ void *worker(void *threadarg) {
       eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
     }
   }
-	
-
-  /*
-   *	Calculate hot pixel masks
-   */
-  calculateHotPixelMask(global);
-    
-	
-
+       
   /*
    *	Subtract persistent photon background
    */
@@ -149,13 +141,18 @@ void *worker(void *threadarg) {
    */
   cspadModuleSubtract2(eventData, global);
 
-	
-	
   /*
-   *	Identify and remove hot pixels
+   *	Apply bad pixels
    */
   applyBadPixelMask(eventData, global);
-  applyHotPixelMask(eventData, global);	
+	
+  /*
+   *	Identify and kill hot pixels
+   */
+  identifyHotPixels(eventData, global);	
+  calculateHotPixelMask(global);
+  applyHotPixelMask(eventData,global);
+
 
   /*
    *	Skip first set of frames to build up running estimate of background...
@@ -190,6 +187,11 @@ void *worker(void *threadarg) {
     eventData->hit = hit;
   }
 	
+  /*
+   *	Identify halo pixels
+   */
+  identifyHaloPixels(eventData, global);	
+  calculateHaloPixelMask(global);
 	
   /*
    *	Update running backround estimate based on non-hits

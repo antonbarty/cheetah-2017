@@ -282,6 +282,7 @@ void cGlobal::setup() {
 	threadCounter = 0;
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
+	pthread_mutex_init(&halopixel_mutex, NULL);
 	pthread_mutex_init(&selfdark_mutex, NULL);
 	pthread_mutex_init(&bgbuffer_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
@@ -381,6 +382,10 @@ void cGlobal::setup() {
 		detector[i].last_hotpix_update = 0;
 		detector[i].hotpixRecalc = detector[i].bgRecalc;
 		detector[i].nhot = 0;
+		detector[i].halopixCounter = 0;
+		detector[i].last_halopix_update = 0;
+		detector[i].halopixRecalc = detector[i].bgRecalc;
+		detector[i].nhalo = 0;
 		detector[i].detectorZprevious = 0;
 		detector[i].detectorZ = 0;
 		detector[i].detectorEncoderValue = 0;

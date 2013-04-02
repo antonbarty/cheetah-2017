@@ -13,7 +13,11 @@ void cspadModuleSubtract(cEventData*, cGlobal*, int);
 void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
+void identifyHotPixels(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
+void calculateHaloPixelMask(cGlobal*);
+void identifyHaloPixels(cEventData*, cGlobal*);
+
 
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
@@ -22,6 +26,7 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
+long calculateHaloPixelMask(uint16_t*, float*, float, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);

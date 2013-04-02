@@ -471,6 +471,7 @@ void cheetahExit(cGlobal *global) {
 		free(global->detector[i].gaincal);
 		free(global->detector[i].bg_buffer);
 		free(global->detector[i].hotpix_buffer);
+		free(global->detector[i].halopix_buffer);
         
         for(long j=0; j<global->nPowderClasses; j++) {
             free(global->detector[i].powderRaw[j]);
@@ -488,6 +489,7 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->nActiveThreads_mutex);
 	pthread_mutex_destroy(&global->selfdark_mutex);
 	pthread_mutex_destroy(&global->hotpixel_mutex);
+	pthread_mutex_destroy(&global->halopixel_mutex);
 	pthread_mutex_destroy(&global->bgbuffer_mutex);
 	pthread_mutex_destroy(&global->framefp_mutex);
 	pthread_mutex_destroy(&global->peaksfp_mutex);

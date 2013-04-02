@@ -112,6 +112,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     hotpixMemory = 50;
     // Kill persistently hot pixels
     applyAutoHotpixel = 0;
+
+    // Identify persistently illuminated pixels (halo)
+    useAutoHalopixel = 0;
+    halopixMinDeviation = 100;
+    halopixMemory = 50;
     
     // correction for PNCCD read out artifacts 
     usePnccdOffsetCorrection = 0;
@@ -247,8 +252,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		bgMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "useautohotpixel")) {
-		//useAutoHotpixel = atoi(value);
-		// Eventually delete this, but not during beamtime!
+	  // useAutoHotpixel = atoi(value);
+	  // Eventually delete this, but not during beamtime!
 	}
 	else if (!strcmp(tag, "hotpixfreq")) {
 		hotpixFreq = atof(value);
@@ -265,6 +270,17 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotpixMemory = atoi(value);
+	}
+	else if (!strcmp(tag, "useautohalopixel")) {
+	  useAutoHalopixel = atoi(value);
+	}
+	else if (!strcmp(tag, "halopixmindeviation")) {
+	  halopixMinDeviation = atof(value);
+	  useAutoHalopixel = 1;
+	}
+	else if (!strcmp(tag, "halopixmemory")) {
+	  halopixMemory = atoi(value);
+	  useAutoHalopixel = 1;
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -360,6 +376,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     selfdark = (float*) calloc(pix_nn, sizeof(float));
     bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
     hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+    halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float)); 
     for(long j=0; j<pix_nn; j++) {
         selfdark[j] = 0;
     }
