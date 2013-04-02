@@ -244,7 +244,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
       nat++;
     }
   }
-  printf("Hitfinder: ADC Pixel count %i\n",nat);
 	
   if(nat >= global->hitfinderMinPixCount)
     hit = 1;
