@@ -86,8 +86,9 @@ cGlobal::cGlobal(void) {
 	//hitfinderLimitRes = 1;
 	hitfinderMinRes = 0;
 	hitfinderMaxRes = 1e10;
+	hitfinderResolutionUnitPixel = 0;
 	hitfinderMinSNR = 40;
-
+	hitfinderDisregardHalopix = 0;
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -755,6 +756,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderdisregardhalopix")) {
+		hitfinderDisregardHalopix = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
 	}
@@ -802,6 +806,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
 		//hitfinderLimitRes = 1;
+	}
+	else if (!strcmp(tag, "hitfinderresolutionunitpixel")) {
+		hitfinderResolutionUnitPixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderminsnr")) {
 		hitfinderMinSNR = atof(value);
@@ -923,6 +930,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+	fprintf(fp, "hitfinderDisregardHalopix=%d\n",hitfinderDisregardHalopix);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
@@ -939,6 +947,7 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
 	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
 	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
+	fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
 	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
 	fprintf(fp, "saveCXI=%f\n",saveCXI);
 	//fprintf(fp, "selfdarkMemory=%li\n",bgMemory);

@@ -78,7 +78,7 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
 	
 	DETECTOR_LOOP {
-		if(global->detector[detID].useBadPixelMask) {
+		if(global->detector[detID].applyBadPixelMask) {
 			long	 pix_nn = global->detector[detID].pix_nn;
 			float	 *data = eventData->detector[detID].corrected_data;
 			uint16_t *mask = eventData->detector[detID].pixelmask;

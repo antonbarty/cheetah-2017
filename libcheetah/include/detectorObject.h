@@ -179,6 +179,7 @@ public:
 	 *  Flags for detector processing options
 	 */
 	int    useBadPixelMask;
+	int    applyBadPixelMask;
 	int    useBadDataMask;
 	int    useDarkcalSubtraction;
 	// Subtract common mode from each ASIC

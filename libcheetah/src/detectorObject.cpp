@@ -71,6 +71,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
     // Bad pixel mask    
     useBadPixelMask = 0;
+    applyBadPixelMask = 1;
     
     // Saturated pixels
     maskSaturatedPixels = 0;
@@ -207,6 +208,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "badpixelmap")) {
 		strcpy(badpixelFile, value);
 		useBadPixelMask = 1;
+	}
+	else if (!strcmp(tag, "applybadpixelmap")) {
+		applyBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "baddatamap")) {
 		strcpy(baddataFile, value);
@@ -605,21 +609,29 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         pix_kr[i] = kr;
         pix_res[i] = res;
         
-		if ( res < minres )
-			minres = res;
-		if ( res > maxres )
-			maxres = res;
+	if ( res < minres )
+	  minres = res;
+	if ( res > maxres )
+	  maxres = res;
         
 		
         // Generate resolution limit mask
-		// (resolution in PIXELS)
-		if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
-		  pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-		else
-		  pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	if (!global->hitfinderResolutionUnitPixel){
+	  // (resolution in Angstrom (!!!))
+	  if (pix_res[i] < global->hitfinderMaxRes && pix_res[i] > global->hitfinderMinRes ) 
+	    pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	  else
+	    pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	}
+	else{
+	// (resolution in pixel (!!!))
+	  if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+	    pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	  else
+	    pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	}
     }
-
-	printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
+    printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
 
 }
 

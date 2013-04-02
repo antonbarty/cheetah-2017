@@ -76,6 +76,8 @@ public:
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
 	int      hitfinderADC;
+	/** @brief Do not count pixels in halo for hit finding. */
+	int      hitfinderDisregardHalopix;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -124,12 +126,17 @@ public:
 	/** @brief Minimum resolution to be considered in hitfinding.
 	 * The units are angstroms.  "High" resolution is numerically low,
 	 * thus the minimum resolution should be larger than the maximum
-	 * resolution (sorry for the confusion...). */
+	 * resolution (sorry for the confusion...).
+	 * This can be changed into "pixel" with the flag hitfinderResolutionUnitPixel
+	 */
 	float    hitfinderMinRes;
 	/** @brief The maximum resolution to be considered in hitfinding.
 	 *
 	 * See hitfinderMinRes for more details. */
 	float    hitfinderMaxRes;
+	/** @brief hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel.
+	 */
+	int      hitfinderResolutionUnitPixel;
 	/** @brief Binary map of pixels excluded based on resolution. */
 	int     *hitfinderResMask;
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */

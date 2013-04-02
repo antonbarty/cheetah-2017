@@ -14,7 +14,7 @@ filename = sys.argv[1]
 
 I = Image.open(filename)
 D = array(I.getdata(),dtype='int')[:,0]
-D = array(D!=0,dtype='int')
+D = array(D==0,dtype='int')
 N = int(sqrt(len(D)))
 D = D.reshape((N,N))
 
