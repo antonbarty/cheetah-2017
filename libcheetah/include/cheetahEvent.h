@@ -1,5 +1,5 @@
 /*
- *  worker.h
+ *  cheetahEvent.h
  *  cheetah
  *
  *  Created by Anton Barty on 6/2/11.
@@ -8,7 +8,7 @@
  */
 
 
-
+#include <stdarg.h>
 
 
 #ifndef CHEETAHEVENT_H
@@ -127,7 +127,18 @@ public:
 
 
 
-#define ERROR(...) fprintf(stderr, __VA_ARGS__)
+//#define ERROR(...) fprintf(stderr, __VA_ARGS__)#
+#define ERROR(...) cheetahError(__FILE__, __LINE__, __VA_ARGS__)
+
+void static cheetahError(const char *filename, int line, const char *format, ...){
+  va_list ap;
+  va_start(ap,format);
+  fprintf(stderr,"ERROR in %s:%d: ",filename,line);
+  vfprintf(stderr,format,ap);
+  va_end(ap);
+}
+
+
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)

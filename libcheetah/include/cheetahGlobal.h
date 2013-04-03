@@ -124,17 +124,20 @@ public:
 	/** @brief Toggle the useage of a resolution-based annulus mask. */
 	//int      hitfinderLimitRes;
 	/** @brief Minimum resolution to be considered in hitfinding.
-	 * The units are angstroms.  "High" resolution is numerically low,
-	 * thus the minimum resolution should be larger than the maximum
-	 * resolution (sorry for the confusion...).
-	 * This can be changed into "pixel" with the flag hitfinderResolutionUnitPixel
+	 * If hitfinderResolutionUnitPixel==0 (default) the unit of
+	 * hitfinderMinRes and hitfinderMaxRes is angstrom and pixels
+	 * below the defined resolution limit will be not considered
+	 * for hitfinding.
+	 * If hitfinderResolutionUnitPixel==1 the unit of hitfinderMinRes
+	 * and hitfinderMaxRes is pixel and pixels within a circle of
+	 * radius hitfinderMinRes pixels will be not considered for hitfinding.
 	 */
 	float    hitfinderMinRes;
 	/** @brief The maximum resolution to be considered in hitfinding.
-	 *
 	 * See hitfinderMinRes for more details. */
 	float    hitfinderMaxRes;
-	/** @brief hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel.
+	/** @brief hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel
+	 * and not angstrom. See hitfinderMinRes for more details.
 	 */
 	int      hitfinderResolutionUnitPixel;
 	/** @brief Binary map of pixels excluded based on resolution. */
