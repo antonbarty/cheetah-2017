@@ -97,38 +97,30 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
  */
 void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
-	DETECTOR_LOOP {
-        if (global->detector[detID].useSubtractPersistentBackground)
+  DETECTOR_LOOP {
+    if (global->detector[detID].useSubtractPersistentBackground)
 						
-            if (hit==0 || global->detector[detID].bgIncludeHits) {
+      if (hit==0 || global->detector[detID].bgIncludeHits) {
 				
-				int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
-				long	bgCounter = global->detector[detID].bgCounter;
-				long	bufferDepth = global->detector[detID].bgMemory;
-				long	pix_nn = global->detector[detID].pix_nn;
-				int16_t	*frameBuffer = global->detector[detID].bg_buffer;
-				int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
+	int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
+	long	bufferDepth = global->detector[detID].bgMemory;
+	long	pix_nn = global->detector[detID].pix_nn;
+	int16_t	*frameBuffer = global->detector[detID].bg_buffer;
+	int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
 				
-
-				if(lockThreads)
-					pthread_mutex_lock(&global->bgbuffer_mutex);
-				
-				updateBackgroundBuffer(data16, frameBuffer, bgCounter, bufferDepth, pix_nn);
-				global->detector[detID].bgCounter += 1;
-				
-				if(lockThreads)
-					pthread_mutex_unlock(&global->bgbuffer_mutex);
-				
-			}		
-    }
-}
-
-// Do we really need a separarte function for this?
-void updateBackgroundBuffer(int16_t *data16, int16_t *frameBuffer, long bgCounter, long bufferDepth, long pix_nn){
-	
-	long frameID = bgCounter%bufferDepth;	
+#ifdef __GNUC__
+	long bgCounter = __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
+#else
+	// ??? Unpredictable outcome if not locked
+	if(lockThreads){pthread_mutex_lock(&global->bgbuffer_mutex);}
+	long bgCounter = global->detector[detID].bgCounter;
+	global->detector[detID].bgCounter += 1;
+	if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
+#endif
+	long frameID = bgCounter%bufferDepth;					
 	memcpy(frameBuffer+pix_nn*frameID, data16, pix_nn*sizeof(int16_t));
-	
+      }		
+  }
 }
 
 

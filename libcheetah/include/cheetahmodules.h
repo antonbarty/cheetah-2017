@@ -43,7 +43,6 @@ void subtractLocalBackground(float*, long, long, long, long, long);
 void checkSaturatedPixels(uint16_t*, uint16_t*, long, long);
 void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
-void updateBackgroundBuffer(int16_t*, int16_t*, long, long, long);
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
