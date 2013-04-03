@@ -136,6 +136,7 @@ void static cheetahError(const char *filename, int line, const char *format, ...
   fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
   vfprintf(stderr,format,ap);
   va_end(ap);
+  abort();
 }
 
 
