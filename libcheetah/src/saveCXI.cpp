@@ -50,12 +50,12 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hsize_t maxdims[1] = {H5S_UNLIMITED};
   hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
-  if( dataspace<0 ) ERROR("Cannot create dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   /* Modify dataset creation properties, i.e. enable chunking  */
   H5Pset_chunk(cparms, 1, dims);
   //  H5Pset_deflate (cparms, 2);
   hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
-  if( dataset<0 ) ERROR("Cannot create dataset.\n");
+  if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
 
   const char * axis = "experiment_identifier";
   hsize_t one = 1;
@@ -80,7 +80,7 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
 
   
   hid_t dataspace = H5Dget_space (dataset);
-  if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   H5Sget_simple_extent_dims(dataspace, block, mdims);
   /* check if we need to extend the dataset */
   if(block[0] <= stackSlice){
@@ -90,7 +90,7 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
     H5Dset_extent(dataset, block);
     /* get enlarged dataspace */
     dataspace = H5Dget_space (dataset);
-    if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+    if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
   block[0] = 1;
   hid_t memspace = H5Screate_simple (1, block, NULL);
@@ -112,7 +112,7 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
   }
 
   hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  if( hs<0 ) ERROR("Cannot select hyperslab.\n");
+  if( hs<0 ) {ERROR("Cannot select hyperslab.\n");}
   w = H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, &value) < 0;
   if( w<0 ){
     ERROR("Cannot write to file.\n");
@@ -129,12 +129,12 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   hsize_t dims[3] = {CXI::initialStackSize,height,width};
   hsize_t maxdims[3] = {H5S_UNLIMITED,height,width};
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
-  if( dataspace<0 ) ERROR("Cannot create dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   H5Pset_chunk(cparms, 3, dims);
   //  H5Pset_deflate (cparms, 2);
   hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
-  if( dataset<0 ) ERROR("Cannot create dataset.\n");
+  if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
   H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
 
   const char * axis = "experiment_identifier:y:x";
@@ -160,7 +160,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
   hsize_t mdims[3];
   /* Use the existing dimensions as block size */
   hid_t dataspace = H5Dget_space (dataset);
-  if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   H5Sget_simple_extent_dims(dataspace, block, mdims);
   /* check if we need to extend the dataset */
   if(block[0] <= stackSlice){
@@ -170,7 +170,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
     H5Dextend (dataset, block);
     /* get enlarged dataspace */
     dataspace = H5Dget_space (dataset);
-    if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+    if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
   block[0] = 1;
   hid_t memspace = H5Screate_simple (3, block, NULL);
@@ -189,10 +189,10 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
   }
 
   hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  if( hs<0 ) ERROR("Cannot select hyperslab.\n");
+  if( hs<0 ) {ERROR("Cannot select hyperslab.\n");}
   w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
   if( w<0 ){
-    ERROR("Cannot write to file.\n");
+    {ERROR("Cannot write to file.\n");}
     abort();
   }
   H5Sclose(memspace);
@@ -200,7 +200,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
 }
 
 template <class T> 
-static void add2DData(const char *name, hid_t loc, int width, int height, T *data){
+static void createAndWrite2DDataset(const char *name, hid_t loc, int width, int height, T *data){
   hsize_t dims[2] = {height,width};
   hsize_t maxdims[2] = {height,width};
   hid_t datatype,w;
@@ -226,6 +226,8 @@ static void add2DData(const char *name, hid_t loc, int width, int height, T *dat
   H5Dclose(dataset);
   H5Sclose(dataspace);
 }
+
+
 
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   /* FM: This is probably wrong */
@@ -266,7 +268,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
 
   
   hid_t dataspace = H5Dget_space (dataset);
-  if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   H5Sget_simple_extent_dims(dataspace, block, mdims);
   /* check if we need to extend the dataset */
   if(block[0] <= stackSlice){
@@ -276,7 +278,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
     H5Dset_extent(dataset, block);
     /* get enlarged dataspace */
     dataspace = H5Dget_space (dataset);
-    if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+    if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
   block[0] = 1;
   hid_t memspace = H5Screate_simple (1, block, NULL);
@@ -285,7 +287,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
   H5Tset_size(type, strlen(value));
 
   sh = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  if( sh<0 ) ERROR("Cannot select hyperslab.\n");
+  if( sh<0 ) {ERROR("Cannot select hyperslab.\n");}
   w = H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, value);
   if( w<0 ){
     ERROR("Cannot write to file.\n");
@@ -345,7 +347,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   /* Create /cxi_version */
   dims[0] = 1;
   hid_t dataspace = H5Screate_simple(1, dims, dims);
-  if( dataspace<0 ) ERROR("Cannot create dataspace.\n");
+  if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   hid_t dataset = H5Dcreate(cxi->self, "cxi_version", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   H5Dwrite (dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &CXI::version);
 
@@ -395,7 +397,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	d.mask = create2DStack("mask", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, H5T_NATIVE_UINT16);
       }
       // /entry_1/instrument_1/detector_i/mask_shared
-      add2DData("mask_shared", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, global->detector[detID].pixelmask_shared);
+      createAndWrite2DDataset("mask_shared", d.self, global->detector[detID].pix_nx, global->detector[detID].pix_ny, global->detector[detID].pixelmask_shared);
       // /entry_1/instrument_1/detector_i/thumbnail
       d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
       // /entry_1/instrument_1/detector_i/experiment_identifier -> /entry_1/experiment_identifier
@@ -419,7 +421,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       // /entry_1/image_i/mask_shared
       uint16_t *image_pixelmask_shared = (uint16_t*) calloc(global->detector[detID].image_nn,sizeof(uint16_t));
       assemble2Dmask(image_pixelmask_shared, global->detector[detID].pixelmask_shared, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_nn, global->detector[detID].image_nx, global->detector[detID].image_nn, global->assembleMode);
-      add2DData("mask_shared", img.self, global->detector[detID].image_nx, image_ny, image_pixelmask_shared);
+      createAndWrite2DDataset("mask_shared", img.self, global->detector[detID].image_nx, image_ny, image_pixelmask_shared);
       // /entry_1/image_i/detector_1
       H5Lcreate_soft(detectorPath,img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
       // /entry_1/image_i/source_1
@@ -503,7 +505,7 @@ static void  closeCXI(CXI::File * cxi){
     hsize_t block[3];
     hsize_t mdims[3];
     hid_t dataspace = H5Dget_space (ids[i]);
-    if( dataspace<0 ) ERROR("Cannot get dataspace.\n");
+    if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
     H5Sget_simple_extent_dims(dataspace, block, mdims);
     if(mdims[0] == H5S_UNLIMITED){
       block[0] = cxi->stackCounter;
@@ -555,17 +557,21 @@ void writeCXI(cEventData *info, cGlobal *global ){
     sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
     writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
     if(global->saveAssembled){
+      if (cxi->entry.images[detID].data<0) {ERROR("No valid dataset.");}
       write2DToStack(cxi->entry.images[detID].data,stackSlice,info->detector[detID].image);
       if(global->savePixelmask){
+	if (cxi->entry.images[detID].mask<0) {ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[detID].mask,stackSlice,info->detector[detID].image_pixelmask);
       }
       int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_nx,CXI::thumbnailScale);
+      if (cxi->entry.images[detID].thumbnail<0){ERROR("No valid dataset.");}
       write2DToStack(cxi->entry.images[detID].thumbnail,stackSlice,thumbnail);
       writeStringToStack(cxi->entry.images[detID].dataType,stackSlice,"intensities");
       writeStringToStack(cxi->entry.images[detID].dataSpace,stackSlice,"diffraction");
       delete thumbnail;      
     }
     if(global->saveRaw){
+      if (cxi->entry.instrument.detectors[detID].data<0){ERROR("No valid dataset.");}
       write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
       if(global->savePixelmask){
 	write2DToStack(cxi->entry.instrument.detectors[detID].mask,stackSlice,info->detector[detID].pixelmask);

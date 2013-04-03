@@ -133,7 +133,7 @@ public:
 void static cheetahError(const char *filename, int line, const char *format, ...){
   va_list ap;
   va_start(ap,format);
-  fprintf(stderr,"ERROR in %s:%d: ",filename,line);
+  fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
   vfprintf(stderr,format,ap);
   va_end(ap);
 }
