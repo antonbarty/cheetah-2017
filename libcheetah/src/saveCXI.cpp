@@ -65,6 +65,9 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   H5Awrite(attr,datatype,axis);
   H5Aclose(attr);
+  H5Sclose(memspace);
+  H5Sclose(dataspace);
+  H5Pclose(cparms);
   return dataset;
 }
 
@@ -89,6 +92,7 @@ static void writeScalarToStack(hid_t dataset, int stackSlice, T value){
     }
     H5Dset_extent(dataset, block);
     /* get enlarged dataspace */
+    H5Sclose(dataspace);
     dataspace = H5Dget_space (dataset);
     if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
@@ -145,6 +149,9 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   H5Awrite(attr,datatype,axis);
   H5Aclose(attr);
+  H5Sclose(memspace);
+  H5Sclose(dataspace);
+  H5Pclose(cparms);
   return dataset;    
 }
 
@@ -169,6 +176,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
     }
     H5Dextend (dataset, block);
     /* get enlarged dataspace */
+    H5Sclose(dataspace);
     dataspace = H5Dget_space (dataset);
     if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
@@ -192,8 +200,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
   if( hs<0 ) {ERROR("Cannot select hyperslab.\n");}
   w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
   if( w<0 ){
-    {ERROR("Cannot write to file.\n");}
-    abort();
+    ERROR("Cannot write to file.\n");
   }
   H5Sclose(memspace);
   H5Sclose(dataspace);
@@ -221,7 +228,6 @@ static void createAndWrite2DDataset(const char *name, hid_t loc, int width, int 
   w = H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);  
   if( w<0 ){
     ERROR("Cannot write to file.\n");
-    abort();
   }
   H5Dclose(dataset);
   H5Sclose(dataspace);
@@ -242,7 +248,6 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
   if( dataset<0 ){
     ERROR("Cannot create dataset.\n");
-    abort();
   }
 
   const char * axis = "experiment_identifier";
@@ -254,6 +259,9 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   
   H5Awrite(attr,datatype,axis);
   H5Aclose(attr);
+  H5Sclose(memspace);
+  H5Sclose(dataspace);
+  H5Pclose(cparms);
   return dataset;    
 }
 
@@ -277,6 +285,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
     }
     H5Dset_extent(dataset, block);
     /* get enlarged dataspace */
+    H5Sclose(dataset);
     dataspace = H5Dget_space (dataset);
     if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
