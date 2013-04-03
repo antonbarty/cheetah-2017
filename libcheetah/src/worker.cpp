@@ -293,7 +293,9 @@ void *worker(void *threadarg) {
  save:
   if((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0))){
     if(global->saveCXI==1){
+      pthread_mutex_lock(&global->selfdark_mutex);
       writeCXI(eventData, global);
+      pthread_mutex_unlock(&global->selfdark_mutex);
     }
     else {
       writeHDF5(eventData, global);

@@ -237,7 +237,7 @@ namespace cheetah_ana_pkg {
 		time(&tnow);
 		
 		dtime = difftime(tnow, cheetahGlobal.tlast);
-		if(dtime > 1) {
+		if(dtime > 0.1) {
 			datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/dtime;
 			cheetahGlobal.lastTimingFrame = frameNumber;
 			time(&cheetahGlobal.tlast);
@@ -251,8 +251,8 @@ namespace cheetah_ana_pkg {
 		 *  This is the fastest we can ever hope to run.
 		 */
 		if(cheetahGlobal.ioSpeedTest==1) {
-			printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
-			return;
+		  printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+		  return;
 		}
 
 		

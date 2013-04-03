@@ -680,16 +680,12 @@ void calculateHaloPixelMask(cGlobal *global){
 	uint16_t *mask = global->detector[detID].pixelmask_shared;
 	float	*frameBuffer = global->detector[detID].halopix_buffer;
 				
-
-	if(lockThreads)
-	  pthread_mutex_lock(&global->halopixel_mutex);
-
-	printf("Detector %li: Recalculating halo pixel mask at %li/%li.\n",detID, threshold, bufferDepth);	
+	printf("Detector %li: Recalculating halo pixel mask at %li/%li.\n",detID, threshold, bufferDepth);   
+	if(lockThreads){ pthread_mutex_lock(&global->halopixel_mutex); }
 	nhalo = calculateHaloPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-	printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
+	if(lockThreads){ pthread_mutex_unlock(&global->halopixel_mutex); }
 
-	if(lockThreads)
-	  pthread_mutex_unlock(&global->halopixel_mutex);
+	printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
 
 	global->detector[detID].nhalo = nhalo;
       }
