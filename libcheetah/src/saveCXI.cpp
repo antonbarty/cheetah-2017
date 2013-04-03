@@ -174,7 +174,7 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
     while(block[0] <= stackSlice){
       block[0] *= 2;
     }
-    H5Dextend (dataset, block);
+    H5Dset_extent (dataset, block);
     /* get enlarged dataspace */
     H5Sclose(dataspace);
     dataspace = H5Dget_space (dataset);
