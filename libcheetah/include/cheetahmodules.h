@@ -97,3 +97,6 @@ int16_t kth_smallest(int16_t*, long, long);
 // fudge...
 void evr41fudge(cEventData *t, cGlobal *g);
 
+// datarate timing
+void updateDatarate(cEventData *t, cGlobal *g);
+

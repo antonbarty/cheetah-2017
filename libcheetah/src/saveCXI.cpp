@@ -194,10 +194,14 @@ static void write2DToStack(hid_t dataset, int stackSlice, T * data){
     type = H5T_NATIVE_UINT16;
   }else if(typeid(T) == typeid(short)){
     type = H5T_NATIVE_INT16;
+  }else{
+    ERROR("Do not understand type.");
   }
 
   hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-  if( hs<0 ) {ERROR("Cannot select hyperslab.\n");}
+  if( hs<0 ) {
+    ERROR("Cannot select hyperslab.\n");
+  }
   w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
   if( w<0 ){
     ERROR("Cannot write to file.\n");
@@ -222,7 +226,10 @@ static void createAndWrite2DDataset(const char *name, hid_t loc, int width, int 
     datatype = H5T_NATIVE_UINT16;
   }else if(typeid(T) == typeid(short)){
     datatype = H5T_NATIVE_INT16;
+  }else{
+    ERROR("Do not understand type.");
   }
+
   hid_t dataspace = H5Screate_simple(2, dims, dims);
   hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   w = H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);  
@@ -620,5 +627,5 @@ void writeCXI(cEventData *info, cGlobal *global ){
   time_t eventTime = info->seconds;
   ctime_r(&eventTime,timestr);
   writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
-  printf("r%04u:%li (%2.1f Hz): Writing %s to %s slice %d\n",global->runNumber, info->threadNum,global->datarate, info->eventname, info->cxiFilename, stackSlice);
+  printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %d\n",global->runNumber, info->threadNum,global->datarateWorker, info->eventname, info->cxiFilename, stackSlice);
 }

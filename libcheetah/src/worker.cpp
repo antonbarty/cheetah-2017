@@ -13,6 +13,8 @@
 #include <math.h>
 #include <hdf5.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "cheetah.h"
 #include "cheetahmodules.h"
@@ -153,6 +155,7 @@ void *worker(void *threadarg) {
   calculateHotPixelMask(global);
   applyHotPixelMask(eventData,global);
 
+  updateDatarate(eventData,global);
 
   /*
    *	Skip first set of frames to build up running estimate of background...
@@ -163,7 +166,7 @@ void *worker(void *threadarg) {
 	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
       updateBackgroundBuffer(eventData, global, detID); 
 		    
-      printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarate);
+      printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
       goto cleanup;
     }
   }
@@ -264,8 +267,12 @@ void *worker(void *threadarg) {
   /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
-  assemble2Dimage(eventData, global);
-  assemble2Dmask(eventData, global);
+  if(global->assemble2DImage) {
+    assemble2Dimage(eventData, global);
+  }
+  if(global->assemble2DMask) {
+    assemble2Dmask(eventData, global);
+  }
 
   /*
    *	Calculate radial average
@@ -299,11 +306,11 @@ void *worker(void *threadarg) {
     }
     else {
       writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1f Hz): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarate, eventData->eventname, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, eventData->nPeaks);
     }
   }
   else {
-    printf("r%04u:%li (%3.1fHz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarate, eventData->nPeaks);
+    printf("r%04u:%li (%2.1lf Hz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, eventData->nPeaks);
   }
 
 
@@ -330,7 +337,6 @@ void *worker(void *threadarg) {
   pthread_mutex_lock(&global->powderfp_mutex);
   fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
-
 	
   /*
    *	Cleanup and exit
@@ -407,5 +413,31 @@ void evr41fudge(cEventData *t, cGlobal *g){
 }
 
 
-	
+double difftime_timeval(timeval t1, timeval t2)
+{
+  return ((t1.tv_sec - t2.tv_sec) + (t1.tv_usec - t2.tv_usec) / 1000000.0 );
+}
+
+void updateDatarate(cEventData *eventData, cGlobal *global){
+
+  timeval timevalNow;
+  double datarateNow;
+  double mem = global->datarateWorkerMemory;
+  double dtNew,dtNow;
+  gettimeofday(&timevalNow, NULL);
+  
+  pthread_mutex_lock(&global->datarateWorker_mutex);
+  if (timercmp(&timevalNow,&global->datarateWorkerTimevalLast,!=)){
+    dtNow = difftime_timeval(timevalNow,global->datarateWorkerTimevalLast) / (1+global->datarateWorkerSkipCounter);
+    dtNew = 1/global->datarateWorker * mem + dtNow * (1-mem);
+    global->datarateWorker = 1/dtNew;
+    global->datarateWorkerTimevalLast = timevalNow;
+    global->datarateWorkerSkipCounter = 0;
+  }else{
+    global->datarateWorkerSkipCounter += 1;
+  }
+  pthread_mutex_unlock(&global->datarateWorker_mutex);
+
+  
+}
 

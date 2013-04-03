@@ -237,7 +237,7 @@ namespace cheetah_ana_pkg {
 		time(&tnow);
 		
 		dtime = difftime(tnow, cheetahGlobal.tlast);
-		if(dtime > 0.1) {
+		if(dtime > 1.) {
 			datarate = (frameNumber - cheetahGlobal.lastTimingFrame)/dtime;
 			cheetahGlobal.lastTimingFrame = frameNumber;
 			time(&cheetahGlobal.tlast);

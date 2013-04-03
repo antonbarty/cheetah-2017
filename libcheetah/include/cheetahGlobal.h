@@ -213,6 +213,8 @@ public:
 	int      saveRaw;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
+	int      assemble2DMask;
+	int      assemble2DImage;
 	/** @brief Toggle assemble mode (0: weight nearest 4 pixels, 1: pick value of nearest pixel).*/
 	int      assembleMode;
 	/** @brief Toggle the writing of individual pixelmask. */
@@ -282,10 +284,11 @@ public:
 	pthread_mutex_t  powderfp_mutex;
 	pthread_mutex_t  peaksfp_mutex;
 	pthread_mutex_t  subdir_mutex;
-    pthread_mutex_t  nespechits_mutex;
-    pthread_mutex_t  espectrumRun_mutex;
-    pthread_mutex_t  espectrumBuffer_mutex;
-
+	pthread_mutex_t  nespechits_mutex;
+	pthread_mutex_t  espectrumRun_mutex;
+	pthread_mutex_t  espectrumBuffer_mutex;
+	pthread_mutex_t  datarateWorker_mutex;
+	
 
 	/*
 	 *	Common variables
@@ -319,8 +322,13 @@ public:
 	time_t   tstart, tend;
 	time_t   tlast, tnow;
 	clock_t  lastclock;
-	float    datarate;
-	long     lastTimingFrame;
+	double    datarate;
+	long      lastTimingFrame;
+	timeval   datarateWorkerTimevalLast;
+	double    datarateWorker;
+	double    datarateWorkerMemory;
+	long      datarateWorkerSkipCounter;
+
 
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int      fudgeevr41;
