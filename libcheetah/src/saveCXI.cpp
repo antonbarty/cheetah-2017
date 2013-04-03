@@ -285,7 +285,7 @@ static void writeStringToStack(hid_t dataset, int stackSlice, const char * value
     }
     H5Dset_extent(dataset, block);
     /* get enlarged dataspace */
-    H5Sclose(dataset);
+    H5Sclose(dataspace);
     dataspace = H5Dget_space (dataset);
     if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   }
