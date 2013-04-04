@@ -22,7 +22,7 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #SET(BUILD_LIBCHEETAH ON CACHE BOOL "If ON build libcheetah. Otherwise skip it.")
 SET(BUILD_CHEETAH_ANA_MOD ON CACHE BOOL "If ON build cheetah_ana_mod. Otherwise skip it.")
 SET(BUILD_PSANA ON CACHE BOOL "If ON build psana. Otherwise skip it.")
-#SET(BUILD_CHEETAH_MYANA OFF CACHE BOOL "If ON build cheetah_myana. Otherwise skip it.")
+SET(BUILD_CHEETAH_MYANA OFF CACHE BOOL "If ON build cheetah_myana. Otherwise skip it.")
 
 
 SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/libcheetah/include CACHE PATH "libcheet
@@ -43,5 +43,9 @@ endif(BUILD_CHEETAH_ANA_MOD)
 if(BUILD_PSANA)
 ADD_SUBDIRECTORY(psana)
 endif(BUILD_PSANA)
+
+if(BUILD_CHEETAH_MYANA)
+ADD_SUBDIRECTORY(cheetah_myana)
+endif(BUILD_CHEETAH_MYANA)
 
 # Lets try to build Psana just for kicks

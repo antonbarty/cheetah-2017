@@ -10,13 +10,13 @@
  */
 
 
-#include "lcls/myana/main.hh"
-#include "lcls/myana/release/pdsdata/cspad/ConfigV1.hh"
-#include "lcls/myana/release/pdsdata/cspad/ConfigV2.hh"
-#include "lcls/myana/release/pdsdata/cspad/ConfigV3.hh"
-#include "lcls/myana/release/pdsdata/cspad/ConfigV4.hh"
-#include "lcls/myana/release/pdsdata/cspad/ElementHeader.hh"
-#include "lcls/myana/release/pdsdata/cspad/ElementIterator.hh"
+#include <main.hh>
+#include <pdsdata/cspad/ConfigV1.hh>
+#include <pdsdata/cspad/ConfigV2.hh>
+#include <pdsdata/cspad/ConfigV3.hh>
+#include <pdsdata/cspad/ConfigV4.hh>
+#include <pdsdata/cspad/ElementHeader.hh>
+#include <pdsdata/cspad/ElementIterator.hh>
 
 #include <stdio.h>
 #include <string.h>
@@ -32,7 +32,7 @@
 #include <signal.h>
 
 
-#include "cheetah.h"
+#include <cheetah.h>
 
 
 static cGlobal		cheetahGlobal;

@@ -95,9 +95,9 @@
 #include "pdsdata/fli/FrameV1.hh"
 #include "pdsdata/ana/XtcRun.hh"
 
-#include "main.hh"
-#include "myana.hh"
-#include "SplitEventQ.cc"
+#include <main.hh>
+#include <myana.hh>
+#include <SplitEventQ.cc>
 
 using std::vector;
 using std::string;
