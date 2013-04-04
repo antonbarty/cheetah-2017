@@ -107,7 +107,8 @@ public:
 	//unsigned         configVsn;
 	//unsigned         quadMask;
 	//unsigned         asicMask;
-
+	// Only required if one wants to specify front/back detector (pnccds)
+	long detectorID;
 
 	/** @brief Detector configuration file */
 	char  detectorConfigFile[MAX_FILENAME_LENGTH];

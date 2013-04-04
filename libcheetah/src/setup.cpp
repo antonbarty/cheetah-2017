@@ -41,6 +41,7 @@ cGlobal::cGlobal(void) {
   for(long i=0; i<MAX_DETECTORS; i++) {
     strcpy(detector[i].detectorConfigFile, "No_file_specified");
     strcpy(detector[i].configGroup,"none");
+    detector[i].detectorID = i;
   }
 
   // Statistics

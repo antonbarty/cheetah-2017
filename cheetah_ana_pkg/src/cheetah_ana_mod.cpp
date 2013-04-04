@@ -512,7 +512,7 @@ namespace cheetah_ana_pkg {
 				const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
 				detectorPosition[detID] = value;
 				if (verbose) {
-					cout << "***** DetectorPosition[" << detID << "]: " << value << endl;
+					cout << "***** DetectorPosition[" << cheetahGlobal.detector[detID].detectorID << "]: " << value << endl;
 				}
 			}
 		}
@@ -550,10 +550,10 @@ namespace cheetah_ana_pkg {
 		for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
 
 			shared_ptr<Psana::CsPad::DataV2> data2;
-			if (detID == 0) {
+			if (cheetahGlobal.detector[detID].detectorID == 0) {
 				data2 = evt.get(m_srcCspad0, m_key);
 			} 
-			else if (detID == 1) {
+			else if (cheetahGlobal.detector[detID].detectorID == 1) {
 				data2 = evt.get(m_srcCspad1, m_key);
 			}
 			
@@ -725,10 +725,10 @@ namespace cheetah_ana_pkg {
 				
 				// Pull out front or back detector depending on detID=0 or 1
 				shared_ptr<Psana::CsPad::DataV2> data2;
-				if (detID == 0) {
+				if (cheetahGlobal.detector[detID].detectorID == 0) {
 					data2 = evt.get(m_srcCspad0, m_key);
 				} 
-				else if (detID == 1) {
+				else if (cheetahGlobal.detector[detID].detectorID == 1) {
 					data2 = evt.get(m_srcCspad1, m_key);
 				}
 				
@@ -797,12 +797,12 @@ namespace cheetah_ana_pkg {
 				shared_ptr<Psana::PNCCD::FrameV1> frame;
 				shared_ptr<Psana::PNCCD::FullFrameV1> fullframe;
 				
-				if (detID == 0) {
+				if (cheetahGlobal.detector[detID].detectorID == 0) {
 					//cout << "front" << endl;
 					//frame = evt.get(m_srcPnccd0);	
 					fullframe = evt.get(m_srcPnccd0);
 				} 
-				else if (detID == 1) {
+				else if (cheetahGlobal.detector[detID].detectorID == 1) {
 					//cout << "back" << endl;
 					//frame = evt.get(m_srcPnccd1);
 					fullframe = evt.get(m_srcPnccd1);
@@ -819,7 +819,7 @@ namespace cheetah_ana_pkg {
 					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
-					printf("%li: pnCCD frame data not available (detID=%li)\n", frameNumber, detID);
+					printf("%li: pnCCD frame data not available (detectorID=%li)\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
 					return;
 				}
 			}
