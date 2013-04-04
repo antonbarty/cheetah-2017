@@ -1,4 +1,8 @@
+if(NOT ANA_RELEASE)
 find_file(ANA_RELEASE ana-current /opt/psana/g/psdm/portable/sw/releases/ /reg/g/psdm/sw/releases/ /cfel/common/slac/reg/g/psdm/portable/sw/releases/)
+endif(NOT ANA_RELEASE)
+
+message(STATUS "ANA_RELEASE is ${ANA_RELEASE}")
 
 IF(EXISTS ${ANA_RELEASE}/../../../data/ExpNameDb/experiment-db.dat)
 	SET(ANA_SIT_DATA ${ANA_RELEASE}/../../../data/ CACHE PATH "Path equivalent to $SIT_DATA")
@@ -25,10 +29,15 @@ LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils acqdata andordata bld camda
   m dl)
 
 foreach(ana_lib IN LISTS ana_libs)
-	message(STATUS "locating ${ana_lib}")
+	# Clear variable first
+	SET(ANA_${ana_lib}_LIBRARY "ANA_${ana_lib}_LIBRARY-NOTFOUND" CACHE INTERNAL "Internal" FORCE)
 	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/)
-	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
+	SET(ANA_${ana_lib}_LIBRARY ${ANA_${ana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
+	message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
+#	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
 	LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
 endforeach(ana_lib)
 
+#clear var
+SET(PSANA_INCLUDES)
 LIST(APPEND PSANA_INCLUDES ${ANA_RELEASE}/include ${ANA_RELEASE}/arch/${ANA_ARCH}/geninc)

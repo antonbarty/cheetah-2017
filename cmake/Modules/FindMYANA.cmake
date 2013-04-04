@@ -37,10 +37,15 @@ xtcdata
 xtcrunset)
 
 foreach(myana_lib IN LISTS myana_libs)
-  message(STATUS "locating ${myana_lib}")
+  # Clear variable first
+  SET(MYANA_${myana_lib}_LIBRARY "MYANA_${myana_lib}_LIBRARY-NOTFOUND" CACHE INTERNAL "Internal" FORCE)
   find_library(MYANA_${myana_lib}_LIBRARY ${myana_lib} ${MYANA_RELEASE}/build/pdsdata/lib/${MYANA_ARCH})
-mark_as_advanced(MYANA_${myana_lib}_LIBRARY)
-LIST(APPEND MYANA_LIBRARIES ${MYANA_${myana_lib}_LIBRARY})
+  SET(MYANA_${myana_lib}_LIBRARY ${MYANA_${myana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
+#  mark_as_advanced(MYANA_${myana_lib}_LIBRARY)
+  message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
+  LIST(APPEND MYANA_LIBRARIES ${MYANA_${myana_lib}_LIBRARY})
 endforeach(myana_lib)
 
+#clear var
+SET(MYANA_INCLUDES)
 LIST(APPEND MYANA_INCLUDES ${MYANA_RELEASE})
