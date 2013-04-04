@@ -13,6 +13,15 @@
 
 #include "saveCXI.h"
 
+herr_t
+cheetahHDF5ErrorHandler(hid_t, void *)
+{
+  // print the error message
+  H5Eprint(H5E_DEFAULT, stderr);
+  // abort such that we get a stack trace to debug
+  abort();
+}
+
 template <class T>
 static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeight, const int scale)
 {
