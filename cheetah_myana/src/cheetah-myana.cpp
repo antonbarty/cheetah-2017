@@ -347,6 +347,7 @@ void event() {
 	
 	if(cheetahGlobal.saveCXI){
 	  std::string cxiFilename = getCXIfromXTC(getXTCFilename());
+
 	  if(cxiFilename.compare(cheetahGlobal.currentCXIFileName)!=0){
 	    while(cheetahGlobal.nActiveThreads > 0){
 	      printf("Waiting for %li worker threads to terminate for new ones\n", cheetahGlobal.nActiveThreads);
@@ -550,7 +551,7 @@ void event() {
 	cEventData	*eventData;
 	eventData = cheetahNewEvent(&cheetahGlobal);
 		
- 
+	sprintf(eventData->cxiFilename,"LCLS-r%04d.cxi",runNumber); 
 		
 	/* This laser event code */
 	int evr41 = laserOn();

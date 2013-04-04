@@ -356,6 +356,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+  if( fid<0 ) {ERROR("Cannot create file.\n");}
+  printf(filename);
   cxi->self = fid;
   cxi->stackCounter = 0;
   hsize_t dims[3];
