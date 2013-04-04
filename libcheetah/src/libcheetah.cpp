@@ -32,6 +32,10 @@ void cheetahInit(cGlobal *global) {
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
+
+	// Set better error handlers for HDF5
+	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
+
 	printf("Cheetah clean initialisation\n");
 }
 
