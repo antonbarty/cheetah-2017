@@ -3,7 +3,8 @@ find_package(HDF5 REQUIRED)
 # We don't want to scare people with this
 mark_as_advanced(HDF5_DIR)
 mark_as_advanced(CLEAR HDF5_C_INCLUDE_DIR)
-mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY)
+mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_RELEASE)
+mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_DEBUG)
 
 
 file(GLOB sources "src/*.cpp")
