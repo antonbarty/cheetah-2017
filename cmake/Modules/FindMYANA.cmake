@@ -42,7 +42,7 @@ foreach(myana_lib IN LISTS myana_libs)
   find_library(MYANA_${myana_lib}_LIBRARY ${myana_lib} ${MYANA_RELEASE}/build/pdsdata/lib/${MYANA_ARCH})
   SET(MYANA_${myana_lib}_LIBRARY ${MYANA_${myana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
 #  mark_as_advanced(MYANA_${myana_lib}_LIBRARY)
-  message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
+  message(STATUS "Found ${myana_lib} in ${MYANA_${myana_lib}_LIBRARY}")
   LIST(APPEND MYANA_LIBRARIES ${MYANA_${myana_lib}_LIBRARY})
 endforeach(myana_lib)
 
