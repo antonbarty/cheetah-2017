@@ -77,14 +77,16 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 */
 	eventData->useThreads = 0;
 	eventData->hit = 0;
-	eventData->samplePumped = 0;   
+	eventData->samplePumped = 0;
+	eventData->peakResolution=0.;
+	eventData->nPeaks=0;
+	eventData->peakNpix=0.;
+	eventData->peakTotal=0.;	
 
 	long		pix_nn1 = global->detector[0].pix_nn;
 	long		asic_nx = global->detector[0].asic_nx;
 	long		asic_ny = global->detector[0].asic_ny;	
 	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn1);
-
-	eventData->peakResolution=0.;	
 
 	/*
 	 *	Create arrays for intermediate detector data, etc 

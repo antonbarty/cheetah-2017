@@ -313,8 +313,6 @@ void *worker(void *threadarg) {
     printf("r%04u:%li (%2.1lf Hz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, eventData->nPeaks);
   }
 
-
-
   /*
    *	If this is a hit, write out peak info to peak list file
    */
@@ -322,14 +320,10 @@ void *worker(void *threadarg) {
     writePeakFile(eventData, global);
   }
 
-	
-	
-
   /*
    *	Write out information on each frame to a log file
    */
-  pthread_mutex_lock(&global->framefp_mutex);
-
+  pthread_mutex_lock(&global->powderfp_mutex);
   fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
   pthread_mutex_unlock(&global->framefp_mutex);
 

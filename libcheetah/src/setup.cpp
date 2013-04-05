@@ -307,6 +307,7 @@ void cGlobal::setup() {
   pthread_mutex_init(&espectrumRun_mutex, NULL);
   pthread_mutex_init(&espectrumBuffer_mutex, NULL);
   pthread_mutex_init(&datarateWorker_mutex, NULL);  
+  pthread_mutex_init(&writeCXI_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
   /*
@@ -959,7 +960,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
   fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
   fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
-  fprintf(fp, "saveCXI=%f\n",saveCXI);
+  fprintf(fp, "saveCXI=%d\n",saveCXI);
   //fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
   //fprintf(fp, "bgMemory=%li\n",bgMemory);
   //fprintf(fp, "bgRecalc=%ld\n",bgRecalc);

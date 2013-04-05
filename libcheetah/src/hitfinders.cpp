@@ -39,7 +39,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	long		asic_ny = global->detector[detID].asic_ny;
 	uint16_t        *mask = eventData->detector[detID].pixelmask;
 
-	long	nat;
+	long	nat = 0;
 	long	counter;
 	int		hit=0;
 	float	total;
@@ -216,7 +216,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 
   long		nat = 0;
   long            hit = 0;
-  float		total;
+  float		total = 0.;
   long		pix_nn = global->detector[detID].pix_nn;
   uint16_t         *mask = eventData->detector[detID].pixelmask;
 	
@@ -284,7 +284,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	uint16_t         *mask = eventData->detector[detID].pixelmask;
 
 	// Variables for this hitfinder
-	long	nat, lastnat;
+	long	nat = 0;
+	long  lastnat = 0;
 	long	counter;
 	int		hit=0;
 	float	total;
@@ -525,8 +526,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
  */
 int peakfinder5(cGlobal *global, cEventData *eventData, int detID) {
 
-	long  nat;
-	long  lastnat;
+	long  nat = 0;
+	long  lastnat = 0;
 	long  counter = 0;
 	int   hit = 0;
 	//float total = 0;
@@ -792,7 +793,8 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	float dist, itot, ftot, stot;	
 	float thisI,snr,bg,bgsig;
 	uint16_t *mask = eventData->detector[detID].pixelmask;
-	
+	nat = 0;
+	lastnat = 0;
 	
 	/* For counting neighbor pixels */
 	int * nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));	

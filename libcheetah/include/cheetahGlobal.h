@@ -288,7 +288,7 @@ public:
 	pthread_mutex_t  espectrumRun_mutex;
 	pthread_mutex_t  espectrumBuffer_mutex;
 	pthread_mutex_t  datarateWorker_mutex;
-	
+	pthread_mutex_t  writeCXI_mutex;
 
 	/*
 	 *	Common variables

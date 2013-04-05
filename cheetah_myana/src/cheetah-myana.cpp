@@ -827,6 +827,7 @@ void event() {
       //free(pulnixImage);
     }
 
+  eventData->specFail = 1;
     
     
   /*

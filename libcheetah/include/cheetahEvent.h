@@ -60,8 +60,8 @@ public:
 	
 	
 	// Peak info
-	int			nPeaks;
-	int			nHot;
+	int	        nPeaks;
+	int	        nHot;
 	long		*peak_com_index;		// closest pixel corresponding to peak center of mass
 	float		*peak_com_x;			// peak center of mass x (in raw layout)
 	float		*peak_com_y;			// peak center of mass y (in raw layout)
@@ -70,7 +70,7 @@ public:
 	float		*peak_com_r_assembled;	// peak center of mass r (in assembled layout)
 	float		*peak_intensity;		// integrated peak intensities
 	float		*peak_npix;				// Number of pixels in peak
-	float       *peak_snr;           // Signal-to-noise of peak
+	float           *peak_snr;           // Signal-to-noise of peak
 	float		peakResolution;			// Radius of 80% of peaks
 	float		peakResolutionA;			// Radius of 80% of peaks
 	float		peakDensity;			// Density of peaks within this 80% figure
