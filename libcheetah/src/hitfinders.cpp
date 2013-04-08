@@ -793,6 +793,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	float dist, itot, ftot, stot;	
 	float thisI,snr,bg,bgsig;
 	uint16_t *mask = eventData->detector[detID].pixelmask;
+	float minPeakSepSq =  global->hitfinderMinPeakSeparation * global->hitfinderMinPeakSeparation;
 	nat = 0;
 	lastnat = 0;
 	
@@ -855,7 +856,6 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					/* get SNR for this pixel */
 					fail = box_snr(temp, mask, combined_pixel_options, e, bgrad, global->hitfinderLocalBGThickness, stride, &snr, &bg, &bgsig);
 					if ( fail ) continue;
-
 					/* Check SNR threshold */
 					if ( snr < global->hitfinderMinSNR ) continue;
 
@@ -902,7 +902,6 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					/* Approximate center of mass */
 					fs = lrint(ftot/itot);
 					ss = lrint(stot/itot);
-
 					/* Have we already found better peak nearby? */
 					newpeak = 1;
 					peakindex = counter;
@@ -910,7 +909,7 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 						/* Distance to neighbor peak */
 						dist = pow(fs - eventData->peak_com_x[p],2) + 
 						pow(ss - eventData->peak_com_y[p], 2);
-						if ( dist <= global->hitfinderMinPeakSeparation ) {
+						if ( dist <= minPeakSepSq ) {
 							if ( snr > eventData->peak_snr[p]) {
 								/* This peak will overtake its neighbor */ 
 								newpeak = 0;
@@ -973,8 +972,9 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 		for ( p1=0; p1 < counter; p1++) {
 			for ( p2=p1+1; p2 < counter; p2++) {
 				/* Distance to neighbor peak */
-				dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) + pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
-				if ( dist <= global->hitfinderMinPeakSeparation ) {
+				dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) + 
+				       pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
+				if ( dist <= minPeakSepSq ) {
 					if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
 						killpeak[p2] = 1;
 					}
