@@ -25,6 +25,8 @@ export TMPDIR="$HOME/mytest/tmp"       # temporary files are necessary
 export H5DIR="$HOME/mytest/hdf5"       # your cheetah output goes here
 export CONFIGDIR="$HOME/mytest/config" # cheetah configuration seach path
 export CHEETAH="psana"                 # the cheetah frontend
+export PSANA_CONFIG="$CONFIGDIR/ini/other/psana.cfg" # for psana frontend
+
 
 # make sure there is a space for temporary files!
 mkdir -p $TMPDIR
