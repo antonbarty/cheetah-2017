@@ -296,6 +296,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long *inx = (long *) calloc(pix_nn, sizeof(long));
 	long *iny = (long *) calloc(pix_nn, sizeof(long));
 	float totI;
+    float maxI;
 	float peak_com_x;
 	float peak_com_y;
 	long thisx;
@@ -352,7 +353,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 						inx[0] = i;
 						iny[0] = j;
 						nat = 1;
-						totI = 0; 
+						totI = 0;
+                        maxI = 0;
 						peak_com_x = 0; 
 						peak_com_y = 0; 
 						
@@ -391,6 +393,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 										//	break
 										//}
 										totI += temp[e]; // add to integrated intensity
+                                        if (temp[e] > maxI)
+                                            maxI = temp[e];
 										peak_com_x += temp[e]*( (float) thisx ); // for center of mass x
 										peak_com_y += temp[e]*( (float) thisy ); // for center of mass y
 										temp[e] = 0; // zero out this intensity so that we don't count it again
@@ -463,7 +467,9 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
                             
                             
                             // Skip this 'peak' if signal to noise criterion is not met 
-                            if( totI < localSigma*global->hitfinderMinSNR )
+                            //if( totI < localSigma*global->hitfinderMinSNR )
+                            //    continue;
+                            if( maxI < localSigma*global->hitfinderMinSNR )
                                 continue;
                         }
                         
