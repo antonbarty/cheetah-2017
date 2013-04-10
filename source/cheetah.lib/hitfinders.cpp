@@ -497,7 +497,9 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
                             
                             
                             // Skip this 'peak' if signal to noise criterion is not met 
-                            if( totI < localSigma*global->hitfinderMinSNR )
+                            //if( totI < localSigma*global->hitfinderMinSNR )
+                            //    continue;
+                            if( maxI < localSigma*global->hitfinderMinSNR )
                                 continue;
                         }
                         
