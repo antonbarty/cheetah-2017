@@ -1,7 +1,5 @@
 
 find_package(PSANA REQUIRED)
-#find_package(Cheetah REQUIRED)
-#find_package(HDF5 REQUIRED)
 
 file(GLOB sources "${ANA_RELEASE}/psana/app/*.cpp")
 

@@ -281,8 +281,6 @@ void *worker(void *threadarg) {
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
 	
-	
-	
   /*
    *	Maintain a running sum of data (powder patterns)
    */
@@ -300,9 +298,9 @@ void *worker(void *threadarg) {
  save:
   if((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0))){
     if(global->saveCXI==1){
-      pthread_mutex_lock(&global->selfdark_mutex);
+      pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
-      pthread_mutex_unlock(&global->selfdark_mutex);
+      pthread_mutex_unlock(&global->saveCXI_mutex);
     }
     else {
       writeHDF5(eventData, global);
@@ -323,7 +321,7 @@ void *worker(void *threadarg) {
   /*
    *	Write out information on each frame to a log file
    */
-  pthread_mutex_lock(&global->powderfp_mutex);
+  pthread_mutex_lock(&global->framefp_mutex);
   fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
   pthread_mutex_unlock(&global->framefp_mutex);
 

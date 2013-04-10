@@ -7,7 +7,15 @@ mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_RELEASE)
 mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_DEBUG)
 
 
-file(GLOB sources "src/*.cpp")
+# Add source files here
+LIST(APPEND sources "src/assemble2DImage.cpp" "src/backgroundCorrection.cpp")
+LIST(APPEND sources "src/data2d.cpp" "src/detectorCorrection.cpp")
+LIST(APPEND sources "src/detectorObject.cpp" "src/hitfinders.cpp")
+LIST(APPEND sources "src/libcheetah.cpp" "src/median.cpp")
+LIST(APPEND sources "src/powder.cpp" "src/peakfinders.cpp")
+LIST(APPEND sources "src/radialAverage.cpp" "src/saveCXI.cpp")
+LIST(APPEND sources "src/saveFrame.cpp" "src/setup.cpp")
+LIST(APPEND sources "src/spectrum.cpp" "src/worker.cpp")
 
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})

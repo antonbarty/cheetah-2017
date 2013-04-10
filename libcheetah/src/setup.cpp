@@ -307,7 +307,7 @@ void cGlobal::setup() {
   pthread_mutex_init(&espectrumRun_mutex, NULL);
   pthread_mutex_init(&espectrumBuffer_mutex, NULL);
   pthread_mutex_init(&datarateWorker_mutex, NULL);  
-  pthread_mutex_init(&writeCXI_mutex, NULL);  
+  pthread_mutex_init(&saveCXI_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
   /*
