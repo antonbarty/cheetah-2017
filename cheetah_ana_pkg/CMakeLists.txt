@@ -3,7 +3,8 @@ find_package(PSANA REQUIRED)
 
 find_package(HDF5 REQUIRED)
 
-file(GLOB sources "src/*.cpp")
+
+LIST(APPEND sources "src/cheetah_ana_mod.cpp")
 
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
