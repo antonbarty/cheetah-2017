@@ -16,10 +16,11 @@ exit 1
 # defaults
 OVERWRITE="NO"
 [ $CHEETAH ] || CHEETAH="cheetah"
+[ $PSANA ] || PSANA="psana"
 [ $H5DIR ] || H5DIR="."
 [ $XTCDIR ] || XTCDIR="."
 [ $CONFIGDIR ] || CONFIGDIR="."
-[ $PSANA_CONFIG ] || PSANA_CONFIG="$HOME/cheetah/source/lcls-psana/psana.cfg"
+[ $PSANA_CONFIG ] || PSANA_CONFIG="psana.cfg"
 
 # get options:
 while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
@@ -43,7 +44,7 @@ while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
 	o) OVERWRITE="CHECK";;
 	O) OVERWRITE="FORCE";;
 	h) SHOWHELP="YES";;
-	p) PSANA="YES";;
+	m) MYANA="YES";;
 	?) UERROR "Unrecognized option $OPTARG";;
 	esac
 done
@@ -55,6 +56,7 @@ Anton Barty's cheetah program
 
 Rick Kirian, Oct. 2011
 (Idea borrowed from Anton's original "crystfinder" tcsh script)
+Modified by Jonas Sellberg, Apr. 2013
 
 Brief summary of options:
 
@@ -69,7 +71,7 @@ Brief summary of options:
    -o       Overwrite the previous run (if it successfully finished).
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
-   -p       Use the psana version of cheetah (this will be the default soon)
+   -m       Use the myana version (i.e. cheetah executable) instead of the psana version of cheetah (default).
 
 Best to explain by example.  Firstly, you will probably want to set up some 
 environment variables for ease of use.  This seems to be the easiest way to 
@@ -79,8 +81,9 @@ are the variables:
 XTCDIR:    Path to where the xtc data is (default: ./)
 H5DIR:     Path to where the results of cheetah will be written (default: ./)
 CONFIGDIR: Search path for ini files (default: ./)
-TMPDIR:    A place to put temporary files (default: /tmp)
 CHEETAH:   The path to cheetah (default: cheetah)
+PSANA:     The path to psana (default: psana)
+PSANA_CONFIG: The path to the psana config file (default: psana.cfg)
 
 The simples thing to do is this:
 
@@ -174,16 +177,16 @@ fi
 # no ini file name specified? take a guess:
 [ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
 
-if [ ! -f $INIFILE ]; then
 # full path to ini file not specified?  look for it:
-echo "Searching for an ini file named $INIFILE"
-INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
+if [ ! -f $INIFILE ]; then
+    echo "Searching for an ini file named $INIFILE"
+    INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
 # check if multiple files found
-if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
+    if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
 	echo "Found too many files:"
 	echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
 	exit 1
-fi
+    fi
 fi
 
 # any luck finding the ini file?
@@ -226,10 +229,10 @@ else
 	cd $SAVEDIR
 	echo "Deleting previous $SCRIPTNAME files"
 	rm -f *.h5 \
-			*.ini \
-			*.out \
-			*.log \
-			*.txt 
+	      *.ini \
+	      *.out \
+	      *.log \
+	      *.txt 
 	      &> /dev/null
 fi
 
@@ -258,28 +261,32 @@ find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
 [ "$(wc -l xtcfiles.txt | awk '{print $1}')" -lt 1 ] && UERROR "Found no xtc files for $RUNDIR"
 echo "Running cheetah..."
 
-if [ $PSANA ]; then
-	ARGS=" $( cat xtcfiles.txt | tr '\n' ' ' )"
-#	ARGS="$ARGS $( cat xtcfiles.txt | tr '\n' ' ' )"
+if [ ! $MYANA ]; then
+#	ARGS=" $( cat xtcfiles.txt | tr '\n' ' ' )"
+	ARGS="$ARGS $( cat xtcfiles.txt | tr '\n' ' ' )"
 	cp $PSANA_CONFIG .
 else
 	ARGS="$ARGS -l xtcfiles.txt"
 fi
 
 if [ $QUE ]; then
+    if [ $MYANA ]; then
 	FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
-	echo $FULLCOMMAND
-	$FULLCOMMAND
-	echo "$SCRIPTNAME job sent to queue"
+    else
+	FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $PSANA $ARGS"
+    fi
+    echo $FULLCOMMAND
+    $FULLCOMMAND
+    echo "$SCRIPTNAME job sent to queue"
 else
-	if [ $PSANA ]; then
-		FULLCOMMAND="psana $ARGS" # >& $LOGFILE"
-	else
-		FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
-	fi
-	echo $FULLCOMMAND
-	$FULLCOMMAND
-	echo "$SCRIPTNAME has finished"
+    if [ $MYANA ]; then
+	FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
+    else
+	FULLCOMMAND="$PSANA $ARGS" # >& $LOGFILE"
+    fi
+    echo $FULLCOMMAND
+    $FULLCOMMAND
+    echo "$SCRIPTNAME has finished"
 fi
 
 # make everything group editable!

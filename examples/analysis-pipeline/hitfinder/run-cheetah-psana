@@ -1,4 +1,17 @@
 #!/bin/bash
 
-hitfinder -n 100 -r 318 -t dark -i dark.ini -p	# -p for PSANA CHEETAH
+export CHEETAH=$HOME/local/bin/cheetah # CHEETAH EXECUTABLE (ONLY NEEDED FOR MYANA CHEETAH)
+export PSANA=$HOME/local/bin/psana # PSANA EXECUTABLE (NEEDED FOR PSANA CHEETAH; DEFAULT)
+export XTCDIR=$PWD # XTC DIRECTORY
+export H5DIR=$PWD # SAVE DIRECTORY
+export CONFIGDIR=$PWD # CONFIG DIRECTORY (OPTIONAL)
+export PSANA_CONFIG=$PWD/../config/ini/other/psana.cfg # PSANA CONFIG FILE
 
+# TYPICAL COMMAND TO RUN DARK RUN
+./hitfinder -r 132 -n 1000 -d -O # -r for run, -n for number of events, -d for dark, -O for force overwrite
+
+# TYPICAL COMMAND TO RUN REGULAR RUN
+./hitfinder -r 135 -t test -i cheetah.ini -O -q # -r for run, -t for tag, -i for ini-file, -n for nevents, -O for force overwrite, -q for submit to job queue
+
+# FOR MORE INFO ON RUN FLAGS
+./hitfinder -h
