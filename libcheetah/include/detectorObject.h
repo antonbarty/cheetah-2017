@@ -79,9 +79,9 @@ inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBi
 /*
  * Assemble modes (see assemble2Dimage.cpp)
  */
-static const int ASSEMBLE_MODE_INTEGRATE_2X2 = 0; 
-static const int ASSEMBLE_MODE_PICK_NEAREST = 1; 
-static const int ASSEMBLE_MODE_DEFAULT = ASSEMBLE_MODE_INTEGRATE_2X2;
+static const int ASSEMBLE_INTERPOLATION_LINEAR = 0; 
+static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
+static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
 
 

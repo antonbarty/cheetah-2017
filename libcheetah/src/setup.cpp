@@ -130,7 +130,7 @@ cGlobal::cGlobal(void) {
   radialStackSize=10000;
 
   // Assemble options
-  assembleMode = ASSEMBLE_MODE_DEFAULT;
+  assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
   assemble2DImage = 1;
   assemble2DMask = 1;
 
@@ -688,8 +688,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     saveAssembled = atoi(value);
     assemble2DImage = 1;
   }
-  else if (!strcmp(tag, "assemblemode")) {
-    assembleMode = atoi(value);
+  else if (!strcmp(tag, "assembleinterpolation")) {
+    assembleInterpolation = atoi(value);
   }
   else if (!strcmp(tag, "savepixelmask")) {
     savePixelmask = atoi(value);
@@ -901,7 +901,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "saveHits=%d\n",savehits);
   fprintf(fp, "saveRaw=%d\n",saveRaw);
   fprintf(fp, "saveAssembled=%d\n",saveAssembled);
-  fprintf(fp, "assembleMode=%d\n",assembleMode);
+  fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
   //fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
   //fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
   fprintf(fp, "hdf5dump=%d\n",hdf5dump);

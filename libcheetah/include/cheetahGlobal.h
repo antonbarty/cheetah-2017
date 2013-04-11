@@ -215,8 +215,8 @@ public:
 	int      saveAssembled;
 	int      assemble2DMask;
 	int      assemble2DImage;
-	/** @brief Toggle assemble mode (0: weight nearest 4 pixels, 1: pick value of nearest pixel).*/
-	int      assembleMode;
+	/** @brief Toggle assemble interpolation mode (0: linear, weight nearest 4 pixels, 1: nearest, pick value of nearest pixel).*/
+	int      assembleInterpolation;
 	/** @brief Toggle the writing of individual pixelmask. */
 	int      savePixelmask;
 	/**
