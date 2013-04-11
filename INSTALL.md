@@ -1,5 +1,4 @@
-Cheetah Installation Instructions
-=================================
+# Cheetah Installation Instructions
 
 ### Preparing for the build
 
