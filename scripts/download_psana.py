@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 
 if(len(sys.argv) < 3):
     print "Usage: download_psana.py <ana-version> <output-directory>"
@@ -18,7 +19,13 @@ output_dir = sys.argv[2]
                     
 
 os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/releases/ && tar czf - '+ana_version+'" | tar xzvf - -C '+output_dir)
-os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/6.1.4/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include)
+pdsdata_version = os.popen('grep "pdsdata_ver =" '+output_dir+'/'+ana_version+'/pdsdata/SConscript').read()
+pdsdata_version = re.search('\d+\.\d+\.\d+',pdsdata_version).group(0)
+
+
+os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/6.1.4/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
+os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/'+pdsdata_version+'/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
+os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/ && tar czf - '+pdsdata_version+'" | tar xzvf - -C '+output_dir+'/../external/pdsdata')
 os.system('ssh psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/root/5.30.06-python2.7/x86_64-rhel6-gcc44-opt/include && tar czf - root" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
 
 # Fix broken symlinks
@@ -30,12 +37,15 @@ for root, dirs, filenames in os.walk(indir):
             orig_path = os.readlink(fpath)
             if(orig_path.find('external')):
                 end_path = orig_path[orig_path.find('external/')+9:]
-                new_path = '../../../../../external'+end_path
-                if(os.path.exists(new_path)):
+                new_path = '../../../../../external/'+end_path
+                if(os.path.exists(os.path.dirname(fpath)+'/'+new_path)):
                     os.unlink(fpath)
                     os.symlink(new_path,fpath)
                 else:
+#                    print "Can't find: "+os.path.dirname(fpath)+'/'+new_path
                     new_path = output_dir+"../../../../../common/package/"+end_path
                     if(os.path.exists(new_path)):
                         os.unlink(fpath)
                         os.symlink(new_path,fpath)
+#                    else:
+#                        print "Could not find link:"+orig_path
