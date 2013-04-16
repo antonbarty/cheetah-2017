@@ -67,6 +67,9 @@ void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int)
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 
+// peakfinders.cpp
+
+
 // spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
