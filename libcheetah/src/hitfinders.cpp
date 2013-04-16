@@ -16,6 +16,7 @@
 
 // Peakfinders local to this routine
 int hitfinder1(cGlobal*, cEventData*, int);
+int hitfinder_tof(cGlobal*, cEventData*, int);
 
 
 
@@ -37,7 +38,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;
-	uint16_t        *mask = eventData->detector[detID].pixelmask;
+	uint16_t	*mask = eventData->detector[detID].pixelmask;
 
 	long	nat = 0;
 	long	counter;
@@ -87,6 +88,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		case 0 :	// Everything is a hit. Used for converting xtc to hdf
 			hit = 1;
 	
+			
 		case 1 :	// Count the number of pixels above ADC threshold
 			hit = hitfinder1(global, eventData,detID);
 			if(eventData->nPeaks >= global->hitfinderMinPixCount)
@@ -100,52 +102,33 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 				hit = 1;
 			break;
 
+
+		case 4 :	// Use TOF signal to find hits
+			hit = hitfinder_tof(global, eventData,detID);
+			break;
+			
 			
 		case 3 : 	// Count number of Bragg peaks
 			hit = peakfinder3(global, eventData, detID);			
-			break;	
-
-            
-		case 4 :	// Use TOF signal to find hits
-			if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
-				double total_tof = 0.;
-				for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-					total_tof += eventData->TOFVoltage[i];
-				}
-				if (total_tof > global->hitfinderTOFThresh)
-					hit = 1;
-			}
-			// Use cspad threshold if TOF is not present 
-			else {
-				for(long i=0;i<pix_nn;i++){
-					if(temp[i] > global->hitfinderADC){
-						nat++;
-					}
-				}
-				if(nat >= global->hitfinderMinPixCount)
-					hit = 1;
-			}
 			break;
 			
-		case 5 : 	// Count number of Bragg peaks
-			hit = peakfinder5(global,eventData, detID);
-			break;
-			
+						
 		case 6 : 	// Count number of Bragg peaks
 			hit = peakfinder6(global,eventData, detID);
 			break;
+			
             
 		case 7 : 	// Return laser on event code
             hit = eventData->laserEventCodeOn;
             eventData->nPeaks = eventData->laserEventCodeOn;
 			break;
 			
+			
 		default :
 			printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 			printf("Stopping in confusion.\n");
 			exit(1);
 			break;
-			
 	}
 	
 	// Statistics on the peaks, for certain hitfinders
@@ -257,6 +240,29 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 	free(temp);
 
 	return hit;
+}
+
+
+int hitfinder_tof(cGlobal *global, cEventData *eventData, int detID){
+	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
+		double total_tof = 0.;
+		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+			total_tof += eventData->TOFVoltage[i];
+		}
+		if (total_tof > global->hitfinderTOFThresh)
+			hit = 1;
+	}
+	// Use cspad threshold if TOF is not present
+	else {
+		for(long i=0;i<pix_nn;i++){
+			if(temp[i] > global->hitfinderADC){
+				nat++;
+			}
+		}
+		if(nat >= global->hitfinderMinPixCount)
+			hit = 1;
+	}
+
 }
 
 

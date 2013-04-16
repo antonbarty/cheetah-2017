@@ -20,7 +20,6 @@ void applyHotPixelMask(cEventData*, cGlobal*);
 void calculateHaloPixelMask(cGlobal*);
 void identifyHaloPixels(cEventData*, cGlobal*);
 
-
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
 void applyBadPixelMask(float*, uint16_t*, long);
@@ -60,14 +59,16 @@ herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
-void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(cEventData*, cGlobal*);
+void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 
 // peakfinders.cpp
+int peakfinder3(cGlobal*, cEventData*, int);
+int peakfinder6(cGlobal*, cEventData*, int);
 
 
 // spectrum.cpp
@@ -101,8 +102,8 @@ void saveRadialStacks(cGlobal*);
 int16_t kth_smallest(int16_t*, long, long);
 
 // fudge...
-void evr41fudge(cEventData *t, cGlobal *g);
+void evr41fudge(cEventData*, cGlobal*);
 
 // datarate timing
-void updateDatarate(cEventData *t, cGlobal *g);
+void updateDatarate(cEventData*, cGlobal*);
 

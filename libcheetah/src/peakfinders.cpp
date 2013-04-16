@@ -21,6 +21,8 @@
 #include "peakfinders.h"
 
 
+
+
 /*
  *	Peakfinder 3
  *	Count peaks by searching for connected pixels above threshold
@@ -41,7 +43,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	long		asic_ny = global->detector[detID].asic_ny;
 	long		nasics_x = global->detector[detID].nasics_x;
 	long		nasics_y = global->detector[detID].nasics_y;
-	uint16_t         *mask = eventData->detector[detID].pixelmask;
+	uint16_t	*mask = eventData->detector[detID].pixelmask;
 	
 	// Variables for this hitfinder
 	long	nat = 0;
@@ -307,8 +309,8 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 	lastnat = 0;
 	
 	/* For counting neighbor pixels */
-	int * nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
-	int * killpeak = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
+	int *nexte = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
+	int *killpeak = (int *) calloc(global->detector[detID].pix_nn,sizeof(int));
 	for (i=0; i<global->detector[detID].pix_nn; i++){
 		killpeak[i] = 0;
 	}
@@ -469,8 +471,10 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 					
 				skipme:;
 					
-				}}
-		}}
+				}
+			}
+		}
+	}
 	
 	
 	/*
