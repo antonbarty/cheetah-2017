@@ -13,7 +13,7 @@
 int box_snr(float * image, int * mask, int center, int radius, int thickness, int stride, float * SNR, float * background, float * backgroundSigma);
 
 
-class cPeaklist {
+typedef struct {
 public:
 	long	    nPeaks;
 	float		*peak_maxintensity;		// Maximum intensity in peak
@@ -34,52 +34,47 @@ public:
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
 	
-public: 
-    cPeaklist();
-    ~cPeaklist();
-	void allocate(long);
-	void free(void);
-};
+} tPeakList;
 
 
 
-void cPeakList::cPeakList(void) {
-}
+//void cPeakList::cPeakList(void) {
+//}
 
-void cPeakList::~cPeakList(void) {
-	free();
-}
+//void cPeakList::~cPeakList(void) {
+//	free();
+//}
 
 /*
  *	Create arrays for remembering Bragg peak data
  */
-void cPeakList::allocate(long NpeaksMax) {
-	peak_maxintensity = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_totalintensity = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_npix = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
-	peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+void allocatePeakList(tPeakList *peaks, long NpeaksMax) {
+	peaks->peak_maxintensity = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_totalintensity = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
+	peaks->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 }
 
 /*
  *	Clean up unused arrays
  */
-void cPeakList::free(long n) {
-	free(peak_maxintensity);
-	free(peak_totalintensity);
-	free(peak_snr);
-	free(peak_npix);
-	free(peak_com_x);
-	free(peak_com_y);
-	free(peak_com_index);
-	free(peak_com_x_assembled);
-	free(peak_com_y_assembled);
-	free(peak_com_r_assembled);
+void freePeakList(tPeakList *peaks) {
+	free(peaks->peak_maxintensity);
+	free(peaks->peak_totalintensity);
+	free(peaks->peak_snr);
+	free(peaks->peak_npix);
+	free(peaks->peak_com_x);
+	free(peaks->peak_com_y);
+	free(peaks->peak_com_index);
+	free(peaks->peak_com_x_assembled);
+	free(peaks->peak_com_y_assembled);
+	free(peaks->peak_com_r_assembled);
 }
 
 
