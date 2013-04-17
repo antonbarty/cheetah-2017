@@ -9,6 +9,7 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
+#incldue "cheetahmodules.h"
 #include "median.h"
 #include "hitfinders.h"
 #include "peakfinders.h"
@@ -244,6 +245,25 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 
 
 int hitfinder_tof(cGlobal *global, cEventData *eventData, int detID){
+    
+    int         hit;
+    long		nat = 0;
+    long		pix_nn = global->detector[detID].pix_nn;
+
+    /*
+     *	Create a buffer for image data so we don't nuke the main image by mistake
+     */
+	float *temp = (float*) calloc(pix_nn, sizeof(float));
+	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	
+	
+	// combine pixelmask bits
+	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
+	for(long i=0;i<pix_nn;i++){
+		temp[i] *= isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
+	}
+
+    
 	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 		double total_tof = 0.;
 		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
@@ -262,7 +282,9 @@ int hitfinder_tof(cGlobal *global, cEventData *eventData, int detID){
 		if(nat >= global->hitfinderMinPixCount)
 			hit = 1;
 	}
-
+    free(temp);
+    
+    return hit;
 }
 
 
