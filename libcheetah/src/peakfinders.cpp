@@ -21,6 +21,38 @@
 #include "peakfinders.h"
 
 
+/*
+ *	Create arrays for remembering Bragg peak data
+ */
+void allocatePeakList(tPeakList *peaks, long NpeaksMax) {
+	peaks->peak_maxintensity = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_totalintensity = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
+	peaks->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+	peaks->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
+}
+
+/*
+ *	Clean up unused arrays
+ */
+void freePeakList(tPeakList *peaks) {
+	free(peaks->peak_maxintensity);
+	free(peaks->peak_totalintensity);
+	free(peaks->peak_snr);
+	free(peaks->peak_npix);
+	free(peaks->peak_com_x);
+	free(peaks->peak_com_y);
+	free(peaks->peak_com_index);
+	free(peaks->peak_com_x_assembled);
+	free(peaks->peak_com_y_assembled);
+	free(peaks->peak_com_r_assembled);
+}
+
 
 
 /*
