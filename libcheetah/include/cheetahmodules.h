@@ -18,7 +18,7 @@ void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 void calculateHaloPixelMask(cGlobal*);
-void identifyHaloPixels(cEventData*, cGlobal*);
+void writeFrameToHaloPixelBuffer(cEventData*, cGlobal*);
 
 
 void subtractDarkcal(float*, float*, long);

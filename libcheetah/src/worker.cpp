@@ -193,7 +193,7 @@ void *worker(void *threadarg) {
   /*
    *	Identify halo pixels
    */
-  identifyHaloPixels(eventData, global);	
+  writeFrameToHaloPixelBuffer(eventData,global);
   calculateHaloPixelMask(global);
 	
   /*

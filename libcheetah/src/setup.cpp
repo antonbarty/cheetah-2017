@@ -93,7 +93,6 @@ cGlobal::cGlobal(void) {
   hitfinderMaxRes = 1e10;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
-  hitfinderDisregardHalopix = 0;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -767,9 +766,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfinderadc")) {
     hitfinderADC = atoi(value);
   }
-  else if (!strcmp(tag, "hitfinderdisregardhalopix")) {
-    hitfinderDisregardHalopix = atoi(value);
-  }
   else if (!strcmp(tag, "hitfindertit")) {
     hitfinderTAT = atof(value);
   }
@@ -941,7 +937,6 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "powderSumHits=%d\n",powderSumHits);
   fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
   fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-  fprintf(fp, "hitfinderDisregardHalopix=%d\n",hitfinderDisregardHalopix);
   fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
   fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
   fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
@@ -985,7 +980,6 @@ void cGlobal::writeConfigurationLog(void){
 void cGlobal::writeInitialLog(void){
 
   FILE *fp;
-
   // Start time
   char	timestr[1024];
   time_t	rawtime;

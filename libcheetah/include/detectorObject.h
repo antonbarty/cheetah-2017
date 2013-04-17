@@ -224,8 +224,8 @@ public:
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
-	int    halopixMemory;
-	int    halopixRecalc;
+	long    halopixMemory;
+	long    halopixRecalc;
 	long   halopixCounter;
 	long   nhalo;
 	long   last_halopix_update;

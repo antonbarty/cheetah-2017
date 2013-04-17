@@ -37,7 +37,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       /*
        *	Subtract persistent background
        */
-      int		scaleBg = global->detector[detID].scaleBackground;
+      int	scaleBg = global->detector[detID].scaleBackground;
       long	pix_nn = global->detector[detID].pix_nn;
       float	*frameData = eventData->detector[detID].corrected_data;
       float	*background = global->detector[detID].selfdark;
@@ -48,35 +48,34 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       /*
        *	Recalculate background from time to time
        */
-      int16_t *frameBuffer = global->detector[detID].bg_buffer; 
       int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
       long	bufferDepth = global->detector[detID].bgMemory;
-      long	bgCounter = global->detector[detID].bgCounter;
       long	bgRecalc = global->detector[detID].bgRecalc;
-      long	lastUpdate = global->detector[detID].last_bg_update;
       float	medianPoint = global->detector[detID].bgMedian;
       long	threshold = lrint(bufferDepth*medianPoint);
-
-      // Lock threads for the first few cycles
-      if(bgCounter < 3*bgRecalc)
-	lockThreads = 1;
+      long	bgCounter,lastUpdate;
+      int16_t *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 			
       pthread_mutex_lock(&global->bgbuffer_mutex);
-
-      if( ((bgCounter % bgRecalc) == 0)  && bgCounter != lastUpdate ) {
-	if(lockThreads)
-	  pthread_mutex_lock(&global->selfdark_mutex);
-	printf("Finding %lith smallest element of buffer depth %li\n",threshold,bufferDepth);	
+      bgCounter = global->detector[detID].bgCounter;
+      lastUpdate = global->detector[detID].last_bg_update;
+      if( bgCounter > bgRecalc+lastUpdate ) {
 	global->detector[detID].last_bg_update = bgCounter;				
+	memcpy(frameBuffer,global->detector[detID].bg_buffer,pix_nn*bufferDepth*sizeof(int16_t));
 	pthread_mutex_unlock(&global->bgbuffer_mutex);
+
+	printf("Detector %d: Recalculating persistent background.\n",detID);
+
+	pthread_mutex_lock(&global->selfdark_mutex);
 	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
-	if(lockThreads)
-	  pthread_mutex_unlock(&global->selfdark_mutex);
+	pthread_mutex_unlock(&global->selfdark_mutex);
+
+      } else {
+	pthread_mutex_unlock(&global->bgbuffer_mutex);			
       }
-      else
-	pthread_mutex_unlock(&global->bgbuffer_mutex);
-			
-			
+      
+
+      free(frameBuffer);			
 			
       /*
        *	Remember GMD values  (why is this here?)
@@ -117,8 +116,10 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	global->detector[detID].bgCounter += 1;
 	if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
-	long frameID = bgCounter%bufferDepth;					
+	long frameID = bgCounter%bufferDepth;
+	pthread_mutex_lock(&global->bgbuffer_mutex);				
 	memcpy(frameBuffer+pix_nn*frameID, data16, pix_nn*sizeof(int16_t));
+	pthread_mutex_unlock(&global->bgbuffer_mutex);
       }		
   }
 }

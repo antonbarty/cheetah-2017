@@ -76,8 +76,6 @@ public:
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
 	int      hitfinderADC;
-	/** @brief Do not count pixels in halo for hit finding. */
-	int      hitfinderDisregardHalopix;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */

@@ -229,8 +229,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, int detID){
 	
   // combine pixelmask bits
   uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
-
-  if(global->hitfinderDisregardHalopix) combined_pixel_options |= PIXEL_IS_IN_HALO;
 	
   /*
    *	Apply masks
