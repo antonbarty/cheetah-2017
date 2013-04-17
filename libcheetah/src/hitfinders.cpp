@@ -9,7 +9,7 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
-#incldue "cheetahmodules.h"
+#include "cheetahmodules.h"
 #include "median.h"
 #include "hitfinders.h"
 #include "peakfinders.h"
@@ -249,6 +249,7 @@ int hitfinder_tof(cGlobal *global, cEventData *eventData, int detID){
     int         hit;
     long		nat = 0;
     long		pix_nn = global->detector[detID].pix_nn;
+	uint16_t	*mask = eventData->detector[detID].pixelmask;
 
     /*
      *	Create a buffer for image data so we don't nuke the main image by mistake
