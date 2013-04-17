@@ -4,17 +4,12 @@
 .style_1 {
     padding: 0px;
 }
-.style_2 {
-    padding: 0px;
-}
 .style_SkipStroke_2 {
     background: transparent;
     opacity: 1.00;
 }
-.style_External_400_335 {
-    bottom: 0px;
-    position: relative;
-    width: 400px;
+.style_2 {
+    padding: 0px;
 }
 .style_External_145_43 {
     bottom: 0px;
@@ -33,10 +28,19 @@
     background: transparent;
     opacity: 1.00;
 }
+.style_SkipStroke_4 {
+    background: transparent;
+    opacity: 1.00;
+}
 .style_External_515_43 {
     bottom: 0px;
     position: absolute;
     width: 515px;
+}
+.style_External_400_278 {
+    bottom: 0px;
+    position: relative;
+    width: 400px;
 }
 .Body {
     color: rgb(81, 81, 81);
@@ -107,11 +111,6 @@
 .Normal {
     padding: 0px;
 }
-.Normal_External_400_335 {
-    bottom: 0px;
-    position: absolute;
-    width: 400px;
-}
 .Normal_External_400_24 {
     bottom: 0px;
     position: absolute;
@@ -121,6 +120,11 @@
     bottom: 0px;
     position: absolute;
     width: 515px;
+}
+.Normal_External_400_278 {
+    bottom: 0px;
+    position: absolute;
+    width: 400px;
 }
 .Title {
     color: rgb(81, 81, 81);
@@ -153,6 +157,10 @@
     opacity: 1.00;
 }
 .graphic_generic_title_textbox_style_default_SkipStroke {
+    background: transparent;
+    opacity: 1.00;
+}
+.graphic_image_style_default_SkipStroke {
     background: transparent;
     opacity: 1.00;
 }

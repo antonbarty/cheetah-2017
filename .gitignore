@@ -3,3 +3,4 @@ geometry
 upload
 *.so.*
 .sconsign.dblite
+*.DS_Store

@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
  <id>urn:iweb:DD7DA1A9-7B23-4E92-8603-8901DFF25009</id>
  <title>Page list Atom feed</title>
- <updated>2013-04-17T10:02:33+02:00</updated>
+ <updated>2013-04-17T11:19:12+02:00</updated>
  <link rel="self" href="feed.xml"/>
  <generator>iWeb</generator>
  <author>
@@ -14,16 +14,16 @@
   <title xmlns="urn:iweb:">Welcome</title>
   <in-navbar xmlns="urn:iweb:">56483921-8F67-4044-B28F-65DC30B71EE5</in-navbar>
   <link rel="alternate" href="Welcome.html"/>
-  <updated>2013-04-17T10:02:33.001+02:00</updated>
+  <updated>2013-04-17T11:19:12.001+02:00</updated>
   <content>Welcome</content>
  </entry>
  <entry>
-  <id>urn:iweb:56F4845D-34B7-426F-A959-4571DF92C8C2</id>
+  <id>urn:iweb:F8C4B76A-B862-4965-94C1-8EDEB181EA0E</id>
   <title>Installation</title>
   <title xmlns="urn:iweb:">Installation</title>
-  <in-navbar xmlns="urn:iweb:">56F4845D-34B7-426F-A959-4571DF92C8C2</in-navbar>
+  <in-navbar xmlns="urn:iweb:">F8C4B76A-B862-4965-94C1-8EDEB181EA0E</in-navbar>
   <link rel="alternate" href="Installation.html"/>
-  <updated>2013-04-17T10:02:33.002+02:00</updated>
+  <updated>2013-04-17T11:19:12.002+02:00</updated>
   <content>Installation</content>
  </entry>
 </feed>

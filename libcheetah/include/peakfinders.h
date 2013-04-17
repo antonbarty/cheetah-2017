@@ -35,8 +35,8 @@ public:
 	float		peakTotal;				// Total integrated intensity in peaks
 	
 public: 
-	void cPeaklist;
-	void ~cPeaklist;
+	void cPeaklist(void);
+	void ~cPeaklist(void);
 	void allocate(long);
 	void free(void);
 };
