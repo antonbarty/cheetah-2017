@@ -35,9 +35,9 @@ Now that you have cmake we can start the build:
         $ mkdir build
         $ cd build
  
-- Run ccmake
+- Run ccmake and point it to the base source directory
 
-        $ ccmake ..
+        $ ccmake ../source
 
 - You will see something like:
 
