@@ -89,11 +89,10 @@ cGlobal::cGlobal(void) {
   hitfinderLocalBGRadius = 4;
   hitfinderLocalBGThickness = 5;
   //hitfinderLimitRes = 1;
-  hitfinderMinRes = 0;
-  hitfinderMaxRes = 1e10;
+  hitfinderMinRes = 1e10;
+  hitfinderMaxRes = 0;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
-  hitfinderDisregardHalopix = 0;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -130,7 +129,7 @@ cGlobal::cGlobal(void) {
   radialStackSize=10000;
 
   // Assemble options
-  assembleMode = ASSEMBLE_MODE_DEFAULT;
+  assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
   assemble2DImage = 1;
   assemble2DMask = 1;
 
@@ -220,6 +219,11 @@ void cGlobal::setup() {
   if(generateDarkcal || generateGaincal)
     nPowderClasses=1;
 
+  for(int i = 0; i<nPowderClasses; i++){
+    nPeaksMin[i] = 1000000000;
+    nPeaksMax[i] = 0;
+  }
+
 	
   if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
     printf("Errors: hitfinderDetector > nDetectors\n");
@@ -230,63 +234,6 @@ void cGlobal::setup() {
     printf("Quitting...\n");
     exit(1);
   }
-
-  /*
-   * Set up arrays for hot pixels, running backround, etc.
-   */
-  for(long i=0; i<nDetectors; i++) {
-    detector[i].allocatePowderMemory(self);
-  }
-
-  /*
-   * Set up array for run integrated energy spectrum
-   */
-  espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumRun[i] = 0;
-  }
-	
-  /*
-   * Set up buffer array for calculation of energy spectrum background
-   */
-  espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumBuffer[i] = 0;
-  }
-
-  /*
-   * Set up Darkcal array for holding energy spectrum background
-   */
-  espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumDarkcal[i] = 0;
-  }
-	
-  /*
-   * Set up array for holding energy spectrum scale
-   */
-  espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumScale[i] = 0;
-  }
-	
-  readSpectrumDarkcal(self, espectrumDarkFile);
-  readSpectrumEnergyScale(self, espectrumScaleFile);
-	
-	
-  /*
-   * Set up arrays for powder classes and radial stacks
-   * Currently only tracked for detector[0]  (generalise this later)
-   */
-  for(long i=0; i<nPowderClasses; i++) {
-    char  filename[1024];
-    powderlogfp[i] = NULL;
-    if(runNumber > 0) {
-      sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
-      powderlogfp[i] = fopen(filename, "w");
-    }
-  }
-
 
   /*
    * Set up thread management
@@ -308,6 +255,7 @@ void cGlobal::setup() {
   pthread_mutex_init(&espectrumBuffer_mutex, NULL);
   pthread_mutex_init(&datarateWorker_mutex, NULL);  
   pthread_mutex_init(&saveCXI_mutex, NULL);  
+  pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
   /*
@@ -399,6 +347,7 @@ void cGlobal::setup() {
     detector[i].halopixCounter = 0;
     detector[i].last_halopix_update = 0;
     detector[i].halopixRecalc = detector[i].bgRecalc;
+    detector[i].halopixMemory = detector[i].bgRecalc;
     detector[i].nhalo = 0;
     detector[i].detectorZprevious = 0;
     detector[i].detectorZ = 0;
@@ -407,6 +356,63 @@ void cGlobal::setup() {
 
   // Make sure to use SLAC timezone!
   setenv("TZ","US/Pacific",1);
+
+  /*
+   * Set up arrays for hot pixels, running backround, etc.
+   */
+  for(long i=0; i<nDetectors; i++) {
+    detector[i].allocatePowderMemory(self);
+  }
+
+  /*
+   * Set up array for run integrated energy spectrum
+   */
+  espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
+  for(long i=0; i<espectrumLength; i++) {
+    espectrumRun[i] = 0;
+  }
+	
+  /*
+   * Set up buffer array for calculation of energy spectrum background
+   */
+  espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+    espectrumBuffer[i] = 0;
+  }
+
+  /*
+   * Set up Darkcal array for holding energy spectrum background
+   */
+  espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+    espectrumDarkcal[i] = 0;
+  }
+	
+  /*
+   * Set up array for holding energy spectrum scale
+   */
+  espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
+  for(long i=0; i<espectrumLength; i++) {
+    espectrumScale[i] = 0;
+  }
+	
+  readSpectrumDarkcal(self, espectrumDarkFile);
+  readSpectrumEnergyScale(self, espectrumScaleFile);
+	
+	
+  /*
+   * Set up arrays for powder classes and radial stacks
+   * Currently only tracked for detector[0]  (generalise this later)
+   */
+  for(long i=0; i<nPowderClasses; i++) {
+    char  filename[1024];
+    powderlogfp[i] = NULL;
+    if(runNumber > 0) {
+      sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
+      powderlogfp[i] = fopen(filename, "w");
+    }
+  }
+
 
 }
 
@@ -430,7 +436,8 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
   if (argc > 2) {
     for (long i=2; i<argc; i++) {
       if (argv[i][0] == '-' && i+1 < argc) {
-	parseConfigTag(argv[i]+1, argv[++i]);
+	parseConfigTag(argv[i]+1, argv[i+1]);
+	i++;
       }
     }
   }
@@ -450,7 +457,7 @@ void cGlobal::parseConfigFile(char* filename) {
   char  ts[cbufsize] = "";
   char  *cp;
   FILE  *fp;
-  int i,cnt,fail;
+  int cnt,fail;
   int exitCheetah = 0;
 
   /*
@@ -483,14 +490,14 @@ void cGlobal::parseConfigFile(char* filename) {
 
     /* strip whitespace */
     cnt=0;
-    for (i=0; i<cbufsize; i++){
+    for (uint i=0; i<cbufsize; i++){
       if (cbuf[i] == ' ') continue;
       cbuf[cnt] = cbuf[i];
       cnt++;
     }
 
     /* strip comments */
-    for (i=0; i<cbufsize-1; i++){
+    for (uint i=0; i<cbufsize-1; i++){
       if (cbuf[i] == '#'){
 	cbuf[i] = '\n';
 	cbuf[i+1] = '\0';
@@ -553,7 +560,7 @@ void cGlobal::parseConfigFile(char* filename) {
       int matched=0;
 
       /* set detector-specific configuration */
-      for (i=0; i<MAX_DETECTORS; i++){
+      for (long i=0; i<MAX_DETECTORS; i++){
 
 	/* new group? */
 	if (!strcmp("none",detector[i].configGroup)){
@@ -592,8 +599,8 @@ void cGlobal::parseConfigFile(char* filename) {
   }
 
   printf("Configured %d detectors\n",nDetectors);
-  for (i=0;i<nDetectors;i++){
-    printf("detector %d: %s\n",i,detector[i].configGroup);
+  for (long i=0;i<nDetectors;i++){
+    printf("detector %li: %s\n",i,detector[i].configGroup);
   }
 
 
@@ -612,7 +619,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   /*
    * Convert to lowercase
    */
-  for(int i=0; i<strlen(tag); i++)
+  for(uint i=0; i<strlen(tag); i++)
     tag[i] = tolower(tag[i]);
 
   /*
@@ -688,8 +695,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     saveAssembled = atoi(value);
     assemble2DImage = 1;
   }
-  else if (!strcmp(tag, "assemblemode")) {
-    assembleMode = atoi(value);
+  else if (!strcmp(tag, "assembleinterpolation")) {
+    assembleInterpolation = atoi(value);
   }
   else if (!strcmp(tag, "savepixelmask")) {
     savePixelmask = atoi(value);
@@ -766,9 +773,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinderadc")) {
     hitfinderADC = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderdisregardhalopix")) {
-    hitfinderDisregardHalopix = atoi(value);
   }
   else if (!strcmp(tag, "hitfindertit")) {
     hitfinderTAT = atof(value);
@@ -901,7 +905,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "saveHits=%d\n",savehits);
   fprintf(fp, "saveRaw=%d\n",saveRaw);
   fprintf(fp, "saveAssembled=%d\n",saveAssembled);
-  fprintf(fp, "assembleMode=%d\n",assembleMode);
+  fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
   //fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
   //fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
   fprintf(fp, "hdf5dump=%d\n",hdf5dump);
@@ -941,7 +945,6 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "powderSumHits=%d\n",powderSumHits);
   fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
   fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-  fprintf(fp, "hitfinderDisregardHalopix=%d\n",hitfinderDisregardHalopix);
   fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
   fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
   fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
@@ -985,7 +988,6 @@ void cGlobal::writeConfigurationLog(void){
 void cGlobal::writeInitialLog(void){
 
   FILE *fp;
-
   // Start time
   char	timestr[1024];
   time_t	rawtime;

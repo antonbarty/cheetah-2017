@@ -9,8 +9,12 @@
 #ifndef cheetah_peakfinders_h
 #define cheetah_peakfinders_h
 
+int peakfinder3(cGlobal *global, cEventData *eventData, int detID);
+int peakfinder6(cGlobal *global, cEventData *eventData, int detID);
 
-int box_snr(float * image, int * mask, int center, int radius, int thickness, int stride, float * SNR, float * background, float * backgroundSigma);
+int box_snr(float * im, uint16_t * mask, uint16_t combined_pixel_options, int center, int radius, int thickness,
+            int stride, float * SNR, float * background, float * backgroundSigma);
+
 
 
 typedef struct {

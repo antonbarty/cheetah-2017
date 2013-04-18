@@ -63,9 +63,6 @@ static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
 
-
-
-
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
 inline bool isNoneOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)==0);}
@@ -79,9 +76,9 @@ inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBi
 /*
  * Assemble modes (see assemble2Dimage.cpp)
  */
-static const int ASSEMBLE_MODE_INTEGRATE_2X2 = 0; 
-static const int ASSEMBLE_MODE_PICK_NEAREST = 1; 
-static const int ASSEMBLE_MODE_DEFAULT = ASSEMBLE_MODE_INTEGRATE_2X2;
+static const int ASSEMBLE_INTERPOLATION_LINEAR = 0; 
+static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
+static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
 
 
@@ -145,6 +142,11 @@ public:
 	// Assembled image size
 	long  image_nx;
 	long  image_nn;
+
+	// Assembled downsampled image size
+	long  imageXxX_nx;
+	long  imageXxX_nn;
+	long  downsampling;
 
 	// ASIC module size
 	long  asic_nx;
@@ -224,8 +226,8 @@ public:
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
-	int    halopixMemory;
-	int    halopixRecalc;
+	long    halopixRecalc;
+	long    halopixMemory;
 	long   halopixCounter;
 	long   nhalo;
 	long   last_halopix_update;
@@ -245,7 +247,7 @@ public:
 	 */
 	int16_t   *bg_buffer;
 	int16_t   *hotpix_buffer;
-	float   *halopix_buffer;
+	float     *halopix_buffer;
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;
@@ -262,11 +264,18 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
+	float   *correctedMin[MAX_POWDER_CLASSES];
+	float   *assembledMin[MAX_POWDER_CLASSES];
+	float   *correctedMax[MAX_POWDER_CLASSES];
+	float   *assembledMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
-
+	pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t assembledMax_mutex[MAX_POWDER_CLASSES];
 
 	/*
 	 *  Radial stacks for this detector
@@ -308,12 +317,14 @@ public:
 	
 	int       cspad_fail;
 	uint16_t  *raw_data;
-	uint16_t  *pixelmask;
-	float     *corrected_data;
 	float     *detector_corrected_data;
+	float     *corrected_data;
 	int16_t   *corrected_data_int16;
+	uint16_t  *pixelmask;
 	int16_t   *image;
 	uint16_t  *image_pixelmask;
+	int16_t   *imageXxX;
+	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
 	double    detectorZ;

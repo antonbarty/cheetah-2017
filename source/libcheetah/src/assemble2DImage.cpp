@@ -18,8 +18,6 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-
-
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
   DETECTOR_LOOP {
@@ -30,10 +28,9 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
     float		*pix_y = global->detector[detID].pix_y;
     float		*corrected_data = eventData->detector[detID].corrected_data;
     int16_t		*image = eventData->detector[detID].image;
-    int             assembleMode = global->assembleMode;
-    assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleMode);
+    int             assembleInterpolation = global->assembleInterpolation;
+    assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
   }
-
 
 }
 
@@ -48,8 +45,8 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
     float		*pix_y = global->detector[detID].pix_y;
     uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
     uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
-    int             assembleMode = global->assembleMode;
-    assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleMode);
+    int             assembleInterpolation = global->assembleInterpolation;
+    assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
   }
 
 }
@@ -61,9 +58,9 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
  *	input data: float
  *	output data: int16_t
  */
-void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleMode) {
+void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
 
-  if(assembleMode == ASSEMBLE_MODE_INTEGRATE_2X2){
+  if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
   
     // Allocate temporary arrays for pixel interpolation (needs to be floating point)
     float	*data = (float*) calloc(image_nn,sizeof(float));
@@ -154,13 +151,12 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     free(data);
     free(weight);
   }
-  else if(assembleMode == ASSEMBLE_MODE_PICK_NEAREST){
+  else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
 
     // Loop through all pixels and interpolate onto regular grid
     float	x, y;
     long	ix, iy;
     long	image_index;
-
     
     for(long i=0;i<pix_nn;i++){
       x = pix_x[i] + image_nx/2.;
@@ -188,7 +184,7 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
  *	input data: uint16_t
  *	output data: uint16_t
  */
-void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleMode) {
+void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
   
   float	x, y;
   long	ix, iy;
@@ -198,7 +194,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
     assembled_mask[i] = PIXEL_IS_MISSING;
   }
        		
-  if(assembleMode == ASSEMBLE_MODE_INTEGRATE_2X2){
+  if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
     // Loop through all pixels and interpolate onto regular grid
   
     for(long i=0;i<pix_nn;i++){
@@ -237,7 +233,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
       }
     }
   }
-  else if(assembleMode == ASSEMBLE_MODE_PICK_NEAREST){
+  else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
     
     for(long i=0;i<pix_nn;i++){
       x = pix_x[i] + image_nx/2.;
@@ -248,5 +244,63 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
       image_index = ix + image_nx*iy;
       assembled_mask[image_index] = original_mask[i];
     }
+  }
+}
+
+void downsample(cEventData *eventData, cGlobal *global){
+
+  DETECTOR_LOOP {
+    if(global->detector[detID].downsampling > 1){
+
+      long		image_nx = global->detector[detID].image_nx;
+      long		image_nn = global->detector[detID].image_nn;
+      int16_t		*image = eventData->detector[detID].image;
+      uint16_t	        *image_pixelmask = eventData->detector[detID].image_pixelmask;
+      long		imageXxX_nx = global->detector[detID].imageXxX_nx;
+      long		imageXxX_nn = global->detector[detID].imageXxX_nn;
+      int16_t		*imageXxX = eventData->detector[detID].imageXxX;
+      uint16_t	        *imageXxX_pixelmask = eventData->detector[detID].imageXxX_pixelmask;
+
+      downsampleImage(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx);
+      downsampleMask(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx);
+    }
+  }
+}
+
+void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
+  long x0,y0;
+  long x1,y1;
+  long downsampling = img_nx/imgXxX_nx;
+  long i0,i1;
+
+  for(i1 = 0;i1<imgXxX_nn;i1++){
+    imgXxX[i1] = 0;
+  }
+  for(i0 = 0;i0<img_nn;i0++){
+    x0 = i0%img_nx;
+    y0 = i0/img_nx;
+    x1 = x0/downsampling;
+    y1 = y0/downsampling;
+    i1 = y1*imgXxX_nx + x1;
+    imgXxX[i1] += img[i0];
+  }
+}
+
+void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
+  long x0,y0;
+  long x1,y1;
+  long downsampling = img_nx/imgXxX_nx;
+  long i0,i1;
+
+  for(i1 = 0;i1<imgXxX_nn;i1++){
+    mskXxX[i1] = 0;
+  }
+  for(i0 = 0;i0<img_nn;i0++){
+    x0 = i0%img_nx;
+    y0 = i0/img_nx;
+    x1 = x0/downsampling;
+    y1 = y0/downsampling;
+    i1 = y1*imgXxX_nx + x1;
+    mskXxX[i1] |= msk[i0];
   }
 }

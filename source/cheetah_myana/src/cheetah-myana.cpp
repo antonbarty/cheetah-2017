@@ -79,7 +79,7 @@ void sig_handler(int signo)
 /*
  *	Return true or false if a given event code is present
  */
-bool eventCodePresent(int EvrCode)
+bool eventCodePresent(uint EvrCode)
 {
   int nfifo = getEvrDataNumber();	
   for(int i=0; i<nfifo; i++) {
@@ -292,7 +292,8 @@ void begincalib()
  */
 void event() {
 	
-        
+  static uint32_t nevents = 0;        
+
   // Variables
   frameNumber++;
   int fail = 0;
@@ -661,7 +662,7 @@ void event() {
     // cspad data
     if ( strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
 
-      uint16_t *quad_data[4];        
+      //uint16_t *quad_data[4];        
       Pds::CsPad::ElementIterator iter;
 			
       //std::cout << "detectorPdsDetInfo[" << detID << "]: " << detectorPdsDetInfo[detID] << std::endl;
@@ -677,8 +678,8 @@ void event() {
 	long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
 	long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
 	long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-	long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
-	long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
+	//long    nasics_x = cheetahGlobal.detector[detID].nasics_x;
+	//long    nasics_y = cheetahGlobal.detector[detID].nasics_y;
 	uint16_t    *quad_data[4];
 
 	//printf("nasics_x/y asic_nx/ny: %d/%d %d/%d\n",nasics_x,nasics_y,asic_nx,asic_ny);          
@@ -762,7 +763,6 @@ void event() {
     }
 		
     // Update detector positions
-    eventData->detector[detID].detectorZ;
     eventData->detector[detID].detectorZ = detectorPosition[detID];
 		
   }	

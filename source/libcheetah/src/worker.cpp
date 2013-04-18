@@ -45,7 +45,7 @@ void *worker(void *threadarg) {
   std::stringstream sstm;
   std::string result;
   std::ofstream outFlu;
-  std::ios_base::openmode mode;
+  //std::ios_base::openmode mode;
   std::stringstream sstm1;
   std::ofstream outHit;
 
@@ -58,33 +58,30 @@ void *worker(void *threadarg) {
     evr41fudge(eventData,global);	
   }
 	
-
-	
   /*
    *	Create a unique name for this event
    */
   nameEvent(eventData, global);
 	
+  /*
+   * Copy pixelmask_shared into pixelmask 
+   * and raw detector data into corrected array as starting point for corrections
+   */
   DETECTOR_LOOP {
-    /*
-     *	Copy pixelmask_shared into pixelmask for this event
-     */
     for(long i=0;i<global->detector[detID].pix_nn;i++){
       eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-    }
-    /*
-     *	Copy raw detector data into corrected array as starting point for corrections
-     */
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
       eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
     }
   }
+
+  // Init background buffer
+  initBackgroundBuffer(eventData, global);
+
 	
   /*
    * Check for saturated pixels before applying any other corrections
    */
   checkSaturatedPixels(eventData, global);
-
 
 	
   /*
@@ -155,6 +152,7 @@ void *worker(void *threadarg) {
   calculateHotPixelMask(global);
   applyHotPixelMask(eventData,global);
 
+
   updateDatarate(eventData,global);
 
   /*
@@ -164,13 +162,12 @@ void *worker(void *threadarg) {
     if (eventData->threadNum < global->detector[detID].startFrames || 
 	(global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
 	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
-      updateBackgroundBuffer(eventData, global, detID); 
-		    
+      updateBackgroundBuffer(eventData, global, 0); 
+      updateHaloBuffer(eventData,global,0);		    
       printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
       goto cleanup;
     }
   }
-    
 
   /*
    *  Fix pnCCD errors:
@@ -180,8 +177,7 @@ void *worker(void *threadarg) {
    */
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
-    
-
+   
   /*
    *	Hitfinding
    */
@@ -193,13 +189,13 @@ void *worker(void *threadarg) {
   /*
    *	Identify halo pixels
    */
-  identifyHaloPixels(eventData, global);	
+  updateHaloBuffer(eventData,global,hit);
   calculateHaloPixelMask(global);
 	
   /*
    *	Update running backround estimate based on non-hits
    */
-  updateBackgroundBuffer(eventData, global, hit); 
+  updateBackgroundBuffer(eventData, global,hit); 
 	
 	
   /*
@@ -283,6 +279,7 @@ void *worker(void *threadarg) {
 	
   /*
    *	Maintain a running sum of data (powder patterns)
+   *    and strongest non-hit and weakest hit
    */
   addToPowder(eventData, global);
 
@@ -292,11 +289,13 @@ void *worker(void *threadarg) {
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
+  goto save;
+  
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
  save:
-  if((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0))){
+  if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
     if(global->saveCXI==1){
       pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
@@ -322,13 +321,46 @@ void *worker(void *threadarg) {
    *	Write out information on each frame to a log file
    */
   pthread_mutex_lock(&global->framefp_mutex);
-  fprintf(global->framefp, "%s, %li, %li, %i, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g, %d\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped);
+  fprintf(global->framefp, "%s, ", eventData->eventname);
+  fprintf(global->framefp, "%li, ", eventData->frameNumber);
+  fprintf(global->framefp, "%li, ", eventData->threadNum);
+  fprintf(global->framefp, "%i, ", eventData->hit);
+  fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
+  fprintf(global->framefp, "%g, ", eventData->wavelengthA);
+  fprintf(global->framefp, "%g, ", eventData->gmd1);
+  fprintf(global->framefp, "%g, ", eventData->gmd2);
+  fprintf(global->framefp, "%g, ", eventData->detector[0].detectorZ);
+  fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
+  fprintf(global->framefp, "%d, ", eventData->nPeaks);
+  fprintf(global->framefp, "%g, ", eventData->peakNpix);
+  fprintf(global->framefp, "%g, ", eventData->peakTotal);
+  fprintf(global->framefp, "%g, ", eventData->peakResolution);
+  fprintf(global->framefp, "%g, ", eventData->peakDensity);
+  fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
+  fprintf(global->framefp, "%g, ", eventData->laserDelay);
+  fprintf(global->framefp, "%d\n", eventData->samplePumped);
   pthread_mutex_unlock(&global->framefp_mutex);
 
   // Keep track of what has gone into each image class
   pthread_mutex_lock(&global->powderfp_mutex);
-  fprintf(global->powderlogfp[hit], "%s, %li, %li, %g, %g, %g, %g, %g, %i, %d, %d, %g, %g, %g, %d, %g\n", eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay);
+  fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+  fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
+  fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
+  fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
+  fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
+  fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
+  fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
+
 	
   /*
    *	Cleanup and exit
@@ -374,8 +406,8 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		return;
 	}
  
-	int nCh = g->AcqNumChannels;
-	int nSamp = g->AcqNumSamples;
+	//int nCh = g->AcqNumChannels;
+	//int nSamp = g->AcqNumSamples;
 	double * Vtof = t->TOFVoltage;
 	int i;
 	double Vtot = 0;
@@ -413,7 +445,6 @@ double difftime_timeval(timeval t1, timeval t2)
 void updateDatarate(cEventData *eventData, cGlobal *global){
 
   timeval timevalNow;
-  double datarateNow;
   double mem = global->datarateWorkerMemory;
   double dtNew,dtNow;
   gettimeofday(&timevalNow, NULL);
