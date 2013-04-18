@@ -271,13 +271,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "applyautohotpixel")) {
     applyAutoHotpixel = atoi(value);

@@ -388,8 +388,15 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         
         // Wait until we have a spare thread in the thread pool
         while(global->nActiveThreads >= global->nThreads) {
-            usleep(1000);
+	  usleep(1000);
         }
+
+	DETECTOR_LOOP {
+	  while((eventData->frameNumber==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
+	    printf("Reached frame %i. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
+	    usleep(5000);
+	  }
+	}
         
         // Set detached state
         pthread_attr_init(&threadAttribute);

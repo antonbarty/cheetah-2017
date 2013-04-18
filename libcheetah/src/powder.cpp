@@ -211,7 +211,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
   for(long i=0; i<pix_nn; i++){
     bufferCorrectedSigma[i] =
-      sqrt( (bufferCorrectedSquared[i] - bufferCorrected[i]*bufferCorrected[i]) / detector->nPowderFrames[powderType] );
+      sqrt( fabs(bufferCorrectedSquared[i] - bufferCorrected[i]*bufferCorrected[i]) / detector->nPowderFrames[powderType] );
   }
   pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
   pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);

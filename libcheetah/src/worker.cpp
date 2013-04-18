@@ -75,7 +75,7 @@ void *worker(void *threadarg) {
   }
 
   // Init background buffer
-  //initBackgroundBuffer(eventData, global);
+  initBackgroundBuffer(eventData, global);
 
 	
   /*
@@ -189,13 +189,13 @@ void *worker(void *threadarg) {
   /*
    *	Identify halo pixels
    */
-  updateHaloBuffer(eventData,global,0);
+  updateHaloBuffer(eventData,global,hit);
   calculateHaloPixelMask(global);
 	
   /*
    *	Update running backround estimate based on non-hits
    */
-  updateBackgroundBuffer(eventData, global, 0); 
+  updateBackgroundBuffer(eventData, global,hit); 
 	
 	
   /*

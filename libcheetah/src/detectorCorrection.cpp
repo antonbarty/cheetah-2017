@@ -622,30 +622,28 @@ void pnccdFixWiringError(float *data) {
 }
 
 void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
-  if(hit){
-    DETECTOR_LOOP {
-      if(global->detector[detID].useAutoHalopixel){
-	float	*frameData = eventData->detector[detID].corrected_data;
-	float     *frameBuffer = global->detector[detID].halopix_buffer;
-	long	pix_nn = global->detector[detID].pix_nn;
-	long	bufferDepth = global->detector[detID].halopixRecalc;
-	long	frameID;
+  DETECTOR_LOOP {
+    if(global->detector[detID].useAutoHalopixel && !hit && (eventData->frameNumber > global->detector[detID].bgRecalc)){
+      float	*frameData = eventData->detector[detID].corrected_data;
+      float     *frameBuffer = global->detector[detID].halopix_buffer;
+      long	pix_nn = global->detector[detID].pix_nn;
+      long	bufferDepth = global->detector[detID].halopixRecalc;
+      long	frameID;
 
-	float	*buffer = (float *) malloc(pix_nn*sizeof(float));
-	for(long i=0; i<pix_nn; i++){
-	  buffer[i] = fabs(frameData[i]);
-	}
-
-	pthread_mutex_lock(&global->halopixel_mutex);
-
-	frameID = (global->detector[detID].halopixCounter)%bufferDepth;
-	memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
-	global->detector[detID].halopixCounter += 1;
-
-	pthread_mutex_unlock(&global->halopixel_mutex);
-
-	free(buffer);
+      float	*buffer = (float *) malloc(pix_nn*sizeof(float));
+      for(long i=0; i<pix_nn; i++){
+	buffer[i] = fabs(frameData[i]);
       }
+
+      pthread_mutex_lock(&global->halopixel_mutex);
+
+      frameID = (global->detector[detID].halopixCounter)%bufferDepth;
+      memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
+      global->detector[detID].halopixCounter += 1;
+
+      pthread_mutex_unlock(&global->halopixel_mutex);
+
+      free(buffer);
     }
   }
 }
@@ -700,39 +698,41 @@ void calculateHaloPixelMask(cGlobal *global){
 long calculateHaloPixelMask(uint16_t *mask, float *frameBuffer, float threshold, long bufferDepth, long pix_nn){
 
   // Loop over all pixels 
-  float	sum;
+  float sum;
   long	nhalo = 0;
 
+  bool* buffer = (bool *) calloc(pix_nn,sizeof(bool));
+
   for(long i=0; i<pix_nn; i++) {
-		
     sum = 0.;
     for(long j=0; j< bufferDepth; j++) {
       sum += frameBuffer[j*pix_nn+i]; 
     }
-		
-    // Apply threshold
+    if(sum >= threshold) {
+      buffer[i] = true;
+      nhalo += 1;
+    } else {
+      buffer[i] = false;
+    }
+  }
 
+  for(long i=0; i<pix_nn; i++) {
+    if (buffer[i]){
 #ifdef __GNUC__
-    // threadsafe but maybe slow?
-    if(sum < threshold) {
-      __sync_fetch_and_and(&(mask[i]),~(PIXEL_IS_IN_HALO));
-    }
-    else {
       __sync_fetch_and_or(&(mask[i]),PIXEL_IS_IN_HALO);
-      nhalo++;				
-    }
 #else
-    // not threadsafe but fast
-    if(sum < threshold) {
-      mask[i] &= ~(PIXEL_IS_IN_HALO);
-    }
-    else {
-      mask[i] |= PIXEL_IS_IN_HALO;
-      nhalo++;				
-    }
+      // Not threadsafe
+      mask[i] |= PIXEL_IS_IN_HALO; 
 #endif
-
-  }	    
+    } else {
+#ifdef __GNUC__
+      __sync_fetch_and_and(&(mask[i]),~PIXEL_IS_IN_HALO);
+#else
+      // Not threadsafe
+      mask[i] &= ~PIXEL_IS_IN_HALO; 
+#endif
+    }
+  }
 
   return nhalo;
 
