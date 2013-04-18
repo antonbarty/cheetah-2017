@@ -69,7 +69,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	
 	// Dereference stuff
 	long		pix_nx = global->detector[detID].pix_nx;
-	long		pix_ny = global->detector[detID].pix_ny;
+	//long		pix_ny = global->detector[detID].pix_ny;
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		asic_nx = global->detector[detID].asic_nx;
 	long		asic_ny = global->detector[detID].asic_ny;
@@ -138,8 +138,8 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 					e = ss + fs;
 					
 					if(e >= pix_nn) {
-						printf("Array bounds error: e=%i\n");
-						exit(1);
+					  printf("Array bounds error: e=%li\n",e);
+					  exit(1);
 					}
 					
 					if(temp[e] > global->hitfinderADC){

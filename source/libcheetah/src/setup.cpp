@@ -457,7 +457,7 @@ void cGlobal::parseConfigFile(char* filename) {
   char  ts[cbufsize] = "";
   char  *cp;
   FILE  *fp;
-  int i,cnt,fail;
+  int cnt,fail;
   int exitCheetah = 0;
 
   /*
@@ -490,14 +490,14 @@ void cGlobal::parseConfigFile(char* filename) {
 
     /* strip whitespace */
     cnt=0;
-    for (i=0; i<cbufsize; i++){
+    for (uint i=0; i<cbufsize; i++){
       if (cbuf[i] == ' ') continue;
       cbuf[cnt] = cbuf[i];
       cnt++;
     }
 
     /* strip comments */
-    for (i=0; i<cbufsize-1; i++){
+    for (uint i=0; i<cbufsize-1; i++){
       if (cbuf[i] == '#'){
 	cbuf[i] = '\n';
 	cbuf[i+1] = '\0';
@@ -560,7 +560,7 @@ void cGlobal::parseConfigFile(char* filename) {
       int matched=0;
 
       /* set detector-specific configuration */
-      for (i=0; i<MAX_DETECTORS; i++){
+      for (long i=0; i<MAX_DETECTORS; i++){
 
 	/* new group? */
 	if (!strcmp("none",detector[i].configGroup)){
@@ -599,8 +599,8 @@ void cGlobal::parseConfigFile(char* filename) {
   }
 
   printf("Configured %d detectors\n",nDetectors);
-  for (i=0;i<nDetectors;i++){
-    printf("detector %d: %s\n",i,detector[i].configGroup);
+  for (long i=0;i<nDetectors;i++){
+    printf("detector %li: %s\n",i,detector[i].configGroup);
   }
 
 
@@ -619,7 +619,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   /*
    * Convert to lowercase
    */
-  for(int i=0; i<strlen(tag); i++)
+  for(uint i=0; i<strlen(tag); i++)
     tag[i] = tolower(tag[i]);
 
   /*
