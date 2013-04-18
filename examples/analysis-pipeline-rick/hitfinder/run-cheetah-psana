@@ -1,0 +1,4 @@
+#!/bin/bash
+
+hitfinder -n 100 -r 318 -t dark -i dark.ini -p	# -p for PSANA CHEETAH
+

@@ -1,7 +1,0 @@
-This is the location where the LCLS myana directory should be located.
-This is only needed if you are using the very old version of Cheetah based on the myana framework.
-We have removed this because myana is not backwards compatible, is not officially supported by LCLS, and goes 
-out of date very rapidly.
-This framework is still used by the LCLS controls and online data analysis groups.
-If needed, simply put the desired version of the 'release' directory into the myana directory...
-

@@ -1,0 +1,43 @@
+
+# example environment for Cheetah analysis with hitfinder script
+#
+# I find it handy to have a small function in my bash startup script,
+# sort of like this:
+#
+# function mytest ()
+# {
+#         export expt=$FUNCNAME
+#         mkdir -p $HOME/$expt
+#         cd $HOME/$expt
+#         source config/environ
+#         export PS1="$expt-\h> "
+#         umask 002
+# }
+#
+# once this function is in your startup script, and the script is 
+# sourced, you can simply type e.g. mytest to setup your 
+# analysis session in the example above
+#
+# r. kirian
+
+export XTCDIR="/reg/d/ana11/cxi/data/cxi22010-gjw" # raw data here
+export TMPDIR="$HOME/mytest/tmp"       # temporary files are necessary
+export H5DIR="$HOME/mytest/hdf5"       # your cheetah output goes here
+export CONFIGDIR="$HOME/mytest/config" # cheetah configuration seach path
+export CHEETAH="psana"                 # the cheetah frontend
+export PSANA_CONFIG="$CONFIGDIR/ini/other/psana.cfg" # for psana frontend
+
+
+# make sure there is a space for temporary files!
+mkdir -p $TMPDIR
+mkdir -p $H5DIR
+
+[ -d $XTCDIR ] || echo "xtc directory does not exist!"
+[ -d $TMPDIR ] || echo "tmp directory does not exist!"
+[ -d $H5DIR  ] || echo "hdf5 directory does not exist!"
+[ -d $CONFIGDIR  ] || echo "config directory does not exist!"
+type $CHEETAH >/dev/null 2>&1 || echo "can't find cheetah frontend!"
+
+# be careful where you dump all the cheetah output.  E.g. your home 
+# directory is probably not appropriate.  LCLS provides scratch space
+# for each experiment, which would be a better place to put such data.

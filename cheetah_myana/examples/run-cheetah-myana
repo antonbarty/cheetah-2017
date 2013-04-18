@@ -1,9 +1,0 @@
-#!/bin/bash
-
-export XTCDIR=/reg/d/psdm/cxi/cxi12345/xtc
-export H5DIR=/reg/d/psdm/cxi/cxi12345/scratch/hdf5
-export CONFIGDIR=/reg/d/psdm/cxi/cxi12345/scratch/cheetah
-export CHEETAH=/reg/neh/home/rkirian/local/bin/cheetah
-
-hitfinder -r 57 -i cheetah.ini
-

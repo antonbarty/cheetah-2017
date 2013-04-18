@@ -1,7 +1,0 @@
-#!/bin/tcsh
-echo 'Running Psana'
-
-setenv XTCDIR '/reg/d/psdm/cxi/cxi52212/xtc'  # XTC DIRECTORY
-
-# Execute psana
-psana $XTCDIR/e182-r0035-s05-c00.xtc

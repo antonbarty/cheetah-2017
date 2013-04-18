@@ -1,0 +1,21 @@
+[psana]
+#modules       =  chuck_ana_pkg.chuck_ana_mod
+modules	= cheetah_ana_pkg.cheetah_ana_mod
+
+[chuck_ana_pkg.chuck_ana_mod]
+inputKey =
+source = DetInfo(CxiDs1.0:Cspad.0)
+evrSource = DetInfo(NoDetector.0:Evr.0)
+beamSource = BldInfo(EBeam)
+feeSource = BldInfo(FEEGasDetEnergy)
+cavitySource = BldInfo(PhaseCavity)
+cameraSource = DetInfo()
+
+[cheetah_ana_pkg.cheetah_ana_mod]
+inputKey =
+source = DetInfo(CxiDs1.0:Cspad.0)
+evrSource = DetInfo(NoDetector.0:Evr.0)
+beamSource = BldInfo(EBeam)
+feeSource = BldInfo(FEEGasDetEnergy)
+cavitySource = BldInfo(PhaseCavity)
+cameraSource = DetInfo()
