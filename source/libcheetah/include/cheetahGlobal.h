@@ -76,8 +76,6 @@ public:
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
 	int      hitfinderADC;
-	/** @brief Do not count pixels in halo for hit finding. */
-	int      hitfinderDisregardHalopix;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -289,6 +287,7 @@ public:
 	pthread_mutex_t  espectrumBuffer_mutex;
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
+	pthread_mutex_t  pixelmask_shared_mutex;
 
 	/*
 	 *	Common variables
@@ -301,6 +300,8 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
+	int nPeaksMin[MAX_POWDER_CLASSES];
+	int nPeaksMax[MAX_POWDER_CLASSES];
 
 
     // counters updated with event data

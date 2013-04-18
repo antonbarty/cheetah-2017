@@ -224,6 +224,8 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
+	  static uint32_t nevents = 0;
+	  
 		frameNumber++;
 
 		//	Create a new eventData structure in which to place all information
