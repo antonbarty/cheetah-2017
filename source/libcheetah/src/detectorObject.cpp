@@ -807,7 +807,7 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
   } 
 	
   for(long i=0;i<pix_nn;i++){
-    if((int) temp2d.data[i]==1){
+    if((int) temp2d.data[i]==0){
       pixelmask_shared[i] |= PIXEL_IS_IN_PEAKMASK;
     }
     else{
@@ -864,7 +864,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	
   // Copy back into array
   for(long i=0;i<pix_nn;i++){
-    if((int) temp2d.data[i]==1){
+    if((int) temp2d.data[i]==0){
       pixelmask_shared[i] |= PIXEL_IS_BAD;
     }
     else{
@@ -921,7 +921,7 @@ void cPixelDetectorCommon::readBaddataMask(char *filename){
 	
   // Copy back into array
   for(long i=0;i<pix_nn;i++){
-    if((int) temp2d.data[i]==1){
+    if((int) temp2d.data[i]==0){
       pixelmask_shared[i] |= PIXEL_IS_TO_BE_IGNORED;
     }
     else{
@@ -980,7 +980,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	
   // Copy into darkcal array
   for(long i=0;i<pix_nn;i++){
-    if((int) temp2d.data[i]==1){
+    if((int) temp2d.data[i]==0){
       pixelmask_shared[i] |= PIXEL_IS_SHADOWED;
     }
     else{
