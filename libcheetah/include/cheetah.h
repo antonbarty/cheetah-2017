@@ -14,8 +14,6 @@
 #include "cheetahmodules.h"
 
 
-static uint32_t nevents = 0;
-
 void cheetahInit(cGlobal *);
 void cheetahNewRun(cGlobal *);
 cEventData* cheetahNewEvent(cGlobal	*global);

@@ -63,9 +63,6 @@ static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
 
-
-
-
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
 inline bool isNoneOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)==0);}
@@ -146,6 +143,11 @@ public:
 	long  image_nx;
 	long  image_nn;
 
+	// Assembled downsampled image size
+	long  imageXxX_nx;
+	long  imageXxX_nn;
+	long  downsampling;
+
 	// ASIC module size
 	long  asic_nx;
 	long  asic_ny;
@@ -224,8 +226,8 @@ public:
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
-	long    halopixMemory;
 	long    halopixRecalc;
+	long    halopixMemory;
 	long   halopixCounter;
 	long   nhalo;
 	long   last_halopix_update;
@@ -245,7 +247,7 @@ public:
 	 */
 	int16_t   *bg_buffer;
 	int16_t   *hotpix_buffer;
-	float   *halopix_buffer;
+	float     *halopix_buffer;
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;
@@ -308,12 +310,14 @@ public:
 	
 	int       cspad_fail;
 	uint16_t  *raw_data;
-	uint16_t  *pixelmask;
-	float     *corrected_data;
 	float     *detector_corrected_data;
+	float     *corrected_data;
 	int16_t   *corrected_data_int16;
+	uint16_t  *pixelmask;
 	int16_t   *image;
 	uint16_t  *image_pixelmask;
+	int16_t   *imageXxX;
+	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
 	double    detectorZ;

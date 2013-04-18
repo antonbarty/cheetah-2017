@@ -108,7 +108,7 @@ typedef struct{
   LCLS lcls;
   /*  This counter defines where in the file each image is stored.
    *  It is atomically incremented by each thread */
-  int stackCounter;
+  uint stackCounter;
 }File;
 
 

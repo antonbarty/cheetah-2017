@@ -124,10 +124,6 @@ public:
 } ;
 
 
-
-
-
-//#define ERROR(...) fprintf(stderr, __VA_ARGS__)#
 #define ERROR(...) cheetahError(__FILE__, __LINE__, __VA_ARGS__)
 
 void static cheetahError(const char *filename, int line, const char *format, ...){

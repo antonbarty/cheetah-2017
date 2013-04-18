@@ -32,10 +32,10 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
     
   DETECTOR_LOOP {
     if(hit && global->powderSumHits) 
-      addToPowder(eventData, global, hit, detID);
+      addToPowder(eventData, global, 1, detID);
     
     if(!hit && global->powderSumBlanks)
-      addToPowder(eventData, global, hit, detID);
+      addToPowder(eventData, global, 0, detID);
     
     if(global->generateDarkcal || global->generateGaincal)
       addToPowder(eventData, global, 0, detID);
@@ -46,7 +46,7 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
 void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int detID){
 	
   // Dereference common variable
-  long	radial_nn = global->detector[detID].radial_nn;
+  //long	radial_nn = global->detector[detID].radial_nn;
   long	pix_nn = global->detector[detID].pix_nn;
   long	image_nn = global->detector[detID].image_nn;
 
@@ -223,7 +223,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
    *	Mess of stuff for writing the compound HDF5 file
    */
   hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-  herr_t r;
+  //herr_t r;
   hsize_t size[2];
   hsize_t max_size[2];
 	
@@ -433,7 +433,7 @@ void saveGaincal(cGlobal *global, int detID) {
 void writePowderData(char *filename, void *data, int width, int height, void *radialAverageCorrected, void *radialAverageCorrectedCounter, long radial_nn, long nFrames, int type) 
 {
   hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-  herr_t r;
+  //herr_t r;
   hsize_t size[2];
   hsize_t max_size[2];
 	

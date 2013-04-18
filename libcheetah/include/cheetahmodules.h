@@ -18,7 +18,7 @@ void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 void calculateHaloPixelMask(cGlobal*);
-void writeFrameToHaloPixelBuffer(cEventData*, cGlobal*);
+void updateHaloBuffer(cEventData*, cGlobal*,int);
 
 
 void subtractDarkcal(float*, float*, long);
@@ -40,6 +40,7 @@ void subtractLocalBackground(cEventData*, cGlobal*);
 void checkSaturatedPixels(cEventData*, cGlobal*);
 void subtractPersistentBackground(cEventData*, cGlobal*);
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
+void initBackgroundBuffer(cEventData*, cGlobal*);
 
 void subtractLocalBackground(float*, long, long, long, long, long);
 void checkSaturatedPixels(uint16_t*, uint16_t*, long, long);
@@ -63,6 +64,9 @@ void assemble2Dimage(cEventData*, cGlobal*);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(cEventData*, cGlobal*);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
+void downsample(cEventData*, cGlobal*);
+void downsampleImage(int16_t*, int16_t*, long, long, long, long);
+void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);

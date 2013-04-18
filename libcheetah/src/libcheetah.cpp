@@ -83,9 +83,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peakNpix=0.;
 	eventData->peakTotal=0.;	
 
-	long		pix_nn1 = global->detector[0].pix_nn;
-	long		asic_nx = global->detector[0].asic_nx;
-	long		asic_ny = global->detector[0].asic_ny;	
+	//long		pix_nn1 = global->detector[0].pix_nn;
+	//long		asic_nx = global->detector[0].asic_nx;
+	//long		asic_ny = global->detector[0].asic_ny;	
 	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn1);
 
 	/*
@@ -99,16 +99,24 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
 		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		eventData->detector[detID].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+
+		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-		
+
+		if(global->detector[detID].downsampling > 1){
+		  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
+		} else {
+		  eventData->detector[detID].imageXxX = NULL;
+		  eventData->detector[detID].imageXxX_pixelmask = NULL;
+		}
+
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
 	}	
 	
-	
-	
+		
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
@@ -130,8 +138,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	int spectrumLength = global->espectrumLength;
 	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
 	eventData->energySpectrumExist = 0;
-
-	
+		
 	// Return
 	return eventData;
 }
@@ -155,6 +162,12 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].image);
 		free(eventData->detector[detID].pixelmask);
 		free(eventData->detector[detID].image_pixelmask);
+		
+		if(global->detector[detID].downsampling > 1){
+		  free(eventData->detector[detID].imageXxX);
+		  free(eventData->detector[detID].imageXxX_pixelmask);
+		}
+
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
 	}
@@ -330,10 +343,10 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
     
-	/*
-	 *	Remember to update global variables 
-	 */
-    cheetahUpdateGlobal(global, eventData);
+  /*
+   *	Remember to update global variables 
+   */
+  cheetahUpdateGlobal(global, eventData);
     
 
     
@@ -424,7 +437,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
  *  libCheetah shutdown function
  */
 void cheetahExit(cGlobal *global) {
-	
+
+
     global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
 
     global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
@@ -472,39 +486,40 @@ void cheetahExit(cGlobal *global) {
     printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
     
     
-	// Cleanup
-	for(long i=0; i<global->nDetectors; i++) {
-		free(global->detector[i].darkcal);
-		free(global->detector[i].selfdark);
-		free(global->detector[i].gaincal);
-		free(global->detector[i].bg_buffer);
-		free(global->detector[i].hotpix_buffer);
-		free(global->detector[i].halopix_buffer);
+    // Cleanup
+    for(long i=0; i<global->nDetectors; i++) {
+      free(global->detector[i].darkcal);
+      free(global->detector[i].selfdark);
+      free(global->detector[i].gaincal);
+      free(global->detector[i].bg_buffer);
+      free(global->detector[i].hotpix_buffer);
+      free(global->detector[i].halopix_buffer);
+
         
-        for(long j=0; j<global->nPowderClasses; j++) {
-            free(global->detector[i].powderRaw[j]);
-            free(global->detector[i].powderCorrected[j]);
-            free(global->detector[i].powderCorrectedSquared[j]);
-            free(global->detector[i].powderAssembled[j]);
-            free(global->detector[i].radialAverageStack[j]);
-            pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
-            pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
-            pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
-            pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
-            pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
-        }
-	}
-	pthread_mutex_destroy(&global->nActiveThreads_mutex);
-	pthread_mutex_destroy(&global->selfdark_mutex);
-	pthread_mutex_destroy(&global->hotpixel_mutex);
-	pthread_mutex_destroy(&global->halopixel_mutex);
-	pthread_mutex_destroy(&global->bgbuffer_mutex);
-	pthread_mutex_destroy(&global->framefp_mutex);
-	pthread_mutex_destroy(&global->peaksfp_mutex);
-	pthread_mutex_destroy(&global->powderfp_mutex);
-	pthread_mutex_destroy(&global->subdir_mutex);
-	pthread_mutex_destroy(&global->espectrumRun_mutex);
-	pthread_mutex_destroy(&global->nespechits_mutex);
+      for(long j=0; j<global->nPowderClasses; j++) {
+	free(global->detector[i].powderRaw[j]);
+	free(global->detector[i].powderCorrected[j]);
+	free(global->detector[i].powderCorrectedSquared[j]);
+	free(global->detector[i].powderAssembled[j]);
+	free(global->detector[i].radialAverageStack[j]);
+	pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
+	pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
+	pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
+	pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
+	pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
+      }
+    }
+    pthread_mutex_destroy(&global->nActiveThreads_mutex);
+    pthread_mutex_destroy(&global->selfdark_mutex);
+    pthread_mutex_destroy(&global->hotpixel_mutex);
+    pthread_mutex_destroy(&global->halopixel_mutex);
+    pthread_mutex_destroy(&global->bgbuffer_mutex);
+    pthread_mutex_destroy(&global->framefp_mutex);
+    pthread_mutex_destroy(&global->peaksfp_mutex);
+    pthread_mutex_destroy(&global->powderfp_mutex);
+    pthread_mutex_destroy(&global->subdir_mutex);
+    pthread_mutex_destroy(&global->espectrumRun_mutex);
+    pthread_mutex_destroy(&global->nespechits_mutex);
 
     
     printf("Cheetah clean exit\n");

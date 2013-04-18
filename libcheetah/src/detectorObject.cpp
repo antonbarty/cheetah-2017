@@ -118,7 +118,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   // Identify persistently illuminated pixels (halo)
   useAutoHalopixel = 0;
   halopixMinDeviation = 100;
-  halopixMemory = 50;
+  halopixRecalc = bgRecalc;
+  halopixMemory = bgRecalc;
     
   // correction for PNCCD read out artifacts 
   usePnccdOffsetCorrection = 0;
@@ -127,6 +128,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   saveDetectorCorrectedOnly = 0;
   saveDetectorRaw = 0;
 
+  // No downsampling
+  downsampling = 1;
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -186,7 +189,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   /*
    *	Convert to lowercase
    */
-  for(int i=0; i<strlen(tag); i++) 
+  for(int i=0; i<((int) strlen(tag)); i++) 
     tag[i] = tolower(tag[i]);
 
   if (!strcmp(tag, "detectorname")) {
@@ -225,6 +228,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "pixelsize")) {
     pixelSize = atof(value);
+  }
+  else if (!strcmp(tag, "downsampling")) {
+    downsampling = atoi(value);
   }
   else if (!strcmp(tag, "savedetectorcorrectedonly")) {
     saveDetectorCorrectedOnly = atoi(value);
@@ -282,13 +288,14 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "useautohalopixel")) {
     useAutoHalopixel = atoi(value);
   }
+  else if (!strcmp(tag, "halopixelmemory")) {
+    halopixMemory = atoi(value);
+  }
+  else if (!strcmp(tag, "halopixelrecalc")) {
+    halopixRecalc = atoi(value);
+  }
   else if (!strcmp(tag, "halopixmindeviation")) {
     halopixMinDeviation = atof(value);
-    useAutoHalopixel = 1;
-  }
-  else if (!strcmp(tag, "halopixmemory")) {
-    halopixMemory = atoi(value);
-    useAutoHalopixel = 1;
   }
   else if (!strcmp(tag, "cmmodule")) {
     cmModule = atoi(value);
@@ -384,7 +391,8 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   selfdark = (float*) calloc(pix_nn, sizeof(float));
   bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
   hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-  halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float)); 
+  halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float)); 
+
   for(long j=0; j<pix_nn; j++) {
     selfdark[j] = 0;
   }
@@ -574,6 +582,10 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
       radial_max = pix_r[i];
   }	
   radial_nn = (long int) ceil(radial_max)+1;
+
+  // How big must we make the output downsampled image?
+  imageXxX_nx = image_nx/downsampling;
+  imageXxX_nn = image_nn/downsampling/downsampling;
 }
 
 
@@ -587,9 +599,12 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   kx,ky,kz,kr;
   double   res,minres,maxres;
   double	 sin_theta;
-	
-  minres = 100000;
-  maxres = 0.0;
+  long     minres_pix,maxres_pix;
+long c = 0;	
+  minres = 0.0;
+  maxres = 1000000;
+  minres_pix = 10000000;
+  maxres_pix = 0;
 
   printf("Recalculating K-space coordinates\n");
 
@@ -613,29 +628,44 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     pix_kr[i] = kr;
     pix_res[i] = res;
         
-    if ( res < minres )
+    if ( res > minres ){
       minres = res;
-    if ( res > maxres )
-      maxres = res;
-        
-		
-    // Generate resolution limit mask
-    if (!global->hitfinderResolutionUnitPixel){
-      // (resolution in Angstrom (!!!))
-      if (pix_res[i] < global->hitfinderMaxRes && pix_res[i] > global->hitfinderMinRes ) 
-	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-      else
-	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+      minres_pix = pix_r[i];
     }
-    else{
+    if ( res < maxres ){
+      maxres = res;
+      maxres_pix = pix_r[i];
+    }
+    
+    
+    // Generate resolution limit mask
+    if (global->hitfinderResolutionUnitPixel){
       // (resolution in pixel (!!!))
-      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+      if (pix_r[i] > global->hitfinderMinRes && pix_r[i] < global->hitfinderMaxRes ) {
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-      else
+	c += 1;
+      } else {
 	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+      }
+    } else {
+      // (resolution in Angstrom (!!!))
+      if (pix_res[i] < global->hitfinderMinRes && pix_res[i] > global->hitfinderMaxRes ) {
+	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+      } else {
+	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+      }
     }
   }
-  printf("\tCurrent resolution (i.e. d-spacing) range is %.2f - %.2f A\n", minres, maxres);
+  printf("C=%li\n",c);
+
+  printf("Current resolution (i.e. d-spacing) range is %.2f - %.2f A (%li - %li det. pixels)\n", minres, maxres,minres_pix,maxres_pix);
+
+  if (global->hitfinderResolutionUnitPixel){
+    printf("Defined resolution limits for hitfinders: %i - %i detector pixels\n",(int) global->hitfinderMinRes, (int) global->hitfinderMaxRes);
+  } else {
+    printf("Defined resolution limits for hitfinders: %.2f - %.2f A\n",global->hitfinderMinRes,global->hitfinderMaxRes);
+  }
+
 
 }
 

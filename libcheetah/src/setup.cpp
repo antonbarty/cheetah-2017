@@ -89,8 +89,8 @@ cGlobal::cGlobal(void) {
   hitfinderLocalBGRadius = 4;
   hitfinderLocalBGThickness = 5;
   //hitfinderLimitRes = 1;
-  hitfinderMinRes = 0;
-  hitfinderMaxRes = 1e10;
+  hitfinderMinRes = 1e10;
+  hitfinderMaxRes = 0;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
 
@@ -231,63 +231,6 @@ void cGlobal::setup() {
   }
 
   /*
-   * Set up arrays for hot pixels, running backround, etc.
-   */
-  for(long i=0; i<nDetectors; i++) {
-    detector[i].allocatePowderMemory(self);
-  }
-
-  /*
-   * Set up array for run integrated energy spectrum
-   */
-  espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumRun[i] = 0;
-  }
-	
-  /*
-   * Set up buffer array for calculation of energy spectrum background
-   */
-  espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumBuffer[i] = 0;
-  }
-
-  /*
-   * Set up Darkcal array for holding energy spectrum background
-   */
-  espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumDarkcal[i] = 0;
-  }
-	
-  /*
-   * Set up array for holding energy spectrum scale
-   */
-  espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumScale[i] = 0;
-  }
-	
-  readSpectrumDarkcal(self, espectrumDarkFile);
-  readSpectrumEnergyScale(self, espectrumScaleFile);
-	
-	
-  /*
-   * Set up arrays for powder classes and radial stacks
-   * Currently only tracked for detector[0]  (generalise this later)
-   */
-  for(long i=0; i<nPowderClasses; i++) {
-    char  filename[1024];
-    powderlogfp[i] = NULL;
-    if(runNumber > 0) {
-      sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
-      powderlogfp[i] = fopen(filename, "w");
-    }
-  }
-
-
-  /*
    * Set up thread management
    */
   nActiveThreads = 0;
@@ -398,6 +341,7 @@ void cGlobal::setup() {
     detector[i].halopixCounter = 0;
     detector[i].last_halopix_update = 0;
     detector[i].halopixRecalc = detector[i].bgRecalc;
+    detector[i].halopixMemory = detector[i].bgRecalc;
     detector[i].nhalo = 0;
     detector[i].detectorZprevious = 0;
     detector[i].detectorZ = 0;
@@ -406,6 +350,63 @@ void cGlobal::setup() {
 
   // Make sure to use SLAC timezone!
   setenv("TZ","US/Pacific",1);
+
+  /*
+   * Set up arrays for hot pixels, running backround, etc.
+   */
+  for(long i=0; i<nDetectors; i++) {
+    detector[i].allocatePowderMemory(self);
+  }
+
+  /*
+   * Set up array for run integrated energy spectrum
+   */
+  espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
+  for(long i=0; i<espectrumLength; i++) {
+    espectrumRun[i] = 0;
+  }
+	
+  /*
+   * Set up buffer array for calculation of energy spectrum background
+   */
+  espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+    espectrumBuffer[i] = 0;
+  }
+
+  /*
+   * Set up Darkcal array for holding energy spectrum background
+   */
+  espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+    espectrumDarkcal[i] = 0;
+  }
+	
+  /*
+   * Set up array for holding energy spectrum scale
+   */
+  espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
+  for(long i=0; i<espectrumLength; i++) {
+    espectrumScale[i] = 0;
+  }
+	
+  readSpectrumDarkcal(self, espectrumDarkFile);
+  readSpectrumEnergyScale(self, espectrumScaleFile);
+	
+	
+  /*
+   * Set up arrays for powder classes and radial stacks
+   * Currently only tracked for detector[0]  (generalise this later)
+   */
+  for(long i=0; i<nPowderClasses; i++) {
+    char  filename[1024];
+    powderlogfp[i] = NULL;
+    if(runNumber > 0) {
+      sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
+      powderlogfp[i] = fopen(filename, "w");
+    }
+  }
+
 
 }
 
@@ -429,7 +430,8 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
   if (argc > 2) {
     for (long i=2; i<argc; i++) {
       if (argv[i][0] == '-' && i+1 < argc) {
-	parseConfigTag(argv[i]+1, argv[++i]);
+	parseConfigTag(argv[i]+1, argv[i+1]);
+	i++;
       }
     }
   }
