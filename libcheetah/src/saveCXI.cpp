@@ -27,7 +27,7 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
 {
   int dstWidth = srcWidth/scale;
   int dstHeight = srcHeight/scale;
-  T * dst = new T[srcWidth*srcHeight];
+  T * dst = new T [srcWidth*srcHeight];
   for(int x = 0; x <dstWidth; x++){
     for(int y = 0; y<dstHeight; y++){
       double res=0;
@@ -626,7 +626,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
       write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
       writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
       writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
-      delete thumbnail;      
+      delete [] thumbnail;      
 
       if (global->detector[detID].downsampling > 1){
 	imgID = detID * 2 + 1;
@@ -641,7 +641,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
 	writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
 	writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
-	delete thumbnail;
+	delete [] thumbnail;
       }
     }
     if(global->saveRaw){
@@ -652,7 +652,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
       }
       int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
       write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
-      delete thumbnail;
+      delete [] thumbnail;
     }
   }
   /*Write LCLS informations*/
@@ -685,5 +685,5 @@ void writeCXI(cEventData *info, cGlobal *global ){
   time_t eventTime = info->seconds;
   ctime_r(&eventTime,timestr);
   writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
-  printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %ui (npeaks=%i)\n",global->runNumber, info->threadNum,global->datarateWorker, info->eventname, info->cxiFilename, stackSlice, info->nPeaks);
+  printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, info->threadNum,global->datarateWorker, info->eventname, info->cxiFilename, stackSlice, info->nPeaks);
 }
