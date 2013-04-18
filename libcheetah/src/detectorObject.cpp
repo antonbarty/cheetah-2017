@@ -400,21 +400,20 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+    correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
+    correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
+    assembledMin[i] = (float*) calloc(image_nn, sizeof(float));
+    assembledMax[i] = (float*) calloc(image_nn, sizeof(float));
         
     pthread_mutex_init(&powderRaw_mutex[i], NULL);
     pthread_mutex_init(&powderCorrected_mutex[i], NULL);
     pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
     pthread_mutex_init(&powderAssembled_mutex[i], NULL);
     pthread_mutex_init(&radialStack_mutex[i], NULL);
-		
-    for(long j=0; j<pix_nn; j++) {
-      powderRaw[i][j] = 0;
-      powderCorrected[i][j] = 0;
-      powderCorrectedSquared[i][j] = 0;
-    }
-    for(long j=0; j<image_nn; j++) {
-      powderAssembled[i][j] = 0;
-    }
+    pthread_mutex_init(&correctedMin_mutex[i], NULL);
+    pthread_mutex_init(&correctedMax_mutex[i], NULL);		
+    pthread_mutex_init(&assembledMin_mutex[i], NULL);
+    pthread_mutex_init(&assembledMax_mutex[i], NULL);		
   }    
 	
     

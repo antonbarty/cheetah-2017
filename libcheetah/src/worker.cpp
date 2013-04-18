@@ -279,6 +279,7 @@ void *worker(void *threadarg) {
 	
   /*
    *	Maintain a running sum of data (powder patterns)
+   *    and strongest non-hit and weakest hit
    */
   addToPowder(eventData, global);
 
@@ -359,6 +360,7 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
+
 	
   /*
    *	Cleanup and exit

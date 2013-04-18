@@ -31,16 +31,16 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
   int hit = eventData->hit;
     
   DETECTOR_LOOP {
-    if(hit && global->powderSumHits) 
+    if(global->generateDarkcal || global->generateGaincal){
+      addToPowder(eventData, global, 0, detID);
+    }
+    if(!hit && global->powderSumBlanks){
+      addToPowder(eventData, global, 0, detID);
+    }
+    if(hit && global->powderSumHits){
       addToPowder(eventData, global, 1, detID);
-    
-    if(!hit && global->powderSumBlanks)
-      addToPowder(eventData, global, 0, detID);
-    
-    if(global->generateDarkcal || global->generateGaincal)
-      addToPowder(eventData, global, 0, detID);
+    }
   } 
-
 }
 
 void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int detID){
@@ -92,20 +92,22 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
   }
   pthread_mutex_unlock(&global->detector[detID].powderCorrectedSquared_mutex[powderClass]);	
   free(buffer);
-	
-  // Assembled data
-  pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-  if(!global->usePowderThresh) {
-    for(long i=0; i<image_nn; i++)
-      global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-  }
-  else {
-    for(long i=0; i<image_nn; i++){
-      if(eventData->detector[detID].image[i] > global->powderthresh)
+  
+  if(global->assemble2DImage) {
+    // Assembled data
+    pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+    if(!global->usePowderThresh) {
+      for(long i=0; i<image_nn; i++)
 	global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
     }
+    else {
+      for(long i=0; i<image_nn; i++){
+	if(eventData->detector[detID].image[i] > global->powderthresh)
+	  global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+      }
+    }
+    pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
   }
-  pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
 
   // Increment counters
   pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
@@ -113,6 +115,33 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
   if(detID == 0)
     global->nPowderFrames[powderClass] += 1;
   pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);			
+
+
+  // Min nPeaks: Pattern
+  if(eventData->nPeaks < global->nPeaksMin[powderClass]){
+    pthread_mutex_lock(&global->detector[detID].correctedMin_mutex[powderClass]);
+    global->nPeaksMin[powderClass] = eventData->nPeaks;
+    memcpy(global->detector[detID].correctedMin[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
+    pthread_mutex_unlock(&global->detector[detID].correctedMin_mutex[powderClass]);
+    if(global->assemble2DImage) {
+      pthread_mutex_lock(&global->detector[detID].assembledMin_mutex[powderClass]);
+      memcpy(global->detector[detID].assembledMin[powderClass],eventData->detector[detID].image,sizeof(int16_t)*image_nn);
+      pthread_mutex_unlock(&global->detector[detID].assembledMin_mutex[powderClass]);
+    }
+  }
+
+  // Max nPeaks: Pattern
+  if(eventData->nPeaks > global->nPeaksMax[powderClass]){
+    pthread_mutex_lock(&global->detector[detID].correctedMax_mutex[powderClass]);
+    global->nPeaksMax[powderClass] = eventData->nPeaks;
+    memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
+    pthread_mutex_unlock(&global->detector[detID].correctedMax_mutex[powderClass]);
+    if(global->assemble2DImage) {
+      pthread_mutex_lock(&global->detector[detID].assembledMax_mutex[powderClass]);
+      memcpy(global->detector[detID].assembledMax[powderClass],eventData->detector[detID].image,sizeof(int16_t)*image_nn);
+      pthread_mutex_unlock(&global->detector[detID].assembledMax_mutex[powderClass]);
+    }
+  }
 
 }
 
@@ -150,7 +179,10 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   long	radial_nn = detector->radial_nn;
   long	pix_nn = detector->pix_nn;
   long	image_nn = detector->image_nn;
- 
+  double *bufferAssembled;
+  int16_t *bufferAssembledNPeaksMin;
+  int16_t *bufferAssembledNPeaksMax;
+
   /*	
    *	Filename
    */
@@ -184,12 +216,14 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   //writePowderData(filename, bufferRaw, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
   //free(bufferRaw);
 	
-  // Assembled sum
-  //sprintf(filename,"%s-sumAssembled.h5", filenamebase);
-  double *bufferAssembled = (double*) calloc(image_nn, sizeof(double));
-  pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
-  memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
-  pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
+  if(global->assemble2DImage) {
+    // Assembled sum
+    //sprintf(filename,"%s-sumAssembled.h5", filenamebase);
+    bufferAssembled = (double*) calloc(image_nn, sizeof(double));
+    pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
+    memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
+    pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
+  }
 	
   //writePowderData(filename, bufferAssembled, detector->image_nx, detector->image_nx, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
 	
@@ -217,8 +251,30 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
   calculateRadialAverage(bufferCorrectedSigma, radialAverageCorrectedSigma, radialAverageCorrectedCounter, global, detID);
   //writePowderData(filename, bufferSigma, detector->pix_nx, detector->pix_ny, radialAverage, radialAverageCounter, radial_nn, detector->nPowderFrames[powderType], H5T_NATIVE_DOUBLE);	
-	
 
+
+  float *bufferCorrectedNPeaksMin = (float*) calloc(pix_nn,sizeof(float));
+  pthread_mutex_lock(&detector->correctedMin_mutex[powderType]);
+  memcpy(bufferCorrectedNPeaksMin, detector->correctedMin[powderType], pix_nn*sizeof(float));
+  pthread_mutex_unlock(&detector->correctedMin_mutex[powderType]);
+
+  float *bufferCorrectedNPeaksMax = (float*) calloc(pix_nn,sizeof(float));
+  pthread_mutex_lock(&detector->correctedMax_mutex[powderType]);
+  memcpy(bufferCorrectedNPeaksMax, detector->correctedMax[powderType], pix_nn*sizeof(float));
+  pthread_mutex_unlock(&detector->correctedMax_mutex[powderType]);
+
+  if(global->assemble2DImage) {
+    bufferAssembledNPeaksMin = (int16_t*) calloc(image_nn,sizeof(int16_t));
+    pthread_mutex_lock(&detector->assembledMin_mutex[powderType]);
+    memcpy(bufferAssembledNPeaksMin, detector->assembledMin[powderType], image_nn*sizeof(int16_t));
+    pthread_mutex_unlock(&detector->assembledMin_mutex[powderType]);
+
+    bufferAssembledNPeaksMax = (int16_t*) calloc(image_nn,sizeof(int16_t));
+    pthread_mutex_lock(&detector->assembledMax_mutex[powderType]);
+    memcpy(bufferAssembledNPeaksMax, detector->assembledMax[powderType], image_nn*sizeof(int16_t));
+    pthread_mutex_unlock(&detector->assembledMax_mutex[powderType]);
+  }
+  
   /*
    *	Mess of stuff for writing the compound HDF5 file
    */
@@ -264,23 +320,45 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   if (dh < 0) ERROR("Could not create dataset.\n");
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSigma);
   H5Dclose(dh);
-  H5Sclose(sh);
 
-	
-  // Write assembled image data
-  size[0] = detector->image_nx;
-  size[1] = detector->image_nx;
-  sh = H5Screate_simple(2, size, NULL);
-	
-  //H5Sget_simple_extent_dims(sh, size, max_size);
-  dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  dh = H5Dcreate(gh, "correcteddatanpeaksmin", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (dh < 0) ERROR("Could not create dataset.\n");
-  H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
+  H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMin);
+  H5Dclose(dh);
+
+  dh = H5Dcreate(gh, "correcteddatanpeaksmax", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  if (dh < 0) ERROR("Could not create dataset.\n");
+  H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMax);
   H5Dclose(dh);
   H5Sclose(sh);
+  
+  if(global->assemble2DImage) {	
+    // Write assembled image data
+    size[0] = detector->image_nn/detector->image_nx;
+    size[1] = detector->image_nx;
+    sh = H5Screate_simple(2, size, NULL);
+	
+    //H5Sget_simple_extent_dims(sh, size, max_size);
+    dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dh < 0) ERROR("Could not create dataset.\n");
+    H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
+    H5Dclose(dh);
 
-  H5Lcreate_soft( "/data/assembleddata", fh, "/data/data",0,0);
+    dh = H5Dcreate(gh, "assembleddatanpeaksmin", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dh < 0) ERROR("Could not create dataset.\n");
+    H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMin);
+    H5Dclose(dh);
+   
+    dh = H5Dcreate(gh, "assembleddatanpeaksmax", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dh < 0) ERROR("Could not create dataset.\n");
+    H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMax);
+    H5Dclose(dh);
+    H5Sclose(sh);
 
+    H5Lcreate_soft( "/data/assembleddata", fh, "/data/data",0,0);
+  } else {
+    H5Lcreate_soft( "/data/correcteddata", fh, "/data/data",0,0);
+  }
 
   // Save radial averages
   size[0] = radial_nn;
@@ -348,13 +426,19 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
    */
   free(bufferRaw);
   free(bufferCorrected);
-  free(bufferAssembled);
   free(bufferCorrectedSquared);
   free(bufferCorrectedSigma);
+  free(bufferCorrectedNPeaksMin);
+  free(bufferCorrectedNPeaksMax);
   free(radialAverageCorrected);
   free(radialAverageCorrectedSquared);
   free(radialAverageCorrectedSigma);
   free(radialAverageCorrectedCounter);
+  if(global->assemble2DImage) {	
+    free(bufferAssembled);
+    free(bufferAssembledNPeaksMin);
+    free(bufferAssembledNPeaksMax);
+  }
   fflush(global->powderlogfp[powderType]);
 
 }

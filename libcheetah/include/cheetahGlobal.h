@@ -300,6 +300,8 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
+	int nPeaksMin[MAX_POWDER_CLASSES];
+	int nPeaksMax[MAX_POWDER_CLASSES];
 
 
     // counters updated with event data

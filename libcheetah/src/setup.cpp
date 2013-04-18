@@ -219,6 +219,11 @@ void cGlobal::setup() {
   if(generateDarkcal || generateGaincal)
     nPowderClasses=1;
 
+  for(int i = 0; i<nPowderClasses; i++){
+    nPeaksMin[i] = 1000000000;
+    nPeaksMax[i] = 0;
+  }
+
 	
   if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
     printf("Errors: hitfinderDetector > nDetectors\n");

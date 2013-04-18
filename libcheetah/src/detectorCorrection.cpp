@@ -673,7 +673,6 @@ void calculateHaloPixelMask(cGlobal *global){
       if( halopixCounter > halopixRecalc+lastUpdate ) {
 
 	global->detector[detID].last_halopix_update = halopixCounter;
-	memcpy(buffer,global->detector[detID].halopix_buffer,pix_nn*bufferDepth*sizeof(float));
 				
 	printf("Detector %li: Recalculating halo pixel mask.\n",detID);
 	nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
