@@ -656,7 +656,6 @@ long c = 0;
       }
     }
   }
-  printf("C=%li\n",c);
 
   printf("Current resolution (i.e. d-spacing) range is %.2f - %.2f A (%li - %li det. pixels)\n", minres, maxres,minres_pix,maxres_pix);
 
