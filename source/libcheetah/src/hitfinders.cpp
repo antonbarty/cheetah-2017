@@ -28,7 +28,7 @@ int hitfinder_tof(cGlobal*, cEventData*, int);
  *		2 - Total intensity above ADC threshold
  *		3 - Count Bragg peaks
  *		4 - Use TOF
- *		5 - Like 3, but with extras
+ *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
  *      7 - Laser on event code (usually EVR41)
  */
