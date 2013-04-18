@@ -183,7 +183,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   eventData->nPeaks = nat;
 
   if(nat >= global->hitfinderMinPixCount){
-    puts("HIT");
     hit = 1;
   }
   return hit;
