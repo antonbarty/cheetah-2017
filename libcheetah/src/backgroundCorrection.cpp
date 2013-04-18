@@ -54,10 +54,11 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       long	threshold = lrint(bufferDepth*medianPoint);
       long	bgCounter,lastUpdate;
       int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
-			
+
       if(lockThreads){
 	pthread_mutex_lock(&global->bgbuffer_mutex);
       }
+			
       bgCounter = global->detector[detID].bgCounter;
       lastUpdate = global->detector[detID].last_bg_update;
       if( bgCounter > bgRecalc+lastUpdate ) {
@@ -111,7 +112,6 @@ void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
 	background[i] = (float) raw_data[i];
       }
       pthread_mutex_unlock(&global->bgbuffer_mutex);
-      puts("BGINTI");
     }
   }
 }
