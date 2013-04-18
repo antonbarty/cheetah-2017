@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# for convenience
+export CONFIGDIR="/xfs/ddn07/anton/test/process"
+#export CONFIGDIR=`pwd`
+#export XTCDIR="/xfs/ddn03/rawdata/LCLS/LCLS-201102/xtc"
+export XTCDIR="/xfs/ddn08/rawdata/LCLS/LCLS-201210/xtc"
+export H5DIR="/xfs/ddn07/anton/test"
+
+# for hitfinder
+export HITFINDER="${CONFIGDIR}/hitfinder"
+export PSANA_CONFIG="${CONFIGDIR}/psana/psana.cfg"
+#export CHEETAH="/cfel/user/barty/bin/psana"
+export CHEETAH="psana"
+
+
+# SLAC has an old version of the HDF5 libraries
+export HDF5_DISABLE_VERSION_CHECK=1
+
+echo $CONFIGDIR
+
+#$HITFINDER -q -O -p -t ab -r $1 -j 10 -i $2 
+$HITFINDER  -O -p -t ab -r $1 -j 50 -i $2 
+

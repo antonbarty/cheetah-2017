@@ -1,0 +1,283 @@
+#!/bin/bash
+
+echo ""
+SCRIPTNAME=$(basename $0)
+HELP="Need help?  Try $SCRIPTNAME -h"
+
+# what to do if the user makes a mistake
+UERROR () {
+echo "================================================================"
+echo -e "$1\n$HELP"
+echo "================================================================"
+echo ""
+exit 1
+} 
+
+# defaults
+OVERWRITE="NO"
+[ $CHEETAH ] || CHEETAH="cheetah"
+[ $H5DIR ] || H5DIR="."
+[ $XTCDIR ] || XTCDIR="."
+[ $CONFIGDIR ] || CONFIGDIR="."
+[ $PSANA_CONFIG ] || PSANA_CONFIG="psana.cfg"
+
+# get options:
+while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
+	case $OPTION in
+	r) if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
+			RUNDIR=$(printf 'r%04d' $OPTARG)
+			RUNNUMBER=$(printf '%d' $OPTARG)
+		else
+			UERROR "Specify a numerical value for the run number"
+		fi;;	
+	i) INIFILE=$OPTARG;;
+	t) TAG=$OPTARG;;
+	q) QUE="YES"
+		hash bsub 2>&- || \
+			UERROR "The bsub system is not available on this machine"
+		;;
+	s) ARGS="$ARGS -s $OPTARG";;
+	n) ARGS="$ARGS -n $OPTARG";;
+	j) NTHREADS=$OPTARG;;
+	d) DARKCAL="YES";;
+	o) OVERWRITE="CHECK";;
+	O) OVERWRITE="FORCE";;
+	h) SHOWHELP="YES";;
+	p) PSANA="YES";;
+	?) UERROR "Unrecognized option $OPTARG";;
+	esac
+done
+
+if [ $SHOWHELP ]; then
+cat << EOF
+This is hitfinder, a handy (or just plain confusing?) bash script wrapper for
+Anton Barty's cheetah program
+
+Rick Kirian, Oct. 2011
+(Idea borrowed from Anton's original "crystfinder" tcsh script)
+
+Brief summary of options:
+
+   -h       Print this help message.
+   -r xxx   Run number.
+   -t xxx   Tag name.
+   -i xxx   Cheetah configuration (i.e. "ini") file. 
+   -s xxx   Skip this many datagrams at the beginning.
+   -n xxx   Analyze this many datagrams in total.
+   -j xxx   Number of worker threads to run in parallel.
+   -d       Make a darkcal.
+   -o       Overwrite the previous run (if it successfully finished).
+   -O       Force overwrite of previous run (even if it didn't finish).
+   -q       Add this job to the queue (using SLAC bsub).
+   -p       Use the psana version of cheetah (this will be the default soon)
+
+Best to explain by example.  Firstly, you will probably want to set up some 
+environment variables for ease of use.  This seems to be the easiest way to 
+do things without verbose input, or editing of the script itself.  Here
+are the variables:
+
+XTCDIR:    Path to where the xtc data is (default: ./)
+H5DIR:     Path to where the results of cheetah will be written (default: ./)
+CONFIGDIR: Search path for ini files (default: ./)
+TMPDIR:    A place to put temporary files (default: /tmp)
+CHEETAH:   The path to cheetah (default: cheetah)
+
+The simples thing to do is this:
+
+> hitfinder -r 57 -i /some/path/foobar.ini
+
+which will run cheetah on run 57 using the specified ini file.  The output will
+go into the directory \$H5DIR/r0057.  If you put the file foobar.ini in your
+CONFIGDIR directory, you can just use "-i foobar.ini", and hitfinder will 
+search recursively for a file with that name (it will complain if multiple
+files are found).  Note that it will first search your current working 
+directory before seaching in your CONFIGDIR.
+
+A more convenient way to do things is to create your ini files with names like
+r0057.ini, and put them in your CONFIGDIR.  Then you need only run hitfinder 
+like this:
+
+> hitfinder -r 57
+
+If you want to put the output in a different directory, you can use a "tag" 
+like this
+
+> hitfinder -r 57 -t test
+
+which will dump results into the directory \$CONFIGDIR/r0057-test.
+
+Hitfinder won't overwrite previous results by default.  If you want to 
+overwrite the previous stuff in r0057-test, pass the -o option to 
+hitfinder.  Note that hitfinder checks if the previous run has actually
+completed - if not, you will see a complaint message.  To force the overwrite,
+use the -O option instead.
+
+You can make a darkcal like this:
+
+> hitfinder -r 57 -d
+
+which assumes that there is an ini file named darkcal.ini somewhere in the
+CONFIGDIR.  This will automatically set the tag equal to "dark", so the results
+go into the \$CONFIGDIR/r0057-dark directory.
+
+If you are running on SLAC computers, then you can queue the job using the bsub
+program with the -q flag.
+
+You can specify the number of threads with the -j flag (which will ignore 
+whatever is in the ini file), skip the first few frames with the -s flag, or 
+limit the number of frames to analyze with the -n flag (useful for testing new 
+ini settings).
+
+That's pretty much it - pretty simple.  But there are a couple of final notes:
+you can use environment variables in your ini files - in that case hitfinder 
+will expand those variables before passing a copy of the (edited) ini file to
+cheetah (this is super useful if you run jobs on multiple computers, e.g. we've
+been running jobs at DESY/SLAC/ASU, and we can use the same ini files).  As an
+example, you can have this in your ini file:
+
+darkcal=\$H5DIR/r0034-dark
+
+Also note that hitfinder will copy the hdf5 files specified in the ini file to
+the output directory - nice to have a copy of the original geometry file, for 
+instance, for future reference.
+
+If there are bugs, let me know (richard.kirian@desy.de).
+
+EOF
+exit 0
+fi
+
+# sanity checks
+[ -d $H5DIR ]   || UERROR "The hdf5 file path $H5DIR does not exist"
+[ -d $XTCDIR ]  || UERROR "The xtc file path $XTCDIR does not exist"
+hash $CHEETAH 2>&- || UERROR "$CHEETAH is not executable"
+[ $RUNDIR ]     || UERROR "You did not specify a run number"
+[ $(find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" | wc -l | awk '{print $1}') -gt 0 ] || \
+	UERROR "There are no xtc files named *$RUNDIR*.xtc in $XTCDIR"
+echo "This is run number $RUNNUMBER"
+
+# if darkcal override everything
+if [ $DARKCAL ]; then
+	TAG="dark"
+	INIFILE="darkcal.ini"
+fi
+
+# set the save directory if not specified
+SAVEDIR=$H5DIR/$RUNDIR
+[ $TAG ] && SAVEDIR=$SAVEDIR-$TAG
+
+# if the save directory exists, make sure we can write files as needed
+if [ -d $SAVEDIR ]; then
+[ -w $SAVEDIR ]   || UERROR "You don't have write permissions in the directory $SAVEDIR"
+fi
+
+# no ini file name specified? take a guess:
+[ $INIFILE ] || INIFILE=$(basename $SAVEDIR).ini
+
+if [ ! -f $INIFILE ]; then
+# full path to ini file not specified?  look for it:
+echo "Searching for an ini file named $INIFILE"
+INIFILE=$(cd $CONFIGDIR ; find $CONFIGDIR -name $INIFILE)
+# check if multiple files found
+if [ "$(echo $INIFILE | grep -o ' ' | wc -l)" -gt 0 ]; then
+	echo "Found too many files:"
+	echo -e "$(echo $INIFILE | sed 's/ /\n/g')\n"
+	exit 1
+fi
+fi
+
+# any luck finding the ini file?
+[ $INIFILE ] || UERROR "Can't find the right ini file"
+[ -f $INIFILE ] || UERROR "Can't find the ini file $INIFILE"
+INIFILE=$(readlink -f $INIFILE)
+echo "Using this ini file: $INIFILE"
+
+# output from cheetah will go here
+LOGFILE=$SAVEDIR/bsub.log
+
+# let me know what's about to happen
+echo "Will search for xtc data here: $XTCDIR"
+echo "Will save hdf5 data here: $SAVEDIR"
+
+# Make it group friendly
+umask 002
+
+# Create directory for this data set
+if [ ! -d $SAVEDIR ]; then
+
+	echo "Creating hdf5 data directory"
+	mkdir $SAVEDIR
+	echo "Moving to hdf5 data directory"
+	cd $SAVEDIR
+
+else
+
+	if [ "$OVERWRITE" = "NO" ]; then
+		UERROR "The directory $SAVEDIR exists\nTo overwrite use the -o option"
+	elif [ "$OVERWRITE" = "CHECK" ]; then
+		# check that the previous cheetah job has completed
+		if ! grep -Fxq ">-------- End of job --------<" $SAVEDIR/log.txt; then
+			UERROR "Previous job has not finished\nTo force the overwrite, use the -O option"
+		fi
+	fi
+	
+	echo "Moving to existing data directory $SAVEDIR"
+	cd $SAVEDIR
+	echo "Deleting previous $SCRIPTNAME files"
+	rm -f 	*.h5 \
+		*.ini \
+		*.out \
+		*.log \
+		*.txt 
+	      	&> /dev/null
+	rm -rf data* &> /dev/null
+fi
+
+# Create configuration files
+# silly, but let's expand environment variables within ini files...
+cp $INIFILE original.ini
+while read line; do eval echo $line; done < original.ini > cheetah.ini
+# toggle the number of threads here, despite value in ini file
+if [ $NTHREADS ]; then
+	echo "Will run $NTHREADS worker threads"
+	cat cheetah.ini | sed -e '/nthreads/d' > tmp.ini
+	echo "nThreads=$NTHREADS" >> tmp.ini
+	mv tmp.ini cheetah.ini
+fi
+
+# keep a copy of these in the save directory, just in case they change elsewhere
+echo "Copying hdf5 files into the data directory"
+cp $(awk -F '=' '/^geometry/ {print $2}' $INIFILE) $SAVEDIR/geometry.h5 &> /dev/null
+cp $(awk -F '=' '/^darkcal/ {print $2}' $INIFILE) $SAVEDIR/darkcal.h5 &> /dev/null
+cp $(awk -F '=' '/^gaincal/ {print $2}' $INIFILE) $SAVEDIR/gaincal.h5 &> /dev/null
+cp $(awk -F '=' '/^peakmask/ {print $2}' $INIFILE) $SAVEDIR/peakmask.h5 &> /dev/null
+cp $(awk -F '=' '/^badpixelmap/ {print $2}' $INIFILE) $SAVEDIR/badpixelmap.h5 &> /dev/null
+
+# now run cheetah
+find $XTCDIR -maxdepth 1 -name "*${RUNDIR}*.xtc" > xtcfiles.txt
+[ "$(wc -l xtcfiles.txt | awk '{print $1}')" -lt 1 ] && UERROR "Found no xtc files for $RUNDIR"
+echo "Running cheetah..."
+
+if [ $PSANA ]; then
+	ARGS="$ARGS $( cat xtcfiles.txt | tr '\n' ' ' )"
+	cp $PSANA_CONFIG .
+else
+	ARGS="$ARGS -l xtcfiles.txt"
+fi
+
+if [ $QUE ]; then
+	#FULLCOMMAND="bsub -q psfehmpiq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	FULLCOMMAND="bsub -q psfehmpiq -n 10 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	#FULLCOMMAND="bsub -q psfehq -n 6 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	echo $FULLCOMMAND
+	$FULLCOMMAND
+	echo "$SCRIPTNAME job sent to queue"
+else
+	FULLCOMMAND="$CHEETAH $ARGS" # >& $LOGFILE"
+	echo $FULLCOMMAND
+	$FULLCOMMAND
+	echo "$SCRIPTNAME has finished"
+fi
+
+# make everything group editable!
+chmod -R g+rw $SAVEDIR
