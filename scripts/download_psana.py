@@ -21,7 +21,6 @@ output_dir = sys.argv[2]
 username = raw_input('Please enter your username on psexport (%s): ' % getpass.getuser())
 if username == "": username = getpass.getuser()
 os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/releases/ && tar czf - '+ana_version+'" | tar xzvf - -C '+output_dir)
-print "AAA"
 pdsdata_version = os.popen('grep "pdsdata_ver =" '+output_dir+'/'+ana_version+'/pdsdata/SConscript').read()
 pdsdata_version = re.search('\d+\.\d+\.\d+',pdsdata_version).group(0)
 
