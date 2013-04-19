@@ -1,4 +1,4 @@
-find_file(MYANA_RELEASE release /reg/g/pcds/package/ana /opt/pcds/package/ana)
+find_file(MYANA_RELEASE release /reg/g/pcds/package/ana /davinci/pcds/package/ana)
 
 
 set(MYANA_ARCH "x86_64-linux-opt" ACHE STRING "myana architecture to be used")

@@ -1,5 +1,5 @@
 if(NOT ANA_RELEASE)
-find_file(ANA_RELEASE ana-current /opt/psana/g/psdm/portable/sw/releases/ /reg/g/psdm/sw/releases/ /cfel/common/slac/reg/g/psdm/portable/sw/releases/)
+find_file(ANA_RELEASE ana-current /davinci/psana/g/psdm/portable/sw/releases/ /reg/g/psdm/sw/releases/ /cfel/common/slac/reg/g/psdm/portable/sw/releases/)
 endif(NOT ANA_RELEASE)
 
 message(STATUS "ANA_RELEASE is ${ANA_RELEASE}")
