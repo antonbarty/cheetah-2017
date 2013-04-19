@@ -347,13 +347,21 @@ entry_1
    |                                              |
    |- (image_1)                                   |
    |    |                                         |
+   |    |- detector_1 ----------------------------|
+   |    |- data [assembled data, 3D array]        |
+   |    |- (mask) [assembled masks, 3D array]     |
+   |    |- mask_shared [assembled mask, 2D array] |
+   |    |- ...                                    |
+   |    .                                         |
+   |                                              |
+   |- (image_2)                                   |
+   |    |                                         |
    |    |- detector_1 ----------------------------
-   |    |- data [assembled data, 3D array]
-   |    |- (mask) [assembled masks, 3D array]
-   |    |- mask_shared [assembled mask, 2D array] 
+   |    |- data [downsampled assembled data, 3D array]
+   |    |- (mask) [downsampled assembled masks, 3D array]
+   |    |- mask_shared [downsampled assembled mask, 2D array] 
    |    |- ...
-   |    .
-   .    
+   .    .
  
 */
 
