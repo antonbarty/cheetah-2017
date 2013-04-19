@@ -263,12 +263,9 @@ void *worker(void *threadarg) {
   /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
-  if(global->assemble2DImage) {
-    assemble2Dimage(eventData, global);
-  }
-  if(global->assemble2DMask) {
-    assemble2Dmask(eventData, global);
-  }
+  assemble2Dimage(eventData, global);
+  assemble2Dmask(eventData, global);
+  downsample(eventData,global);
 
   /*
    *	Calculate radial average

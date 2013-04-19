@@ -20,16 +20,18 @@
 
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
-  DETECTOR_LOOP {
-    long		pix_nn = global->detector[detID].pix_nn;
-    long		image_nx = global->detector[detID].image_nx;
-    long		image_nn = global->detector[detID].image_nn;
-    float		*pix_x = global->detector[detID].pix_x;
-    float		*pix_y = global->detector[detID].pix_y;
-    float		*corrected_data = eventData->detector[detID].corrected_data;
-    int16_t		*image = eventData->detector[detID].image;
-    int             assembleInterpolation = global->assembleInterpolation;
-    assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+  if(global->assemble2DImage) {
+    DETECTOR_LOOP {
+      long		pix_nn = global->detector[detID].pix_nn;
+      long		image_nx = global->detector[detID].image_nx;
+      long		image_nn = global->detector[detID].image_nn;
+      float		*pix_x = global->detector[detID].pix_x;
+      float		*pix_y = global->detector[detID].pix_y;
+      float		*corrected_data = eventData->detector[detID].corrected_data;
+      int16_t		*image = eventData->detector[detID].image;
+      int             assembleInterpolation = global->assembleInterpolation;
+      assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    }
   }
 
 }
@@ -37,18 +39,19 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
 void assemble2Dmask(cEventData *eventData, cGlobal *global) {
 
-  DETECTOR_LOOP {
-    long		pix_nn = global->detector[detID].pix_nn;
-    long		image_nx = global->detector[detID].image_nx;
-    long		image_nn = global->detector[detID].image_nn;
-    float		*pix_x = global->detector[detID].pix_x;
-    float		*pix_y = global->detector[detID].pix_y;
-    uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
-    uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
-    int             assembleInterpolation = global->assembleInterpolation;
-    assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+  if(global->assemble2DMask) {
+    DETECTOR_LOOP {
+      long		pix_nn = global->detector[detID].pix_nn;
+      long		image_nx = global->detector[detID].image_nx;
+      long		image_nn = global->detector[detID].image_nn;
+      float		*pix_x = global->detector[detID].pix_x;
+      float		*pix_y = global->detector[detID].pix_y;
+      uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
+      uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+      int             assembleInterpolation = global->assembleInterpolation;
+      assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    }
   }
-
 }
 
 

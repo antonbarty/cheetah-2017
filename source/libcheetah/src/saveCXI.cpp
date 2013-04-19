@@ -484,9 +484,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	// /entry_1/image_j/data_type
 	imgXxX.dataType = createStringStack("data_type",imgXxX.self);
 	// /entry_1/image_j/data_space
-	img.dataSpace = createStringStack("data_space",imgXxX.self);
+	imgXxX.dataSpace = createStringStack("data_space",imgXxX.self);
 	// /entry_1/image_j/thumbnail
-	img.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, H5T_STD_I16LE);
+	imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, imageXxX_ny/CXI::thumbnailScale, H5T_STD_I16LE);
 	// /entry_1/image_j/experiment_identifier
 	H5Lcreate_soft("/entry_1/experiment_identifier",imgXxX.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 	cxi->entry.images.push_back(imgXxX);
@@ -612,6 +612,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
       imgID = detID * 2;
     }
     char buffer[1024];
+    long image_ny = global->detector[detID].image_nn/global->detector[detID].image_nx;
     sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
     writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
     if(global->saveAssembled){
@@ -621,7 +622,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].image_pixelmask);
       }
-      int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_nx,CXI::thumbnailScale);
+      int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,image_ny,CXI::thumbnailScale);
       if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
       write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
       writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
@@ -630,13 +631,14 @@ void writeCXI(cEventData *info, cGlobal *global ){
 
       if (global->detector[detID].downsampling > 1){
 	imgID = detID * 2 + 1;
+	long imageXxX_ny = global->detector[detID].imageXxX_nn/global->detector[detID].imageXxX_nx;
 	if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
 	if(global->savePixelmask){
 	  if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
 	  write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].imageXxX_pixelmask);
 	}
-	int16_t * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,global->detector[detID].imageXxX_nx,CXI::thumbnailScale);
+	int16_t * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
 	if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
 	writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
