@@ -162,6 +162,13 @@ public:
 	float   *pix_kr;
 	float   *pix_res;
 
+	// Polar binning
+	int      radialBinSize;
+	int      nRadialBins;
+	int      nAngularBins;
+	int     *radialBinIdx;
+	int     *angularBinIdx;
+	double  *polarIntensities;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];

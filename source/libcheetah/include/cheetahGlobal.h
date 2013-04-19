@@ -184,6 +184,8 @@ public:
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
 
+	/** @brief Toggle polar binning of data */
+	int      polarBinData;
 
 	/** @brief Interval between saving of powder patterns, etc. */
 	int      saveInterval;
