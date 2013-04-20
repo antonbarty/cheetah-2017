@@ -169,6 +169,7 @@ public:
 	int     *radialBinIdx;
 	int     *angularBinIdx;
 	double  *polarIntensities;
+	float  *pix_kphi;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
