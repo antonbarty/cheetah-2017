@@ -278,9 +278,6 @@ void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long
   long i0,i1;
   int16_t int16_t_max = 32767;
 
-  for(i1 = 0;i1<imgXxX_nn;i1++){
-    imgXxX[i1] = 0;
-  }
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
     y0 = i0/img_nx;
@@ -290,8 +287,9 @@ void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long
     // Check for overflow and clip in case
     if (imgXxX[i1] > int16_t_max - img[i0]){
       imgXxX[i1] = int16_t_max;
+    } else {
+      imgXxX[i1] += img[i0];
     }
-    imgXxX[i1] += img[i0];
   }
 }
 
