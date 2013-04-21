@@ -265,6 +265,10 @@ void *worker(void *threadarg) {
    */
   assemble2Dimage(eventData, global);
   assemble2Dmask(eventData, global);
+
+  /*
+   *   Downsample assembled image
+   */
   downsample(eventData,global);
 
   /*
