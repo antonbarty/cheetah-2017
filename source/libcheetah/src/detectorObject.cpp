@@ -609,8 +609,8 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   res,minres,maxres;
   double	 sin_theta;
   long     minres_pix,maxres_pix;
-long c = 0;	
-  minres = 10000000.0;
+	long c = 0;	
+  minres = 100000;
   maxres = 0.0;
   minres_pix = 10000000;
   maxres_pix = 0;
@@ -637,11 +637,11 @@ long c = 0;
     pix_kr[i] = kr;
     pix_res[i] = res;
         
-    if ( res > minres ){
+    if ( res < minres ){
       minres = res;
       minres_pix = pix_r[i];
     }
-    if ( res < maxres ){
+    if ( res > maxres ){
       maxres = res;
       maxres_pix = pix_r[i];
     }
@@ -650,14 +650,14 @@ long c = 0;
     // Generate resolution limit mask
     if (!global->hitfinderResolutionUnitPixel){
       // (resolution in Angstrom (!!!))
-      if (pix_res[i] < global->hitfinderMaxRes && pix_res[i] > global->hitfinderMinRes ) 
-	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-      else
+      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+      else
+	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
     }
     else{
       // (resolution in pixel (!!!))
-      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes )
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
       else
 	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
