@@ -16,9 +16,9 @@ pro resolution, dir, buffer=buffer
 
 	a = read_csv(infile, comment='#')
 	file = a.field1
-	npeaks = float(a.field2)
-	resolution = float(a.field5)
-	density = float(a.field6)
+	npeaks = float(a.field3)
+	resolution = float(a.field6)
+	density = float(a.field7)
 	
 	nhits = n_elements(file)
 	print,'Number of hits', nhits

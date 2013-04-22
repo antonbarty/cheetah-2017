@@ -16,8 +16,8 @@ pro hitrate, dir, buffer=buffer
 
 	a = read_csv(infile, comment='#')
 	file = a.field01
-	hit = float(a.field03)
-	npeaks = float(a.field09)
+	hit = float(a.field04)
+	npeaks = float(a.field10)
 	nframes = n_elements(file)
 	nhits = n_elements(where(hit eq 1))
 	
