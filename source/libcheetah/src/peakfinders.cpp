@@ -112,7 +112,6 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	
 	
 	// combine pixelmask bits
-	//uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_BAD | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS 
 	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_BAD | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS ;
 	
 	/*
