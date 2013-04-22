@@ -28,7 +28,7 @@
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 	// Dereference stuff
-	int	        detID = global->hitfinderDetector;
+	int	    detID = global->hitfinderDetector;
 	int		hit=0;
 	
 	/*
