@@ -271,9 +271,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
+    useAutoHotpixel = 1;
+    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
+    useAutoHotpixel = 1;
+    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "applyautohotpixel")) {
     applyAutoHotpixel = atoi(value);
@@ -413,8 +417,18 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     pthread_mutex_init(&correctedMin_mutex[i], NULL);
     pthread_mutex_init(&correctedMax_mutex[i], NULL);		
     pthread_mutex_init(&assembledMin_mutex[i], NULL);
-    pthread_mutex_init(&assembledMax_mutex[i], NULL);		
-  }    
+    pthread_mutex_init(&assembledMax_mutex[i], NULL);
+	  
+	for(long j=0; j<pix_nn; j++) {
+		powderRaw[i][j] = 0;
+		powderCorrected[i][j] = 0;
+		powderCorrectedSquared[i][j] = 0;
+	  }
+	  for(long j=0; j<image_nn; j++) {
+		  powderAssembled[i][j] = 0;
+	  }
+	  
+  }
 	
     
   // Radial stacks
