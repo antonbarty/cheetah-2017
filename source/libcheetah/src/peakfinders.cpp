@@ -304,7 +304,7 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	}
 	
 	
-    eventData->nPeaks = counter;
+    eventData->nPeaks = (int) counter;
     
 	// Now figure out whether this is a hit
 	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
