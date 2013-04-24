@@ -16,6 +16,8 @@
 #define MAX_EPICS_PVS 10
 #define MAX_EPICS_PV_NAME_LENGTH 512
 
+#define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
+
 /** @brief Global variables.
  *
  * Configuration parameters, and things that don't change often.
@@ -33,7 +35,7 @@ public:
 	/** @brief Path to the global configuration file */
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
-	char     currentCXIFileName[MAX_FILENAME_LENGTH];
+	char     cxiFilename[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 

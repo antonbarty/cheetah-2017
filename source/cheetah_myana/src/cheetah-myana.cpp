@@ -272,6 +272,7 @@ void beginrun()
    *	Pass new run information to Cheetah
    */
   cheetahGlobal.runNumber = getRunNumber();
+  strcpy(cheetahGlobal.cxiFilename,getCXIfromXTC(getXTCFilename()).c_str());
   cheetahNewRun(&cheetahGlobal);
 }
 
@@ -345,21 +346,23 @@ void event() {
    */
   unsigned runNumber;
   runNumber = getRunNumber();
-	
-  if(cheetahGlobal.saveCXI){
+
+  // This section is moved to endrun()
+  /*if(cheetahGlobal.saveCXI){
     std::string cxiFilename = getCXIfromXTC(getXTCFilename());
 
-    if(cxiFilename.compare(cheetahGlobal.currentCXIFileName)!=0){
+
+    if(cxiFilename.compare(cheetahGlobal.cxiFilename)!=0){
       while(cheetahGlobal.nActiveThreads > 0){
 	printf("Waiting for %li worker threads to terminate for new ones\n", cheetahGlobal.nActiveThreads);
 	usleep(100000);
       }
-      if(strcmp(cheetahGlobal.currentCXIFileName,"") != 0){
+      if(strcmp(cheetahGlobal.cxiFilename,"") != 0){
 	closeCXIFiles(&cheetahGlobal);
       }
-      strcpy(cheetahGlobal.currentCXIFileName,cxiFilename.c_str());
+      strcpy(cheetahGlobal.cxiFilename,cxiFilename.c_str());
     }
-  }
+    }*/
 	
   /*
    * Get event time information
@@ -552,7 +555,7 @@ void event() {
   cEventData	*eventData;
   eventData = cheetahNewEvent(&cheetahGlobal);
 		
-  sprintf(eventData->cxiFilename,"LCLS-r%04d.cxi",runNumber); 
+  sprintf(cheetahGlobal.cxiFilename,"LCLS-r%04d.cxi",runNumber); 
 		
   /* This laser event code */
   int evr41 = laserOn();
@@ -856,6 +859,14 @@ void endcalib() {
 void endrun() 
 {
   printf("User analysis endrun() routine called.\n");
+  if(cheetahGlobal.saveCXI){
+    // Wait for all workers to finish
+    while(cheetahGlobal.nActiveThreads > 0) {
+      printf("Waiting for %li worker threads to terminate before processing a new run\n", cheetahGlobal.nActiveThreads);
+      usleep(100000);
+    }
+    writeSharedCXI(&cheetahGlobal);
+  }
 }
 
 void endjob()

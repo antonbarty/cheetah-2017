@@ -44,17 +44,22 @@ void cheetahInit(cGlobal *global) {
  *  libCheetah function for start of a new run
  */
 void cheetahNewRun(cGlobal *global) {
-	// Reset the powder log files
-	if(global->runNumber > 0) {
-		for(long i=0; i<global->nPowderClasses; i++) {
-			char	filename[1024];
-			if(global->powderlogfp[i] != NULL)
-				fclose(global->powderlogfp[i]);
-			sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
-			global->powderlogfp[i] = fopen(filename, "w");
-			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
-		}
-	}
+  // Wait for all workers to finish
+  while(global->nActiveThreads > 0) {
+    printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+    usleep(100000);
+  }
+  // Reset the powder log files
+  if(global->runNumber > 0) {
+    for(long i=0; i<global->nPowderClasses; i++) {
+      char	filename[1024];
+      if(global->powderlogfp[i] != NULL)
+	fclose(global->powderlogfp[i]);
+      sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
+      global->powderlogfp[i] = fopen(filename, "w");
+      fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+    }
+  }
 }
 
 
@@ -81,7 +86,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peakResolution=0.;
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
-	eventData->peakTotal=0.;	
+	eventData->peakTotal=0.;
+
+	eventData->stackSlice=0;
 
 	//long		pix_nn1 = global->detector[0].pix_nn;
 	//long		asic_nx = global->detector[0].asic_nx;
@@ -390,13 +397,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         while(global->nActiveThreads >= global->nThreads) {
 	  usleep(1000);
         }
-
-	DETECTOR_LOOP {
-	  while((eventData->frameNumber==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
-	    printf("Reached frame %i. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
-	    usleep(5000);
-	  }
-	}
         
         // Set detached state
         pthread_attr_init(&threadAttribute);
@@ -435,6 +435,14 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         saveRadialStacks(global);
 		global->updateLogfile();
 	}
+
+	DETECTOR_LOOP {
+	  while((eventData->frameNumber+1==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
+	    printf("Processed %i frames. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
+	    usleep(5000);
+	  }
+	}
+
 	
 }
 
@@ -519,6 +527,7 @@ void cheetahExit(cGlobal *global) {
 	free(global->detector[i].powderAssembled[j]);
 	free(global->detector[i].radialAverageStack[j]);
 	pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
+	pthread_mutex_destroy(&global->detector[i].powderRawSquared_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);

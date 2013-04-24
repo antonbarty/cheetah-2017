@@ -84,6 +84,49 @@ typedef struct{
 }LCLS;
 
 typedef struct{
+  hid_t self;
+}ConfValues;
+
+typedef struct{
+  hid_t self;
+  hid_t eventName;
+  hid_t frameNumber;
+  hid_t threadNumber;
+  hid_t gmd1;
+  hid_t gmd2;
+  hid_t energySpectrumExist;
+  hid_t nPeaks;
+  hid_t peakNpix;
+  hid_t peakTotal;
+  hid_t peakResolution;
+  hid_t peakResolutionA;
+  hid_t peakDensity;
+  hid_t laserEventCodeOn;
+  hid_t laserDelay;
+  hid_t hit;
+  hid_t lastBgUpdate;
+  hid_t nHot;
+  hid_t lastHotPixUpdate;
+  hid_t hotPixCounter;
+  hid_t nHalo;
+  hid_t lastHaloPixUpdate;
+  hid_t haloPixCounter;
+}UnsharedValues;
+
+typedef struct{
+  hid_t self;
+}SharedValues;
+
+typedef struct{
+  hid_t self;
+  //needs to be implemented:
+  //hid_t cheetah_version;
+  ConfValues confVal;
+  UnsharedValues unsharedVal;
+  SharedValues sharedVal;
+}CheetahValues;
+
+typedef struct{
   std::vector<hid_t> radialAverage;
   std::vector<hid_t> radialAverageCounter;
 }Radial;
@@ -103,9 +146,10 @@ typedef struct{
 
 typedef struct{
   hid_t self;
-
-  Entry entry;  
+  Entry entry;
   LCLS lcls;
+  CheetahValues cheetahVal;
+  
   /*  This counter defines where in the file each image is stored.
    *  It is atomically incremented by each thread */
   uint stackCounter;

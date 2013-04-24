@@ -301,6 +301,7 @@ void *worker(void *threadarg) {
       pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
       pthread_mutex_unlock(&global->saveCXI_mutex);
+      printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
     else {
       writeHDF5(eventData, global);

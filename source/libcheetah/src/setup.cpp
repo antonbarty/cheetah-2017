@@ -173,9 +173,8 @@ cGlobal::cGlobal(void) {
   lasttime = 0;
   laserPumpScheme = 0;
 
-  // Do not output 1 HDF5 per image by default
+  // Output 1 HDF5 per image by default
   saveCXI = 0;
-  strcpy(currentCXIFileName, "");
 }
 
 
@@ -398,7 +397,6 @@ void cGlobal::setup() {
 	
   readSpectrumDarkcal(self, espectrumDarkFile);
   readSpectrumEnergyScale(self, espectrumScaleFile);
-	
 	
   /*
    * Set up arrays for powder classes and radial stacks

@@ -226,8 +226,8 @@ public:
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
-	long    halopixRecalc;
-	long    halopixMemory;
+	long   halopixRecalc;
+	long   halopixMemory;
 	long   halopixCounter;
 	long   nhalo;
 	long   last_halopix_update;
@@ -261,6 +261,7 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
+	double   *powderRawSquared[MAX_POWDER_CLASSES];
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
@@ -269,6 +270,7 @@ public:
 	float   *correctedMax[MAX_POWDER_CLASSES];
 	float   *assembledMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderRawSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
