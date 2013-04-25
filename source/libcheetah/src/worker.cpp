@@ -273,7 +273,14 @@ void *worker(void *threadarg) {
    */
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
-	
+
+  /*
+   *  Calculate autocorrelation
+   *  write accumulated autocorrelation to file when approperiate
+   *  the written out version has mask corrected
+   */
+  calculateAutoCorrelation(eventData, global);
+
   /*
    *	Maintain a running sum of data (powder patterns)
    *    and strongest non-hit and weakest hit
@@ -306,6 +313,13 @@ void *worker(void *threadarg) {
   else {
     printf("r%04u:%li (%2.1lf Hz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, eventData->nPeaks);
   }
+
+  /*
+   * save accumulated autocorrelation
+   */
+   if( ( eventData->frameNumber % global->autodump ) == 0 ) {
+     saveAutoCorrelation( global ); 
+   }
 
   /*
    *	If this is a hit, write out peak info to peak list file

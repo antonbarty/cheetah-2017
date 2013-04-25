@@ -170,6 +170,13 @@ public:
 	int     *angularBinIdx;
 	double  *polarIntensities;
 	float  *pix_kphi;
+  
+   // Polar mapping
+   long polar_nn;
+   int *polar_map;
+
+   // auto-correlation
+   double *autocorrelation;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
@@ -293,6 +300,9 @@ public:
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
+   long  autocorrelationCounter;
+	pthread_mutex_t autocorrelation_mutex;
+
 
 
 public:
@@ -301,7 +311,10 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
+	void allocateAutoCorrelationMemory(cGlobal*);
 	void readDetectorGeometry(char *);
+   void buildPolarMap(cGlobal*);
+   void map2Polar(cGlobal*);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
 	void readGaincal(char *);

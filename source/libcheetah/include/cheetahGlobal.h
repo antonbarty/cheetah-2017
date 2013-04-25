@@ -227,6 +227,7 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+	int      autodump;  // how frequent to dump autocorrelation
     
     bool saveCXI;
 

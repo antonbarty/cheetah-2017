@@ -101,6 +101,11 @@ void addToRadialAverageStack(cEventData*, cGlobal*);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
+
+// correlation.cpp
+void calculateAutoCorrelation(cEventData *,cGlobal*);
+void calculateAutoCorrelation(float *, int *, long, long, int *, cPixelDetectorCommon*);
+void saveAutoCorrelation(cGlobal *);
     
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);

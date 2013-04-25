@@ -141,6 +141,7 @@ cGlobal::cGlobal(void) {
   saveAssembled = 1;
   saveRaw = 0;
   hdf5dump = 0;
+  autodump = 0;
   saveInterval = 1000;
   savePixelmask = 0;
   saveCXI = 0;
@@ -365,6 +366,8 @@ void cGlobal::setup() {
    */
   for(long i=0; i<nDetectors; i++) {
     detector[i].allocatePowderMemory(self);
+    detector[i].allocateAutoCorrelationMemory(self);
+    detector[i].buildPolarMap(self);
   }
 
   /*
@@ -706,6 +709,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hdf5dump")) {
     hdf5dump = atoi(value);
+  }
+  else if (!strcmp(tag, "autodump")) {
+    autodump = atoi(value);
   }
   else if (!strcmp(tag, "saveinterval")) {
     saveInterval = atoi(value);
