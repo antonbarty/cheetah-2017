@@ -104,7 +104,7 @@ void saveRadialStacks(cGlobal*);
 
 // correlation.cpp
 void calculateAutoCorrelation(cEventData *,cGlobal*);
-void calculateAutoCorrelation(float *, int *, long, long, int *, cPixelDetectorCommon*);
+void calculateAutoCorrelation(float *, long *, long, long, int *, cPixelDetectorCommon*);
 void saveAutoCorrelation(cGlobal *);
     
 // median.cpp

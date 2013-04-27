@@ -642,12 +642,12 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
 
 void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
   polar_nn = (nRadialBins)*nAngularBins;
-  int index=0;
+  long index=0;
   float pi = 3.141593;
-  float angle_step_size = 2.0 * pi /nAngularBins;
+  float angle_step_size = 2.0 * pi /(float)nAngularBins;
   float radial_step_size = radialBinSize*pixelSize;
   float x,y,polar_x, polar_y, polar_r, theta, error;
-  polar_map = (int*) calloc(polar_nn, sizeof(int));
+  polar_map = (long *) calloc(polar_nn, sizeof(long));
   float *polar_map_error = (float*) calloc(polar_nn, sizeof(float));
   float *polarx = (float*) calloc(polar_nn, sizeof(float));
   float *polary = (float*) calloc(polar_nn, sizeof(float));
@@ -655,6 +655,7 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
   int polar_r_i, theta_i;
 
   for(int na=0;na<nAngularBins;na++) angle[na] = angle_step_size*na;
+  printf("angle stepsize, max angle: %f %f\n",angle_step_size, angle[nAngularBins-1]);
 
   for(int nr=0;nr<nRadialBins;nr++) {
     polar_r = radial_step_size*nr;
@@ -667,20 +668,23 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
     }
   }
 
-  for(int i=0;i<pix_nn;i++)
+  for(long i=0;i<pix_nn;i++)
   {
      //convert x,y to polar and map to nearest polar pixel (keep distance info)
-     x = pix_x[i];
-     y = pix_y[i];
-     polar_r = sqrt( x*x + y*y )*pixelSize;
+     x = pix_x[i]*pixelSize;
+     y = pix_y[i]*pixelSize;
+     polar_r = sqrt( x*x + y*y );
+     polar_r_i = floor( polar_r/radial_step_size );
+     if (polar_r_i >= nRadialBins ) continue;
+
      theta = atan2( y, x );  
-     if( theta < 0) theta += (2.0*pi); // this SHOULD not matter for correlation computing
-     polar_r_i = lrint( polar_r/radial_step_size );
-     if (polar_r_i >= nRadialBins*radialBinSize ) continue;
-     theta_i = lrint( theta / angle_step_size );
+     if( theta < 0) theta += (2.0*pi); // wrap to [0,2pi]
+     theta_i = floor( theta / angle_step_size );
+     if(theta_i>=nAngularBins) { printf("wrong, theta_i>=nAngularBins, %d\n",theta_i); exit(1);}
      index = polar_r_i*nAngularBins + theta_i;
      error = (x-polarx[index])*(x-polarx[index]) + (y-polary[index])*(y-polary[index]);
-     if( error < polar_map_error[ index ] ) { // replace with the new pixel 
+//     if( error < polar_map_error[ index ] ) { // replace with the new pixel 
+     if( polar_map[index] < 0 ) {
        polar_map[index] = i;
        polar_map_error[index] = error;
      }
@@ -688,6 +692,12 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
 
   // fill unvisited polar pixels using neighbor's 
     // this may be unsafe; an alternative is to mask these as gaps
+  if( global->debugLevel > 2)
+  for(int ii=0;ii<polar_nn;ii++) {
+    printf("%f %f %f %f map\n", polarx[ii],polary[ii],pix_x[polar_map[ii]],pix_y[polar_map[ii]]);
+  }
+
+/*
   index = 0;
   for(int nr=0;nr<nRadialBins;nr++) {
     for(int na=0;na<nAngularBins;na++) {
@@ -696,8 +706,13 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
          polar_map_error[index] = polar_map_error[index-1];
        }
        index++;
+       if(global->debugLevel>2) {
+         if(polar_map[index] > 0 )
+         printf("%f %f map x\n",polarx[index], pix_x[polar_map[index]]*pixelSize);
+       }
     }
   }
+*/
   free(polar_map_error);
   free(polarx);
   free(polary);

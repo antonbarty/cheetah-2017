@@ -261,6 +261,13 @@ void *worker(void *threadarg) {
   */
 
   /*
+   *  Calculate autocorrelation
+   *  write accumulated autocorrelation to file when approperiate
+   *  the written out version has mask corrected
+   */
+  calculateAutoCorrelation(eventData, global);
+
+  /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
   assemble2Dimage(eventData, global);
@@ -273,13 +280,6 @@ void *worker(void *threadarg) {
    */
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
-
-  /*
-   *  Calculate autocorrelation
-   *  write accumulated autocorrelation to file when approperiate
-   *  the written out version has mask corrected
-   */
-  calculateAutoCorrelation(eventData, global);
 
   /*
    *	Maintain a running sum of data (powder patterns)

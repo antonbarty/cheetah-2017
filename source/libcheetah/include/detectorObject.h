@@ -173,7 +173,7 @@ public:
   
    // Polar mapping
    long polar_nn;
-   int *polar_map;
+   long *polar_map;
 
    // auto-correlation
    double *autocorrelation;
