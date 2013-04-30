@@ -171,10 +171,10 @@ public:
 	double  *polarIntensities;
 	float  *pix_kphi;
   
-   // Polar mapping
-   long polar_nn;
-   long *polar_map;
-   long *cart2polar_map;
+    // Polar mapping
+    long    polar_nn;
+    long    *polar_map;
+    long    *cart2polar_map;
 
    // auto-correlation
    double *autocorrelation;
@@ -312,11 +312,8 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
-	void allocateAutoCorrelationMemory(cGlobal*);
 	void readDetectorGeometry(char *);
-   void buildPolarMap(cGlobal*);
-   void buildCart2PolarMap(cGlobal*);
-   void map2Polar(cGlobal*);
+    void updateRadialMap(void);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
 	void readGaincal(char *);
@@ -324,10 +321,19 @@ public:
 	void readBadpixelMask(char *);
 	void readBaddataMask(char *);
 	void readWireMask(char *);
+    
+    // Polar functions
+    void buildPolarMap(cGlobal*);
+    void map2Polar(cGlobal*);
 
+    
 //private:
 
 	int parseConfigTag(char*, char*);
+
+    // Polar functions
+	void allocateAutoCorrelationMemory(cGlobal*);
+    void updatePolarMap(cGlobal*);
 
 };
 
@@ -350,6 +356,10 @@ public:
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
+
+	float     *polarData;
+	float     *polarDataCounter;
+
 	double    detectorZ;
 
 };

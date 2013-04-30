@@ -374,9 +374,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if(!strcmp(tag, "radialbinsize")) {
     radialBinSize = atoi(value);
   }
-  else if(!strcmp(tag, "nradialbins")) {
-    nRadialBins = atoi(value);
-  }
+//  else if(!strcmp(tag, "nradialbins")) {
+//    nRadialBins = atoi(value);
+//  }
   else if(!strcmp(tag, "nangularbins")) {
     nAngularBins = atoi(value);
   }
@@ -432,17 +432,13 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     pthread_mutex_init(&correctedMax_mutex[i], NULL);
     pthread_mutex_init(&assembledMin_mutex[i], NULL);
     pthread_mutex_init(&assembledMax_mutex[i], NULL);
-<<<<<<< HEAD
-  }
 
 
-=======
-	  
-	for(long j=0; j<pix_nn; j++) {
-		powderRaw[i][j] = 0;
-		powderCorrected[i][j] = 0;
-		powderCorrectedSquared[i][j] = 0;
-	  }
+    for(long j=0; j<pix_nn; j++) {
+        powderRaw[i][j] = 0;
+        powderCorrected[i][j] = 0;
+        powderCorrectedSquared[i][j] = 0;
+      }
 	  for(long j=0; j<image_nn; j++) {
 		  powderAssembled[i][j] = 0;
 	  }
@@ -450,7 +446,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   }
 	
     
->>>>>>> developer
   // Radial stacks
   for(long i=0; i<nPowderClasses; i++) {
     radialStackCounter[i] = 0;
@@ -463,18 +458,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 
 }
 
-/*
- * Allocate memory for auto-correlation computation
- */
-
-void cPixelDetectorCommon::allocateAutoCorrelationMemory(cGlobal *global) {
-  polar_nn = (nRadialBins)*nAngularBins;
-  polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
-  autocorrelation =  (double*) calloc( polar_nn, sizeof(double) );
-  polar_map = (long *) calloc(polar_nn, sizeof(long));
-  cart2polar_map = (long *) calloc(pix_nn, sizeof(long));
-  pthread_mutex_init(&autocorrelation_mutex, NULL);
-}
 
 
 /*
@@ -590,109 +573,140 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
     goto bounds;
   }
 
-  fesetround(1);
-  xmax = lrint(xmax);
-  xmin = lrint(xmin);
-  ymax = lrint(ymax);
-  ymin = lrint(ymin);
-  printf("\tImage bounds:\n");
-  printf("\tx range %.0f to %.0f\n",xmin,xmax);
-  printf("\ty range %.0f to %.0f\n",ymin,ymax);
+    fesetround(1);
+    xmax = lrint(xmax);
+    xmin = lrint(xmin);
+    ymax = lrint(ymax);
+    ymin = lrint(ymin);
+    printf("\tImage bounds:\n");
+    printf("\tx range %.0f to %.0f\n",xmin,xmax);
+    printf("\ty range %.0f to %.0f\n",ymin,ymax);
 
 
-  // How big must we make the output image?
-  float max = xmax;
-  if(ymax > max) max = ymax;
-  if(fabs(xmin) > max) max = fabs(xmin);
-  if(fabs(ymin) > max) max = fabs(ymin);
-  image_nx = 2*(unsigned)max;
-  image_nn = image_nx*image_nx;
-  printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
+    // How big must we make the output image?
+    float max = xmax;
+    if(ymax > max) max = ymax;
+    if(fabs(xmin) > max) max = fabs(xmin);
+    if(fabs(ymin) > max) max = fabs(ymin);
+    image_nx = 2*(unsigned)max;
+    image_nn = image_nx*image_nx;
+    printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
 
-  // Apply image center shift
-  for(i=0;i<nn;i++){
-    pix_x[i] -= beamCenterPixX;
-    pix_y[i] -= beamCenterPixY;
-  }
-
-
-  // Compute radial distances
-  pix_r = (float *) calloc(nn, sizeof(float));
-  radial_max = 0.0;
-  for(long i=0;i<nn;i++){
-    pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
-    if(pix_r[i] > radial_max)
-      radial_max = pix_r[i];
-  }
-  radial_nn = (long int) ceil(radial_max)+1;
-
-  // How big must we make the output downsampled image?
-  imageXxX_nx = image_nx/downsampling;
-  imageXxX_nn = image_nn/downsampling/downsampling;
-}
-
-// build a polar detector, and find corresponding pixels from real detectors 
-
-/* This is a naive implementation, stupidly assuming detector pixels are assembled 
-void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
-  polar_nn = (nRadialBins)*nAngularBins;
-  int index=0;
-  float pi = 3.141593;
-  float angle_step = 2.0 * pi /nAngularBins;
-  float polar_x, polar_y, polar_r; 
-  polar_map = (int*) calloc(polar_nn, sizeof(int));
-  float *angle = (float*) calloc(nAngularBins,sizeof(float));
-
-  for(int na=0;na<nAngularBins;na++) angle[na] = angle_step*na;
-
-  for(int nr=0;nr<nRadialBins;nr++) {
-    polar_r = radialBinSize*nr;
-    for(int na=0;na<nAngularBins;na++) {
-	    polar_x = polar_r * cos(angle[na]) + beamCenterPixX;
-	    polar_y = polar_r * sin(angle[na]) + beamCenterPixY;
-       polar_map[index] = lrint(polar_x) * pix_nx + lrint(polar_y);
-       if( global->debugLevel>1 ) 
-         printf("beam center: (%8.2f, %8.2f)\n",beamCenterPixX, beamCenterPixY);
-       if( index%nAngularBins < 5 && global->debugLevel>1)
-         printf("x,y,index,map: %f %f %d %d\n",polar_x, polar_y,index, polar_map[index]);
-       if( polar_map[index] > pix_nn ) {
-         printf("Wrong with polar mapping, exceeding maximum");
-         exit(1);
-       }
-       index += 1;
+    // Apply image center shift
+    for(i=0;i<nn;i++){
+        pix_x[i] -= beamCenterPixX;
+        pix_y[i] -= beamCenterPixY;
     }
-  }
+
+
+    // Compute radial distances
+    updateRadialMap();
+    
+
+    // How big must we make the output downsampled image?
+    imageXxX_nx = image_nx/downsampling;
+    imageXxX_nn = image_nn/downsampling/downsampling;
 }
-*/
 
-void cPixelDetectorCommon::buildCart2PolarMap(cGlobal *global) {
-  polar_nn = nRadialBins*nAngularBins;
-  long index=0;
-  float pi = 3.141593;
-  float angle_step_size =  2.0*pi /(float)nAngularBins;
-  float radial_step_size = radialBinSize*pixelSize;
-  float x,y,polar_r, theta;
-  int polar_r_i, theta_i;
 
-  for(long i=0;i<pix_nn;i++)
-  {
-     //convert x,y to polar and map to nearest polar pixel (keep distance info)
-     x = pix_x[i]*pixelSize;
-     y = pix_y[i]*pixelSize;
-     polar_r = sqrt( x*x + y*y );
-     polar_r_i = (int)floor( polar_r/radial_step_size );
-     if (polar_r_i >= nRadialBins ) continue;
+/*
+ *  Update mapping of pixel locations to radius
+ */
+void cPixelDetectorCommon::updateRadialMap(void) {
+    long	nx = pix_nx;
+    long	ny = pix_ny;
+    long	nn = nx*ny;
+    
+    radial_max = 0.0;
+    pix_r = (float *) calloc(nn, sizeof(float));
+    
+    for(long i=0;i<nn;i++){
+        pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
+        if(pix_r[i] > radial_max)
+            radial_max = pix_r[i];
+    }
+    radial_nn = (long int) ceil(radial_max)+1;
+    
+}
 
-     theta = atan2( y, x );  
-     if( theta < 0) theta += (2.0*pi); // wrap to [0,2pi]
-//     if(theta < 0 ) continue;
-     theta_i = (int)floor( theta / angle_step_size );
-     if(theta_i>=nAngularBins) { printf("wrong, theta_i>=nAngularBins, %d\n",theta_i); exit(1);}
-     index = polar_r_i*nAngularBins + theta_i;
-     printf("%d %d %d %f %f theta\n",polar_r_i,theta_i, index, x,y);
-     cart2polar_map[i] = index;
+/*
+ * Allocate memory for auto-correlation computation
+ *  Note: at some point we may want to check whether this memory has already been allocated.
+ *  For now be quick-and-dirty assuming this is only called once
+ *
+ */
+void cPixelDetectorCommon::allocateAutoCorrelationMemory(cGlobal *global) {
+    polar_nn = (nRadialBins)*nAngularBins;
+    polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
+    autocorrelation =  (double*) calloc( polar_nn, sizeof(double) );
+    polar_map = (long *) calloc(polar_nn, sizeof(long));
+    cart2polar_map = (long *) calloc(pix_nn, sizeof(long));
+    pthread_mutex_init(&autocorrelation_mutex, NULL);
+}
+
+
+
+/*
+ *  Update mapping of pixel locations to polar coordinates
+ */
+void cPixelDetectorCommon::updatePolarMap(cGlobal *global) {
+    float pi = 3.141593;
+
+    float angle_step_size =  2.0*pi /(float)nAngularBins;
+    float radial_step_size = radialBinSize;
+    nRadialBins = radial_max / radialBinSize;
+    polar_nn = nRadialBins*nAngularBins;
+    
+    
+    // Allocate memory for the arrays
+    allocateAutoCorrelationMemory(global);
+    
+    
+  
+    float x,y,polar_r, theta;
+    long polar_r_i, theta_i;
+
+    fesetround(1);
+
+    //convert cartesian x,y map to polar and map to nearest polar pixel
+    long index=0;
+    for(long i=0;i<pix_nn;i++) {
+        x = pix_x[i];
+        y = pix_y[i];
+        
+        polar_r = sqrt( x*x + y*y );
+        theta = atan2( y, x );
+        
+        // wrap to [0,2pi]
+        theta_bounds:
+        if( theta < 0) {
+            theta += (2.0*pi);
+            goto theta_bounds;
+        }
+        if( theta > 2.0*pi) {
+            theta -= (2.0*pi);
+            goto theta_bounds;
+        }
+
+        // Make polar coordinates integer pixels in polar array
+        polar_r_i = (long) lrint( polar_r/radial_step_size );
+        theta_i = (long) lrint( theta / angle_step_size );
+
+        // Trap out of bounds errors
+        if (polar_r_i > nRadialBins ||  polar_r_i < 0)
+            continue;
+        if(theta_i > nAngularBins || theta_i < 0) {
+            printf("wrong, theta_i>=nAngularBins, %ld\n",theta_i);
+            exit(1);
+        }
+
+        
+        // This makes theta the fast scan (usually x) and r the slow scan (usually y)
+        index = polar_r_i*nAngularBins + theta_i;
+        cart2polar_map[i] = index;
+
+        //printf("%d %d %ld %f %f theta\n",polar_r_i,theta_i, index, x,y);
   }
-
 }
    
 
@@ -773,6 +787,8 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
   free(polary);
   free(angle);
 }
+
+
 
 /*
  *  Update K-space variables
