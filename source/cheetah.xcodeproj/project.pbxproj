@@ -23,6 +23,9 @@
 		4D7A929C171EAAD500766DCF /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928C171EAAD400766DCF /* setup.cpp */; };
 		4D7A929D171EAAD500766DCF /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928D171EAAD500766DCF /* spectrum.cpp */; };
 		4D7A929E171EAAD500766DCF /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928E171EAAD500766DCF /* worker.cpp */; };
+		4DB87435172FE8E000548E2D /* polarMaping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB87433172FE8E000548E2D /* polarMaping.cpp */; };
+		4DB8743F172FE9E700548E2D /* angularCorrelation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB8743D172FE9E700548E2D /* angularCorrelation.cpp */; };
+		4DB87440172FE9E700548E2D /* autocorrelation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB8743E172FE9E700548E2D /* autocorrelation.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,6 +68,9 @@
 		4D7A92A6171EAAE000766DCF /* median.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = median.h; path = libcheetah/include/median.h; sourceTree = SOURCE_ROOT; };
 		4D7A92A7171EAAE000766DCF /* peakfinders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = peakfinders.h; path = libcheetah/include/peakfinders.h; sourceTree = SOURCE_ROOT; };
 		4D7A92A8171EAAE000766DCF /* saveCXI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = saveCXI.h; path = libcheetah/include/saveCXI.h; sourceTree = SOURCE_ROOT; };
+		4DB87433172FE8E000548E2D /* polarMaping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = polarMaping.cpp; path = libcheetah/src/polarMaping.cpp; sourceTree = SOURCE_ROOT; };
+		4DB8743D172FE9E700548E2D /* angularCorrelation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = angularCorrelation.cpp; path = libcheetah/src/angularCorrelation.cpp; sourceTree = SOURCE_ROOT; };
+		4DB8743E172FE9E700548E2D /* autocorrelation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = autocorrelation.cpp; path = libcheetah/src/autocorrelation.cpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +113,8 @@
 				4D7A92A6171EAAE000766DCF /* median.h */,
 				4D7A92A7171EAAE000766DCF /* peakfinders.h */,
 				4D7A92A8171EAAE000766DCF /* saveCXI.h */,
+				4DB8743D172FE9E700548E2D /* angularCorrelation.cpp */,
+				4DB8743E172FE9E700548E2D /* autocorrelation.cpp */,
 				4D7A927F171EAAD400766DCF /* assemble2DImage.cpp */,
 				4D7A9280171EAAD400766DCF /* backgroundCorrection.cpp */,
 				4D7A9281171EAAD400766DCF /* data2d.cpp */,
@@ -117,6 +125,7 @@
 				4D7A9286171EAAD400766DCF /* median.cpp */,
 				4D7A9287171EAAD400766DCF /* peakfinders.cpp */,
 				4D7A9288171EAAD400766DCF /* powder.cpp */,
+				4DB87433172FE8E000548E2D /* polarMaping.cpp */,
 				4D7A9289171EAAD400766DCF /* radialAverage.cpp */,
 				4D7A928A171EAAD400766DCF /* saveCXI.cpp */,
 				4D7A928B171EAAD400766DCF /* saveFrame.cpp */,
@@ -194,6 +203,9 @@
 				4D7A929C171EAAD500766DCF /* setup.cpp in Sources */,
 				4D7A929D171EAAD500766DCF /* spectrum.cpp in Sources */,
 				4D7A929E171EAAD500766DCF /* worker.cpp in Sources */,
+				4DB87435172FE8E000548E2D /* polarMaping.cpp in Sources */,
+				4DB8743F172FE9E700548E2D /* angularCorrelation.cpp in Sources */,
+				4DB87440172FE9E700548E2D /* autocorrelation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

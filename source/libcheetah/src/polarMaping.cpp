@@ -34,16 +34,19 @@
  *  (repeated once for each different data type)
  */
 
-/*
-void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
+
+void mapToPolar(cEventData *eventData, cGlobal *global) {
     
  	DETECTOR_LOOP {
-        float   *corrected_data = eventData->detector[detID].corrected_data;
-        float   *pix_r = global->detector[detID].pix_r;
        	long	pix_nn = global->detector[detID].pix_nn;
-        float   *radial_average = eventData->detector[detID].radialAverage;
-        float   *radial_average_counter = eventData->detector[detID].radialAverageCounter;
-        long	radial_nn = global->detector[detID].radial_nn;
+        float   *corrected_data = eventData->detector[detID].corrected_data;
+        long    *cart2polar_map = global->detector[detID].cart2polar_map;
+        
+        float   *polarData = eventData->detector[detID].polarData;
+        float   *polarDataCounter = eventData->detector[detID].polarDataCounter;
+        long	nRadialBins = global->detector[detID].nRadialBins;
+        long	nAngularBins = global->detector[detID].nAngularBins;
+        
         
         // Mask for where to calculate average
         int     *mask = (int *) calloc(pix_nn, sizeof(int));
@@ -51,7 +54,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
             mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
         }
         
-        calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
+        mapToPolar(corrected_data, cart2polar_map, pix_nn, polarData, polarDataCounter, nRadialBins, nAngularBins, mask);
         
         // Remember to free the mask
         free(mask);
@@ -60,16 +63,19 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
 }
 
 
-void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
+void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, float *polarDataCounter, long nRadialBins, long nAngularBins, int *mask){
     
-	// Zero arrays
-	for(long i=0; i<radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
+    // polar array size
+    long   polar_nn = nRadialBins * nAngularBins;
+
+    // Zero arrays
+	for(long i=0; i<polar_nn; i++) {
+		polarData[i] = 0.;
+		polarDataCounter[i] = 0.;
 	}
 	
 	// Radial average
-	long	rbin;
+	long	bin;
 	for(long i=0; i<pix_nn; i++){
         
         // Don't count bad pixels in radial average
@@ -77,22 +83,18 @@ void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radia
             continue;
         
         // Radius of this pixel
-		rbin = lrint(pix_r[i]);
-		
-		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
+		bin = polarMap[i];
 		
         // Add to average
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
+		polarData[bin] += data[i];
+		polarDataCounter[bin] += 1;
 	}
 	
 	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
+	for(long i=0; i<polar_nn; i++) {
+		if (polarDataCounter[i] != 0)
+			polarData[i] /= polarDataCounter[i];
 	}
 	
 }
 
-*/

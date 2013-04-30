@@ -95,6 +95,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		long	pix_nn = global->detector[detID].pix_nn;
 		long	image_nn = global->detector[detID].image_nn;
 		long	radial_nn = global->detector[detID].radial_nn;
+		long	polar_nn = global->detector[detID].polar_nn;
 		
 		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detID].corrected_data_int16 = (int16_t*) calloc(pix_nn,sizeof(int16_t));
@@ -114,7 +115,11 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
-	}	
+
+        eventData->detector[detID].polarData = (float *) calloc(polar_nn, sizeof(float));
+		eventData->detector[detID].polarDataCounter = (float *) calloc(polar_nn, sizeof(float));
+
+    }
 	
 		
 	/*
@@ -170,6 +175,8 @@ void cheetahDestroyEvent(cEventData *eventData) {
 
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
+		free(eventData->detector[detID].polarData);
+		free(eventData->detector[detID].polarDataCounter);
 	}
 	free(eventData->peak_com_index);
 	free(eventData->peak_com_x);

@@ -102,7 +102,16 @@ void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
 
-// correlation.cpp
+
+// polarMapping.cpp
+void mapToPolar(cEventData*, cGlobal*);
+void mapToPolar(float*, long*, long, float*, float*, long, long, int*);
+
+
+// angularCorrelation.cpp
+
+
+// autocorrelation.cpp
 void calculateAutoCorrelation(cEventData *,cGlobal*);
 void calculateAutoCorrelation(float *, long *, long, long, int *, cPixelDetectorCommon*);
 void saveAutoCorrelation(cGlobal *);

@@ -163,11 +163,11 @@ public:
 	float   *pix_res;
 
 	// Polar binning
-	int      radialBinSize;
-	int      nRadialBins;
-	int      nAngularBins;
-	int     *radialBinIdx;
-	int     *angularBinIdx;
+	long    radialBinSize;
+	long    nRadialBins;
+	long    nAngularBins;
+	long    *radialBinIdx;
+	long    *angularBinIdx;
 	double  *polarIntensities;
 	float  *pix_kphi;
   

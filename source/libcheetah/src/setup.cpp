@@ -366,8 +366,6 @@ void cGlobal::setup() {
    */
   for(long i=0; i<nDetectors; i++) {
     detector[i].allocatePowderMemory(self);
-    //detector[i].allocateAutoCorrelationMemory(self);
-    //detector[i].buildPolarMap(self);  //this must be after geometry reading
     detector[i].updatePolarMap(self);  //this must be after geometry reading
   }
 
