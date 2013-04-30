@@ -34,7 +34,7 @@ void calculateAutoCorrelation(cEventData *eventData, cGlobal *global) {
  	DETECTOR_LOOP {
         detector = &global->detector[detID];    
         float   *corrected_data = eventData->detector[detID].corrected_data;
-        long    *polar_map = global->detector[detID].polar_map;
+        long    *polar_map = global->detector[detID].cart2polar_map;
         long	 pix_nn = global->detector[detID].pix_nn;
         long	 polar_nn = global->detector[detID].polar_nn;
 
@@ -65,6 +65,7 @@ void calculateAutoCorrelation(float *data, long *polar_map, long pix_nn, long po
     
 	// allocate memory for polar intensities
    double *intensities_in_polar = (double*) calloc( polar_nn, sizeof(double) );
+   int *intensities_in_polar_counter = (int *) calloc( polar_nn, sizeof(int) );
    double *this_autocorrelation = (double*) calloc( polar_nn, sizeof(double) );
    if( intensities_in_polar == NULL )
    {
@@ -72,11 +73,20 @@ void calculateAutoCorrelation(float *data, long *polar_map, long pix_nn, long po
      return ;
    }
    // map the values to polar pixels
-   for(long ii=0;ii<polar_nn;ii++){
-     if( polar_map[ii] >0 ) {
-	    if( mask[ polar_map[ii] ] != 0 )
-         intensities_in_polar[ii] = data[ polar_map[ii] ];
-     }
+   for(long ii=0;ii<polar_nn;ii++) {
+     intensities_in_polar[ii] = 0.0; 
+     intensities_in_polar_counter[ii] = 0; 
+   }
+   for(long ii=0;ii<pix_nn;ii++){
+	    if( mask[ ii ] != 0 ) {
+         intensities_in_polar[polar_map[ii] ] += data[ ii ];
+         intensities_in_polar_counter[polar_map[ii] ] += 1;
+       }
+   }
+
+   for(long ii=0;ii<polar_nn;ii++) {
+     if (intensities_in_polar_counter[ii] > 0 )
+       intensities_in_polar[ii] /= intensities_in_polar_counter[ii];
    }
 /*
    float *pix_x = detector->pix_x;
@@ -101,6 +111,7 @@ void calculateAutoCorrelation(float *data, long *polar_map, long pix_nn, long po
    detector->autocorrelationCounter++;
    pthread_mutex_unlock(&detector->autocorrelation_mutex);
    free(intensities_in_polar);	
+   free(intensities_in_polar_counter);	
    free(this_autocorrelation);	
 }
 

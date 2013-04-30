@@ -174,6 +174,7 @@ public:
    // Polar mapping
    long polar_nn;
    long *polar_map;
+   long *cart2polar_map;
 
    // auto-correlation
    double *autocorrelation;
@@ -314,6 +315,7 @@ public:
 	void allocateAutoCorrelationMemory(cGlobal*);
 	void readDetectorGeometry(char *);
    void buildPolarMap(cGlobal*);
+   void buildCart2PolarMap(cGlobal*);
    void map2Polar(cGlobal*);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
