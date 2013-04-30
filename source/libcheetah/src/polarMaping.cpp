@@ -30,7 +30,7 @@
 
 
 /*
- *  Calculate radial averages
+ *  Map to Polar 
  *  (repeated once for each different data type)
  */
 
@@ -74,7 +74,7 @@ void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, floa
 		polarDataCounter[i] = 0.;
 	}
 	
-	// Radial average
+	// Bin average
 	long	bin;
 	for(long i=0; i<pix_nn; i++){
         
@@ -82,10 +82,10 @@ void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, floa
         if(mask[i] == 0)
             continue;
         
-        // Radius of this pixel
+        // Bin index of this pixel
 		bin = polarMap[i];
 		
-        // Add to average
+        // Add to Sum 
 		polarData[bin] += data[i];
 		polarDataCounter[bin] += 1;
 	}

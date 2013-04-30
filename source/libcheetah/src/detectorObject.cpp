@@ -631,18 +631,18 @@ void cPixelDetectorCommon::updateRadialMap(void) {
 }
 
 /*
- * Allocate memory for auto-correlation computation
+ * Allocate memory for angular-correlation computation
  *  Note: at some point we may want to check whether this memory has already been allocated.
  *  For now be quick-and-dirty assuming this is only called once
  *
  */
-void cPixelDetectorCommon::allocateAutoCorrelationMemory(void) {
+void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) {
     polar_nn = (nRadialBins)*nAngularBins;
     polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
-    autocorrelation =  (double*) calloc( polar_nn, sizeof(double) );
+    angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
     polar_map = (long *) calloc(polar_nn, sizeof(long));
     cart2polar_map = (long *) calloc(pix_nn, sizeof(long));
-    pthread_mutex_init(&autocorrelation_mutex, NULL);
+    pthread_mutex_init(&angularcorrelation_mutex, NULL);
 }
 
 
@@ -660,7 +660,7 @@ void cPixelDetectorCommon::updatePolarMap(void) {
     
     
     // Allocate memory for the arrays
-    allocateAutoCorrelationMemory();
+    allocateAngularCorrelationMemory();
     
     
   

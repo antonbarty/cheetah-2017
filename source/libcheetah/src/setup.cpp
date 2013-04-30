@@ -141,7 +141,7 @@ cGlobal::cGlobal(void) {
   saveAssembled = 1;
   saveRaw = 0;
   hdf5dump = 0;
-  autodump = 0;
+  angulardump = 0;
   saveInterval = 1000;
   savePixelmask = 0;
   saveCXI = 0;
@@ -709,8 +709,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hdf5dump")) {
     hdf5dump = atoi(value);
   }
-  else if (!strcmp(tag, "autodump")) {
-    autodump = atoi(value);
+  else if (!strcmp(tag, "angulardump")) {
+    angulardump = atoi(value);
   }
   else if (!strcmp(tag, "saveinterval")) {
     saveInterval = atoi(value);

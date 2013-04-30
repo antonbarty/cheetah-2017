@@ -176,8 +176,8 @@ public:
     long    *polar_map;
     long    *cart2polar_map;
 
-   // auto-correlation
-   double *autocorrelation;
+   // angular-correlation
+   double *angularcorrelation;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
@@ -301,8 +301,8 @@ public:
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
-   long  autocorrelationCounter;
-	pthread_mutex_t autocorrelation_mutex;
+   long  angularcorrelationCounter;
+	pthread_mutex_t angularcorrelation_mutex;
 
 
 
@@ -329,8 +329,8 @@ public:
 	int parseConfigTag(char*, char*);
 
     // Polar functions
-	void allocateAutoCorrelationMemory();
-    void updatePolarMap();
+	void allocateAngularCorrelationMemory();
+   void updatePolarMap();
 
 };
 

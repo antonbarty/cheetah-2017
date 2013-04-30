@@ -109,12 +109,13 @@ void mapToPolar(float*, long*, long, float*, float*, long, long, int*);
 
 
 // angularCorrelation.cpp
+void calculateAngularCorrelation(cEventData *,cGlobal*);
+void saveAngularCorrelation(cGlobal *);
+void saveAngularCorrelation(cGlobal *, int, int);
+void calculateACviaFFT( float *, float*, long, cPixelDetectorCommon*);
 
 
 // autocorrelation.cpp
-void calculateAutoCorrelation(cEventData *,cGlobal*);
-void calculateAutoCorrelation(float *, long *, long, long, int *, cPixelDetectorCommon*);
-void saveAutoCorrelation(cGlobal *);
     
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);

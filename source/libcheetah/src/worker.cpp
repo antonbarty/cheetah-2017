@@ -261,11 +261,11 @@ void *worker(void *threadarg) {
   */
 
   /*
-   *  Calculate autocorrelation
-   *  write accumulated autocorrelation to file when approperiate
+   *  Calculate angular correlation
+   *  write accumulated angular correlation to file when approperiate
    *  the written out version has mask corrected
    */
-  calculateAutoCorrelation(eventData, global);
+  calculateAngularCorrelation(eventData, global);
 
   /*
    *	Assemble quadrants into a 'realistic' 2D image
@@ -319,10 +319,10 @@ void *worker(void *threadarg) {
   }
 
   /*
-   * save accumulated autocorrelation
+   * save accumulated angular correlation
    */
-   if( ( eventData->frameNumber % global->autodump ) == 0 ) {
-     saveAutoCorrelation( global ); 
+   if( ( eventData->frameNumber % global->angulardump ) == 0 ) {
+     saveAngularCorrelation( global ); 
    }
 
   /*
