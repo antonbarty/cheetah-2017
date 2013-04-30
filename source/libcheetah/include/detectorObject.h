@@ -322,9 +322,6 @@ public:
 	void readBaddataMask(char *);
 	void readWireMask(char *);
     
-    // Polar functions
-    void buildPolarMap(cGlobal*);
-    void map2Polar(cGlobal*);
 
     
 //private:
@@ -332,8 +329,8 @@ public:
 	int parseConfigTag(char*, char*);
 
     // Polar functions
-	void allocateAutoCorrelationMemory(cGlobal*);
-    void updatePolarMap(cGlobal*);
+	void allocateAutoCorrelationMemory();
+    void updatePolarMap();
 
 };
 

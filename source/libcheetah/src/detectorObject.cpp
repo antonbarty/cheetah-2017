@@ -601,6 +601,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 
     // Compute radial distances
     updateRadialMap();
+    updatePolarMap();
     
 
     // How big must we make the output downsampled image?
@@ -635,7 +636,7 @@ void cPixelDetectorCommon::updateRadialMap(void) {
  *  For now be quick-and-dirty assuming this is only called once
  *
  */
-void cPixelDetectorCommon::allocateAutoCorrelationMemory(cGlobal *global) {
+void cPixelDetectorCommon::allocateAutoCorrelationMemory(void) {
     polar_nn = (nRadialBins)*nAngularBins;
     polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
     autocorrelation =  (double*) calloc( polar_nn, sizeof(double) );
@@ -649,7 +650,7 @@ void cPixelDetectorCommon::allocateAutoCorrelationMemory(cGlobal *global) {
 /*
  *  Update mapping of pixel locations to polar coordinates
  */
-void cPixelDetectorCommon::updatePolarMap(cGlobal *global) {
+void cPixelDetectorCommon::updatePolarMap(void) {
     float pi = 3.141593;
 
     float angle_step_size =  2.0*pi /(float)nAngularBins;
@@ -659,7 +660,7 @@ void cPixelDetectorCommon::updatePolarMap(cGlobal *global) {
     
     
     // Allocate memory for the arrays
-    allocateAutoCorrelationMemory(global);
+    allocateAutoCorrelationMemory();
     
     
   
@@ -788,9 +789,10 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     
     
     // Update the polar mapping
-    // (do this here for future mapping to K-space, in which case we want to update the
-    //  polar map every time k-space variables change)
-    updatePolarMap(global);
+    // (At some stage we will need to do this here when mapping to K-space,
+    //  in which case we want to update the polar map every time k-space variables change)
+    // For now, the polar map is static and re-calculated whenever the detector geometry is read
+    // updatePolarMap(global);
 
 }
 
