@@ -19,34 +19,18 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 SET(RPATH_ON_INSTALLED_BINS TRUE CACHE BOOL "Keep RPATH on installed binaries")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH ${RPATH_ON_INSTALLED_BINS})
 
-#SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
-
-#OPTION(BUILD_LIBCHEETAH "If ON build libcheetah. Otherwise skip it." ON )
 OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." ON )
 OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." ON )
 OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
 
-SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/libcheetah/include CACHE PATH "libcheet
+SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/source/libcheetah/include CACHE PATH "libcheet
 ah include directory")
 MARK_AS_ADVANCED(CHEETAH_INCLUDES)
-SET(CHEETAH_LIBRARY ${CMAKE_BINARY_DIR}/libcheetah/libcheetah.so CACHE FILEPATH 
+
+SET(CHEETAH_LIBRARY ${CMAKE_BINARY_DIR}/source/libcheetah/libcheetah.so CACHE FILEPATH 
 "libcheetah to link against")
 MARK_AS_ADVANCED(CHEETAH_LIBRARY)
 
-#if(BUILD_LIBCHEETAH)
-ADD_SUBDIRECTORY(libcheetah)
-#endif(BUILD_LIBCHEETAH)
 
-if(BUILD_CHEETAH_ANA_MOD)
-ADD_SUBDIRECTORY(cheetah_ana_pkg)
-endif(BUILD_CHEETAH_ANA_MOD)
+ADD_SUBDIRECTORY(source)
 
-if(BUILD_PSANA)
-ADD_SUBDIRECTORY(psana)
-endif(BUILD_PSANA)
-
-if(BUILD_CHEETAH_MYANA)
-ADD_SUBDIRECTORY(cheetah_myana)
-endif(BUILD_CHEETAH_MYANA)
-
-# Lets try to build Psana just for kicks
