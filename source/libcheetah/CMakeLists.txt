@@ -16,7 +16,7 @@ LIST(APPEND sources "src/powder.cpp" "src/peakfinders.cpp")
 LIST(APPEND sources "src/radialAverage.cpp" "src/saveCXI.cpp")
 LIST(APPEND sources "src/saveFrame.cpp" "src/setup.cpp")
 LIST(APPEND sources "src/spectrum.cpp" "src/worker.cpp")
-LIST(APPEND sources "src/correlation.cpp")
+LIST(APPEND sources "src/autocorrelation.cpp")
 
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})

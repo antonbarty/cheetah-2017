@@ -155,11 +155,11 @@ void saveAutoCorrelation(cGlobal *global) {
 
     sprintf(filename,"r%04u-autocorrelation-detector%d-class%i-frame%ld.h5", global->runNumber, detID, powderClass,frameNum);
     printf("Saving auto-correlation: %s\n", filename);
-    writeSimpleHDF5(filename, detector->autocorrelation, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_FLOAT);
+    writeSimpleHDF5(filename, detector->autocorrelation, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_DOUBLE);
 
    sprintf(filename,"r%04u-polar-detector%d-class%i-frame%ld.h5", global->runNumber, detID, powderClass,frameNum);
    printf("Saving Polar pixel intensity: %s\n", filename);
-   writeSimpleHDF5(filename, detector->polarIntensities, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_FLOAT);
+   writeSimpleHDF5(filename, detector->polarIntensities, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_DOUBLE);
    // compute auto-correlation using fft
     pthread_mutex_unlock(&detector->autocorrelation_mutex);			
 
