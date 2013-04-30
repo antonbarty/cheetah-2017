@@ -13,6 +13,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "cheetah.h"
 #include "cheetahmodules.h"
@@ -275,17 +276,20 @@ void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long
   long x1,y1;
   long downsampling = img_nx/imgXxX_nx;
   long i0,i1;
+  int16_t int16_t_max = 32767;
 
-  for(i1 = 0;i1<imgXxX_nn;i1++){
-    imgXxX[i1] = 0;
-  }
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
     y0 = i0/img_nx;
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    imgXxX[i1] += img[i0];
+    // Check for overflow and clip in case
+    if (imgXxX[i1] > int16_t_max - img[i0]){
+      imgXxX[i1] = int16_t_max;
+    } else {
+      imgXxX[i1] += img[i0];
+    }
   }
 }
 

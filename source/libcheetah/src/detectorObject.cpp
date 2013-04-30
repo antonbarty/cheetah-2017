@@ -274,9 +274,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
+    useAutoHotpixel = 1;
+    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
+    useAutoHotpixel = 1;
+    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "applyautohotpixel")) {
     applyAutoHotpixel = atoi(value);
@@ -428,9 +432,25 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     pthread_mutex_init(&correctedMax_mutex[i], NULL);
     pthread_mutex_init(&assembledMin_mutex[i], NULL);
     pthread_mutex_init(&assembledMax_mutex[i], NULL);
+<<<<<<< HEAD
   }
 
 
+=======
+	  
+	for(long j=0; j<pix_nn; j++) {
+		powderRaw[i][j] = 0;
+		powderCorrected[i][j] = 0;
+		powderCorrectedSquared[i][j] = 0;
+	  }
+	  for(long j=0; j<image_nn; j++) {
+		  powderAssembled[i][j] = 0;
+	  }
+	  
+  }
+	
+    
+>>>>>>> developer
   // Radial stacks
   for(long i=0; i<nPowderClasses; i++) {
     radialStackCounter[i] = 0;
@@ -759,72 +779,65 @@ void cPixelDetectorCommon::buildPolarMap(cGlobal *global) {
  *  (called whenever detector has moved)
  */
 void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
+    double   x, y, z, r;
+    double   kx,ky,kz,kr;
+    double   res,minres,maxres;
+    double	 sin_theta;
+    long     minres_pix,maxres_pix;
+    long c = 0;
+    minres = 100000;
+    maxres = 0.0;
+    minres_pix = 10000000;
+    maxres_pix = 0;
+    
+    printf("Recalculating K-space coordinates\n");
+    
+    for (long i=0; i<pix_nn; i++ ) {
+        x = pix_x[i]*pixelSize;
+        y = pix_y[i]*pixelSize;
+        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
+        r = sqrt(x*x + y*y + z*z);
+        
+        kx = (x/r)/wavelengthA;
+        ky = (y/r)/wavelengthA;
+        kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
+        kr = sqrt(kx*kx + ky*ky + kz*kz);
+        //res = 1.0/kr;
+        sin_theta = sqrt(x*x+y*y)/r;
+        res = wavelengthA/(sin_theta);
+        
+        pix_kx[i] = kx;
+        pix_ky[i] = ky;
+        pix_kz[i] = kz;
+        pix_kr[i] = kr;
+        pix_res[i] = res;
+        
+        if ( res < minres ){
+            minres = res;
+            minres_pix = pix_r[i];
+        }
+        if ( res > maxres ){
+            maxres = res;
+            maxres_pix = pix_r[i];
+        }
 
-	double   x, y, z, r;
-	double   kx,ky,kz,kr,kphi;
-	double   res,minres,maxres;
-	double	 sin_theta;
-	long     minres_pix,maxres_pix;
-	long c = 0;
-	minres = 0.0;
-	maxres = 1000000;
-	minres_pix = 10000000;
-	maxres_pix = 0;
-
-	printf("Recalculating K-space coordinates\n");
-
-	for (long i=0; i<pix_nn; i++ ) {
-
-		x = pix_x[i]*pixelSize;
-		y = pix_y[i]*pixelSize;
-		z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
-		r = sqrt(x*x + y*y + z*z);
-
-		kx = (x/r)/wavelengthA;
-		ky = (y/r)/wavelengthA;
-		kz = (z/r - 1)/wavelengthA; // assuming incident beam is along +z direction
-		kr = sqrt(kx*kx + ky*ky + kz*kz);
-		kphi = atan2(kx,ky);
-
-		sin_theta = sqrt(x*x+y*y)/r;
-		res = wavelengthA/(sin_theta);
-
-		pix_kx[i] = kx;
-		pix_ky[i] = ky;
-		pix_kz[i] = kz;
-		pix_kr[i] = kr;
-		pix_kphi[i] = kphi;
-		pix_res[i] = res;
-
-		if ( res > minres ){
-			minres = res;
-			minres_pix = (long)pix_r[i];
-		}
-		if ( res < maxres ){
-			maxres = res;
-			maxres_pix = (long)pix_r[i];
-		}
-
-		// Generate resolution limit mask
-		if (global->hitfinderResolutionUnitPixel){
-
-			// (resolution in pixel (!!!))
-			if (pix_r[i] > global->hitfinderMinRes && pix_r[i] < global->hitfinderMaxRes ) {
-				pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-				c += 1;
-			} else {
-		 		pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-			}
-
-		} else {
-
-			// (resolution in Angstrom (!!!))
-			if (pix_res[i] < global->hitfinderMinRes && pix_res[i] > global->hitfinderMaxRes ) {
-				pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-			} else {
-				pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-			}
-		}
+        
+        // Generate resolution limit mask
+        if (!global->hitfinderResolutionUnitPixel){
+            // (resolution in Angstrom (!!!))
+            if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes )
+                pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+            else
+                pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+        }
+        else{
+            // (resolution in pixel (!!!))
+            if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes )
+                pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+            else
+                pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+        }
+            
 	}
 
 	printf("Current resolution (i.e. d-spacing) range is %.2f - %.2f A (%li - %li det. pixels)\n", minres, maxres,minres_pix,maxres_pix);

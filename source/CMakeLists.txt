@@ -21,11 +21,10 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH ${RPATH_ON_INSTALLED_BINS})
 
 #SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
 
-#SET(BUILD_LIBCHEETAH ON CACHE BOOL "If ON build libcheetah. Otherwise skip it.")
-SET(BUILD_CHEETAH_ANA_MOD ON CACHE BOOL "If ON build cheetah_ana_mod. Otherwise skip it.")
-SET(BUILD_PSANA ON CACHE BOOL "If ON build psana. Otherwise skip it.")
-SET(BUILD_CHEETAH_MYANA OFF CACHE BOOL "If ON build cheetah_myana. Otherwise skip it.")
-
+#OPTION(BUILD_LIBCHEETAH "If ON build libcheetah. Otherwise skip it." ON )
+OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." ON )
+OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." ON )
+OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
 
 SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/libcheetah/include CACHE PATH "libcheet
 ah include directory")
