@@ -112,7 +112,8 @@ void mapToPolar(float*, long*, long, float*, float*, long, long, int*);
 void calculateAngularCorrelation(cEventData *,cGlobal*);
 void saveAngularCorrelation(cGlobal *);
 void saveAngularCorrelation(cGlobal *, int, int);
-void calculateACviaFFT( float *, float*, long, cPixelDetectorCommon*);
+//void calculateACviaFFT( float *, double*, long, cPixelDetectorCommon*);
+void calculateACviaFFT( float *, double*, long, long);
 
 
 // autocorrelation.cpp

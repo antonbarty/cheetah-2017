@@ -13,7 +13,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <stdlib.h>
-// #include <fftw3.h>
+#include <fftw3.h>
 
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
@@ -36,24 +36,63 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
  	DETECTOR_LOOP {
         detector = &global->detector[detID];    
         float   *polarData = eventData->detector[detID].polarData;
+        long    nRadialBins = global->detector[detID].nRadialBins;
+		  long    nAngularBins = global->detector[detID].nAngularBins;
 		  long 	 polar_nn = global->detector[detID].polar_nn;
-        float *this_angularcorrelation = (float*) calloc( polar_nn, sizeof(float) );
+        double *this_angularcorrelation = (double*) calloc( polar_nn, sizeof(double) );
 
         // compute angular-correlation 
-        calculateACviaFFT(polarData, this_angularcorrelation, polar_nn, detector);
+        calculateACviaFFT(polarData, this_angularcorrelation, nRadialBins, nAngularBins);
 
 	     pthread_mutex_lock(&detector->angularcorrelation_mutex);
         for(long ii=0;ii<polar_nn;ii++){
           detector->polarIntensities[ii] += polarData[ii]; 
-//     detector->angularcorrelation[ii] += this_angularcorrelation[ii]; 
+          detector->angularcorrelation[ii] += this_angularcorrelation[ii]; 
         }
    	  detector->angularcorrelationCounter++;
    	  pthread_mutex_unlock(&detector->angularcorrelation_mutex);
+        free( this_angularcorrelation );
     }
    
 }
     
-void calculateACviaFFT(float *polarData, float* this_angularcorrelation, long polar_nn, cPixelDetectorCommon* detector) {
+void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long nRadialBins, long nAngularBins) {  
+//cPixelDetectorCommon* detector) {
+  fftw_plan p_forward, p_backward;  // if the array sizes are constant, these plans can be saved for future
+  fftw_complex *out;
+  fftw_complex *in;
+  double nAngularBins2 = nAngularBins * nAngularBins;
+//  long polar_nn = nRadialBins * nAngularBins;
+  long offset;
+
+  //may not be necessary to make this new input array, if converting to double is not required during FFT
+  in = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );  
+  out = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );
+
+  p_forward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  p_backward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+  for( long ii=0;ii<nAngularBins;ii++) in[ii][1] = 0;
+
+  for(int nr=0;nr<nRadialBins;nr++) {
+    offset = nr*nAngularBins;
+    for( long ii=0;ii<nAngularBins;ii++) in[ii][0] = polarData[offset+ii]; 
+    fftw_execute( p_forward );
+
+    for( long ii=0;ii<nAngularBins;ii++) {
+      in[ii][0] = out[ii][0]*out[ii][0] + out[ii][1]*out[ii][1];
+      in[ii][0] /= nAngularBins2;
+    }
+  
+    fftw_execute( p_backward );
+    for( long ii=0;ii<nAngularBins;ii++) 
+      this_angularcorrelation[offset+ii] = out[ii][0]/nAngularBins;
+    //printf("%f ac\n",this_angularcorrelation[offset+1]);
+  }
+  fftw_destroy_plan( p_forward );
+  fftw_destroy_plan( p_backward);
+  fftw_free(in);
+  fftw_free(out);
 }
 
 /*
