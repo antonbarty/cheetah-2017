@@ -43,6 +43,7 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
         long    *cart2polar_map = global->detector[detID].cart2polar_map;
         
         float   *polarData = eventData->detector[detID].polarData;
+        float   *mask_polar = global->detector[detID].mask_polar;
         float   *polarDataCounter = eventData->detector[detID].polarDataCounter;
         long	nRadialBins = global->detector[detID].nRadialBins;
         long	nAngularBins = global->detector[detID].nAngularBins;
@@ -54,7 +55,7 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
             mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
         }
         
-        mapToPolar(corrected_data, cart2polar_map, pix_nn, polarData, polarDataCounter, nRadialBins, nAngularBins, mask);
+        mapToPolar(corrected_data, cart2polar_map, pix_nn, polarData, polarDataCounter, nRadialBins, nAngularBins, mask, mask_polar);
         
         // Remember to free the mask
         free(mask);
@@ -63,7 +64,7 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
 }
 
 
-void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, float *polarDataCounter, long nRadialBins, long nAngularBins, int *mask){
+void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, float *polarDataCounter, long nRadialBins, long nAngularBins, int *mask, float *mask_polar){
     
     // polar array size
     long   polar_nn = nRadialBins * nAngularBins;
@@ -92,8 +93,12 @@ void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, floa
 	
 	// Divide by number of actual pixels in ring to get the average
 	for(long i=0; i<polar_nn; i++) {
-		if (polarDataCounter[i] != 0)
+		if (polarDataCounter[i] != 0) {
 			polarData[i] /= polarDataCounter[i];
+         mask_polar[i] = 1.0; // this might be saved IF we assume mask is not changing
+      } else {
+         mask_polar[i] = 0.0; // this might be saved IF we assume mask is not changing
+      }
 	}
 	
 }

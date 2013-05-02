@@ -15,6 +15,7 @@ If your HDF5 is not installed in a standard location set the
 HDF5_ROOT environment variable to point to it, e.g.:
 
     $ export HDF5_ROOT=${HOME}/local
+    $ export FFTW_DIR=${HOME}/local
 
 
 You also need to have LCLS's ana available somewhere. If you're building 

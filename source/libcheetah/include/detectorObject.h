@@ -178,6 +178,8 @@ public:
 
    // angular-correlation
    double *angularcorrelation;
+   double *mask_angularcorrelation;
+   float  *mask_polar;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
@@ -313,7 +315,8 @@ public:
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
-    void updateRadialMap(void);
+   void updateRadialMap(void);
+   void getGapCorrelation(void);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
 	void readGaincal(char *);

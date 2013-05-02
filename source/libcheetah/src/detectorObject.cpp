@@ -22,6 +22,7 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
+#include "cheetahmodules.h"  // have to think about this: or make a member function of detector
 
 
 
@@ -637,10 +638,12 @@ void cPixelDetectorCommon::updateRadialMap(void) {
  *
  */
 void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) {
-    polar_nn = (nRadialBins)*nAngularBins;
+    polar_nn = nRadialBins*nAngularBins;
     polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
     angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
-    polar_map = (long *) calloc(polar_nn, sizeof(long));
+    mask_polar =  (float*) calloc( polar_nn, sizeof(float) );
+    mask_angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
+//    polar_map = (long *) calloc(polar_nn, sizeof(long));
     cart2polar_map = (long *) calloc(pix_nn, sizeof(long));
     pthread_mutex_init(&angularcorrelation_mutex, NULL);
 }
@@ -710,7 +713,9 @@ void cPixelDetectorCommon::updatePolarMap(void) {
   }
 }
    
-
+void cPixelDetectorCommon::getGapCorrelation( ) {
+  calculateACviaFFT(mask_polar, mask_angularcorrelation, nRadialBins, nAngularBins);
+}
 
 
 /*

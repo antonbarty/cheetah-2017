@@ -62,7 +62,6 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
   fftw_complex *out;
   fftw_complex *in;
   double nAngularBins2 = nAngularBins * nAngularBins;
-//  long polar_nn = nRadialBins * nAngularBins;
   long offset;
 
   //may not be necessary to make this new input array, if converting to double is not required during FFT
@@ -87,7 +86,6 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
     fftw_execute( p_backward );
     for( long ii=0;ii<nAngularBins;ii++) 
       this_angularcorrelation[offset+ii] = out[ii][0]/nAngularBins;
-    //printf("%f ac\n",this_angularcorrelation[offset+1]);
   }
   fftw_destroy_plan( p_forward );
   fftw_destroy_plan( p_backward);
@@ -111,21 +109,30 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
 
     cPixelDetectorCommon     *detector = &global->detector[detID];
 
+    double *this_angularcorrelation = (double*) calloc( detector->polar_nn, sizeof(double) );
+    detector->getGapCorrelation( );
     pthread_mutex_lock(&detector->angularcorrelation_mutex);
+    for(long ii=0;ii<detector->polar_nn;ii++) {
+      if( detector->mask_angularcorrelation[ii] == 0 )
+	     continue;
+      this_angularcorrelation[ii] = detector->angularcorrelation[ii] / detector->mask_angularcorrelation[ii];
+    }
 
     char	filename[1024];
     long    frameNum = detector->angularcorrelationCounter;
 
     sprintf(filename,"r%04u-angularcorrelation-detector%d-class%i-frame%ld.h5", global->runNumber, detID, powderClass,frameNum);
     printf("Saving Angular-correlation: %s\n", filename);
-    writeSimpleHDF5(filename, detector->angularcorrelation, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_DOUBLE);
+    writeSimpleHDF5(filename, this_angularcorrelation, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_DOUBLE);
 
+/*
     sprintf(filename,"r%04u-polar-detector%d-class%i-frame%ld.h5", global->runNumber, detID, powderClass,frameNum);
     printf("Saving Polar pixel intensity: %s\n", filename);
     writeSimpleHDF5(filename, detector->polarIntensities, detector->nAngularBins, detector->nRadialBins, H5T_NATIVE_DOUBLE);
 
+*/
     pthread_mutex_unlock(&detector->angularcorrelation_mutex);			
-
+    free(this_angularcorrelation);
 }
 
 

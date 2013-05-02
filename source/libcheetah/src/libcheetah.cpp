@@ -517,6 +517,11 @@ void cheetahExit(cGlobal *global) {
       free(global->detector[i].bg_buffer);
       free(global->detector[i].hotpix_buffer);
       free(global->detector[i].halopix_buffer);
+      free(global->detector[i].polarIntensities);
+      free(global->detector[i].angularcorrelation);
+      free(global->detector[i].mask_polar);
+      free(global->detector[i].mask_angularcorrelation);
+      free(global->detector[i].cart2polar_map);
 
         
       for(long j=0; j<global->nPowderClasses; j++) {
@@ -531,6 +536,7 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
       }
+	pthread_mutex_destroy(&global->detector[i].angularcorrelation_mutex);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);

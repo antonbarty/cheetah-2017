@@ -105,7 +105,7 @@ void saveRadialStacks(cGlobal*);
 
 // polarMapping.cpp
 void mapToPolar(cEventData*, cGlobal*);
-void mapToPolar(float*, long*, long, float*, float*, long, long, int*);
+void mapToPolar(float*, long*, long, float*, float*, long, long, int*, float*);
 
 
 // angularCorrelation.cpp
