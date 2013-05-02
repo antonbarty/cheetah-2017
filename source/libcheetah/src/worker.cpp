@@ -263,7 +263,7 @@ void *worker(void *threadarg) {
   /*
    *  Calculate angular correlation
    *  write accumulated angular correlation to file when approperiate
-   *  the written out version has mask corrected
+   *  then written out version has mask corrected
    */
   if(global->calcAngularCorrelation)
     calculateAngularCorrelation(eventData, global);
@@ -322,9 +322,9 @@ void *worker(void *threadarg) {
   /*
    * save accumulated angular correlation
    */
-//   if( global->calcAngularCorrelation && ( eventData->frameNumber % global->angulardump ) == 0 ) {
- //    saveAngularCorrelation( global ); 
- //  }
+   if( global->calcAngularCorrelation && ( eventData->frameNumber % global->angulardump ) == 0 ) {
+     saveAngularCorrelation( global ); 
+   }
 
   /*
    *	If this is a hit, write out peak info to peak list file

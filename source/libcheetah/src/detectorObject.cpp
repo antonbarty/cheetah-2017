@@ -602,7 +602,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 
     // Compute radial distances
     updateRadialMap();
-    updatePolarMap();
+    // updatePolarMap();  //this is called somewhere else in setup
     
 
     // How big must we make the output downsampled image?
@@ -658,7 +658,7 @@ void cPixelDetectorCommon::updatePolarMap(void) {
 
     float angle_step_size =  2.0*pi /(float)nAngularBins;
     float radial_step_size = radialBinSize;
-    nRadialBins = radial_max / radialBinSize;
+    nRadialBins = radial_max / radialBinSize + 1;  //make sure the radial bins are sufficient
     polar_nn = nRadialBins*nAngularBins;
     
     
@@ -694,12 +694,12 @@ void cPixelDetectorCommon::updatePolarMap(void) {
 
         // Make polar coordinates integer pixels in polar array
         polar_r_i = (long) lrint( polar_r/radial_step_size );
-        theta_i = (long) lrint( theta / angle_step_size );
+        theta_i = (long) floor( theta / angle_step_size );
 
         // Trap out of bounds errors
-        if (polar_r_i > nRadialBins ||  polar_r_i < 0)
+        if (polar_r_i >= nRadialBins ||  polar_r_i < 0)
             continue;
-        if(theta_i > nAngularBins || theta_i < 0) {
+        if(theta_i >= nAngularBins || theta_i < 0) {
             printf("wrong, theta_i>=nAngularBins, %ld\n",theta_i);
             exit(1);
         }

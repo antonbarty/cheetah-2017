@@ -42,7 +42,7 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
         double *this_angularcorrelation = (double*) calloc( polar_nn, sizeof(double) );
 
         // compute angular-correlation 
-        calculateACviaFFT(polarData, this_angularcorrelation, nRadialBins, nAngularBins);
+        // calculateACviaFFT(polarData, this_angularcorrelation, nRadialBins, nAngularBins);
 
 	     pthread_mutex_lock(&detector->angularcorrelation_mutex);
         for(long ii=0;ii<polar_nn;ii++){
@@ -106,7 +106,7 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
 
  void saveAngularCorrelation(cGlobal *global, int powderClass, int detID) {  // saved
 
-    cPixelDetectorCommon     *detector = &global->detector[detID];
+    cPixelDetectorCommon     *detector = &(global->detector[detID]);
     long    frameNum = detector->angularcorrelationCounter;
     double *this_angularcorrelation = (double*) calloc( detector->polar_nn, sizeof(double) );
 

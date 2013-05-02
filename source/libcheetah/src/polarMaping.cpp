@@ -41,9 +41,9 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
         long	pix_nn = global->detector[detID].pix_nn;
         float   *corrected_data = eventData->detector[detID].corrected_data;
         long    *cart2polar_map = global->detector[detID].cart2polar_map;
-        
+    
         float   *polarData = eventData->detector[detID].polarData;
-        float   *mask_polar = global->detector[detID].mask_polar;
+        float   *mask_polar= global->detector[detID].mask_polar; // not updated in this version, need threadsafe
         float   *polarDataCounter = eventData->detector[detID].polarDataCounter;
         long	nRadialBins = global->detector[detID].nRadialBins;
         long	nAngularBins = global->detector[detID].nAngularBins;
@@ -59,7 +59,6 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
         
         // Remember to free the mask
         free(mask);
-        if( corrected_data == NULL ) printf("\n\ndamn\n\n");
     }
     
 }
