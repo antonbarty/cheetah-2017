@@ -226,6 +226,7 @@ public:
 	 * When set to a value of n, every nth frame will be saved, regardless
 	 * of hit status.
 	 */
+   bool	   calcAngularCorrelation;
 	int      hdf5dump;
 	int      angulardump;  // how frequent to dump angular correlation
     

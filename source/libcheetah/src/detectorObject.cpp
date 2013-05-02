@@ -709,6 +709,8 @@ void cPixelDetectorCommon::updatePolarMap(void) {
         index = polar_r_i*nAngularBins + theta_i;
         cart2polar_map[i] = index;
 
+        mask_polar[ index ] = 1; // this is pixel in this bin
+
         //printf("%d %d %ld %f %f theta\n",polar_r_i,theta_i, index, x,y);
   }
 }

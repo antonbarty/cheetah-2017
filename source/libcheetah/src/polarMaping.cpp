@@ -38,7 +38,7 @@
 void mapToPolar(cEventData *eventData, cGlobal *global) {
     
  	DETECTOR_LOOP {
-       	long	pix_nn = global->detector[detID].pix_nn;
+        long	pix_nn = global->detector[detID].pix_nn;
         float   *corrected_data = eventData->detector[detID].corrected_data;
         long    *cart2polar_map = global->detector[detID].cart2polar_map;
         
@@ -59,6 +59,7 @@ void mapToPolar(cEventData *eventData, cGlobal *global) {
         
         // Remember to free the mask
         free(mask);
+        if( corrected_data == NULL ) printf("\n\ndamn\n\n");
     }
     
 }
@@ -95,9 +96,9 @@ void mapToPolar(float *data, long *polarMap, long pix_nn, float *polarData, floa
 	for(long i=0; i<polar_nn; i++) {
 		if (polarDataCounter[i] != 0) {
 			polarData[i] /= polarDataCounter[i];
-         mask_polar[i] = 1.0; // this might be saved IF we assume mask is not changing
+//         mask_polar[i] = 1.0; // this might be saved IF we assume mask is not changing
       } else {
-         mask_polar[i] = 0.0; // this might be saved IF we assume mask is not changing
+ //        mask_polar[i] = 0.0; // this might be saved IF we assume mask is not changing
       }
 	}
 	

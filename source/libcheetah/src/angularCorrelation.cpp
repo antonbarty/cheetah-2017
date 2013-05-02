@@ -34,7 +34,7 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
    mapToPolar(eventData, global);
 
  	DETECTOR_LOOP {
-        detector = &global->detector[detID];    
+        detector = &(global->detector[detID]);    
         float   *polarData = eventData->detector[detID].polarData;
         long    nRadialBins = global->detector[detID].nRadialBins;
 		  long    nAngularBins = global->detector[detID].nAngularBins;
@@ -46,14 +46,13 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
 
 	     pthread_mutex_lock(&detector->angularcorrelation_mutex);
         for(long ii=0;ii<polar_nn;ii++){
-          detector->polarIntensities[ii] += polarData[ii]; 
+ //         detector->polarIntensities[ii] += polarData[ii]; 
           detector->angularcorrelation[ii] += this_angularcorrelation[ii]; 
         }
    	  detector->angularcorrelationCounter++;
    	  pthread_mutex_unlock(&detector->angularcorrelation_mutex);
         free( this_angularcorrelation );
     }
-   
 }
     
 void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long nRadialBins, long nAngularBins) {  
@@ -108,10 +107,12 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
  void saveAngularCorrelation(cGlobal *global, int powderClass, int detID) {  // saved
 
     cPixelDetectorCommon     *detector = &global->detector[detID];
-
+    long    frameNum = detector->angularcorrelationCounter;
     double *this_angularcorrelation = (double*) calloc( detector->polar_nn, sizeof(double) );
-    detector->getGapCorrelation( );
+
     pthread_mutex_lock(&detector->angularcorrelation_mutex);
+
+    detector->getGapCorrelation( );
     for(long ii=0;ii<detector->polar_nn;ii++) {
       if( detector->mask_angularcorrelation[ii] == 0 )
 	     continue;
@@ -119,7 +120,6 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
     }
 
     char	filename[1024];
-    long    frameNum = detector->angularcorrelationCounter;
 
     sprintf(filename,"r%04u-angularcorrelation-detector%d-class%i-frame%ld.h5", global->runNumber, detID, powderClass,frameNum);
     printf("Saving Angular-correlation: %s\n", filename);
