@@ -1,6 +1,6 @@
 /*
 
- *  saveCxi.cpp
+ *  saveCXI.cpp
  *  cheetah
  *
  *  Created by Jing Liu on 05/11/12.
