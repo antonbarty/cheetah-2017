@@ -42,7 +42,7 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
         double *this_angularcorrelation = (double*) calloc( polar_nn, sizeof(double) );
 
         // compute angular-correlation 
-        // calculateACviaFFT(polarData, this_angularcorrelation, nRadialBins, nAngularBins);
+         calculateACviaFFT(polarData, this_angularcorrelation, detector);
 
 	     pthread_mutex_lock(&detector->angularcorrelation_mutex);
         for(long ii=0;ii<polar_nn;ii++){
@@ -55,9 +55,10 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
     }
 }
     
-void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long nRadialBins, long nAngularBins) {  
-//cPixelDetectorCommon* detector) {
-  fftw_plan p_forward, p_backward;  // if the array sizes are constant, these plans can be saved for future
+void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixelDetectorCommon* detector) {
+  long nRadialBins = detector->nRadialBins;
+  long nAngularBins = detector->nAngularBins;
+//  fftw_plan p_forward, p_backward;  // if the array sizes are constant, these plans can be saved for future
   fftw_complex *out;
   fftw_complex *in;
   double nAngularBins2 = nAngularBins * nAngularBins;
@@ -67,27 +68,27 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, long n
   in = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );  
   out = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );
 
-  p_forward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-  p_backward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
+ // p_forward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  //p_backward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for( long ii=0;ii<nAngularBins;ii++) in[ii][1] = 0;
 
   for(int nr=0;nr<nRadialBins;nr++) {
     offset = nr*nAngularBins;
     for( long ii=0;ii<nAngularBins;ii++) in[ii][0] = polarData[offset+ii]; 
-    fftw_execute( p_forward );
+    fftw_execute_dft( detector->p_forward, in, out );
 
     for( long ii=0;ii<nAngularBins;ii++) {
       in[ii][0] = out[ii][0]*out[ii][0] + out[ii][1]*out[ii][1];
       in[ii][0] /= nAngularBins2;
     }
   
-    fftw_execute( p_backward );
+    fftw_execute_dft( detector->p_backward, in, out );
     for( long ii=0;ii<nAngularBins;ii++) 
       this_angularcorrelation[offset+ii] = out[ii][0]/nAngularBins;
   }
-  fftw_destroy_plan( p_forward );
-  fftw_destroy_plan( p_backward);
+//  fftw_destroy_plan( p_forward );
+//  fftw_destroy_plan( p_backward);
   fftw_free(in);
   fftw_free(out);
 }

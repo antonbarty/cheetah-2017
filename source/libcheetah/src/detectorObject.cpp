@@ -17,6 +17,7 @@
 #include <hdf5.h>
 #include <fenv.h>
 #include <stdlib.h>
+#include <fftw3.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -664,7 +665,11 @@ void cPixelDetectorCommon::updatePolarMap(void) {
     
     // Allocate memory for the arrays
     allocateAngularCorrelationMemory();
-    
+
+    // Prepare FFT plans
+    fftw_complex *in, *out;
+    p_forward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    p_backward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
     
   
     float x,y,polar_r, theta;
@@ -716,7 +721,7 @@ void cPixelDetectorCommon::updatePolarMap(void) {
 }
    
 void cPixelDetectorCommon::getGapCorrelation( ) {
-  calculateACviaFFT(mask_polar, mask_angularcorrelation, nRadialBins, nAngularBins);
+  calculateACviaFFT(mask_polar, mask_angularcorrelation, this);
 }
 
 

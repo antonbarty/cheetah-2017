@@ -522,6 +522,8 @@ void cheetahExit(cGlobal *global) {
       free(global->detector[i].mask_polar);
       free(global->detector[i].mask_angularcorrelation);
       free(global->detector[i].cart2polar_map);
+      fftw_destroy_plan(global->detector[i].p_forward);
+      fftw_destroy_plan(global->detector[i].p_backward);
 
         
       for(long j=0; j<global->nPowderClasses; j++) {

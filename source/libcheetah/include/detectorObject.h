@@ -15,6 +15,7 @@
 //#include "cspad/CspadGeometry.hh"
 #ifndef DETECTOROBJECT_H
 #define DETECTOROBJECT_H
+#include <fftw3.h>
 
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
@@ -180,6 +181,10 @@ public:
    double *angularcorrelation;
    double *mask_angularcorrelation;
    float  *mask_polar;
+
+   // fftw plans
+   fftw_plan p_forward;
+   fftw_plan p_backward;
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
