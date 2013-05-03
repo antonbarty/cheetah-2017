@@ -282,14 +282,21 @@ pro cheetah_displayImage, pState, image
 		image = image < (max(image)/((*pState).image_boost))
 		image = (image > 0)^((*pState).image_gamma)
 
+
+		;; Resize image depending on zoom factor
+		z = (*pstate).image_zoom 
+		if z ne 1.0 then begin
+			sz = size(image,/dim)
+			image = congrid(image, z*sz[0], z*sz[1])		
+		endif
+		(*pstate).image_size = size(image,/dim)
+		
 		
 		;; Display image
 		(*pState).data = data
-		;(*pState).image = image
 		widget_control, (*pState).base, base_set_title=title
 		WSET, (*pState).slideWin
 		loadct, (*pstate).colour_table, /silent
-		;tvscl, (*pState).image
 		tvscl, image
 
 		;; Widget_control
@@ -393,12 +400,22 @@ pro cheetah_overwritePeaks, filename, peakinfo
 end
 
 
+pro cheetah_resizewindow, pstate
+  	sState = *pState
+	s = (*pstate).image_size
+	screensize = get_screen_size()
+	screensize -= 140
+	new_xsize = min([screensize[0],s[0]])
+	new_ysize = min([screensize[1],s[1]])
+	WIDGET_CONTROL, sState.scroll, xsize=new_xsize, ysize=new_ysize, draw_xsize=s[0],draw_ysize=s[1]
+end
+
 
 pro cheetah_event, ev
 
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
   	sState = *pState
-	img_size = size(sState.image,/dim)
+	img_size = (*pstate).image_size
 	
 	
 	;; Establish polite error handler to catch crashes
@@ -845,6 +862,41 @@ pro cheetah_event, ev
 		end
 		
 		
+		;;
+		;;	Image zoom
+		;;
+		sState.menu_localzoom : begin
+			zoom
+		end		
+
+		sState.menu_zoom50 : begin
+			(*pstate).image_zoom = .5
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom100 : begin
+			(*pstate).image_zoom = 1.0
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom150 : begin
+			(*pstate).image_zoom = 1.5
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom200 : begin
+			(*pstate).image_zoom = 2.0
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+		
 
 		else: begin
 		end
@@ -857,7 +909,7 @@ end
 
 
 
-pro cheetahview, pixmap=pixmap
+pro cheetahview, geometry=geometry
 
 	;;	Select data directory
 	dir = dialog_pickfile(/directory, title='Select data directory')
@@ -870,26 +922,13 @@ pro cheetahview, pixmap=pixmap
 	endif
 
 
-	;; Using a pixel map?
-	;pixmap_file = dialog_pickfile(filter='*.h5', title='Select detector geometry file')
-	;if pixmap_file eq '' then begin
-	;	pixmap = 0
-	;	pixmap_x = 0
-	;	pixmap_y = 0
-	;	pixmap_dx = 0
-	;endif $
-	;else begin
-	;	pixmap = 1
-	;	pixmap_x = read_h5(pixmap_file,field='x')
-	;	pixmap_y = read_h5(pixmap_file,field='y')
-	;	pixmap_dx = 110e-6		;; cspad
-	;endelse
 
 	
 	;; Sample data
 	filename = file[0]
 	data = read_h5(filename)
 	
+
 	;; Set default pixel map (none)
 	s = size(data, /dim)
 	pixmap = 0
@@ -897,13 +936,22 @@ pro cheetahview, pixmap=pixmap
 	pixmap_y = fltarr(s[0],s[1])
 	pixmap_dx = 110e-6
 
+	;; If geometry file is specified...
+	if keyword_set(geometry) then begin
+		pixmap = 1
+		pixmap_x = read_h5(geometry,field='x')
+		pixmap_y = read_h5(geometry,field='y')
+		pixmap_dx = 110e-6		;; cspad
+	endif
 
-	if keyword_set(pixmap) then $
-		data = pixelRemap(data, pixmap_x, pixmap_y, pixmap_dx)
 
 	
 	image = (data>0)
-	image = image < 1000
+	image = image < 10000
+
+	if keyword_set(geometry) then $
+		image = pixelRemap(image, pixmap_x, pixmap_y, pixmap_dx)
+
 
 	title = file_basename(file[0])
 	oldwin = !d.window
@@ -975,10 +1023,11 @@ pro cheetahview, pixmap=pixmap
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
-	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=0, /separator)
-	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=0)
-	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=0)
-	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=0)
+	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
+	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
+	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)
+	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=1)
+	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=1)
 
 
 	;; Create action buttons
@@ -1023,6 +1072,8 @@ pro cheetahview, pixmap=pixmap
 				  image_gamma : 1.0, $
 				  image_boost : 5., $
 				  image_max : 32000., $
+				  image_zoom : 1.0, $
+				  image_size: size(image,/dim), $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
 				  pixmap_y : pixmap_y, $
@@ -1068,7 +1119,11 @@ pro cheetahview, pixmap=pixmap
 				  menu_cdiDefaults : mbanalysis_cdidefaults, $
 				  menu_crystDefaults : mbanalysis_crystdefaults, $
 				  menu_processall : mbanalysis_processall, $
-				  
+				  menu_localzoom : 	mbanalysis_localzoom, $
+				  menu_zoom50 : 	mbanalysis_zoom50, $
+				  menu_zoom100 : mbanalysis_zoom100, $
+				  menu_zoom150 : mbanalysis_zoom150, $
+				  menu_zoom200 : mbanalysis_zoom200, $
 
 				  peaks_localbackground : 2, $
 				  peaks_ADC : 300, $

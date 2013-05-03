@@ -192,29 +192,37 @@ void *worker(void *threadarg) {
   updateHaloBuffer(eventData,global,hit);
   calculateHaloPixelMask(global);
 	
-  /*
-   *	Update running backround estimate based on non-hits
-   */
-  updateBackgroundBuffer(eventData, global,hit); 
+	/*
+	 *	Update running backround estimate based on non-hits
+	 */
+	updateBackgroundBuffer(eventData, global,hit); 
 	
 	
-  /*
-   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorCorrectedOnly) 
-      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-  }
+	/*
+	 *	Maintain a running sum of data (powder patterns)
+	 *    and strongest non-hit and weakest hit
+	 */
+	addToPowder(eventData, global);
+
 	
 	
-  /*
-   *	If using detector raw, do it here
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorRaw) 
-      for(long i=0;i<global->detector[detID].pix_nn;i++)
-	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-  }
+	/*
+	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+	 */
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorCorrectedOnly) 
+		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+	}
+	
+	
+	/*
+	*	If using detector raw, do it here
+	*/
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorRaw)
+			for(long i=0;i<global->detector[detID].pix_nn;i++)
+				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+	}
 	
 	
   /*
@@ -226,39 +234,6 @@ void *worker(void *threadarg) {
     }
   }
 
-  /*
-   *	Write cspad to file in 1D
-   */
-  /*
-  //	if (eventData->threadNum >= 0) {
-  std::cout << "Write cspad to file.. single threaded" << std::endl;
-  DETECTOR_LOOP {
-  for(long i=0;i<global->detector[detID].pix_nn;i++){
-  myvector.push_back( (int16_t) lrint(eventData->detector[detID].corrected_data[i]) );
-  }
-  }
-  // Write out files
-  sstm << "r0" << global->runNumber << "_cspad_corrected1D_" << eventData->frameNumber;
-  result = sstm.str();
-  //outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
-  outFlu.open(result.c_str()); // output cspad for all shots
-  //std::cout << myvector.size() << std::endl;
-  //std::cout << global->nDetectors << std::endl;
-  for (unsigned i = 0; i < myvector.size(); i++ ) {
-  outFlu << myvector[i] << " ";
-  }
-  outFlu << std::endl;
-  outFlu.close();
-
-  sstm1 << "r0" << global->runNumber << "_cspad_corrected1D_target_" << eventData->frameNumber;
-  result = sstm1.str();
-  outHit.open(result.c_str()); // output cspad for all shots
-  outHit << eventData->hit;
-  outHit << std::endl;
-  outHit.close();
-
-  //	}
-  */
 
   /*
    *	Assemble quadrants into a 'realistic' 2D image
@@ -278,11 +253,6 @@ void *worker(void *threadarg) {
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
 	
-  /*
-   *	Maintain a running sum of data (powder patterns)
-   *    and strongest non-hit and weakest hit
-   */
-  addToPowder(eventData, global);
 
   /*
    * calculate the one dimesional beam spectrum
