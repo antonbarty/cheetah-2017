@@ -40,7 +40,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
         // Mask for where to calculate average
         int     *mask = (int *) calloc(pix_nn, sizeof(int));
         for(long i=0; i<pix_nn; i++){
-	  mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
+			mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
         }
         
         calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);

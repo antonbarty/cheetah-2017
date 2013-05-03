@@ -104,13 +104,14 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
-		if(global->detector[detID].downsampling > 1){
+		//if(global->detector[detID].downsampling > 1){
 		  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-		} else {
-		  eventData->detector[detID].imageXxX = NULL;
-		  eventData->detector[detID].imageXxX_pixelmask = NULL;
-		}
+		//}
+		//else {
+		//  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		//  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
+		//}
 
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
@@ -163,10 +164,10 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].pixelmask);
 		free(eventData->detector[detID].image_pixelmask);
 		
-		if(global->detector[detID].downsampling > 1){
+		//if(global->detector[detID].downsampling > 1){
 		  free(eventData->detector[detID].imageXxX);
 		  free(eventData->detector[detID].imageXxX_pixelmask);
-		}
+		//}
 
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
