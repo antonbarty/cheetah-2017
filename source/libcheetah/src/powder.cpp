@@ -32,16 +32,17 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
     
   DETECTOR_LOOP {
     if(global->generateDarkcal || global->generateGaincal){
-      addToPowder(eventData, global, 0, detID);
+		addToPowder(eventData, global, 0, detID);
     }
     if(!hit && global->powderSumBlanks){
-      addToPowder(eventData, global, 0, detID);
+		addToPowder(eventData, global, 0, detID);
     }
     if(hit && global->powderSumHits){
-      addToPowder(eventData, global, 1, detID);
+		addToPowder(eventData, global, 1, detID);
     }
   } 
 }
+
 
 void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int detID){
 	

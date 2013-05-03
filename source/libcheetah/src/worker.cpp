@@ -178,30 +178,31 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
    
-  /*
-   *	Hitfinding
-   */
-  if(global->hitfinder){
-    hit = hitfinder(eventData, global);
-    eventData->hit = hit;
-  }
+	/*
+	 *	Hitfinding
+	 */
+	if(global->hitfinder){
+		hit = hitfinder(eventData, global);
+		eventData->hit = hit;
+	}
 	
-  /*
-   *	Identify halo pixels
-   */
-  updateHaloBuffer(eventData,global,hit);
-  calculateHaloPixelMask(global);
+	/*
+	 *	Identify halo pixels
+	 */
+	updateHaloBuffer(eventData,global,hit);
+	calculateHaloPixelMask(global);
 	
 	/*
 	 *	Update running backround estimate based on non-hits
 	 */
-	updateBackgroundBuffer(eventData, global,hit); 
+	updateBackgroundBuffer(eventData, global, hit); 
 	
 	
 	/*
 	 *	Maintain a running sum of data (powder patterns)
 	 *    and strongest non-hit and weakest hit
 	 */
+	assemble2Dimage(eventData, global);
 	addToPowder(eventData, global);
 
 	
@@ -216,8 +217,8 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	*	If using detector raw, do it here
-	*/
+	 *	If using detector raw, do it here
+	 */
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorRaw)
 			for(long i=0;i<global->detector[detID].pix_nn;i++)
@@ -247,7 +248,7 @@ void *worker(void *threadarg) {
   downsample(eventData,global);
 
   /*
-   *	Calculate radial average
+   *  Calculate radial average
    *  Maintain radial average stack
    */
   calculateRadialAverage(eventData, global); 
