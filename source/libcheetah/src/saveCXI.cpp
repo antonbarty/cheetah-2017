@@ -116,8 +116,7 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
   hsize_t block[1] = {1};
   /* dummy */
   hsize_t mdims[1];
-
-  
+ 
   hid_t dataspace = H5Dget_space (dataset);
   if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
   H5Sget_simple_extent_dims(dataspace, block, mdims);

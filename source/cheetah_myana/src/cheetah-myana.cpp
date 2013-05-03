@@ -869,6 +869,24 @@ void endrun()
   }
 }
 
+  // This section is moved to endrun()
+  /*if(cheetahGlobal.saveCXI){
+    std::string cxiFilename = getCXIfromXTC(getXTCFilename());
+
+
+    if(cxiFilename.compare(cheetahGlobal.cxiFilename)!=0){
+      while(cheetahGlobal.nActiveThreads > 0){
+	printf("Waiting for %li worker threads to terminate for new ones\n", cheetahGlobal.nActiveThreads);
+	usleep(100000);
+      }
+      if(strcmp(cheetahGlobal.cxiFilename,"") != 0){
+	closeCXIFiles(&cheetahGlobal);
+      }
+      strcpy(cheetahGlobal.cxiFilename,cxiFilename.c_str());
+    }
+    }*/
+
+
 void endjob()
 {
   printf("User analysis endjob() routine called.\n");
