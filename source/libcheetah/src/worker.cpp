@@ -290,13 +290,12 @@ void *worker(void *threadarg) {
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
-  goto save;
   
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
- save:
-  if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
+  
+	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
     if(global->saveCXI==1){
       pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
