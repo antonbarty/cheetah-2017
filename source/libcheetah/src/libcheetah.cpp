@@ -198,7 +198,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->TOFVoltage); 
 	}
     
-    
+    free(eventData->energySpectrum1D);
     
     
 	free(eventData);

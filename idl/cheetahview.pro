@@ -844,6 +844,12 @@ pro cheetah_event, ev
 		end
 
 
+		sState.menu_centeredPeaks : begin
+			(*pstate).centeredPeaks = 1-(*pstate).centeredPeaks
+			widget_control, sState.menu_centeredPeaks, set_button = (*pstate).centeredPeaks
+		end
+		
+
 		sState.menu_cdiDefaults : begin
 			loadct, 4, /silent		
 			(*pstate).colour_table = 4
@@ -909,10 +915,14 @@ end
 
 
 
-pro cheetahview, geometry=geometry
+pro cheetahview, geometry=geometry, dir=dir
 
 	;;	Select data directory
-	dir = dialog_pickfile(/directory, title='Select data directory')
+	if not keyword_set(dir) then begin
+		dir = dialog_pickfile(/directory, title='Select data directory')
+		if dir eq '' then return
+	endif
+	
 	file = file_search(dir,"LCLS*.h5",/fully_qualify)
 	savedir=dir
 	
@@ -935,13 +945,15 @@ pro cheetahview, geometry=geometry
 	pixmap_x = fltarr(s[0],s[1])
 	pixmap_y = fltarr(s[0],s[1])
 	pixmap_dx = 110e-6
-
+	centeredPeaks = 0
+	
 	;; If geometry file is specified...
 	if keyword_set(geometry) then begin
 		pixmap = 1
 		pixmap_x = read_h5(geometry,field='x')
 		pixmap_y = read_h5(geometry,field='y')
 		pixmap_dx = 110e-6		;; cspad
+		centeredPeaks = 1
 	endif
 
 
@@ -1019,7 +1031,7 @@ pro cheetahview, geometry=geometry
 	mbanalysis_savePeaks = widget_button(mbcryst, value='Save IDL found peaks to H5 file', /checked)
 	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked)
 	mbanalysis_displayLocalBackground = widget_button(mbcryst, value='Display with local background subtraction', /checked)
-
+	widget_control, mbanalysis_centeredPeaks, set_button=centeredPeaks
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
@@ -1086,7 +1098,7 @@ pro cheetahview, geometry=geometry
 				  circleHDF5Peaks : 0, $
 				  findPeaks : 0, $
 				  savePeaks : 0, $
-				  centeredPeaks : 0, $
+				  centeredPeaks : centeredPeaks, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
 				  xvisible: xview, $
