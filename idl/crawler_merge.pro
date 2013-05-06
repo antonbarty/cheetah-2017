@@ -64,17 +64,18 @@ pro crawler_merge
 				hitrate = h5hitrate[whdf5[j]]
 				;;hitrate = (fix(100*hitrate))/100.
 				hitrate = strmid(strcompress(hitrate,/remove_all),0,4)
-			endif else begin
-				status = '---'
-				dir = '---'
-				processed = '---'
-				hits = '---'
-				hitrate = '---'
-			endelse	
+			endfor
+		endif $
+		else begin
+			status = '---'
+			dir = '---'
+			processed = '---'
+			hits = '---'
+			hitrate = '---'
+		endelse	
 
-			str = strcompress(string(xtcrun[i], ',', dataset[wdataset], ',', xtcstatus[i], ',', status, ',', dir, ',', processed, ',', hits, ',', hitrate))
-			printf, fout, str
-		endfor
+		str = strcompress(string(xtcrun[i], ',', dataset[wdataset], ',', xtcstatus[i], ',', status, ',', dir, ',', processed, ',', hits, ',', hitrate))
+		printf, fout, str
 		
 	endfor
 	
