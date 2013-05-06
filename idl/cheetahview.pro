@@ -78,8 +78,8 @@ pro cheetah_resolutionCircles, pState, filename, image
 	detectorZ_mm = detectorZ_mm[0]
 	wavelength_A = wavelength_A[0]
 	
-	print, detectorZ_mm
-	print, wavelength_A
+	print, 'Detector Z (mm) = ', detectorZ_mm
+	print, 'Wavelength (A) = ', wavelength_A
 	
 	;; For making the circle the old-fashioned way
 	np = 360
@@ -89,12 +89,18 @@ pro cheetah_resolutionCircles, pState, filename, image
 	
 	WSET, (*pState).slideWin
 	for d=2., 10., 1. do begin
-		sin_t = wavelength_A / (2 * d)
+
+		;; Lithographer or Crystallographer convention?
+		if (*pState).resolutionRings1 eq 1 then $
+			sin_t = wavelength_A / (2 * d) $
+		else  $
+			sin_t = wavelength_A / d
+					
 		tan_t = sin_t / sqrt(1-sin_t^2)
 		r_mm = detectorZ_mm * tan_t
 		r_pix = r_mm / 110e-3
 		;print, d, sin_t, tan_t, r_mm, r_pix
-		print, d, r_pix
+		;print, d, r_pix
 		;ring = ellipse(s[0]/2, s[1]/2, /device, color='red', major = r_pix, thick=1);, target=scroll)
 		;label = text(s[0]/2+r_pix, s[1]/2, string(d, 'Å'), color='red', /data)
 		plots, r_pix*cx+s[0]/2, r_pix*cy+s[1]/2, color=90, /device
@@ -345,7 +351,7 @@ pro cheetah_displayImage, pState, image
 		tvscl, image
 
 		;; Resolution rings
-		if (*pState).resolutionRings eq 1 then begin
+		if (*pState).resolutionRings1 eq 1 or (*pState).resolutionRings2 eq 1 then begin
 			cheetah_resolutionCircles, pState, filename, image
 		
 		endif
@@ -743,9 +749,21 @@ pro cheetah_event, ev
 			cheetah_displayImage, pState
 		end
 		
-		sState.menu_resolution : begin
-			(*pstate).resolutionRings = 1-sState.resolutionRings
-			widget_control, sState.menu_resolution, set_button = (*pstate).resolutionRings
+		;;
+		;;	Resolution (in two conventions)
+		;;
+		sState.menu_resolution1 : begin
+			(*pstate).resolutionRings1 = 1-sState.resolutionRings1
+			(*pstate).resolutionRings2 = 0
+			widget_control, sState.menu_resolution1, set_button = (*pstate).resolutionRings1
+			widget_control, sState.menu_resolution2, set_button = 0
+			cheetah_displayImage, pState
+		end
+		sState.menu_resolution2 : begin
+			(*pstate).resolutionRings1 = 0
+			(*pstate).resolutionRings2 = 1-sState.resolutionRings2
+			widget_control, sState.menu_resolution1, set_button = 0
+			widget_control, sState.menu_resolution2, set_button = (*pstate).resolutionRings2
 			cheetah_displayImage, pState
 		end
 		
@@ -1094,13 +1112,15 @@ pro cheetahview, geometry=geometry, dir=dir
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
-	mbanalysis_resolution = widget_button(mbview, value='Resolution rings', /checked)
+	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer: wl = d sin(theta))', /checked)
+	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer: wl = 2d sin(theta))', /checked)
 	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
 	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
 	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)
 	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=1)
 	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=1)
-	widget_control, mbanalysis_resolution, set_button=0
+	widget_control, mbanalysis_resolution1, set_button=0
+	widget_control, mbanalysis_resolution2, set_button=0
 
 
 	;; Create action buttons
@@ -1157,7 +1177,8 @@ pro cheetahview, geometry=geometry, dir=dir
 				  autoShuffle : 0, $
 				  autoNext : 0, $
 				  circleHDF5Peaks : 0, $
-				  resolutionRings : 0, $
+				  resolutionRings1 : 0, $
+				  resolutionRings2 : 0, $
 				  findPeaks : 0, $
 				  savePeaks : 0, $
 				  centeredPeaks : centeredPeaks, $
@@ -1194,7 +1215,8 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_crystDefaults : mbanalysis_crystdefaults, $
 				  menu_processall : mbanalysis_processall, $
 				  menu_localzoom : 	mbanalysis_localzoom, $
-				  menu_resolution :  mbanalysis_resolution, $
+				  menu_resolution1 :  mbanalysis_resolution1, $
+				  menu_resolution2 :  mbanalysis_resolution2, $
 				  menu_zoom50 : 	mbanalysis_zoom50, $
 				  menu_zoom100 : mbanalysis_zoom100, $
 				  menu_zoom150 : mbanalysis_zoom150, $
