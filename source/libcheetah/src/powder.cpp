@@ -322,15 +322,15 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSigma);
   H5Dclose(dh);
 
-  dh = H5Dcreate(gh, "correcteddatanpeaksmin", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  if (dh < 0) ERROR("Could not create dataset.\n");
-  H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMin);
-  H5Dclose(dh);
+  //dh = H5Dcreate(gh, "correcteddatanpeaksmin", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  //if (dh < 0) ERROR("Could not create dataset.\n");
+  //H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMin);
+  //H5Dclose(dh);
 
-  dh = H5Dcreate(gh, "correcteddatanpeaksmax", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  if (dh < 0) ERROR("Could not create dataset.\n");
-  H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMax);
-  H5Dclose(dh);
+  //dh = H5Dcreate(gh, "correcteddatanpeaksmax", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  //if (dh < 0) ERROR("Could not create dataset.\n");
+  //H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedNPeaksMax);
+  //H5Dclose(dh);
   H5Sclose(sh);
   
   if(global->assemble2DImage) {	
@@ -345,19 +345,20 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
     H5Dclose(dh);
 
-    dh = H5Dcreate(gh, "assembleddatanpeaksmin", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    if (dh < 0) ERROR("Could not create dataset.\n");
-    H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMin);
-    H5Dclose(dh);
+    //dh = H5Dcreate(gh, "assembleddatanpeaksmin", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    //if (dh < 0) ERROR("Could not create dataset.\n");
+    //H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMin);
+    //H5Dclose(dh);
    
-    dh = H5Dcreate(gh, "assembleddatanpeaksmax", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    if (dh < 0) ERROR("Could not create dataset.\n");
-    H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMax);
-    H5Dclose(dh);
+    //dh = H5Dcreate(gh, "assembleddatanpeaksmax", H5T_NATIVE_INT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    //if (dh < 0) ERROR("Could not create dataset.\n");
+    //H5Dwrite(dh, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembledNPeaksMax);
+    //H5Dclose(dh);
     H5Sclose(sh);
 
     H5Lcreate_soft( "/data/assembleddata", fh, "/data/data",0,0);
-  } else {
+  }
+  else {
     H5Lcreate_soft( "/data/correcteddata", fh, "/data/data",0,0);
   }
 
@@ -367,22 +368,22 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
   sh = H5Screate_simple(1, size, NULL);
   //H5Sget_simple_extent_dims(sh, size, max_size);
 	
-  dh = H5Dcreate(gh, "radialAverageCorrected", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  dh = H5Dcreate(gh, "radialAverage", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (dh < 0) ERROR("Could not create dataset.\n");
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrected);
   H5Dclose(dh);
 
-  dh = H5Dcreate(gh, "radialAverageCorrectedSquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  dh = H5Dcreate(gh, "radialAverageSquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (dh < 0) ERROR("Could not create dataset.\n");
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrectedSquared);
   H5Dclose(dh);
 
-  dh = H5Dcreate(gh, "radialAverageCorrectedSigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  dh = H5Dcreate(gh, "radialAverageSigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (dh < 0) ERROR("Could not create dataset.\n");
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrectedSigma);
   H5Dclose(dh);
 
-  dh = H5Dcreate(gh, "radialAverageCorrectedCounter", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  dh = H5Dcreate(gh, "radialAverageCounter", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (dh < 0) ERROR("Could not create dataset.\n");
   H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrectedCounter);
   H5Dclose(dh);	
