@@ -947,7 +947,7 @@ namespace cheetah_ana_pkg {
 	    printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
 	    usleep(100000);
 	  }
-	  writeSharedCXI(&cheetahGlobal);
+	  writeAccumulatedCXI(&cheetahGlobal);
 	  //closeCXIFiles(&cheetahGlobal);
 	}
 

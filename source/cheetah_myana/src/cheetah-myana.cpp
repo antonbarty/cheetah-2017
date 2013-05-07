@@ -865,7 +865,7 @@ void endrun()
       printf("Waiting for %li worker threads to terminate before processing a new run\n", cheetahGlobal.nActiveThreads);
       usleep(100000);
     }
-    writeSharedCXI(&cheetahGlobal);
+    writeAccumulatedCXI(&cheetahGlobal);
   }
 }
 

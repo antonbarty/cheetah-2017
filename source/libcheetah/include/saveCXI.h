@@ -91,7 +91,7 @@ typedef struct{
   hid_t self;
   hid_t eventName;
   hid_t frameNumber;
-  hid_t threadNumber;
+  hid_t threadID;
   hid_t gmd1;
   hid_t gmd2;
   hid_t energySpectrumExist;
@@ -104,17 +104,17 @@ typedef struct{
   hid_t laserEventCodeOn;
   hid_t laserDelay;
   hid_t hit;
-  hid_t lastBgUpdate;
-  hid_t nHot;
-  hid_t lastHotPixUpdate;
-  hid_t hotPixCounter;
-  hid_t nHalo;
-  hid_t lastHaloPixUpdate;
-  hid_t haloPixCounter;
 }UnsharedValues;
 
 typedef struct{
   hid_t self;
+  hid_t lastBgUpdate[MAX_DETECTORS];
+  hid_t nHot[MAX_DETECTORS];
+  hid_t lastHotPixUpdate[MAX_DETECTORS];
+  hid_t hotPixCounter[MAX_DETECTORS];
+  hid_t nHalo[MAX_DETECTORS];
+  hid_t lastHaloPixUpdate[MAX_DETECTORS];
+  hid_t haloPixCounter[MAX_DETECTORS];
 }SharedValues;
 
 typedef struct{

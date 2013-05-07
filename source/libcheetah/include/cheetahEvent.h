@@ -117,7 +117,7 @@ public:
 	double		phaseCavityCharge2;
 	
 	// Thread management
-	int		threadID;
+	int	threadID;
 	int     useThreads;
 	
 } ;
