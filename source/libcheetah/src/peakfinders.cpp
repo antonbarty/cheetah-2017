@@ -305,9 +305,13 @@ int peakfinder3(cGlobal *global, cEventData *eventData, int detID) {
 	
 	
     eventData->nPeaks = (int) counter;
-    
+   
+	// eliminate closely spaced peaks
+	if(global->hitfinderMinPeakSeparation > 0 )
+		killNearbyPeaks(eventData);
+ 
 	// Now figure out whether this is a hit
-	if(counter >= global->hitfinderNpeaks && counter <= global->hitfinderNpeaksMax)
+	if(eventData->nPeaks >= global->hitfinderNpeaks && eventData->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
     
 	
@@ -510,8 +514,9 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 
 	eventData->nPeaks = counter;
 
-	// final round of eliminating closely spaced peaks
-	killNearbyPeaks(eventData);
+	// eliminate closely spaced peaks
+	if(global->hitfinderMinPeakSeparation > 0 )
+		killNearbyPeaks(eventData);
 
 	if(eventData->nPeaks >= global->hitfinderNpeaks && eventData->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
