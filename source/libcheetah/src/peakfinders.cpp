@@ -508,46 +508,9 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 		}
 	}
 	
-	
-	/*
-	 *	Final round of killing peaks
-	 */
-	// Find peaks that are too close together
-	if(global->hitfinderMinPeakSeparation > 0 ) {
-		for ( p1=0; p1 < counter; p1++) {
-			for ( p2=p1+1; p2 < counter; p2++) {
-				/* Distance to neighbor peak */
-				dist = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2],2) +
-				pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2);
-				if ( dist <= minPeakSepSq ) {
-					if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
-						killpeak[p2] = 1;
-					}
-					else {
-						killpeak[p1] = 1;
-					}
-				}
-			}
-		}
-	}
-	
-	counter2 = 0;
-	for ( p=0; p < counter; p++) {
-		if (killpeak[p] == 0) {
-			eventData->peak_intensity[counter2] = eventData->peak_intensity[p];
-			eventData->peak_com_x[counter2] = eventData->peak_com_x[p];
-			eventData->peak_com_y[counter2] = eventData->peak_com_y[p];
-			eventData->peak_npix[counter2] = eventData->peak_npix[p] ;
-			eventData->peak_snr[counter2] = eventData->peak_snr[p];
-			eventData->peak_com_index[counter2] = eventData->peak_com_index[p];
-			eventData->peak_com_x_assembled[counter2] = eventData->peak_com_x_assembled[p];
-			eventData->peak_com_y_assembled[counter2] = eventData->peak_com_y_assembled[p];
-			eventData->peak_com_r_assembled[counter2] = eventData->peak_com_r_assembled[p];
-			counter2++;
-		}
-	}
-	eventData->nPeaks = counter2;
-	
+	// final round of eliminating closely spaced peaks
+	killNearbyPeaks(eventData);
+
 	if(eventData->nPeaks >= global->hitfinderNpeaks && eventData->nPeaks <= global->hitfinderNpeaksMax)
 		hit = 1;
 	
@@ -562,7 +525,55 @@ nohit:
 	
 }
 
+void killNearbyPeaks(cEventData *eventData){
 
+	cGlobal * global = eventData->pGlobal;
+	int p, p1, p2, c;
+	int n = eventData->nPeaks;
+	float d;
+	float d2 =  global->hitfinderMinPeakSeparation * global->hitfinderMinPeakSeparation;	
+
+	char *killpeak = (char *) calloc(n,sizeof(char));
+
+	// Find peaks that are too close together
+	if(global->hitfinderMinPeakSeparation > 0 ) {
+		for ( p1=0; p1 < n; p1++) {
+			for ( p2=p1+1; p2 < n; p2++) {
+				/* Distance to neighbor peak */
+				d = pow(eventData->peak_com_x[p1] - eventData->peak_com_x[p2], 2) +
+				       pow(eventData->peak_com_y[p1] - eventData->peak_com_y[p2], 2) ;
+				if ( d <= d2 ) {
+					if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
+						killpeak[p2] = 1;
+					}
+					else {
+						killpeak[p1] = 1;
+					}
+				}
+			}
+		}
+	}
+
+	c = 0;
+	for ( p=0; p < eventData->nPeaks; p++) {
+		if (killpeak[p] == 0) {
+			eventData->peak_intensity[c] = eventData->peak_intensity[p];
+			eventData->peak_com_x[c] = eventData->peak_com_x[p];
+			eventData->peak_com_y[c] = eventData->peak_com_y[p];
+			eventData->peak_npix[c] = eventData->peak_npix[p] ;
+			eventData->peak_snr[c] = eventData->peak_snr[p];
+			eventData->peak_com_index[c] = eventData->peak_com_index[p];
+			eventData->peak_com_x_assembled[c] = eventData->peak_com_x_assembled[p];
+			eventData->peak_com_y_assembled[c] = eventData->peak_com_y_assembled[p];
+			eventData->peak_com_r_assembled[c] = eventData->peak_com_r_assembled[p];
+			c++;
+		}
+	}
+	eventData->nPeaks = c;
+	
+	free(killpeak);
+
+}
 
 
 /* Calculate signal-to-noise ratio for the central pixel, using a square
