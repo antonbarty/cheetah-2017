@@ -75,6 +75,7 @@ cGlobal::cGlobal(void) {
   hitfinderTAT = 1e3;
   hitfinderNpeaks = 50;
   hitfinderNpeaksMax = 100000;
+  hitfinderPeakBufferSize = hitfinderNpeaksMax*2;
   hitfinderAlgorithm = 3;
   hitfinderMinPixCount = 3;
   hitfinderMaxPixCount = 20;

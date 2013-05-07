@@ -127,7 +127,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	long NpeaksMax = global->hitfinderNpeaksMax;
+	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
+	long NpeaksMax = global->hitfinderPeakBufferSize;
 	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
 	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
 	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	

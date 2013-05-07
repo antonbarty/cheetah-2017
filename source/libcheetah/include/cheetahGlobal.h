@@ -84,6 +84,7 @@ public:
 	int      hitfinderNpeaks;
 	/** @brief Maximum number of Bragg peaks that constitute a hit. */
 	int      hitfinderNpeaksMax;
+	int      hitfinderPeakBufferSize;
 	/** @brief Minimum number of connected pixels in a Bragg peak. */
 	int      hitfinderMinPixCount;
 	/** @brief Maximum number of connected pixels in a Bragg peak. */
