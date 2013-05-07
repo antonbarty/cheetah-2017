@@ -11,7 +11,7 @@
 
 int peakfinder3(cGlobal *global, cEventData *eventData, int detID);
 int peakfinder6(cGlobal *global, cEventData *eventData, int detID);
-void killNearbyPeaks(cEventData *eventData);
+int killNearbyPeaks(cEventData *eventData);
 
 int box_snr(float * im, uint16_t * mask, uint16_t combined_pixel_options, int center, int radius, int thickness,
             int stride, float * SNR, float * background, float * backgroundSigma);

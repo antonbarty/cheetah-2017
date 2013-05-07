@@ -507,7 +507,9 @@ int peakfinder6(cGlobal *global, cEventData *eventData, int detID) {
 			}
 		}
 	}
-	
+
+	eventData->nPeaks = counter;
+
 	// final round of eliminating closely spaced peaks
 	killNearbyPeaks(eventData);
 
@@ -525,17 +527,19 @@ nohit:
 	
 }
 
-void killNearbyPeaks(cEventData *eventData){
+
+// Find peaks that are too close together and remove them.  Return number of removed peaks.
+int killNearbyPeaks(cEventData *eventData){
 
 	cGlobal * global = eventData->pGlobal;
 	int p, p1, p2, c;
+	int k = 0;
 	int n = eventData->nPeaks;
 	float d;
 	float d2 =  global->hitfinderMinPeakSeparation * global->hitfinderMinPeakSeparation;	
 
 	char *killpeak = (char *) calloc(n,sizeof(char));
 
-	// Find peaks that are too close together
 	if(global->hitfinderMinPeakSeparation > 0 ) {
 		for ( p1=0; p1 < n; p1++) {
 			for ( p2=p1+1; p2 < n; p2++) {
@@ -545,17 +549,14 @@ void killNearbyPeaks(cEventData *eventData){
 				if ( d <= d2 ) {
 					if ( eventData->peak_snr[p1] > eventData->peak_snr[p2]) {
 						killpeak[p2] = 1;
-					}
-					else {
+						k++;
+					} else {
 						killpeak[p1] = 1;
-					}
-				}
-			}
-		}
-	}
+						k++;
+	}	}	}	}	}
 
 	c = 0;
-	for ( p=0; p < eventData->nPeaks; p++) {
+	for ( p=0; p < n; p++) {
 		if (killpeak[p] == 0) {
 			eventData->peak_intensity[c] = eventData->peak_intensity[p];
 			eventData->peak_com_x[c] = eventData->peak_com_x[p];
@@ -567,11 +568,12 @@ void killNearbyPeaks(cEventData *eventData){
 			eventData->peak_com_y_assembled[c] = eventData->peak_com_y_assembled[p];
 			eventData->peak_com_r_assembled[c] = eventData->peak_com_r_assembled[p];
 			c++;
-		}
-	}
+	}	}
 	eventData->nPeaks = c;
-	
+
 	free(killpeak);
+
+	return(k);
 
 }
 
