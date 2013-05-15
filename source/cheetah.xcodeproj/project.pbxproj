@@ -23,6 +23,8 @@
 		4D7A929C171EAAD500766DCF /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928C171EAAD400766DCF /* setup.cpp */; };
 		4D7A929D171EAAD500766DCF /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928D171EAAD500766DCF /* spectrum.cpp */; };
 		4D7A929E171EAAD500766DCF /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A928E171EAAD500766DCF /* worker.cpp */; };
+		4D9BD45B1732F4A80055787F /* cheetah_ana_mod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D9BD45A1732F4A80055787F /* cheetah_ana_mod.cpp */; };
+		4D9BD45D1732F4B20055787F /* cheetah-myana.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D9BD45C1732F4B20055787F /* cheetah-myana.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,6 +67,8 @@
 		4D7A92A6171EAAE000766DCF /* median.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = median.h; path = libcheetah/include/median.h; sourceTree = SOURCE_ROOT; };
 		4D7A92A7171EAAE000766DCF /* peakfinders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = peakfinders.h; path = libcheetah/include/peakfinders.h; sourceTree = SOURCE_ROOT; };
 		4D7A92A8171EAAE000766DCF /* saveCXI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = saveCXI.h; path = libcheetah/include/saveCXI.h; sourceTree = SOURCE_ROOT; };
+		4D9BD45A1732F4A80055787F /* cheetah_ana_mod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheetah_ana_mod.cpp; path = cheetah_ana_pkg/src/cheetah_ana_mod.cpp; sourceTree = "<group>"; };
+		4D9BD45C1732F4B20055787F /* cheetah-myana.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "cheetah-myana.cpp"; path = "cheetah_myana/src/cheetah-myana.cpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +85,8 @@
 		4D7A926A171EAA5000766DCF = {
 			isa = PBXGroup;
 			children = (
+				4D9BD45A1732F4A80055787F /* cheetah_ana_mod.cpp */,
+				4D9BD45C1732F4B20055787F /* cheetah-myana.cpp */,
 				4D7A9275171EAA5000766DCF /* cheetah */,
 				4D7A9274171EAA5000766DCF /* Products */,
 			);
@@ -194,6 +200,8 @@
 				4D7A929C171EAAD500766DCF /* setup.cpp in Sources */,
 				4D7A929D171EAAD500766DCF /* spectrum.cpp in Sources */,
 				4D7A929E171EAAD500766DCF /* worker.cpp in Sources */,
+				4D9BD45B1732F4A80055787F /* cheetah_ana_mod.cpp in Sources */,
+				4D9BD45D1732F4B20055787F /* cheetah-myana.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

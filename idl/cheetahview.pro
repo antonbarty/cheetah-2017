@@ -5,6 +5,9 @@
 ;;	Anton Barty, 2007-2008
 ;;
 
+;;
+;; Draw circles around peaks
+;;
 function cheetah_peakcircles, filename, image, pState, peakx, peaky
 
 	;; Image of overlaid circles
@@ -60,6 +63,54 @@ function cheetah_peakcircles, filename, image, pState, peakx, peaky
 	peakcircles = peakcircles < 1
 	
 	return, peakcircles	
+
+end
+
+
+pro cheetah_resolutionCircles, pState, filename, image
+	
+	s = size(image,/dim)
+	win = (*pState).slideWin
+	scroll = (*pState).scroll
+	
+	detectorZ_mm = read_h5(filename, field='LCLS/detector0-Position')
+	wavelength_A = read_h5(filename, field='LCLS/photon_wavelength_A')
+	detectorZ_mm = detectorZ_mm[0]
+	wavelength_A = wavelength_A[0]
+	
+	print, 'Detector Z (mm) = ', detectorZ_mm
+	print, 'Wavelength (A) = ', wavelength_A
+	
+	;; For making the circle the old-fashioned way
+	np = 360
+	ct = 2*!pi*findgen(np)/(np-1)
+	cx = cos(ct)
+	cy = sin(ct)
+	
+	WSET, (*pState).slideWin
+	for d=2., 10., 1. do begin
+
+		;; Lithographer or Crystallographer convention?
+		if (*pState).resolutionRings1 eq 1 then $
+			sin_t = wavelength_A / (2 * d) $
+		else  $
+			sin_t = wavelength_A / d
+					
+		tan_t = sin_t / sqrt(1-sin_t^2)
+		r_mm = detectorZ_mm * tan_t
+		r_pix = r_mm / 110e-3
+		;print, d, sin_t, tan_t, r_mm, r_pix
+		;print, d, r_pix
+		;ring = ellipse(s[0]/2, s[1]/2, /device, color='red', major = r_pix, thick=1);, target=scroll)
+		;label = text(s[0]/2+r_pix, s[1]/2, string(d, 'Å'), color='red', /data)
+		plots, r_pix*cx+s[0]/2, r_pix*cy+s[1]/2, color=90, /device
+		
+		label = strcompress(string(fix(d),'A'),/remove_all)
+		lx = s[0]/2 - r_pix/sqrt(2)
+		ly = s[1]/2 - r_pix/sqrt(2)
+		xyouts, lx, ly, label, /device
+	endfor
+	
 
 end
 
@@ -282,15 +333,29 @@ pro cheetah_displayImage, pState, image
 		image = image < (max(image)/((*pState).image_boost))
 		image = (image > 0)^((*pState).image_gamma)
 
+
+		;; Resize image depending on zoom factor
+		z = (*pstate).image_zoom 
+		if z ne 1.0 then begin
+			sz = size(image,/dim)
+			image = congrid(image, z*sz[0], z*sz[1])		
+		endif
+		(*pstate).image_size = size(image,/dim)
+		
 		
 		;; Display image
 		(*pState).data = data
-		;(*pState).image = image
 		widget_control, (*pState).base, base_set_title=title
 		WSET, (*pState).slideWin
 		loadct, (*pstate).colour_table, /silent
-		;tvscl, (*pState).image
 		tvscl, image
+
+		;; Resolution rings
+		if (*pState).resolutionRings1 eq 1 or (*pState).resolutionRings2 eq 1 then begin
+			cheetah_resolutionCircles, pState, filename, image
+		
+		endif
+
 
 		;; Widget_control
 		thisfile = (*pState).currentFileNum+1
@@ -314,7 +379,9 @@ pro cheetah_displayImage, pState, image
 
 end
 
-
+;;
+;;	Save optimised IDL found peak list back into HDF5 file
+;;
 pro cheetah_overwritePeaks, filename, peakinfo
 
 	print, 'Saving found peaks back into HDF5 file '
@@ -393,12 +460,22 @@ pro cheetah_overwritePeaks, filename, peakinfo
 end
 
 
+pro cheetah_resizewindow, pstate
+  	sState = *pState
+	s = (*pstate).image_size
+	screensize = get_screen_size()
+	screensize -= 140
+	new_xsize = min([screensize[0],s[0]])
+	new_ysize = min([screensize[1],s[1]])
+	WIDGET_CONTROL, sState.scroll, xsize=new_xsize, ysize=new_ysize, draw_xsize=s[0],draw_ysize=s[1]
+end
+
 
 pro cheetah_event, ev
 
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
   	sState = *pState
-	img_size = size(sState.image,/dim)
+	img_size = (*pstate).image_size
 	
 	
 	;; Establish polite error handler to catch crashes
@@ -672,6 +749,23 @@ pro cheetah_event, ev
 			cheetah_displayImage, pState
 		end
 		
+		;;
+		;;	Resolution (in two conventions)
+		;;
+		sState.menu_resolution1 : begin
+			(*pstate).resolutionRings1 = 1-sState.resolutionRings1
+			(*pstate).resolutionRings2 = 0
+			widget_control, sState.menu_resolution1, set_button = (*pstate).resolutionRings1
+			widget_control, sState.menu_resolution2, set_button = 0
+			cheetah_displayImage, pState
+		end
+		sState.menu_resolution2 : begin
+			(*pstate).resolutionRings1 = 0
+			(*pstate).resolutionRings2 = 1-sState.resolutionRings2
+			widget_control, sState.menu_resolution1, set_button = 0
+			widget_control, sState.menu_resolution2, set_button = (*pstate).resolutionRings2
+			cheetah_displayImage, pState
+		end
 		
 		;;
 		;;	Profiles
@@ -827,6 +921,12 @@ pro cheetah_event, ev
 		end
 
 
+		sState.menu_centeredPeaks : begin
+			(*pstate).centeredPeaks = 1-(*pstate).centeredPeaks
+			widget_control, sState.menu_centeredPeaks, set_button = (*pstate).centeredPeaks
+		end
+		
+
 		sState.menu_cdiDefaults : begin
 			loadct, 4, /silent		
 			(*pstate).colour_table = 4
@@ -840,10 +940,45 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 5
+			(*pstate).image_boost = 10
 			cheetah_displayImage, pState
 		end
 		
+		
+		;;
+		;;	Image zoom
+		;;
+		sState.menu_localzoom : begin
+			zoom
+		end		
+
+		sState.menu_zoom50 : begin
+			(*pstate).image_zoom = .5
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom100 : begin
+			(*pstate).image_zoom = 1.0
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom150 : begin
+			(*pstate).image_zoom = 1.5
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
+
+		sState.menu_zoom200 : begin
+			(*pstate).image_zoom = 2.0
+			cheetah_displayImage, pState
+			cheetah_resizewindow, pstate
+			cheetah_displayImage, pState
+		end		
 		
 
 		else: begin
@@ -857,10 +992,14 @@ end
 
 
 
-pro cheetahview, pixmap=pixmap
+pro cheetahview, geometry=geometry, dir=dir
 
 	;;	Select data directory
-	dir = dialog_pickfile(/directory, title='Select data directory')
+	if not keyword_set(dir) then begin
+		dir = dialog_pickfile(/directory, title='Select data directory')
+		if dir eq '' then return
+	endif
+	
 	file = file_search(dir,"LCLS*.h5",/fully_qualify)
 	savedir=dir
 	
@@ -870,40 +1009,38 @@ pro cheetahview, pixmap=pixmap
 	endif
 
 
-	;; Using a pixel map?
-	;pixmap_file = dialog_pickfile(filter='*.h5', title='Select detector geometry file')
-	;if pixmap_file eq '' then begin
-	;	pixmap = 0
-	;	pixmap_x = 0
-	;	pixmap_y = 0
-	;	pixmap_dx = 0
-	;endif $
-	;else begin
-	;	pixmap = 1
-	;	pixmap_x = read_h5(pixmap_file,field='x')
-	;	pixmap_y = read_h5(pixmap_file,field='y')
-	;	pixmap_dx = 110e-6		;; cspad
-	;endelse
 
 	
 	;; Sample data
 	filename = file[0]
 	data = read_h5(filename)
 	
+
 	;; Set default pixel map (none)
 	s = size(data, /dim)
 	pixmap = 0
 	pixmap_x = fltarr(s[0],s[1])
 	pixmap_y = fltarr(s[0],s[1])
 	pixmap_dx = 110e-6
+	centeredPeaks = 0
+	
+	;; If geometry file is specified...
+	if keyword_set(geometry) then begin
+		pixmap = 1
+		pixmap_x = read_h5(geometry,field='x')
+		pixmap_y = read_h5(geometry,field='y')
+		pixmap_dx = 110e-6		;; cspad
+		centeredPeaks = 1
+	endif
 
-
-	if keyword_set(pixmap) then $
-		data = pixelRemap(data, pixmap_x, pixmap_y, pixmap_dx)
 
 	
 	image = (data>0)
-	image = image < 1000
+	image = image < 10000
+
+	if keyword_set(geometry) then $
+		image = pixelRemap(image, pixmap_x, pixmap_y, pixmap_dx)
+
 
 	title = file_basename(file[0])
 	oldwin = !d.window
@@ -971,14 +1108,19 @@ pro cheetahview, pixmap=pixmap
 	mbanalysis_savePeaks = widget_button(mbcryst, value='Save IDL found peaks to H5 file', /checked)
 	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked)
 	mbanalysis_displayLocalBackground = widget_button(mbcryst, value='Display with local background subtraction', /checked)
-
+	widget_control, mbanalysis_centeredPeaks, set_button=centeredPeaks
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
-	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=0, /separator)
-	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=0)
-	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=0)
-	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=0)
+	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer: wl = d sin(theta))', /checked)
+	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer: wl = 2d sin(theta))', /checked)
+	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
+	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
+	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)
+	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=1)
+	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=1)
+	widget_control, mbanalysis_resolution1, set_button=0
+	widget_control, mbanalysis_resolution2, set_button=0
 
 
 	;; Create action buttons
@@ -1021,8 +1163,10 @@ pro cheetahview, pixmap=pixmap
 				  currentFileNum : 0L, $
 				  h5field : "data/data", $
 				  image_gamma : 1.0, $
-				  image_boost : 5., $
-				  image_max : 32000., $
+				  image_boost : 10., $
+				  image_max : 16000., $
+				  image_zoom : 1.0, $
+				  image_size: size(image,/dim), $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
 				  pixmap_y : pixmap_y, $
@@ -1033,9 +1177,11 @@ pro cheetahview, pixmap=pixmap
 				  autoShuffle : 0, $
 				  autoNext : 0, $
 				  circleHDF5Peaks : 0, $
+				  resolutionRings1 : 0, $
+				  resolutionRings2 : 0, $
 				  findPeaks : 0, $
 				  savePeaks : 0, $
-				  centeredPeaks : 0, $
+				  centeredPeaks : centeredPeaks, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
 				  xvisible: xview, $
@@ -1068,7 +1214,13 @@ pro cheetahview, pixmap=pixmap
 				  menu_cdiDefaults : mbanalysis_cdidefaults, $
 				  menu_crystDefaults : mbanalysis_crystdefaults, $
 				  menu_processall : mbanalysis_processall, $
-				  
+				  menu_localzoom : 	mbanalysis_localzoom, $
+				  menu_resolution1 :  mbanalysis_resolution1, $
+				  menu_resolution2 :  mbanalysis_resolution2, $
+				  menu_zoom50 : 	mbanalysis_zoom50, $
+				  menu_zoom100 : mbanalysis_zoom100, $
+				  menu_zoom150 : mbanalysis_zoom150, $
+				  menu_zoom200 : mbanalysis_zoom200, $
 
 				  peaks_localbackground : 2, $
 				  peaks_ADC : 300, $
