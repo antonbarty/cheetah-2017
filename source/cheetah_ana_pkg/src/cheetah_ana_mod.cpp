@@ -943,11 +943,17 @@ namespace cheetah_ana_pkg {
 	cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
 	  // Wait for all workers to finish
-	  while(cheetahGlobal.nActiveThreads > 0) {
-	    printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
-	    usleep(100000);
+		int p=0;
+		int pp=0;
+		while(cheetahGlobal.nActiveThreads > 0) {
+	    	p = cheetahGlobal.nActiveThreads;
+			if ( pp != p){
+				pp = p;
+				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+				usleep(100000);
+			}
 	  }
-	  writeSharedCXI(&cheetahGlobal);
+	  writeAccumulatedCXI(&cheetahGlobal);
 	  //closeCXIFiles(&cheetahGlobal);
 	}
 

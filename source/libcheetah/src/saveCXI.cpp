@@ -538,7 +538,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   cxi->cheetahVal.unsharedVal.eventName = createStringStack("eventName", cxi->cheetahVal.unsharedVal.self,1024);
   cxi->cheetahVal.unsharedVal.frameNumber = createScalarStack("frameNumber", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.threadNumber = createScalarStack("threadNumber", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
+  cxi->cheetahVal.unsharedVal.threadID = createScalarStack("threadID", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
   cxi->cheetahVal.unsharedVal.gmd1 = createScalarStack("gmd1", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
   cxi->cheetahVal.unsharedVal.gmd2 = createScalarStack("gmd2", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
   cxi->cheetahVal.unsharedVal.energySpectrumExist = createScalarStack("energySpectrumExist", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
@@ -551,14 +551,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->cheetahVal.unsharedVal.laserEventCodeOn = createScalarStack("laserEventCodeOn", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
   cxi->cheetahVal.unsharedVal.laserDelay = createScalarStack("laserDelay", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
   cxi->cheetahVal.unsharedVal.hit = createScalarStack("hit", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
-  cxi->cheetahVal.unsharedVal.lastBgUpdate = createScalarStack("lastBgUpdate", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.nHot = createScalarStack("nHot", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.lastHotPixUpdate = createScalarStack("lastHotPixUpdate", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.hotPixCounter = createScalarStack("hotPixCounter", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.nHalo = createScalarStack("nHalo", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.lastHaloPixUpdate = createScalarStack("lastHaloPixUpdate", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-  cxi->cheetahVal.unsharedVal.haloPixCounter = createScalarStack("haloPixCounter", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
-
+  
   cxi->cheetahVal.sharedVal.self = H5Gcreate(cxi->cheetahVal.self, "shared", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
  
   CXI::ConfValues confVal;
@@ -567,6 +560,20 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   DETECTOR_LOOP{
     char buffer[1024];
+    sprintf(buffer,"detector%ld_lastBgUpdate",detID);
+    cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_nHot",detID);
+    cxi->cheetahVal.sharedVal.nHot[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_lastHotPixUpdate",detID);
+    cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_hotPixCounter",detID);
+    cxi->cheetahVal.sharedVal.hotPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_nHalo",detID);
+    cxi->cheetahVal.sharedVal.nHalo[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_lastHaloPixUpdate",detID);
+    cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+    sprintf(buffer,"detector%ld_haloPixCounter",detID);
+    cxi->cheetahVal.sharedVal.haloPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
     sprintf(buffer,"detector%ld_detectorName",detID);
     createAndWriteDataset(buffer,confVal.self,global->detector[detID].detectorName,MAX_FILENAME_LENGTH);
     sprintf(buffer,"detector%ld_geometryFile",detID);
@@ -707,7 +714,7 @@ static CXI::File * getCXIFileByName(cGlobal *global){
   return cxi;
 }
 
-void writeSharedCXI(cGlobal * global){
+void writeAccumulatedCXI(cGlobal * global){
   CXI::File * cxi = getCXIFileByName(global);
   CXI::SharedValues sharedVal = cxi->cheetahVal.sharedVal;
 
@@ -927,4 +934,31 @@ void writeCXI(cEventData *info, cGlobal *global ){
   time_t eventTime = info->seconds;
   ctime_r(&eventTime,timestr);
   writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
+  
+  writeStringToStack(cxi->cheetahVal.unsharedVal.eventName,stackSlice,info->eventname);
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumber,stackSlice,info->frameNumber);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.threadID,stackSlice,info->threadNum);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd1,stackSlice,info->gmd1);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd2,stackSlice,info->gmd2);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.energySpectrumExist,stackSlice,info->energySpectrumExist);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.nPeaks,stackSlice,info->nPeaks);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakNpix,stackSlice,info->peakNpix);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakTotal,stackSlice,info->peakTotal);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakDensity,stackSlice,info->peakDensity);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.laserEventCodeOn,stackSlice,info->laserEventCodeOn);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
+  writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
+  
+
+  DETECTOR_LOOP{
+    writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].last_bg_update);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].last_hotpix_update);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
+  }
 }
