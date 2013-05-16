@@ -752,12 +752,12 @@ void writeAccumulatedCXI(cGlobal * global){
       double * sigma_raw = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_raw[i] =
-	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }
       double * sigma_corrected = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_corrected[i] =
-	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }      
       double * sigma_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
       double * sigma_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
