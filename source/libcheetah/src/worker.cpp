@@ -338,6 +338,11 @@ void *worker(void *threadarg) {
    *	Cleanup and exit
    */
  cleanup:
+  // Add element to hitVector
+  pthread_mutex_lock(&global->hitVector_mutex);  
+  global->hitVector.push_back((bool) hit);
+  pthread_mutex_unlock(&global->hitVector_mutex);  
+
   // Decrement thread pool counter by one
   pthread_mutex_lock(&global->nActiveThreads_mutex);
   global->nActiveThreads -= 1;

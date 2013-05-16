@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <fenv.h>
 #include <unistd.h>
+#include <vector>
 
 #include "cheetah.h"
 

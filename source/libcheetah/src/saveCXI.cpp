@@ -723,6 +723,14 @@ void writeAccumulatedCXI(cGlobal * global){
   long	pix_nn,pix_nx,pix_ny;
   long	image_nn;
 
+  long NEvents = global->hitVector.size();
+  bool * temp = (bool*) calloc(NEvents, sizeof(bool));
+  for (long i=0;i<NEvents;i++){
+    temp[i] = global->hitVector[i];
+  }
+  createAndWriteDataset("hitVector",sharedVal.self,temp,NEvents);
+  free(temp);
+
   DETECTOR_LOOP{
     POWDER_LOOP{
       detector = &global->detector[detID];
@@ -786,7 +794,7 @@ void writeAccumulatedCXI(cGlobal * global){
       createAndWriteDataset(buffer, sharedVal.self,sigma_corrected,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_sigma_corrected_angAvg",detID,powID);
       createAndWriteDataset(buffer, sharedVal.self,sigma_corrected_ang,radial_nn);
-      
+
       free(sum_corrected_ang);
       free(sum_corrected_angCnt);
       free(sum_correctedSq_ang);
