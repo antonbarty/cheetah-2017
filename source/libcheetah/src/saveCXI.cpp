@@ -222,8 +222,8 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   int ndims;
   hid_t dataspace;
   hsize_t dims1[1] = {width};
-  hsize_t dims2[2] = {height,width};
-  hsize_t dims3[3] = {length,height,width};
+  hsize_t dims2[2] = {width,height};
+  hsize_t dims3[3] = {width,height,length};
   datatype = get_datatype(data);
   if(height == 0 && length==0){
     ndims = 1;
@@ -367,6 +367,12 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+  H5Fclose(fid);
+  // Closing off the newly created file to allow sharing to work
+  printf("Reopening #%s#\n", filename);
+  hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG);
+  fid = H5Fopen(filename, H5F_ACC_RDWR, fapl_id);
   if( fid<0 ) {ERROR("Cannot create file.\n");}
   cxi->self = fid;
   cxi->stackCounter = 0;
@@ -752,12 +758,12 @@ void writeAccumulatedCXI(cGlobal * global){
       double * sigma_raw = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_raw[i] =
-	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]) / detector->nPowderFrames[powID] );
       }
       double * sigma_corrected = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_corrected[i] =
-	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]) / detector->nPowderFrames[powID] );
       }      
       double * sigma_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
       double * sigma_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
