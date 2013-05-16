@@ -367,6 +367,12 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+  H5Fclose(fid);
+  // Closing off the newly created file to allow sharing to work
+  printf("Reopening #%s#\n", filename);
+  hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG);
+  fid = H5Fopen(filename, H5F_ACC_RDWR, fapl_id);
   if( fid<0 ) {ERROR("Cannot create file.\n");}
   cxi->self = fid;
   cxi->stackCounter = 0;

@@ -1,5 +1,6 @@
 
 find_package(HDF5 REQUIRED)
+find_package(PythonLibs REQUIRED)
 # We don't want to scare people with this
 mark_as_advanced(HDF5_DIR)
 mark_as_advanced(CLEAR HDF5_C_INCLUDE_DIR)
@@ -19,10 +20,11 @@ LIST(APPEND sources "src/spectrum.cpp" "src/worker.cpp")
 
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})
+include_directories(${PYTHON_INCLUDE_DIR})
 
 add_library(cheetah SHARED ${sources})
 
-target_link_libraries(cheetah ${HDF5_LIBRARIES})
+target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES})
 
 set_target_properties(
  cheetah

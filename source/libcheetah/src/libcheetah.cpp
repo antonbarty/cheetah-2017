@@ -17,8 +17,38 @@
 #include <stdlib.h>
 #include <fenv.h>
 #include <unistd.h>
+#include <Python.h>
 
 #include "cheetah.h"
+
+/* Very crude embedding of a Python interpreter for shared memory visualization */
+/* Note that this code implicitly assumes to be the only Python interpreter within the process */
+/* No synchronization at all, not even proper signal handling */
+
+void* pythonWorker(void* threadarg)
+{
+  char* pythonFile = (char*) threadarg;
+  FILE* fileHandle = fopen(pythonFile, "r");
+  if (!fileHandle)
+    {
+      fprintf(stderr, "Unable to open Python script %s, error code %d, continuing without Python visualizer.", pythonFile, errno);
+    }
+  // Note: no call to Py_SetProgramName for now
+  Py_Initialize();
+  PyRun_SimpleFile(fileHandle, pythonFile);
+  Py_Finalize();
+
+  return 0;
+}
+
+void spawnPython(char* pythonFile)
+{
+  pthread_t         thread;
+  pthread_attr_t    threadAttribute;
+  pthread_attr_init(&threadAttribute);
+  pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+  int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+}
 
 /*
  *  libCheetah initialisation function
@@ -37,6 +67,10 @@ void cheetahInit(cGlobal *global) {
 	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
 
 	printf("Cheetah clean initialisation\n");
+	if (global->pythonFile[0]) {
+	  printf("Initialising embedded Python visualisation now\n");
+	  spawnPython(global->pythonFile);
+	}
 }
 
 
