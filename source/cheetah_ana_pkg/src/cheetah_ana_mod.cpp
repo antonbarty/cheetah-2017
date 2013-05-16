@@ -191,7 +191,7 @@ namespace cheetah_ana_pkg {
 		 */
 		for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
 
-			if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
+		  if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
 
 				// Need to make this do 
 				shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_srcPnccd0);
@@ -223,7 +223,7 @@ namespace cheetah_ana_pkg {
 				}
 			}
 			else {
-				cout << "No configuration data" << endl;
+				cout << "No configuration data blas" << endl;
 			}
 		}
 	}
@@ -724,7 +724,6 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityCharge1 = charge1;
 		eventData->phaseCavityCharge1 = charge2;	
 		eventData->pGlobal = &cheetahGlobal;
-
 		
 		//	Copy raw cspad image data into Cheetah event structure for processing
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
@@ -769,14 +768,14 @@ namespace cheetah_ana_pkg {
 							for (unsigned s = 0; s != data.shape()[0]; ++s) {
 								memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
 							}
-										// Get temperature on strong back, just in case we want it for anything 
+							// Get temperature on strong back, just in case we want it for anything 
 							//float	temperature = std::numeric_limits<float>::quiet_NaN();;
 							//eventData->detector[detID].quad_temperature[quadrant] = temperature;
 						}
 					}        
 					
 					// Assemble data from all four quadrants into one large array (rawdata layout)
-							// Memcpy is necessary for thread safety.
+					// Memcpy is necessary for thread safety.
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					for(int quadrant=0; quadrant<4; quadrant++) {
 						long	i,j,ii;
@@ -806,11 +805,6 @@ namespace cheetah_ana_pkg {
 			  if (singleQuad.get()) {
 			    eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			    const ndarray<const int16_t, 3>& data = singleQuad->data();
-			    /*			    for (unsigned s = 0; s != data.shape()[2]; ++s) {
-			      printf("GUARD %d %d %d\n", data.shape()[0], data.shape()[1], data.shape()[2]);
-			      memcpy(&eventData->detector[detID].raw_data[s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
-			      printf("GUARD 2\n");
-			      }*/
 			    int partsize = asic_nx * asic_ny * 2;
 
 			        for (unsigned s = 0; s != data.shape()[2]; ++s) {
