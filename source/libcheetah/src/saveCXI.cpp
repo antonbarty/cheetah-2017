@@ -222,8 +222,8 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   int ndims;
   hid_t dataspace;
   hsize_t dims1[1] = {width};
-  hsize_t dims2[2] = {width,height};
-  hsize_t dims3[3] = {width,height,length};
+  hsize_t dims2[2] = {height,width};
+  hsize_t dims3[3] = {length,height,width};
   datatype = get_datatype(data);
   if(height == 0 && length==0){
     ndims = 1;
@@ -758,12 +758,12 @@ void writeAccumulatedCXI(cGlobal * global){
       double * sigma_raw = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_raw[i] =
-	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }
       double * sigma_corrected = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_corrected[i] =
-	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }      
       double * sigma_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
       double * sigma_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
