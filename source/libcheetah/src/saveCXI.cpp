@@ -223,7 +223,7 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   hid_t dataspace;
   hsize_t dims1[1] = {width};
   hsize_t dims2[2] = {height,width};
-  hsize_t dims3[3] = {length,height,width}
+  hsize_t dims3[3] = {length,height,width};
   datatype = get_datatype(data);
   if(height == 0 && length==0){
     ndims = 1;
