@@ -256,6 +256,7 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
     datatype = H5Tcopy(H5T_C_S1);
     H5Tset_size(datatype, width);    
     dims1[0] = 1;
+    ndims = 1;
     dataspace = H5Screate_simple(ndims, dims1, dims1);
   }else{
     if(height == 0 && length==0){
