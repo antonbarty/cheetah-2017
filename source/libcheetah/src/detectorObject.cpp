@@ -151,8 +151,18 @@ void cPixelDetectorCommon::configure(void) {
     pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
     pix_nn = pix_nx * pix_ny;
     pixelSize = 110e-6;
-  } 
-  else if(strcmp(detectorName, "pnCCD") == 0 ) {
+  } else if(strcmp(detectorName, "CxiSc2") == 0) {
+    strcpy(detectorType, "cspad2x2");
+    asic_nx = CSPAD_ASIC_NX;
+    asic_ny = CSPAD_ASIC_NY;
+    asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+    nasics_x = CSPAD2x2_nASICS_X;
+    nasics_y = CSPAD2x2_nASICS_Y;
+    pix_nx = nasics_x*asic_nx;
+    pix_ny = nasics_y*asic_ny;
+    pix_nn = pix_nx * pix_ny;
+    pixelSize = 110e-6;
+  } else if(strcmp(detectorName, "pnCCD") == 0 ) {
     strcpy(detectorType, "pnccd");
     asic_nx = PNCCD_ASIC_NX;
     asic_ny = PNCCD_ASIC_NY;
@@ -558,11 +568,10 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
     goto bounds;
   }
 
-  fesetround(1);
-  xmax = lrint(xmax);
-  xmin = lrint(xmin);
-  ymax = lrint(ymax);
-  ymin = lrint(ymin);
+  xmax = (long) (xmax + 0.5);
+  xmin = (long) (xmin + 0.5);
+  ymax = (long) (ymax + 0.5);
+  ymin = (long) (ymin + 0.5);
   printf("\tImage bounds:\n");
   printf("\tx range %.0f to %.0f\n",xmin,xmax);
   printf("\ty range %.0f to %.0f\n",ymin,ymax);
@@ -579,8 +588,8 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 	
   // Apply image center shift
   for(i=0;i<nn;i++){
-    pix_x[i] -= beamCenterPixX;
-    pix_y[i] -= beamCenterPixY;
+    pix_x[i] -= beamCenterPixX + 0.5;
+    pix_y[i] -= beamCenterPixY + 0.5;
   }
 	
 

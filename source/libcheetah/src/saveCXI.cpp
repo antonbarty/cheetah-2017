@@ -25,11 +25,13 @@ cheetahHDF5ErrorHandler(hid_t, void *)
 template <class T>
 hid_t get_datatype(const T * foo){
   hid_t datatype;
-  if(typeid(T) == typeid(short)){
+  if(typeid(T) == typeid(bool) && sizeof(bool) == 1){
+    datatype = H5T_NATIVE_INT8;
+  }else if(typeid(T) == typeid(short)){
     datatype = H5T_NATIVE_INT16;
   }else if(typeid(T) == typeid(unsigned short)){
     datatype = H5T_NATIVE_UINT16;
-  }else if((typeid(T) == typeid(int)) || (typeid(T) == typeid(bool))){
+  }else if((typeid(T) == typeid(int))) {
     datatype = H5T_NATIVE_INT32;
   }else if(typeid(T) == typeid(unsigned int)){
     datatype = H5T_NATIVE_UINT32;
@@ -222,8 +224,8 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   int ndims;
   hid_t dataspace;
   hsize_t dims1[1] = {width};
-  hsize_t dims2[2] = {width,height};
-  hsize_t dims3[3] = {width,height,length};
+  hsize_t dims2[2] = {height,width};
+  hsize_t dims3[3] = {length,height,width};
   datatype = get_datatype(data);
   if(height == 0 && length==0){
     ndims = 1;
@@ -559,7 +561,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->cheetahVal.unsharedVal.hit = createScalarStack("hit", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
   
   cxi->cheetahVal.sharedVal.self = H5Gcreate(cxi->cheetahVal.self, "shared", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
- 
+  cxi->cheetahVal.sharedVal.hit = createScalarStack("hit", cxi->cheetahVal.sharedVal.self,H5T_NATIVE_INT);
+
   CXI::ConfValues confVal;
   cxi->cheetahVal.confVal.self = H5Gcreate(cxi->cheetahVal.self, "configuration", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   confVal = cxi->cheetahVal.confVal;
@@ -729,6 +732,14 @@ void writeAccumulatedCXI(cGlobal * global){
   long	pix_nn,pix_nx,pix_ny;
   long	image_nn;
 
+  //long NEvents = global->hitVector.size();
+  //bool * temp = (bool*) calloc(NEvents, sizeof(bool));
+  //for (long i=0;i<NEvents;i++){
+  //  temp[i] = global->hitVector[i];
+  //}
+  //createAndWriteDataset("hitVector",sharedVal.self,temp,NEvents);
+  //free(temp);
+
   DETECTOR_LOOP{
     POWDER_LOOP{
       detector = &global->detector[detID];
@@ -758,12 +769,12 @@ void writeAccumulatedCXI(cGlobal * global){
       double * sigma_raw = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_raw[i] =
-	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }
       double * sigma_corrected = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
 	sigma_corrected[i] =
-	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
       }      
       double * sigma_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
       double * sigma_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
@@ -792,7 +803,7 @@ void writeAccumulatedCXI(cGlobal * global){
       createAndWriteDataset(buffer, sharedVal.self,sigma_corrected,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_sigma_corrected_angAvg",detID,powID);
       createAndWriteDataset(buffer, sharedVal.self,sigma_corrected_ang,radial_nn);
-      
+
       free(sum_corrected_ang);
       free(sum_corrected_angCnt);
       free(sum_correctedSq_ang);
@@ -844,127 +855,134 @@ void writeCXI(cEventData *info, cGlobal *global ){
   CXI::File * cxi = getCXIFileByName(global);
   uint stackSlice = getStackSlice(cxi);
   info->stackSlice = stackSlice;
-  //printf("Writing to CXI file for stack slice number %ld \n", stackSlice);
-  
-  double en = info->photonEnergyeV * 1.60217646e-19;
-  writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);
-  // remove the '.h5' from eventname
-  info->eventname[strlen(info->eventname) - 3] = 0;
-  writeStringToStack(cxi->entry.experimentIdentifier,stackSlice,info->eventname);
-  // put it back
-  info->eventname[strlen(info->eventname)] = '.';
 
-  DETECTOR_LOOP {    
-    /* Save assembled image under image groups */
-    writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
-    writeScalarToStack(cxi->entry.instrument.detectors[detID].xPixelSize,stackSlice,global->detector[detID].pixelSize);
-    writeScalarToStack(cxi->entry.instrument.detectors[detID].yPixelSize,stackSlice,global->detector[detID].pixelSize);
+  writeScalarToStack(cxi->cheetahVal.sharedVal.hit,global->nCXIEvents,info->hit);
+  global->nCXIEvents += 1;
 
-    long imgID = detID;
-    if (global->detector[detID].downsampling > 1){
-      imgID = detID * 2;
-    }
-    char buffer[1024];
-    long image_ny = global->detector[detID].image_nn/global->detector[detID].image_nx;
-    sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
-    writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
-    if(global->saveAssembled){
-      if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
-      write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].image);
-      if(global->savePixelmask){
-	if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
-	write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].image_pixelmask);
-      }
-      int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,image_ny,CXI::thumbnailScale);
-      if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
-      write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
-      writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
-      writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
-      delete [] thumbnail;      
+  if(info->writeFlag){
+    global->nCXIHits += 1;
+    double en = info->photonEnergyeV * 1.60217646e-19;
+    writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);
+    // remove the '.h5' from eventname
+    info->eventname[strlen(info->eventname) - 3] = 0;
+    writeStringToStack(cxi->entry.experimentIdentifier,stackSlice,info->eventname);
+    // put it back
+    info->eventname[strlen(info->eventname)] = '.';
 
+
+    DETECTOR_LOOP {    
+      /* Save assembled image under image groups */
+      writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
+      writeScalarToStack(cxi->entry.instrument.detectors[detID].xPixelSize,stackSlice,global->detector[detID].pixelSize);
+      writeScalarToStack(cxi->entry.instrument.detectors[detID].yPixelSize,stackSlice,global->detector[detID].pixelSize);
+
+      long imgID = detID;
       if (global->detector[detID].downsampling > 1){
-	imgID = detID * 2 + 1;
-	long imageXxX_ny = global->detector[detID].imageXxX_nn/global->detector[detID].imageXxX_nx;
+	imgID = detID * 2;
+      }
+      char buffer[1024];
+      long image_ny = global->detector[detID].image_nn/global->detector[detID].image_nx;
+      sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
+      writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
+      if(global->saveAssembled){
 	if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
-	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
+	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].image);
 	if(global->savePixelmask){
 	  if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
-	  write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].imageXxX_pixelmask);
+	  write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].image_pixelmask);
 	}
-	int16_t * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
+	int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,image_ny,CXI::thumbnailScale);
 	if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
 	writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
 	writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
+	delete [] thumbnail;      
+
+	if (global->detector[detID].downsampling > 1){
+	  imgID = detID * 2 + 1;
+	  long imageXxX_ny = global->detector[detID].imageXxX_nn/global->detector[detID].imageXxX_nx;
+	  if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
+	  write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
+	  if(global->savePixelmask){
+	    if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
+	    write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].imageXxX_pixelmask);
+	  }
+	  int16_t * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
+	  if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
+	  write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
+	  writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
+	  writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
+	  delete [] thumbnail;
+	}
+      }
+      if(global->saveRaw){
+	if (cxi->entry.instrument.detectors[detID].data<0){ERROR("No valid dataset.");}
+	write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
+	if(global->savePixelmask){
+	  write2DToStack(cxi->entry.instrument.detectors[detID].mask,stackSlice,info->detector[detID].pixelmask);
+	}
+	int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+	write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
 	delete [] thumbnail;
       }
     }
-    if(global->saveRaw){
-      if (cxi->entry.instrument.detectors[detID].data<0){ERROR("No valid dataset.");}
-      write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
-      if(global->savePixelmask){
-	write2DToStack(cxi->entry.instrument.detectors[detID].mask,stackSlice,info->detector[detID].pixelmask);
-      }
-      int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
-      write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
-      delete [] thumbnail;
+    /*Write LCLS informations*/
+    DETECTOR_LOOP{
+      writeScalarToStack(cxi->lcls.detector_positions[detID],stackSlice,global->detector[detID].detectorZ);
+      writeScalarToStack(cxi->lcls.detector_EncoderValues[detID],stackSlice,detID);
     }
-  }
-  /*Write LCLS informations*/
-  DETECTOR_LOOP{
-    writeScalarToStack(cxi->lcls.detector_positions[detID],stackSlice,global->detector[detID].detectorZ);
-    writeScalarToStack(cxi->lcls.detector_EncoderValues[detID],stackSlice,detID);
-  }
-  writeScalarToStack(cxi->lcls.machineTime,stackSlice,info->seconds);
-  writeScalarToStack(cxi->lcls.fiducial,stackSlice,info->fiducial);
-  writeScalarToStack(cxi->lcls.ebeamCharge,stackSlice,info->fEbeamCharge);
-  writeScalarToStack(cxi->lcls.ebeamL3Energy,stackSlice,info->fEbeamL3Energy);
-  writeScalarToStack(cxi->lcls.ebeamLTUAngX,stackSlice,info->fEbeamLTUAngX);
-  writeScalarToStack(cxi->lcls.ebeamLTUAngY,stackSlice,info->fEbeamLTUAngY);
-  writeScalarToStack(cxi->lcls.ebeamLTUPosX,stackSlice,info->fEbeamLTUPosX);
-  writeScalarToStack(cxi->lcls.ebeamLTUPosY,stackSlice,info->fEbeamLTUPosY);
-  writeScalarToStack(cxi->lcls.ebeamPkCurrBC2,stackSlice,info->fEbeamPkCurrBC2);
-  writeScalarToStack(cxi->lcls.phaseCavityTime1,stackSlice,info->phaseCavityTime1);
-  writeScalarToStack(cxi->lcls.phaseCavityTime2,stackSlice,info->phaseCavityTime2);
-  writeScalarToStack(cxi->lcls.phaseCavityCharge1,stackSlice,info->phaseCavityCharge1);
-  writeScalarToStack(cxi->lcls.phaseCavityCharge2,stackSlice,info->phaseCavityCharge2);
-  writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,info->photonEnergyeV);
-  writeScalarToStack(cxi->lcls.photon_wavelength_A,stackSlice,info->wavelengthA);
-  writeScalarToStack(cxi->lcls.f_11_ENRC,stackSlice,info->gmd11);
-  writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
-  writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
-  writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
-  int LaserOnVal = (info->laserEventCodeOn)?1:0;
-  writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
-  char timestr[26];
-  time_t eventTime = info->seconds;
-  ctime_r(&eventTime,timestr);
-  writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
+    writeScalarToStack(cxi->lcls.machineTime,stackSlice,info->seconds);
+    writeScalarToStack(cxi->lcls.fiducial,stackSlice,info->fiducial);
+    writeScalarToStack(cxi->lcls.ebeamCharge,stackSlice,info->fEbeamCharge);
+    writeScalarToStack(cxi->lcls.ebeamL3Energy,stackSlice,info->fEbeamL3Energy);
+    writeScalarToStack(cxi->lcls.ebeamLTUAngX,stackSlice,info->fEbeamLTUAngX);
+    writeScalarToStack(cxi->lcls.ebeamLTUAngY,stackSlice,info->fEbeamLTUAngY);
+    writeScalarToStack(cxi->lcls.ebeamLTUPosX,stackSlice,info->fEbeamLTUPosX);
+    writeScalarToStack(cxi->lcls.ebeamLTUPosY,stackSlice,info->fEbeamLTUPosY);
+    writeScalarToStack(cxi->lcls.ebeamPkCurrBC2,stackSlice,info->fEbeamPkCurrBC2);
+    writeScalarToStack(cxi->lcls.phaseCavityTime1,stackSlice,info->phaseCavityTime1);
+    writeScalarToStack(cxi->lcls.phaseCavityTime2,stackSlice,info->phaseCavityTime2);
+    writeScalarToStack(cxi->lcls.phaseCavityCharge1,stackSlice,info->phaseCavityCharge1);
+    writeScalarToStack(cxi->lcls.phaseCavityCharge2,stackSlice,info->phaseCavityCharge2);
+    writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,info->photonEnergyeV);
+    writeScalarToStack(cxi->lcls.photon_wavelength_A,stackSlice,info->wavelengthA);
+    writeScalarToStack(cxi->lcls.f_11_ENRC,stackSlice,info->gmd11);
+    writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
+    writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
+    writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
+    int LaserOnVal = (info->laserEventCodeOn)?1:0;
+    writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
+    char timestr[26];
+    time_t eventTime = info->seconds;
+    ctime_r(&eventTime,timestr);
+    writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
   
-  writeStringToStack(cxi->cheetahVal.unsharedVal.eventName,stackSlice,info->eventname);
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumber,stackSlice,info->frameNumber);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.threadID,stackSlice,info->threadNum);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd1,stackSlice,info->gmd1);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd2,stackSlice,info->gmd2);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.energySpectrumExist,stackSlice,info->energySpectrumExist);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.nPeaks,stackSlice,info->nPeaks);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakNpix,stackSlice,info->peakNpix);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakTotal,stackSlice,info->peakTotal);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.peakDensity,stackSlice,info->peakDensity);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.laserEventCodeOn,stackSlice,info->laserEventCodeOn);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
-  writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
+    writeStringToStack(cxi->cheetahVal.unsharedVal.eventName,stackSlice,info->eventname);
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumber,stackSlice,info->frameNumber);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.threadID,stackSlice,info->threadNum);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd1,stackSlice,info->gmd1);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd2,stackSlice,info->gmd2);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.energySpectrumExist,stackSlice,info->energySpectrumExist);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.nPeaks,stackSlice,info->nPeaks);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.peakNpix,stackSlice,info->peakNpix);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.peakTotal,stackSlice,info->peakTotal);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.peakDensity,stackSlice,info->peakDensity);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.laserEventCodeOn,stackSlice,info->laserEventCodeOn);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
   
 
-  DETECTOR_LOOP{
-    writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].last_bg_update);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].last_hotpix_update);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
+    DETECTOR_LOOP{
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].last_bg_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].last_hotpix_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
+    }
+   
   }
 }

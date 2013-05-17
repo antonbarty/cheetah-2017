@@ -18,6 +18,7 @@
 
 #define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
 
+
 /** @brief Global variables.
  *
  * Configuration parameters, and things that don't change often.
@@ -293,6 +294,7 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
+	pthread_mutex_t  hitVector_mutex;
 
 	/*
 	 *	Common variables
@@ -317,6 +319,8 @@ public:
 	long     nrecentprocessedframes;
 	long     nrecenthits;
     long     nespechits;
+    long nCXIEvents;
+    long nCXIHits;
     
 	// variable to hold the updating run integrated spectrum
 	double  *espectrumRun;

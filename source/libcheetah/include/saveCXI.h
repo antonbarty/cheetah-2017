@@ -115,6 +115,7 @@ typedef struct{
   hid_t nHalo[MAX_DETECTORS];
   hid_t lastHaloPixUpdate[MAX_DETECTORS];
   hid_t haloPixCounter[MAX_DETECTORS];
+  hid_t hit;
 }SharedValues;
 
 typedef struct{

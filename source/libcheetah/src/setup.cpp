@@ -2,7 +2,7 @@
  *  setup.cpp
  *  cheetah
  *
- *  Created by Anton Barty on 7/2/11.
+ *  created by Anton Barty on 7/2/11.
  *  Copyright 2011 CFEL. All rights reserved.
  *
  */
@@ -415,7 +415,8 @@ void cGlobal::setup() {
     }
   }
 
-
+  nCXIEvents = 0;
+  nCXIHits = 0;
 }
 
 
@@ -695,7 +696,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "saveassembled")) {
     saveAssembled = atoi(value);
-    assemble2DImage = 1;
+    assemble2DImage = saveAssembled;
+    assemble2DMask = saveAssembled;
   }
   else if (!strcmp(tag, "assembleinterpolation")) {
     assembleInterpolation = atoi(value);

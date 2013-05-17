@@ -34,6 +34,7 @@
 #include "PSEvt/EventId.h"
 #include "psddl_psana/bld.ddl.h"
 #include "psddl_psana/cspad.ddl.h"
+#include "psddl_psana/cspad2x2.ddl.h"
 #include "psddl_psana/evr.ddl.h"
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
@@ -63,6 +64,10 @@ namespace cheetah_ana_pkg {
 	static int laserSwitch = 0;
 	static int prevLaser = 0;
 	static time_t startT = 0;
+
+  class CspadDataWrapper {
+    
+  };
 
 
         void sig_handler(int signo)
@@ -108,6 +113,7 @@ namespace cheetah_ana_pkg {
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
 		m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
+		m_srcCspad2x2 = configStr("cspad2x2Source0","DetInfo(:Cspad2x2)");
 		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
 		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
@@ -115,7 +121,7 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
-        m_srcSpec = configStr("spectrumSource","DetInfo()");
+		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 	}
 
@@ -185,7 +191,7 @@ namespace cheetah_ana_pkg {
 		 */
 		for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
 
-			if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
+		  if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
 
 				// Need to make this do 
 				shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_srcPnccd0);
@@ -215,10 +221,10 @@ namespace cheetah_ana_pkg {
 					cout << "Exiting..." << endl;
 					exit(1);
 				}
-			}
-			else {
-				cout << "No configuration data" << endl;
-			}
+		  }
+		  else {
+		    cout << "No configuration data" << endl;
+		  }
 		}
 	}
 
@@ -562,6 +568,9 @@ namespace cheetah_ana_pkg {
 			else if (cheetahGlobal.detector[detID].detectorID == 1) {
 				data2 = evt.get(m_srcCspad1, m_key);
 			}
+			else if (cheetahGlobal.detector[detID].detectorID == 2) {
+				data2 = evt.get(m_srcCspad2x2, m_key);
+			}
 			
 			if (data2.get()) {
 				if (verbose) {
@@ -715,7 +724,6 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityCharge1 = charge1;
 		eventData->phaseCavityCharge1 = charge2;	
 		eventData->pGlobal = &cheetahGlobal;
-
 		
 		//	Copy raw cspad image data into Cheetah event structure for processing
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
@@ -760,14 +768,14 @@ namespace cheetah_ana_pkg {
 							for (unsigned s = 0; s != data.shape()[0]; ++s) {
 								memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
 							}
-										// Get temperature on strong back, just in case we want it for anything 
+							// Get temperature on strong back, just in case we want it for anything 
 							//float	temperature = std::numeric_limits<float>::quiet_NaN();;
 							//eventData->detector[detID].quad_temperature[quadrant] = temperature;
 						}
 					}        
 					
 					// Assemble data from all four quadrants into one large array (rawdata layout)
-							// Memcpy is necessary for thread safety.
+					// Memcpy is necessary for thread safety.
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					for(int quadrant=0; quadrant<4; quadrant++) {
 						long	i,j,ii;
@@ -783,9 +791,33 @@ namespace cheetah_ana_pkg {
 						free(quad_data[quadrant]);
 				}
 				else {
-					printf("%li: cspad frame data not available\n", frameNumber);
+				  printf("%li: cspad frame data not available for detector ID %d\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
 					return;
 				}
+			}
+			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
+			  long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+			  long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+			  long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+
+			  shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
+			  singleQuad = evt.get(m_srcCspad2x2, m_key);
+			  if (singleQuad.get()) {
+			    eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+			    const ndarray<const int16_t, 3>& data = singleQuad->data();
+			    int partsize = asic_nx * asic_ny * 2;
+			    for (unsigned s = 0; s < 2; s++) {
+			      for (int y = 0; y < asic_ny; y++) {
+				for (int x = 0; x < asic_nx * 2; x++) {
+				  eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+				}
+			      }
+			    }
+			   
+			  } else {
+			    printf("%li: cspad 2x2 frame data not available for detector ID %d\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+			    return;
+			  }
 			}
 
 			/*

@@ -87,6 +87,7 @@ private:
   std::string m_key;
   Source m_srcCspad0;
   Source m_srcCspad1;
+  Source m_srcCspad2x2;
   Source m_srcEvr;
   Source m_srcBeam;
   Source m_srcFee;

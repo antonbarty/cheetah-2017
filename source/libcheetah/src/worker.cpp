@@ -74,15 +74,14 @@ void *worker(void *threadarg) {
     }
   }
 
+
   // Init background buffer
   initBackgroundBuffer(eventData, global);
-
 	
   /*
    * Check for saturated pixels before applying any other corrections
    */
   checkSaturatedPixels(eventData, global);
-
 	
   /*
    *	Subtract darkcal image (static electronic offsets)
@@ -96,19 +95,16 @@ void *worker(void *threadarg) {
   cspadModuleSubtract(eventData, global);
   cspadSubtractUnbondedPixels(eventData, global);
   cspadSubtractBehindWires(eventData, global);
-
 	
   /*
    *	Apply gain correction
    */
   applyGainCorrection(eventData, global);
-
 	
   /*
    *	Apply bad pixel map
    */
   applyBadPixelMask(eventData, global);
-	
 	
   /* 
    *	Keep memory of data with only detector artefacts subtracted 
@@ -126,8 +122,6 @@ void *worker(void *threadarg) {
    *	Subtract persistent photon background
    */
   subtractPersistentBackground(eventData, global);
-
-    	
 
   /*
    *	Local background subtraction
@@ -178,7 +172,8 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
    
-	/*
+
+  /*
 	 *	Hitfinding
 	 */
 	if(global->hitfinder){
@@ -235,7 +230,6 @@ void *worker(void *threadarg) {
     }
   }
 
-
   /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
@@ -246,6 +240,7 @@ void *worker(void *threadarg) {
    *   Downsample assembled image
    */
   downsample(eventData,global);
+
 
   /*
    *  Calculate radial average
@@ -265,23 +260,24 @@ void *worker(void *threadarg) {
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
-  
-	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
-    if(global->saveCXI==1){
-      pthread_mutex_lock(&global->saveCXI_mutex);
-      writeCXI(eventData, global);
-      pthread_mutex_unlock(&global->saveCXI_mutex);
+
+  eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+  if(global->saveCXI==1){
+    pthread_mutex_lock(&global->saveCXI_mutex);
+    writeCXI(eventData, global);
+    pthread_mutex_unlock(&global->saveCXI_mutex);
+    if(eventData->writeFlag){
       printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
-    else {
+  } else {
+    if(eventData->writeFlag){
       writeHDF5(eventData, global);
       printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
     }
   }
-  else {
+  if(!eventData->writeFlag){
     printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
   }
-
   /*
    *	If this is a hit, write out peak info to peak list file
    */
@@ -332,7 +328,6 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
-
 	
   /*
    *	Cleanup and exit
@@ -342,7 +337,7 @@ void *worker(void *threadarg) {
   pthread_mutex_lock(&global->nActiveThreads_mutex);
   global->nActiveThreads -= 1;
   pthread_mutex_unlock(&global->nActiveThreads_mutex);
-    
+
   // Free memory only if running multi-threaded
   if(eventData->useThreads == 1) {
     cheetahDestroyEvent(eventData);

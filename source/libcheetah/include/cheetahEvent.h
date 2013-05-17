@@ -27,6 +27,7 @@ public:
 	long        frameNumber;
 	long        frameNum;
 	uint stackSlice;
+	bool writeFlag;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
