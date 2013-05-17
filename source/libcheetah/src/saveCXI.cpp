@@ -252,15 +252,22 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   hsize_t dims2[2] = {height,width};
   hsize_t dims3[3] = {length,height,width};
   datatype = get_datatype(data);
-  if(height == 0 && length==0){
-    ndims = 1;
+  if(typeid(T) == typeid(char)){
+    datatype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(datatype, width);    
+    dims1[0] = 1;
     dataspace = H5Screate_simple(ndims, dims1, dims1);
-  }else if(length==0){
-   ndims = 2; 
-   dataspace = H5Screate_simple(ndims, dims2, dims2);
-   }else{
-    ndims = 3;
-    dataspace = H5Screate_simple(ndims, dims3, dims3);
+  }else{
+    if(height == 0 && length==0){
+      ndims = 1;
+      dataspace = H5Screate_simple(ndims, dims1, dims1);
+    }else if(length==0){
+      ndims = 2; 
+      dataspace = H5Screate_simple(ndims, dims2, dims2);
+    }else{
+      ndims = 3;
+      dataspace = H5Screate_simple(ndims, dims3, dims3);
+    }
   }
   if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -270,6 +277,9 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   }
   H5Dclose(dataset);
   H5Sclose(dataspace);
+  if(typeid(T) == typeid(char)){
+    H5Tclose(datatype);
+  }
 }
 
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
