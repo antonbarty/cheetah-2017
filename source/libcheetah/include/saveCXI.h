@@ -17,6 +17,7 @@
 #include "median.h"
 
 namespace CXI{
+  const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
 typedef struct{
     hid_t self;

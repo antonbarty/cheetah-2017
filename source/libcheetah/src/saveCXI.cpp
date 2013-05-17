@@ -171,6 +171,10 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   H5Awrite(attr,datatype,axis);
   H5Aclose(attr);
+  attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  int zero = 0;
+  H5Awrite(attr,H5T_NATIVE_INT32,&zero);
+  H5Aclose(attr);
   H5Sclose(memspace);
   H5Sclose(dataspace);
   H5Pclose(cparms);
@@ -213,6 +217,25 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
   w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
   if( w<0 ){
     ERROR("Cannot write to file.\n");
+  }
+  hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
+  // Silently ignore failure to write, this attribute is non-essential
+  if(a>=0) {
+    int oldVal;
+    w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to read back size attribute");
+      }
+    if (oldVal < stackSlice + 1) {
+      oldVal = stackSlice + 1;
+    }
+    w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to write size attribute");
+      }
+    H5Aclose(a);
   }
   H5Sclose(memspace);
   H5Sclose(dataspace);
