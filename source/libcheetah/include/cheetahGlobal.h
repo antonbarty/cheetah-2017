@@ -18,8 +18,6 @@
 
 #define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
 
-#include <vector>
-
 
 /** @brief Global variables.
  *
@@ -321,9 +319,8 @@ public:
 	long     nrecentprocessedframes;
 	long     nrecenthits;
     long     nespechits;
-
-    // long vector (all events) storing whether it was a hit or not
-    std::vector<bool> hitVector;
+    long nCXIEvents;
+    long nCXIHits;
     
 	// variable to hold the updating run integrated spectrum
 	double  *espectrumRun;

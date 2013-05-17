@@ -2,7 +2,7 @@
  *  setup.cpp
  *  cheetah
  *
- *  Created by Anton Barty on 7/2/11.
+ *  created by Anton Barty on 7/2/11.
  *  Copyright 2011 CFEL. All rights reserved.
  *
  */
@@ -259,7 +259,6 @@ void cGlobal::setup() {
   pthread_mutex_init(&datarateWorker_mutex, NULL);  
   pthread_mutex_init(&saveCXI_mutex, NULL);  
   pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
-  pthread_mutex_init(&hitVector_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
   /*
@@ -416,12 +415,8 @@ void cGlobal::setup() {
     }
   }
 
-  /*
-   * Init bool vector for every event: hit or no hit ?
-   */
-  std::vector<bool> hitVector;
-  // would be nice to have a vector of all experiment identifiers as well?!
-
+  nCXIEvents = 0;
+  nCXIHits = 0;
 }
 
 
