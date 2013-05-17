@@ -891,13 +891,13 @@ void closeCXIFiles(cGlobal * global){
 void writeCXI(cEventData *info, cGlobal *global ){
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
-  uint stackSlice = getStackSlice(cxi);
-  info->stackSlice = stackSlice;
-
   writeScalarToStack(cxi->cheetahVal.sharedVal.hit,global->nCXIEvents,info->hit);
   global->nCXIEvents += 1;
 
   if(info->writeFlag){
+    uint stackSlice = getStackSlice(cxi);
+    info->stackSlice = stackSlice;
+
     global->nCXIHits += 1;
     double en = info->photonEnergyeV * 1.60217646e-19;
     writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);

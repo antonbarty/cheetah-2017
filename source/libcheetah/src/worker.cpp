@@ -177,6 +177,7 @@ void *worker(void *threadarg) {
 	 *	Hitfinding
 	 */
 	if(global->hitfinder){
+
 		hit = hitfinder(eventData, global);
 		eventData->hit = hit;
 	}
