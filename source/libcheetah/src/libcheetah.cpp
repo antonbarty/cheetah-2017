@@ -36,8 +36,10 @@ void* pythonWorker(void* threadarg)
     }
   // Note: no call to Py_SetProgramName for now
   Py_Initialize();
+  //  PyThreadState* ourThread = Py_NewInterpreter();
   PyRun_SimpleFile(fileHandle, pythonFile);
-  Py_Finalize();
+  //  Py_EndInterpreter(ourThread);
+  //  Py_Finalize();
 
   return 0;
 }
