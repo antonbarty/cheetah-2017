@@ -104,6 +104,12 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   H5Awrite(attr,datatype,axis);
   H5Tclose(datatype);
   H5Aclose(attr);
+
+  attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  int zero = 0;
+  H5Awrite(attr,H5T_NATIVE_INT32,&zero);
+  H5Aclose(attr);
+
   H5Sclose(memspace);
   H5Sclose(dataspace);
   H5Pclose(cparms);
@@ -144,6 +150,26 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
   if( w<0 ){
     ERROR("Cannot write to file.\n");
     abort();
+  }
+
+  hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
+  // Silently ignore failure to write, this attribute is non-essential
+  if(a>=0) {
+    int oldVal;
+    w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to read back size attribute");
+      }
+    if (oldVal < stackSlice + 1) {
+      oldVal = stackSlice + 1;
+    }
+    w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to write size attribute");
+      }
+    H5Aclose(a);
   }
 
   H5Sclose(memspace);
@@ -306,8 +332,14 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   
   H5Awrite(attr,datatype,axis);
+  H5Aclose(attr);
+
+  attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
+  int zero = 0;
+  H5Awrite(attr,H5T_NATIVE_INT32,&zero);
   H5Tclose(datatype);
   H5Aclose(attr);
+
   H5Sclose(memspace);
   H5Sclose(dataspace);
   H5Pclose(cparms);
@@ -352,6 +384,26 @@ static void writeStringToStack(hid_t dataset, uint stackSlice, const char * valu
     abort();
   }
   H5Tclose(type);
+
+  hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
+  // Silently ignore failure to write, this attribute is non-essential
+  if(a>=0) {
+    int oldVal;
+    w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to read back size attribute");
+      }
+    if (oldVal < stackSlice + 1) {
+      oldVal = stackSlice + 1;
+    }
+    w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
+    if (w < 0)
+      {
+	ERROR("Failure to write size attribute");
+      }
+    H5Aclose(a);
+  }
   H5Sclose(memspace);
   H5Sclose(dataspace);
 }
@@ -600,6 +652,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   
   cxi->cheetahVal.sharedVal.self = H5Gcreate(cxi->cheetahVal.self, "shared", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   cxi->cheetahVal.sharedVal.hit = createScalarStack("hit", cxi->cheetahVal.sharedVal.self,H5T_NATIVE_INT);
+  cxi->cheetahVal.sharedVal.nPeaks = createScalarStack("nPeaks", cxi->cheetahVal.sharedVal.self,H5T_NATIVE_INT);
 
   CXI::ConfValues confVal;
   cxi->cheetahVal.confVal.self = H5Gcreate(cxi->cheetahVal.self, "configuration", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -859,11 +912,16 @@ static void  closeCXI(CXI::File * cxi){
     //H5I_type_t type;
     hsize_t block[3];
     hsize_t mdims[3];
+    hid_t attr_id;
     hid_t dataspace = H5Dget_space (ids[i]);
+    int size;
     if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
     H5Sget_simple_extent_dims(dataspace, block, mdims);
     if(mdims[0] == H5S_UNLIMITED){
-      block[0] = cxi->stackCounter;
+      attr_id = H5Aopen_name(ids[i],CXI::ATTR_NAME_NUM_EVENTS);
+      H5Aread(attr_id,H5T_NATIVE_INT32,&size); 
+      H5Aclose(attr_id);
+      block[0] = size;
       H5Dset_extent(ids[i], block);
     }
   }
@@ -891,7 +949,9 @@ void closeCXIFiles(cGlobal * global){
 void writeCXI(cEventData *info, cGlobal *global ){
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
+
   writeScalarToStack(cxi->cheetahVal.sharedVal.hit,global->nCXIEvents,info->hit);
+  writeScalarToStack(cxi->cheetahVal.sharedVal.nPeaks,global->nCXIEvents,info->nPeaks);
   global->nCXIEvents += 1;
 
   if(info->writeFlag){
