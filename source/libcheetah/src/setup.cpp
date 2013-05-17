@@ -143,6 +143,9 @@ cGlobal::cGlobal(void) {
   savePixelmask = 0;
   saveCXI = 0;
 
+  // Visualization
+  pythonFile[0] = 0;
+
   // Peak lists
   savePeakList = 1;
 
@@ -848,6 +851,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "savecxi")) {
     saveCXI = atoi(value);
+  } else if (!strcmp(tag, "pythonfile")) {
+    strcpy(pythonFile, value);
   }
   // Unknown tags
   else {
@@ -970,6 +975,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
   fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
   fprintf(fp, "saveCXI=%d\n",saveCXI);
+  fprintf(fp, "pythonfile=%s\n", pythonFile);
   //fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
   //fprintf(fp, "bgMemory=%li\n",bgMemory);
   //fprintf(fp, "bgRecalc=%ld\n",bgRecalc);

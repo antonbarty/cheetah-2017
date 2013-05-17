@@ -231,6 +231,8 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+	/** @brief Python script to be hosted for shared memory visualization */
+	char     pythonFile[MAX_FILENAME_LENGTH];
     
     bool saveCXI;
 
