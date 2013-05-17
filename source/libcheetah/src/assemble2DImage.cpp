@@ -170,6 +170,11 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
       iy = (long) (y+0.5);
 
       image_index = ix + image_nx*iy;
+      if (image_index >= image_nn || image_index < 0)
+	{
+	  printf("Image index over/underflow %d %d %d\n", ix, iy, image_index);
+	  continue;
+	}
       // Check for int16 overflow
       if(lrint(corrected_data[i]) > 32767) 
 	image[image_index]=32767;

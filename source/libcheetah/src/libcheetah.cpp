@@ -352,13 +352,10 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
-    
   /*
    *	Remember to update global variables 
    */
   cheetahUpdateGlobal(global, eventData);
-    
-
     
     /*
      *  I/O speed test
@@ -384,7 +381,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     if(eventData->useThreads == 0) {
         worker((void *)eventData);
     }
-    
   	
 	/*
 	 *	Spawn worker in multithreaded mode 
@@ -404,7 +400,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         // Set detached state
         pthread_attr_init(&threadAttribute);
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-        
+
         // Create a new worker thread for this data frame
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);

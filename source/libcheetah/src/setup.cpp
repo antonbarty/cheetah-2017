@@ -698,7 +698,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "saveassembled")) {
     saveAssembled = atoi(value);
-    assemble2DImage = 1;
+    assemble2DImage = saveAssembled;
+    assemble2DMask = saveAssembled;
   }
   else if (!strcmp(tag, "assembleinterpolation")) {
     assembleInterpolation = atoi(value);

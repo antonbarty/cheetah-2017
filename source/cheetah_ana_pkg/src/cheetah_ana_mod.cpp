@@ -121,7 +121,7 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
-        m_srcSpec = configStr("spectrumSource","DetInfo()");
+		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 	}
 
@@ -221,10 +221,10 @@ namespace cheetah_ana_pkg {
 					cout << "Exiting..." << endl;
 					exit(1);
 				}
-			}
-			else {
-				cout << "No configuration data blas" << endl;
-			}
+		  }
+		  else {
+		    cout << "No configuration data" << endl;
+		  }
 		}
 	}
 
@@ -806,14 +806,14 @@ namespace cheetah_ana_pkg {
 			    eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 			    const ndarray<const int16_t, 3>& data = singleQuad->data();
 			    int partsize = asic_nx * asic_ny * 2;
-
-			        for (unsigned s = 0; s != data.shape()[2]; ++s) {
-				  for (int y = 0; y < asic_ny; y++) {
-				    for (int x = 0; x < asic_nx * 2; x++) {
-				      eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
-				    }
-				  }
+			    for (unsigned s = 0; s < 2; s++) {
+			      for (int y = 0; y < asic_ny; y++) {
+				for (int x = 0; x < asic_nx * 2; x++) {
+				  eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
 				}
+			      }
+			    }
+			   
 			  } else {
 			    printf("%li: cspad 2x2 frame data not available for detector ID %d\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
 			    return;

@@ -74,15 +74,14 @@ void *worker(void *threadarg) {
     }
   }
 
+
   // Init background buffer
   initBackgroundBuffer(eventData, global);
-
 	
   /*
    * Check for saturated pixels before applying any other corrections
    */
   checkSaturatedPixels(eventData, global);
-
 	
   /*
    *	Subtract darkcal image (static electronic offsets)
@@ -96,19 +95,16 @@ void *worker(void *threadarg) {
   cspadModuleSubtract(eventData, global);
   cspadSubtractUnbondedPixels(eventData, global);
   cspadSubtractBehindWires(eventData, global);
-
 	
   /*
    *	Apply gain correction
    */
   applyGainCorrection(eventData, global);
-
 	
   /*
    *	Apply bad pixel map
    */
   applyBadPixelMask(eventData, global);
-	
 	
   /* 
    *	Keep memory of data with only detector artefacts subtracted 
@@ -126,8 +122,6 @@ void *worker(void *threadarg) {
    *	Subtract persistent photon background
    */
   subtractPersistentBackground(eventData, global);
-
-    	
 
   /*
    *	Local background subtraction
@@ -178,7 +172,8 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
    
-	/*
+
+  /*
 	 *	Hitfinding
 	 */
 	if(global->hitfinder){
@@ -235,7 +230,6 @@ void *worker(void *threadarg) {
     }
   }
 
-
   /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
@@ -246,6 +240,7 @@ void *worker(void *threadarg) {
    *   Downsample assembled image
    */
   downsample(eventData,global);
+
 
   /*
    *  Calculate radial average
@@ -332,7 +327,6 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
-
 	
   /*
    *	Cleanup and exit
@@ -347,7 +341,7 @@ void *worker(void *threadarg) {
   pthread_mutex_lock(&global->nActiveThreads_mutex);
   global->nActiveThreads -= 1;
   pthread_mutex_unlock(&global->nActiveThreads_mutex);
-    
+
   // Free memory only if running multi-threaded
   if(eventData->useThreads == 1) {
     cheetahDestroyEvent(eventData);
