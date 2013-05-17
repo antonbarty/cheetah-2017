@@ -102,6 +102,7 @@ static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
   hid_t memspace = H5Screate_simple(1,&one,NULL);
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   H5Awrite(attr,datatype,axis);
+  H5Tclose(datatype);
   H5Aclose(attr);
   H5Sclose(memspace);
   H5Sclose(dataspace);
@@ -174,6 +175,7 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
   attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
   int zero = 0;
   H5Awrite(attr,H5T_NATIVE_INT32,&zero);
+  H5Tclose(datatype);
   H5Aclose(attr);
   H5Sclose(memspace);
   H5Sclose(dataspace);
@@ -284,7 +286,7 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   if( dataset<0 ){
     ERROR("Cannot create dataset.\n");
   }
-
+  H5Tclose(datatype);
   const char * axis = "experiment_identifier";
   hsize_t one = 1;
   datatype = H5Tcopy(H5T_C_S1);
@@ -293,6 +295,7 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
   
   H5Awrite(attr,datatype,axis);
+  H5Tclose(datatype);
   H5Aclose(attr);
   H5Sclose(memspace);
   H5Sclose(dataspace);
@@ -337,6 +340,7 @@ static void writeStringToStack(hid_t dataset, uint stackSlice, const char * valu
     ERROR("Cannot write to file.\n");
     abort();
   }
+  H5Tclose(type);
   H5Sclose(memspace);
   H5Sclose(dataspace);
 }
