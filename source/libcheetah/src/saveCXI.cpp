@@ -867,6 +867,8 @@ static void  closeCXI(CXI::File * cxi){
       H5Dset_extent(ids[i], block);
     }
   }
+  H5Fflush(cxi->self, H5F_SCOPE_GLOBAL);
+  H5Fclose(cxi->self);
 }
 
 void closeCXIFiles(cGlobal * global){
