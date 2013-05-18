@@ -13,18 +13,84 @@
 ;;
 pro crawler_config, pState
 	
-	(*pstate).process = '../anton/process/process'
+	;; First set some sensible defaults
+	(*pstate).xtcdir = '../../xtc'
 	(*pstate).h5dir = '../hdf5'
 	(*pstate).h5filter = 'r*-ab' 
 	(*pstate).geometry = '../config/pixelmap/2may13-v2.h5'
+	(*pstate).process = '../anton/process/process'
 	(*pstate).cheetahIni = '2dx.ini'
 
 
+	;; Now try to read from the config file
+	configFile = 'crawler.config'
+	if file_test(configFile) eq 1 then begin
+		info = read_csv(configFile)
+		info = info.field1		
+		if n_elements(info) eq 6 then begin
+			(*pstate).xtcdir = info[0]
+			(*pstate).h5dir = info[1]
+			(*pstate).h5filter = info[2]
+			(*pstate).geometry = info[3]
+			(*pstate).process = info[4]
+			(*pstate).cheetahIni = info[5]
+		endif $
+		
+		else begin
+			crawler_configMenu, pState
+		endelse		
+	endif $
+	
+	else begin
+		crawler_configMenu, pState
+	endelse
+	
+
+	print, 'XTC directory: ', (*pState).xtcdir
 	print, 'HDF5 directory: ', (*pState).h5dir
 	print, 'HDF5 run filter: ', (*pState).h5filter
 	print, 'Process script: ', (*pState).process
 	print, 'Geometry file: ', (*pState).geometry
 	print, 'Cheetah .ini: ', (*pstate).cheetahIni
+
+end
+
+
+pro crawler_configMenu, pState
+
+	desc = [ 	'1, base, , column', $
+					'0, text, '+(*pstate).xtcdir+', label_left=XTC directory:, width=100, tag=xtcdir', $
+					'0, text, '+(*pstate).h5dir+', label_left=HDF5 directory:, width=100, tag=h5dir', $
+					'0, text, '+(*pstate).h5filter+', label_left=HDF5 filter:, width=100, tag=h5filter', $
+					'0, text, '+(*pstate).geometry+', label_left=Geometry file:, width=100, tag=geometry', $
+					'0, text, '+(*pstate).process+', label_left=Process script:, width=100, tag=process', $
+					'0, text, '+(*pstate).cheetahIni+', label_left=Default cheetah.ini:, width=100, tag=cheetahIni', $
+					'1, base,, row', $
+					'0, button, OK, Quit, Tag=OK', $
+					'2, button, Cancel, Quit' $
+	]		
+	a = cw_form(desc, /column, title='Start cheetah')
+	
+	;; Only do this if OK is pressed (!!)
+	if a.OK eq 1 then begin		
+			(*pstate).xtcdir = a.xtcdir
+			(*pstate).h5dir = a.h5dir
+			(*pstate).h5filter = a.h5filter
+			(*pstate).geometry = a.geometry
+			(*pstate).process = a.process
+			(*pstate).cheetahIni = a.cheetahIni
+			
+			;; Save back out to file
+			openw, lun, 'crawler.config', /get
+			printf, lun, (*pstate).xtcdir
+			printf, lun, (*pstate).h5dir
+			printf, lun, (*pstate).h5filter
+			printf, lun, (*pstate).geometry
+			printf, lun, (*pstate).process
+			printf, lun, (*pstate).cheetahIni
+			close, lun
+			free_lun, lun
+	endif
 
 end
 
@@ -246,7 +312,12 @@ pro crawler_event, ev
 		;;
 		sState.button_refresh : begin
 			crawler_updateTable, pState
+			if sState.table_autorefresh ne 0 then begin
+					print,'Auto refreshing table'
+					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
+			endif
 		end
+				
 				
 		sState.button_viewtype : begin
 		
@@ -295,6 +366,9 @@ pro crawler_event, ev
 		sState.mbfile_refresh : begin
 			crawler_updateTable, pState
 		end
+		sState.mbfile_configure : begin
+			crawler_configMenu, pState
+		end
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
 			crawler_startCheetah, pState, run
@@ -321,6 +395,23 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			crawler_displayfile, f[0]
+		end
+
+
+		sState.mbfile_autorefresh : begin
+			;;help, sState.table_autorefresh
+			desc = [ 	'1, base, , column', $
+						'2, FLOAT, '+ string(sState.table_autorefresh)+', label_left=Auto refresh delay (sec):, width=10, tag=delay', $
+						'1, base,, row', $
+						'0, button, OK, Quit, Tag=OK', $
+						'2, button, Cancel, Quit' $
+			]		
+			a = cw_form(desc, /column, title='Start cheetah')
+	
+			;; Only do this if OK is pressed (!!)
+			if a.OK eq 1 then begin		
+				(*pstate).table_autorefresh = a.delay
+			endif
 		end
 
 
@@ -359,7 +450,9 @@ pro crawler_view
 	;; Menu bar items
 	;;
 	mbfile = widget_button(bar, value='File')
+	mbfile_configure = widget_button(mbfile, value='Configure')
 	mbfile_refresh = widget_button(mbfile, value='Refresh table')
+	mbfile_autorefresh = widget_button(mbfile, value='Auto refresh table')
 	mbfile_quit = widget_button(mbfile, value='Quit')
 
 	mbfile = widget_button(bar, value='Cheetah')
@@ -428,8 +521,11 @@ pro crawler_view
 			table_pdata : ptr_new(),  $
 			table_datasetview : 0, $
 			table_scrwidth : scrwidth, $
+			table_autorefresh : 60., $
 			
+			mbfile_configure : mbfile_configure, $
 			mbfile_refresh : mbfile_refresh, $
+			mbfile_autorefresh : mbfile_autorefresh, $ 
 			mbfile_quit : mbfile_quit, $
 			mbcheetah_run : mbcheetah_run, $
 			
@@ -447,9 +543,10 @@ pro crawler_view
 			button_resolution : button_resolution, $
 			button_powder : button_powder, $
 			
-			process : 'Not set', $
+			xtcdir : 'Not set', $
 			h5dir : 'Not set', $
 			h5filter : 'Not set', $
+			process : 'Not set', $
 			geometry : 'Not set', $
 			cheetahIni : 'Not set' $
 	}
