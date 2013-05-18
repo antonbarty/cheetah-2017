@@ -600,8 +600,8 @@ namespace cheetah_ana_pkg {
 		//? get Acqiris
 		shared_ptr<Psana::Acqiris::DataDescV1> acq = evt.get(m_srcAcq);
 		if (acq.get()) {
-			if (verbose) {	
-				// find matching config object
+		  if (verbose) {	
+		    // find matching config object
 				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
 				// loop over channels
 				int nchan = acq->data_shape()[0];
@@ -612,7 +612,7 @@ namespace cheetah_ana_pkg {
 					double slope = v.slope();
 					double offset = v.offset(); 
 					cout << "slope, offset: " << v.slope() << " , " << v.offset() << endl;
-				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+					const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
 					double sampInterval = h.sampInterval();
 					cout << "sampInterval: " << sampInterval << endl;
 				cout << "Acqiris::DataDescV1: channel=" << chan
@@ -620,7 +620,7 @@ namespace cheetah_ana_pkg {
 						 << "\n  nbrSamplesInSeg=" << elem.nbrSamplesInSeg()
 						 << "\n  indexFirstPoint=" << elem.indexFirstPoint();
 					const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+					const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
 					// loop over segments
 					for (unsigned seg = 0; seg<elem.nbrSegments(); ++seg) {
 						unsigned size = std::min(elem.nbrSamplesInSeg(), 32U);
@@ -873,23 +873,41 @@ namespace cheetah_ana_pkg {
 		
 		//	Copy TOF (aqiris) channel into Cheetah event for processing
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
-		eventData->TOFPresent = 0; // DO NOT READ TOF
-		//eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
+		//eventData->TOFPresent = 0; // DO NOT READ TOF
+		eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 		if (cheetahGlobal.TOFPresent==1){
-			// Cheetah can only handle one channel. Must inc. to 4
-			cout << "cheetahGlobal.TOFPresent" << endl;
-			double tempTOFTime;
-			double tempTOFVoltage;
-			double tempTrigTime = 0;
-			
-			//Memcpy is necessary for thread safety.
-			eventData->TOFtrigtime = tempTrigTime;
-			eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFTime, &tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFVoltage, &tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
+		  int chan = cheetahGlobal.TOFchannel;
+		  Pds::Src src;
+		  shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq);
+		  if (acqData) {
+		    shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
+		    const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
+		    const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
+		    double slope = v.slope();
+		    double offset = v.offset();
+		    const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+		    int sampInterval = h.sampInterval();
+		    const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+		    const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+		    int seg = 0;
+		    eventData->TOFtrigtime = timestamps[seg].pos();
+		    eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		    eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		    double * tempTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		    double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+		    double timestamp = timestamps[seg].value();
+		    ndarray<const int16_t, 1> raw(waveforms[seg]);
+		    for (unsigned i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
+		      tempTime[i] = timestamp + i*sampInterval;
+		      tempVoltage[i] = raw[i]*slope + offset;
+		    }
+		    //Memcpy is necessary for thread safety.
+		    memcpy(eventData->TOFTime, &tempTime[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+		    memcpy(eventData->TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+		    free(tempTime);
+		    free(tempVoltage);
+		  }
 		}
-		
 		
 		//	Copy Pulnix camera into Cheetah event for processing
 		//	Pulnix 120Hz CCD camera on CXI Questar micrscope
