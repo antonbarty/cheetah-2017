@@ -180,6 +180,10 @@ pro crawler_updateTable, pState
 
 
 	;; Read crawler file
+	if file_test('crawler.txt') eq 0 then begin
+		print,'Crawler file does not exist'
+		return
+	endif
 	data = read_csv('crawler.txt',header=h)
 
 	ntags = n_tags(data)
@@ -313,7 +317,7 @@ pro crawler_event, ev
 		sState.button_refresh : begin
 			crawler_updateTable, pState
 			if sState.table_autorefresh ne 0 then begin
-					print,'Auto refreshing table'
+					;print,'Auto refreshing table'
 					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
 			endif
 		end
@@ -368,6 +372,9 @@ pro crawler_event, ev
 		end
 		sState.mbfile_configure : begin
 			crawler_configMenu, pState
+		end
+		sState.mbfile_crawl : begin
+			crawler_autorun, xtcdir=(*pState).xtcdir, hdf5dir=(*pState).h5dir, hdf5filter=(*pState).h5filter
 		end
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
@@ -438,9 +445,17 @@ pro crawler_view
 	yview = screensize[1] - 140
 
 
-	data = read_csv('crawler.txt',header=h)
-	colwidth = strlen(h)+3
-	cwidth = colwidth * !d.x_ch_size + 6
+	if file_test('crawler.txt') eq 1 then begin
+		data = read_csv('crawler.txt',header=h)
+		colwidth = strlen(h)+3
+		cwidth = colwidth * !d.x_ch_size + 6
+	endif $
+	else begin
+		data = strarr(5,5)
+		h = strarr(5)
+		colwidth = strlen(h)+3
+		cwidth = colwidth * !d.x_ch_size + 6
+	endelse
 		
 
 	base = widget_base(/column, group=group, mbar=bar, /tlb_size_events)
@@ -451,6 +466,7 @@ pro crawler_view
 	;;
 	mbfile = widget_button(bar, value='File')
 	mbfile_configure = widget_button(mbfile, value='Configure')
+	mbfile_crawl = widget_button(mbfile, value='Start crawler')
 	mbfile_refresh = widget_button(mbfile, value='Refresh table')
 	mbfile_autorefresh = widget_button(mbfile, value='Auto refresh table')
 	mbfile_quit = widget_button(mbfile, value='Quit')
@@ -501,7 +517,7 @@ pro crawler_view
 	;;
 	;;	Realise widget
 	;;
-	widget_control, base, base_set_title='Cheetah crawler'
+	widget_control, base, base_set_title='Cheetah crawler view'
 	widget_control, base, scr_ysize = yview
 	widget_control, base, /realize
 
@@ -524,6 +540,7 @@ pro crawler_view
 			table_autorefresh : 60., $
 			
 			mbfile_configure : mbfile_configure, $
+			mbfile_crawl : mbfile_crawl, $
 			mbfile_refresh : mbfile_refresh, $
 			mbfile_autorefresh : mbfile_autorefresh, $ 
 			mbfile_quit : mbfile_quit, $
