@@ -53,7 +53,6 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       float	medianPoint = global->detector[detID].bgMedian;
       long	threshold = lrint(bufferDepth*medianPoint);
       long	bgCounter,lastUpdate;
-      int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 
       if(lockThreads){
 	pthread_mutex_lock(&global->bgbuffer_mutex);
@@ -62,6 +61,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       bgCounter = global->detector[detID].bgCounter;
       lastUpdate = global->detector[detID].last_bg_update;
       if( bgCounter > bgRecalc+lastUpdate ) {
+	int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 	global->detector[detID].last_bg_update = bgCounter;
 	for(long i = 0;i<pix_nn*bufferDepth;i++){
 	  frameBuffer[i] = global->detector[detID].bg_buffer[i];
@@ -77,15 +77,12 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 	pthread_mutex_unlock(&global->selfdark_mutex);
 
 	printf("Detector %li: Recalculating persistent background done.\n",detID);      
-
+	free(frameBuffer);			
       } else {
 	if(lockThreads){
 	  pthread_mutex_unlock(&global->bgbuffer_mutex);			
 	}
       }
-
-
-      free(frameBuffer);			
 			
       /*
        *	Remember GMD values  (why is this here?)
