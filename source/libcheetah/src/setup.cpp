@@ -103,8 +103,10 @@ cGlobal::cGlobal(void) {
 
   // TOF configuration
   TOFPresent = 0;
-  TOFchannel = 1;
+  TOFchannel = 0;
   strcpy(tofName, "CxiSc1");
+  // Has to be looked up automatically
+  AcqNumSamples = 12288;
   //tofType = Pds::DetInfo::Acqiris;
   //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 
@@ -712,7 +714,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     saveInterval = atoi(value);
   }
   // Time-of-flight
-  else if (!strcmp(tag, "tofname")) {
+  else if (!strcmp(tag, "tofpresent")) {
+    TOFPresent = atoi(value);
+  }
+    else if (!strcmp(tag, "tofname")) {
     strcpy(tofName, value);
   }
   else if (!strcmp(tag, "tofchannel")) {

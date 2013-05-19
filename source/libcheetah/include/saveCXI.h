@@ -82,6 +82,8 @@ typedef struct{
   std::vector<hid_t> detector_positions;
   std::vector<hid_t> detector_EncoderValues;
   hid_t eventTimeString;
+  hid_t tofTime;
+  hid_t tofVoltage;
 }LCLS;
 
 typedef struct{

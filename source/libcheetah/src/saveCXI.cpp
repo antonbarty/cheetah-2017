@@ -618,6 +618,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->lcls.f_22_ENRC = createScalarStack("f_22_ENRC", cxi->lcls.self,H5T_NATIVE_DOUBLE);
   cxi->lcls.evr41 = createScalarStack("evr41", cxi->lcls.self,H5T_NATIVE_INT);
   cxi->lcls.eventTimeString = createStringStack("eventTimeString", cxi->lcls.self);
+  if(global->TOFPresent){
+    cxi->lcls.tofTime = create2DStack("tofTime", cxi->lcls.self, 1, global->AcqNumSamples, H5T_NATIVE_DOUBLE);
+    cxi->lcls.tofVoltage = create2DStack("tofVoltage", cxi->lcls.self, 1, global->AcqNumSamples, H5T_NATIVE_DOUBLE);
+  }
   H5Lcreate_soft("/LCLS/eventTimeString", cxi->self, "/LCLS/eventTime",H5P_DEFAULT,H5P_DEFAULT);
   H5Lcreate_soft("/entry_1/experiment_identifier",cxi->lcls.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
@@ -1050,6 +1054,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
     writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
     writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
+    if(global->TOFPresent){
+      write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
+      write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
+    }
     int LaserOnVal = (info->laserEventCodeOn)?1:0;
     writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
     char timestr[26];
