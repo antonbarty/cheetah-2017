@@ -24,6 +24,7 @@
  *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
  *              7 - Laser on event code (usually EVR41)
+ *              8 - Use TOF peak
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
@@ -71,6 +72,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	case 7 : 	// Return laser on event code
 	  hit = eventData->laserEventCodeOn;
 	  eventData->nPeaks = eventData->laserEventCodeOn;
+	  break;
+
+	case 8 :	// Use TOF signal, maximum peak, to find hits
+	  hit = hitfinder8(global,eventData,detID);
 	  break;
 			
 	default :
@@ -268,6 +273,36 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
       hit = 1;
   }
   free(temp);
+  return hit;
+}
+
+int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
+  int hit = 0;
+  long		pix_nn = global->detector[detID].pix_nn;
+  uint16_t      *mask = eventData->detector[detID].pixelmask;
+  long	nat = 0;
+  long	counter;
+  float	total;
+  float	mingrad = global->hitfinderMinGradient*2;
+  mingrad *= mingrad;
+  
+  nat = 0;
+  counter = 0;
+  total = 0.0;
+
+  /*
+   *	Apply masks
+   *	(multiply data by 0 to ignore regions)
+   */
+
+		  
+  if ((eventData->TOFPresent==1)){
+    for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+      if (eventData->TOFVoltage[i] > global->hitfinderTOFThresh) hit = 1;
+    }
+  }
+
+
   return hit;
 }
 

@@ -357,7 +357,7 @@ void cGlobal::setup() {
     detector[i].detectorZprevious = 0;
     detector[i].detectorZ = 0;
     detector[i].detectorEncoderValue = 0;
-  }
+  }  
 
   // Make sure to use SLAC timezone!
   setenv("TZ","US/Pacific",1);

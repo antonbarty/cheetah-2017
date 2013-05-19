@@ -401,7 +401,11 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   selfdark = (float*) calloc(pix_nn, sizeof(float));
   bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
   hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-  halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float)); 
+  halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float));
+  halopix_mutexes = (pthread_mutex_t*) calloc(halopixRecalc, sizeof(pthread_mutex_t));
+  for (long j=0; j<halopixRecalc; j++) {
+    pthread_mutex_init(&halopix_mutexes[j], NULL);
+  }
 
   for(long j=0; j<pix_nn; j++) {
     selfdark[j] = 0;

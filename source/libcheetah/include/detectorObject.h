@@ -254,6 +254,7 @@ public:
 	float     *selfdark;
 	float     *gaincal;
 	uint16_t  *pixelmask_shared;
+	pthread_mutex_t* halopix_mutexes;
 
 
 	/*
