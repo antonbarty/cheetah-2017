@@ -14,10 +14,10 @@
 #include "saveCXI.h"
 
 herr_t
-cheetahHDF5ErrorHandler(hid_t, void *)
+cheetahHDF5ErrorHandler(void *)
 {
   // print the error message
-  H5Eprint(H5E_DEFAULT, stderr);
+  H5Eprint1(stderr);
   // abort such that we get a stack trace to debug
   abort();
 }

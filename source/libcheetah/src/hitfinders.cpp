@@ -175,7 +175,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   long	    pix_nn = global->detector[detID].pix_nn;  
   float     ADC_threshold = global->hitfinderADC;
   // Combine pixel options for pixels to be ignored
-  uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
+  uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO;
   
   integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
   eventData->peakTotal = tat;

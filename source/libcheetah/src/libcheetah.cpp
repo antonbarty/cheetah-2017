@@ -67,7 +67,7 @@ void cheetahInit(cGlobal *global) {
 	global->writeConfigurationLog();
 
 	// Set better error handlers for HDF5
-	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
+	H5Eset_auto1(cheetahHDF5ErrorHandler, NULL);
 
 	printf("Cheetah clean initialisation\n");
 	if (global->pythonFile[0]) {

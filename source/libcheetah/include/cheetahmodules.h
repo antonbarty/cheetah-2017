@@ -57,7 +57,7 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 void writeCXI(cEventData *info, cGlobal *global);
 void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
-herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
+herr_t cheetahHDF5ErrorHandler(void *unused);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
