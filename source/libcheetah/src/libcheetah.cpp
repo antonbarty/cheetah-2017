@@ -69,7 +69,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
-	eventData = (cEventData*) malloc(sizeof(cEventData));
+	eventData = (cEventData*) calloc(sizeof(cEventData),1);
 	eventData->pGlobal = global;
 
     /*
@@ -432,6 +432,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         for(long detID=0; detID<global->nDetectors; detID++) {
             saveRunningSums(global, detID);
         }
+		saveHistograms(global);
         saveRadialStacks(global);
 		global->updateLogfile();
 	}
@@ -495,26 +496,7 @@ void cheetahExit(cGlobal *global) {
     
     // Cleanup
     for(long i=0; i<global->nDetectors; i++) {
-      free(global->detector[i].darkcal);
-      free(global->detector[i].selfdark);
-      free(global->detector[i].gaincal);
-      free(global->detector[i].bg_buffer);
-      free(global->detector[i].hotpix_buffer);
-      free(global->detector[i].halopix_buffer);
-
-        
-      for(long j=0; j<global->nPowderClasses; j++) {
-	free(global->detector[i].powderRaw[j]);
-	free(global->detector[i].powderCorrected[j]);
-	free(global->detector[i].powderCorrectedSquared[j]);
-	free(global->detector[i].powderAssembled[j]);
-	free(global->detector[i].radialAverageStack[j]);
-	pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
-      }
+		global->detector[i].freePowderMemory(global);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);

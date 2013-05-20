@@ -93,6 +93,14 @@ void saveGaincal(cGlobal*, int);
 void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 
+// histogram.cpp
+void addToHistogram(cEventData*, cGlobal*);
+void addToHistogram(cEventData*, cGlobal*, int);
+void saveHistograms(cGlobal*);
+void saveHistogram(cGlobal*, int);
+
+
+
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
 void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);

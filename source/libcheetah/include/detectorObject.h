@@ -236,6 +236,22 @@ public:
 	// correction for PNCCD read out artifacts on back detector
 	int    usePnccdOffsetCorrection;
 	
+	
+	// Histogram stack
+	int		histogram;
+	long	histogramMin;
+	long	histogramMax;
+	long	histogramBinSize;
+	float	histogramMaxMemoryGb;
+	long	histogram_nx;
+	long	histogram_ny;
+	long	histogram_depth;
+	uint64_t	histogram_nn;
+	uint16_t	*histogramData;
+	pthread_mutex_t histogram_mutex;
+
+	
+	
 
 	// Saving options
 	int   saveDetectorCorrectedOnly;
@@ -293,6 +309,7 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
+	void freePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
