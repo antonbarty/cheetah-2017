@@ -302,7 +302,11 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 		  
   if ((eventData->TOFPresent==1)){
     const int nback = 3;
-    float olddata[nback] = {0};
+    float olddata[nback];
+    for (int k = 0; k < nback; k++)
+      {
+	olddata[k] = NAN;
+      }
     for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
       olddata[i % nback] = eventData->TOFVoltage[i];
       double sum = 0;

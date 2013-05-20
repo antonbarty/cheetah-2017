@@ -114,7 +114,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
-	eventData = (cEventData*) malloc(sizeof(cEventData));
+	eventData = (cEventData*) calloc(sizeof(cEventData), 1);
 	eventData->pGlobal = global;
 
     /*
