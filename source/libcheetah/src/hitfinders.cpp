@@ -77,6 +77,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	case 8 :	// Use TOF signal, maximum peak, to find hits
 	  hit = hitfinder8(global,eventData,detID);
 	  break;
+
+	case 9 :	// Use TOF signal, maximum peak, excluding classical htis
+	  hit = hitfinder8(global,eventData,detID) && !(hitfinder1(global,eventData,detID));
+	  break;
 			
 	default :
 	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
@@ -297,8 +301,16 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 
 		  
   if ((eventData->TOFPresent==1)){
+    const int nback = 3;
+    float olddata[nback] = {0};
     for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-      if (eventData->TOFVoltage[i] > global->hitfinderTOFThresh) hit = 1;
+      olddata[i % nback] = eventData->TOFVoltage[i];
+      double sum = 0;
+      for (int k = 0; k < nback; k++)
+	{
+	  sum += olddata[k];
+	}
+      if (sum < global->hitfinderTOFThresh * nback) hit = 1;
     }
   }
 
