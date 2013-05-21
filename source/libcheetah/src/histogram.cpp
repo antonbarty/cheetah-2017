@@ -319,13 +319,13 @@ void saveHistogram(cGlobal *global, int detID) {
 	 *	Release memory (very important here!)
 	 */
 	free(histogramBuffer);
-	free(mean);
-	free(var);
-	free(rVar);
-	free(cSq);
-	free(kld);
-	free(count);
-	free(temp);
+	free(mean_arr);
+	free(var_arr);
+	free(rVar_arr);
+	free(cSq_arr);
+	free(kld_arr);
+	free(count_arr);
+	free(hist);
 
 	
 }
