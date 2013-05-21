@@ -158,6 +158,7 @@ void *worker(void *threadarg) {
 	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) || (global->detector[detID].useAutoHalopixel && global->detector[detID].halopixCounter < global->detector[detID].halopixRecalc)) {
       updateBackgroundBuffer(eventData, global, 0); 
       updateHaloBuffer(eventData,global,0);		    
+	calculateHaloPixelMask(global);
       printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
       goto cleanup;
     }

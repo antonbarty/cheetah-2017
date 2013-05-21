@@ -110,6 +110,10 @@ public:
 	int      hitfinderTOFMaxSample;
 	/** @brief Intensity threshold of TOF for hitfinding. */
 	double   hitfinderTOFThresh;
+	/** @brief Window used for moving average in some TOF hitfinding. */
+	double   hitfinderTOFWindow;
+	/** @brief Peak count constraint used in some TOF hitfinding. */
+	double   hitfinderTOFMinCount;
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */

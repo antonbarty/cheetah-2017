@@ -907,6 +907,8 @@ namespace cheetah_ana_pkg {
 		    free(tempTime);
 		    free(tempVoltage);
 		  }
+		  else
+		    eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 		}
 		
 		//	Copy Pulnix camera into Cheetah event for processing
