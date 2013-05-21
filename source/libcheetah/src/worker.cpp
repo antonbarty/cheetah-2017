@@ -282,6 +282,7 @@ void *worker(void *threadarg) {
    *    and strongest non-hit and weakest hit
    */
   addToPowder(eventData, global);
+  addToHistogram(eventData, global);
 
   /*
    * calculate the one dimesional beam spectrum
