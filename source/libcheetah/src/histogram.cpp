@@ -138,19 +138,27 @@ void saveHistogram(cGlobal *global, int detID) {
 		offset = i*hist_depth;
 
 		// Extract a temporary copy of the histogram for this pixel
-		for(long j=0; j<hist_depth; j++)
+		count = 0;
+		for(long j=0; j<hist_depth; j++) {
 			hist[j] = histogramData[offset+j];
+			count += hist[j];
+		}
+
+		
+		// Normalise the histogram to total count of 1
+		for(long j=0; j<hist_depth; j++)
+			hist[j] /= count;
+
 
 		// Calculate mean and variance
 		mean = 0;
 		var = 0;
-		count = 0;
 		for(long j=0; j<hist_depth; j++) {
 			count += hist[j];
 			mean += j*hist[j];
 			var += j*j*hist[j];
 		}
-		var = var - mean*mean;
+		var = (var - mean*mean);
 		
 		
 		// Calculate Chi-Squared and KL-divergence
