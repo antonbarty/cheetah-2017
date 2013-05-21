@@ -98,10 +98,100 @@ void saveHistogram(cGlobal *global, int detID) {
 	long		hist_depth = global->detector[detID].histogram_depth;
 	float		*darkcal = global->detector[detID].darkcal;
 	uint16_t	*histogramData = global->detector[detID].histogramData;
-
+	uint64_t	hist_nn = global->detector[detID].histogram_nn;
+	long		hist_count;
 
 	/*
-	 *	Filename
+	 *	Grab a copy of the histogram so that saving does not slow down the rest of the code
+	 *	(always a balance between time/memory benefit in having a buffer)
+	 */
+	uint16_t	*histogramBuffer = (uint16_t*) calloc(hist_nn, sizeof(uint16_t));
+
+	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	memcpy(histogramBuffer, histogramData, hist_nn*sizeof(uint16_t));
+	hist_count = global->detector[detID].histogram_count;
+	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
+	
+	
+	/*
+	 *	Perform some statistical analysis
+	 */
+	float	n;
+	float	mean;
+	float	var;
+	float	rVar;
+	float	cSq;
+	float	kld;
+	float	count;
+	float	temp1, temp2, temp3, temp4;
+	float	*mean_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*var_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*rVar_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*cSq_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*kld_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*count_arr = (float*) calloc(pix_nn, sizeof(float));
+	float	*hist = (float*) calloc(hist_depth, sizeof(float));
+	uint64_t	offset;
+	
+	
+	for(long i=0; i<pix_nn; i++) {
+		offset = i*hist_depth;
+
+		// Extract a temporary copy of the histogram for this pixel
+		for(long j=0; j<hist_depth; j++)
+			hist[j] = histogramData[offset+j];
+
+		// Calculate mean and variance
+		mean = 0;
+		var = 0;
+		count = 0;
+		for(long j=0; j<hist_depth; j++) {
+			count += hist[j];
+			mean += j*hist[j];
+			var += j*j*hist[j];
+		}
+		var = var - mean*mean;
+		
+		
+		// Calculate Chi-Squared and KL-divergence
+		rVar = 0;
+		cSq = 0;
+		kld = 0;
+		n=0;
+		for(long j=0; j<hist_depth; j++) {
+			if(hist[j] > 1e-10 && var > 1e-10) {
+				temp1 = (j - mean);
+				temp2 = temp1*temp1;
+				temp3 = expf(-0.5 * temp2 / var);
+				rVar += temp2;
+				cSq += temp2;
+				if(temp3 > 1e-10 && hist[j] > 1e-10) {
+					temp4 = hist[j] / temp3;
+					kld += hist[j] * logf(temp4);
+					n += temp2;
+				}
+			}
+		}
+		if(var > 1e-7)
+			rVar /= var;
+		if(mean > 1e-7)
+			cSq /= (mean*mean);
+		if(n > 1e-10)
+			kld += logf(n);
+		
+		mean_arr[i] = mean;
+		var_arr[i] = var;
+		rVar_arr[i] = rVar;
+		cSq_arr[i] = cSq;
+		kld_arr[i] = kld;
+		count_arr[i] = n;
+	}
+	
+	
+	
+	
+	/*
+	 *	Save the HDF5 file
 	 */
 	char	filename[1024];
 	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
@@ -135,13 +225,8 @@ void saveHistogram(cGlobal *global, int detID) {
 	sh = H5Screate_simple(3, size, NULL);
 	
 	dh = H5Dcreate(gh, "data", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (dh < 0) ERROR("Could not create dataset.\n");
-	
-	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
-	long		hist_count = global->detector[detID].histogram_count;
-	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramData);
-	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
-	
+	if (dh < 0) ERROR("Could not create dataset.\n");	
+	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramBuffer);
 	H5Dclose(dh);
 
 	
@@ -154,10 +239,35 @@ void saveHistogram(cGlobal *global, int detID) {
 	dh = H5Dcreate(gh, "offset", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, darkcal);
 	H5Dclose(dh);
+
+		
+	// Write arrays of statistics for each pixel
+	dh = H5Dcreate(gh, "mean", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, mean_arr);
+
+	dh = H5Dcreate(gh, "variance", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, var_arr);
+
+	dh = H5Dcreate(gh, "reduced-variance", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rVar_arr);
+
+	dh = H5Dcreate(gh, "chi-squared", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, cSq_arr);
+
+	dh = H5Dcreate(gh, "kl-divergence", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, kld_arr);
+
+	dh = H5Dcreate(gh, "n", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, count_arr);
+
+	
 	H5Sclose(sh);
 	
 	
-	// Write other info
+	
+	
+	
+	// Write a bunch of other useful information
 	size[0] = 1;
 	sh = H5Screate_simple(1, size, NULL );
 	//sh = H5Screate(H5S_SCALAR);
@@ -202,5 +312,20 @@ void saveHistogram(cGlobal *global, int detID) {
 		if ( type == H5I_ATTR ) H5Aclose(id);
 	}
 	H5Fclose(fh);
+	
+	
+	
+	/*
+	 *	Release memory (very important here!)
+	 */
+	free(histogramBuffer);
+	free(mean);
+	free(var);
+	free(rVar);
+	free(cSq);
+	free(kld);
+	free(count);
+	free(temp);
+
 	
 }
