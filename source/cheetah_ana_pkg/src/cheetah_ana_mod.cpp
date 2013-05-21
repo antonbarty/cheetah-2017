@@ -892,7 +892,7 @@ namespace cheetah_ana_pkg {
 		//	current spectrum camera is at CxiEndstation.0:Opal2000.1
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
 		eventData->specFail = 1;
-		int useSpec = 1;		// Ignore Opal camera
+		int useSpec = 0;		// Ignore Opal camera
 		if (specData.get() && useSpec) {
 			eventData->specFail = 0;
 			eventData->specWidth = specData->width();
