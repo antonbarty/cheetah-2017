@@ -127,6 +127,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	histogramMax = 100;
 	histogramBinSize = 1;
 	histogramMaxMemoryGb = 4;
+	histogram_count = 0;
 
 
 	// correction for PNCCD read out artifacts 

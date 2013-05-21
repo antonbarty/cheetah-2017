@@ -67,6 +67,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 		offset = i*histDepth;
 		histogramData[offset+buffer[i]] += 1;
 	}
+	global->detector[detID].histogram_count += 1;
 	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
 	
 	free(buffer);
@@ -91,10 +92,11 @@ void saveHistogram(cGlobal *global, int detID) {
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		histMin = global->detector[detID].histogramMin;
 	long		histMax = global->detector[detID].histogramMax;
-	long		histStep = global->detector[detID].histogramBinSize;
+	long		histBinsize = global->detector[detID].histogramBinSize;
 	long		hist_nx = global->detector[detID].histogram_nx;
 	long		hist_ny = global->detector[detID].histogram_ny;
 	long		hist_depth = global->detector[detID].histogram_depth;
+	float		*darkcal = global->detector[detID].darkcal;
 	uint16_t	*histogramData = global->detector[detID].histogramData;
 
 
@@ -104,6 +106,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	char	filename[1024];
 	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
 	printf("%s\n",filename);
+	
 	
 
 	/*
@@ -135,14 +138,55 @@ void saveHistogram(cGlobal *global, int detID) {
 	if (dh < 0) ERROR("Could not create dataset.\n");
 	
 	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	long		hist_count = global->detector[detID].histogram_count;
 	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramData);
 	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
-
+	
 	H5Dclose(dh);
 
 	
-	// Clean up stale HDF5 links
+	// Write offsets for each pixel (darkcal)
+	size[0] = hist_ny;
+	size[1] = hist_nx;
+	max_size[0] = hist_ny;
+	max_size[1] = hist_nx;
+	sh = H5Screate_simple(2, size, max_size);
+	dh = H5Dcreate(gh, "offset", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, darkcal);
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	
+	// Write other info
+	size[0] = 1;
+	sh = H5Screate_simple(1, size, NULL );
+	//sh = H5Screate(H5S_SCALAR);
+	
+	// Number of frames in histogram
+	dh = H5Dcreate(gh, "histogramCount", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &hist_count );
+	H5Dclose(dh);
+	
+	// Histogram minimum
+	dh = H5Dcreate(gh, "histogramMin", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histMin );
+	H5Dclose(dh);
+
+	// Histogram maximum
+	dh = H5Dcreate(gh, "histogramMax", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histMax );
+	H5Dclose(dh);
+
+	// Step size
+	dh = H5Dcreate(gh, "histogramBinsize", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histBinsize );
+	H5Dclose(dh);
+	
+	H5Sclose(sh);
 	H5Gclose(gh);
+
+	
+	// Clean up stale HDF5 links
 	int n_ids;
 	hid_t ids[256];
 	n_ids = H5Fget_obj_ids(fh, H5F_OBJ_ALL, 256, ids);

@@ -246,6 +246,7 @@ public:
 	long	histogram_nx;
 	long	histogram_ny;
 	long	histogram_depth;
+	long	histogram_count;
 	uint64_t	histogram_nn;
 	uint16_t	*histogramData;
 	pthread_mutex_t histogram_mutex;
