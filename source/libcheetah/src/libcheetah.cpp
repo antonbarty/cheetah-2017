@@ -447,12 +447,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 void cheetahExit(cGlobal *global) {
 
 
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
-    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
-    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
-
     /*
      *	Wait for all worker threads to finish
      *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
@@ -473,6 +467,12 @@ void cheetahExit(cGlobal *global) {
         break;
       }
     }
+    
+    // Calculate mean photon energy
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
+    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
     
 	
     // Save powder patterns and other stuff

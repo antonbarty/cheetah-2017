@@ -142,11 +142,13 @@ void saveHistogram(cGlobal *global, int detID) {
 	size[2] = hist_depth;
 	sh = H5Screate_simple(3, size, NULL);
 	
-	dh = H5Dcreate(gh, "data", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "histogram", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if (dh < 0) ERROR("Could not create dataset.\n");
 	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramData);
 	H5Dclose(dh);
     
+    // Create link from /data/histogram to /data/data (the default data locations)
+    H5Lcreate_soft( "/data/histogram", fh, "/data/data",0,0);
 
 	
 	/*
