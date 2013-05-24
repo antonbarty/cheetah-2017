@@ -103,7 +103,7 @@ void saveHistogram(cGlobal *global, int detID) {
 
 	/*
 	 *	Grab a copy of the histogram so that saving does not slow down the rest of the code
-	 *	(always a balance between time/memory benefit in having a buffer)
+	 *	(a balance between time/memory benefit in having a buffer)
 	 */
 	uint16_t	*histogramBuffer = (uint16_t*) calloc(hist_nn, sizeof(uint16_t));
 
@@ -151,6 +151,7 @@ void saveHistogram(cGlobal *global, int detID) {
 
 
 		// Calculate mean and variance
+		count = 0;
 		mean = 0;
 		var = 0;
 		for(long j=0; j<hist_depth; j++) {
@@ -158,25 +159,28 @@ void saveHistogram(cGlobal *global, int detID) {
 			mean += j*hist[j];
 			var += j*j*hist[j];
 		}
-		var = (var - mean*mean);
+		var -= (mean*mean);
 		
 		
 		// Calculate Chi-Squared and KL-divergence
 		rVar = 0;
 		cSq = 0;
 		kld = 0;
-		n=0;
+		n = 0;
 		for(long j=0; j<hist_depth; j++) {
 			if(hist[j] > 1e-10 && var > 1e-10) {
 				temp1 = (j - mean);
 				temp2 = temp1*temp1;
 				temp3 = expf(-0.5 * temp2 / var);
+                temp2 *= hist[j];
 				rVar += temp2;
 				cSq += temp2;
 				if(temp3 > 1e-10 && hist[j] > 1e-10) {
 					temp4 = hist[j] / temp3;
-					kld += hist[j] * logf(temp4);
-					n += temp2;
+					if (temp4 > 1e-10) {
+						kld += hist[j] * logf(temp4);
+						n += temp3;
+					}
 				}
 			}
 		}
