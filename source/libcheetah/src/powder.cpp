@@ -149,6 +149,12 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 /*
  *	Wrapper for saving all powder patterns for a detector
  */
+void saveRunningSums(cGlobal *global) {
+    for(int detID=0; detID<global->nDetectors; detID++) {
+        saveRunningSums(global, detID);
+    }
+}
+
 void saveRunningSums(cGlobal *global, int detID) {
 
   //	Save powder patterns from different classes

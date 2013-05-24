@@ -113,7 +113,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	hsize_t max_size[3];
     
 	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
-	printf("%s\n",filename);
+	printf("Writing histogram data to file: %s\n",filename);
 	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {

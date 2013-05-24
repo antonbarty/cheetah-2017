@@ -32,6 +32,7 @@ void cheetahInit(cGlobal *global) {
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
+    global->writeStatus("Started");
 
 	// Set better error handlers for HDF5
 	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
@@ -426,15 +427,14 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     
 	
 	/*
-	 *	Save periodic powder patterns
+	 *	Save some types of information from time to timeperiodic powder patterns
 	 */
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-        for(long detID=0; detID<global->nDetectors; detID++) {
-            saveRunningSums(global, detID);
-        }
+        saveRunningSums(global);
 		saveHistograms(global);
         saveRadialStacks(global);
 		global->updateLogfile();
+        global->writeStatus("Not finished");
 	}
 	
 }
@@ -475,10 +475,8 @@ void cheetahExit(cGlobal *global) {
     }
     
 	
-    // Save powder patterns
-    for(long detID=0; detID<global->nDetectors; detID++) {
-        saveRunningSums(global, detID);
-    }
+    // Save powder patterns and other stuff
+    saveRunningSums(global);
     saveRadialStacks(global);
 	global->writeFinalLog();
 
@@ -510,7 +508,7 @@ void cheetahExit(cGlobal *global) {
     pthread_mutex_destroy(&global->espectrumRun_mutex);
     pthread_mutex_destroy(&global->nespechits_mutex);
 
-    
+    global->writeStatus("Finished");    
     printf("Cheetah clean exit\n");
 }
 

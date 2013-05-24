@@ -87,6 +87,7 @@ void readSpectrumEnergyScale(cGlobal*, char*);
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
 void addToPowder(cEventData*, cGlobal*, int, int);
+void saveRunningSums(cGlobal*);
 void saveRunningSums(cGlobal*, int);
 void saveDarkcal(cGlobal*, int);
 void saveGaincal(cGlobal*, int);

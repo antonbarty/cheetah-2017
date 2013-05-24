@@ -1103,8 +1103,19 @@ void cGlobal::updateLogfile(void){
   pthread_mutex_lock(&peaksfp_mutex);
   fflush(peaksfp);
   pthread_mutex_unlock(&peaksfp_mutex);
+}
 
+void cGlobal::writeStatus(const char* message) {
+    FILE *fp;
+    fp = fopen ("status.txt","w");
+    
+    fprintf(fp, "%s\n", message);
+    fprintf(fp, "%li\n", nprocessedframes);
+    fprintf(fp, "%li\n", nhits);
 
+    fclose (fp);
+
+    
 }
 
 

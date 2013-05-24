@@ -361,6 +361,7 @@ public:
 
 	void writeInitialLog(void);
 	void updateLogfile(void);
+    void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
 
