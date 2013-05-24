@@ -101,17 +101,53 @@ void saveHistogram(cGlobal *global, int detID) {
 	uint64_t	hist_nn = global->detector[detID].histogram_nn;
 	long		hist_count;
 
-	/*
-	 *	Grab a copy of the histogram so that saving does not slow down the rest of the code
-	 *	(a balance between time/memory benefit in having a buffer)
-	 */
-	uint16_t	*histogramBuffer = (uint16_t*) calloc(hist_nn, sizeof(uint16_t));
 
-	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
-	memcpy(histogramBuffer, histogramData, hist_nn*sizeof(uint16_t));
-	hist_count = global->detector[detID].histogram_count;
-	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
+    
+    /*
+	 *	Mess of stuff for writing the HDF5 file
+     *  (OK to open HDF5 file outside the mutex lock)
+	 */
+	char	filename[1024];
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	hsize_t size[3];
+	hsize_t max_size[3];
+    
+	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
+	printf("%s\n",filename);
 	
+	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if ( fh < 0 ) {
+		ERROR("Couldn't create HDF5 file: %s\n", filename);
+	}
+	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gh < 0 ) {
+		ERROR("Couldn't create HDF5 group\n");
+		H5Fclose(fh);
+	}
+	
+
+    
+    
+	/*
+	 *	Lock the histogram 
+     *  Keep this bit as short as possible because it locks up the rest of the code.
+	 */
+	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	hist_count = global->detector[detID].histogram_count;
+	
+
+    // Write histogram data
+	size[0] = hist_ny;
+	size[1] = hist_nx;
+	size[2] = hist_depth;
+	sh = H5Screate_simple(3, size, NULL);
+	
+	dh = H5Dcreate(gh, "data", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dh < 0) ERROR("Could not create dataset.\n");
+	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramData);
+	H5Dclose(dh);
+    
+
 	
 	/*
 	 *	Perform some statistical analysis
@@ -140,7 +176,7 @@ void saveHistogram(cGlobal *global, int detID) {
 		// Extract a temporary copy of the histogram for this pixel
 		count = 0;
 		for(long j=0; j<hist_depth; j++) {
-			hist[j] = histogramData[offset+j];
+			hist[j] = (float) histogramData[offset+j];
 			count += hist[j];
 		}
 
@@ -199,48 +235,15 @@ void saveHistogram(cGlobal *global, int detID) {
 		count_arr[i] = n;
 	}
 	
-	
-	
-	
-	/*
-	 *	Save the HDF5 file
-	 */
-	char	filename[1024];
-	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
-	printf("%s\n",filename);
-	
-	
+    
+	// Unlock the histogram
+    pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
 
-	/*
-	 *	Mess of stuff for writing the compound HDF5 file
-	 */
-	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-	//herr_t r;
-	hsize_t size[3];
-	hsize_t max_size[3];
-	
-	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	if ( fh < 0 ) {
-		ERROR("Couldn't create HDF5 file: %s\n", filename);
-	}
-	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if ( gh < 0 ) {
-		ERROR("Couldn't create HDF5 group\n");
-		H5Fclose(fh);
-	}
-	
-
-	// Write histogram data
-	size[0] = hist_ny;
-	size[1] = hist_nx;
-	size[2] = hist_depth;
-	sh = H5Screate_simple(3, size, NULL);
-	
-	dh = H5Dcreate(gh, "data", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (dh < 0) ERROR("Could not create dataset.\n");	
-	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramBuffer);
-	H5Dclose(dh);
-
+    
+    /*
+     *  Back outside of mutex lock - keep writing the rest of the data
+     */
+    
 	
 	// Write offsets for each pixel (darkcal)
 	size[0] = hist_ny;
@@ -330,7 +333,6 @@ void saveHistogram(cGlobal *global, int detID) {
 	/*
 	 *	Release memory (very important here!)
 	 */
-	free(histogramBuffer);
 	free(mean_arr);
 	free(var_arr);
 	free(rVar_arr);
