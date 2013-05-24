@@ -73,6 +73,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	free(buffer);
 }
 
+
 /*
  *	Save histograms
  */
@@ -127,16 +128,27 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 
     
-    
 	/*
 	 *	Lock the histogram 
+     *  Copy across into a buffer so that the rest of the code can keep crunching in the meantime
      *  Keep this bit as short as possible because it locks up the rest of the code.
 	 */
-	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
-	hist_count = global->detector[detID].histogram_count;
-	
 
-    // Write histogram data
+    // Create and allocate the buffer outside of mutex lock (memset forces allocation)
+    uint16_t *histogramBuffer = (uint16_t*) calloc(hist_nn, sizeof(uint16_t));
+    memset(histogramBuffer, 0, hist_nn*sizeof(uint16_t));
+    
+    // Copy histogram data inside mutex lock
+	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	memcpy(histogramBuffer, histogramData, hist_nn*sizeof(uint16_t));
+	hist_count = global->detector[detID].histogram_count;
+    pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
+    
+    
+
+    /*
+     *  Write histogram data
+     */
 	size[0] = hist_ny;
 	size[1] = hist_nx;
 	size[2] = hist_depth;
@@ -144,7 +156,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	dh = H5Dcreate(gh, "histogram", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if (dh < 0) ERROR("Could not create dataset.\n");
-	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramData);
+	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramBuffer);
 	H5Dclose(dh);
     
     // Create link from /data/histogram to /data/data (the default data locations)
@@ -178,7 +190,7 @@ void saveHistogram(cGlobal *global, int detID) {
 		// Extract a temporary copy of the histogram for this pixel
 		count = 0;
 		for(long j=0; j<hist_depth; j++) {
-			hist[j] = (float) histogramData[offset+j];
+			hist[j] = (float) histogramBuffer[offset+j];
 			count += hist[j];
 		}
 
@@ -239,7 +251,6 @@ void saveHistogram(cGlobal *global, int detID) {
 	
     
 	// Unlock the histogram
-    pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
 
     
     /*
@@ -333,8 +344,9 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	
 	/*
-	 *	Release memory (very important!)
+	 *	Release memory (very important because the histogram array is big!)
 	 */
+    free(histogramBuffer);
 	free(mean_arr);
 	free(var_arr);
 	free(rVar_arr);
