@@ -153,8 +153,12 @@ namespace cheetah_ana_pkg {
 		if (eventId.get()) {
 			runNumber = eventId->run();
 		}
-		
+
 		cheetahGlobal.runNumber = runNumber;
+
+		// Set CXI file name				
+		sprintf(cheetahGlobal.cxiFilename,"%s-r%04d.cxi", env.experiment().c_str(),runNumber);
+
 		cheetahNewRun(&cheetahGlobal);
 		printf("User analysis beginrun() routine called.\n");
 		printf("*** Processing r%04u ***\n",runNumber);
@@ -319,11 +323,11 @@ namespace cheetah_ana_pkg {
 			LTUAngY = ebeam0->ebeamLTUAngY();
 			if (verbose) {
 			cout << "* fEbeamCharge0=" << charge << "\n"
-					<< "* fEbeamL3Energy0=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX0=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY0=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX0=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY0=" << LTUAngY << endl;
+			     << "* fEbeamL3Energy0=" << L3Energy << "\n"
+			     << "* fEbeamLTUPosX0=" << LTUPosX << "\n"
+			     << "* fEbeamLTUPosY0=" << LTUPosY << "\n"
+			     << "* fEbeamLTUAngX0=" << LTUAngX << "\n"
+			     << "* fEbeamLTUAngY0=" << LTUAngY << endl;
 			}
 		}
 
@@ -920,7 +924,7 @@ namespace cheetah_ana_pkg {
 
 		// Set CXI name				
 		//sprintf(eventData->cxiFilename,"e%d-r%04d.cxi",env.expNum(),eventData->runNumber);
-		sprintf(eventData->cxiFilename,"%s-r%04d.cxi", env.experiment().c_str(),eventData->runNumber);
+		//sprintf(eventData->cxiFilename,"%s-r%04d.cxi", env.experiment().c_str(),eventData->runNumber);
         
 		// Call cheetah
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
@@ -938,6 +942,19 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
+	  // Wait for all workers to finish
+		int p=0;
+		int pp=0;
+		while(cheetahGlobal.nActiveThreads > 0) {
+	    	p = cheetahGlobal.nActiveThreads;
+			if ( pp != p){
+				pp = p;
+				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+				usleep(100000);
+			}
+	  }
+	  writeAccumulatedCXI(&cheetahGlobal);
+	  //closeCXIFiles(&cheetahGlobal);
 	}
 
 	/// Method which is called once at the end of the job
@@ -945,13 +962,13 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
-		cheetahExit(&cheetahGlobal);
-
-		time_t endT;
-		time(&endT);
-		double dif = difftime(endT,startT);
-			cout << "time taken: " << dif << " seconds" << endl;
-		exit(1);
+	  cheetahExit(&cheetahGlobal);
+	  
+	  time_t endT;
+	  time(&endT);
+	  double dif = difftime(endT,startT);
+	  cout << "time taken: " << dif << " seconds" << endl;
+	  exit(1);
 	}
 
 } // namespace cheetah_ana_pkg

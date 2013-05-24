@@ -13,6 +13,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "cheetah.h"
 #include "cheetahmodules.h"
@@ -20,16 +21,18 @@
 
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
-  DETECTOR_LOOP {
-    long		pix_nn = global->detector[detID].pix_nn;
-    long		image_nx = global->detector[detID].image_nx;
-    long		image_nn = global->detector[detID].image_nn;
-    float		*pix_x = global->detector[detID].pix_x;
-    float		*pix_y = global->detector[detID].pix_y;
-    float		*corrected_data = eventData->detector[detID].corrected_data;
-    int16_t		*image = eventData->detector[detID].image;
-    int             assembleInterpolation = global->assembleInterpolation;
-    assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+  if(global->assemble2DImage) {
+    DETECTOR_LOOP {
+      long		pix_nn = global->detector[detID].pix_nn;
+      long		image_nx = global->detector[detID].image_nx;
+      long		image_nn = global->detector[detID].image_nn;
+      float		*pix_x = global->detector[detID].pix_x;
+      float		*pix_y = global->detector[detID].pix_y;
+      float		*corrected_data = eventData->detector[detID].corrected_data;
+      int16_t		*image = eventData->detector[detID].image;
+      int             assembleInterpolation = global->assembleInterpolation;
+      assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    }
   }
 
 }
@@ -37,18 +40,19 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
 void assemble2Dmask(cEventData *eventData, cGlobal *global) {
 
-  DETECTOR_LOOP {
-    long		pix_nn = global->detector[detID].pix_nn;
-    long		image_nx = global->detector[detID].image_nx;
-    long		image_nn = global->detector[detID].image_nn;
-    float		*pix_x = global->detector[detID].pix_x;
-    float		*pix_y = global->detector[detID].pix_y;
-    uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
-    uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
-    int             assembleInterpolation = global->assembleInterpolation;
-    assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+  if(global->assemble2DMask) {
+    DETECTOR_LOOP {
+      long		pix_nn = global->detector[detID].pix_nn;
+      long		image_nx = global->detector[detID].image_nx;
+      long		image_nn = global->detector[detID].image_nn;
+      float		*pix_x = global->detector[detID].pix_x;
+      float		*pix_y = global->detector[detID].pix_y;
+      uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
+      uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+      int             assembleInterpolation = global->assembleInterpolation;
+      assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    }
   }
-
 }
 
 
@@ -272,17 +276,20 @@ void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long
   long x1,y1;
   long downsampling = img_nx/imgXxX_nx;
   long i0,i1;
+  int16_t int16_t_max = 32767;
 
-  for(i1 = 0;i1<imgXxX_nn;i1++){
-    imgXxX[i1] = 0;
-  }
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
     y0 = i0/img_nx;
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    imgXxX[i1] += img[i0];
+    // Check for overflow and clip in case
+    if (imgXxX[i1] > int16_t_max - img[i0]){
+      imgXxX[i1] = int16_t_max;
+    } else {
+      imgXxX[i1] += img[i0];
+    }
   }
 }
 

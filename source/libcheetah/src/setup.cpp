@@ -400,7 +400,6 @@ void cGlobal::setup() {
   readSpectrumDarkcal(self, espectrumDarkFile);
   readSpectrumEnergyScale(self, espectrumScaleFile);
 	
-	
   /*
    * Set up arrays for powder classes and radial stacks
    * Currently only tracked for detector[0]  (generalise this later)

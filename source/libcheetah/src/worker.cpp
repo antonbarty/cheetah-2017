@@ -178,43 +178,52 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
    
-  /*
-   *	Hitfinding
-   */
-  if(global->hitfinder){
-    hit = hitfinder(eventData, global);
-    eventData->hit = hit;
-  }
+	/*
+	 *	Hitfinding
+	 */
+	if(global->hitfinder){
+		hit = hitfinder(eventData, global);
+		eventData->hit = hit;
+	}
 	
-  /*
-   *	Identify halo pixels
-   */
-  updateHaloBuffer(eventData,global,hit);
-  calculateHaloPixelMask(global);
+	/*
+	 *	Identify halo pixels
+	 */
+	updateHaloBuffer(eventData,global,hit);
+	calculateHaloPixelMask(global);
 	
-  /*
-   *	Update running backround estimate based on non-hits
-   */
-  updateBackgroundBuffer(eventData, global,hit); 
-	
-	
-  /*
-   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorCorrectedOnly) 
-      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-  }
+	/*
+	 *	Update running backround estimate based on non-hits
+	 */
+	updateBackgroundBuffer(eventData, global, hit); 
 	
 	
-  /*
-   *	If using detector raw, do it here
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorRaw) 
-      for(long i=0;i<global->detector[detID].pix_nn;i++)
-	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-  }
+	/*
+	 *	Maintain a running sum of data (powder patterns)
+	 *    and strongest non-hit and weakest hit
+	 */
+	assemble2Dimage(eventData, global);
+	addToPowder(eventData, global);
+
+	
+	
+	/*
+	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+	 */
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorCorrectedOnly) 
+		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+	}
+	
+	
+	/*
+	 *	If using detector raw, do it here
+	 */
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorRaw)
+			for(long i=0;i<global->detector[detID].pix_nn;i++)
+				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+	}
 	
 	
   /*
@@ -226,52 +235,20 @@ void *worker(void *threadarg) {
     }
   }
 
-  /*
-   *	Write cspad to file in 1D
-   */
-  /*
-  //	if (eventData->threadNum >= 0) {
-  std::cout << "Write cspad to file.. single threaded" << std::endl;
-  DETECTOR_LOOP {
-  for(long i=0;i<global->detector[detID].pix_nn;i++){
-  myvector.push_back( (int16_t) lrint(eventData->detector[detID].corrected_data[i]) );
-  }
-  }
-  // Write out files
-  sstm << "r0" << global->runNumber << "_cspad_corrected1D_" << eventData->frameNumber;
-  result = sstm.str();
-  //outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
-  outFlu.open(result.c_str()); // output cspad for all shots
-  //std::cout << myvector.size() << std::endl;
-  //std::cout << global->nDetectors << std::endl;
-  for (unsigned i = 0; i < myvector.size(); i++ ) {
-  outFlu << myvector[i] << " ";
-  }
-  outFlu << std::endl;
-  outFlu.close();
-
-  sstm1 << "r0" << global->runNumber << "_cspad_corrected1D_target_" << eventData->frameNumber;
-  result = sstm1.str();
-  outHit.open(result.c_str()); // output cspad for all shots
-  outHit << eventData->hit;
-  outHit << std::endl;
-  outHit.close();
-
-  //	}
-  */
 
   /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
-  if(global->assemble2DImage) {
-    assemble2Dimage(eventData, global);
-  }
-  if(global->assemble2DMask) {
-    assemble2Dmask(eventData, global);
-  }
+  assemble2Dimage(eventData, global);
+  assemble2Dmask(eventData, global);
 
   /*
-   *	Calculate radial average
+   *   Downsample assembled image
+   */
+  downsample(eventData,global);
+
+  /*
+   *  Calculate radial average
    *  Maintain radial average stack
    */
   calculateRadialAverage(eventData, global); 
@@ -290,25 +267,25 @@ void *worker(void *threadarg) {
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
-  goto save;
   
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
- save:
-  if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
+  
+	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
     if(global->saveCXI==1){
       pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
       pthread_mutex_unlock(&global->saveCXI_mutex);
+      printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
     else {
       writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1lf Hz): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
     }
   }
   else {
-    printf("r%04u:%li (%2.1lf Hz): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, eventData->nPeaks);
+    printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
   }
 
   /*

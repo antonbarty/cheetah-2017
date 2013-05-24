@@ -45,17 +45,22 @@ void cheetahInit(cGlobal *global) {
  *  libCheetah function for start of a new run
  */
 void cheetahNewRun(cGlobal *global) {
-	// Reset the powder log files
-	if(global->runNumber > 0) {
-		for(long i=0; i<global->nPowderClasses; i++) {
-			char	filename[1024];
-			if(global->powderlogfp[i] != NULL)
-				fclose(global->powderlogfp[i]);
-			sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
-			global->powderlogfp[i] = fopen(filename, "w");
-			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
-		}
-	}
+  // Wait for all workers to finish
+  while(global->nActiveThreads > 0) {
+    printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+    usleep(100000);
+  }
+  // Reset the powder log files
+  if(global->runNumber > 0) {
+    for(long i=0; i<global->nPowderClasses; i++) {
+      char	filename[1024];
+      if(global->powderlogfp[i] != NULL)
+	fclose(global->powderlogfp[i]);
+      sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
+      global->powderlogfp[i] = fopen(filename, "w");
+      fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+    }
+  }
 }
 
 
@@ -82,7 +87,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->peakResolution=0.;
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
-	eventData->peakTotal=0.;	
+	eventData->peakTotal=0.;
+
+	eventData->stackSlice=0;
 
 	//long		pix_nn1 = global->detector[0].pix_nn;
 	//long		asic_nx = global->detector[0].asic_nx;
@@ -105,13 +112,14 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
-		if(global->detector[detID].downsampling > 1){
+		//if(global->detector[detID].downsampling > 1){
 		  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-		} else {
-		  eventData->detector[detID].imageXxX = NULL;
-		  eventData->detector[detID].imageXxX_pixelmask = NULL;
-		}
+		//}
+		//else {
+		//  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
+		//  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
+		//}
 
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
@@ -121,7 +129,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	long NpeaksMax = global->hitfinderNpeaksMax;
+	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
+	long NpeaksMax = global->hitfinderPeakBufferSize;
 	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
 	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
 	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
@@ -164,10 +173,10 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].pixelmask);
 		free(eventData->detector[detID].image_pixelmask);
 		
-		if(global->detector[detID].downsampling > 1){
+		//if(global->detector[detID].downsampling > 1){
 		  free(eventData->detector[detID].imageXxX);
 		  free(eventData->detector[detID].imageXxX_pixelmask);
-		}
+		//}
 
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
@@ -198,7 +207,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->TOFVoltage); 
 	}
     
-    
+    free(eventData->energySpectrum1D);
     
     
 	free(eventData);
@@ -391,13 +400,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         while(global->nActiveThreads >= global->nThreads) {
 	  usleep(1000);
         }
-
-	DETECTOR_LOOP {
-	  while((eventData->frameNumber==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
-	    printf("Reached frame %i. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
-	    usleep(5000);
-	  }
-	}
         
         // Set detached state
         pthread_attr_init(&threadAttribute);
@@ -436,6 +438,14 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		global->updateLogfile();
         global->writeStatus("Not finished");
 	}
+
+	DETECTOR_LOOP {
+	  while((eventData->frameNumber+1==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
+	    printf("Processed %i frames. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
+	    usleep(5000);
+	  }
+	}
+
 	
 }
 
@@ -489,7 +499,16 @@ void cheetahExit(cGlobal *global) {
     
 	
     // Hitrate?
-    printf("%li files processed, %li hits (%2.2f%%)\n",global->nprocessedframes, global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+    if (global->nPowderClasses){
+      printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+      printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
+      printf("Blanks: %li (%2.2f%%) ",global->nprocessedframes-global->nhits, 100.*( (global->nprocessedframes-global->nhits)/ (float) global->nprocessedframes));
+      printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
+    } else {
+      printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+    }
+    printf("%li files processed\n",global->nprocessedframes);
+
     
     
     // Cleanup

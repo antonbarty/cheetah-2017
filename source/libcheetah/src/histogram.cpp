@@ -39,7 +39,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	// Dereference common variables
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		histMin = global->detector[detID].histogramMin;
-	long		histMax = global->detector[detID].histogramMax;
+    //long		histMax = global->detector[detID].histogramMax;
 	long		histStep = global->detector[detID].histogramBinSize;
 	long		histDepth = global->detector[detID].histogram_depth;
 	uint16_t	*histogramData = global->detector[detID].histogramData;
@@ -52,7 +52,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	buffer = (long *) calloc(pix_nn, sizeof(long));
 	for(long i=0; i<pix_nn; i++) {
 		value = eventData->detector[detID].corrected_data[i];
-		bin = floor((value-histMin)/histStep);
+		bin = (long) floor((value-histMin)/histStep);
 		if(bin < 0) bin = 0;
 		if(bin >= histDepth) bin=histDepth-1;
 		buffer[i] = bin;

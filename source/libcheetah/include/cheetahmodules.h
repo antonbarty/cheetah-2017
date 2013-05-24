@@ -55,6 +55,7 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
+void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
 herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
 
