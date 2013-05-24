@@ -254,6 +254,12 @@ void *worker(void *threadarg) {
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
 	
+  /*
+   *	Maintain a running sum of data (powder patterns)
+   *    and strongest non-hit and weakest hit
+   */
+  addToPowder(eventData, global);
+  addToHistogram(eventData, global);
 
   /*
    * calculate the one dimesional beam spectrum
@@ -261,17 +267,17 @@ void *worker(void *threadarg) {
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
-  goto save;
   
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */
- save:
-  if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
+  
+	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
     if(global->saveCXI==1){
       pthread_mutex_lock(&global->saveCXI_mutex);
       writeCXI(eventData, global);
       pthread_mutex_unlock(&global->saveCXI_mutex);
+      printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
     else {
       writeHDF5(eventData, global);

@@ -44,138 +44,139 @@ cGlobal::cGlobal(void) {
     detector[i].detectorID = i;
   }
 
-  // Statistics
-  summedPhotonEnergyeV = 0;
-  meanPhotonEnergyeV = 0;
-  datarateWorker = 1.;
-  datarateWorkerMemory = 0.95;
-  datarateWorkerSkipCounter = 0;
-  lastTimingFrame = 0;
+    // Statistics
+    summedPhotonEnergyeV = 0;
+    meanPhotonEnergyeV = 0;
+    datarateWorker = 1.;
+    datarateWorkerMemory = 0.95;
+    datarateWorkerSkipCounter = 0;
+    lastTimingFrame = 0;
 
-  // Pv values
-  strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
-  laserDelay = std::numeric_limits<float>::quiet_NaN();
-  laserDelay = 0;
+    // Pv values
+    strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+    laserDelay = std::numeric_limits<float>::quiet_NaN();
+    laserDelay = 0;
 
-  // Misc. PV values
-  nEpicsPvFloatValues = 0;
+    // Misc. PV values
+    nEpicsPvFloatValues = 0;
 
-  // Start and stop frames
-  startAtFrame = 0;
-  stopAtFrame = 0;
+    // Start and stop frames
+    startAtFrame = 0;
+    stopAtFrame = 0;
 
-  // Calibrations
-  generateDarkcal = 0;
-  generateGaincal = 0;
+    // Calibrations
+    generateDarkcal = 0;
+    generateGaincal = 0;
 
-  // Hitfinding
-  hitfinder = 0;
-  hitfinderDetector = 0;
-  hitfinderADC = 100;
-  hitfinderTAT = 1e3;
-  hitfinderNpeaks = 50;
-  hitfinderNpeaksMax = 100000;
-  hitfinderAlgorithm = 3;
-  hitfinderMinPixCount = 3;
-  hitfinderMaxPixCount = 20;
-  hitfinderUsePeakmask = 0;
-  hitfinderCheckGradient = 0;
-  hitfinderMinGradient = 0;
-  strcpy(peaksearchFile, "No_file_specified");
-  savePeakInfo = 0;
-  hitfinderCheckPeakSeparation = 0;
-  hitfinderMinPeakSeparation = 0;
-  hitfinderSubtractLocalBG = 0;
-  hitfinderLocalBGRadius = 4;
-  hitfinderLocalBGThickness = 5;
-  //hitfinderLimitRes = 1;
-  hitfinderMinRes = 0;
-  hitfinderMaxRes = 1e10;
-  hitfinderResolutionUnitPixel = 0;
-  hitfinderMinSNR = 40;
+    // Hitfinding
+    hitfinder = 0;
+    hitfinderDetector = 0;
+    hitfinderADC = 100;
+    hitfinderTAT = 1e3;
+    hitfinderNpeaks = 50;
+    hitfinderNpeaksMax = 100000;
+    hitfinderAlgorithm = 3;
+    hitfinderMinPixCount = 3;
+    hitfinderMaxPixCount = 20;
+    hitfinderUsePeakmask = 0;
+    hitfinderCheckGradient = 0;
+    hitfinderMinGradient = 0;
+    strcpy(peaksearchFile, "No_file_specified");
+    savePeakInfo = 0;
+    hitfinderCheckPeakSeparation = 0;
+    hitfinderMinPeakSeparation = 0;
+    hitfinderSubtractLocalBG = 0;
+    hitfinderLocalBGRadius = 4;
+    hitfinderLocalBGThickness = 5;
+    //hitfinderLimitRes = 1;
+    hitfinderMinRes = 0;
+    hitfinderMaxRes = 1e10;
+    hitfinderResolutionUnitPixel = 0;
+    hitfinderMinSNR = 40;
 
-  // TOF (Aqiris)
-  hitfinderUseTOF = 0;
-  hitfinderTOFMinSample = 0;
-  hitfinderTOFMaxSample = 1000;
-  hitfinderTOFThresh = 100;
+    // TOF (Aqiris)
+    hitfinderUseTOF = 0;
+    hitfinderTOFMinSample = 0;
+    hitfinderTOFMaxSample = 1000;
+    hitfinderTOFThresh = 100;
 
-  // TOF configuration
-  TOFPresent = 0;
-  TOFchannel = 1;
-  strcpy(tofName, "CxiSc1");
-  //tofType = Pds::DetInfo::Acqiris;
-  //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+    // TOF configuration
+    TOFPresent = 0;
+    TOFchannel = 1;
+    strcpy(tofName, "CxiSc1");
+    //tofType = Pds::DetInfo::Acqiris;
+    //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 
-  // energy spectrum default configuration
-  espectrum1D = 1;
-  espectrumTiltAng = 0;
-  espectrumLength = 1080;
-  espectrumWidth = 900;
-  espectrumDarkSubtract = 0;
-  espectrumSpreadeV = 40;
-  strcpy(espectrumDarkFile, "No_file_specified");
-  strcpy(espectrumScaleFile, "No_file_specified");
+    // energy spectrum default configuration
+    espectrum = 0;
+    espectrum1D = 1;
+    espectrumTiltAng = 0;
+    espectrumLength = 1080;
+    espectrumWidth = 900;
+    espectrumDarkSubtract = 0;
+    espectrumSpreadeV = 40;
+    strcpy(espectrumDarkFile, "No_file_specified");
+    strcpy(espectrumScaleFile, "No_file_specified");
 
-  // Powder pattern generation
-  nPowderClasses = 2;
-  usePowderThresh = 0;
-  powderthresh = 0.0;
-  powderSumHits = 1;
-  powderSumBlanks = 0;
+    // Powder pattern generation
+    nPowderClasses = 2;
+    usePowderThresh = 0;
+    powderthresh = 0.0;
+    powderSumHits = 1;
+    powderSumBlanks = 0;
 
-  // Radial average stacks
-  saveRadialStacks=0;
-  radialStackSize=10000;
+    // Radial average stacks
+    saveRadialStacks=0;
+    radialStackSize=10000;
 
-  // Assemble options
-  assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
-  assemble2DImage = 1;
-  assemble2DMask = 1;
+    // Assemble options
+    assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
+    assemble2DImage = 1;
+    assemble2DMask = 1;
 
-  // Saving options
-  savehits = 0;
-  saveAssembled = 1;
-  saveRaw = 0;
-  hdf5dump = 0;
-  saveInterval = 1000;
-  savePixelmask = 0;
-  saveCXI = 0;
+    // Saving options
+    savehits = 0;
+    saveAssembled = 1;
+    saveRaw = 0;
+    hdf5dump = 0;
+    saveInterval = 1000;
+    savePixelmask = 0;
+    saveCXI = 0;
 
-  // Peak lists
-  savePeakList = 1;
+    // Peak lists
+    savePeakList = 1;
 
-  // Verbosity
-  debugLevel = 2;
+    // Verbosity
+    debugLevel = 2;
 
-  // I/O speed test?
-  ioSpeedTest = 0;
+    // I/O speed test?
+    ioSpeedTest = 0;
 
-  // Default to only a few threads
-  nThreads = 16;
-  useHelperThreads = 0;
-  threadPurge = 10000;
-	
-  // Saving to subdirectories
-  subdirFileCount = -1;
-  subdirNumber = 0;
-  strcpy(subdirName, "");
+    // Default to only a few threads
+    nThreads = 16;
+    useHelperThreads = 0;
+    threadPurge = 10000;
+
+    // Saving to subdirectories
+    subdirFileCount = -1;
+    subdirNumber = 0;
+    strcpy(subdirName, "");
 
 
-  // Log files
-  strcpy(logfile, "log.txt");
-  strcpy(framefile, "frames.txt");
-  strcpy(cleanedfile, "cleaned.txt");
-  strcpy(peaksfile, "peaks.txt");
+    // Log files
+    strcpy(logfile, "log.txt");
+    strcpy(framefile, "frames.txt");
+    strcpy(cleanedfile, "cleaned.txt");
+    strcpy(peaksfile, "peaks.txt");
 
-  // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
-  fudgeevr41 = 0; // this means no fudge by default
-  lasttime = 0;
-  laserPumpScheme = 0;
+    // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
+    fudgeevr41 = 0; // this means no fudge by default
+    lasttime = 0;
+    laserPumpScheme = 0;
 
-  // Do not output 1 HDF5 per image by default
-  saveCXI = 0;
-  strcpy(currentCXIFileName, "");
+    // Do not output 1 HDF5 per image by default
+    saveCXI = 0;
+    strcpy(cxiFilename, "");
 }
 
 
@@ -398,7 +399,6 @@ void cGlobal::setup() {
 	
   readSpectrumDarkcal(self, espectrumDarkFile);
   readSpectrumEnergyScale(self, espectrumScaleFile);
-	
 	
   /*
    * Set up arrays for powder classes and radial stacks
@@ -728,11 +728,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
 
   // Energy spectrum parameters
-  else if (!strcmp(tag, "espectrumtiltang")) {
-    espectrumTiltAng = atoi(value);
+  else if (!strcmp(tag, "espectrum")) {
+      espectrum = atoi(value);
   }
   else if (!strcmp(tag, "espectrum1d")) {
-    espectrum1D = atoi(value);
+      espectrum1D = atoi(value);
+  }
+  else if (!strcmp(tag, "espectrumtiltang")) {
+    espectrumTiltAng = atoi(value);
   }
   else if (!strcmp(tag, "espectrumlength")) {
     espectrumLength = atoi(value);
@@ -928,6 +931,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
   fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
   fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
+  fprintf(fp, "espectrum=%d\n",espectrum);
   fprintf(fp, "espectrum1D=%d\n",espectrum1D);
   fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
   fprintf(fp, "espectrumLength=%d\n",espectrumLength);
@@ -1103,8 +1107,19 @@ void cGlobal::updateLogfile(void){
   pthread_mutex_lock(&peaksfp_mutex);
   fflush(peaksfp);
   pthread_mutex_unlock(&peaksfp_mutex);
+}
 
+void cGlobal::writeStatus(const char* message) {
+    FILE *fp;
+    fp = fopen ("status.txt","w");
+    
+    fprintf(fp, "%s\n", message);
+    fprintf(fp, "%li\n", nprocessedframes);
+    fprintf(fp, "%li\n", nhits);
 
+    fclose (fp);
+
+    
 }
 
 

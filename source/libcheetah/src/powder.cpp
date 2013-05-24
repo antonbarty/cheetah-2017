@@ -59,6 +59,28 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].raw_data[i];
   pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
 
+  // Raw data squared (for calculating variance)
+  buffer = (double*) calloc(pix_nn, sizeof(double));
+  if(!global->usePowderThresh) {
+    for(long i=0; i<pix_nn; i++)
+      buffer[i] = (eventData->detector[detID].raw_data[i])*(eventData->detector[detID].raw_data[i]);
+  }
+  else {
+    for(long i=0; i<pix_nn; i++){
+      if(eventData->detector[detID].raw_data[i] > global->powderthresh)
+	buffer[i] = (eventData->detector[detID].raw_data[i])*(eventData->detector[detID].raw_data[i]);
+      else
+	buffer[i] = 0;
+    }	
+  }
+  pthread_mutex_lock(&global->detector[detID].powderRawSquared_mutex[powderClass]);
+  for(long i=0; i<pix_nn; i++){
+    global->detector[detID].powderRawSquared[powderClass][i] += buffer[i];
+  }
+  pthread_mutex_unlock(&global->detector[detID].powderRawSquared_mutex[powderClass]);	
+  free(buffer);
+
+
   // Corrected data
   pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
   if(!global->usePowderThresh) {
@@ -150,6 +172,12 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 /*
  *	Wrapper for saving all powder patterns for a detector
  */
+void saveRunningSums(cGlobal *global) {
+    for(int detID=0; detID<global->nDetectors; detID++) {
+        saveRunningSums(global, detID);
+    }
+}
+
 void saveRunningSums(cGlobal *global, int detID) {
 
   //	Save powder patterns from different classes

@@ -15,6 +15,7 @@ exit 1
 
 # defaults
 OVERWRITE="NO"
+PSANA="YES"
 [ $CHEETAH ] || CHEETAH="cheetah"
 [ $H5DIR ] || H5DIR="."
 [ $XTCDIR ] || XTCDIR="."
@@ -28,7 +29,7 @@ CONFIGDIR=${CONFIGDIR}/
 
 
 # get options:
-while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
+while getopts "r:i:t:s:n:j:qdoOhpm" OPTION; do
 	case $OPTION in
 	r) if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
 			RUNDIR=$(printf 'r%04d' $OPTARG)
@@ -50,6 +51,8 @@ while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
 	O) OVERWRITE="FORCE";;
 	h) SHOWHELP="YES";;
 	p) PSANA="YES";;
+	m) MYANA="YES"
+	   PSANA="";;
 	?) UERROR "Unrecognized option $OPTARG";;
 	esac
 done
@@ -75,7 +78,7 @@ Brief summary of options:
    -o       Overwrite the previous run (if it successfully finished).
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
-   -p       Use the psana version of cheetah (this will be the default soon)
+   -m       Use the myana version of cheetah
 
 Best to explain by example.  Firstly, you will probably want to set up some 
 environment variables for ease of use.  This seems to be the easiest way to 
