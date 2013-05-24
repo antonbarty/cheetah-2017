@@ -158,6 +158,7 @@ public:
 	double   AcqSampleInterval;
     
 	/** @brief Toggle energy spectrum creation. */
+    int      espectrum;
 	int      espectrum1D;
 	/** @brief Angle of spectra from horizontal (clockwise). */
 	double   espectrumTiltAng;

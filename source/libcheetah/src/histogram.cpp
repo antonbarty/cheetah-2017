@@ -331,7 +331,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	
 	/*
-	 *	Release memory (very important here!)
+	 *	Release memory (very important!)
 	 */
 	free(mean_arr);
 	free(var_arr);
