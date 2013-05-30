@@ -46,8 +46,8 @@ pro crawler_hdf5, hdf5dir, pattern
 		;; Newer versions of Cheetah will output a brief status.txt file
 		if file_test(h5dir[i]+'/status.txt') then begin
 			data1 = string('')
-			data2 = fix(0)
-			data3 = fix(0)
+			data2 = long(0)
+			data3 = long(0)
 			openr, lun, h5dir[i]+'/status.txt', /get
 			readf, lun, data1
 			readf, lun, data2
@@ -65,42 +65,51 @@ pro crawler_hdf5, hdf5dir, pattern
 			;; Clean exit?
 			;; Directory exists means job has at least been sent to the queue
 			;; Otherwise, look at log.txt to check for 'clean exit'
-			command = 'tail -n 2 ' +h5dir[i]+ '/log.txt | head -n 1'
-			spawn, command, r
-			w2 = strpos(r, 'Cheetah clean exit')
-			if r eq '' then $
-				s = 'Not started'  $
-			else if w2 ne -1 then $
-				s = 'Finished' $
-			else $
-				s = 'Not finished' 
+			s = 'Queued'
+			if file_test(h5dir[i]+ '/log.txt') then begin 
+				command = 'tail -n 2 ' +h5dir[i]+ '/log.txt | head -n 1'
+				spawn, command, r
+				w2 = strpos(r, 'Cheetah clean exit')
+				if r eq '' then $
+					s = 'Not started'  $
+				else if w2 ne -1 then $
+					s = 'Finished' $
+				else $
+					s = 'Not finished' 
+			endif
 			status[i] = s
 		
 		
 			;; Number of processed frames
-			command = 'wc -l ' +h5dir[i]+ '/frames.txt'
-			spawn, command, r
-			w1 = strpos(r, 'No such file or directory')
-			if w1 ne -1 then $
-				processed[i] = 0 $
-			else begin
-				s = strsplit(r, ' ', /extract)
-				p = s[0]
-				processed[i] = long(p)-1 
-			endelse
+			processed[i] = 0
+			if file_test(h5dir[i]+ '/frames.txt') then begin
+				command = 'wc -l ' +h5dir[i]+ '/frames.txt'
+				spawn, command, r
+				w1 = strpos(r, 'No such file or directory')
+				if w1 ne -1 then $
+					processed[i] = 0 $
+				else begin
+					s = strsplit(r, ' ', /extract)
+					p = s[0]
+					processed[i] = long(p)-1 
+				endelse
+			endif
 
 
 			;; Number of hits
-			command = 'wc -l ' +h5dir[i]+ '/cleaned.txt'
-			spawn, command, r
-			w1 = strpos(r, 'No such file or directory')
-			if w1 ne -1 then $
-				hits[i] = 0 $
-			else begin
-				s = strsplit(r, ' ', /extract)
-				c = s[0]
-				hits[i] = long(c)-1
-			endelse
+			hits[i] = 0 
+			if file_test(h5dir[i]+ '/cleaned.txt') then begin
+				command = 'wc -l ' +h5dir[i]+ '/cleaned.txt'
+				spawn, command, r
+				w1 = strpos(r, 'No such file or directory')
+				if w1 ne -1 then $
+					hits[i] = 0 $
+				else begin
+					s = strsplit(r, ' ', /extract)
+					c = s[0]
+					hits[i] = long(c)-1
+				endelse
+			endif
 		endelse
 	
 		

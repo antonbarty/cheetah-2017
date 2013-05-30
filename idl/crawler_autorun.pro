@@ -18,11 +18,11 @@ pro crawler_autorun_event, ev
 			widget_control, sState.mbrun, sensitive=0
 
 			widget_control, sState.text, set_value='XTC files'
-			crawler_xtc, xtcdir
+			crawler_xtc, sState.xtcdir
 			widget_control, sState.text, set_value='Datasets'
-			crawler_dataset
+			crawler_dataset, sState.datasetdb
 			widget_control, sState.text, set_value='Scanning HDF5 directories'
-			crawler_hdf5, hdf5dir, hdf5filter
+			crawler_hdf5, sState.hdf5dir, sState.hdf5filter
 			widget_control, sState.text, set_value='Merging'
 			crawler_merge
 
@@ -76,7 +76,12 @@ pro crawler_autorun, xtcdir=xtcdir, hdf5dir=hdf5dir, hdf5filter=hdf5filter, data
 	sState = { $
 			base : base, $
 			mbrun : mbrun, $
-			text : text $
+			text : text,  $
+
+			xtcdir : xtcdir, $
+			hdf5dir : hdf5dir, $
+			hdf5filter : hdf5filter, $
+			datasetdb : datasetdb $
 	}				
 	pstate = ptr_new(sState)
 	WIDGET_CONTROL, base, SET_UVALUE=pState
