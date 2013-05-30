@@ -54,6 +54,7 @@ pro crawler_merge
 		;; Retrieve HDF5 directories for this run (used when HDF5 filter allows for multiple results per run)
 		whdf5 = where(h5run eq xtcrun[i])
 		
+		
 		;; Loop through all HDF5 directories that exist and are associated with this run
 		if whdf5[0] ne -1 then begin
 			for j=0L, n_elements(whdf5)-1 do begin

@@ -109,7 +109,7 @@ cGlobal::cGlobal(void) {
 
     // energy spectrum default configuration
     espectrum = 0;
-    espectrum1D = 1;
+    espectrum1D = 0;
     espectrumTiltAng = 0;
     espectrumLength = 1080;
     espectrumWidth = 900;
