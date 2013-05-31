@@ -941,6 +941,13 @@ pro cheetah_event, ev
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
 			(*pstate).image_boost = 10
+			(*pstate).circleHDF5Peaks = 1
+			(*pstate).findPeaks = 0
+			(*pstate).savePeaks = 0
+			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
+			widget_control, sState.menu_findPeaks, set_button = 0
+			widget_control, sState.menu_savePeaks, set_button = 0
+
 			cheetah_displayImage, pState
 		end
 		

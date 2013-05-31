@@ -24,7 +24,7 @@ pro crawler_hdf5, hdf5dir, pattern
 	;; No files = blank hdf5 status file
 	if h5dir[0] eq '' then begin
 		openw, fout, 'hdf5.txt', /get	
-		printf, fout, '# Run, status, processed, hits, hitrate%'
+		printf, fout, '# Run, status, directory, processed, hits, hitrate%'
 		close, fout
 		free_lun, fout
 		return

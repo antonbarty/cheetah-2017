@@ -17,13 +17,19 @@ pro crawler_config, pState
 	(*pstate).xtcdir = '../../xtc'
 	(*pstate).h5dir = '../hdf5'
 	(*pstate).h5filter = 'r*-ab' 
-	(*pstate).geometry = '../config/pixelmap/2may13-v2.h5'
+	(*pstate).geometry = '../calib/geometry/2may13-v2.h5'
 	(*pstate).process = '../anton/process/process'
 	(*pstate).cheetahIni = '2dx.ini'
 
 
 	;; Now try to read from the config file
 	configFile = 'crawler.config'
+	if file_test(configFile) ne 1 then begin
+		cd,'~'
+		dir=dialog_pickfile(/dir)
+		cd,dir[0]
+	endif
+	
 	if file_test(configFile) eq 1 then begin
 		info = read_csv(configFile)
 		info = info.field1		
@@ -39,8 +45,7 @@ pro crawler_config, pState
 		else begin
 			crawler_configMenu, pState
 		endelse		
-	endif $
-	
+	endif $	
 	else begin
 		crawler_configMenu, pState
 	endelse
@@ -185,7 +190,6 @@ pro crawler_updateTable, pState
 		return
 	endif
 	data = read_csv('crawler.txt',header=h)
-
 	ntags = n_tags(data)
 	names = tag_names(data)
 	
@@ -281,6 +285,20 @@ end
 pro crawler_event, ev
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
   	sState = *pState
+
+
+	;; Establish polite error handler to catch crashes
+	;; (only if not in debug mode)
+	if 1 then begin
+		catch, Error_status 
+		if Error_status ne 0 then begin
+			message = 'Execution error: ' + !error_state.msg
+			r = dialog_message(message,title='Error',/center,/error)
+			catch, /cancel
+			return
+		endif 
+	endif
+
 
 	;;
 	;; Main event processing case statement
@@ -430,6 +448,8 @@ pro crawler_event, ev
 			
 		
 	endcase
+
+	catch, /cancel
 
 end
 
