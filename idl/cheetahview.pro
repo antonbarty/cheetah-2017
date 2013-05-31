@@ -1112,8 +1112,8 @@ pro cheetahview, geometry=geometry, dir=dir
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
-	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer: wl = d sin(theta))', /checked)
-	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer: wl = 2d sin(theta))', /checked)
+	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer, wl = d sin(theta))', /checked)
+	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer, wl = 2d sin(theta))', /checked)
 	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
 	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
 	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)
