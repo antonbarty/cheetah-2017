@@ -55,9 +55,11 @@ function cheetah_peakcircles, filename, image, pState, peakx, peaky
 	
 	;; Create circles
 	for i=0L, npeaks-1 do begin
-		temp = peakcircles[peakx[i]:peakx[i]+19, peaky[i]:peaky[i]+19]
+		xx = round(peakx[i])
+		yy = round(peaky[i])
+		temp = peakcircles[xx:xx+19, yy:yy+19]
 		temp += circle
-		peakcircles[peakx[i]:peakx[i]+19, peaky[i]:peaky[i]+19] = temp
+		peakcircles[xx:xx+19, yy:yy+19] = temp
 	endfor
 	
 	peakcircles = peakcircles < 1

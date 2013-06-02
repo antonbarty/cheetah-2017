@@ -43,21 +43,36 @@ pro crawler_hdf5, hdf5dir, pattern
 		
 		s = 'Queued'		
 	
+		catch, Error_status 
+		if Error_status ne 0 then begin
+			message = 'Execution error: ' + !error_state.msg
+			print, message
+			status[i] = 'Dont panic'
+			catch, /cancel
+			continue
+		endif 
+
+	
 		;; Newer versions of Cheetah will output a brief status.txt file
+		;; Sometimes this will tank when the file has not been completely written - fix later, solve now with catch errors
 		if file_test(h5dir[i]+'/status.txt') then begin
-			data1 = string('')
-			data2 = long(0)
-			data3 = long(0)
-			openr, lun, h5dir[i]+'/status.txt', /get
-			readf, lun, data1
-			readf, lun, data2
-			readf, lun, data3
-			close, lun
-			free_lun, lun
+			if file_lines(h5dir[i]+'/status.txt') eq 3 then begin
+				data1 = string('')
+				data2 = long(0)
+				data3 = long(0)
+				openr, lun, h5dir[i]+'/status.txt', /get
+				readf, lun, data1
+				readf, lun, data2
+				readf, lun, data3
+				close, lun
+				free_lun, lun
 			
-			status[i] = data1
-			processed[i] = data2
-			hits[i] = data3
+				status[i] = data1
+				processed[i] = data2
+				hits[i] = data3
+			endif $
+			else $
+				continue
 		endif $
 		
 		;; Older versions won't 
@@ -119,7 +134,8 @@ pro crawler_hdf5, hdf5dir, pattern
 		else $
 			hitrate[i] = 0 
 			
-	
+		catch, /cancel
+
 	endfor
 	
 
@@ -139,5 +155,6 @@ pro crawler_hdf5, hdf5dir, pattern
 	
 	close, fout
 	free_lun, fout
+	close, /all
 
 end

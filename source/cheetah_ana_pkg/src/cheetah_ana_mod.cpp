@@ -905,8 +905,6 @@ namespace cheetah_ana_pkg {
 			const ndarray<const uint8_t, 2>& data8 = specData->data8();
 			if (not data8.empty()) {
 				cout << "Opal2k(uint8_t) will not be passed to Cheetah. Complain if you need this!" << endl;
-				//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
-				//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
 			}
             
 			const ndarray<const uint16_t, 2>& data16 = specData->data16();

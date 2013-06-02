@@ -122,62 +122,67 @@ void *worker(void *threadarg) {
     }
   }
        
-  /*
-   *	Subtract persistent photon background
-   */
-  subtractPersistentBackground(eventData, global);
+	/*
+	 *	Subtract persistent photon background
+	 */
+	subtractPersistentBackground(eventData, global);
 
     	
 
-  /*
-   *	Local background subtraction
-   */
-  subtractLocalBackground(eventData, global);
+	/*
+	 *	Local background subtraction
+	 */
+	subtractLocalBackground(eventData, global);
 			
 
-  /*
-   *	Subtract residual common mode offsets (cmModule=2)
-   */
-  cspadModuleSubtract2(eventData, global);
+	/*
+	 *	Subtract residual common mode offsets (cmModule=2)
+	 */
+	cspadModuleSubtract2(eventData, global);
 
-  /*
-   *	Apply bad pixels
-   */
-  applyBadPixelMask(eventData, global);
 	
-  /*
-   *	Identify and kill hot pixels
-   */
-  identifyHotPixels(eventData, global);	
-  calculateHotPixelMask(global);
-  applyHotPixelMask(eventData,global);
+	/*
+	 *	Apply bad pixels
+	 */
+	applyBadPixelMask(eventData, global);
+	
+	
+	/*
+	 *	Identify and kill hot pixels
+	 */
+	identifyHotPixels(eventData, global);
+	calculateHotPixelMask(global);
+	applyHotPixelMask(eventData,global);
 
+	updateDatarate(eventData,global);
 
-  updateDatarate(eventData,global);
+	
+	
+	  /*
+	   *	Skip first set of frames to build up running estimate of background...
+	   */
+	  DETECTOR_LOOP {
+		if (eventData->threadNum < global->detector[detID].startFrames || 
+		(global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
+		(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
+		  updateBackgroundBuffer(eventData, global, 0); 
+		  updateHaloBuffer(eventData,global,0);		    
+		  printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+		  goto cleanup;
+		}
+	  }
 
-  /*
-   *	Skip first set of frames to build up running estimate of background...
-   */
-  DETECTOR_LOOP {
-    if (eventData->threadNum < global->detector[detID].startFrames || 
-	(global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
-	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
-      updateBackgroundBuffer(eventData, global, 0); 
-      updateHaloBuffer(eventData,global,0);		    
-      printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
-      goto cleanup;
-    }
-  }
-
-  /*
-   *  Fix pnCCD errors:
-   *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
-   *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-   *  (these corrections will be automatically skipped for any non-pnCCD detector)
-   */
-  pnccdOffsetCorrection(eventData, global);
-  pnccdFixWiringError(eventData, global);
+		
+	  /*
+	   *  Fix pnCCD errors:
+	   *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
+	   *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+	   *  (these corrections will be automatically skipped for any non-pnCCD detector)
+	   */
+	  pnccdOffsetCorrection(eventData, global);
+	  pnccdFixWiringError(eventData, global);
    
+	
 	/*
 	 *	Hitfinding
 	 */
@@ -191,6 +196,7 @@ void *worker(void *threadarg) {
 	 */
 	updateHaloBuffer(eventData,global,hit);
 	calculateHaloPixelMask(global);
+	
 	
 	/*
 	 *	Update running backround estimate based on non-hits
@@ -258,7 +264,6 @@ void *worker(void *threadarg) {
    *	Maintain a running sum of data (powder patterns)
    *    and strongest non-hit and weakest hit
    */
-  addToPowder(eventData, global);
   addToHistogram(eventData, global);
 
   /*

@@ -34,13 +34,15 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
     if(global->generateDarkcal || global->generateGaincal){
 		addToPowder(eventData, global, 0, detID);
     }
-    if(!hit && global->powderSumBlanks){
-		addToPowder(eventData, global, 0, detID);
-    }
-    if(hit && global->powderSumHits){
-		addToPowder(eventData, global, 1, detID);
-    }
-  } 
+	else {
+		if(!hit && global->powderSumBlanks){
+			addToPowder(eventData, global, 0, detID);
+		}
+		if(hit && global->powderSumHits){
+			addToPowder(eventData, global, 1, detID);
+		}
+	}
+  }
 }
 
 
@@ -52,6 +54,15 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
   long	image_nn = global->detector[detID].image_nn;
 
   double  *buffer;
+	
+	// Increment counters
+	pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
+	global->detector[detID].nPowderFrames[powderClass] += 1;
+	if(detID == 0)
+		global->nPowderFrames[powderClass] += 1;
+	pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);
+	
+
 	
   // Raw data
   pthread_mutex_lock(&global->detector[detID].powderRaw_mutex[powderClass]);
@@ -131,13 +142,6 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     }
     pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
   }
-
-  // Increment counters
-  pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
-  global->detector[detID].nPowderFrames[powderClass] += 1;
-  if(detID == 0)
-    global->nPowderFrames[powderClass] += 1;
-  pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);			
 
 
   // Min nPeaks: Pattern
