@@ -181,7 +181,7 @@ void *worker(void *threadarg) {
   /*
    *	Hitfinding
    */
-  if(global->hitfinder){
+  if(global->hitfinder && global->hitfinderAlgorithm != 8){
     hit = hitfinder(eventData, global);
     eventData->hit = hit;
   }
@@ -261,14 +261,6 @@ void *worker(void *threadarg) {
   */
 
   /*
-   *  Calculate angular correlation
-   *  write accumulated angular correlation to file when approperiate
-   *  then written out version has mask corrected
-   */
-  if(global->calcAngularCorrelation)
-    calculateAngularCorrelation(eventData, global);
-
-  /*
    *	Assemble quadrants into a 'realistic' 2D image
    */
   assemble2Dimage(eventData, global);
@@ -283,8 +275,27 @@ void *worker(void *threadarg) {
    *	Calculate radial average
    *  Maintain radial average stack
    */
+
   calculateRadialAverage(eventData, global); 
+  if( global->hitfinder && (global->hitfinderAlgorithm == 8) ) {
+    hit = hitfinder(eventData, global);
+    eventData->hit = hit;
+  }
+
+//  calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
+  DETECTOR_LOOP {
+    updatesaxs(global, eventData, detID);
+  }
+
+  /*
+   *  Calculate angular correlation
+   *  write accumulated angular correlation to file when approperiate
+   *  then written out version has mask corrected
+   *  Note: this needs to be done after calculateRadialAverage if hitfinder is on
+   */
+  if(global->calcAngularCorrelation) // && ( (hit && global->hitfinder) || !global->hitfinder ) )
+    calculateAngularCorrelation(eventData, global);
 
   /*
    *	Maintain a running sum of data (powder patterns)
@@ -375,6 +386,7 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
   fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
+  fprintf(global->powderlogfp[hit], "\n");
   pthread_mutex_unlock(&global->powderfp_mutex);
 
 	

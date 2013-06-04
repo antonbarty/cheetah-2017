@@ -229,8 +229,9 @@ public:
    bool	   calcAngularCorrelation;
 	int      hdf5dump;
 	int      angulardump;  // how frequent to dump angular correlation
-    
-    bool saveCXI;
+   float    cc_threshold;   
+ 
+   bool saveCXI;
 
 
 	/** @brief Toggle the verbosity of Cheetah. */

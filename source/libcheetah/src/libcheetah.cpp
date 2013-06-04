@@ -518,10 +518,10 @@ void cheetahExit(cGlobal *global) {
       free(global->detector[i].hotpix_buffer);
       free(global->detector[i].halopix_buffer);
       free(global->detector[i].polarIntensities);
-      free(global->detector[i].angularcorrelation);
       free(global->detector[i].mask_polar);
       free(global->detector[i].mask_angularcorrelation);
       free(global->detector[i].cart2polar_map);
+      free(global->detector[i].meanradialAverage);
       fftw_destroy_plan(global->detector[i].p_forward);
       fftw_destroy_plan(global->detector[i].p_backward);
 
@@ -532,6 +532,7 @@ void cheetahExit(cGlobal *global) {
 	free(global->detector[i].powderCorrectedSquared[j]);
 	free(global->detector[i].powderAssembled[j]);
 	free(global->detector[i].radialAverageStack[j]);
+   free(global->detector[i].angularcorrelation[j]);
 	pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
 	pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
@@ -539,6 +540,7 @@ void cheetahExit(cGlobal *global) {
 	pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
       }
 	pthread_mutex_destroy(&global->detector[i].angularcorrelation_mutex);
+	pthread_mutex_destroy(&global->detector[i].meanradialAverage_mutex);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);

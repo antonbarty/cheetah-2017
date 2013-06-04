@@ -31,25 +31,26 @@
 void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
 
    cPixelDetectorCommon     *detector;
+   int powderType = eventData->hit;
    mapToPolar(eventData, global);
 
  	DETECTOR_LOOP {
         detector = &(global->detector[detID]);    
         float   *polarData = eventData->detector[detID].polarData;
-        long    nRadialBins = global->detector[detID].nRadialBins;
-		  long    nAngularBins = global->detector[detID].nAngularBins;
+//        long    nRadialBins = global->detector[detID].nRadialBins;
+//		  long    nAngularBins = global->detector[detID].nAngularBins;
 		  long 	 polar_nn = global->detector[detID].polar_nn;
         double *this_angularcorrelation = (double*) calloc( polar_nn, sizeof(double) );
 
         // compute angular-correlation 
-         calculateACviaFFT(polarData, this_angularcorrelation, detector);
+        calculateACviaFFT(polarData, this_angularcorrelation, detector);
 
 	     pthread_mutex_lock(&detector->angularcorrelation_mutex);
         for(long ii=0;ii<polar_nn;ii++){
  //         detector->polarIntensities[ii] += polarData[ii]; 
-          detector->angularcorrelation[ii] += this_angularcorrelation[ii]; 
+          detector->angularcorrelation[powderType][ii] += this_angularcorrelation[ii]; 
         }
-   	  detector->angularcorrelationCounter++;
+   	  detector->angularcorrelationCounter[powderType]++;
    	  pthread_mutex_unlock(&detector->angularcorrelation_mutex);
         free( this_angularcorrelation );
     }
@@ -58,7 +59,6 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
 void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixelDetectorCommon* detector) {
   long nRadialBins = detector->nRadialBins;
   long nAngularBins = detector->nAngularBins;
-//  fftw_plan p_forward, p_backward;  // if the array sizes are constant, these plans can be saved for future
   fftw_complex *out;
   fftw_complex *in;
   double nAngularBins2 = nAngularBins * nAngularBins;
@@ -67,9 +67,6 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixel
   //may not be necessary to make this new input array, if converting to double is not required during FFT
   in = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );  
   out = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * nAngularBins );
-
- // p_forward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-  //p_backward = fftw_plan_dft_1d( nAngularBins, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   for( long ii=0;ii<nAngularBins;ii++) in[ii][1] = 0;
 
@@ -87,8 +84,6 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixel
     for( long ii=0;ii<nAngularBins;ii++) 
       this_angularcorrelation[offset+ii] = out[ii][0]/nAngularBins;
   }
-//  fftw_destroy_plan( p_forward );
-//  fftw_destroy_plan( p_backward);
   fftw_free(in);
   fftw_free(out);
 }
@@ -108,7 +103,7 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixel
  void saveAngularCorrelation(cGlobal *global, int powderClass, int detID) {  // saved
 
     cPixelDetectorCommon     *detector = &(global->detector[detID]);
-    long    frameNum = detector->angularcorrelationCounter;
+    long    frameNum = detector->angularcorrelationCounter[powderClass];
     double *this_angularcorrelation = (double*) calloc( detector->polar_nn, sizeof(double) );
 
     pthread_mutex_lock(&detector->angularcorrelation_mutex);
@@ -117,7 +112,7 @@ void calculateACviaFFT(float *polarData, double* this_angularcorrelation, cPixel
     for(long ii=0;ii<detector->polar_nn;ii++) {
       if( detector->mask_angularcorrelation[ii] == 0 )
 	     continue;
-      this_angularcorrelation[ii] = detector->angularcorrelation[ii] / detector->mask_angularcorrelation[ii];
+      this_angularcorrelation[ii] = detector->angularcorrelation[powderClass][ii] / detector->mask_angularcorrelation[ii];
     }
 
     char	filename[1024];

@@ -178,7 +178,7 @@ public:
     long    *cart2polar_map;
 
    // angular-correlation
-   double *angularcorrelation;
+   double *angularcorrelation[MAX_POWDER_CLASSES];
    double *mask_angularcorrelation;
    float  *mask_polar;
 
@@ -306,9 +306,11 @@ public:
 	long            radialStackSize;
 	long   radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
+	float     *meanradialAverage;
+	pthread_mutex_t meanradialAverage_mutex;
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
-   long  angularcorrelationCounter;
+   long  angularcorrelationCounter[MAX_POWDER_CLASSES];
 	pthread_mutex_t angularcorrelation_mutex;
 
 
@@ -337,7 +339,8 @@ public:
 	int parseConfigTag(char*, char*);
 
     // Polar functions
-	void allocateAngularCorrelationMemory();
+	void allocateAngularCorrelationMemory(void);
+	//void allocateAngularCorrelationMemory(cGlobal*);
    void updatePolarMap();
 
 };

@@ -457,6 +457,8 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
       radialAverageStack[i][j] = 0;
     }
   }
+  meanradialAverage = (float *) calloc(radial_nn, sizeof(float));
+  pthread_mutex_init(&meanradialAverage_mutex, NULL);
 
 }
 
@@ -638,10 +640,14 @@ void cPixelDetectorCommon::updateRadialMap(void) {
  *  For now be quick-and-dirty assuming this is only called once
  *
  */
-void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) {
+void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) { //cGlobal *global) {
+
+    //nPowderClasses = global->nPowderClasses;
     polar_nn = nRadialBins*nAngularBins;
     polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
-    angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
+    for(long i=0; i<nPowderClasses; i++) {
+      angularcorrelation[i] =  (double*) calloc( polar_nn, sizeof(double) );
+    }
     mask_polar =  (float*) calloc( polar_nn, sizeof(float) );
     mask_angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
 //    polar_map = (long *) calloc(polar_nn, sizeof(long));

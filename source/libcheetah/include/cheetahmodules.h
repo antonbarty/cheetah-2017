@@ -69,6 +69,7 @@ void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
+void updatesaxs(cGlobal *global, cEventData *eventData, long detID);
 
 // peakfinders.cpp
 int peakfinder3(cGlobal*, cEventData*, int);

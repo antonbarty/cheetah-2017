@@ -145,6 +145,7 @@ cGlobal::cGlobal(void) {
   angulardump = 0;
   saveInterval = 1000;
   savePixelmask = 0;
+  cc_threshold = 0.95;
   saveCXI = 0;
 
   // Peak lists
@@ -715,6 +716,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "angulardump")) {
     angulardump = atoi(value);
+  }
+  else if (!strcmp(tag, "ccthreshold")) {
+    cc_threshold = atof(value);
   }
   else if (!strcmp(tag, "saveinterval")) {
     saveInterval = atoi(value);
