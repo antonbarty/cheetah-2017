@@ -63,6 +63,7 @@ cGlobal::cGlobal(void) {
   // Start and stop frames
   startAtFrame = 0;
   stopAtFrame = 0;
+  skipFract = 0.;
 
   // Calibrations
   generateDarkcal = 0;
@@ -634,6 +635,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "startatframe")) {
     startAtFrame = atoi(value);
   }
+  else if (!strcmp(tag, "skipfract")) {
+    skipFract = atof(value);
+  }
   else if (!strcmp(tag, "stopatframe")) {
     stopAtFrame = atoi(value);
   }
@@ -881,6 +885,7 @@ void cGlobal::writeConfigurationLog(void){
   //fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
   //fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
   //fprintf(fp, "detectorName=%s\n",detector[0].detectorName);
+  fprintf(fp, "skipFract=%f\n",skipFract);
   fprintf(fp, "startAtFrame=%ld\n",startAtFrame);
   fprintf(fp, "stopAtFrame=%ld\n",stopAtFrame);
   fprintf(fp, "nThreads=%ld\n",nThreads);
