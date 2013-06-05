@@ -27,7 +27,7 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
-long calculateHaloPixelMask(uint16_t*, float*, float, long, long);
+long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
@@ -57,7 +57,7 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 void writeCXI(cEventData *info, cGlobal *global);
 void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
-herr_t cheetahHDF5ErrorHandler(void *unused);
+herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);

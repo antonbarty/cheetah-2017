@@ -14,13 +14,15 @@
 #include "saveCXI.h"
 
 herr_t
-cheetahHDF5ErrorHandler(void *)
+cheetahHDF5ErrorHandler(hid_t,void *)
 {
   // print the error message
-  H5Eprint1(stderr);
+  //H5Eprint1(stderr);
+  H5Eprint(H5E_DEFAULT, stderr);
   // abort such that we get a stack trace to debug
   abort();
 }
+
 
 template <class T>
 hid_t get_datatype(const T * foo){
@@ -644,6 +646,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   cxi->cheetahVal.unsharedVal.eventName = createStringStack("eventName", cxi->cheetahVal.unsharedVal.self,1024);
   cxi->cheetahVal.unsharedVal.frameNumber = createScalarStack("frameNumber", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
+  cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped = createScalarStack("frameNumberIncludingSkipped", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
   cxi->cheetahVal.unsharedVal.threadID = createScalarStack("threadID", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
   cxi->cheetahVal.unsharedVal.gmd1 = createScalarStack("gmd1", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
   cxi->cheetahVal.unsharedVal.gmd2 = createScalarStack("gmd2", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
@@ -977,7 +980,6 @@ void writeCXI(cEventData *info, cGlobal *global ){
     // put it back
     info->eventname[strlen(info->eventname)] = '.';
 
-
     DETECTOR_LOOP {    
       /* Save assembled image under image groups */
       writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
@@ -1068,15 +1070,17 @@ void writeCXI(cEventData *info, cGlobal *global ){
     time_t eventTime = info->seconds;
     ctime_r(&eventTime,timestr);
     writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
-  
+
     writeStringToStack(cxi->cheetahVal.unsharedVal.eventName,stackSlice,info->eventname);
     writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumber,stackSlice,info->frameNumber);  
+    writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped,stackSlice,info->frameNumberIncludingSkipped);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.threadID,stackSlice,info->threadNum);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd1,stackSlice,info->gmd1);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd2,stackSlice,info->gmd2);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.energySpectrumExist,stackSlice,info->energySpectrumExist);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.nPeaks,stackSlice,info->nPeaks);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.peakNpix,stackSlice,info->peakNpix);  
+
     writeScalarToStack(cxi->cheetahVal.unsharedVal.peakTotal,stackSlice,info->peakTotal);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
@@ -1085,7 +1089,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
   
-
+    
     DETECTOR_LOOP{
       writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].last_bg_update);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
@@ -1095,6 +1099,6 @@ void writeCXI(cEventData *info, cGlobal *global ){
       writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
     }
-   
   }
 }
+

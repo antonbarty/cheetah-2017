@@ -235,9 +235,12 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
-	  if (cheetahGlobal.skipFract < rand()){
+	  float random_float = (float)rand()/(float)RAND_MAX;
+	  frameNumberIncludingSkipped ++;
+	  if (cheetahGlobal.skipFract > random_float){
 	    return;	    
 	  }
+	  
 
 	  static uint32_t nevents = 0;
 	  
@@ -729,7 +732,7 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityCharge1 = charge1;
 		eventData->phaseCavityCharge1 = charge2;	
 		eventData->pGlobal = &cheetahGlobal;
-		
+
 		//	Copy raw cspad image data into Cheetah event structure for processing
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {

@@ -40,7 +40,7 @@ void *worker(void *threadarg) {
   eventData = (cEventData*) threadarg;
   global = eventData->pGlobal;
   int	hit = 0;
-	
+
   std::vector<int> myvector;
   std::stringstream sstm;
   std::string result;
@@ -63,6 +63,8 @@ void *worker(void *threadarg) {
    */
   nameEvent(eventData, global);
 	
+
+
   /*
    * Copy pixelmask_shared into pixelmask 
    * and raw detector data into corrected array as starting point for corrections

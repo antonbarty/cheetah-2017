@@ -25,6 +25,7 @@ public:
 	int			busy;
 	long		threadNum;
 	long        frameNumber;
+	long        frameNumberIncludingSkipped;
 	long        frameNum;
 	uint stackSlice;
 	bool writeFlag;

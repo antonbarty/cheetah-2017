@@ -70,7 +70,8 @@ void cheetahInit(cGlobal *global) {
 	global->writeConfigurationLog();
 
 	// Set better error handlers for HDF5
-	H5Eset_auto1(cheetahHDF5ErrorHandler, NULL);
+	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
+	//H5Eset_auto(cheetahHDF5ErrorHandler, NULL);
 
 	printf("Cheetah clean initialisation\n");
 	if (global->pythonFile[0]) {
@@ -109,7 +110,7 @@ void cheetahNewRun(cGlobal *global) {
  *  initialising variables without needing to change any top level code
  */
 cEventData* cheetahNewEvent(cGlobal	*global) {
-    
+
     /*
 	 *	Create new event structure
 	 */
@@ -380,7 +381,6 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
  *  This function simply sets the thread flag for activating multi-threading
  */
 void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
-
     eventData->useThreads = 1;
     cheetahProcessEvent(global, eventData);
 

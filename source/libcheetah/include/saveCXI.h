@@ -96,6 +96,7 @@ typedef struct{
   hid_t self;
   hid_t eventName;
   hid_t frameNumber;
+  hid_t frameNumberIncludingSkipped;
   hid_t threadID;
   hid_t gmd1;
   hid_t gmd2;

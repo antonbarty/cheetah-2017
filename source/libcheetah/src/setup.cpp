@@ -238,8 +238,8 @@ void cGlobal::setup() {
   }
 
 	
-  if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
-    printf("Errors: hitfinderDetector > nDetectors\n");
+  if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
+    printf("Error: hitfinderDetector > nDetectors\n");
     printf("nDetectors = %i\n", nDetectors);
     printf("hitfinderDetector = detector%i\n", hitfinderDetector);
     printf("This doesn't make sense.\n");
@@ -427,6 +427,7 @@ void cGlobal::setup() {
 
   nCXIEvents = 0;
   nCXIHits = 0;
+
 }
 
 
