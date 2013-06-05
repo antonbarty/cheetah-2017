@@ -523,6 +523,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       }
       // /entry_1/instrument_1/detector_i/mask_shared
       createAndWriteDataset("mask_shared", d.self, global->detector[detID].pixelmask_shared, global->detector[detID].pix_nx, global->detector[detID].pix_ny);
+      // /entry_1/instrument_1/detector_i/mask_shared_max
+      createAndWriteDataset("mask_shared_max", d.self, global->detector[detID].pixelmask_shared_max, global->detector[detID].pix_nx, global->detector[detID].pix_ny);
+      // /entry_1/instrument_1/detector_i/mask_shared_min
+      createAndWriteDataset("mask_shared_min", d.self, global->detector[detID].pixelmask_shared_min, global->detector[detID].pix_nx, global->detector[detID].pix_ny);
       // /entry_1/instrument_1/detector_i/thumbnail
       d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
       // /entry_1/instrument_1/detector_i/experiment_identifier -> /entry_1/experiment_identifier

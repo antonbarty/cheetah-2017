@@ -59,6 +59,7 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
+        static long frameNumberIncludingSkipped = 0;
 	static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
 	static int laserSwitch = 0;
@@ -234,6 +235,10 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
+	  if (cheetahGlobal.skipFract < rand()){
+	    return;	    
+	  }
+
 	  static uint32_t nevents = 0;
 	  
 		frameNumber++;

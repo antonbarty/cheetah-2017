@@ -38,6 +38,8 @@ typedef struct{
   hid_t data;
   hid_t mask;
   hid_t mask_shared;
+  hid_t mask_shared_min;
+  hid_t mask_shared_max;
   hid_t thumbnail;
   hid_t dataType;
   hid_t dataSpace;

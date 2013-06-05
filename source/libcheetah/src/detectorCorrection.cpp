@@ -668,6 +668,8 @@ void calculateHaloPixelMask(cGlobal *global){
       float	threshold = bufferDepth*halopixMinDeviation;
       long	pix_nn = global->detector[detID].pix_nn;
       uint16_t  *mask = global->detector[detID].pixelmask_shared;
+      uint16_t  *maskMinExtent = global->detector[detID].pixelmask_shared_min;
+      uint16_t  *maskMaxExtent = global->detector[detID].pixelmask_shared_max;
       
       pthread_mutex_lock(&global->halopixel_mutex);
 
@@ -679,7 +681,7 @@ void calculateHaloPixelMask(cGlobal *global){
 	global->detector[detID].last_halopix_update = halopixCounter;
 				
 	printf("Detector %li: Recalculating halo pixel mask.\n",detID);
-	nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
+	nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
 	global->detector[detID].nhalo = nhalo;
 	printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
 
@@ -695,7 +697,7 @@ void calculateHaloPixelMask(cGlobal *global){
 }
 
 
-long calculateHaloPixelMask(uint16_t *mask, float *frameBuffer, float threshold, long bufferDepth, long pix_nn){
+long calculateHaloPixelMask(uint16_t *mask, uint16_t *maskMinExtent, uint16_t *maskMaxExtent, float *frameBuffer, float threshold, long bufferDepth, long pix_nn){
 
   // Loop over all pixels 
   float sum;
@@ -724,12 +726,14 @@ long calculateHaloPixelMask(uint16_t *mask, float *frameBuffer, float threshold,
       // Not threadsafe
       mask[i] |= PIXEL_IS_IN_HALO; 
 #endif
+      maskMaxExtent[i] |= PIXEL_IS_IN_HALO;
     } else {
 #ifdef __GNUC__
       __sync_fetch_and_and(&(mask[i]),~PIXEL_IS_IN_HALO);
 #else
       // Not threadsafe
       mask[i] &= ~PIXEL_IS_IN_HALO; 
+      maskMinExtent[i] &= ~PIXEL_IS_IN_HALO;
 #endif
     }
   }

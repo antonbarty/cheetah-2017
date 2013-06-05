@@ -62,8 +62,9 @@ static const uint16_t PIXEL_IS_IN_PEAKMASK = 32;            // bit 5
 static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
-static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
+static const uint16_t PIXEL_IS_MISSING = 512;                // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID*PIXEL_IS_SATURATED*PIXEL_IS_HOT*PIXEL_IS_DEAD*PIXEL_IS_SHADOWED*PIXEL_IS_IN_PEAKMASK*PIXEL_IS_TO_BE_IGNORED*PIXEL_IS_BAD*PIXEL_IS_OUT_OF_RESOLUTION_LIMITS*PIXEL_IS_MISSING*PIXEL_IS_MISSING;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -255,7 +256,8 @@ public:
 	float     *gaincal;
 	uint16_t  *pixelmask_shared;
 	pthread_mutex_t* halopix_mutexes;
-
+	uint16_t  *pixelmask_shared_max;
+	uint16_t  *pixelmask_shared_min;
 
 	/*
 	 * Powder patterns/sums for this detector

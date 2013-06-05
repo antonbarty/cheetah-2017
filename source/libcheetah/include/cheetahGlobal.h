@@ -64,6 +64,8 @@ public:
 	long     startAtFrame;
 	/** @brief Skip all frames after this one. */
 	long     stopAtFrame;
+	/** @brief Skip a random fraction of the given size (value between 0. and 1.). */
+	float    skipFract;
 
 	/** @brief Toggle the creation of a darkcal image. */
 	int      generateDarkcal;
