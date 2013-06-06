@@ -232,12 +232,9 @@ namespace cheetah_ana_pkg {
 	  
 		frameNumber++;
 
-		//	Create a new eventData structure in which to place all information
-		cEventData	*eventData;
-		eventData = cheetahNewEvent(&cheetahGlobal);
-		nevents++;
-
-		// Calculate time beteeen processing of data frames
+		/*
+         *  Calculate time beteeen processing of data frames
+         */
 		time_t	tnow;
 		double	dtime, datarate;
 		time(&tnow);
@@ -257,13 +254,23 @@ namespace cheetah_ana_pkg {
 		 *  This is the fastest we can ever hope to run.
 		 */
 		if(cheetahGlobal.ioSpeedTest==1) {
-		  printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+		  printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1 (psana event rate)\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
 		  return;
 		}
 
+
+		
+        //	Create a new eventData structure in which to place all information
+		cEventData	*eventData;
+		eventData = cheetahNewEvent(&cheetahGlobal);
+		nevents++;
+        
 		
 		
-		// get RunNumber & EventTime
+		/*
+         *  Get RunNumber & EventTime
+         *  PSEvt::EventId.get()
+         */
 		int runNumber = 0;
 		time_t sec = 0;
 		time_t nsec = 0;
@@ -272,7 +279,7 @@ namespace cheetah_ana_pkg {
 
 		if (eventId.get()) {
 			runNumber = eventId->run();
-				evtTime = eventId->time();
+            evtTime = eventId->time();
 			sec = evtTime.sec();
 			nsec = evtTime.nsec();
 			if (verbose) {
@@ -281,7 +288,11 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
-		// get number of EvrData & fiducials
+        
+		/* 
+         *  Get number of EvrData & fiducials & beam on state & EVR41 laser on
+         *  Psana::EvrData::DataV3.get()
+         */
 		int numEvrData = 0;
 		int fiducial = 0;
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
@@ -289,6 +300,7 @@ namespace cheetah_ana_pkg {
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
+            // Timestamps
 			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();
 			if (verbose) { 
@@ -298,12 +310,44 @@ namespace cheetah_ana_pkg {
 					cout << fiducial << " ";
 				}
 				cout << endl;
-			}
+            }
+            
+            // Beam on
+            beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
+            if (verbose) {
+                cout << "***** beamOn: " << beamOn << endl;
+            }
+
+            //! get laserOn
+            // laserSwitch should be as large as count (50% on and off)
+            bool laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
+            if (frameNumber == 1) {
+                // initialize
+                prevLaser = laserOn;
+                laserSwitch = 1;
+            }
+            else {
+                if (prevLaser != laserOn) {
+                    laserSwitch++;
+                    prevLaser = laserOn;
+                }
+            }
+            if (verbose) {
+                cout << "*** laserOn: " << laserOn << "\n"
+                << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
+            }
+            
 		}
 
-		// get EBeam
-		// EBeamV0 ~ EBeamV3
-		// EBeamV2 not implemented yet
+        
+        
+        /*
+         *  Get Electron beam data
+         *  Psana::Bld::BldDataEBeamV3.get()
+         *
+         *  Note: We have to account for multiple versions of the ebeam configuration (!!!)
+         *  Try the newest version first
+         */
 		float charge=0;
 		float L3Energy=0;
 		float LTUPosX=0; 
@@ -311,70 +355,15 @@ namespace cheetah_ana_pkg {
 		float LTUAngX=0; 
 		float LTUAngY=0; 
 		float PkCurrBC2=0;
-		
-		// Ebeam v0
-		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
-		if (ebeam0.get()) {
-			charge = ebeam0->ebeamCharge();
-			L3Energy = ebeam0->ebeamL3Energy();
-			LTUPosX = ebeam0->ebeamLTUPosX();
-			LTUPosY = ebeam0->ebeamLTUPosY();
-			LTUAngX = ebeam0->ebeamLTUAngX();
-			LTUAngY = ebeam0->ebeamLTUAngY();
-			if (verbose) {
-			cout << "* fEbeamCharge0=" << charge << "\n"
-			     << "* fEbeamL3Energy0=" << L3Energy << "\n"
-			     << "* fEbeamLTUPosX0=" << LTUPosX << "\n"
-			     << "* fEbeamLTUPosY0=" << LTUPosY << "\n"
-			     << "* fEbeamLTUAngX0=" << LTUAngX << "\n"
-			     << "* fEbeamLTUAngY0=" << LTUAngY << endl;
-			}
-		}
-
-		// Ebeam v1
-		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
-		if (ebeam1.get()) {
-			charge = ebeam1->ebeamCharge();
-			L3Energy = ebeam1->ebeamL3Energy();
-			LTUPosX = ebeam1->ebeamLTUPosX();
-			LTUPosY = ebeam1->ebeamLTUPosY();
-			LTUAngX = ebeam1->ebeamLTUAngX();
-			LTUAngY = ebeam1->ebeamLTUAngY();
-			PkCurrBC2 = ebeam1->ebeamPkCurrBC2();
-			if (verbose) {
-			cout << "* fEbeamCharge1=" << charge << "\n"
-					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
-					<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
-			}
-		}
-
-		// Ebeam v2
-		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
-		if (ebeam2.get()) {
-			charge = ebeam2->ebeamCharge();
-			L3Energy = ebeam2->ebeamL3Energy();
-			LTUPosX = ebeam2->ebeamLTUPosX();
-			LTUPosY = ebeam2->ebeamLTUPosY();
-			LTUAngX = ebeam2->ebeamLTUAngX();
-			LTUAngY = ebeam2->ebeamLTUAngY();
-			PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
-			if (verbose) {
-				cout << "* fEbeamCharge2=" << charge << "\n"
-						<< "* fEbeamL3Energy2=" << L3Energy << "\n"
-						<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
-						<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
-						<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
-						<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
-						<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
-			}
-		}
-
-		// Ebeam v3
+        double peakCurrent = 0;
+		double DL2energyGeV = 0;
+	
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
+		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
+		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
+		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
+
+        // Ebeam v3
 		if (ebeam3.get()) {
 			charge = ebeam3->ebeamCharge();
 			L3Energy = ebeam3->ebeamL3Energy();
@@ -383,44 +372,100 @@ namespace cheetah_ana_pkg {
 			LTUAngX = ebeam3->ebeamLTUAngX();
 			LTUAngY = ebeam3->ebeamLTUAngY();
 			PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
+
+            peakCurrent = ebeam3->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
+
 			if (verbose) {
 				cout << "* fEbeamCharge3=" << charge << "\n"
-						<< "* fEbeamL3Energy3=" << L3Energy << "\n"
-						<< "* fEbeamLTUPosX3=" << LTUPosX << "\n"
-						<< "* fEbeamLTUPosY3=" << LTUPosY << "\n"
-						<< "* fEbeamLTUAngX3=" << LTUAngX << "\n"
-						<< "* fEbeamLTUAngY3=" << LTUAngY << "\n"
-						<< "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
+                << "* fEbeamL3Energy3=" << L3Energy << "\n"
+                << "* fEbeamLTUPosX3=" << LTUPosX << "\n"
+                << "* fEbeamLTUPosY3=" << LTUPosY << "\n"
+                << "* fEbeamLTUAngX3=" << LTUAngX << "\n"
+                << "* fEbeamLTUAngY3=" << LTUAngY << "\n"
+                << "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
 			}
 		}
+		// Ebeam v2
+		else if (ebeam2.get()) {
+			charge = ebeam2->ebeamCharge();
+			L3Energy = ebeam2->ebeamL3Energy();
+			LTUPosX = ebeam2->ebeamLTUPosX();
+			LTUPosY = ebeam2->ebeamLTUPosY();
+			LTUAngX = ebeam2->ebeamLTUAngX();
+			LTUAngY = ebeam2->ebeamLTUAngY();
+			PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
 
-		// Calculate photon energy and wavelength
-		double photonEnergyeV=0;
-		double wavelengthA=0;
-		double peakCurrent = 0;
-		double DL2energyGeV = 0;
-		if (ebeam0.get()) {
-			cout << "***** WARNING *****" << endl;
+            peakCurrent = ebeam2->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam2->ebeamL3Energy();
+            
+			if (verbose) {
+				cout << "* fEbeamCharge2=" << charge << "\n"
+                << "* fEbeamL3Energy2=" << L3Energy << "\n"
+                << "* fEbeamLTUPosX2=" << LTUPosX << "\n"
+                << "* fEbeamLTUPosY2=" << LTUPosY << "\n"
+                << "* fEbeamLTUAngX2=" << LTUAngX << "\n"
+                << "* fEbeamLTUAngY2=" << LTUAngY << "\n"
+                << "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
+			}
+		}
+		// Ebeam v1
+		else if (ebeam1.get()) {
+			charge = ebeam1->ebeamCharge();
+			L3Energy = ebeam1->ebeamL3Energy();
+			LTUPosX = ebeam1->ebeamLTUPosX();
+			LTUPosY = ebeam1->ebeamLTUPosY();
+			LTUAngX = ebeam1->ebeamLTUAngX();
+			LTUAngY = ebeam1->ebeamLTUAngY();
+			PkCurrBC2 = ebeam1->ebeamPkCurrBC2();
+            
+            peakCurrent = ebeam1->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
+
+			if (verbose) {
+                cout << "* fEbeamCharge1=" << charge << "\n"
+					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
+					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
+					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
+					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
+					<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
+					<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
+			}
+		}
+		// Ebeam v0
+		else if (ebeam0.get()) {
+			charge = ebeam0->ebeamCharge();
+			L3Energy = ebeam0->ebeamL3Energy();
+			LTUPosX = ebeam0->ebeamLTUPosX();
+			LTUPosY = ebeam0->ebeamLTUPosY();
+			LTUAngX = ebeam0->ebeamLTUAngX();
+			LTUAngY = ebeam0->ebeamLTUAngY();
+
+            cout << "***** WARNING *****" << endl;
 			cout << "EBeamV0 does not record peak current" << endl;
 			cout << "Setting peak current to 0" << endl;
 			peakCurrent = 0;
 			DL2energyGeV = 0.001*ebeam0->ebeamL3Energy();
-		} else if (ebeam1.get()) {
-			// Get the present peak current in Amps
-			// Get present beam energy [GeV]
-			peakCurrent = ebeam1->ebeamPkCurrBC2();
-			DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
-		} else if (ebeam2.get()) {
-			peakCurrent = ebeam2->ebeamPkCurrBC2();
-			DL2energyGeV = 0.001*ebeam2->ebeamL3Energy();
-		} else if (ebeam3.get()) {
-			peakCurrent = ebeam3->ebeamPkCurrBC2();
-			DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
+
+			if (verbose) {
+                cout << "* fEbeamCharge0=" << charge << "\n"
+                << "* fEbeamL3Energy0=" << L3Energy << "\n"
+                << "* fEbeamLTUPosX0=" << LTUPosX << "\n"
+                << "* fEbeamLTUPosY0=" << LTUPosY << "\n"
+                << "* fEbeamLTUAngX0=" << LTUAngX << "\n"
+                << "* fEbeamLTUAngY0=" << LTUAngY << endl;
+			}
 		}
-		
-		// get wavelengthA
-		// Calculate the resonant photon energy (ie: photon wavelength) 
-		// wakeloss prior to undulators
+        
+
+        /*
+         *  Calculate photon energy and wavelength
+         *  Calculate the resonant photon energy (ie: photon wavelength)
+         *  including wakeloss prior to undulators
+         */
+		double photonEnergyeV=0;
+		double wavelengthA=0;
+
 		double LTUwakeLoss = 0.0016293*peakCurrent;
 		// Spontaneous radiation loss per segment
 		double SRlossPerSegment = 0.63*DL2energyGeV;
@@ -439,8 +484,11 @@ namespace cheetah_ana_pkg {
 		}
 	  
 		
-		// Gas detector values	
-		// get gasdet[4]
+        
+        /*
+         *  Gas detector values (in FEE)
+         *  Psana::Bld::BldDataFEEGasDetEnergy.get()
+         */
 		double gmd1=0, gmd2=0;
 		double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
 
@@ -458,7 +506,10 @@ namespace cheetah_ana_pkg {
 		} 
 
 		
-		// get PhaseCavity data (timing)
+        /*
+         *  Phase cavity data (timing)
+         *  Psana::Bld::BldDataPhaseCavity.get()
+         */
 		float fitTime1=0;
 		float fitTime2=0;
 		float charge1=0;
@@ -466,23 +517,42 @@ namespace cheetah_ana_pkg {
 
 		shared_ptr<Psana::Bld::BldDataPhaseCavity> cav = evt.get(m_srcCav);
 		if (cav.get()) {
-		fitTime1 = cav->fitTime1();
-		fitTime2 = cav->fitTime2();
-		charge1 = cav->charge1();
-		charge2 = cav->charge2();
-		if (verbose) {
-			cout << "* fitTime1=" << fitTime1 << "\n"
-					 << "* fitTime2=" << fitTime2 << "\n"
-					 << "* charge1=" << charge1 << "\n"
-					 << "* charge2=" << charge2 << endl;
+            fitTime1 = cav->fitTime1();
+            fitTime2 = cav->fitTime2();
+            charge1 = cav->charge1();
+            charge2 = cav->charge2();
+            if (verbose) {
+                cout << "* fitTime1=" << fitTime1 << "\n"
+                         << "* fitTime2=" << fitTime2 << "\n"
+                         << "* charge1=" << charge1 << "\n"
+                         << "* charge2=" << charge2 << endl;
+            }
+		}
+
+        
+        
+        
+        /*
+         *  Get EPICS data 
+         *  (slow data for stuff like motors)
+         */
+		const EpicsStore& estore = env.epicsStore();
+		std::vector<std::string> pvNames = estore.pvNames();
+        
+		// Detector position
+		float detectorPosition[MAX_DETECTORS];
+		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
+			if (pv && pv->numElements() > 0) {
+				const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
+				detectorPosition[detID] = value;
+				if (verbose) {
+					cout << "***** DetectorPosition[" << cheetahGlobal.detector[detID].detectorID << "]: " << value << endl;
+				}
 			}
 		}
 
-		// get laserDelay only for Neutze TiSa delay
-		// access EPICS store
-		const EpicsStore& estore = env.epicsStore(); 
-		// get the names of EPICS PVs
-		std::vector<std::string> pvNames = estore.pvNames();   
+        // get laserDelay only for Neutze TiSa delay
 		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.laserDelayPV);
 			if (pv && pv->numElements() > 0) {
@@ -493,8 +563,7 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
-
-		// Misc. EPICS PV float values
+		// Other EPICS PV float values
 		for(long i=0; i < cheetahGlobal.nEpicsPvFloatValues; i++) {
 			char * thisPv = & cheetahGlobal.epicsPvFloatAddresses[i][0];
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(thisPv);
@@ -509,49 +578,8 @@ namespace cheetah_ana_pkg {
 
 	
 
-		// Detector position
-		float detectorPosition[MAX_DETECTORS];
-		//!! get detector position (Z)
-		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
-			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
-			if (pv && pv->numElements() > 0) {
-				const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
-				detectorPosition[detID] = value;
-				if (verbose) {
-					cout << "***** DetectorPosition[" << cheetahGlobal.detector[detID].detectorID << "]: " << value << endl;
-				}
-			}
-		}
 
-	//! get beamOn
-	bool beamOn;
-	if (data3.get()) {
-		beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
-		if (verbose) {
-			cout << "***** beamOn: " << beamOn << endl;
-		}
-
-		
-		//! get laserOn
-		bool laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
-		if (frameNumber == 1) {
-			// initialize
-			prevLaser = laserOn;
-			laserSwitch = 1;
-		} 
-		else {
-			if (prevLaser != laserOn) {
-				laserSwitch++;
-				prevLaser = laserOn;
-			}
-		}
-		if (verbose) {
-		cout << "*** laserOn: " << laserOn << "\n"
-			 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
-		}
-		// laserSwitch should be as large as count (50% on and off)
-	}
-
+ 
 		
 		//!! get CsPadData
 		for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
