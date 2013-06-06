@@ -42,7 +42,7 @@ pro crawler_merge
 	
 	;; Populate the output table
 	openw, fout, 'crawler.txt', /get
-	printf, fout, '#Run, DatasetID, XTC, Cheetah, Directory, Nprocessed, Nhits, Hitrate%'
+	printf, fout, '#Run, Dataset Info, XTC, Cheetah, Directory, Nprocessed, Nhits, Hitrate%'
 	
 	
 	for i = 0L, n_elements(xtcrun)-1 do begin	

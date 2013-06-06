@@ -355,42 +355,42 @@ namespace cheetah_ana_pkg {
 		// Ebeam v2
 		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
 		if (ebeam2.get()) {
-		charge = ebeam2->ebeamCharge();
-		L3Energy = ebeam2->ebeamL3Energy();
-		LTUPosX = ebeam2->ebeamLTUPosX();
-		LTUPosY = ebeam2->ebeamLTUPosY();
-		LTUAngX = ebeam2->ebeamLTUAngX();
-		LTUAngY = ebeam2->ebeamLTUAngY();
-		PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
-		if (verbose) {
-			cout << "* fEbeamCharge2=" << charge << "\n"
-					<< "* fEbeamL3Energy2=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
-					<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
+			charge = ebeam2->ebeamCharge();
+			L3Energy = ebeam2->ebeamL3Energy();
+			LTUPosX = ebeam2->ebeamLTUPosX();
+			LTUPosY = ebeam2->ebeamLTUPosY();
+			LTUAngX = ebeam2->ebeamLTUAngX();
+			LTUAngY = ebeam2->ebeamLTUAngY();
+			PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
+			if (verbose) {
+				cout << "* fEbeamCharge2=" << charge << "\n"
+						<< "* fEbeamL3Energy2=" << L3Energy << "\n"
+						<< "* fEbeamLTUPosX2=" << LTUPosX << "\n"
+						<< "* fEbeamLTUPosY2=" << LTUPosY << "\n"
+						<< "* fEbeamLTUAngX2=" << LTUAngX << "\n"
+						<< "* fEbeamLTUAngY2=" << LTUAngY << "\n"
+						<< "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
 			}
 		}
 
 		// Ebeam v3
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
 		if (ebeam3.get()) {
-		charge = ebeam3->ebeamCharge();
-		L3Energy = ebeam3->ebeamL3Energy();
-		LTUPosX = ebeam3->ebeamLTUPosX();
-		LTUPosY = ebeam3->ebeamLTUPosY();
-		LTUAngX = ebeam3->ebeamLTUAngX();
-		LTUAngY = ebeam3->ebeamLTUAngY();
-		PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
-		if (verbose) {
-			cout << "* fEbeamCharge3=" << charge << "\n"
-					<< "* fEbeamL3Energy3=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX3=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY3=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX3=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY3=" << LTUAngY << "\n"
-					<< "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
+			charge = ebeam3->ebeamCharge();
+			L3Energy = ebeam3->ebeamL3Energy();
+			LTUPosX = ebeam3->ebeamLTUPosX();
+			LTUPosY = ebeam3->ebeamLTUPosY();
+			LTUAngX = ebeam3->ebeamLTUAngX();
+			LTUAngY = ebeam3->ebeamLTUAngY();
+			PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
+			if (verbose) {
+				cout << "* fEbeamCharge3=" << charge << "\n"
+						<< "* fEbeamL3Energy3=" << L3Energy << "\n"
+						<< "* fEbeamLTUPosX3=" << LTUPosX << "\n"
+						<< "* fEbeamLTUPosY3=" << LTUPosY << "\n"
+						<< "* fEbeamLTUAngX3=" << LTUAngX << "\n"
+						<< "* fEbeamLTUAngY3=" << LTUAngY << "\n"
+						<< "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
 			}
 		}
 
@@ -552,6 +552,7 @@ namespace cheetah_ana_pkg {
 		// laserSwitch should be as large as count (50% on and off)
 	}
 
+		
 		//!! get CsPadData
 		for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
 
@@ -590,8 +591,8 @@ namespace cheetah_ana_pkg {
 		
 		//? get Acqiris
 		shared_ptr<Psana::Acqiris::DataDescV1> acq = evt.get(m_srcAcq);
-		if (acq.get()) {
-			if (verbose) {	
+		if (verbose) {
+			if (acq.get()) {
 				// find matching config object
 				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
 				// loop over channels
@@ -632,8 +633,8 @@ namespace cheetah_ana_pkg {
 
 		// get Pulnix
 		shared_ptr<Psana::Camera::FrameV1> frmData = evt.get(m_srcCam);
-		if (frmData.get()) {
-			if (verbose) {	
+		if (verbose) {
+			if (frmData.get()) {
 				cout << "Camera::FrameV1: width=" << frmData->width()
 					 << " height=" << frmData->height()
 					 << " depth=" << frmData->depth()
@@ -658,8 +659,8 @@ namespace cheetah_ana_pkg {
         
         // get spectrum (Opal2k)
 		shared_ptr<Psana::Camera::FrameV1> specData = evt.get(m_srcSpec);
-		if (specData.get()) {
-			if (verbose) {
+		if (verbose) {
+			if (specData.get()) {
 				cout << "Camera::FrameV1: width=" << specData->width()
                 << " height=" << specData->height()
                 << " depth=" << specData->depth()

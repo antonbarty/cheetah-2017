@@ -55,12 +55,14 @@ pro crawler_hdf5, hdf5dir, pattern
 	
 		;; Newer versions of Cheetah will output a brief status.txt file
 		;; Sometimes this will tank when the file has not been completely written - fix later, solve now with catch errors
-		if file_test(h5dir[i]+'/status.txt') then begin
-			if file_lines(h5dir[i]+'/status.txt') eq 3 then begin
+		sfile = h5dir[i]+'/status.txt'
+		if file_test(sfile) then begin
+			;; Are there 3 lines?
+			if file_lines(sfile) eq 3 then begin
 				data1 = string('')
 				data2 = long(0)
 				data3 = long(0)
-				openr, lun, h5dir[i]+'/status.txt', /get
+				openr, lun, sfile, /get
 				readf, lun, data1
 				readf, lun, data2
 				readf, lun, data3
@@ -70,9 +72,22 @@ pro crawler_hdf5, hdf5dir, pattern
 				status[i] = data1
 				processed[i] = data2
 				hits[i] = data3
+				
+				;; Is the file stale??
+				staletime = 20
+				if data1 eq 'Not finished' then begin
+					info = file_info(sfile)
+					mtime = info.mtime
+					now = systime(/sec)
+					if (now - mtime) gt (staletime*60) then begin
+						status[i] = 'Stalled?'
+					endif
+				endif
 			endif $
-			else $
+			else begin
+				status[i] = 'Dont panic'
 				continue
+			endelse
 		endif $
 		
 		;; Older versions won't 

@@ -66,7 +66,7 @@ pro crawler_autorun, xtcdir=xtcdir, hdf5dir=hdf5dir, hdf5filter=hdf5filter, data
 	text = widget_label(base, xsize=200, value='Started')
 
 
-	widget_control, base, base_set_title='Cheetah crawler engine'
+	widget_control, base, base_set_title='Cheetah crawler'
 	widget_control, base, /realize
 
 

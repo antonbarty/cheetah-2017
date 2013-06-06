@@ -35,7 +35,7 @@ pro crawler_dataset, datasetfile
 	
 	;; Populate the output table
 	openw, fout, datasetfile, /get
-	printf, fout, '#Run, DatasetID'
+	printf, fout, '#Run, DatasetInfo'
 	
 	for i = 0L, n_elements(xtcrun)-1 do begin	
 		
