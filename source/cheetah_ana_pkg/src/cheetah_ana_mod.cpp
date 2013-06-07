@@ -616,26 +616,6 @@ namespace cheetah_ana_pkg {
 		eventData->pGlobal = &cheetahGlobal;
         
 		
-
-
- 
-		
-		//!! get CsPadData
-		for (long detID=0; detID<cheetahGlobal.nDetectors; detID++){
-
-			shared_ptr<Psana::CsPad::DataV2> data2;
-			if (cheetahGlobal.detector[detID].detectorID == 0) {
-				data2 = evt.get(m_srcCspad0, m_key);
-			} 
-			else if (cheetahGlobal.detector[detID].detectorID == 1) {
-				data2 = evt.get(m_srcCspad1, m_key);
-			}
-			
-			if (data2.get()) {
-				}
-			}
-		}
-
 		
 		
  				
