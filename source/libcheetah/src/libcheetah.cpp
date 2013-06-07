@@ -366,7 +366,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
      *  This measures how fast Cheetah could conceivably process the data
      */
 	if(global->ioSpeedTest==2) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);		
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        cheetahDestroyEvent(eventData);
 		free(eventData);
 		return;
 	}
@@ -406,10 +407,11 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         double	dtime;
         float	maxwait = 2*60.;
         while(global->nActiveThreads > global->nThreads) {
-            printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
             usleep(10000);
             time(&tnow);
             dtime = difftime(tnow, tstart);
+            if(dtime > 1)
+                printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
             if(dtime > maxwait) {
                 printf("\tApparent thread lock - no free thread for 2 minutes.\n", global->nActiveThreads, dtime);
                 printf("\tGiving up and exiting anyway\n");
