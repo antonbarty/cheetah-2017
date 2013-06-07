@@ -102,8 +102,8 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 
 /*
  *  Set background to the first frame by default
+ *  (possibly not needed...)
  */
-probably not needed
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
     if(global->detector[detID].bgCounter == 0) {
         DETECTOR_LOOP {
