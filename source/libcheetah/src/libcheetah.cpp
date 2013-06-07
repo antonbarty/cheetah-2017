@@ -368,7 +368,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
         cheetahDestroyEvent(eventData);
-		free(eventData);
 		return;
 	}
 	
