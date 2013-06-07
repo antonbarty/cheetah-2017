@@ -406,7 +406,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         double	dtime;
         float	maxwait = 2*60.;
         while(global->nActiveThreads > global->nThreads) {
-            printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+            printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
             usleep(10000);
             time(&tnow);
             dtime = difftime(tnow, tstart);
