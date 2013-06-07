@@ -105,8 +105,8 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
  *  (possibly not needed...)
  */
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
-    if(global->detector[detID].bgCounter == 0) {
-        DETECTOR_LOOP {
+    DETECTOR_LOOP {
+        if(global->detector[detID].bgCounter == 0) {
             if (global->detector[detID].useSubtractPersistentBackground){
                 long        pix_nn = global->detector[detID].pix_nn;
                 uint16_t	*raw_data = eventData->detector[detID].raw_data;
