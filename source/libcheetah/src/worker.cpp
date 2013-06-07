@@ -75,19 +75,22 @@ void *worker(void *threadarg) {
     }
     
     
+
+    // Init background buffer
+    initBackgroundBuffer(eventData, global);
+
+    
     /*
-     *  Speed test
+     *  Inside-thread speed test
      */
     if(global->ioSpeedTest==3) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #3 (exiting within thread)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
-
-
-  // Init background buffer
-  initBackgroundBuffer(eventData, global);
+    
 
 	
+    
   /*
    * Check for saturated pixels before applying any other corrections
    */
