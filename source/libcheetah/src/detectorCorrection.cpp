@@ -632,7 +632,7 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
 
       float	*buffer = (float *) malloc(pix_nn*sizeof(float));
       for(long i=0; i<pix_nn; i++){
-	buffer[i] = fabs(frameData[i]);
+          buffer[i] = fabs(frameData[i]);
       }
 
       pthread_mutex_lock(&global->halopixel_mutex);
@@ -672,19 +672,17 @@ void calculateHaloPixelMask(cGlobal *global){
 
       if( halopixCounter > halopixRecalc+lastUpdate ) {
 
-	global->detector[detID].last_halopix_update = halopixCounter;
+          global->detector[detID].last_halopix_update = halopixCounter;
 				
-	printf("Detector %li: Recalculating halo pixel mask.\n",detID);
-	nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
-	global->detector[detID].nhalo = nhalo;
-	printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
+          printf("Detector %li: Recalculating halo pixel mask.\n",detID);
+          nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
+          global->detector[detID].nhalo = nhalo;
+          printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
 
-	pthread_mutex_unlock(&global->halopixel_mutex);
-
-      } else {
-
-	pthread_mutex_unlock(&global->halopixel_mutex);
-
+          pthread_mutex_unlock(&global->halopixel_mutex);
+      }
+      else {
+          pthread_mutex_unlock(&global->halopixel_mutex);
       }
     }	
   }

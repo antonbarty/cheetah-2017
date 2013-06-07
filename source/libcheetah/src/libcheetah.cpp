@@ -395,11 +395,29 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_t		thread;
         pthread_attr_t	threadAttribute;
         int				returnStatus;
+    
         
-        // Wait until we have a spare thread in the thread pool
-        while(global->nActiveThreads >= global->nThreads) {
-	  usleep(1000);
+        /*
+         *  Wait until we have a spare thread in the thread pool
+         *  If nothing happens for 2 minutes, assume we have some sort of thread lockup and keep going anyway
+         */
+        time_t	tstart, tnow;
+        time(&tstart);
+        double	dtime;
+        float	maxwait = 2*60.;
+        while(global->nActiveThreads > global->nThreads) {
+            printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+            usleep(10000);
+            time(&tnow);
+            dtime = difftime(tnow, tstart);
+            if(dtime > maxwait) {
+                printf("\tApparent thread lock - no free thread for 2 minutes.\n", global->nActiveThreads, dtime);
+                printf("\tGiving up and exiting anyway\n");
+                global->nActiveThreads = 0;
+                break;
+            }
         }
+
         
         // Set detached state
         pthread_attr_init(&threadAttribute);
