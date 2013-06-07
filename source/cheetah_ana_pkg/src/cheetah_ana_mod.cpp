@@ -641,7 +641,7 @@ namespace cheetah_ana_pkg {
             
 				// copy data into event structure if successful
 				if (data2.get()) {
-
+                
                     if (verbose) {
                         cout << "CsPad::DataV2:";
                         int nQuads = data2->quads_shape()[0];
@@ -669,10 +669,10 @@ namespace cheetah_ana_pkg {
                         
                         
 					// Allocate memory for detector data and set to zero
+					int nQuads = data2->quads_shape()[0];
 					for(int quadrant=0; quadrant<4; quadrant++)
 						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					int nQuads = data2->quads_shape()[0];
-                        
+                    
 					// loop over elements (quadrants)
 					for (int q = 0; q < nQuads; ++ q) {
 						const Psana::CsPad::ElementV2& el = data2->quads(q); 
@@ -704,6 +704,7 @@ namespace cheetah_ana_pkg {
                     for(int quadrant=0; quadrant<4; quadrant++) {
 						free(quad_data[quadrant]);
                     }
+                }
                 
 				else {
 					printf("%li: cspad frame data not available\n", frameNumber);
