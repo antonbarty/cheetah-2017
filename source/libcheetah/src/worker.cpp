@@ -63,16 +63,26 @@ void *worker(void *threadarg) {
    */
   nameEvent(eventData, global);
 	
-  /*
-   * Copy pixelmask_shared into pixelmask 
-   * and raw detector data into corrected array as starting point for corrections
-   */
-  DETECTOR_LOOP {
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-      eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+    /*
+     * Copy pixelmask_shared into pixelmask
+     * and raw detector data into corrected array as starting point for corrections
+     */
+    DETECTOR_LOOP {
+        for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
+            eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+        }
     }
-  }
+    
+    
+    /*
+     *  Speed test
+     */
+    if(global->ioSpeedTest==3) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+
 
   // Init background buffer
   initBackgroundBuffer(eventData, global);
