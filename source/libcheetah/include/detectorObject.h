@@ -164,6 +164,7 @@ public:
 	float   *pix_res;
 
 	// Polar binning
+	int     polarBinData;
 	long    radialBinSize;
 	long    nRadialBins;
 	long    nAngularBins;
@@ -339,9 +340,8 @@ public:
 	int parseConfigTag(char*, char*);
 
     // Polar functions
-	void allocateAngularCorrelationMemory(void);
-	//void allocateAngularCorrelationMemory(cGlobal*);
-   void updatePolarMap();
+	void allocateAngularCorrelationMemory(cGlobal*);
+   void updatePolarMap(cGlobal*);
 
 };
 

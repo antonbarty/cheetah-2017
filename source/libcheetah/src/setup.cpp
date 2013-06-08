@@ -128,9 +128,6 @@ cGlobal::cGlobal(void) {
   saveRadialStacks=0;
   radialStackSize=10000;
 
-	// Polar binning
-	polarBinData = 0;
-
   // Assemble options
   assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
   assemble2DImage = 1;
@@ -368,7 +365,7 @@ void cGlobal::setup() {
    */
   for(long i=0; i<nDetectors; i++) {
     detector[i].allocatePowderMemory(self);
-    detector[i].updatePolarMap();  //this must be after geometry reading
+    detector[i].updatePolarMap(self);  //this must be after geometry reading
   }
 
   /*

@@ -94,7 +94,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   invertGain = 0;
 
   // polar mapping
-  radialBinSize = 1;
+  polarBinData = 0;
+	radialBinSize = 1;
 
   // Subtraction of running background (persistent photon background)
   useSubtractPersistentBackground = 0;
@@ -381,6 +382,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 //  }
   else if(!strcmp(tag, "nangularbins")) {
     nAngularBins = atoi(value);
+	polarBinData = 1;
   }
 
   // Unknown tags
@@ -638,9 +640,11 @@ void cPixelDetectorCommon::updateRadialMap(void) {
  * Allocate memory for angular-correlation computation
  *  Note: at some point we may want to check whether this memory has already been allocated.
  *  For now be quick-and-dirty assuming this is only called once
- *
+ *  ALSO WE SHOULD DECOUPLE ANGULAR BINNING AND CORRELATION ANALYSIS.
  */
-void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) { //cGlobal *global) {
+void cPixelDetectorCommon::allocateAngularCorrelationMemory(cGlobal *global) { //cGlobal *global) {
+
+	printf("allocate angular correlation memory\n");
 
     //nPowderClasses = global->nPowderClasses;
     polar_nn = nRadialBins*nAngularBins;
@@ -660,7 +664,14 @@ void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) { //cGlobal *g
 /*
  *  Update mapping of pixel locations to polar coordinates
  */
-void cPixelDetectorCommon::updatePolarMap(void) {
+void cPixelDetectorCommon::updatePolarMap(cGlobal *global) {
+
+	if (global->calcAngularCorrelation == 0){
+		return;
+	}
+	printf("update polar mapping\n");
+
+
     float pi = 3.141593;
 
     float angle_step_size =  2.0*pi /(float)nAngularBins;
@@ -670,7 +681,7 @@ void cPixelDetectorCommon::updatePolarMap(void) {
     
     
     // Allocate memory for the arrays
-    allocateAngularCorrelationMemory();
+    allocateAngularCorrelationMemory(global);
 
     // Prepare FFT plans
     fftw_complex *in, *out;
