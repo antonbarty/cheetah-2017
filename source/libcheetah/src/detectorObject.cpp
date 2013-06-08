@@ -750,6 +750,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     double   x, y, z, r;
     double   kx,ky,kz,kr;
     double   res,minres,maxres;
+    double   camera_length = detectorZ*cameraLengthScale;
     double	 sin_theta;
     long     minres_pix,maxres_pix;
     long c = 0;
@@ -763,7 +764,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     for (long i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
         y = pix_y[i]*pixelSize;
-        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
+        z = pix_z[i]*pixelSize + camera_length;
         r = sqrt(x*x + y*y + z*z);
         
         kx = (x/r)/wavelengthA;
@@ -816,6 +817,21 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 		printf("Defined resolution limits for hitfinders: %.2f - %.2f A\n",global->hitfinderMinRes,global->hitfinderMaxRes);
 	}
     
+   // save k-vectors corresponding to radial pixels
+   // For later data merging
+   char filename[1024];
+   float two_over_lambda = 2.0/wavelengthA;
+   float this_theta;
+   float radial_step = radialBinSize*pixelSize;
+   float kvector[nRadialBins];
+   for (int kk=0;kk<nRadialBins;kk++) {
+     this_theta = atan(kk*radial_step/camera_length);
+//     printf("%f %f %d %e %e\n", this_theta, radial_step, kk, cameraLengthScale, detectorZ);
+     kvector[kk] = two_over_lambda*sin(this_theta/2.0);
+   }
+   sprintf(filename,"r%04u-kvector-detector.h5",global->runNumber);
+   writeSimpleHDF5(filename, kvector, nRadialBins, 1, H5T_NATIVE_FLOAT);
+
     
     // Update the polar mapping
     // (At some stage we will need to do this here when mapping to K-space,
