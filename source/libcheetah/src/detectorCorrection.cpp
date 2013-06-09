@@ -668,7 +668,8 @@ void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
       uint16_t  *maskMinExtent = global->detector[detID].pixelmask_shared_min;
       uint16_t  *maskMaxExtent = global->detector[detID].pixelmask_shared_max;
 
-      if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory) && !halopixCalibrated) ) {
+      // here the condition (eventData->threadNum%50 == 0) avoids multiple initial calibrations
+      if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory)  && (eventData->threadNum%50 == 0) && !halopixCalibrated) ) { 
 	
 	pthread_mutex_lock(&global->halopixel_mutex);
 			
