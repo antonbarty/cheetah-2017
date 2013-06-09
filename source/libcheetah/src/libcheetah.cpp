@@ -475,9 +475,9 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	}
 
 	DETECTOR_LOOP {
-	  while((eventData->frameNumber+1==global->detector[detID].startFrames) && (global->nActiveThreads>0)){
-	    printf("Processed %i frames. Waiting for all threads to finish.\n",global->detector[detID].startFrames);
-	    usleep(5000);
+	  while((eventData->frameNumber==(global->nInitFrames-1)) && (global->nActiveThreads>0)){
+	    printf("Finalizing initial frame digestion (%i frames). Waiting for all threads to finish.\n",global->nInitFrames);
+	    usleep(500000);
 	  }
 	}
 

@@ -431,17 +431,14 @@ void cGlobal::setup() {
 
   // Set number of frames for initial calibrations
   nInitFrames = 0;
+  long temp;
   for (long detID=0; detID<MAX_DETECTORS; detID++){
-    nInitFrames = std::max((long) detector[detID].startFrames,nInitFrames);
-    if (detector[detID].useAutoHalopixel){
-      nInitFrames = std::max((long) detector[detID].halopixMemory,nInitFrames);
-    }
-    if (detector[detID].useAutoHotpixel){
-      nInitFrames = std::max((long) detector[detID].hotpixMemory,nInitFrames);
-    }
-    if (detector[detID].useSubtractPersistentBackground){
-      nInitFrames = std::max((long) detector[detID].bgMemory,nInitFrames);
-    }
+    temp = detector[detID].startFrames;
+    nInitFrames = std::max(nInitFrames,temp);
+    temp = detector[detID].hotpixMemory * detector[detID].useAutoHotpixel;
+    nInitFrames = std::max(nInitFrames,temp);
+    temp = detector[detID].useSubtractPersistentBackground * detector[detID].bgMemory + detector[detID].useAutoHalopixel * detector[detID].halopixMemory;
+    nInitFrames = std::max(nInitFrames,temp);
   }
 }
 

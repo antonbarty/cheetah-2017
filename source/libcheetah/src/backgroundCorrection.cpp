@@ -50,6 +50,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
       long	bufferDepth = global->detector[detID].bgMemory;
       long	bgRecalc = global->detector[detID].bgRecalc;
+      long	bgMemory = global->detector[detID].bgMemory;
       float	medianPoint = global->detector[detID].bgMedian;
       long	threshold = lrint(bufferDepth*medianPoint);
       long	bgCounter,lastUpdate;
@@ -60,7 +61,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 			
       bgCounter = global->detector[detID].bgCounter;
       lastUpdate = global->detector[detID].last_bg_update;
-      if( bgCounter > bgRecalc+lastUpdate ) {
+      if( (bgCounter == bgRecalc+lastUpdate) || ((bgCounter == (bgMemory-1)) && (lastUpdate == 0)) ) {
 	int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 	global->detector[detID].last_bg_update = bgCounter;
 	for(long i = 0;i<pix_nn*bufferDepth;i++){

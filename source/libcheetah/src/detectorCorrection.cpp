@@ -623,7 +623,7 @@ void pnccdFixWiringError(float *data) {
 
 void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
   DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (eventData->frameNumber > global->detector[detID].bgRecalc)){
+    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && ((global->detector[detID].last_bg_update != 0) || (global->detector[detID].useSubtractPersistentBackground == 0))){
       float	*frameData = eventData->detector[detID].corrected_data;
       float     *frameBuffer = global->detector[detID].halopix_buffer;
       long	pix_nn = global->detector[detID].pix_nn;
@@ -656,10 +656,8 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
  *	Recalculate halo pixel masks using frame buffer
  */
 void calculateHaloPixelMask(cGlobal *global){
-
-	
   DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel) {
+    if(global->detector[detID].useAutoHalopixel && ((global->detector[detID].last_bg_update != 0) || (global->detector[detID].useSubtractPersistentBackground == 0))) {
       float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
       long	bufferDepth = global->detector[detID].halopixMemory;
       long	halopixRecalc = global->detector[detID].halopixRecalc;

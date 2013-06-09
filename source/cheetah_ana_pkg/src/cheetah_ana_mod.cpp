@@ -238,19 +238,12 @@ namespace cheetah_ana_pkg {
 	  float random_float = (float)rand()/(float)RAND_MAX;
 	  frameNumberIncludingSkipped ++;
 	  
-	  if (cheetahGlobal.skipFract > random_float) {
-	    int temp = 0 ;
-	    for(long detID=0; detID < cheetahGlobal.nDetectors; detID++){
-	      if ((frameNumber-1) > cheetahGlobal.detector[detID].startFrames) {
-		temp ++;
-	      }
-	    }
-	    if (temp == cheetahGlobal.nDetectors){
+	  if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames) {
 	      printf("Skipping a frame (%d)\n",frameNumberIncludingSkipped);
 	      skip();
 	      return;
-	    }
 	  }
+	  
 	  
 
 	  static uint32_t nevents = 0;
