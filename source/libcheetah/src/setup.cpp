@@ -272,6 +272,15 @@ void cGlobal::setup() {
   pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
+  // Set number of frames for initial calibrations
+  nInitFrames = 0;
+  long temp;
+  for (long detID=0; detID<MAX_DETECTORS; detID++){
+    temp = detector[detID].startFrames;
+    nInitFrames = std::max(nInitFrames,temp);
+  }
+  calibrated = 0;
+
   /*
    * Trap specific configurations and mutually incompatible options
    */
@@ -283,7 +292,9 @@ void cGlobal::setup() {
     savehits = 0;
     hdf5dump = 0;
     saveRaw = 0;
-        
+   
+    nInitFrames = 0;
+
     powderSumHits = 0;
     powderSumBlanks = 0;
     powderthresh = -30000;
@@ -308,6 +319,9 @@ void cGlobal::setup() {
     savehits = 0;
     hdf5dump = 0;
     saveRaw = 0;
+
+    nInitFrames = 0;
+
     powderSumHits = 0;
     powderSumBlanks = 0;
     powderthresh = -30000;
@@ -353,13 +367,13 @@ void cGlobal::setup() {
 
   for(long i=0; i<MAX_DETECTORS; i++) {
     detector[i].bgCounter = 0;
-    detector[i].last_bg_update = 0;
+    detector[i].bgLastUpdate = 0;
     detector[i].hotpixCounter = 0;
-    detector[i].last_hotpix_update = 0;
+    detector[i].hotpixLastUpdate = 0;
     detector[i].hotpixRecalc = detector[i].bgRecalc;
     detector[i].nhot = 0;
     detector[i].halopixCounter = 0;
-    detector[i].last_halopix_update = 0;
+    detector[i].halopixLastUpdate = 0;
     detector[i].halopixRecalc = detector[i].bgRecalc;
     detector[i].halopixMemory = detector[i].bgRecalc;
     detector[i].nhalo = 0;
@@ -428,18 +442,6 @@ void cGlobal::setup() {
 
   nCXIEvents = 0;
   nCXIHits = 0;
-
-  // Set number of frames for initial calibrations
-  nInitFrames = 0;
-  long temp;
-  for (long detID=0; detID<MAX_DETECTORS; detID++){
-    temp = detector[detID].startFrames;
-    nInitFrames = std::max(nInitFrames,temp);
-    temp = detector[detID].hotpixMemory * detector[detID].useAutoHotpixel;
-    nInitFrames = std::max(nInitFrames,temp);
-    temp = detector[detID].useSubtractPersistentBackground * detector[detID].bgMemory + detector[detID].useAutoHalopixel * detector[detID].halopixMemory;
-    nInitFrames = std::max(nInitFrames,temp);
-  }
 }
 
 
@@ -1148,6 +1150,16 @@ void cGlobal::updateLogfile(void){
   pthread_mutex_unlock(&peaksfp_mutex);
 
 
+}
+
+void cGlobal::updateCalibrated(void){
+  int temp = 1;
+  for(long detID=0; detID<MAX_DETECTORS; detID++) {
+    temp *= ((detector[detID].useAutoHotpixel == 0) || (detector[detID].hotpixLastUpdate != 0));
+    temp *= ((detector[detID].useAutoHalopixel == 0) || (detector[detID].halopixLastUpdate != 0));
+    temp *= ((detector[detID].useSubtractPersistentBackground == 0) || (detector[detID].bgLastUpdate != 0));
+  }
+  calibrated = temp;
 }
 
 

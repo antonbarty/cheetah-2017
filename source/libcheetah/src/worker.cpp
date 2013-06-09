@@ -155,10 +155,11 @@ void *worker(void *threadarg) {
   /*
    *	Skip first set of frames to build up running estimate of background...
    */
-  if (eventData->threadNum < global->nInitFrames){
+  if (eventData->threadNum < global->nInitFrames || !global->calibrated){
     updateBackgroundBuffer(eventData, global, 0); 
     updateHaloBuffer(eventData,global,0);		    
     calculateHaloPixelMask(global);
+    global->updateCalibrated();
     printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
     goto cleanup;
   }

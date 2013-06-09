@@ -473,14 +473,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         saveRadialStacks(global);
 		global->updateLogfile();
 	}
-
-	DETECTOR_LOOP {
-	  while((eventData->frameNumber==(global->nInitFrames-1)) && (global->nActiveThreads>0)){
-	    printf("Finalizing initial frame digestion (%i frames). Waiting for all threads to finish.\n",global->nInitFrames);
-	    usleep(500000);
-	  }
-	}
-
 	
 }
 

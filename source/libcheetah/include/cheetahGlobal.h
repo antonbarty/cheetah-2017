@@ -210,6 +210,8 @@ public:
 
 	/** @brief The number of initial calibration frames */
 	long       nInitFrames;
+	/** @brief flag encoding status of calibration  */
+	int       calibrated;
 
 	/** @brief The Epics process variable for the pump laser delay. */
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
@@ -375,6 +377,7 @@ public:
 	 * @brief What's this for?
 	**/
 	void setup(void);
+	void updateCalibrated(void);
 
 	void writeInitialLog(void);
 	void updateLogfile(void);

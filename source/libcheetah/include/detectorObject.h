@@ -211,7 +211,7 @@ public:
 	long   bgMemory;
 	long   bgRecalc;
 	long   bgCounter;
-	long   last_bg_update;
+	long   bgLastUpdate;
 	int    bgIncludeHits;
 	int    bgNoBeamReset;
 	int    bgFiducialGlitchReset;
@@ -223,7 +223,7 @@ public:
 	float  hotpixFreq;
 	long   hotpixCounter;
 	long   nhot;
-	long   last_hotpix_update;
+	long   hotpixLastUpdate;
 	// Apply persistently hot pixels
 	int    applyAutoHotpixel;
 	// Identify persistently illuminated pixels (Halo)
@@ -234,7 +234,7 @@ public:
 	long   halopixCounter;
 	int    halopixIncludeHits;
 	long   nhalo;
-	long   last_halopix_update;
+	long   halopixLastUpdate;
 	// Start frames for calibration before output
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector

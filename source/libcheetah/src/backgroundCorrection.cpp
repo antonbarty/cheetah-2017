@@ -60,10 +60,9 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       }
 			
       bgCounter = global->detector[detID].bgCounter;
-      lastUpdate = global->detector[detID].last_bg_update;
+      lastUpdate = global->detector[detID].bgLastUpdate;
       if( (bgCounter == bgRecalc+lastUpdate) || ((bgCounter == (bgMemory-1)) && (lastUpdate == 0)) ) {
 	int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
-	global->detector[detID].last_bg_update = bgCounter;
 	for(long i = 0;i<pix_nn*bufferDepth;i++){
 	  frameBuffer[i] = global->detector[detID].bg_buffer[i];
 	}
@@ -78,6 +77,8 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 	pthread_mutex_unlock(&global->selfdark_mutex);
 
 	printf("Detector %li: Recalculating persistent background done.\n",detID);      
+
+	global->detector[detID].bgLastUpdate = bgCounter;
 	free(frameBuffer);			
       } else {
 	if(lockThreads){

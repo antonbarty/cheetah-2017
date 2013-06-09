@@ -238,7 +238,7 @@ namespace cheetah_ana_pkg {
 	  float random_float = (float)rand()/(float)RAND_MAX;
 	  frameNumberIncludingSkipped ++;
 	  
-	  if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames) {
+	  if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames && cheetahGlobal.calibrated) {
 	      printf("Skipping a frame (%d)\n",frameNumberIncludingSkipped);
 	      skip();
 	      return;

@@ -1091,12 +1091,12 @@ void writeCXI(cEventData *info, cGlobal *global ){
   
     
     DETECTOR_LOOP{
-      writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].last_bg_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].bgLastUpdate);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
-      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].last_hotpix_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].hotpixLastUpdate);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
-      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
+      writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].halopixLastUpdate);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
     }
   }
