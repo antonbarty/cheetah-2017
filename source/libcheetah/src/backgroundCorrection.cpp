@@ -41,7 +41,6 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       long	pix_nn = global->detector[detID].pix_nn;
       float	*frameData = eventData->detector[detID].corrected_data;
       float	*background = global->detector[detID].selfdark;
-
       subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
 						
       /*
@@ -62,6 +61,7 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
       /*
        *	Recalculate background from time to time
        */
+      long	pix_nn = global->detector[detID].pix_nn;
       int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
       long	bufferDepth = global->detector[detID].bgMemory;
       long	bgRecalc = global->detector[detID].bgRecalc;
@@ -69,6 +69,8 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
       float	medianPoint = global->detector[detID].bgMedian;
       long	threshold = lrint(bufferDepth*medianPoint);
       long	bgCounter,lastUpdate;
+      float	*frameData = eventData->detector[detID].corrected_data;
+      float	*background = global->detector[detID].selfdark;
 
       if(lockThreads){
 	pthread_mutex_lock(&global->bgbuffer_mutex);
@@ -146,7 +148,7 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
       global->detector[detID].bgCounter += 1;
       if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
-      long frameID = (&eventData->threadNum)%bufferDepth;
+      long frameID = eventData->threadNum%bufferDepth;
       pthread_mutex_lock(&global->bgbuffer_mutex);
       for(long i = 0;i<pix_nn;i++){
 	frameBuffer[i+pix_nn*frameID] = data16[i];
