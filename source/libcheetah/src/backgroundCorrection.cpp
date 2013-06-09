@@ -92,10 +92,10 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	pthread_mutex_lock(&global->selfdark_mutex);
 	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
 	pthread_mutex_unlock(&global->selfdark_mutex);
-
+	global->detector[detID].bgLastUpdate = bgCounter;
+	global->detector[detID].bgCalibrated = bgCalibrated;
 	printf("Detector %li: Recalculating persistent background done.\n",detID);      
 
-	global->detector[detID].bgLastUpdate = bgCounter;
 	free(frameBuffer);			
       } else {
 	if(lockThreads){

@@ -619,7 +619,7 @@ void pnccdFixWiringError(float *data) {
 
 void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
   DETECTOR_LOOP{
-    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCalibrated)){
+    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (!global->detector[detID].useSubtractPersistentBackground || global->detector[detID].bgCalibrated)){
       float	*frameData = eventData->detector[detID].corrected_data;
       float     *frameBuffer = global->detector[detID].halopix_buffer;
       long	pix_nn = global->detector[detID].pix_nn;
