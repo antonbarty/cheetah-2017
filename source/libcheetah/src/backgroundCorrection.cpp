@@ -78,7 +78,7 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 			
       bgCounter = global->detector[detID].bgCounter;
       lastUpdate = global->detector[detID].bgLastUpdate;
-      if( (bgCounter == bgRecalc+lastUpdate) || ((bgCounter == (bgMemory-1)) && (lastUpdate == 0)) ) {
+      if( (eventData->threadNum == bgRecalc+lastUpdate) || ((eventData->threadNum == (bgMemory-1)) && (lastUpdate == 0)) ) {
 	int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 	for(long i = 0;i<pix_nn*bufferDepth;i++){
 	  frameBuffer[i] = global->detector[detID].bg_buffer[i];
@@ -92,8 +92,8 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	pthread_mutex_lock(&global->selfdark_mutex);
 	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
 	pthread_mutex_unlock(&global->selfdark_mutex);
-	global->detector[detID].bgLastUpdate = bgCounter;
-	global->detector[detID].bgCalibrated = bgCalibrated;
+	global->detector[detID].bgLastUpdate = eventData->threadNum;
+	global->detector[detID].bgCalibrated = 1;
 	printf("Detector %li: Recalculating persistent background done.\n",detID);      
 
 	free(frameBuffer);			
@@ -138,7 +138,12 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
       long	pix_nn = global->detector[detID].pix_nn;
       int16_t	*frameBuffer = global->detector[detID].bg_buffer;
       int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
-
+      long frameID = eventData->threadNum%bufferDepth;
+      pthread_mutex_lock(&global->bgbuffer_mutex);
+      for(long i = 0;i<pix_nn;i++){
+	frameBuffer[i+pix_nn*frameID] = data16[i];
+      }
+      pthread_mutex_unlock(&global->bgbuffer_mutex);
 #ifdef __GNUC__
       long bgCounter = __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
 #else
@@ -148,12 +153,6 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
       global->detector[detID].bgCounter += 1;
       if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
-      long frameID = eventData->threadNum%bufferDepth;
-      pthread_mutex_lock(&global->bgbuffer_mutex);
-      for(long i = 0;i<pix_nn;i++){
-	frameBuffer[i+pix_nn*frameID] = data16[i];
-      }
-      pthread_mutex_unlock(&global->bgbuffer_mutex);
     }		
   }
 }
