@@ -145,7 +145,8 @@ void *worker(void *threadarg) {
   /*
    *	Identify and kill hot pixels
    */
-  identifyHotPixels(eventData, global);	
+  identifyHotPixels(eventData, global);
+  calculateHotPixelMask(eventData,global);
   applyHotPixelMask(eventData,global);
 
   updateDatarate(eventData,global);

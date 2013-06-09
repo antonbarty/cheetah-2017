@@ -16,6 +16,7 @@ void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
+void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 void calculateHaloPixelMask(cEventData*,cGlobal*);
 void updateHaloBuffer(cEventData*, cGlobal*,int);
