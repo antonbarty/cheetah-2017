@@ -278,6 +278,9 @@ void cGlobal::setup() {
   for (long detID=0; detID<MAX_DETECTORS; detID++){
     temp = detector[detID].startFrames;
     nInitFrames = std::max(nInitFrames,temp);
+    detector[detID].halopixCalibrated = 0;
+    detector[detID].hotpixCalibrated = 0;
+    detector[detID].bgCalibrated = 0;
   }
   calibrated = 0;
 
@@ -1155,9 +1158,9 @@ void cGlobal::updateLogfile(void){
 void cGlobal::updateCalibrated(void){
   int temp = 1;
   for(long detID=0; detID<MAX_DETECTORS; detID++) {
-    temp *= ((detector[detID].useAutoHotpixel == 0) || (detector[detID].hotpixLastUpdate != 0));
-    temp *= ((detector[detID].useAutoHalopixel == 0) || (detector[detID].halopixLastUpdate != 0));
-    temp *= ((detector[detID].useSubtractPersistentBackground == 0) || (detector[detID].bgLastUpdate != 0));
+    temp *= ((detector[detID].useAutoHotpixel == 0) || detector[detID].hotpixCalibrated);
+    temp *= ((detector[detID].useAutoHalopixel == 0) || detector[detID].halopixCalibrated);
+    temp *= ((detector[detID].useSubtractPersistentBackground == 0) || detector[detID].bgCalibrated);
   }
   calibrated = temp;
 }

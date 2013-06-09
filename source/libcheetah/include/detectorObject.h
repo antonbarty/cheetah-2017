@@ -211,6 +211,7 @@ public:
 	long   bgMemory;
 	long   bgRecalc;
 	long   bgCounter;
+	int   bgCalibrated;
 	long   bgLastUpdate;
 	int    bgIncludeHits;
 	int    bgNoBeamReset;
@@ -222,6 +223,7 @@ public:
 	int    hotpixRecalc;
 	float  hotpixFreq;
 	long   hotpixCounter;
+	int   hotpixCalibrated;
 	long   nhot;
 	long   hotpixLastUpdate;
 	// Apply persistently hot pixels
@@ -232,6 +234,7 @@ public:
 	long   halopixRecalc;
 	long   halopixMemory;
 	long   halopixCounter;
+	int   halopixCalibrated;
 	int    halopixIncludeHits;
 	long   nhalo;
 	long   halopixLastUpdate;
