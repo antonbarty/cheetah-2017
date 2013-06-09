@@ -247,7 +247,8 @@ namespace cheetah_ana_pkg {
 	    }
 	    if (temp == cheetahGlobal.nDetectors){
 	      printf("Skipping a frame (%d)\n",frameNumberIncludingSkipped);
-	      return;	    
+	      skip();
+	      return;
 	    }
 	  }
 	  

@@ -17,6 +17,7 @@
 #include <fenv.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <algorithm>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -428,6 +429,20 @@ void cGlobal::setup() {
   nCXIEvents = 0;
   nCXIHits = 0;
 
+  // Set number of frames for initial calibrations
+  nInitFrames = 0;
+  for (long detID=0; detID<MAX_DETECTORS; detID++){
+    nInitFrames = std::max((long) detector[detID].startFrames,nInitFrames);
+    if (detector[detID].useAutoHalopixel){
+      nInitFrames = std::max((long) detector[detID].halopixMemory,nInitFrames);
+    }
+    if (detector[detID].useAutoHotpixel){
+      nInitFrames = std::max((long) detector[detID].hotpixMemory,nInitFrames);
+    }
+    if (detector[detID].useSubtractPersistentBackground){
+      nInitFrames = std::max((long) detector[detID].bgMemory,nInitFrames);
+    }
+  }
 }
 
 

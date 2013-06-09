@@ -663,6 +663,7 @@ void calculateHaloPixelMask(cGlobal *global){
       float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
       long	bufferDepth = global->detector[detID].halopixMemory;
       long	halopixRecalc = global->detector[detID].halopixRecalc;
+      long	halopixMemory = global->detector[detID].halopixMemory;
       long	halopixCounter,lastUpdate;
       long	nhalo;
       float	threshold = bufferDepth*halopixMinDeviation;
@@ -676,7 +677,7 @@ void calculateHaloPixelMask(cGlobal *global){
       halopixCounter = global->detector[detID].halopixCounter;
       lastUpdate = global->detector[detID].last_halopix_update;
 
-      if( halopixCounter > halopixRecalc+lastUpdate ) {
+      if( (halopixCounter == halopixRecalc+lastUpdate) || ((halopixCounter+1 == halopixMemory) && (lastUpdate==0)) ) {
 
 	global->detector[detID].last_halopix_update = halopixCounter;
 				

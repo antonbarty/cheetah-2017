@@ -27,6 +27,7 @@
 #include <string>
 #include <iomanip>
 
+
 /*
  *	Worker thread function for processing each cspad data frame
  */
@@ -154,16 +155,12 @@ void *worker(void *threadarg) {
   /*
    *	Skip first set of frames to build up running estimate of background...
    */
-  DETECTOR_LOOP {
-    if (eventData->threadNum < global->detector[detID].startFrames || 
-	(global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
-	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) || (global->detector[detID].useAutoHalopixel && global->detector[detID].halopixCounter < global->detector[detID].halopixRecalc)) {
-      updateBackgroundBuffer(eventData, global, 0); 
-      updateHaloBuffer(eventData,global,0);		    
-	calculateHaloPixelMask(global);
-      printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
-      goto cleanup;
-    }
+  if (eventData->threadNum < global->nInitFrames){
+    updateBackgroundBuffer(eventData, global, 0); 
+    updateHaloBuffer(eventData,global,0);		    
+    calculateHaloPixelMask(global);
+    printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+    goto cleanup;
   }
 
   /*

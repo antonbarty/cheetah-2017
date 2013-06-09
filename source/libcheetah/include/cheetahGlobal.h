@@ -208,6 +208,8 @@ public:
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
 
+	/** @brief The number of initial calibration frames */
+	long       nInitFrames;
 
 	/** @brief The Epics process variable for the pump laser delay. */
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
