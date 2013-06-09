@@ -80,6 +80,7 @@ namespace cheetah_ana_pkg {
 	      usleep(100000);
 	    }
 	    printf("Attempting to close CXIs cleanly\n");
+	    writeAccumulatedCXI(&cheetahGlobal);
 	    closeCXIFiles(&cheetahGlobal);
 	    signal(SIGINT,SIG_DFL);
 	    kill(getpid(),SIGINT);

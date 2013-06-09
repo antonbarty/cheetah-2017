@@ -342,7 +342,6 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
       long	pix_nn = global->detector[detID].pix_nn;
       long	hotpixADC = global->detector[detID].hotpixADC;
       long	bufferDepth = global->detector[detID].hotpixMemory;
-      long	hotpixCounter = global->detector[detID].hotpixCounter;
       float	*frameData = eventData->detector[detID].corrected_data;
       int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
       
@@ -355,11 +354,11 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 	buffer[i] = (fabs(frameData[i])>hotpixADC)?(1):(0);
       }
       
-      long frameID = hotpixCounter%bufferDepth;
 
       if(lockThreads)
 	pthread_mutex_lock(&global->hotpixel_mutex);
 
+      long frameID = global->detector[detID].hotpixCounter%bufferDepth;
       global->detector[detID].hotpixCounter += 1;
       memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
       eventData->nHot = global->detector[detID].nhot;

@@ -43,7 +43,21 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       float	*background = global->detector[detID].selfdark;
 
       subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
-			
+						
+      /*
+       *	Remember GMD values  (why is this here?)
+       */
+      float	gmd;
+      pthread_mutex_lock(&global->selfdark_mutex);
+      gmd = (eventData->gmd21+eventData->gmd22)/2;
+      global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
+      pthread_mutex_unlock(&global->selfdark_mutex);
+
+    }
+  }	
+}
+
+void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
       /*
        *	Recalculate background from time to time
        */
@@ -85,19 +99,9 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 	  pthread_mutex_unlock(&global->bgbuffer_mutex);			
 	}
       }
-			
-      /*
-       *	Remember GMD values  (why is this here?)
-       */
-      float	gmd;
-      pthread_mutex_lock(&global->selfdark_mutex);
-      gmd = (eventData->gmd21+eventData->gmd22)/2;
-      global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-      pthread_mutex_unlock(&global->selfdark_mutex);
-
-    }
-  }	
 }
+
+
 
 // probably not needed
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
