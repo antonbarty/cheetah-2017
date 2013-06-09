@@ -358,8 +358,7 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
       if(lockThreads)
 	pthread_mutex_lock(&global->hotpixel_mutex);
 
-      long frameID = global->detector[detID].hotpixCounter%bufferDepth;
-      global->detector[detID].hotpixCounter += 1;
+      long frameID = &eventData->threadNum%bufferDepth;
       memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
       eventData->nHot = global->detector[detID].nhot;
 
@@ -396,18 +395,18 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 /* 
  *	Recalculate hot pixel masks using frame buffer
  */
-void calculateHotPixelMask(cGlobal *global){
+void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 
 	
   DETECTOR_LOOP {
     if(global->detector[detID].useAutoHotpixel) {
       float	hotpixFrequency = global->detector[detID].hotpixFreq;
       long	bufferDepth = global->detector[detID].hotpixMemory;
-      long	hotpixCounter = global->detector[detID].hotpixCounter;
       long	hotpixRecalc = global->detector[detID].hotpixRecalc;
+      long	hotpixCalibrated = global->detector[detID].hotpixCalibrated;
       long	lastUpdate = global->detector[detID].hotpixLastUpdate;
 			
-      if( ( (hotpixCounter % hotpixRecalc) == 0 || hotpixCounter == bufferDepth) && hotpixCounter != lastUpdate ) {
+      if ( ( (&eventData->threadNum == lastUpdate+hotpixRecalc) && hotpixCalibrated ) || ( (&eventData->threadNum == (hotpixMemory-1)) && !hotpixCalibrated) ) {
 				
 	long	nhot;
 	int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
@@ -419,16 +418,16 @@ void calculateHotPixelMask(cGlobal *global){
 	if(lockThreads)
 	  pthread_mutex_lock(&global->hotpixel_mutex);
 
-	printf("Detector %li: Recalculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);	
+	printf("Detector %li: Recalculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
 	nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
 	printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
-
+	global->detector[detID].nhot = nhot;
+	global->detector[detID].hotpixLastUpdate = &eventData->threadNum;
+	global->detector[detID].hotpixCalibrated = 1;
+	
 	if(lockThreads)
 	  pthread_mutex_unlock(&global->hotpixel_mutex);
 
-	global->detector[detID].nhot = nhot;
-
-	global->detector[detID].hotpixLastUpdate = hotpixCounter;
       }
     }	
   }
@@ -595,55 +594,54 @@ void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
 
 // Can be fixed with an adequate geometry as well.
 void pnccdFixWiringError(float *data) {
-    long	i,j;
-    long    nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
+  long	i,j;
+  long    nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
     
 
-    // Fix top left quadrant 
-    // (shift all pixels right by one and zero first column)
-    for(j=512; j<1023; j++)		
-        for(i=511; i>0; i--)
-            data[i+j*nx] = data[(i-1)+j*nx];            
-    for(j=512; j<1024; j++) 
-        data[0+j*nx] = 0;
+  // Fix top left quadrant 
+  // (shift all pixels right by one and zero first column)
+  for(j=512; j<1023; j++)		
+    for(i=511; i>0; i--)
+      data[i+j*nx] = data[(i-1)+j*nx];            
+  for(j=512; j<1024; j++) 
+    data[0+j*nx] = 0;
     
 
-    // Fix bottom right quadrant 
-    //  (shift all pixels left by one and zero last column)
-    for(j=0; j<512; j++)
-        for(i=512; i<1024; i++)
-            data[i+j*nx] =  data[(i+1)+j*nx];            
-    for(j=0; j<512; j++) 
-        data[1023+j*nx] = 0;
-    
+  // Fix bottom right quadrant 
+  //  (shift all pixels left by one and zero last column)
+  for(j=0; j<512; j++)
+    for(i=512; i<1024; i++)
+      data[i+j*nx] =  data[(i+1)+j*nx];            
+  for(j=0; j<512; j++) 
+    data[1023+j*nx] = 0;
 }
 
-void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && ((global->detector[detID].useSubtractPersistentBackground == 0) || (global->detector[detID].bgLastUpdate != 0) )){
+void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
+  DETECTOR_LOOP{
+    if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCalibrated)){
       float	*frameData = eventData->detector[detID].corrected_data;
       float     *frameBuffer = global->detector[detID].halopix_buffer;
       long	pix_nn = global->detector[detID].pix_nn;
       long	bufferDepth = global->detector[detID].halopixMemory;
-      long	frameID;
+      long	frameID = (&eventData->numThread)%bufferDepth;
 
       float	*buffer = (float *) malloc(pix_nn*sizeof(float));
       for(long i=0; i<pix_nn; i++){
 	buffer[i] = fabs(frameData[i]);
       }
 
-      pthread_mutex_lock(&global->halopixel_mutex);
-
-      frameID = (global->detector[detID].halopixCounter)%bufferDepth;
-      global->detector[detID].halopixCounter += 1;
-
+      // Update buffer slice
       pthread_mutex_lock(&global->detector[detID].halopix_mutexes[frameID]);
-      pthread_mutex_unlock(&global->halopixel_mutex);
-
       memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
-
       pthread_mutex_unlock(&global->detector[detID].halopix_mutexes[frameID]);
-
+      // Update counter
+#ifdef __GNUC__
+      __sync_fetch_and_add(&(global->detector[detID].haloCounter),1);
+#else
+      pthread_mutex_lock(&global->halopixel_mutex);
+      global->detector[detID].halopixCounter += 1;
+      pthread_mutex_unlock(&global->halopixel_mutex);
+#endif      
       free(buffer);
     }
   }
@@ -652,47 +650,38 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
 /* 
  *	Recalculate halo pixel masks using frame buffer
  */
-void calculateHaloPixelMask(cGlobal *global){
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel && ((global->detector[detID].useSubtractPersistentBackground == 0) || (global->detector[detID].bgLastUpdate != 0))) {
+void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
+      DETECTOR_LOOP {
+      if(global->detector[detID].useAutoHalopixel) {
       float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
       long	bufferDepth = global->detector[detID].halopixMemory;
       long	halopixRecalc = global->detector[detID].halopixRecalc;
       long	halopixMemory = global->detector[detID].halopixMemory;
-      long	halopixCounter,lastUpdate;
+      long	lastUpdate = global->detector[detID].halopixLastUpdate;
       long	nhalo;
       float	threshold = bufferDepth*halopixMinDeviation;
       long	pix_nn = global->detector[detID].pix_nn;
       uint16_t  *mask = global->detector[detID].pixelmask_shared;
       uint16_t  *maskMinExtent = global->detector[detID].pixelmask_shared_min;
       uint16_t  *maskMaxExtent = global->detector[detID].pixelmask_shared_max;
-      
-      pthread_mutex_lock(&global->halopixel_mutex);
 
-      halopixCounter = global->detector[detID].halopixCounter;
-      lastUpdate = global->detector[detID].halopixLastUpdate;
-
-      if( (halopixCounter == halopixRecalc+lastUpdate) || ((lastUpdate==0) && (halopixCounter == (halopixMemory-1))) ) {
-
+      if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory) && !halopixCalibrated) ) {
+	
+	pthread_mutex_lock(&global->halopixel_mutex);
 			
 	printf("Detector %li: Recalculating halo pixel mask.\n",detID);
 	nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
 	global->detector[detID].nhalo = nhalo;
+	global->detector[detID].halopixLastUpdate = &eventData->threadNum;
+	global->detector[detID].halopixCalibrated = 1;
 	printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
-
-	global->detector[detID].halopixLastUpdate = halopixCounter;
-
-	pthread_mutex_unlock(&global->halopixel_mutex);
-
-      } else {
 
 	pthread_mutex_unlock(&global->halopixel_mutex);
 
       }
     }	
-  }
-}
-
+ }
+ 
 
 long calculateHaloPixelMask(uint16_t *mask, uint16_t *maskMinExtent, uint16_t *maskMaxExtent, float *frameBuffer, float threshold, long bufferDepth, long pix_nn){
 

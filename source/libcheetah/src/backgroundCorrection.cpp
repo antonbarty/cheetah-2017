@@ -144,7 +144,7 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
       global->detector[detID].bgCounter += 1;
       if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
-      long frameID = bgCounter%bufferDepth;
+      long frameID = (&eventData->threadNum)%bufferDepth;
       pthread_mutex_lock(&global->bgbuffer_mutex);
       for(long i = 0;i<pix_nn;i++){
 	frameBuffer[i+pix_nn*frameID] = data16[i];

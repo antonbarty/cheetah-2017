@@ -146,9 +146,8 @@ void *worker(void *threadarg) {
    *	Identify and kill hot pixels
    */
   identifyHotPixels(eventData, global);	
-  calculateHotPixelMask(global);
+  calculateHotPixelMask(eventData,global);
   applyHotPixelMask(eventData,global);
-
 
   updateDatarate(eventData,global);
 
@@ -158,7 +157,7 @@ void *worker(void *threadarg) {
   if (eventData->threadNum < global->nInitFrames || !global->calibrated){
     updateBackgroundBuffer(eventData, global, 0); 
     updateHaloBuffer(eventData,global,0);		    
-    calculateHaloPixelMask(global);
+    calculateHaloPixelMask(eventData,global);
     global->updateCalibrated();
     printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
     goto cleanup;
@@ -187,7 +186,7 @@ void *worker(void *threadarg) {
 	 *	Identify halo pixels
 	 */
 	updateHaloBuffer(eventData,global,hit);
-	calculateHaloPixelMask(global);
+	calculateHaloPixelMask(eventData,global);
 	
 	/*
 	 *	Update running backround estimate based on non-hits
