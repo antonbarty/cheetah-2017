@@ -232,6 +232,7 @@ public:
 	long   halopixRecalc;
 	long   halopixMemory;
 	long   halopixCounter;
+	int    halopixIncludeHits;
 	long   nhalo;
 	long   last_halopix_update;
 	// Start frames for calibration before output

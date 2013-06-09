@@ -237,8 +237,18 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
 	  float random_float = (float)rand()/(float)RAND_MAX;
 	  frameNumberIncludingSkipped ++;
-	  if (cheetahGlobal.skipFract > random_float){
-	    return;	    
+	  
+	  if (cheetahGlobal.skipFract > random_float) {
+	    int temp = 0 ;
+	    for(long detID=0; detID < cheetahGlobal.nDetectors; detID++){
+	      if ((frameNumber-1) > cheetahGlobal.detector[detID].startFrames) {
+		temp ++;
+	      }
+	    }
+	    if (temp == cheetahGlobal.nDetectors){
+	      printf("Skipping a frame (%d)\n",frameNumberIncludingSkipped);
+	      return;	    
+	    }
 	  }
 	  
 

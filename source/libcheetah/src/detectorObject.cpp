@@ -117,6 +117,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
   // Identify persistently illuminated pixels (halo)
   useAutoHalopixel = 0;
+  halopixIncludeHits = 0;
   halopixMinDeviation = 100;
   halopixRecalc = bgRecalc;
   halopixMemory = bgRecalc;
@@ -298,14 +299,17 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "useautohalopixel")) {
     useAutoHalopixel = atoi(value);
   }
-  else if (!strcmp(tag, "halopixelmemory")) {
+  else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory"))) {
     halopixMemory = atoi(value);
   }
-  else if (!strcmp(tag, "halopixelrecalc")) {
+  else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc"))) {
     halopixRecalc = atoi(value);
   }
   else if (!strcmp(tag, "halopixmindeviation")) {
     halopixMinDeviation = atof(value);
+  }
+  else if (!strcmp(tag, "halopixincludehits")) {
+    halopixIncludeHits = atoi(value);
   }
   else if (!strcmp(tag, "cmmodule")) {
     cmModule = atoi(value);
@@ -396,14 +400,13 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   nPowderClasses = global->nPowderClasses;
   radialStackSize = global->radialStackSize;
     
-    
   // Background buffers and the like
   selfdark = (float*) calloc(pix_nn, sizeof(float));
   bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
   hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-  halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float));
-  halopix_mutexes = (pthread_mutex_t*) calloc(halopixRecalc, sizeof(pthread_mutex_t));
-  for (long j=0; j<halopixRecalc; j++) {
+  halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float));
+  halopix_mutexes = (pthread_mutex_t*) calloc(halopixMemory, sizeof(pthread_mutex_t));
+  for (long j=0; j<halopixMemory; j++) {
     pthread_mutex_init(&halopix_mutexes[j], NULL);
   }
 
