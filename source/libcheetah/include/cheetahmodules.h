@@ -17,7 +17,7 @@ void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
-void calculateHaloPixelMask(cGlobal*);
+void calculateHaloPixelMask(cEventData*,cGlobal*);
 void updateHaloBuffer(cEventData*, cGlobal*,int);
 
 void subtractDarkcal(float*, float*, long);
@@ -39,6 +39,7 @@ void subtractLocalBackground(cEventData*, cGlobal*);
 void checkSaturatedPixels(cEventData*, cGlobal*);
 void subtractPersistentBackground(cEventData*, cGlobal*);
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
+void calculatePersistentBackground(cEventData*, cGlobal*);
 void initBackgroundBuffer(cEventData*, cGlobal*);
 
 void subtractLocalBackground(float*, long, long, long, long, long);

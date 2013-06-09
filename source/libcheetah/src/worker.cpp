@@ -156,7 +156,8 @@ void *worker(void *threadarg) {
    */
   if (eventData->threadNum < global->nInitFrames || !global->calibrated){
     updateBackgroundBuffer(eventData, global, 0); 
-    updateHaloBuffer(eventData,global,0);		    
+    calculatePersistentBackground(eventData,global);
+    updateHaloBuffer(eventData,global,0);
     calculateHaloPixelMask(eventData,global);
     global->updateCalibrated();
     printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
@@ -189,10 +190,11 @@ void *worker(void *threadarg) {
 	calculateHaloPixelMask(eventData,global);
 	
 	/*
-	 *	Update running backround estimate based on non-hits
+	 *	Update running backround estimate based on non-hits and calculate background from buffer
 	 */
 	updateBackgroundBuffer(eventData, global, hit); 
-	
+	calculatePersistentBackground(eventData,global);
+
 	
 	/*
 	 *	Maintain a running sum of data (powder patterns)
