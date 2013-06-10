@@ -300,7 +300,6 @@ void *worker(void *threadarg) {
     assemble2Dimage(eventData, global);
     assemble2Dmask(eventData, global);
 
-<<<<<<< HEAD
   /*
    *  Calculate angular correlation
    *  write accumulated angular correlation to file when approperiate
@@ -314,12 +313,11 @@ void *worker(void *threadarg) {
    */
   assemble2Dimage(eventData, global);
   assemble2Dmask(eventData, global);
-=======
+
     /*
      *   Downsample assembled image
      */
     downsample(eventData,global);
->>>>>>> developer
 
     
     /*
@@ -331,7 +329,6 @@ void *worker(void *threadarg) {
 	}
     
 
-<<<<<<< HEAD
   /*
    *	Calculate radial average
    *  Maintain radial average stack
@@ -343,34 +340,14 @@ void *worker(void *threadarg) {
    *	Maintain a running sum of data (powder patterns)
    *    and strongest non-hit and weakest hit
    */
-  addToPowder(eventData, global);
+	addToHistogram(eventData, global);
+	addToPowder(eventData, global);
 
   /*
    * calculate the one dimesional beam spectrum
    */
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
-=======
-    
-    /*
-     *  Calculate radial average
-     *  Maintain radial average stack
-     */
-    calculateRadialAverage(eventData, global);
-    addToRadialAverageStack(eventData, global);
-	
-    /*
-     *	Maintain a running sum of data (powder patterns)
-     *    and strongest non-hit and weakest hit
-     */
-    addToHistogram(eventData, global);
-
-    /*
-     * calculate the one dimesional beam spectrum
-     */
-    integrateSpectrum(eventData, global);
-    integrateRunSpectrum(eventData, global);
-
 
     /*
      *  Inside-thread speed test
@@ -380,7 +357,6 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
->>>>>>> developer
 
   
     /*
@@ -410,7 +386,6 @@ void *worker(void *threadarg) {
         writePeakFile(eventData, global);
     }
 
-<<<<<<< HEAD
   /*
    * save accumulated angular correlation
    */
@@ -418,14 +393,6 @@ void *worker(void *threadarg) {
      saveAngularCorrelation( global ); 
    }
 
-  /*
-   *	If this is a hit, write out peak info to peak list file
-   */
-  if(hit && global->savePeakInfo) {
-    writePeakFile(eventData, global);
-  }
-=======
-    
     /*
     *	Write out information on each frame to a log file
     */
@@ -469,7 +436,6 @@ void *worker(void *threadarg) {
     fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
     fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
     pthread_mutex_unlock(&global->powderfp_mutex);
->>>>>>> developer
 
     
     /*

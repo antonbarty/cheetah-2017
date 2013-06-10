@@ -33,110 +33,6 @@
 cPixelDetectorCommon::cPixelDetectorCommon() {
 
 
-<<<<<<< HEAD
-  // Defaults to CXI cspad configuration
-  strcpy(detectorType, "cspad");
-  strcpy(detectorName, "CxiDs1");
-  //detectorType = Pds::DetInfo::Cspad;
-  //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
-
-  // Calibration files
-  strcpy(detectorConfigFile, "No_file_specified");
-  strcpy(geometryFile, "No_file_specified");
-  strcpy(badpixelFile, "No_file_specified");
-  strcpy(darkcalFile, "No_file_specified");
-  strcpy(wireMaskFile, "No_file_specified");
-  strcpy(gaincalFile, "No_file_specified");
-
-  // Default ASIC layout (cspad)
-  asic_nx = CSPAD_ASIC_NX;
-  asic_ny = CSPAD_ASIC_NY;
-  asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-  nasics_x = CSPAD_nASICS_X;
-  nasics_y = CSPAD_nASICS_Y;
-  pix_nx = asic_nx*nasics_x;
-  pix_ny = asic_ny*nasics_y;
-  pix_nn = pix_nx*pix_ny;
-  pixelSize = 110e-6;
-
-
-  // Detector Z position
-  //strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
-  strcpy(detectorZpvname,"");
-  //defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
-  defaultCameraLengthMm = 0;
-  fixedCameraLengthMm = 0;
-  detposprev = 0;
-  cameraLengthOffset = 500.0 + 79.0;
-  cameraLengthScale = 1e-3;
-
-  beamCenterPixX = 0;
-  beamCenterPixY = 0;
-
-  // Bad pixel mask
-  useBadPixelMask = 0;
-  applyBadPixelMask = 1;
-
-  // Saturated pixels
-  maskSaturatedPixels = 0;
-  pixelSaturationADC = 15564;  // 95% of 2^14 ??
-
-  // Static dark calibration (electronic offsets)
-  useDarkcalSubtraction = 0;
-
-  // Common mode subtraction from each ASIC
-  cmModule = 0;
-  cmFloor = 0.1;
-  cspadSubtractUnbondedPixels = 0;
-  cspadSubtractBehindWires = 0;
-
-  // Gain calibration correction
-  useGaincal = 0;
-  invertGain = 0;
-
-  // polar mapping
-  radialBinSize = 1;
-
-  // Subtraction of running background (persistent photon background)
-  useSubtractPersistentBackground = 0;
-  bgMemory = 50;
-  startFrames = 0;
-  scaleBackground = 0;
-  useBackgroundBufferMutex = 0;
-  bgMedian = 0.5;
-  bgRecalc = bgMemory;
-  bgIncludeHits = 0;
-  bgNoBeamReset = 0;
-  bgFiducialGlitchReset = 0;
-
-  // Local background subtraction
-  useLocalBackgroundSubtraction = 0;
-  localBackgroundRadius = 3;
-
-  // Identify persistently hot pixels
-  useAutoHotpixel = 0;
-  hotpixFreq = 0.9;
-  hotpixADC = 1000;
-  hotpixMemory = 50;
-  // Kill persistently hot pixels
-  applyAutoHotpixel = 0;
-
-  // Identify persistently illuminated pixels (halo)
-  useAutoHalopixel = 0;
-  halopixMinDeviation = 100;
-  halopixRecalc = bgRecalc;
-  halopixMemory = bgRecalc;
-
-  // correction for PNCCD read out artifacts
-  usePnccdOffsetCorrection = 0;
-
-  // Saving options
-  saveDetectorCorrectedOnly = 0;
-  saveDetectorRaw = 0;
-
-  // No downsampling
-  downsampling = 1;
-=======
 	// Defaults to CXI cspad configuration
 	strcpy(detectorType, "cspad");
 	strcpy(detectorName, "CxiDs1");
@@ -245,7 +141,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// No downsampling
 	downsampling = 1;
->>>>>>> developer
+
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -480,7 +376,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
-<<<<<<< HEAD
   else if (!strcmp(tag, "startframes")) {
     startFrames = atoi(value);
   }
@@ -491,18 +386,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 //  else if(!strcmp(tag, "nradialbins")) {
 //    nRadialBins = atoi(value);
 //  }
-  else if(!strcmp(tag, "nangularbins")) {
-    nAngularBins = atoi(value);
-  }
-
-  // Unknown tags
-  else {
-    fail = 1;
-  }
-=======
-	else if (!strcmp(tag, "startframes")) {
-		startFrames = atoi(value);
-	}
+	else if(!strcmp(tag, "nangularbins")) {
+		nAngularBins = atoi(value);
 	
 	// Histograms
 	else if (!strcmp(tag, "histogram")) {
@@ -521,13 +406,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	  histogramMaxMemoryGb = atof(value);
 	}
 
-
-
 	// Unknown tags
 	else {
 		fail = 1;
 	}
->>>>>>> developer
 
 	return fail;
 
@@ -591,17 +473,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   }
 	
     
-<<<<<<< HEAD
-  // Radial stacks
-  for(long i=0; i<nPowderClasses; i++) {
-    radialStackCounter[i] = 0;
-    radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
-
-    for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-      radialAverageStack[i][j] = 0;
-    }
-  }
-=======
 	// Radial stacks
 	for(long i=0; i<nPowderClasses; i++) {
 		radialStackCounter[i] = 0;
@@ -642,9 +513,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		}
 	}
 }
->>>>>>> developer
-
-}
 
 /*
  *	Free detector specific memory
@@ -656,6 +524,14 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 	free(bg_buffer);
 	free(hotpix_buffer);
 	free(halopix_buffer);
+	free(polarIntensities);
+	free(angularcorrelation);
+	free(mask_polar);
+	free(mask_angularcorrelation);
+	free(cart2polar_map);
+	fftw_destroy_plan(p_forward);
+	fftw_destroy_plan(p_backward);
+
 	
 	for(long j=0; j<global->nPowderClasses; j++) {
 		free(powderRaw[j]);
