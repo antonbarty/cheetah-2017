@@ -251,6 +251,7 @@ void assemble2Dmask(uint16_t *assembled_mask, uint16_t *original_mask, float *pi
   }
 }
 
+
 void downsample(cEventData *eventData, cGlobal *global){
 
   DETECTOR_LOOP {

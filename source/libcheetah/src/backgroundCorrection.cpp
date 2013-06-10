@@ -100,20 +100,26 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
   }	
 }
 
-// probably not needed
+/*
+ *  Set background to the first frame by default
+ *  (possibly not needed...)
+ */
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
-  DETECTOR_LOOP {
-    if (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter == 0){
-      long	pix_nn = global->detector[detID].pix_nn;
-      uint16_t	*raw_data = eventData->detector[detID].raw_data;
-      float	*background = global->detector[detID].selfdark;
-      pthread_mutex_lock(&global->bgbuffer_mutex);
-      for(long i = 0;i<pix_nn;i++){
-	background[i] = (float) raw_data[i];
-      }
-      pthread_mutex_unlock(&global->bgbuffer_mutex);
+    DETECTOR_LOOP {
+        if(global->detector[detID].bgCounter == 0) {
+            if (global->detector[detID].useSubtractPersistentBackground){
+                long        pix_nn = global->detector[detID].pix_nn;
+                uint16_t	*raw_data = eventData->detector[detID].raw_data;
+                float       *background = global->detector[detID].selfdark;
+                
+                pthread_mutex_lock(&global->bgbuffer_mutex);
+                for(long i = 0;i<pix_nn;i++){
+                    background[i] = (float) raw_data[i];
+                }
+                pthread_mutex_unlock(&global->bgbuffer_mutex);
+            }
+        }
     }
-  }
 }
 
 

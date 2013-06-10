@@ -32,234 +32,275 @@
  */
 void *worker(void *threadarg) {
 
-  /*
-   *	Turn threadarg into a more useful form
-   */
-  cGlobal			*global;
-  cEventData		*eventData;
-  eventData = (cEventData*) threadarg;
-  global = eventData->pGlobal;
-  int	hit = 0;
+    /*
+     *	Turn threadarg into a more useful form
+     */
+    cGlobal			*global;
+    cEventData		*eventData;
+    int             hit = 0;
+    eventData = (cEventData*) threadarg;
+    global = eventData->pGlobal;
 	
-  std::vector<int> myvector;
-  std::stringstream sstm;
-  std::string result;
-  std::ofstream outFlu;
-  //std::ios_base::openmode mode;
-  std::stringstream sstm1;
-  std::ofstream outHit;
+    std::vector<int> myvector;
+    std::stringstream sstm;
+    std::string result;
+    std::ofstream outFlu;
+    //std::ios_base::openmode mode;
+    std::stringstream sstm1;
+    std::ofstream outHit;
 
-  /*
-   * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
-   * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
-   * Hopefully this never happens again... 
-   */
-  if ( global->fudgeevr41 == 1 ) {
-    evr41fudge(eventData,global);	
-  }
-	
-  /*
-   *	Create a unique name for this event
-   */
-  nameEvent(eventData, global);
-	
-  /*
-   * Copy pixelmask_shared into pixelmask 
-   * and raw detector data into corrected array as starting point for corrections
-   */
-  DETECTOR_LOOP {
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-      eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+    
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==3) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #3 (exiting within thread)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
+
+    
+    /*
+     * Andy's nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only
+     * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
+     * Hopefully this never happens again... 
+     */
+    if ( global->fudgeevr41 == 1 ) {
+        evr41fudge(eventData,global);	
     }
-  }
-
-  // Init background buffer
-  initBackgroundBuffer(eventData, global);
-
 	
-  /*
-   * Check for saturated pixels before applying any other corrections
-   */
-  checkSaturatedPixels(eventData, global);
-
+    /*
+     *	Create a unique name for this event
+     */
+    nameEvent(eventData, global);
 	
-  /*
-   *	Subtract darkcal image (static electronic offsets)
-   */
-  subtractDarkcal(eventData, global);
+    /*
+     * Copy pixelmask_shared into pixelmask
+     * and raw detector data into corrected array as starting point for corrections
+     */
+    DETECTOR_LOOP {
+        for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
+            eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+        }
+    }
+    
+    
 
-  /*
-   *	Subtract common mode offsets (electronic offsets)
-   *	cmModule = 1
-   */
-  cspadModuleSubtract(eventData, global);
-  cspadSubtractUnbondedPixels(eventData, global);
-  cspadSubtractBehindWires(eventData, global);
+    // Init background buffer
+    initBackgroundBuffer(eventData, global);
 
-	
-  /*
-   *	Apply gain correction
-   */
-  applyGainCorrection(eventData, global);
+    
+    
+    /*
+     * Check for saturated pixels before applying any other corrections
+     */
+    checkSaturatedPixels(eventData, global);
 
 	
-  /*
-   *	Apply bad pixel map
-   */
-  applyBadPixelMask(eventData, global);
+    /*
+     *	Subtract darkcal image (static electronic offsets)
+     */
+    subtractDarkcal(eventData, global);
+
+    /*
+     *	Subtract common mode offsets (electronic offsets)
+     *	cmModule = 1
+     */
+    cspadModuleSubtract(eventData, global);
+    cspadSubtractUnbondedPixels(eventData, global);
+    cspadSubtractBehindWires(eventData, global);
+
+	
+    /*
+     *	Apply gain correction
+     */
+    applyGainCorrection(eventData, global);
+
+	
+    /*
+     *	Apply bad pixel map
+     */
+    applyBadPixelMask(eventData, global);
 	
 	
-  /* 
-   *	Keep memory of data with only detector artefacts subtracted 
-   *	(possibly needed later)
-   */
-  DETECTOR_LOOP {
-    memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+    /* 
+     *	Keep memory of data with only detector artefacts subtracted 
+     *	(possibly needed later)
+     */
+    DETECTOR_LOOP {
+        memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
 		
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+        for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+        }
     }
-  }
-       
-  /*
-   *	Subtract persistent photon background
-   */
-  subtractPersistentBackground(eventData, global);
+    
+
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==4) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
+    
+    
+	/*
+	 *	Subtract persistent photon background
+	 */
+	subtractPersistentBackground(eventData, global);
 
     	
 
-  /*
-   *	Local background subtraction
-   */
-  subtractLocalBackground(eventData, global);
+	/*
+	 *	Local background subtraction
+	 */
+	subtractLocalBackground(eventData, global);
 			
 
-  /*
-   *	Subtract residual common mode offsets (cmModule=2)
-   */
-  cspadModuleSubtract2(eventData, global);
+	/*
+	 *	Subtract residual common mode offsets (cmModule=2)
+	 */
+	cspadModuleSubtract2(eventData, global);
 
-  /*
-   *	Apply bad pixels
-   */
-  applyBadPixelMask(eventData, global);
 	
-  /*
-   *	Identify and kill hot pixels
-   */
-  identifyHotPixels(eventData, global);	
-  calculateHotPixelMask(global);
-  applyHotPixelMask(eventData,global);
+	/*
+	 *	Apply bad pixels
+	 */
+	applyBadPixelMask(eventData, global);
+	
+	
+	/*
+	 *	Identify and kill hot pixels
+	 */
+	identifyHotPixels(eventData, global);
+	calculateHotPixelMask(global);
+	applyHotPixelMask(eventData,global);
 
+	updateDatarate(eventData,global);
 
-  updateDatarate(eventData,global);
-
-  /*
-   *	Skip first set of frames to build up running estimate of background...
-   */
-  DETECTOR_LOOP {
-    if (eventData->threadNum < global->detector[detID].startFrames || 
-	(global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) || 
-	(global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
-      updateBackgroundBuffer(eventData, global, 0); 
-      updateHaloBuffer(eventData,global,0);		    
-      printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
-      goto cleanup;
+	
+    
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==5) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
+    
+    /*
+     *	Skip first set of frames to build up running estimate of background...
+     */
+    DETECTOR_LOOP {
+		if (eventData->threadNum < global->detector[detID].startFrames || 
+            (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) ||
+            (global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
+                updateBackgroundBuffer(eventData, global, 0);
+                updateHaloBuffer(eventData,global,0);
+                printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+            goto cleanup;
+		}
     }
-  }
 
-  /*
-   *  Fix pnCCD errors:
-   *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
-   *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-   *  (these corrections will be automatically skipped for any non-pnCCD detector)
-   */
-  pnccdOffsetCorrection(eventData, global);
-  pnccdFixWiringError(eventData, global);
+		
+    /*
+     *  Fix pnCCD errors:
+     *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
+     *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+     *  (these corrections will be automatically skipped for any non-pnCCD detector)
+     */
+    pnccdOffsetCorrection(eventData, global);
+    pnccdFixWiringError(eventData, global);
    
-  /*
-   *	Hitfinding
-   */
-  if(global->hitfinder){
-    hit = hitfinder(eventData, global);
-    eventData->hit = hit;
-  }
 	
-  /*
-   *	Identify halo pixels
-   */
-  updateHaloBuffer(eventData,global,hit);
-  calculateHaloPixelMask(global);
+	/*
+	 *	Hitfinding
+	 */
+	if(global->hitfinder){
+		hit = hitfinder(eventData, global);
+		eventData->hit = hit;
+	}
 	
-  /*
-   *	Update running backround estimate based on non-hits
-   */
-  updateBackgroundBuffer(eventData, global,hit); 
+	/*
+	 *	Identify halo pixels
+	 */
+	updateHaloBuffer(eventData,global,hit);
+	calculateHaloPixelMask(global);
 	
 	
-  /*
-   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorCorrectedOnly) 
-      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-  }
+	/*
+	 *	Update running backround estimate based on non-hits
+	 */
+	updateBackgroundBuffer(eventData, global, hit); 
 	
 	
-  /*
-   *	If using detector raw, do it here
-   */
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorRaw) 
-      for(long i=0;i<global->detector[detID].pix_nn;i++)
-	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-  }
+    
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==6) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #6 (after hitfinding)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
+    
+    
+	/*
+	 *	Maintain a running sum of data (powder patterns)
+	 *    and strongest non-hit and weakest hit
+	 */
+	assemble2Dimage(eventData, global);
+	addToPowder(eventData, global);
+
 	
 	
-  /*
-   *	Keep int16 copy of corrected data (needed for saving images)
-   */
-  DETECTOR_LOOP {
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+	/*
+	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+	 */
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorCorrectedOnly) 
+		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+	}
+	
+	
+	/*
+	 *	If using detector raw, do it here
+	 */
+	DETECTOR_LOOP {
+		if(global->detector[detID].saveDetectorRaw)
+			for(long i=0;i<global->detector[detID].pix_nn;i++)
+				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+	}
+	
+	
+    /*
+     *	Keep int16 copy of corrected data (needed for saving images)
+     */
+    DETECTOR_LOOP {
+        for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+        }
     }
-  }
 
-  /*
-   *	Write cspad to file in 1D
-   */
-  /*
-  //	if (eventData->threadNum >= 0) {
-  std::cout << "Write cspad to file.. single threaded" << std::endl;
-  DETECTOR_LOOP {
-  for(long i=0;i<global->detector[detID].pix_nn;i++){
-  myvector.push_back( (int16_t) lrint(eventData->detector[detID].corrected_data[i]) );
-  }
-  }
-  // Write out files
-  sstm << "r0" << global->runNumber << "_cspad_corrected1D_" << eventData->frameNumber;
-  result = sstm.str();
-  //outFlu.open(result.c_str(), mode = std::ios_base::app); // output cspad for all shots
-  outFlu.open(result.c_str()); // output cspad for all shots
-  //std::cout << myvector.size() << std::endl;
-  //std::cout << global->nDetectors << std::endl;
-  for (unsigned i = 0; i < myvector.size(); i++ ) {
-  outFlu << myvector[i] << " ";
-  }
-  outFlu << std::endl;
-  outFlu.close();
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==7) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
 
-  sstm1 << "r0" << global->runNumber << "_cspad_corrected1D_target_" << eventData->frameNumber;
-  result = sstm1.str();
-  outHit.open(result.c_str()); // output cspad for all shots
-  outHit << eventData->hit;
-  outHit << std::endl;
-  outHit.close();
+    /*
+     *	Assemble quadrants into a 'realistic' 2D image
+     */
+    assemble2Dimage(eventData, global);
+    assemble2Dmask(eventData, global);
 
-  //	}
-  */
-
+<<<<<<< HEAD
   /*
    *  Calculate angular correlation
    *  write accumulated angular correlation to file when approperiate
@@ -273,12 +314,24 @@ void *worker(void *threadarg) {
    */
   assemble2Dimage(eventData, global);
   assemble2Dmask(eventData, global);
+=======
+    /*
+     *   Downsample assembled image
+     */
+    downsample(eventData,global);
+>>>>>>> developer
 
-  /*
-   *   Downsample assembled image
-   */
-  downsample(eventData,global);
+    
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==8) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #8 (after image assembly)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
 
+<<<<<<< HEAD
   /*
    *	Calculate radial average
    *  Maintain radial average stack
@@ -297,28 +350,67 @@ void *worker(void *threadarg) {
    */
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
+=======
+    
+    /*
+     *  Calculate radial average
+     *  Maintain radial average stack
+     */
+    calculateRadialAverage(eventData, global);
+    addToRadialAverageStack(eventData, global);
+	
+    /*
+     *	Maintain a running sum of data (powder patterns)
+     *    and strongest non-hit and weakest hit
+     */
+    addToHistogram(eventData, global);
 
-  goto save;
+    /*
+     * calculate the one dimesional beam spectrum
+     */
+    integrateSpectrum(eventData, global);
+    integrateRunSpectrum(eventData, global);
+
+
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==9) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #9 (After histograms)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
+>>>>>>> developer
+
   
-  /*
-   *	If this is a hit, write out to our favourite HDF5 format
-   */
- save:
-  if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
-    if(global->saveCXI==1){
-      pthread_mutex_lock(&global->saveCXI_mutex);
-      writeCXI(eventData, global);
-      pthread_mutex_unlock(&global->saveCXI_mutex);
-    }
-    else {
-      writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
-    }
-  }
-  else {
-    printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
-  }
+    /*
+     *	If this is a hit, write out to our favourite HDF5 format
+     */
+  
+	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
+        if(global->saveCXI==1){
+            pthread_mutex_lock(&global->saveCXI_mutex);
+            writeCXI(eventData, global);
+            pthread_mutex_unlock(&global->saveCXI_mutex);
+            printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
+        }
+        else {
+            writeHDF5(eventData, global);
+            printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
+            }
+      }
+      else {
+          printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
+      }
 
+    /*
+     *	If this is a hit, write out peak info to peak list file
+     */
+    if(hit && global->savePeakInfo) {
+        writePeakFile(eventData, global);
+    }
+
+<<<<<<< HEAD
   /*
    * save accumulated angular correlation
    */
@@ -332,51 +424,64 @@ void *worker(void *threadarg) {
   if(hit && global->savePeakInfo) {
     writePeakFile(eventData, global);
   }
+=======
+    
+    /*
+    *	Write out information on each frame to a log file
+    */
+    pthread_mutex_lock(&global->framefp_mutex);
+    fprintf(global->framefp, "%s, ", eventData->eventname);
+    fprintf(global->framefp, "%li, ", eventData->frameNumber);
+    fprintf(global->framefp, "%li, ", eventData->threadNum);
+    fprintf(global->framefp, "%i, ", eventData->hit);
+    fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
+    fprintf(global->framefp, "%g, ", eventData->wavelengthA);
+    fprintf(global->framefp, "%g, ", eventData->gmd1);
+    fprintf(global->framefp, "%g, ", eventData->gmd2);
+    fprintf(global->framefp, "%g, ", eventData->detector[0].detectorZ);
+    fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
+    fprintf(global->framefp, "%d, ", eventData->nPeaks);
+    fprintf(global->framefp, "%g, ", eventData->peakNpix);
+    fprintf(global->framefp, "%g, ", eventData->peakTotal);
+    fprintf(global->framefp, "%g, ", eventData->peakResolution);
+    fprintf(global->framefp, "%g, ", eventData->peakDensity);
+    fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
+    fprintf(global->framefp, "%g, ", eventData->laserDelay);
+    fprintf(global->framefp, "%d\n", eventData->samplePumped);
+    pthread_mutex_unlock(&global->framefp_mutex);
 
-  /*
-   *	Write out information on each frame to a log file
-   */
-  pthread_mutex_lock(&global->framefp_mutex);
-  fprintf(global->framefp, "%s, ", eventData->eventname);
-  fprintf(global->framefp, "%li, ", eventData->frameNumber);
-  fprintf(global->framefp, "%li, ", eventData->threadNum);
-  fprintf(global->framefp, "%i, ", eventData->hit);
-  fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
-  fprintf(global->framefp, "%g, ", eventData->wavelengthA);
-  fprintf(global->framefp, "%g, ", eventData->gmd1);
-  fprintf(global->framefp, "%g, ", eventData->gmd2);
-  fprintf(global->framefp, "%g, ", eventData->detector[0].detectorZ);
-  fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
-  fprintf(global->framefp, "%d, ", eventData->nPeaks);
-  fprintf(global->framefp, "%g, ", eventData->peakNpix);
-  fprintf(global->framefp, "%g, ", eventData->peakTotal);
-  fprintf(global->framefp, "%g, ", eventData->peakResolution);
-  fprintf(global->framefp, "%g, ", eventData->peakDensity);
-  fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
-  fprintf(global->framefp, "%g, ", eventData->laserDelay);
-  fprintf(global->framefp, "%d\n", eventData->samplePumped);
-  pthread_mutex_unlock(&global->framefp_mutex);
+    // Keep track of what has gone into each image class
+    pthread_mutex_lock(&global->powderfp_mutex);
+    fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+    fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
+    fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
+    fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
+    fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
+    fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
+    pthread_mutex_unlock(&global->powderfp_mutex);
+>>>>>>> developer
 
-  // Keep track of what has gone into each image class
-  pthread_mutex_lock(&global->powderfp_mutex);
-  fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
-  fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
-  fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
-  fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
-  fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
-  fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
-  pthread_mutex_unlock(&global->powderfp_mutex);
+    
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==10) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #1 (after saving frames)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+    
 
+    
 	
   /*
    *	Cleanup and exit

@@ -55,6 +55,7 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
+void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
 herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
 
@@ -87,11 +88,20 @@ void readSpectrumEnergyScale(cGlobal*, char*);
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
 void addToPowder(cEventData*, cGlobal*, int, int);
+void saveRunningSums(cGlobal*);
 void saveRunningSums(cGlobal*, int);
 void saveDarkcal(cGlobal*, int);
 void saveGaincal(cGlobal*, int);
 void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
+
+// histogram.cpp
+void addToHistogram(cEventData*, cGlobal*);
+void addToHistogram(cEventData*, cGlobal*, int);
+void saveHistograms(cGlobal*);
+void saveHistogram(cGlobal*, int);
+
+
 
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);

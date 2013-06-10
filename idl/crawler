@@ -1,0 +1,11 @@
+#!/bin/csh
+
+# Script to start the IDL crawler for those who do not have
+# IDL set up by default
+
+source /afs/slac/g/ki/software/idl/idl80/bin/idl_setup
+#source /afs/slac/g/ki/software/idl/idl82/bin/idl_setup
+
+setenv IDL_STARTUP ~barty/idl/idlstartup.pro
+
+idl -e crawler_view
