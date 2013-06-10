@@ -1,0 +1,5 @@
+copy the matlab folder to $HOME/matlab
+
+It should be in the path for matlab, otherwise, you have to either use addpath or other way to add these scripts to executable paths.
+
+Contact haiguang.liu@gmail.com if there is question.

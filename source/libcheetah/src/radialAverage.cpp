@@ -178,9 +178,10 @@ void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderC
      
      
     // Save data once stack is full
+    stackCounter = detector->radialStackCounter[powderClass];
     if((stackCounter % stackSize) == 0) {
         
-        printf("Saving radial stack: %i %i\n", powderClass, detID);
+        printf("Saving radial stack: %i %i %d %d\n", powderClass, detID, stackCounter, stackSize);
         saveRadialAverageStack(global, powderClass, detID);
         
         for(long j=0; j<radial_nn*global->radialStackSize; j++) 
@@ -229,7 +230,7 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
 
     sprintf(filename,"r%04u-radialstack-detector%d-class%i.h5", global->runNumber, detID, powderClass);
     //sprintf(filename,"r%04u-radialstack-detector%d-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum);
-    printf("Saving radial stack: %s\n", filename);
+    printf("Saving radial stack, class %d, frame %d : %s\n", powderClass, frameNum, filename);
 
 
     writeSimpleHDF5(filename, detector->radialAverageStack[powderClass], detector->radial_nn, nRows, H5T_NATIVE_FLOAT);

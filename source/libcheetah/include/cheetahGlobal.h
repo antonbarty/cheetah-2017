@@ -188,9 +188,6 @@ public:
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
 
-	/** @brief Toggle polar binning of data */
-	int      polarBinData;
-
 	/** @brief Interval between saving of powder patterns, etc. */
 	int      saveInterval;
 	/** @brief Toggle the writing of Bragg peak information in hdf5 files. */
@@ -233,8 +230,9 @@ public:
    bool	   calcAngularCorrelation;
 	int      hdf5dump;
 	int      angulardump;  // how frequent to dump angular correlation
-    
-    bool saveCXI;
+   float    cc_threshold;   
+ 
+   bool saveCXI;
 
 
 	/** @brief Toggle the verbosity of Cheetah. */

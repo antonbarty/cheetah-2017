@@ -72,6 +72,9 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = eventData->laserEventCodeOn;
 	  eventData->nPeaks = eventData->laserEventCodeOn;
 	  break;
+   case 8 : //based on SAXS
+     hit = hitfinder8( global, eventData, detID );
+     break;
 			
 	default :
 	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
@@ -272,3 +275,37 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 }
 
 
+int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
+  int hit = 0;
+  long   radial_nn = global->detector[detID].radial_nn;
+  float * accumulate_radialAverage = global->detector[detID].meanradialAverage;
+  float * this_radialAverage = eventData->detector[detID].radialAverage;
+  double xy,x2,y2,x,y,sigma_x, sigma_y,cc;
+  xy=x2=y2=x=y=0.0;
+  for(long i=100;i<radial_nn;i++) {
+    x  += accumulate_radialAverage[i];
+    x2 += accumulate_radialAverage[i]*accumulate_radialAverage[i];
+    y  += this_radialAverage[i];
+    y2 += this_radialAverage[i]*this_radialAverage[i];
+    xy += accumulate_radialAverage[i]*this_radialAverage[i];
+  }
+  sigma_x = sqrt( (radial_nn-1)*x2 - x*x ); 
+  sigma_y = sqrt( (radial_nn-1)*y2 - y*y ); 
+  cc = (radial_nn*xy - x*y)/sigma_x/sigma_y;
+  printf("%f CC\n",cc);
+  if (cc < global->cc_threshold )
+    hit = 1;  // different from solvent
+  return hit;
+}
+
+void updatesaxs(cGlobal *global, cEventData *eventData, long detID) {
+  float * accumulate_radialAverage = global->detector[detID].meanradialAverage;
+  float * this_radialAverage = eventData->detector[detID].radialAverage;
+  long   radial_nn = global->detector[detID].radial_nn;
+
+  pthread_mutex_lock(&(global->detector[detID].meanradialAverage_mutex) );
+  for(long i=0;i<radial_nn;i++) {
+    accumulate_radialAverage[i] += this_radialAverage[i];
+  }
+  pthread_mutex_unlock(&(global->detector[detID].meanradialAverage_mutex) );
+}

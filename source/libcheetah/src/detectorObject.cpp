@@ -33,114 +33,82 @@
 cPixelDetectorCommon::cPixelDetectorCommon() {
 
 
-	// Defaults to CXI cspad configuration
-	strcpy(detectorType, "cspad");
-	strcpy(detectorName, "CxiDs1");
-	//detectorType = Pds::DetInfo::Cspad;
-	//detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 
-	// Calibration files
-	strcpy(detectorConfigFile, "No_file_specified");
-	strcpy(geometryFile, "No_file_specified");
-	strcpy(badpixelFile, "No_file_specified");
-	strcpy(darkcalFile, "No_file_specified");
-	strcpy(wireMaskFile, "No_file_specified");
-	strcpy(gaincalFile, "No_file_specified");
+  // Defaults to CXI cspad configuration
+  strcpy(detectorType, "cspad");
+  strcpy(detectorName, "CxiDs1");
+  //detectorType = Pds::DetInfo::Cspad;
+  //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 
-	// Default ASIC layout (cspad)
-	asic_nx = CSPAD_ASIC_NX;
-	asic_ny = CSPAD_ASIC_NY;
-	asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-	nasics_x = CSPAD_nASICS_X;
-	nasics_y = CSPAD_nASICS_Y;
-	pix_nx = asic_nx*nasics_x;
-	pix_ny = asic_ny*nasics_y;
-	pix_nn = pix_nx*pix_ny;
-	pixelSize = 110e-6;
+  // Calibration files
+  strcpy(detectorConfigFile, "No_file_specified");
+  strcpy(geometryFile, "No_file_specified");
+  strcpy(badpixelFile, "No_file_specified");
+  strcpy(darkcalFile, "No_file_specified");
+  strcpy(wireMaskFile, "No_file_specified");
+  strcpy(gaincalFile, "No_file_specified");
 
-
-	// Detector Z position
-	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
-	strcpy(detectorZpvname,"");
-	//defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
-	defaultCameraLengthMm = 0;
-	fixedCameraLengthMm = 0;
-	detposprev = 0;
-	cameraLengthOffset = 500.0 + 79.0;
-	cameraLengthScale = 1e-3;
-
-	beamCenterPixX = 0;
-	beamCenterPixY = 0;
-
-	// Bad pixel mask    
-	useBadPixelMask = 0;
-	applyBadPixelMask = 1;
-
-	// Saturated pixels
-	maskSaturatedPixels = 0;
-	pixelSaturationADC = 15564;  // 95% of 2^14 ??
-
-	// Static dark calibration (electronic offsets)
-	useDarkcalSubtraction = 0;
-
-	// Common mode subtraction from each ASIC
-	cmModule = 0;
-	cmFloor = 0.1;
-	cspadSubtractUnbondedPixels = 0;
-	cspadSubtractBehindWires = 0;
-
-	// Gain calibration correction
-	useGaincal = 0;
-	invertGain = 0;
-
-	// Subtraction of running background (persistent photon background) 
-	useSubtractPersistentBackground = 0;
-	bgMemory = 50;
-	startFrames = 0;
-	scaleBackground = 0;
-	useBackgroundBufferMutex = 0;
-	bgMedian = 0.5;
-	bgRecalc = bgMemory;
-	bgIncludeHits = 0;
-	bgNoBeamReset = 0;
-	bgFiducialGlitchReset = 0;
-
-	// Local background subtraction
-	useLocalBackgroundSubtraction = 0;
-	localBackgroundRadius = 3;
-
-	// Identify persistently hot pixels
-	useAutoHotpixel = 0;
-	hotpixFreq = 0.9;
-	hotpixADC = 1000;
-	hotpixMemory = 50;
-	// Kill persistently hot pixels
-	applyAutoHotpixel = 0;
-
-	// Identify persistently illuminated pixels (halo)
-	useAutoHalopixel = 0;
-	halopixMinDeviation = 100;
-	halopixRecalc = bgRecalc;
-	halopixMemory = bgRecalc;
-
-	// Histogram stack
-	histogram = 0;
-	histogramMin = -100;
-	histogramMax = 100;
-	histogramBinSize = 1;
-	histogramMaxMemoryGb = 4;
-	histogram_count = 0;
+  // Default ASIC layout (cspad)
+  asic_nx = CSPAD_ASIC_NX;
+  asic_ny = CSPAD_ASIC_NY;
+  asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+  nasics_x = CSPAD_nASICS_X;
+  nasics_y = CSPAD_nASICS_Y;
+  pix_nx = asic_nx*nasics_x;
+  pix_ny = asic_ny*nasics_y;
+  pix_nn = pix_nx*pix_ny;
+  pixelSize = 110e-6;
 
 
-	// correction for PNCCD read out artifacts 
-	usePnccdOffsetCorrection = 0;
+  // Detector Z position
+  //strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+  strcpy(detectorZpvname,"");
+  //defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
+  defaultCameraLengthMm = 0;
+  fixedCameraLengthMm = 0;
+  detposprev = 0;
+  cameraLengthOffset = 500.0 + 79.0;
+  cameraLengthScale = 1e-3;
 
-	// Saving options
-	saveDetectorCorrectedOnly = 0;
-	saveDetectorRaw = 0;
+  beamCenterPixX = 0;
+  beamCenterPixY = 0;
 
-	// No downsampling
-	downsampling = 1;
+  // Bad pixel mask
+  useBadPixelMask = 0;
+  applyBadPixelMask = 1;
+
+  // Saturated pixels
+  maskSaturatedPixels = 0;
+  pixelSaturationADC = 15564;  // 95% of 2^14 ??
+
+  // Static dark calibration (electronic offsets)
+  useDarkcalSubtraction = 0;
+
+  // Common mode subtraction from each ASIC
+  cmModule = 0;
+  cmFloor = 0.1;
+  cspadSubtractUnbondedPixels = 0;
+  cspadSubtractBehindWires = 0;
+
+  // Gain calibration correction
+  useGaincal = 0;
+  invertGain = 0;
+
+  // polar mapping
+  polarBinData = 0;
+	radialBinSize = 1;
+
+  // Subtraction of running background (persistent photon background)
+  useSubtractPersistentBackground = 0;
+  bgMemory = 50;
+  startFrames = 0;
+  scaleBackground = 0;
+  useBackgroundBufferMutex = 0;
+  bgMedian = 0.5;
+  bgRecalc = bgMemory;
+  bgIncludeHits = 0;
+  bgNoBeamReset = 0;
+  bgFiducialGlitchReset = 0;
 
 }
 
@@ -388,7 +356,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 //  }
 	else if(!strcmp(tag, "nangularbins")) {
 		nAngularBins = atoi(value);
-	
+		polarBinData = 1;
+	}
 	// Histograms
 	else if (!strcmp(tag, "histogram")) {
 	  histogram = atoi(value);
@@ -405,6 +374,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammaxmemorygb")) {
 	  histogramMaxMemoryGb = atof(value);
 	}
+  else if(!strcmp(tag, "nangularbins")) {
+  }
 
 	// Unknown tags
 	else {
@@ -549,6 +520,13 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 	if(histogram) {
 		free(histogramData);
 	}
+
+    for(long j=0; j<radial_nn*global->radialStackSize; j++) {
+      radialAverageStack[i][j] = 0;
+    }
+  }
+  meanradialAverage = (float *) calloc(radial_nn, sizeof(float));
+  pthread_mutex_init(&meanradialAverage_mutex, NULL);
 
 }
 
@@ -728,12 +706,18 @@ void cPixelDetectorCommon::updateRadialMap(void) {
  * Allocate memory for angular-correlation computation
  *  Note: at some point we may want to check whether this memory has already been allocated.
  *  For now be quick-and-dirty assuming this is only called once
- *
+ *  ALSO WE SHOULD DECOUPLE ANGULAR BINNING AND CORRELATION ANALYSIS.
  */
-void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) {
+void cPixelDetectorCommon::allocateAngularCorrelationMemory(cGlobal *global) { //cGlobal *global) {
+
+	printf("allocate angular correlation memory\n");
+
+    //nPowderClasses = global->nPowderClasses;
     polar_nn = nRadialBins*nAngularBins;
     polarIntensities = (double*) calloc( polar_nn, sizeof(double) );
-    angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
+    for(long i=0; i<nPowderClasses; i++) {
+      angularcorrelation[i] =  (double*) calloc( polar_nn, sizeof(double) );
+    }
     mask_polar =  (float*) calloc( polar_nn, sizeof(float) );
     mask_angularcorrelation =  (double*) calloc( polar_nn, sizeof(double) );
 //    polar_map = (long *) calloc(polar_nn, sizeof(long));
@@ -746,7 +730,14 @@ void cPixelDetectorCommon::allocateAngularCorrelationMemory(void) {
 /*
  *  Update mapping of pixel locations to polar coordinates
  */
-void cPixelDetectorCommon::updatePolarMap(void) {
+void cPixelDetectorCommon::updatePolarMap(cGlobal *global) {
+
+	if (global->calcAngularCorrelation == 0){
+		return;
+	}
+	printf("update polar mapping\n");
+
+
     float pi = 3.141593;
 
     float angle_step_size =  2.0*pi /(float)nAngularBins;
@@ -756,7 +747,7 @@ void cPixelDetectorCommon::updatePolarMap(void) {
     
     
     // Allocate memory for the arrays
-    allocateAngularCorrelationMemory();
+    allocateAngularCorrelationMemory(global);
 
     // Prepare FFT plans
     fftw_complex *in, *out;
@@ -825,6 +816,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     double   x, y, z, r;
     double   kx,ky,kz,kr;
     double   res,minres,maxres;
+    double   camera_length = detectorZ*cameraLengthScale;
     double	 sin_theta;
     long     minres_pix,maxres_pix;
     long c = 0;
@@ -838,7 +830,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     for (long i=0; i<pix_nn; i++ ) {
         x = pix_x[i]*pixelSize;
         y = pix_y[i]*pixelSize;
-        z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
+        z = pix_z[i]*pixelSize + camera_length;
         r = sqrt(x*x + y*y + z*z);
         
         kx = (x/r)/wavelengthA;
@@ -891,6 +883,21 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 		printf("Defined resolution limits for hitfinders: %.2f - %.2f A\n",global->hitfinderMinRes,global->hitfinderMaxRes);
 	}
     
+   // save k-vectors corresponding to radial pixels
+   // For later data merging
+   char filename[1024];
+   float two_over_lambda = 2.0/wavelengthA;
+   float this_theta;
+   float radial_step = radialBinSize*pixelSize;
+   float kvector[nRadialBins];
+   for (int kk=0;kk<nRadialBins;kk++) {
+     this_theta = atan(kk*radial_step/camera_length);
+//     printf("%f %f %d %e %e\n", this_theta, radial_step, kk, cameraLengthScale, detectorZ);
+     kvector[kk] = two_over_lambda*sin(this_theta/2.0);
+   }
+   sprintf(filename,"r%04u-kvector-detector.h5",global->runNumber);
+   writeSimpleHDF5(filename, kvector, nRadialBins, 1, H5T_NATIVE_FLOAT);
+
     
     // Update the polar mapping
     // (At some stage we will need to do this here when mapping to K-space,

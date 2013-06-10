@@ -125,60 +125,61 @@ cGlobal::cGlobal(void) {
     powderSumHits = 1;
     powderSumBlanks = 0;
 
-    // Radial average stacks
-    saveRadialStacks=0;
-    radialStackSize=10000;
+  // Radial average stacks
+  saveRadialStacks=0;
+  radialStackSize=10000;
 
-    // Assemble options
-    assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
-    assemble2DImage = 1;
-    assemble2DMask = 1;
+  // Assemble options
+  assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
+  assemble2DImage = 1;
+  assemble2DMask = 1;
 
-    // Saving options
-	savehits = 0;
-	saveAssembled = 1;
-	saveRaw = 0;
-	hdf5dump = 0;
-	calcAngularCorrelation = 0;
-	angulardump = 0;
-	saveInterval = 1000;
-	savePixelmask = 0;
-	saveCXI = 1;
+  // Saving options
+  savehits = 0;
+  saveAssembled = 1;
+  saveRaw = 0;
+  hdf5dump = 0;
+  calcAngularCorrelation = 0;
+  angulardump = 0;
+  saveInterval = 1000;
+  savePixelmask = 0;
+  cc_threshold = 0.95;
+  saveCXI = 0;
 
-    // Peak lists
-    savePeakList = 1;
+  // Peak lists
+  savePeakList = 1;
 
-    // Verbosity
-    debugLevel = 2;
+  // Verbosity
+  debugLevel = 2;
 
-    // I/O speed test?
-    ioSpeedTest = 0;
+  // I/O speed test?
+  ioSpeedTest = 0;
 
-    // Default to only a few threads
-    nThreads = 16;
-    useHelperThreads = 0;
-    threadPurge = 10000;
+  // Default to only a few threads
+  nThreads = 16;
+  useHelperThreads = 0;
+  threadPurge = 10000;
+	
+  // Saving to subdirectories
+  subdirFileCount = -1;
+  subdirNumber = 0;
+  strcpy(subdirName, "");
 
-    // Saving to subdirectories
-    subdirFileCount = -1;
-    subdirNumber = 0;
-    strcpy(subdirName, "");
 
+  // Log files
+  strcpy(logfile, "log.txt");
+  strcpy(framefile, "frames.txt");
+  strcpy(cleanedfile, "cleaned.txt");
+  strcpy(peaksfile, "peaks.txt");
 
-    // Log files
-    strcpy(logfile, "log.txt");
-    strcpy(framefile, "frames.txt");
-    strcpy(cleanedfile, "cleaned.txt");
-    strcpy(peaksfile, "peaks.txt");
+  // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
+  fudgeevr41 = 0; // this means no fudge by default
+  lasttime = 0;
+  laserPumpScheme = 0;
 
-    // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
-    fudgeevr41 = 0; // this means no fudge by default
-    lasttime = 0;
-    laserPumpScheme = 0;
-
-    // Do not output 1 HDF5 per image by default
-    saveCXI = 0;
-    strcpy(cxiFilename, "");
+  // Do not output 1 HDF5 per image by default
+  saveCXI = 0;
+  strcpy(currentCXIFileName, "");
 }
 
 
@@ -365,7 +366,7 @@ void cGlobal::setup() {
    */
   for(long i=0; i<nDetectors; i++) {
     detector[i].allocatePowderMemory(self);
-    detector[i].updatePolarMap();  //this must be after geometry reading
+    detector[i].updatePolarMap(self);  //this must be after geometry reading
   }
 
   /*
@@ -712,6 +713,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "angulardump")) {
     angulardump = atoi(value);
+  }
+  else if (!strcmp(tag, "ccthreshold")) {
+    cc_threshold = atof(value);
   }
   else if (!strcmp(tag, "saveinterval")) {
     saveInterval = atoi(value);
