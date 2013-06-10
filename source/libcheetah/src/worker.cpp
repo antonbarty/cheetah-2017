@@ -103,12 +103,7 @@ void *worker(void *threadarg) {
    *	Apply gain correction
    */
   applyGainCorrection(eventData, global);
-	
-  /*
-   *	Apply bad pixel map
-   */
-  applyBadPixelMask(eventData, global);
-	
+		
   /* 
    *	Keep memory of data with only detector artefacts subtracted 
    *	(possibly needed later)
@@ -275,7 +270,7 @@ void *worker(void *threadarg) {
   } else {
     if(eventData->writeFlag){
       writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
     }
   }
   if(!eventData->writeFlag){
@@ -292,7 +287,7 @@ void *worker(void *threadarg) {
    *	Write out information on each frame to a log file
    */
   pthread_mutex_lock(&global->framefp_mutex);
-  fprintf(global->framefp, "%s, ", eventData->eventname);
+  fprintf(global->framefp, "%s.h5, ", eventData->eventname);
   fprintf(global->framefp, "%li, ", eventData->frameNumber);
   fprintf(global->framefp, "%li, ", eventData->threadNum);
   fprintf(global->framefp, "%i, ", eventData->hit);
@@ -314,7 +309,7 @@ void *worker(void *threadarg) {
 
   // Keep track of what has gone into each image class
   pthread_mutex_lock(&global->powderfp_mutex);
-  fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+  fprintf(global->powderlogfp[hit], "%s.h5, ", eventData->eventname);
   fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
   fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
   fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);

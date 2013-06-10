@@ -112,8 +112,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   hotpixFreq = 0.9;
   hotpixADC = 1000;
   hotpixMemory = 50;
-  // Kill persistently hot pixels
-  applyAutoHotpixel = 0;
+  // Kill persistently hot pixels (only active if useAutoHotpixel==1 which is 0 by default)
+  applyAutoHotpixel = 1;
 
   // Identify persistently illuminated pixels (halo)
   useAutoHalopixel = 0;
@@ -277,18 +277,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     bgMemory = atoi(value);
   }
   else if (!strcmp(tag, "useautohotpixel")) {
-    // useAutoHotpixel = atoi(value);
-    // Eventually delete this, but not during beamtime!
+    useAutoHotpixel = atoi(value);
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "applyautohotpixel")) {
     applyAutoHotpixel = atoi(value);
@@ -879,6 +874,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	
   // Do we need a bad pixel map?
   if ( useBadPixelMask == 0 ){
+    applyBadPixelMask = 0;
     return;
   }
 

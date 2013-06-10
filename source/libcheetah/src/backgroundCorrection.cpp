@@ -30,7 +30,6 @@
  *	(and perform recalculation when required)
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
-
   DETECTOR_LOOP {
     if(global->detector[detID].useSubtractPersistentBackground){
 			
@@ -58,6 +57,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 
 void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
   DETECTOR_LOOP {
+    if(global->detector[detID].useSubtractPersistentBackground){
       /*
        *	Recalculate background from time to time
        */
@@ -102,8 +102,10 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	  pthread_mutex_unlock(&global->bgbuffer_mutex);			
 	}
       }
+    }
   }
 }
+
 
 
 

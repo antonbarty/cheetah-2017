@@ -77,21 +77,21 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 
 void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
 	
-	DETECTOR_LOOP {
-		if(global->detector[detID].applyBadPixelMask) {
-			long	 pix_nn = global->detector[detID].pix_nn;
-			float	 *data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
-
-			applyBadPixelMask(data, mask, pix_nn);
-		}
-	} 
+  DETECTOR_LOOP {
+    if(global->detector[detID].applyBadPixelMask) {
+      long	 pix_nn = global->detector[detID].pix_nn;
+      float	 *data = eventData->detector[detID].corrected_data;
+      uint16_t *mask = eventData->detector[detID].pixelmask;
+	    
+      applyBadPixelMask(data, mask, pix_nn);
+    }
+  } 
 }
 
 void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
-	for(long i=0; i<pix_nn; i++) {
-	  data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
-	}
+  for(long i=0; i<pix_nn; i++) {
+    data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
+  }
 }
 
 
@@ -493,7 +493,7 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
   DETECTOR_LOOP {
-    if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
+    if(global->detector[detID].usePnccdOffsetCorrection) {
       float	*data = eventData->detector[detID].corrected_data;
       pnccdOffsetCorrection(data);
     }
@@ -583,14 +583,13 @@ void pnccdOffsetCorrection(float *data) {
 
 void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
-        if(strcmp(global->detector[detID].detectorType, "pnccd") == 0 ) {
-            if(global->detector[detID].usePnccdOffsetCorrection == 1) {
-                float	*data = eventData->detector[detID].corrected_data;
-                pnccdFixWiringError(data);
-            }
-        }
+      if(global->detector[detID].usePnccdOffsetCorrection == 1) {
+	float	*data = eventData->detector[detID].corrected_data;
+	pnccdFixWiringError(data);
+      }
     }
 }
+
 
 
 // Can be fixed with an adequate geometry as well.

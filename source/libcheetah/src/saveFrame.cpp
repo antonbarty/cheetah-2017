@@ -42,7 +42,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,event->fiducial);
+	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x",buffer1,global->runNumber,buffer2,event->fiducial);
 }
 
 
@@ -85,14 +85,14 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 */
 	char outfile[1024];
 	makeSubdir(info, global);
-	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
+	sprintf(outfile, "%s/%s.h5", global->subdirName, info->eventname);
 
 	
 	/*
 	 *	Update text file log
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
-	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventSubdir, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
+	fprintf(global->cleanedfp, "r%04u/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, outfile, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
 	
@@ -665,7 +665,7 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	// Dump peak info to file
 	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	fprintf(global->peaksfp, "%s.h5\n", eventData->eventname);
 	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
 	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
 	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);

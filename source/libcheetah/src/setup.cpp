@@ -238,7 +238,6 @@ void cGlobal::setup() {
     nPeaksMax[i] = 0;
   }
 
-	
   if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
     printf("Error: hitfinderDetector > nDetectors\n");
     printf("nDetectors = %i\n", nDetectors);
@@ -247,6 +246,12 @@ void cGlobal::setup() {
     printf("in void cGlobal::setup()\n");
     printf("Quitting...\n");
     exit(1);
+  }
+  
+  for(long detID=0; detID<nDetectors; detID++) {
+    if (strcmp(detector[detID].detectorType, "pnccd") != 0){
+      detector[detID].usePnccdOffsetCorrection = 0;
+    }
   }
 
   /*
@@ -282,7 +287,6 @@ void cGlobal::setup() {
     detector[detID].hotpixCalibrated = 0;
     detector[detID].bgCalibrated = 0;
   }
-  calibrated = 0;
 
   /*
    * Trap specific configurations and mutually incompatible options
@@ -311,6 +315,7 @@ void cGlobal::setup() {
       detector[i].startFrames = 0;
       detector[i].saveDetectorRaw = 1;
       detector[i].saveDetectorCorrectedOnly = 1;
+      detector[i].usePnccdOffsetCorrection = 0;
     }
   }
 
@@ -445,6 +450,8 @@ void cGlobal::setup() {
 
   nCXIEvents = 0;
   nCXIHits = 0;
+
+  updateCalibrated();
 }
 
 
