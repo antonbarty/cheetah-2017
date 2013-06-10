@@ -28,136 +28,137 @@
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
-	// Dereference stuff
-	int	    detID = global->hitfinderDetector;
-	int		hit=0;
-	
-	/*
-	 *	Default values for some metrics
-	 */
-	eventData->peakNpix = 0;
-	eventData->peakTotal = 0;
-	eventData->peakResolution = 0;
-	eventData->peakDensity = 0;
+  // Dereference stuff
+  int	    detID = global->hitfinderDetector;
+  int		hit=0;
+  
+  if(global->hitfinder){	
+    /*
+     *	Default values for some metrics
+     */
+    eventData->peakNpix = 0;
+    eventData->peakTotal = 0;
+    eventData->peakResolution = 0;
+    eventData->peakDensity = 0;
       
- 	/*
-	 *	Use one of various hitfinder algorithms
-	 */
- 	switch(global->hitfinderAlgorithm) {
+    /*
+     *	Use one of various hitfinder algorithms
+     */
+    switch(global->hitfinderAlgorithm) {
 		
-	case 0 :	// Everything is a hit. Used for converting xtc to hdf
-	  hit = 1;
-	  break;	
+    case 0 :	// Everything is a hit. Used for converting xtc to hdf
+      hit = 1;
+      break;	
 
-	case 1 :	// Count the number of pixels above ADC threshold
-	  hit = hitfinder1(global,eventData,detID);
-	  break;	
+    case 1 :	// Count the number of pixels above ADC threshold
+      hit = hitfinder1(global,eventData,detID);
+      break;	
 	  
-	case 2 :	// Integrated intensity above ADC threshold
-	  hit = hitfinder2(global,eventData,detID);
-	  break;
+    case 2 :	// Integrated intensity above ADC threshold
+      hit = hitfinder2(global,eventData,detID);
+      break;
 			
-	case 3 : 	// Count number of Bragg peaks
-	  hit = peakfinder3(global,eventData, detID);			
-	  break;	
+    case 3 : 	// Count number of Bragg peaks
+      hit = peakfinder3(global,eventData, detID);			
+      break;	
 
-	case 4 :	// Use TOF signal to find hits
-	  hit = hitfinder4(global,eventData,detID);
-	  break;
+    case 4 :	// Use TOF signal to find hits
+      hit = hitfinder4(global,eventData,detID);
+      break;
 						
-	case 6 : 	// Count number of Bragg peaks
-	  hit = peakfinder6(global,eventData, detID);
-	  break;
+    case 6 : 	// Count number of Bragg peaks
+      hit = peakfinder6(global,eventData, detID);
+      break;
             
-	case 7 : 	// Return laser on event code
-	  hit = eventData->laserEventCodeOn;
-	  eventData->nPeaks = eventData->laserEventCodeOn;
-	  break;
+    case 7 : 	// Return laser on event code
+      hit = eventData->laserEventCodeOn;
+      eventData->nPeaks = eventData->laserEventCodeOn;
+      break;
 
-	case 8 :	// Use TOF signal, maximum peak, to find hits
-	  hit = hitfinder8(global,eventData,detID);
-	  break;
+    case 8 :	// Use TOF signal, maximum peak, to find hits
+      hit = hitfinder8(global,eventData,detID);
+      break;
 
-	case 9 :	// Use TOF signal, maximum peak, excluding classical htis
-	  hit = hitfinder8(global,eventData,detID);
-	  if (hit)
-	    {
-	      int nPeaks = eventData->nPeaks;
-	      hit = !(hitfinder1(global,eventData,detID));
-	      eventData->nPeaks = nPeaks;
-	    }
-	  break;
-			
-	default :
-	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
-	  printf("Stopping in confusion.\n");
-	  exit(1);
-	  break;
-			
+    case 9 :	// Use TOF signal, maximum peak, excluding classical htis
+      hit = hitfinder8(global,eventData,detID);
+      if (hit)
+	{
+	  int nPeaks = eventData->nPeaks;
+	  hit = !(hitfinder1(global,eventData,detID));
+	  eventData->nPeaks = nPeaks;
 	}
+      break;
+			
+    default :
+      printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
+      printf("Stopping in confusion.\n");
+      exit(1);
+      break;
+			
+    }
 	
-	// Statistics on the peaks, for certain hitfinders
-	if( eventData->nPeaks > 1 &&
-	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
+    // Statistics on the peaks, for certain hitfinders
+    if( eventData->nPeaks > 1 &&
+	( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
 		   
-		long	np;
-		long  kk;
-		float	resolution;
-		float	resolutionA;	
-		float	cutoff = 0.95;
-		long		pix_nn = global->detector[detID].pix_nn;
-		long		asic_nx = global->detector[detID].asic_nx;
-		long		asic_ny = global->detector[detID].asic_ny;
-		long	*inx = (long *) calloc(pix_nn, sizeof(long));
-		long	*iny = (long *) calloc(pix_nn, sizeof(long));
+      long	np;
+      long  kk;
+      float	resolution;
+      float	resolutionA;	
+      float	cutoff = 0.95;
+      long		pix_nn = global->detector[detID].pix_nn;
+      long		asic_nx = global->detector[detID].asic_nx;
+      long		asic_ny = global->detector[detID].asic_ny;
+      long	*inx = (long *) calloc(pix_nn, sizeof(long));
+      long	*iny = (long *) calloc(pix_nn, sizeof(long));
 
 
-		np = eventData->nPeaks;
-		if(np >= global->hitfinderNpeaksMax) 
-		   np = global->hitfinderNpeaksMax; 
-		kk = (long) floor(cutoff*np);
+      np = eventData->nPeaks;
+      if(np >= global->hitfinderNpeaksMax) 
+	np = global->hitfinderNpeaksMax; 
+      kk = (long) floor(cutoff*np);
 	
 	
 
-		// Pixel radius resolution (bigger is better)
-		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
-		for(long k=0; k<np; k++) 
-			buffer1[k] = eventData->peak_com_r_assembled[k];
-		resolution = kth_smallest(buffer1, np, kk);		   
-		eventData->peakResolution = resolution;
-		free(buffer1);
+      // Pixel radius resolution (bigger is better)
+      float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
+      for(long k=0; k<np; k++) 
+	buffer1[k] = eventData->peak_com_r_assembled[k];
+      resolution = kth_smallest(buffer1, np, kk);		   
+      eventData->peakResolution = resolution;
+      free(buffer1);
 	
-		// Resolution to real space (in Angstrom)
-		// Crystallographic resolution d = lambda/sin(theta)
-		float z = global->detector[0].detectorZ;
-		float dx = global->detector[0].pixelSize;
-		double r = sqrt(z*z+dx*dx*resolution*resolution);
-		double sintheta = dx*resolution/r;
-		resolutionA = eventData->wavelengthA/sintheta;
-		eventData->peakResolutionA = resolutionA;
+      // Resolution to real space (in Angstrom)
+      // Crystallographic resolution d = lambda/sin(theta)
+      float z = global->detector[0].detectorZ;
+      float dx = global->detector[0].pixelSize;
+      double r = sqrt(z*z+dx*dx*resolution*resolution);
+      double sintheta = dx*resolution/r;
+      resolutionA = eventData->wavelengthA/sintheta;
+      eventData->peakResolutionA = resolutionA;
 
 	
-		if(resolution > 0) {
-			float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
-			eventData->peakDensity = (cutoff*np)/area;
-		}
-		free(inx); 			
-		free(iny);	
+      if(resolution > 0) {
+	float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
+	eventData->peakDensity = (cutoff*np)/area;
+      }
+      free(inx); 			
+      free(iny);	
 
 	   
-	}
+    }
 	
-	// Update central hit counter
-	if(hit) {
-		pthread_mutex_lock(&global->nhits_mutex);
-		global->nhits++;
-		global->nrecenthits++;
-		pthread_mutex_unlock(&global->nhits_mutex);
-	}
-	
-
-	
-	return(hit);
+    // Update central hit counter
+    if(hit) {
+      pthread_mutex_lock(&global->nhits_mutex);
+      global->nhits++;
+      global->nrecenthits++;
+      pthread_mutex_unlock(&global->nhits_mutex);
+    }
+  }	
+  
+  eventData->hit = hit;
+  return(hit);
 	
 }
 

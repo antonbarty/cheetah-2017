@@ -144,18 +144,19 @@ void *worker(void *threadarg) {
   calculateHotPixelMask(eventData,global);
   applyHotPixelMask(eventData,global);
 
+  /*
+   *	Update running backround estimate based on non-hits and calculate background from buffer
+   */
+  updateBackgroundBuffer(eventData, global, hit); 
+  calculatePersistentBackground(eventData,global);
+
   updateDatarate(eventData,global);
 
   /*
    *	Skip first set of frames to build up running estimate of background...
    */
-  if (eventData->threadNum < global->nInitFrames || !global->calibrated){
-    updateBackgroundBuffer(eventData, global, 0); 
-    calculatePersistentBackground(eventData,global);
-    updateHaloBuffer(eventData,global,0);
-    calculateHaloPixelMask(eventData,global);
-    global->updateCalibrated();
-    printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+  if (eventData->threadNum < global->nInitFrames){
+    printf("r%04u:%li (%3.1fHz): Digesting initial frames (%li)\n", global->runNumber, eventData->threadNum,global->datarateWorker,global->nInitFrames);
     goto cleanup;
   }
 
@@ -168,55 +169,41 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
    
-
   /*
-	 *	Hitfinding
-	 */
-	if(global->hitfinder){
-
-		hit = hitfinder(eventData, global);
-		eventData->hit = hit;
-	}
+   *	Hitfinding
+   */
+  hit = hitfinder(eventData, global);
 	
-	/*
-	 *	Identify halo pixels
-	 */
-	updateHaloBuffer(eventData,global,hit);
-	calculateHaloPixelMask(eventData,global);
+  /*
+   *	Identify halo pixels
+   */
+  updateHaloBuffer(eventData,global,hit);
+  calculateHaloPixelMask(eventData,global);
 	
-	/*
-	 *	Update running backround estimate based on non-hits and calculate background from buffer
-	 */
-	updateBackgroundBuffer(eventData, global, hit); 
-	calculatePersistentBackground(eventData,global);
-
+  /*
+   *	Maintain a running sum of data (powder patterns)
+   *    and strongest non-hit and weakest hit
+   */
+  assemble2Dimage(eventData, global);
+  addToPowder(eventData, global);
 	
-	/*
-	 *	Maintain a running sum of data (powder patterns)
-	 *    and strongest non-hit and weakest hit
-	 */
-	assemble2Dimage(eventData, global);
-	addToPowder(eventData, global);
-
+  /*
+   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+   */
+  DETECTOR_LOOP {
+    if(global->detector[detID].saveDetectorCorrectedOnly) 
+      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+  }
 	
 	
-	/*
-	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-	 */
-	DETECTOR_LOOP {
-		if(global->detector[detID].saveDetectorCorrectedOnly) 
-		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-	}
-	
-	
-	/*
-	 *	If using detector raw, do it here
-	 */
-	DETECTOR_LOOP {
-		if(global->detector[detID].saveDetectorRaw)
-			for(long i=0;i<global->detector[detID].pix_nn;i++)
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-	}
+  /*
+   *	If using detector raw, do it here
+   */
+  DETECTOR_LOOP {
+    if(global->detector[detID].saveDetectorRaw)
+      for(long i=0;i<global->detector[detID].pix_nn;i++)
+	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+  }
 	
 	
   /*
@@ -239,14 +226,12 @@ void *worker(void *threadarg) {
    */
   downsample(eventData,global);
 
-
   /*
    *  Calculate radial average
    *  Maintain radial average stack
    */
   calculateRadialAverage(eventData, global); 
   addToRadialAverageStack(eventData, global);
-	
 
   /*
    * calculate the one dimesional beam spectrum
@@ -254,7 +239,12 @@ void *worker(void *threadarg) {
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
 
-  
+  global->updateCalibrated();
+  if (!global->calibrated){
+    printf("r%04u:%li (%3.1fHz): Digesting calibration frames till calibration finished (nPeaks=%i)\n", global->runNumber, eventData->threadNum,global->datarateWorker,eventData->nPeaks);
+    goto cleanup;
+  }
+
   /*
    *	If this is a hit, write out to our favourite HDF5 format
    */

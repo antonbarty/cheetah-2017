@@ -283,6 +283,10 @@ void cGlobal::setup() {
   for (long detID=0; detID<MAX_DETECTORS; detID++){
     temp = detector[detID].startFrames;
     nInitFrames = std::max(nInitFrames,temp);
+    temp = detector[detID].hotpixMemory * detector[detID].useAutoHotpixel;
+    nInitFrames = std::max(nInitFrames,temp);
+    temp = detector[detID].bgMemory * detector[detID].useSubtractPersistentBackground;
+    nInitFrames = std::max(nInitFrames,temp);
     detector[detID].halopixCalibrated = 0;
     detector[detID].hotpixCalibrated = 0;
     detector[detID].bgCalibrated = 0;
