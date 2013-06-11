@@ -141,7 +141,7 @@ void *worker(void *threadarg) {
      *  Inside-thread speed test
      */
     if(global->ioSpeedTest==4) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test 43 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+		printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
     
