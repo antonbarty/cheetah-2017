@@ -962,19 +962,37 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
-	  // Wait for all workers to finish
-		int p=0;
-		int pp=0;
-		while(cheetahGlobal.nActiveThreads > 0) {
-	    	p = cheetahGlobal.nActiveThreads;
-			if ( pp != p){
-				pp = p;
-				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
-				usleep(100000);
-			}
-	  }
-	  writeAccumulatedCXI(&cheetahGlobal);
-	  //closeCXIFiles(&cheetahGlobal);
+		
+	/*
+	 *	Wait for all worker threads to finish
+	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+	 */
+	time_t	tstart, tnow;
+	time(&tstart);
+	double	dtime;
+	float	maxwait = 60.;
+	int p=0, pp=0;
+	
+	while(cheetahGlobal.nActiveThreads > 0) {
+		p = cheetahGlobal.nActiveThreads;
+		if ( pp != p){
+			pp = p;
+			printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+		}
+		time(&tnow);
+		dtime = difftime(tnow, tstart);
+		if(dtime > maxwait) {
+			printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
+			printf("\tGiving up and exiting anyway\n");
+			cheetahGlobal.nActiveThreads = 0;
+			break;
+		}
+		usleep(100000);
+	}
+		
+	printf("Writing accumulated CXIDB file\n")
+	writeAccumulatedCXI(&cheetahGlobal);
+	//closeCXIFiles(&cheetahGlobal);
 	}
 
 	/// Method which is called once at the end of the job

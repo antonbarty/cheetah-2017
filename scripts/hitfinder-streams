@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export HDF5_DISABLE_VERSION_CHECK=2
 echo ""
 SCRIPTNAME=$(basename $0)
 HELP="Need help?  Try $SCRIPTNAME -h"
@@ -16,16 +15,18 @@ exit 1
 
 # defaults
 OVERWRITE="NO"
-#[ $CHEETAH ] || CHEETAH="cheetah"
-CHEETAH=~/local/bin/psana
-#PSANA_CONFIG="$HOME/software/cheetah/source/lcls-psana/psana.cfg"
-PSANA_CONFIG="/reg/neh/home3/hgliu/cxi/cxi67213/scratch/hgliu/hitfind/psana.cfg"
-H5DIR=`pwd`
+PSANA="YES"
+[ $CHEETAH ] || CHEETAH="cheetah"
 [ $H5DIR ] || H5DIR="."
-# H5DIR=$PWD
 [ $XTCDIR ] || XTCDIR="."
 [ $CONFIGDIR ] || CONFIGDIR="."
 [ $PSANA_CONFIG ] || PSANA_CONFIG="psana.cfg"
+
+# Make sure directories end with /. It's necessary for find to work
+H5DIR=${H5DIR}/
+XTCDIR=${XTCDIR}/
+CONFIGDIR=${CONFIGDIR}/
+
 
 # get options:
 while getopts "r:i:t:s:n:j:qdoOhp" OPTION; do
@@ -278,14 +279,17 @@ if [ $QUE ]; then
 	for xtc in `cat xtcfiles.txt`
 	do
    	THIS_ARG="$ARGS $xtc"
-      THIS_TAG="$RUNDIR-$TAG$m"
-		mkdir $m
-		cd $m
+      THIS_TAG="$RUNDIR-$TAG.$m"
+      	SUBDIR=`echo $xtc | sed 's/.*e[0-9]*-r[0-9]*-//' | sed 's/.xtc//'`
+		#mkdir $m
+		#cd $m
+		mkdir $SUBDIR
+		cd $SUBDIR
 		ln -s ../cheetah.ini .
 		ln -s ../darkcal.h5 .
 		ln -s ../geometry.h5 .
 		ln -s ../psana.cfg .
-		FULLCOMMAND="bsub -n 10 -R "span[hosts=1]" -q psfehq -J $THIS_TAG -o $LOGFILE$m $CHEETAH $THIS_ARG"
+		FULLCOMMAND="bsub -n 10 -R "span[hosts=1]" -q psfehmpiq -J $THIS_TAG -o $LOGFILE$m $CHEETAH $THIS_ARG"
 		echo $FULLCOMMAND
 		$FULLCOMMAND
 		echo "$SCRIPTNAME job sent to queue"
