@@ -613,6 +613,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
     // How big must we make the output downsampled image?
     imageXxX_nx = image_nx/downsampling;
     imageXxX_nn = image_nn/downsampling/downsampling;
+    printf("done with geom\n");
 }
 
 

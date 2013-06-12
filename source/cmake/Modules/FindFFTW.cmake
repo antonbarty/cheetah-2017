@@ -10,9 +10,9 @@ if (FFTW_INCLUDE_DIR)
   set (FFTW_FIND_QUIETLY TRUE)
 endif (FFTW_INCLUDE_DIR)
 
-find_path (FFTW_INCLUDE_DIR fftw3.h)
+find_path (FFTW_INCLUDE_DIR NAMES fftw3.h FFTW_DIR)
 
-find_library (FFTW_LIBRARIES NAMES fftw3)
+find_library (FFTW_LIBRARIES NAMES fftw3 FFTW_DIR)
 
 # handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if
 # all listed variables are TRUE
