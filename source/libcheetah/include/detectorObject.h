@@ -111,7 +111,7 @@ public:
 	long detectorID;
 
 	/** @brief Detector configuration file */
-	char  detectorConfigFile[MAX_FILENAME_LENGTH];
+	//char  detectorConfigFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing pixelmap (coordinates of pixels) */
 	char  geometryFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing dark calibration */

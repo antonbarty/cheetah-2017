@@ -152,7 +152,8 @@ public:
 	int     *hitfinderResMask;
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
-	
+	/** @brief Toggle ignoring halo pixels during hitfinding. */
+	int      hitfinderIgnoreHaloPixels;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];

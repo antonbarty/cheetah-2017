@@ -92,10 +92,11 @@ cGlobal::cGlobal(void) {
   hitfinderLocalBGRadius = 4;
   hitfinderLocalBGThickness = 5;
   //hitfinderLimitRes = 1;
-  hitfinderMinRes = 0;
-  hitfinderMaxRes = 1e10;
+  hitfinderMinRes = 1.e10;
+  hitfinderMaxRes = 0.;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
+  hitfinderIgnoreHaloPixels = 1;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -163,7 +164,9 @@ cGlobal::cGlobal(void) {
 
   // Default to only a few threads
   nThreads = 16;
+  // depreciated?
   useHelperThreads = 0;
+  // depreciated?
   threadPurge = 10000;
 	
   // Saving to subdirectories
@@ -745,6 +748,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "tofpresent")) {
     TOFPresent = atoi(value);
   }
+  // depreciated?
     else if (!strcmp(tag, "tofname")) {
     strcpy(tofName, value);
   }
@@ -769,6 +773,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindertofwindow")) {
     hitfinderTOFWindow = atoi(value);
   }
+  else if (!strcmp(tag, "hitfinderignorehalopixels")) {
+    hitfinderIgnoreHaloPixels = atoi(value);
+  }
+
 
   // Energy spectrum parameters
   else if (!strcmp(tag, "espectrumtiltang")) {
@@ -826,6 +834,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindermingradient")) {
     hitfinderMinGradient = atof(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "hitfindercluster")) {
     hitfinderCluster = atoi(value);
   }
@@ -877,9 +886,11 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
+  // depreciated?
   else if (!strcmp(tag, "fudgeevr41")) {
     fudgeevr41 = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "laserpumpscheme")) {
     laserPumpScheme = atoi(value);
   }

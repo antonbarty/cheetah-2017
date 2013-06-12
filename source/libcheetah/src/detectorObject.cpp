@@ -38,7 +38,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
     
   // Calibration files
-  strcpy(detectorConfigFile, "No_file_specified");
+  //strcpy(detectorConfigFile, "No_file_specified");
   strcpy(geometryFile, "No_file_specified");
   strcpy(badpixelFile, "No_file_specified");
   strcpy(darkcalFile, "No_file_specified");
@@ -223,11 +223,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     strcpy(gaincalFile, value);
     useGaincal = 1;
   }
-  else if (!strcmp(tag, "badpixelmap")) {
+  else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask"))) {
     strcpy(badpixelFile, value);
     useBadPixelMask = 1;
   }
-  else if (!strcmp(tag, "applybadpixelmap")) {
+  else if ((!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
     applyBadPixelMask = atoi(value);
   }
   else if (!strcmp(tag, "baddatamap")) {
@@ -270,25 +270,25 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "cameralengthscale")) {
     cameraLengthScale  = atof(value);
   }
-  else if (!strcmp(tag, "masksaturatedpixels")) {
+  else if ((!strcmp(tag, "masksaturatedpixels")) || (!strcmp(tag, "usemasksaturatedpixels"))) {
     maskSaturatedPixels = atoi(value);
   }
   else if (!strcmp(tag, "bgmemory")) {
     bgMemory = atoi(value);
   }
   else if (!strcmp(tag, "useautohotpixel")) {
-    // useAutoHotpixel = atoi(value);
+    useAutoHotpixel = atoi(value);
     // Eventually delete this, but not during beamtime!
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
+    //useAutoHotpixel = 1;
+    //applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
+    //useAutoHotpixel = 1;
+    //applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "applyautohotpixel")) {
     applyAutoHotpixel = atoi(value);
@@ -311,13 +311,14 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "halopixincludehits")) {
     halopixIncludeHits = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "cmmodule")) {
     cmModule = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "cmfloor")) {
     cmFloor = atof(value);
   }
-    
   // Local background subtraction
   else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
     useLocalBackgroundSubtraction = atoi(value);
@@ -341,13 +342,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "usebackgroundbuffermutex")) {
     useBackgroundBufferMutex = atoi(value);
   }
-  else if (!strcmp(tag, "subtractbehindwires")) {
+  else if ( (!strcmp(tag, "subtractbehindwires")) || (!strcmp(tag, "usesubtractbehindwires")) ){
     cspadSubtractBehindWires = atoi(value);
   }
   else if (!strcmp(tag, "invertgain")) {
     invertGain = atoi(value);
   }
-  else if (!strcmp(tag, "subtractunbondedpixels")) {
+  else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) {
     cspadSubtractUnbondedPixels = atoi(value);
   }
   else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
@@ -363,9 +364,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "bgincludehits")) {
     bgIncludeHits = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "bgnobeamreset")) {
     bgNoBeamReset = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "bgfiducialglitchreset")) {
     bgFiducialGlitchReset = atoi(value);
   }	
@@ -480,23 +483,33 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   printf("\t%s\n",filename);
 	
 	
-  // Check whether pixel map file exists!
-  FILE* fp = fopen(filename, "r");
-  if (fp) 	// file exists
-    fclose(fp);
-  else {		// file doesn't exist
-    printf("Error: Detector geometry file does not exist: %s\n",filename);
-    exit(1);
-  }
-	
-	
-  // Read pixel locations from file
   cData2d		detector_x;
   cData2d		detector_y;
   cData2d		detector_z;
-  detector_x.readHDF5(filename, (char *) "x");
-  detector_y.readHDF5(filename, (char *) "y");
-  detector_z.readHDF5(filename, (char *) "z");
+  
+  // Check whether pixel map file exists!
+  FILE* fp = fopen(filename, "r");
+  if (fp) { 	// file exists
+    fclose(fp);
+    // Read pixel locations from file
+    detector_x.readHDF5(filename, (char *) "x");
+    detector_y.readHDF5(filename, (char *) "y");
+    detector_z.readHDF5(filename, (char *) "z");
+  } else {		// file doesn't exist
+    printf("Detector geometry file does not exist: %s, make standard geometry.\n",filename);
+    detector_x.create(pix_nx,pix_ny);
+    detector_y.create(pix_nx,pix_ny);
+    detector_z.create(pix_nx,pix_ny);
+    for (long i=0;i<pix_ny;i++){
+      for(long j=0;j<pix_nx;j++){
+	detector_x.data[i+j*pix_ny] = j-pix_nx/2.;
+	detector_y.data[i+j*pix_ny] = i-pix_ny/2.;
+	detector_z.data[i+j*pix_ny] = 0.;
+      }
+    }
+  }
+	
+	
 	
   // Sanity check that all detector arrays are the same size (!)
   if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
@@ -627,11 +640,11 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   res,minres,maxres;
   double	 sin_theta;
   long     minres_pix,maxres_pix;
-	long c = 0;	
-  minres = 100000;
-  maxres = 0.0;
-  minres_pix = 10000000;
-  maxres_pix = 0;
+  long c = 0;	
+  minres = 1.e10;
+  maxres = 0.;
+  minres_pix = 0;
+  maxres_pix = 1000000;
 
   printf("Recalculating K-space coordinates\n");
 
@@ -655,20 +668,20 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     pix_kr[i] = kr;
     pix_res[i] = res;
         
-    if ( res < minres ){
+    if ( res > minres ){
       minres = res;
-      minres_pix = pix_r[i];
-    }
-    if ( res > maxres ){
-      maxres = res;
       maxres_pix = pix_r[i];
+    }
+    if ( res < maxres ){
+      maxres = res;
+      minres_pix = pix_r[i];
     }
     
     
     // Generate resolution limit mask
     if (!global->hitfinderResolutionUnitPixel){
       // (resolution in Angstrom (!!!))
-      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+      if (pix_res[i] > global->hitfinderMaxRes && pix_res[i] < global->hitfinderMinRes ) 
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
       else
 	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
