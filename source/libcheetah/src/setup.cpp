@@ -180,6 +180,7 @@ cGlobal::cGlobal(void) {
   // Do not output 1 HDF5 per image by default
   saveCXI = 0;
   strcpy(currentCXIFileName, "");
+  strcpy(cxiFilename, "");
 }
 
 

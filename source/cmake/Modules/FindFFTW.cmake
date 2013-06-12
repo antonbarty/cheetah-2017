@@ -1,22 +1,42 @@
-# - Find FFTW
-# Find the native FFTW includes and library
-#
-#  FFTW_INCLUDES    - where to find fftw3.h
-#  FFTW_LIBRARIES   - List of libraries when using FFTW.
-#  FFTW_FOUND       - True if FFTW found.
+# FFTW_INCLUDE_DIR = fftw3.h
+# FFTW_LIBRARIES = libfftw3.a
+# FFTW_FOUND = true if FFTW3 is found
 
-if (FFTW_INCLUDE_DIR)
-  # Already in cache, be silent
-  set (FFTW_FIND_QUIETLY TRUE)
-endif (FFTW_INCLUDE_DIR)
+IF(FFTW_INCLUDE_DIRS)
+  FIND_PATH(FFTW_INCLUDE_DIR fftw3.h  ${FFTW_INCLUDE_DIRS})
+  FIND_LIBRARY(FFTW_LIBRARY fftw3 ${FFTW_LIBRARY_DIRS})
+ELSE(FFTW_INCLUDE_DIRS)
+  SET(TRIAL_PATHS
+    $ENV{FFTW_ROOT}/include
+    /usr/include
+    /usr/local/include
+    /opt/include
+    /usr/apps/include
+  )
+  
+  SET(TRIAL_LIBRARY_PATHS
+    $ENV{FFTW_ROOT}/lib
+    /usr/lib 
+    /usr/local/lib
+    /opt/lib
+    /sw/lib
+  )
+  
+  FIND_PATH(FFTW_INCLUDE_DIR fftw3.h ${TRIAL_PATHS})
+  FIND_LIBRARY(FFTW_LIBRARY fftw3 ${TRIAL_LIBRARY_PATHS})
 
-find_path (FFTW_INCLUDE_DIR fftw3.h)
+ENDIF(FFTW_INCLUDE_DIRS)
 
-find_library (FFTW_LIBRARIES NAMES fftw3)
+SET(FFTW_FOUND FALSE)
+IF(FFTW_INCLUDE_DIR AND FFTW_LIBRARIES)
+  MESSAGE(STATUS "FFTW_INCLUDE_DIR=${FFTW_INCLUDE_DIR}")
+  MESSAGE(STATUS "FFTW_LIBRARIES=${FFTW_LIBRARIES}")
+  SET(FFTW_FOUND TRUE)
+ENDIF()
 
-# handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if
-# all listed variables are TRUE
-include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args (FFTW DEFAULT_MSG FFTW_LIBRARIES FFTW_INCLUDE_DIR)
+MARK_AS_ADVANCED(
+   FFTW_INCLUDE_DIR
+   FFTW_LIBRARIES
+   FFTW_FOUND
+)
 
-mark_as_advanced (FFTW_LIBRARIES FFTW_INCLUDE_DIR)

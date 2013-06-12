@@ -36,6 +36,7 @@ public:
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
 	char     cxiFilename[MAX_FILENAME_LENGTH];
+	char     currentCXIFileName[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 
