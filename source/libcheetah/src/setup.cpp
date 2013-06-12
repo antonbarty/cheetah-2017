@@ -40,7 +40,7 @@ cGlobal::cGlobal(void) {
   // Detector info
   nDetectors = 0;
   for(long i=0; i<MAX_DETECTORS; i++) {
-    strcpy(detector[i].detectorConfigFile, "No_file_specified");
+    //strcpy(detector[i].detectorConfigFile, "No_file_specified");
     strcpy(detector[i].configGroup,"none");
     detector[i].detectorID = i;
   }
@@ -690,8 +690,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   // Processing options
   else if (!strcmp(tag, "subtractcmmodule")) {
-    printf("The keyword subtractcmModule has been changed. It is\n"
-	   "now known as cmModule.\n"
+    printf("The keyword subtractcmModule is depreciated.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
