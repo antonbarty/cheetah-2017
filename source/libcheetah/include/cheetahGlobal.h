@@ -124,7 +124,7 @@ public:
 	 * hitfinderLocalBGThickness.*/
 	int      hitfinderLocalBGThickness;
 	/** @brief Toggle the useage of a resolution-based annulus mask. */
-	//int      hitfinderLimitRes;
+	int      hitfinderLimitRes;
 	/** @brief Minimum resolution to be considered in hitfinding.
 	 * If hitfinderResolutionUnitPixel==0 (default) the unit of
 	 * hitfinderMinRes and hitfinderMaxRes is angstrom and pixels

@@ -89,7 +89,7 @@ cGlobal::cGlobal(void) {
     hitfinderSubtractLocalBG = 0;
     hitfinderLocalBGRadius = 4;
     hitfinderLocalBGThickness = 5;
-    //hitfinderLimitRes = 1;
+    hitfinderLimitRes = 0;
     hitfinderMinRes = 0;
     hitfinderMaxRes = 1e10;
     hitfinderResolutionUnitPixel = 0;
@@ -836,11 +836,11 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinderminres")) {
     hitfinderMinRes = atof(value);
-    //hitfinderLimitRes = 1;
+    hitfinderLimitRes = 1;
   }
   else if (!strcmp(tag, "hitfindermaxres")) {
     hitfinderMaxRes = atof(value);
-    //hitfinderLimitRes = 1;
+    hitfinderLimitRes = 1;
   }
   else if (!strcmp(tag, "hitfinderresolutionunitpixel")) {
     hitfinderResolutionUnitPixel = atoi(value);

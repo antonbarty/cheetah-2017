@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./dump-global-keywords
+echo " "
+./dump-detector-keywords
