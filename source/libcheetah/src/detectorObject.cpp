@@ -592,7 +592,6 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   pix_kr = (float *) calloc(nn, sizeof(float));
   pix_kphi = (float *) calloc(nn, sizeof(float));
 
-	printf("============================> phi\n");
 	pix_res = (float *) calloc(nn, sizeof(float));
   //hitfinderResMask = (int *) calloc(nn, sizeof(int)); // is there a better place for this?
   //for (i=0;i<nn;i++) hitfinderResMask[i]=1;
@@ -668,7 +667,6 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
     updateRadialMap();
     // updatePolarMap();  //this is called somewhere else in setup
     
-
     // How big must we make the output downsampled image?
     imageXxX_nx = image_nx/downsampling;
     imageXxX_nn = image_nn/downsampling/downsampling;
@@ -891,7 +889,6 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
    sprintf(filename,"r%04u-kvector-detector.h5",global->runNumber);
    writeSimpleHDF5(filename, kvector, nRadialBins, 1, H5T_NATIVE_FLOAT);
 
-    
     // Update the polar mapping
     // (At some stage we will need to do this here when mapping to K-space,
     //  in which case we want to update the polar map every time k-space variables change)

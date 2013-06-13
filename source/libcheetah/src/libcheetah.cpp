@@ -359,6 +359,14 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
+
+	/*
+	 * In case people forget to turn on the beamline data.
+	 */
+	if (global->fixedPhotonEnergyeV >= 0) {
+		eventData->photonEnergyeV = global->fixedPhotonEnergyeV;
+		eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
+	}
     
   /*
    *	Remember to update global variables 

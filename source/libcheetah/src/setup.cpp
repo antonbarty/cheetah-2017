@@ -35,6 +35,7 @@ cGlobal::cGlobal(void) {
 
   // Default experiment info (in case beamline data is missing...)
   defaultPhotonEnergyeV = 0;
+	fixedPhotonEnergyeV = 0;
 
   // Detector info
   nDetectors = 0;
@@ -203,7 +204,7 @@ void cGlobal::setup() {
   for(long i=0; i<nDetectors; i++) {
     detector[i].configure();
     detector[i].readDetectorGeometry(detector[i].geometryFile);
-    detector[i].readDarkcal(detector[i].darkcalFile);
+   detector[i].readDarkcal(detector[i].darkcalFile);
     detector[i].readGaincal(detector[i].gaincalFile);
     detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
     detector[i].readPeakmask(self, peaksearchFile);
@@ -212,7 +213,6 @@ void cGlobal::setup() {
     detector[i].readWireMask(detector[i].wireMaskFile);
   }
 	
-
   /*
    * How many types of powder pattern do we need?
    */
@@ -633,7 +633,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   if (!strcmp(tag, "defaultphotonenergyev")) {
     defaultPhotonEnergyeV = atof(value);
   }
-  else if (!strcmp(tag, "saveepicspvfloat")) {
+  else if (!strcmp(tag, "fixedphotonenergyev")){
+		fixedPhotonEnergyeV = atof(value);
+	}
+	else if (!strcmp(tag, "saveepicspvfloat")) {
     strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
     nEpicsPvFloatValues++;
   }
