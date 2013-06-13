@@ -521,13 +521,6 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 		free(histogramData);
 	}
 
-    for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-      radialAverageStack[i][j] = 0;
-    }
-  }
-  meanradialAverage = (float *) calloc(radial_nn, sizeof(float));
-  pthread_mutex_init(&meanradialAverage_mutex, NULL);
-
 }
 
 
