@@ -16,6 +16,10 @@ HDF5_ROOT environment variable to point to it, e.g.:
 
     $ export HDF5_ROOT=${HOME}/local
 
+If you're on psexport you can just do:
+
+    $ export HDF5_ROOT=~barty/hdf5
+
 
 You also need to have LCLS's ana available somewhere. If you're building 
 at CFEL, LCLS or Uppsala this should already be available. 
@@ -30,6 +34,10 @@ ask LCLS about getting a portable version of ana.
 
 Now that you have cmake we can start the build:
 
+- If you're on psexport, make sure to log into one of the psana computers (it's not possible to compile anymore on psexport):
+
+	$ ssh psanafeh
+
 - Create and go into a build directory:
 
         $ mkdir build
@@ -42,30 +50,42 @@ Now that you have cmake we can start the build:
 - You will see something like:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- ANA_ARCH                         x86_64-rhel6-gcc44-opt                       
- ANA_RELEASE                      /opt/psana/g/psdm/portable/sw/releases/ana-current
- ANA_SIT_DATA                     /opt/psana/g/psdm/portable/sw/releases/ana-current/../../../data
- BUILD_CHEETAH_ANA_MOD            ON                                           
- BUILD_CHEETAH_MYANA              OFF                                          
- BUILD_PSANA                      ON                                           
- CMAKE_BUILD_TYPE                                                              
- CMAKE_CXX_COMPILER               /usr/bin/c++                                 
- CMAKE_C_COMPILER                 /usr/bin/cc                                  
- CMAKE_INSTALL_PREFIX             /usr/local                                   
- HDF5_C_INCLUDE_DIR               /opt/include                                 
- HDF5_hdf5_LIBRARY_RELEASE        /opt/lib64/libhdf5.so                        
- RPATH_ON_INSTALLED_BINS          ON                                           
+[EMPTY CACHE]
 
-ANA_ARCH: ana architecture to be used                                           
+EMPTY CACHE:
+
 Press [enter] to edit option                              CMake Version 2.8.10.2
 Press [c] to configure
 Press [h] for help           Press [q] to quit without generating
 Press [t] to toggle advanced mode (Currently Off)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Press "c" to configure
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ANA_ARCH                        *x86_64-rhel5-gcc41-opt                       
+ ANA_RELEASE                     */reg/g/psdm/sw/releases/ana-current          
+ ANA_SIT_DATA                    */reg/g/psdm/sw/releases/ana-current/../../../
+ BUILD_CHEETAH_ANA_MOD           *ON                                           
+ BUILD_CHEETAH_MYANA             *OFF                                          
+ BUILD_PSANA                     *ON                                           
+ CMAKE_BUILD_TYPE                *                                             
+ CMAKE_INSTALL_PREFIX            */usr/local                                   
+ HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
+ HDF5_hdf5_LIBRARY_DEBUG          HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
+ HDF5_hdf5_LIBRARY_RELEASE	  /reg/neh/home/barty/hdf5/lib/libhdf5.so      
+ RPATH_ON_INSTALLED_BINS         *ON                                           
+
+ANA_ARCH: ana architecture to be used                                           
+Press [enter] to edit option                              CMake Version 2.8.10.2
+Press [c] to configure       Press [g] to generate and exit
+Press [h] for help           Press [q] to quit without generating
+Press [t] to toggle advanced mode (Currently Off)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - It's possible that you have to specify `ANA_RELEASE` manually. It should
 point to the ana-current directory, for example on psexport it is 
-`/reg/g/psdm/sw/releases/ana-current/`
+`/reg/g/psdm/sw/releases/ana-current`
 
 - You can also specify the `CMAKE_INSTALL_PREFIX`. I set mine to `~/usr`
 
@@ -79,10 +99,9 @@ point to the ana-current directory, for example on psexport it is
  BUILD_CHEETAH_MYANA              OFF                                          
  BUILD_PSANA                      ON                                           
  CMAKE_BUILD_TYPE                                                              
- CMAKE_CXX_COMPILER               /usr/bin/c++                                 
- CMAKE_C_COMPILER                 /usr/bin/cc                                  
  CMAKE_INSTALL_PREFIX             /home/filipe/usr                             
  HDF5_C_INCLUDE_DIR               /opt/include                                 
+ HDF5_hdf5_LIBRARY_DEBUG         *HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
  HDF5_hdf5_LIBRARY_RELEASE        /opt/lib64/libhdf5.so                        
  RPATH_ON_INSTALLED_BINS          ON                                           
 
@@ -95,7 +114,8 @@ Press [t] to toggle advanced mode (Currently Off)
 
 - If everything went well you should see a screen just like the one above and be able to press "g" to generate the Makefiles.
 
-- When you press "g" ccmake will generate the necessary Makefiles and exit. 
+- When you press "g" ccmake will generate the necessary Makefiles and exit.
+
 - Now just run make. This will build things and place the result in the
 build directory.
 
