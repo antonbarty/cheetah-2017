@@ -13,6 +13,10 @@
 #include "hitfinders.h"
 #include "peakfinders.h"
 
+void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx);
+
 
 /*
  *	Various flavours of hitfinder
@@ -205,9 +209,9 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     long pix_nx = global->detector[detID].pix_nx/downsampling;  
     long pix_ny = global->detector[detID].pix_ny/downsampling;  
     long pix_nn = pix_ny*pix_nx;  
-    float *data = (float) * calloc(pix_nn,sizeof(float));
-    uint16_t *mask = (uint16_t) * calloc(pix_nn,sizeof(uint16_t));
-    downsampleImage(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
+    float *data = (float *) calloc(sizeof(float),pix_nn);
+    uint16_t *mask = (uint16_t *) calloc(sizeof(uint16_t),pix_nn);
+    downsampleImage(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
     downsampleMask(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
   } else {
     pix_nn = global->detector[detID].pix_nn;  

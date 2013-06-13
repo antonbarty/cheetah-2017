@@ -16,6 +16,7 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
+
 namespace CXI{
   const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 

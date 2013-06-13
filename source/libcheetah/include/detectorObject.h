@@ -152,7 +152,7 @@ public:
 	/** @brief Downsampling factor (1: no downsampling) */
 	long  downsampling;
 	/** @brief Rescale intensities after downsamping but before saving to image (avoid clamping to maximum value of 16-bit int) (1.: no rescaling) */
-	float downsamplingRecale;
+	float downsamplingRescale;
 
 	// ASIC module size
 	long  asic_nx;

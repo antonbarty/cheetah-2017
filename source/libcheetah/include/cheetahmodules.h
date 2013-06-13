@@ -66,9 +66,12 @@ void assemble2Dimage(cEventData*, cGlobal*);
 void assemble2Dmask(cEventData*, cGlobal*);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
-void downsample(cEventData*, cGlobal*);
-void downsampleImage(int16_t*, int16_t*, long, long, long, long);
-void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
+
+// downsample.cpp
+void downsample(cEventData *eventData, cGlobal *global);
+void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);

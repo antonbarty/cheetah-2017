@@ -131,7 +131,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
   // Downsampling factor (1: no downsampling)
   downsampling = 1;
-  downsamplingRescale = 1.
+  downsamplingRescale = 1.;
 }
 
 void cPixelDetectorCommon::configure(void) {
