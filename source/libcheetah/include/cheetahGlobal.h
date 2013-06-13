@@ -154,6 +154,8 @@ public:
 	float    hitfinderMinSNR;
 	/** @brief Toggle ignoring halo pixels during hitfinding. */
 	int      hitfinderIgnoreHaloPixels;
+	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
+	long      hitfinderDownsampling;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];

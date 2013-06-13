@@ -129,8 +129,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   saveDetectorCorrectedOnly = 0;
   saveDetectorRaw = 0;
 
-  // No downsampling
+  // Downsampling factor (1: no downsampling)
   downsampling = 1;
+  downsamplingRescale = 1.
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -242,6 +243,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "downsampling")) {
     downsampling = atoi(value);
+  }
+  else if (!strcmp(tag, "downsamplingrescale")) {
+    downsamplingRescale = atof(value);
   }
   else if (!strcmp(tag, "savedetectorcorrectedonly")) {
     saveDetectorCorrectedOnly = atoi(value);

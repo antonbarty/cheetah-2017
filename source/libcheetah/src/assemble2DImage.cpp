@@ -269,33 +269,45 @@ void downsample(cEventData *eventData, cGlobal *global){
       long		imageXxX_nn = global->detector[detID].imageXxX_nn;
       int16_t		*imageXxX = eventData->detector[detID].imageXxX;
       uint16_t	        *imageXxX_pixelmask = eventData->detector[detID].imageXxX_pixelmask;
+      float             rescale = global->detector[detID].downsamplingRescale;
 
-      downsampleImage(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx);
+      downsampleImage(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,rescale);
       downsampleMask(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx);
     }
   }
 }
 
-void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
+template <class T>
+void downsampleImage(T *img,T *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale = 1.){
   long x0,y0;
   long x1,y1;
   long downsampling = img_nx/imgXxX_nx;
   long i0,i1;
-  int16_t int16_t_max = 32767;
+  double int16_t_max = 32767.;
 
+  double *temp = calloc(imgXxX_nn,sizeof(double));
+  
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
     y0 = i0/img_nx;
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    // Check for overflow and clip in case
-    if (imgXxX[i1] > int16_t_max - img[i0]){
-      imgXxX[i1] = int16_t_max;
-    } else {
-      imgXxX[i1] += img[i0];
-    }
+    temp[i1] += (double) img[i0];
   }
+
+  for(i1 = 0;i1<imgXxX_nn;i1++){
+    if (typeid(T) == typeid(int16_t)){
+      // Check for overflow and clamp in case
+      if(temp[i1]>int16_t_max){
+	temp[i1] = int16_t_max;
+      }
+    }
+    // cast to type
+    imgXxX[i1] = (T) temp[i1];
+  }
+
+  free(temp);
 }
 
 void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){

@@ -185,9 +185,9 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   int       hit = 0;
   long      nat = 0;
   float     tat = 0.;
-  uint16_t  *mask = eventData->detector[detID].pixelmask;
-  float     *data = eventData->detector[detID].corrected_data;
-  long	    pix_nn = global->detector[detID].pix_nn;  
+  uint16_t  *mask;
+  float     *data;
+  long	    pix_nn;
   float     ADC_threshold = global->hitfinderADC;
   // Combine pixel options for pixels to be ignored
   uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
@@ -196,10 +196,34 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     pixel_options |= PIXEL_IS_IN_HALO;
   }
   
+  if (global->hitfinderDownsampling > 1) {
+    long pix_nn_0 = global->detector[detID].pix_nn;  
+    long pix_nx_0 = global->detector[detID].pix_nx;  
+    float *data_0 = eventData->detector[detID].corrected_data;
+    uint16_t *mask_0 = eventData->detector[detID].pixelmask;
+    long downsampling = global->hitfinderDownsampling;
+    long pix_nx = global->detector[detID].pix_nx/downsampling;  
+    long pix_ny = global->detector[detID].pix_ny/downsampling;  
+    long pix_nn = pix_ny*pix_nx;  
+    float *data = (float) * calloc(pix_nn,sizeof(float));
+    uint16_t *mask = (uint16_t) * calloc(pix_nn,sizeof(uint16_t));
+    downsampleImage(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
+    downsampleMask(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
+  } else {
+    pix_nn = global->detector[detID].pix_nn;  
+    data = eventData->detector[detID].corrected_data;
+    mask = eventData->detector[detID].pixelmask;
+  }
+
   integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
   eventData->peakTotal = tat;
   eventData->peakNpix = nat;
   eventData->nPeaks = nat;
+
+  if(global->hitfinderDownsampling > 1){
+    free(data);
+    free(mask);
+  }
 
   if(nat >= global->hitfinderMinPixCount){
     hit = 1;
