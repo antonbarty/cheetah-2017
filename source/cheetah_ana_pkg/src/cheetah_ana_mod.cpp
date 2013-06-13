@@ -305,7 +305,7 @@ namespace cheetah_ana_pkg {
             // Timestamps
 			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();
-			if (verbose) { 
+			if (verbose) {
 				cout << "*** fiducial: ";
 				for (int i=0; i<numEvrData; i++) {
 					fiducial = array[i].timestampHigh(); // array[0],array[1]
@@ -339,6 +339,10 @@ namespace cheetah_ana_pkg {
                 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
             }
             
+		}
+		else {
+			printf("Failed to get fiducial (Psana::EvrData::DataV3.get() failed)\n");
+			fiducial = frameNumber;
 		}
 
         
@@ -990,7 +994,7 @@ namespace cheetah_ana_pkg {
 		usleep(100000);
 	}
 		
-	printf("Writing accumulated CXIDB file\n")
+        printf("Writing accumulated CXIDB file\n");
 	writeAccumulatedCXI(&cheetahGlobal);
 	//closeCXIFiles(&cheetahGlobal);
 	}

@@ -281,6 +281,7 @@ void cGlobal::setup() {
       detector[i].useGaincal=0;
       detector[i].useAutoHotpixel = 0;
       detector[i].useSubtractPersistentBackground = 0;
+        detector[i].useLocalBackgroundSubtraction = 0;
       detector[i].startFrames = 0;
       detector[i].saveDetectorRaw = 1;
       detector[i].saveDetectorCorrectedOnly = 1;
