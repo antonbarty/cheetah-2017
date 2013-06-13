@@ -463,6 +463,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 	
     
 	// Radial stacks
+	printf("Allocating radial stacks\n");
 	for(long i=0; i<nPowderClasses; i++) {
 		radialStackCounter[i] = 0;
 		radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
@@ -471,9 +472,12 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 			radialAverageStack[i][j] = 0;
 		}
 	}
+	printf("Radial stacks allocated\n");
+	
 	
 	// Histogram memory
 	if(histogram) {
+		printf("Allocating histogram memory\n");
 		histogram_nx = pix_nx;
 		histogram_ny = pix_ny;
 		histogram_depth = (histogramMax - histogramMin + 1) / histogramBinSize;
@@ -491,6 +495,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 			printf("Set histogramMaxMemoryGb to a larger value in cheetah.ini if you really want to use a bigger array\n");
 			exit(1);
 		}
+		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 		
 		// Allocate memory
 		histogramData = (uint16_t*) calloc(histogram_nn, sizeof(uint16_t));
