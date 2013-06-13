@@ -177,53 +177,43 @@ void *worker(void *threadarg) {
   /*
 	 *	Hitfinding
 	 */
-	if(global->hitfinder){
-
-		hit = hitfinder(eventData, global);
-		eventData->hit = hit;
-	}
-	
-	/*
-	 *	Identify halo pixels
-	 */
-	updateHaloBuffer(eventData,global,hit);
-	calculateHaloPixelMask(eventData,global);
-	
-	/*
-	 *	Update running backround estimate based on non-hits and calculate background from buffer
-	 */
-	updateBackgroundBuffer(eventData, global, hit); 
-	calculatePersistentBackground(eventData,global);
-
-	
-	/*
-	 *	Maintain a running sum of data (powder patterns)
-	 *    and strongest non-hit and weakest hit
-	 */
-	assemble2Dimage(eventData, global);
-	addToPowder(eventData, global);
-
-	
-	
-	/*
-	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-	 */
-	DETECTOR_LOOP {
-		if(global->detector[detID].saveDetectorCorrectedOnly) 
-		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-	}
-	
-	
-	/*
-	 *	If using detector raw, do it here
-	 */
-	DETECTOR_LOOP {
-		if(global->detector[detID].saveDetectorRaw)
-			for(long i=0;i<global->detector[detID].pix_nn;i++)
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
-	}
-	
-	
+  if(global->hitfinder){
+    
+    hit = hitfinder(eventData, global);
+    eventData->hit = hit;
+  }
+  
+  /*
+   *	Identify halo pixels
+   */
+  updateHaloBuffer(eventData,global,hit);
+  calculateHaloPixelMask(eventData,global);
+  
+  /*
+   *	Update running backround estimate based on non-hits and calculate background from buffer
+   */
+  updateBackgroundBuffer(eventData, global, hit); 
+  calculatePersistentBackground(eventData,global);  
+    
+  /*
+   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+   */
+  DETECTOR_LOOP {
+    if(global->detector[detID].saveDetectorCorrectedOnly) 
+      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+  }
+  
+  
+  /*
+   *	If using detector raw, do it here
+   */
+  DETECTOR_LOOP {
+    if(global->detector[detID].saveDetectorRaw)
+      for(long i=0;i<global->detector[detID].pix_nn;i++)
+	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+  }
+  
+  
   /*
    *	Keep int16 copy of corrected data (needed for saving images)
    */
@@ -234,7 +224,7 @@ void *worker(void *threadarg) {
   }
 
   /*
-   *	Assemble quadrants into a 'realistic' 2D image
+   *   Assemble to realistic image
    */
   assemble2Dimage(eventData, global);
   assemble2Dmask(eventData, global);
@@ -244,6 +234,11 @@ void *worker(void *threadarg) {
    */
   downsample(eventData,global);
 
+  /*
+   *	Maintain a running sum of data (powder patterns)
+   *    and strongest non-hit and weakest hit
+   */
+  addToPowder(eventData, global);
 
   /*
    *  Calculate radial average
