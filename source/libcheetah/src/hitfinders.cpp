@@ -171,6 +171,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
   *tat = 0.0;
 
   for(long i=0;i<pix_nn;i++){
+    printf("%li %li %i %f\n",i,pix_nn,mask[i],data[i]);
     if(isNoneOfBitOptionsSet(mask[i],pixel_options) && data[i] > ADC_threshold){
       *tat += data[i];
       *nat += 1;
@@ -208,9 +209,9 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     long downsampling = global->hitfinderDownsampling;
     long pix_nx = global->detector[detID].pix_nx/downsampling;  
     long pix_ny = global->detector[detID].pix_ny/downsampling;  
-    long pix_nn = pix_ny*pix_nx;  
-    float *data = (float *) calloc(sizeof(float),pix_nn);
-    uint16_t *mask = (uint16_t *) calloc(sizeof(uint16_t),pix_nn);
+    long pix_nn = pix_ny*pix_nx;
+    data = (float *) calloc(pix_nn,sizeof(float));
+    mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
     downsampleImage(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
     downsampleMask(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
   } else {

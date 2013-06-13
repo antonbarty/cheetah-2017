@@ -26,8 +26,9 @@ void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long
   long i0,i1;
   double int16_t_max = 32767.;
 
-  double *temp = (double *) calloc(sizeof(double),imgXxX_nn);
-  
+  double *temp;
+  temp = (double *) calloc(imgXxX_nn,sizeof(double));
+
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
     y0 = i0/img_nx;
@@ -63,7 +64,6 @@ void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long img
     i1 = y1*imgXxX_nx + x1;
     img[i1] += rescale*img[i0];
   }
-
 }
 
 void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
