@@ -419,7 +419,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         time_t	tstart, tnow;
         time(&tstart);
         double	dtime;
-        float	maxwait = 2*60.;
+        float	maxwait = 60.;
         double  dnextmsg = 1;
         while(global->nActiveThreads > global->nThreads) {
             usleep(10000);
@@ -430,7 +430,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
                 dnextmsg += 1;
             }
             if(dtime > maxwait) {
-                printf("\tApparent thread lock - no free thread for 2 minutes.\n", global->nActiveThreads, dtime);
+                printf("\tApparent thread lock - no free thread for %li seconds.\n", dtime);
                 printf("\tGiving up and resetting the thread counter\n");
                 global->nActiveThreads = 0;
                 break;

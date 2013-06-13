@@ -323,8 +323,8 @@ public:
 	/*
 	 *  Radial stacks for this detector
 	 */
-	long            radialStackSize;
-	long   radialStackCounter[MAX_POWDER_CLASSES];
+	long	radialStackSize;
+	long	radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	float     *meanradialAverage;
 	pthread_mutex_t meanradialAverage_mutex;
