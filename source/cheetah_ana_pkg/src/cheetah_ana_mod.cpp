@@ -115,7 +115,7 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
-        m_srcSpec = configStr("spectrumSource","DetInfo()");
+		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 	}
 
@@ -217,7 +217,8 @@ namespace cheetah_ana_pkg {
 				}
 			}
 			else {
-				cout << "No configuration data" << endl;
+				// WHY OUTPUT THIS MESSAGE IF NO PNCCD REQUESTED??????????
+				//cout << "No configuration data" << endl;
 			}
 		}
 	}
@@ -481,7 +482,8 @@ namespace cheetah_ana_pkg {
 		photonEnergyeV = 44.42*energyProfile*energyProfile;
 		// Calculate wavelength in Angstrom
 		wavelengthA = 12398.42/photonEnergyeV;
-		if (verbose) {
+		
+if (verbose) {
 			cout << "***** wavelengthA: " << wavelengthA << endl;
 		}
 	  
