@@ -348,7 +348,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "invertgain")) {
     invertGain = atoi(value);
   }
-  else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) {
+  else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) ) {
     cspadSubtractUnbondedPixels = atoi(value);
   }
   else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
