@@ -61,7 +61,9 @@ herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
+void assemble2Dpowder(cGlobal*);
 void assemble2Dmask(cEventData*, cGlobal*);
+void assemble2Dimage(float*, float*, float*, float*, long, long, long, int);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 void downsample(cEventData*, cGlobal*);

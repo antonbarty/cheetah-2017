@@ -253,11 +253,11 @@ void *worker(void *threadarg) {
 	 *	Maintain a running sum of data (powder patterns)
 	 *    and strongest non-hit and weakest hit
 	 */
-	assemble2Dimage(eventData, global);
 	addToPowder(eventData, global);
 
 	
-	
+    
+
 	/*
 	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
 	 */
@@ -268,7 +268,7 @@ void *worker(void *threadarg) {
 	
 	
 	/*
-	 *	If using detector raw, do it here
+	 *	If reverting to detector raw data, do it here
 	 */
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorRaw)
@@ -286,31 +286,12 @@ void *worker(void *threadarg) {
         }
     }
 
+
     /*
      *  Inside-thread speed test
      */
     if(global->ioSpeedTest==7) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
-        goto cleanup;
-	}
-
-    /*
-     *	Assemble quadrants into a 'realistic' 2D image
-     */
-    assemble2Dimage(eventData, global);
-    assemble2Dmask(eventData, global);
-
-    /*
-     *   Downsample assembled image
-     */
-    downsample(eventData,global);
-
-    
-    /*
-     *  Inside-thread speed test
-     */
-    if(global->ioSpeedTest==8) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #8 (after image assembly)\n", global->runNumber, eventData->frameNumber, global->datarate);
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder sum and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
     
@@ -322,18 +303,29 @@ void *worker(void *threadarg) {
      */
     calculateRadialAverage(eventData, global);
     addToRadialAverageStack(eventData, global);
-	
-    /*
-     *	Maintain a running sum of data (powder patterns)
-     *    and strongest non-hit and weakest hit
-     */
-    addToHistogram(eventData, global);
 
+    
     /*
      * calculate the one dimesional beam spectrum
      */
     integrateSpectrum(eventData, global);
     integrateRunSpectrum(eventData, global);
+    
+	
+    /*
+     *  Inside-thread speed test
+     */
+    if(global->ioSpeedTest==8) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #8 (radial average and spectrum)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        goto cleanup;
+	}
+
+    
+    /*
+     *	Maintain a running sum of data (powder patterns)
+     *    and strongest non-hit and weakest hit
+     */
+    addToHistogram(eventData, global);
 
 
     /*
@@ -343,14 +335,22 @@ void *worker(void *threadarg) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #9 (After histograms)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
-    
 
   
     /*
      *	If this is a hit, write out to our favourite HDF5 format
+     *
+     *  Put here anything only needed for data saved to file (why waste the time on events that are not saved)
+     *  eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
      */
-  
-	if(((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) )) && (0==0)){
+	if( (hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ) ){
+        
+        //  Assemble quadrants into a 'realistic' 2D image and downsample if requested
+        assemble2Dimage(eventData, global);
+        assemble2Dmask(eventData, global);
+        downsample(eventData,global);
+        
+        // Which save format?
         if(global->saveCXI==1){
             pthread_mutex_lock(&global->saveCXI_mutex);
             writeCXI(eventData, global);
@@ -360,12 +360,13 @@ void *worker(void *threadarg) {
         else {
             writeHDF5(eventData, global);
             printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
-            }
-      }
-      else {
-          printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
-      }
-
+        }
+    }
+    // This frame is not going to be saved, but print anyway
+    else {
+        printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
+    }
+    
     /*
      *	If this is a hit, write out peak info to peak list file
      */
