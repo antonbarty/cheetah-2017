@@ -96,12 +96,13 @@ void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
-void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
+void calculateRadialAverage(float*, float*, int*, long, float*, float*, long, int*);
 void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
 void addToRadialAverageStack(cEventData*, cGlobal*);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
+void clean_streak(float *, int*, long , float *, float *,long , float ) ;
 
 
 // polarMapping.cpp

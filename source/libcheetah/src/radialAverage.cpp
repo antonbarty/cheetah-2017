@@ -32,6 +32,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
  	DETECTOR_LOOP {
         float   *corrected_data = eventData->detector[detID].corrected_data;
         float   *pix_r = global->detector[detID].pix_r;
+        int     *pix_r_i = global->detector[detID].pix_r_i;
        	long	pix_nn = global->detector[detID].pix_nn;
         float   *radial_average = eventData->detector[detID].radialAverage;
         float   *radial_average_counter = eventData->detector[detID].radialAverageCounter;
@@ -43,7 +44,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
 	  mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
         }
         
-        calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
+        calculateRadialAverage(corrected_data, pix_r, pix_r_i, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
         
         // Remember to free the mask
         free(mask); 
@@ -52,8 +53,9 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
 }
     
 
-void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
-    
+void calculateRadialAverage(float *data, float *pix_r, int *pix_r_i, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
+   
+   float threshold = 3.0; 
 	// Zero arrays
 	for(long i=0; i<radial_nn; i++) {
 		radialAverage[i] = 0.;
@@ -78,13 +80,32 @@ void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radia
 		radialAverage[rbin] += data[i];
 		radialAverageCounter[rbin] += 1;
 	}
-	
+
+   clean_streak( data, pix_r_i, pix_nn, radialAverage, radialAverageCounter, radial_nn, threshold );	
 	// Divide by number of actual pixels in ring to get the average
 	for(long i=0; i<radial_nn; i++) {
 		if (radialAverageCounter[i] != 0)
 			radialAverage[i] /= radialAverageCounter[i];
 	}
 	
+}
+
+void clean_streak(float *data, int *pix_r_i, long pix_nn, float *radialSum, float *radialAverageCounter,long radial_nn, float threshratio) {
+  float *this_radialAverage = (float*) calloc( radial_nn, sizeof(float));
+  int this_index;
+
+  for(long i=0; i< radial_nn; i++) {
+    if( radialAverageCounter[i] != 0 )
+      this_radialAverage[i] = radialSum[i]/radialAverageCounter[i]*threshratio;
+  }
+  for(long i=0;i< pix_nn; i++) {
+    this_index = pix_r_i[i];
+    if( data[i] > this_radialAverage[ this_index ] ) {
+      radialSum[ this_index ] -= data[i];
+      radialAverageCounter[ this_index ]--;
+    }
+  }
+  free( this_radialAverage );
 }
 
 

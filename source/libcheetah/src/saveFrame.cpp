@@ -85,7 +85,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 */
 	char outfile[1024];
 	makeSubdir(info, global);
-	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
+	sprintf(outfile, "%s/%s_%i.h5", global->subdirName, info->eventname,info->frameNumber);
 
 	
 	/*

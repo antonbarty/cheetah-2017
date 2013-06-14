@@ -627,9 +627,11 @@ void cPixelDetectorCommon::updateRadialMap(void) {
     
     radial_max = 0.0;
     pix_r = (float *) calloc(nn, sizeof(float));
+    pix_r_i = (int *) calloc(nn, sizeof(int));
     
     for(long i=0;i<nn;i++){
         pix_r[i] = sqrt(pix_x[i]*pix_x[i]+pix_y[i]*pix_y[i]);
+        pix_r_i[i] = lrint( pix_r[i] );
         if(pix_r[i] > radial_max)
             radial_max = pix_r[i];
     }

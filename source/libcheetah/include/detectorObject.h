@@ -160,6 +160,7 @@ public:
 	float   radial_max;
 	long    radial_nn;
 	float   *pix_r;
+	int     *pix_r_i;
 	float   *pix_kr;
 	float   *pix_res;
 
