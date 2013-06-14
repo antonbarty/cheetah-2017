@@ -182,25 +182,27 @@ void saveRunningSums(cGlobal *global) {
     }
 }
 
-void saveRunningSums(cGlobal *global, int detID) {
 
+void saveRunningSums(cGlobal *global, int detID) {
   //	Save powder patterns from different classes
   printf("Writing intermediate powder patterns to file\n");
   for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
-    if(powderType == 0 && global->powderSumBlanks)
+    if(global->powderSumBlanks && powderType == 0)
       savePowderPattern(global, detID, powderType);
-    else if (powderType > 0 && global->powderSumHits)
+    else if (global->powderSumHits && powderType > 0)
       savePowderPattern(global, detID, powderType);
   }
 	
   // Compute and save darkcal
   if(global->generateDarkcal) {
-    saveDarkcal(global, detID);
+      savePowderPattern(global, detID, 0);
+      saveDarkcal(global, detID);
   }
 	
   // Compute and save gain calibration
   if(global->generateGaincal) {
-    saveGaincal(global, detID);
+      savePowderPattern(global, detID, 0);
+      saveGaincal(global, detID);
   }
 }
 
@@ -500,6 +502,8 @@ void saveDarkcal(cGlobal *global, int detID) {
   writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
   free(buffer);
 }
+
+
 
 /*
  *	Compute and save gain calibration
