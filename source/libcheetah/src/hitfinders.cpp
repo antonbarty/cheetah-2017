@@ -282,7 +282,7 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
   float * this_radialAverage = eventData->detector[detID].radialAverage;
   double xy,x2,y2,x,y,sigma_x, sigma_y,cc;
   xy=x2=y2=x=y=0.0;
-  for(long i=100;i<radial_nn;i++) {
+  for(long i=150;i<radial_nn;i++) {
     x  += accumulate_radialAverage[i];
     x2 += accumulate_radialAverage[i]*accumulate_radialAverage[i];
     y  += this_radialAverage[i];
