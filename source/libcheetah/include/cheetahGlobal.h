@@ -307,7 +307,8 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
-	pthread_mutex_t  hitVector_mutex;
+	//pthread_mutex_t  hitVector_mutex;
+	pthread_mutex_t  gmd_mutex;
 
 	/*
 	 *	Common variables

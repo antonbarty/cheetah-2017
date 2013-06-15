@@ -50,215 +50,152 @@ void *worker(void *threadarg) {
   std::stringstream sstm1;
   std::ofstream outHit;
 
-  /*
-   * Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
-   * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
-   * Hopefully this never happens again... 
-   */
+  //--------MONITORING---------//
+
+  updateDatarate(eventData,global);
+
+  //---INITIALIZATIONS-AND-PREPARATIONS---//
+
+  // Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
+  // Acqiris data (i.e. temporal profile of the laser diode signal) is available...
+  // Hopefully this never happens again... 
   if ( global->fudgeevr41 == 1 ) {
     evr41fudge(eventData,global);	
   }
 	
-  /*
-   *	Create a unique name for this event
-   */
+  // Create a unique name for this event
   nameEvent(eventData, global);
 	
-
-
-  /*
-   * Copy pixelmask_shared into pixelmask 
-   * and raw detector data into corrected array as starting point for corrections
-   */
+  // Copy pixelmask_shared into pixelmask and raw detector data into corrected array as starting point for corrections
   DETECTOR_LOOP {
     for(long i=0;i<global->detector[detID].pix_nn;i++){
       eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
       eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
     }
   }
-
-
-  // Init background buffer
-  initBackgroundBuffer(eventData, global);
 	
-  /*
-   * Check for saturated pixels before applying any other corrections
-   */
+  //---DETECTOR-CORRECTION---//
+
+  // Check for saturated pixels before applying any other corrections
   checkSaturatedPixels(eventData, global);
-	
-  /*
-   *	Subtract darkcal image (static electronic offsets)
-   */
+
+  // If no darkcal image subtract persistent background here
+  subtractPersistentBackground(eventData, global);
+  // Subtract darkcal image (static electronic offsets)
   subtractDarkcal(eventData, global);
 
-  /*
-   *	Subtract common mode offsets (electronic offsets)
-   *	cmModule = 1
-   */
+  // Subtract common mode offsets (electronic offsets)
+  // cmModule = 1
   cspadModuleSubtract(eventData, global);
   cspadSubtractUnbondedPixels(eventData, global);
   cspadSubtractBehindWires(eventData, global);
+
+  // Fix pnCCD errors:
+  // pnCCD offset correction (read out artifacts prominent in lines with high signal)
+  // pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+  //  (these corrections will be automatically skipped for any non-pnCCD detector)
+  pnccdOffsetCorrection(eventData, global);
+  pnccdFixWiringError(eventData, global);
 	
-  /*
-   *	Apply gain correction
-   */
+  // Apply gain correction
   applyGainCorrection(eventData, global);
 	
-  /*
-   *	Apply bad pixel map
-   */
+  // Apply bad pixel map
   applyBadPixelMask(eventData, global);
-	
-  /* 
-   *	Keep memory of data with only detector artefacts subtracted 
-   *	(possibly needed later)
-   */
-  DETECTOR_LOOP {
-    memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
-		
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
-    }
-  }
-       
-  /*
-   *	Subtract persistent photon background
-   */
-  subtractPersistentBackground(eventData, global);
 
-  /*
-   *	Local background subtraction
-   */
+  // Local background subtraction
   subtractLocalBackground(eventData, global);
 			
-
-  /*
-   *	Subtract residual common mode offsets (cmModule=2)
-   */
+  // Subtract residual common mode offsets (cmModule=2)
   cspadModuleSubtract2(eventData, global);
 
-  /*
-   *	Apply bad pixels
-   */
-  applyBadPixelMask(eventData, global);
-	
-  /*
-   *	Identify and kill hot pixels
-   */
+  // Identify and kill hot pixels
   identifyHotPixels(eventData, global);
   calculateHotPixelMask(eventData,global);
   applyHotPixelMask(eventData,global);
 
-  updateDatarate(eventData,global);
-
-  /*
-   *	Skip first set of frames to build up running estimate of background...
-   */
-  if (eventData->threadNum < global->nInitFrames || !global->calibrated){
-    updateBackgroundBuffer(eventData, global, 0); 
-    calculatePersistentBackground(eventData,global);
-    updateHaloBuffer(eventData,global,0);
-    calculateHaloPixelMask(eventData,global);
-    global->updateCalibrated();
-    printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
-    goto cleanup;
-  }
-
-  /*
-   *  Fix pnCCD errors:
-   *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
-   *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-   *  (these corrections will be automatically skipped for any non-pnCCD detector)
-   */
-  pnccdOffsetCorrection(eventData, global);
-  pnccdFixWiringError(eventData, global);
-   
-
-  /*
-	 *	Hitfinding
-	 */
-  if(global->hitfinder){
-    
-    hit = hitfinder(eventData, global);
-    eventData->hit = hit;
-  }
-  
-  /*
-   *	Identify halo pixels
-   */
-  updateHaloBuffer(eventData,global,hit);
-  calculateHaloPixelMask(eventData,global);
-  
-  /*
-   *	Update running backround estimate based on non-hits and calculate background from buffer
-   */
-  updateBackgroundBuffer(eventData, global, hit); 
-  calculatePersistentBackground(eventData,global);  
-    
-  /*
-   *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-   */
+  // Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
   DETECTOR_LOOP {
     if(global->detector[detID].saveDetectorCorrectedOnly) 
       memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
   }
-  
-  
-  /*
-   *	If using detector raw, do it here
-   */
+
+  //---BACKGROUND-CORRECTION---//
+	  
+  // Subtract persistent photon background (if darkcal subtraction from file, otherwise persitent background subtraction was done earlier)
+  subtractPersistentBackground(eventData, global);
+
+  //---HITFINDING---//
+     
+  // Hitfinding
+  if(global->hitfinder){ 
+    hit = hitfinder(eventData, global);
+    eventData->hit = hit;
+  }
+
+  //---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
+
+  // Identify halo pixels
+  updateHaloBuffer(eventData,global,hit);
+  calculateHaloPixelMask(eventData,global);
+
+  // Skip first set of frames to build up running estimate of background...
+  if (eventData->threadNum < global->nInitFrames || !global->calibrated){
+    // Update running backround estimate based on non-hits and calculate background from buffer
+    updateBackgroundBuffer(eventData, global, 0); 
+    calculatePersistentBackground(eventData,global);  
+    global->updateCalibrated();
+    printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+    goto cleanup;
+  }  else {
+    // Update running backround estimate based on non-hits and calculate background from buffer
+    updateBackgroundBuffer(eventData, global, hit); 
+    calculatePersistentBackground(eventData,global);  
+  }
+
+  //---ASSEMBLE-AND-ACCUMULATE-DATA---//
+
+  // If using detector raw, do it here
   DETECTOR_LOOP {
     if(global->detector[detID].saveDetectorRaw)
       for(long i=0;i<global->detector[detID].pix_nn;i++)
 	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
   }
+
+  // Assemble to realistic image
+  assemble2Dimage(eventData, global);
+  assemble2Dmask(eventData, global);
+
+  // Downsample assembled image
+  downsample(eventData,global);
+
+  // Maintain a running sums of data ("powder" patterns)
+  addToPowder(eventData, global);
+
+  // Calculate radial average and maintain radial average stack
+  calculateRadialAverage(eventData, global); 
+  addToRadialAverageStack(eventData, global);
+	
+  // calculate the one dimesional beam spectrum
+  integrateSpectrum(eventData, global);
+  integrateRunSpectrum(eventData, global);
   
-  
-  /*
-   *	Keep int16 copy of corrected data (needed for saving images)
-   */
+  // update GMD average
+  updateAvgGMD(eventData,global);
+
+  // integrate pattern
+  integratePattern(eventData,global);
+
+  //---WRITE-DATA-TO-H5---//
+
+  // Keep int16 copy of corrected data (needed for saving images)
   DETECTOR_LOOP {
     for(long i=0;i<global->detector[detID].pix_nn;i++){
       eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
     }
   }
-
-  /*
-   *   Assemble to realistic image
-   */
-  assemble2Dimage(eventData, global);
-  assemble2Dmask(eventData, global);
-
-  /*
-   *   Downsample assembled image
-   */
-  downsample(eventData,global);
-
-  /*
-   *	Maintain a running sum of data (powder patterns)
-   *    and strongest non-hit and weakest hit
-   */
-  addToPowder(eventData, global);
-
-  /*
-   *  Calculate radial average
-   *  Maintain radial average stack
-   */
-  calculateRadialAverage(eventData, global); 
-  addToRadialAverageStack(eventData, global);
-	
-
-  /*
-   * calculate the one dimesional beam spectrum
-   */
-  integrateSpectrum(eventData, global);
-  integrateRunSpectrum(eventData, global);
-
   
-  /*
-   *	If this is a hit, write out to our favourite HDF5 format
-   */
-
+  // If this is a hit, write out to our favourite HDF5 format
   eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
   if(global->saveCXI==1){
     pthread_mutex_lock(&global->saveCXI_mutex);
@@ -276,16 +213,15 @@ void *worker(void *threadarg) {
   if(!eventData->writeFlag){
     printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
   }
-  /*
-   *	If this is a hit, write out peak info to peak list file
-   */
+
+  // If this is a hit, write out peak info to peak list file
   if(hit && global->savePeakInfo) {
     writePeakFile(eventData, global);
   }
 
-  /*
-   *	Write out information on each frame to a log file
-   */
+  //---LOGBOOK-KEEPING---//
+
+  // Write out information on each frame to a log file
   pthread_mutex_lock(&global->framefp_mutex);
   fprintf(global->framefp, "%s, ", eventData->eventname);
   fprintf(global->framefp, "%li, ", eventData->frameNumber);
@@ -327,9 +263,7 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
 	
-  /*
-   *	Cleanup and exit
-   */
+  //---CLEANUP-AND-EXIT----//
  cleanup:
   // Decrement thread pool counter by one
   pthread_mutex_lock(&global->nActiveThreads_mutex);
@@ -429,3 +363,13 @@ void updateDatarate(cEventData *eventData, cGlobal *global){
   
 }
 
+void updateAvgGMD(cEventData *eventData, cGlobal *global){
+  /*
+   *	Remember GMD values  (why is this here?)
+   */
+  float	gmd;
+  pthread_mutex_lock(&global->gmd_mutex);
+  gmd = (eventData->gmd21+eventData->gmd22)/2;
+  global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
+  pthread_mutex_unlock(&global->gmd_mutex);
+}

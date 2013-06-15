@@ -300,7 +300,6 @@ public:
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
 
-
 public:
 
 	cPixelDetectorCommon();
@@ -330,6 +329,7 @@ public:
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;
+	int       pedSubtracted;
 	uint16_t  *raw_data;
 	float     *detector_corrected_data;
 	float     *corrected_data;
@@ -342,6 +342,7 @@ public:
 	float     *radialAverage;
 	float     *radialAverageCounter;
 	double    detectorZ;
+	float sum;
 
 };
 

@@ -128,7 +128,6 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
 	eventData->peakTotal=0.;
-
 	eventData->stackSlice=0;
 
 	//long		pix_nn1 = global->detector[0].pix_nn;
@@ -163,6 +162,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
+
+		eventData->detector[detID].pedSubtracted=0;
+		eventData->detector[detID].sum=0.;
 	}	
 	
 		
@@ -548,8 +550,6 @@ void cheetahExit(cGlobal *global) {
       free(global->detector[i].bg_buffer);
       free(global->detector[i].hotpix_buffer);
       free(global->detector[i].halopix_buffer);
-
-        
       for(long j=0; j<global->nPowderClasses; j++) {
 	free(global->detector[i].powderRaw[j]);
 	free(global->detector[i].powderCorrected[j]);
@@ -575,6 +575,7 @@ void cheetahExit(cGlobal *global) {
     pthread_mutex_destroy(&global->subdir_mutex);
     pthread_mutex_destroy(&global->espectrumRun_mutex);
     pthread_mutex_destroy(&global->nespechits_mutex);
+    pthread_mutex_destroy(&global->gmd_mutex);
 
     
     printf("Cheetah clean exit\n");

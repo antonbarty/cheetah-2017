@@ -1,4 +1,4 @@
-//
+
 //  assembleImage.cpp
 //  cheetah
 //
@@ -171,7 +171,7 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
       image_index = ix + image_nx*iy;
       if (image_index >= image_nn || image_index < 0)
 	{
-	  printf("Image index over/underflow %d %d %d\n", ix, iy, image_index);
+	  printf("Image index over/underflow %li %ld %li\n", ix, iy, image_index);
 	  continue;
 	}
       // Check for int16 overflow

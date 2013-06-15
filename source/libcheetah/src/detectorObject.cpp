@@ -644,7 +644,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   res,minres,maxres;
   double	 sin_theta;
   long     minres_pix,maxres_pix;
-  long c = 0;	
+  //long c = 0;	
   minres = 1.e10;
   maxres = 0.;
   minres_pix = 0;

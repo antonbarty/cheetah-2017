@@ -62,7 +62,7 @@ void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long img
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    img[i1] += rescale*img[i0];
+    imgXxX[i1] += rescale*img[i0];
   }
 }
 

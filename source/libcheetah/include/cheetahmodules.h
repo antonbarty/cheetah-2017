@@ -18,9 +18,6 @@ void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
-void calculateHaloPixelMask(cEventData*,cGlobal*);
-void updateHaloBuffer(cEventData*, cGlobal*,int);
-
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
 void applyBadPixelMask(float*, uint16_t*, long);
@@ -28,8 +25,6 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
-long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
-
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
@@ -42,11 +37,13 @@ void subtractPersistentBackground(cEventData*, cGlobal*);
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
 void calculatePersistentBackground(cEventData*, cGlobal*);
 void initBackgroundBuffer(cEventData*, cGlobal*);
-
 void subtractLocalBackground(float*, long, long, long, long, long);
 void checkSaturatedPixels(uint16_t*, uint16_t*, long, long);
 void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
+void updateHaloBuffer(cEventData*, cGlobal*,int);
+void calculateHaloPixelMask(cEventData*,cGlobal*);
+long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
@@ -114,6 +111,9 @@ int16_t kth_smallest(int16_t*, long, long);
 // fudge...
 void evr41fudge(cEventData*, cGlobal*);
 
+// integratePattern.cpp
+void integratePattern(cEventData * eventData,cGlobal * global);
+
 // datarate timing
 void updateDatarate(cEventData*, cGlobal*);
-
+void updateAvgGMD(cEventData *eventData, cGlobal *global);
