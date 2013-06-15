@@ -13,6 +13,10 @@
 #include "hitfinders.h"
 #include "peakfinders.h"
 
+void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
+void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx);
+
 
 /*
  *	Various flavours of hitfinder
@@ -186,17 +190,44 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   int       hit = 0;
   long      nat = 0;
   float     tat = 0.;
-  uint16_t  *mask = eventData->detector[detID].pixelmask;
-  float     *data = eventData->detector[detID].corrected_data;
-  long	    pix_nn = global->detector[detID].pix_nn;  
+  uint16_t  *mask;
+  float     *data;
+  long	    pix_nn;
   float     ADC_threshold = global->hitfinderADC;
   // Combine pixel options for pixels to be ignored
-  uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO;
+  uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
+
+  if (global->hitfinderIgnoreHaloPixels) {
+    pixel_options |= PIXEL_IS_IN_HALO;
+  }
   
+  if (global->hitfinderDownsampling > 1) {
+    long pix_nn_0 = global->detector[detID].pix_nn;  
+    long pix_nx_0 = global->detector[detID].pix_nx;  
+    long pix_ny_0 = global->detector[detID].pix_ny;  
+    float *data_0 = eventData->detector[detID].corrected_data;
+    uint16_t *mask_0 = eventData->detector[detID].pixelmask;
+    long pix_nx = pix_ny_0/global->hitfinderDownsampling;  
+    pix_nn = (pix_ny_0/global->hitfinderDownsampling)*pix_nx;
+    data = (float *) calloc(pix_nn,sizeof(float));
+    mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
+    downsampleImage(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
+    downsampleMask(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
+  } else {
+    pix_nn = global->detector[detID].pix_nn;  
+    data = eventData->detector[detID].corrected_data;
+    mask = eventData->detector[detID].pixelmask;
+  }
+
   integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
   eventData->peakTotal = tat;
   eventData->peakNpix = nat;
   eventData->nPeaks = nat;
+
+  if(global->hitfinderDownsampling > 1){
+    free(data);
+    free(mask);
+  }
 
   if(nat >= global->hitfinderMinPixCount){
     hit = 1;
@@ -222,6 +253,10 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detID){
   // Combine pixel options for pixels to be ignored
   uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
   
+  if (global->hitfinderIgnoreHaloPixels) {
+    pixel_options |= PIXEL_IS_IN_HALO;
+  }
+
   integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
   eventData->peakTotal = tat;
   eventData->peakNpix = nat;
@@ -256,6 +291,10 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 
   // combine pixelmask bits
   uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
+
+  if (global->hitfinderIgnoreHaloPixels) {
+    combined_pixel_options |= PIXEL_IS_IN_HALO;
+  }
 	
   /*
    *	Apply masks
@@ -289,7 +328,7 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 
 int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
   int hit = 0;
-  long		pix_nn = global->detector[detID].pix_nn;
+  //long		pix_nn = global->detector[detID].pix_nn;
   uint16_t      *mask = eventData->detector[detID].pixelmask;
   long	nat = 0;
   long	counter;

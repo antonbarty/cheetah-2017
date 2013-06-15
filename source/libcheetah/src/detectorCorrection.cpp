@@ -26,15 +26,18 @@
  *	Subtract pre-loaded darkcal file
  */
 void subtractDarkcal(cEventData *eventData, cGlobal *global) {
-	DETECTOR_LOOP {
-		if(global->detector[detID].useDarkcalSubtraction) {
-		  long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			float	*darkcal = global->detector[detID].darkcal;
-
-			subtractDarkcal(data, darkcal, pix_nn);
-		}			
-	}
+  DETECTOR_LOOP {
+    if(global->detector[detID].useDarkcalSubtraction) {
+      /*
+       *	Subtract darkcal (from calibration file)
+       */
+      long	pix_nn = global->detector[detID].pix_nn;
+      float	*data = eventData->detector[detID].corrected_data;
+      float	*darkcal = global->detector[detID].darkcal;
+      subtractDarkcal(data, darkcal, pix_nn);
+      eventData->detector[detID].pedSubtracted = 1;
+    }
+  }
 }
 
 void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
@@ -616,5 +619,3 @@ void pnccdFixWiringError(float *data) {
     data[1023+j*nx] = 0;
 }
 
-
-			

@@ -157,7 +157,7 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
   hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
   // Silently ignore failure to write, this attribute is non-essential
   if(a>=0) {
-    int oldVal;
+    uint oldVal;
     w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
     if (w < 0)
       {
@@ -251,7 +251,7 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
   hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
   // Silently ignore failure to write, this attribute is non-essential
   if(a>=0) {
-    int oldVal;
+    uint oldVal;
     w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
     if (w < 0)
       {
@@ -390,7 +390,7 @@ static void writeStringToStack(hid_t dataset, uint stackSlice, const char * valu
   hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
   // Silently ignore failure to write, this attribute is non-essential
   if(a>=0) {
-    int oldVal;
+    uint oldVal;
     w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
     if (w < 0)
       {
@@ -660,7 +660,14 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->cheetahVal.unsharedVal.laserEventCodeOn = createScalarStack("laserEventCodeOn", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
   cxi->cheetahVal.unsharedVal.laserDelay = createScalarStack("laserDelay", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
   cxi->cheetahVal.unsharedVal.hit = createScalarStack("hit", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
-  
+  DETECTOR_LOOP{
+    char buffer[1024];
+    sprintf(buffer,"detector%li-sum", detID +1);
+    cxi->cheetahVal.unsharedVal.sums.push_back(createScalarStack(buffer, cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_FLOAT));
+  }
+
+
+
   cxi->cheetahVal.sharedVal.self = H5Gcreate(cxi->cheetahVal.self, "shared", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   cxi->cheetahVal.sharedVal.hit = createScalarStack("hit", cxi->cheetahVal.sharedVal.self,H5T_NATIVE_INT);
   cxi->cheetahVal.sharedVal.nPeaks = createScalarStack("nPeaks", cxi->cheetahVal.sharedVal.self,H5T_NATIVE_INT);
@@ -1098,6 +1105,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
       writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].halopixLastUpdate);  
       writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
+      writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);  
     }
   }
 }

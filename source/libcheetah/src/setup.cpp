@@ -40,7 +40,7 @@ cGlobal::cGlobal(void) {
   // Detector info
   nDetectors = 0;
   for(long i=0; i<MAX_DETECTORS; i++) {
-    strcpy(detector[i].detectorConfigFile, "No_file_specified");
+    //strcpy(detector[i].detectorConfigFile, "No_file_specified");
     strcpy(detector[i].configGroup,"none");
     detector[i].detectorID = i;
   }
@@ -92,10 +92,12 @@ cGlobal::cGlobal(void) {
   hitfinderLocalBGRadius = 4;
   hitfinderLocalBGThickness = 5;
   //hitfinderLimitRes = 1;
-  hitfinderMinRes = 0;
-  hitfinderMaxRes = 1e10;
+  hitfinderMinRes = 1.e10;
+  hitfinderMaxRes = 0.;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
+  hitfinderIgnoreHaloPixels = 1;
+  hitfinderDownsampling = 1;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -163,7 +165,9 @@ cGlobal::cGlobal(void) {
 
   // Default to only a few threads
   nThreads = 16;
+  // depreciated?
   useHelperThreads = 0;
+  // depreciated?
   threadPurge = 10000;
 	
   // Saving to subdirectories
@@ -276,6 +280,7 @@ void cGlobal::setup() {
   pthread_mutex_init(&saveCXI_mutex, NULL);  
   pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+  pthread_mutex_init(&gmd_mutex, NULL);  
 
   // Set number of frames for initial calibrations
   nInitFrames = 0;
@@ -701,8 +706,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   // Processing options
   else if (!strcmp(tag, "subtractcmmodule")) {
-    printf("The keyword subtractcmModule has been changed. It is\n"
-	   "now known as cmModule.\n"
+    printf("The keyword subtractcmModule is depreciated.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
@@ -757,6 +761,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "tofpresent")) {
     TOFPresent = atoi(value);
   }
+  // depreciated?
     else if (!strcmp(tag, "tofname")) {
     strcpy(tofName, value);
   }
@@ -781,6 +786,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindertofwindow")) {
     hitfinderTOFWindow = atoi(value);
   }
+  else if (!strcmp(tag, "hitfinderignorehalopixels")) {
+    hitfinderIgnoreHaloPixels = atoi(value);
+  }
+
 
   // Energy spectrum parameters
   else if (!strcmp(tag, "espectrumtiltang")) {
@@ -838,6 +847,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindermingradient")) {
     hitfinderMinGradient = atof(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "hitfindercluster")) {
     hitfinderCluster = atoi(value);
   }
@@ -883,15 +893,20 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfinderminsnr")) {
     hitfinderMinSNR = atof(value);
   }
+  else if (!strcmp(tag, "hitfinderdownsampling")) {
+    hitfinderDownsampling = (long) atoi(value);
+  }
   else if (!strcmp(tag, "selfdarkmemory")) {
     printf("The keyword selfDarkMemory has been changed.  It is\n"
 	   "now known as bgMemory.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
+  // depreciated?
   else if (!strcmp(tag, "fudgeevr41")) {
     fudgeevr41 = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "laserpumpscheme")) {
     laserPumpScheme = atoi(value);
   }

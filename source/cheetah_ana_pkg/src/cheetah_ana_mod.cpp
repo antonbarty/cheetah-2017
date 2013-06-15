@@ -240,7 +240,7 @@ namespace cheetah_ana_pkg {
 	  frameNumberIncludingSkipped ++;
 	  
 	  if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames && cheetahGlobal.calibrated) {
-	      printf("Skipping a frame (%d)\n",frameNumberIncludingSkipped);
+	      printf("Skipping a frame (%ld)\n",frameNumberIncludingSkipped);
 	      skip();
 	      return;
 	  }
@@ -804,7 +804,7 @@ namespace cheetah_ana_pkg {
 						free(quad_data[quadrant]);
 				}
 				else {
-				  printf("%li: cspad frame data not available for detector ID %d\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+				  printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
 					return;
 				}
 			}
@@ -828,7 +828,7 @@ namespace cheetah_ana_pkg {
 			    }
 			   
 			  } else {
-			    printf("%li: cspad 2x2 frame data not available for detector ID %d\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+			    printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
 			    return;
 			  }
 			}
@@ -910,7 +910,7 @@ namespace cheetah_ana_pkg {
 		    double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 		    double timestamp = timestamps[seg].value();
 		    ndarray<const int16_t, 1> raw(waveforms[seg]);
-		    for (unsigned i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
+		    for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
 		      tempTime[i] = timestamp + i*sampInterval;
 		      tempVoltage[i] = raw[i]*slope + offset;
 		    }

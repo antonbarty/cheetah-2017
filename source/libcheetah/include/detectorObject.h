@@ -111,7 +111,7 @@ public:
 	long detectorID;
 
 	/** @brief Detector configuration file */
-	char  detectorConfigFile[MAX_FILENAME_LENGTH];
+	//char  detectorConfigFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing pixelmap (coordinates of pixels) */
 	char  geometryFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing dark calibration */
@@ -149,7 +149,10 @@ public:
 	// Assembled downsampled image size
 	long  imageXxX_nx;
 	long  imageXxX_nn;
+	/** @brief Downsampling factor (1: no downsampling) */
 	long  downsampling;
+	/** @brief Rescale intensities after downsamping but before saving to image (avoid clamping to maximum value of 16-bit int) (1.: no rescaling) */
+	float downsamplingRescale;
 
 	// ASIC module size
 	long  asic_nx;
@@ -297,7 +300,6 @@ public:
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
 
-
 public:
 
 	cPixelDetectorCommon();
@@ -327,6 +329,7 @@ public:
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;
+	int       pedSubtracted;
 	uint16_t  *raw_data;
 	float     *detector_corrected_data;
 	float     *corrected_data;
@@ -339,6 +342,7 @@ public:
 	float     *radialAverage;
 	float     *radialAverageCounter;
 	double    detectorZ;
+	float sum;
 
 };
 

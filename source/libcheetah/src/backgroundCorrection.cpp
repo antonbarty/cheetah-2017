@@ -27,12 +27,10 @@
 
 /*
  *	Subtract persistent background 
- *	(and perform recalculation when required)
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
   DETECTOR_LOOP {
-    if(global->detector[detID].useSubtractPersistentBackground){
-			
+    if(global->detector[detID].useSubtractPersistentBackground && ((eventData->detector[detID].pedSubtracted && global->detector[detID].useDarkcalSubtraction) || (!eventData->detector[detID].pedSubtracted && !global->detector[detID].useDarkcalSubtraction))){
       /*
        *	Subtract persistent background
        */
@@ -41,16 +39,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
       float	*frameData = eventData->detector[detID].corrected_data;
       float	*background = global->detector[detID].selfdark;
       subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
-						
-      /*
-       *	Remember GMD values  (why is this here?)
-       */
-      float	gmd;
-      pthread_mutex_lock(&global->selfdark_mutex);
-      gmd = (eventData->gmd21+eventData->gmd22)/2;
-      global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-      pthread_mutex_unlock(&global->selfdark_mutex);
-
+      eventData->detector[detID].pedSubtracted = 1;
     }
   }	
 }
@@ -69,7 +58,6 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
       float	medianPoint = global->detector[detID].bgMedian;
       long	threshold = lrint(bufferDepth*medianPoint);
       long	bgCounter,lastUpdate;
-      float	*frameData = eventData->detector[detID].corrected_data;
       float	*background = global->detector[detID].selfdark;
 
       if(lockThreads){
@@ -134,20 +122,23 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
   DETECTOR_LOOP {
     if (global->detector[detID].useSubtractPersistentBackground && (hit==0 || global->detector[detID].bgIncludeHits)) {
-				
-
       long	bufferDepth = global->detector[detID].bgMemory;
       long	pix_nn = global->detector[detID].pix_nn;
       int16_t	*frameBuffer = global->detector[detID].bg_buffer;
-      int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
       long frameID = eventData->threadNum%bufferDepth;
       pthread_mutex_lock(&global->bgbuffer_mutex);
-      for(long i = 0;i<pix_nn;i++){
-	frameBuffer[i+pix_nn*frameID] = data16[i];
+      if (global->detector[detID].useDarkcalSubtraction){
+	for(long i = 0;i<pix_nn;i++){
+	  frameBuffer[i+pix_nn*frameID] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+	}
+      } else {
+	for(long i = 0;i<pix_nn;i++){
+	  frameBuffer[i+pix_nn*frameID] = eventData->detector[detID].raw_data[i];
+	}
       }
       pthread_mutex_unlock(&global->bgbuffer_mutex);
 #ifdef __GNUC__
-      long bgCounter = __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
+      __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
 #else
       int lockThreads = global->detector[detID].useBackgroundBufferMutex;
       if(lockThreads){pthread_mutex_lock(&global->bgbuffer_mutex);}
@@ -525,4 +516,3 @@ long calculateHaloPixelMask(uint16_t *mask, uint16_t *maskMinExtent, uint16_t *m
   return nhalo;
 
 }
-

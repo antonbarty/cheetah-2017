@@ -16,6 +16,7 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
+
 namespace CXI{
   const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
@@ -110,6 +111,7 @@ typedef struct{
   hid_t laserEventCodeOn;
   hid_t laserDelay;
   hid_t hit;
+  std::vector<hid_t> sums;
 }UnsharedValues;
 
 typedef struct{

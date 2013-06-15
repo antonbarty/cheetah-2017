@@ -152,7 +152,10 @@ public:
 	int     *hitfinderResMask;
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
-	
+	/** @brief Toggle ignoring halo pixels during hitfinding. */
+	int      hitfinderIgnoreHaloPixels;
+	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
+	long      hitfinderDownsampling;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -304,7 +307,8 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
-	pthread_mutex_t  hitVector_mutex;
+	//pthread_mutex_t  hitVector_mutex;
+	pthread_mutex_t  gmd_mutex;
 
 	/*
 	 *	Common variables
