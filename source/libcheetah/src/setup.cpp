@@ -132,8 +132,8 @@ cGlobal::cGlobal(void) {
 
   // Assemble options
   assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
-  assemble2DImage = 1;
-  assemble2DMask = 1;
+  assemble2DImage = 0;
+  assemble2DMask = 0;
 
   // Saving options
   savehits = 0;
@@ -268,7 +268,9 @@ void cGlobal::setup() {
    */
   if(generateDarkcal) {
 
-    printf("keyword generatedarkcal set: overriding some keyword values!!!");
+    printf("******************************************************************\n");
+    printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
+    printf("******************************************************************\n");
 
     hitfinder = 0;
     savehits = 0;
@@ -294,7 +296,9 @@ void cGlobal::setup() {
 
   if(generateGaincal) {
 
-    printf("keyword generategaincal set: overriding some keyword values!!!");
+      printf("******************************************************************\n");
+      printf("keyword generategaincal set: this overrides some keyword values!!!\n");
+      printf("******************************************************************\n");
 
     hitfinder = 0;
     savehits = 0;
