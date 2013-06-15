@@ -356,15 +356,6 @@ void *worker(void *threadarg) {
    */
   integrateSpectrum(eventData, global);
   integrateRunSpectrum(eventData, global);
-=======
-    
-    /*
-     *	Maintain a running sum of data (powder patterns)
-     *    and strongest non-hit and weakest hit
-     */
-    addToHistogram(eventData, global);
-
->>>>>>> developer
 
     /*
      *  Inside-thread speed test
