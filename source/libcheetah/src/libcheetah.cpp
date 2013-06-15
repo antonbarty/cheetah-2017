@@ -511,6 +511,7 @@ void cheetahExit(cGlobal *global) {
     
     // Cleanup
     for(long i=0; i<global->nDetectors; i++) {
+      free(global->detector[i].init_powder);
       free(global->detector[i].darkcal);
       free(global->detector[i].selfdark);
       free(global->detector[i].gaincal);

@@ -81,7 +81,7 @@ void calculateRadialAverage(float *data, float *pix_r, int *pix_r_i, long pix_nn
 		radialAverageCounter[rbin] += 1;
 	}
 
-   clean_streak( data, pix_r_i, pix_nn, radialAverage, radialAverageCounter, radial_nn, threshold );	
+   // clean_streak( data, pix_r_i, pix_nn, radialAverage, radialAverageCounter, radial_nn, threshold, mask );	
 	// Divide by number of actual pixels in ring to get the average
 	for(long i=0; i<radial_nn; i++) {
 		if (radialAverageCounter[i] != 0)
@@ -90,7 +90,7 @@ void calculateRadialAverage(float *data, float *pix_r, int *pix_r_i, long pix_nn
 	
 }
 
-void clean_streak(float *data, int *pix_r_i, long pix_nn, float *radialSum, float *radialAverageCounter,long radial_nn, float threshratio) {
+void clean_streak(float *data, int *pix_r_i, long pix_nn, float *radialSum, float *radialAverageCounter,long radial_nn, float threshratio, int* mask) {
   float *this_radialAverage = (float*) calloc( radial_nn, sizeof(float));
   int this_index;
 
@@ -99,6 +99,8 @@ void clean_streak(float *data, int *pix_r_i, long pix_nn, float *radialSum, floa
       this_radialAverage[i] = radialSum[i]/radialAverageCounter[i]*threshratio;
   }
   for(long i=0;i< pix_nn; i++) {
+    if(mask[i] == 0)
+      continue;
     this_index = pix_r_i[i];
     if( data[i] > this_radialAverage[ this_index ] ) {
       radialSum[ this_index ] -= data[i];

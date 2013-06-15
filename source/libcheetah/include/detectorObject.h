@@ -112,6 +112,8 @@ public:
 	char  detectorConfigFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing pixelmap (coordinates of pixels) */
 	char  geometryFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing initial powder */
+	char  powderFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing dark calibration */
 	char  darkcalFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing gain calibration */
@@ -210,6 +212,7 @@ public:
 	int    applyBadPixelMask;
 	int    useBadDataMask;
 	int    useDarkcalSubtraction;
+	int    useInitialPowder;
 	// Subtract common mode from each ASIC
 	int    cmModule;
 	int    cspadSubtractUnbondedPixels;
@@ -273,6 +276,7 @@ public:
 	int16_t   *bg_buffer;
 	int16_t   *hotpix_buffer;
 	float     *halopix_buffer;
+	float     *init_powder;
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;
@@ -327,6 +331,8 @@ public:
    void updateRadialMap(void);
    void getGapCorrelation(void);
 	void updateKspace(cGlobal*, float);
+	void readPowder(char *);
+   void initializeRefSAXS(void);
 	void readDarkcal(char *);
 	void readGaincal(char *);
 	void readPeakmask(cGlobal*, char *);

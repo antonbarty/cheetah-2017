@@ -102,7 +102,7 @@ void addToRadialAverageStack(cEventData*, cGlobal*);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
-void clean_streak(float *, int*, long , float *, float *,long , float ) ;
+void clean_streak(float *, int*, long , float *, float *,long , float, int* ) ;
 
 
 // polarMapping.cpp

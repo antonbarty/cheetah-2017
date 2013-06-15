@@ -201,6 +201,7 @@ void cGlobal::setup() {
   for(long i=0; i<nDetectors; i++) {
     detector[i].configure();
     detector[i].readDetectorGeometry(detector[i].geometryFile);
+    detector[i].readPowder(detector[i].powderFile);
     detector[i].readDarkcal(detector[i].darkcalFile);
     detector[i].readGaincal(detector[i].gaincalFile);
     detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
@@ -279,6 +280,7 @@ void cGlobal::setup() {
     for(long i=0; i<nDetectors; i++) {
       detector[i].cmModule = 0;
       detector[i].cspadSubtractUnbondedPixels = 0;
+      detector[i].useInitialPowder = 0;
       detector[i].useDarkcalSubtraction = 0;
       detector[i].useGaincal=0;
       detector[i].useAutoHotpixel = 0;
@@ -303,6 +305,7 @@ void cGlobal::setup() {
     for(long i=0; i<nDetectors; i++) {
       detector[i].cmModule = 0;
       detector[i].cspadSubtractUnbondedPixels = 0;
+      detector[i].useInitialPowder = 0;
       detector[i].useDarkcalSubtraction = 1;
       detector[i].useAutoHotpixel = 0;
       detector[i].useSubtractPersistentBackground = 0;
@@ -366,6 +369,7 @@ void cGlobal::setup() {
   for(long i=0; i<nDetectors; i++) {
     detector[i].allocatePowderMemory(self);
     detector[i].updatePolarMap(self);  //this must be after geometry reading
+    detector[i].initializeRefSAXS();
   }
 
   /*

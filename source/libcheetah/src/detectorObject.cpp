@@ -43,6 +43,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   strcpy(detectorConfigFile, "No_file_specified");
   strcpy(geometryFile, "No_file_specified");
   strcpy(badpixelFile, "No_file_specified");
+  strcpy(powderFile, "No_file_specified");
   strcpy(darkcalFile, "No_file_specified");
   strcpy(wireMaskFile, "No_file_specified");
   strcpy(gaincalFile, "No_file_specified");
@@ -209,6 +210,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "geometry")) {
     strcpy(geometryFile, value);
+  }
+  else if (!strcmp(tag, "powderfile")) {
+    strcpy(powderFile, value);
+    useInitialPowder = 1;
   }
   else if (!strcmp(tag, "darkcal")) {
     strcpy(darkcalFile, value);
@@ -464,6 +469,32 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 
 }
 
+void cPixelDetectorCommon::initializeRefSAXS( void ) {
+  long rbin;
+  if( useInitialPowder == 0)
+    return;
+  float* temp_counter=(float*) calloc( radial_nn, sizeof(float) );
+
+  for(long i=0; i<pix_nn; i++) {
+    if( isAnyOfBitOptionsSet(pixelmask_shared[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD) ))
+      continue;
+    rbin = pix_r_i[i];
+    if( rbin > 200) {
+      printf("rbin exceeding limit %i at %i %i \n", rbin, i/pix_nx, i%pix_nx);
+      exit(1);
+    }
+    meanradialAverage[ rbin ] += init_powder[i];
+    temp_counter[rbin]++;
+  }
+
+  for(long i=0; i<radial_nn; i++){
+    if( temp_counter[ rbin ] != 0 )
+      meanradialAverage[i] /= temp_counter[i];
+  }
+  
+  free(temp_counter);
+}
+
 
 
 /*
@@ -607,6 +638,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 
     // Compute radial distances
     updateRadialMap();
+
     // updatePolarMap();  //this is called somewhere else in setup
     
 
@@ -841,6 +873,57 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     //  in which case we want to update the polar map every time k-space variables change)
     // For now, the polar map is static and re-calculated whenever the detector geometry is read
     // updatePolarMap(global);
+
+}
+
+/*
+ * Read in an power pattern to get start if any
+*/
+
+void cPixelDetectorCommon::readPowder(char *filename) {
+
+  //allocate memory and initialize
+  init_powder = (float*) calloc(pix_nn, sizeof(float));
+ 
+  // Do we need a darkcal file?
+  if (useInitialPowder == 0){
+    return;
+  }
+
+  // Check if a darkcal file has been specified
+  if ( strcmp(filename,"") == 0 ){
+    printf("Initial Powder file path was not specified.\n");
+    exit(1);
+  }
+
+  printf("Reading initial powder values:\n");
+  printf("\t%s\n",filename);
+
+  // Check whether file exists!
+  FILE* fp = fopen(filename, "r");
+  if (fp) 	// file exists
+    fclose(fp);
+  else {		// file doesn't exist
+    printf("\tInitial Powder file does not exist: %s\n",filename);
+    printf("\tAborting...\n");
+    exit(1);
+  }
+
+
+  // Read darkcal data from file
+  cData2d		temp2d;
+  temp2d.readHDF5(filename);
+
+  // Correct geometry?
+  if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+    printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+    printf("\tAborting...\n");
+    exit(1);
+  }
+
+  // Copy into powder array
+  for(long i=0;i<pix_nn;i++)
+    init_powder[i] = temp2d.data[i];
 
 }
 
