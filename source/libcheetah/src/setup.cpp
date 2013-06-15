@@ -639,9 +639,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     defaultPhotonEnergyeV = atof(value);
   }
   else if (!strcmp(tag, "fixedphotonenergyev")){
-		fixedPhotonEnergyeV = atof(value);
-	}
-	else if (!strcmp(tag, "saveepicspvfloat")) {
+    fixedPhotonEnergyeV = atof(value);
+  }
+  else if (!strcmp(tag, "saveepicspvfloat")) {
     strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
     nEpicsPvFloatValues++;
   }

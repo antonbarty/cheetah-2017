@@ -359,15 +359,28 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
-
+	printf("photonEnergyeV = %f\n",eventData->photonEnergyeV);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
-	if (global->fixedPhotonEnergyeV >= 0) {
+	if (global->fixedPhotonEnergyeV > 0) {
 		eventData->photonEnergyeV = global->fixedPhotonEnergyeV;
 		eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
 	}
-    
+   
+	/* Further wavelength testing */
+	if ( ! isfinite(eventData->photonEnergyeV ) ) {
+		if ( global->defaultPhotonEnergyeV > 0 ) {
+			eventData->photonEnergyeV = global->defaultPhotonEnergyeV;
+			eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
+		} else {
+			printf("Bad value for photon energy.\n");
+			printf("Try setting the keyword defaultPhotonEnergyeV or fixedPhotonEnergyeV\n");
+			exit(1);
+		}
+	}
+	printf("photonEnergyeV = %f\n",eventData->photonEnergyeV);
+
   /*
    *	Remember to update global variables 
    */
