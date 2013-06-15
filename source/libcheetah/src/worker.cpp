@@ -59,6 +59,16 @@ void *worker(void *threadarg) {
 	}
     
 
+	/* Sanity checks.  libCheetah cant check that the front end was coded properly */
+	/* This should be a method in the event class some day */
+	printf("photonEnergyeV = %f\n",eventData->photonEnergyeV);
+	if ( ! isfinite(eventData->photonEnergyeV)) {
+		if ( global->defaultPhotonEnergyeV > 0 ) {
+			eventData->photonEnergyeV = global->defaultPhotonEnergyeV;
+		} else
+			if ( ! ( global->defaultPhotonEnergyeV > 0 ) ) exit(1);
+	}
+	
     
     /*
      * Andy's nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only
