@@ -29,7 +29,7 @@ CONFIGDIR=${CONFIGDIR}/
 
 
 # get options:
-while getopts "r:i:t:s:n:j:qdoOhpm" OPTION; do
+while getopts "r:i:t:s:n:j:qdoOhpmcf" OPTION; do
 	case $OPTION in
 	r) if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
 			RUNDIR=$(printf 'r%04d' $OPTARG)
@@ -46,11 +46,13 @@ while getopts "r:i:t:s:n:j:qdoOhpm" OPTION; do
 	s) ARGS="$ARGS -s $OPTARG";;
 	n) ARGS="$ARGS -n $OPTARG";;
 	j) NTHREADS=$OPTARG;;
+	c) CHUNKS="YES";;
 	d) DARKCAL="YES";;
 	o) OVERWRITE="CHECK";;
 	O) OVERWRITE="FORCE";;
 	h) SHOWHELP="YES";;
 	p) PSANA="YES";;
+	f) HDF5="YES";;
 	m) MYANA="YES"
 	   PSANA="";;
 	?) UERROR "Unrecognized option $OPTARG";;
@@ -79,6 +81,8 @@ Brief summary of options:
    -O       Force overwrite of previous run (even if it didn't finish).
    -q       Add this job to the queue (using SLAC bsub).
    -m       Use the myana version of cheetah
+   -c        Process chunks separately
+   -f         Use the SLAC HDF5 input version of cheetah
 
 Best to explain by example.  Firstly, you will probably want to set up some 
 environment variables for ease of use.  This seems to be the easiest way to 
@@ -240,6 +244,7 @@ else
 		*.txt 
 	      	&> /dev/null
 	rm -rf data* &> /dev/null
+	rm -rf s* &> /dev/null
 fi
 
 # Create configuration files
@@ -274,9 +279,30 @@ else
 	ARGS="$ARGS -l xtcfiles.txt"
 fi
 
-if [ $QUE ]; then
-	#FULLCOMMAND="bsub -q psfehmpiq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
-	FULLCOMMAND="bsub -q psfehmpiq -n 10 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+if [ $CHUNKS ]; then
+   let "m = 1"
+	for xtc in `cat xtcfiles.txt`
+	do
+   	THIS_ARG="$ARGS $xtc"
+      THIS_TAG="$RUNDIR-$TAG-$m"
+      	SUBDIR=`echo $xtc | sed 's/.*e[0-9]*-r[0-9]*-//' | sed 's/.xtc//'`
+      	SUBDIR="stream$m"
+		mkdir $SUBDIR
+		cd $SUBDIR
+		ln -s ../cheetah.ini .
+		ln -s ../darkcal.h5 .
+		ln -s ../geometry.h5 .
+		ln -s ../psana.cfg .
+		FULLCOMMAND="bsub -n 12 -R "span[hosts=1]" -q psfehmpiq -J $THIS_TAG -o $LOGFILE$m $CHEETAH $THIS_ARG"
+		echo $FULLCOMMAND
+		$FULLCOMMAND
+		echo "$SCRIPTNAME job sent to queue"
+		cd ..
+      let "m += 1"
+	done
+elif [ $QUE ]; then
+	#FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	FULLCOMMAND="bsub -q psfehmpiq -n 12 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	#FULLCOMMAND="bsub -q psfehq -n 6 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	echo $FULLCOMMAND
 	$FULLCOMMAND
@@ -289,6 +315,15 @@ else
 	$FULLCOMMAND
 	echo "$SCRIPTNAME has finished"
 fi
+
+# make everything group editable!
+chmod -R g+rw $SAVEDIR
+
+
+#############
+
+
+
 
 # make everything group editable!
 chmod -R g+rw $SAVEDIR

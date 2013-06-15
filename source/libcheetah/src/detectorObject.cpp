@@ -33,110 +33,120 @@
 cPixelDetectorCommon::cPixelDetectorCommon() {
 
 
-  // Defaults to CXI cspad configuration
-  strcpy(detectorType, "cspad");
-  strcpy(detectorName, "CxiDs1");
-  //detectorType = Pds::DetInfo::Cspad;
-  //detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 
-  // Calibration files
-  strcpy(detectorConfigFile, "No_file_specified");
-  strcpy(geometryFile, "No_file_specified");
-  strcpy(badpixelFile, "No_file_specified");
-  strcpy(powderFile, "No_file_specified");
-  strcpy(darkcalFile, "No_file_specified");
-  strcpy(wireMaskFile, "No_file_specified");
-  strcpy(gaincalFile, "No_file_specified");
+	// Defaults to CXI cspad configuration
+	strcpy(detectorType, "cspad");
+	strcpy(detectorName, "CxiDs1");
+	//detectorType = Pds::DetInfo::Cspad;
+	//detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 
-  // Default ASIC layout (cspad)
-  asic_nx = CSPAD_ASIC_NX;
-  asic_ny = CSPAD_ASIC_NY;
-  asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
-  nasics_x = CSPAD_nASICS_X;
-  nasics_y = CSPAD_nASICS_Y;
-  pix_nx = asic_nx*nasics_x;
-  pix_ny = asic_ny*nasics_y;
-  pix_nn = pix_nx*pix_ny;
-  pixelSize = 110e-6;
+	// Calibration files
+	strcpy(detectorConfigFile, "No_file_specified");
+	strcpy(geometryFile, "No_file_specified");
+	strcpy(badpixelFile, "No_file_specified");
+	strcpy(darkcalFile, "No_file_specified");
+	strcpy(wireMaskFile, "No_file_specified");
+	strcpy(gaincalFile, "No_file_specified");
+
+	// Default ASIC layout (cspad)
+	asic_nx = CSPAD_ASIC_NX;
+	asic_ny = CSPAD_ASIC_NY;
+	asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+	nasics_x = CSPAD_nASICS_X;
+	nasics_y = CSPAD_nASICS_Y;
+	pix_nx = asic_nx*nasics_x;
+	pix_ny = asic_ny*nasics_y;
+	pix_nn = pix_nx*pix_ny;
+	pixelSize = 110e-6;
 
 
-  // Detector Z position
-  //strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
-  strcpy(detectorZpvname,"");
-  //defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
-  defaultCameraLengthMm = 0;
-  fixedCameraLengthMm = 0;
-  detposprev = 0;
-  cameraLengthOffset = 500.0 + 79.0;
-  cameraLengthScale = 1e-3;
-
-  beamCenterPixX = 0;
-  beamCenterPixY = 0;
-
-  // Bad pixel mask
-  useBadPixelMask = 0;
-  applyBadPixelMask = 1;
-
-  // Saturated pixels
-  maskSaturatedPixels = 0;
-  pixelSaturationADC = 15564;  // 95% of 2^14 ??
-
-  // Static dark calibration (electronic offsets)
-  useDarkcalSubtraction = 0;
-
-  // Common mode subtraction from each ASIC
-  cmModule = 0;
-  cmFloor = 0.1;
-  cspadSubtractUnbondedPixels = 0;
-  cspadSubtractBehindWires = 0;
-
-  // Gain calibration correction
-  useGaincal = 0;
-  invertGain = 0;
-
-  // polar mapping
-  polarBinData = 0;
+	// polar mapping
+	polarBinData = 0;
 	radialBinSize = 1;
 
-  // Subtraction of running background (persistent photon background)
-  useSubtractPersistentBackground = 0;
-  bgMemory = 50;
-  startFrames = 0;
-  scaleBackground = 0;
-  useBackgroundBufferMutex = 0;
-  bgMedian = 0.5;
-  bgRecalc = bgMemory;
-  bgIncludeHits = 0;
-  bgNoBeamReset = 0;
-  bgFiducialGlitchReset = 0;
+	
+	// Detector Z position
+	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
+	strcpy(detectorZpvname,"");
+	//defaultCameraLengthMm = std::numeric_limits<float>::quiet_NaN();
+	defaultCameraLengthMm = 0;
+	fixedCameraLengthMm = 0;
+	detposprev = 0;
+	cameraLengthOffset = 500.0 + 79.0;
+	cameraLengthScale = 1e-3;
 
-  // Local background subtraction
-  useLocalBackgroundSubtraction = 0;
-  localBackgroundRadius = 3;
+	beamCenterPixX = 0;
+	beamCenterPixY = 0;
 
-  // Identify persistently hot pixels
-  useAutoHotpixel = 0;
-  hotpixFreq = 0.9;
-  hotpixADC = 1000;
-  hotpixMemory = 50;
-  // Kill persistently hot pixels
-  applyAutoHotpixel = 0;
+	// Bad pixel mask    
+	useBadPixelMask = 0;
+	applyBadPixelMask = 1;
 
-  // Identify persistently illuminated pixels (halo)
-  useAutoHalopixel = 0;
-  halopixMinDeviation = 100;
-  halopixRecalc = bgRecalc;
-  halopixMemory = bgRecalc;
+	// Saturated pixels
+	maskSaturatedPixels = 0;
+	pixelSaturationADC = 15564;  // 95% of 2^14 ??
 
-  // correction for PNCCD read out artifacts
-  usePnccdOffsetCorrection = 0;
+	// Static dark calibration (electronic offsets)
+	useDarkcalSubtraction = 0;
 
-  // Saving options
-  saveDetectorCorrectedOnly = 0;
-  saveDetectorRaw = 0;
+	// Common mode subtraction from each ASIC
+	cmModule = 0;
+	cmFloor = 0.1;
+	cspadSubtractUnbondedPixels = 0;
+	cspadSubtractBehindWires = 0;
 
-  // No downsampling
-  downsampling = 1;
+	// Gain calibration correction
+	useGaincal = 0;
+	invertGain = 0;
+
+	// Subtraction of running background (persistent photon background) 
+	useSubtractPersistentBackground = 0;
+	bgMemory = 50;
+	startFrames = 0;
+	scaleBackground = 0;
+	useBackgroundBufferMutex = 0;
+	bgMedian = 0.5;
+	bgRecalc = bgMemory;
+	bgIncludeHits = 0;
+	bgNoBeamReset = 0;
+	bgFiducialGlitchReset = 0;
+
+	// Local background subtraction
+	useLocalBackgroundSubtraction = 0;
+	localBackgroundRadius = 3;
+
+	// Identify persistently hot pixels
+	useAutoHotpixel = 0;
+	hotpixFreq = 0.9;
+	hotpixADC = 1000;
+	hotpixMemory = 50;
+	// Kill persistently hot pixels
+	applyAutoHotpixel = 0;
+
+	// Identify persistently illuminated pixels (halo)
+	useAutoHalopixel = 0;
+	halopixMinDeviation = 100;
+	halopixRecalc = bgRecalc;
+	halopixMemory = bgRecalc;
+
+	// Histogram stack
+	histogram = 0;
+	histogramMin = -100;
+	histogramMax = 100;
+	histogramBinSize = 1;
+	histogramMaxMemoryGb = 4;
+	histogram_count = 0;
+
+
+	// correction for PNCCD read out artifacts 
+	usePnccdOffsetCorrection = 0;
+
+	// Saving options
+	saveDetectorCorrectedOnly = 0;
+	saveDetectorRaw = 0;
+
+	// No downsampling
+	downsampling = 1;
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -375,10 +385,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
-  else if (!strcmp(tag, "startframes")) {
-    startFrames = atoi(value);
-  }
-  // convert to polar 
+  // convert to polar
   else if(!strcmp(tag, "radialbinsize")) {
     radialBinSize = atoi(value);
   }
@@ -389,13 +396,35 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     nAngularBins = atoi(value);
 	polarBinData = 1;
   }
+	else if (!strcmp(tag, "startframes")) {
+		startFrames = atoi(value);
+	}
+	
+	// Histograms
+	else if (!strcmp(tag, "histogram")) {
+	  histogram = atoi(value);
+	}
+	else if (!strcmp(tag, "histogrammin")) {
+	  histogramMin = atoi(value);
+	}
+	else if (!strcmp(tag, "histogrammax")) {
+	  histogramMax = atoi(value);
+	}
+	else if (!strcmp(tag, "histogrambinsize")) {
+	  histogramBinSize = atoi(value);
+	}
+	else if (!strcmp(tag, "histogrammaxmemorygb")) {
+	  histogramMaxMemoryGb = atof(value);
+	}
 
-  // Unknown tags
-  else {
-    fail = 1;
-  }
 
-  return fail;
+
+	// Unknown tags
+	else {
+		fail = 1;
+	}
+
+	return fail;
 
 }
 
@@ -424,6 +453,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   for(long i=0; i<nPowderClasses; i++) {
     nPowderFrames[i] = 0;
     powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
+    powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
@@ -433,6 +463,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     assembledMax[i] = (float*) calloc(image_nn, sizeof(float));
 
     pthread_mutex_init(&powderRaw_mutex[i], NULL);
+    pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
     pthread_mutex_init(&powderCorrected_mutex[i], NULL);
     pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
     pthread_mutex_init(&powderAssembled_mutex[i], NULL);
@@ -455,18 +486,53 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   }
 	
     
-  // Radial stacks
-  for(long i=0; i<nPowderClasses; i++) {
-    radialStackCounter[i] = 0;
-    radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
 
-    for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-      radialAverageStack[i][j] = 0;
-    }
-  }
-  meanradialAverage = (float *) calloc(radial_nn, sizeof(float));
-  pthread_mutex_init(&meanradialAverage_mutex, NULL);
+	// Radial stacks
+	printf("Allocating radial stacks\n");
+	for(long i=0; i<nPowderClasses; i++) {
+		radialStackCounter[i] = 0;
+		radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
+			
+		for(long j=0; j<radial_nn*global->radialStackSize; j++) {
+			radialAverageStack[i][j] = 0;
+		}
+	}
+	printf("Radial stacks allocated\n");
+	meanradialAverage = (float *) calloc(radial_nn, sizeof(float));
+	pthread_mutex_init(&meanradialAverage_mutex, NULL);
+	
+	
+	// Histogram memory
+	if(histogram) {
+		printf("Allocating histogram memory\n");
+		histogram_nx = pix_nx;
+		histogram_ny = pix_ny;
+		histogram_depth = (histogramMax - histogramMin + 1) / histogramBinSize;
+		histogram_nn = (uint64_t)histogram_depth*(uint64_t)(histogram_nx*histogram_ny);
+		
+		float	histogramMemory;
+		float	histogramMemoryGb;
+		histogramMemory = (histogram_nn * sizeof(uint16_t));
+		histogramMemoryGb = histogramMemory / (1024LL*1024LL*1024LL);
+		if (histogramMemoryGb > histogramMaxMemoryGb) {
+			printf("Size of histogram buffer would exceed allowed size:\n");
+			printf("Histogram depth: %li\n", histogram_depth);
+			printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
+			printf("Maximum histogram buffer size (GB): %f\n", histogramMaxMemoryGb);
+			printf("Set histogramMaxMemoryGb to a larger value in cheetah.ini if you really want to use a bigger array\n");
+			exit(1);
+		}
+		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
+		
+		// Allocate memory
+		histogramData = (uint16_t*) calloc(histogram_nn, sizeof(uint16_t));
+		pthread_mutex_init(&histogram_mutex, NULL);
 
+		// Zero array (there may be a faster way to do this)
+		for(uint64_t j=0; j<histogram_nn; j++) {
+			histogramData[j] = 0;
+		}
+	}
 }
 
 void cPixelDetectorCommon::initializeRefSAXS( void ) {
@@ -493,6 +559,36 @@ void cPixelDetectorCommon::initializeRefSAXS( void ) {
   }
   
   free(temp_counter);
+}
+
+/*
+ *	Free detector specific memory
+ */
+void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
+	free(darkcal);
+	free(selfdark);
+	free(gaincal);
+	free(bg_buffer);
+	free(hotpix_buffer);
+	free(halopix_buffer);
+	
+	for(long j=0; j<global->nPowderClasses; j++) {
+		free(powderRaw[j]);
+		free(powderCorrected[j]);
+		free(powderCorrectedSquared[j]);
+		free(powderAssembled[j]);
+		free(radialAverageStack[j]);
+		pthread_mutex_destroy(&powderRaw_mutex[j]);
+		pthread_mutex_destroy(&powderCorrected_mutex[j]);
+		pthread_mutex_destroy(&powderCorrectedSquared_mutex[j]);
+		pthread_mutex_destroy(&powderAssembled_mutex[j]);
+		pthread_mutex_destroy(&radialStack_mutex[j]);
+	}
+	
+	if(histogram) {
+		free(histogramData);
+	}
+
 }
 
 

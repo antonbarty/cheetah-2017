@@ -254,8 +254,8 @@ public:
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
-	long    halopixRecalc;
-	long    halopixMemory;
+	long   halopixRecalc;
+	long   halopixMemory;
 	long   halopixCounter;
 	long   nhalo;
 	long   last_halopix_update;
@@ -263,6 +263,23 @@ public:
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
 	int    usePnccdOffsetCorrection;
+	
+	
+	// Histogram stack
+	int		histogram;
+	long	histogramMin;
+	long	histogramMax;
+	long	histogramBinSize;
+	float	histogramMaxMemoryGb;
+	long	histogram_nx;
+	long	histogram_ny;
+	long	histogram_depth;
+	long	histogram_count;
+	uint64_t	histogram_nn;
+	uint16_t	*histogramData;
+	pthread_mutex_t histogram_mutex;
+
+	
 	
 
 	// Saving options
@@ -290,6 +307,7 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
+	double   *powderRawSquared[MAX_POWDER_CLASSES];
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
@@ -298,6 +316,7 @@ public:
 	float   *correctedMax[MAX_POWDER_CLASSES];
 	float   *assembledMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderRawSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
@@ -309,8 +328,8 @@ public:
 	/*
 	 *  Radial stacks for this detector
 	 */
-	long            radialStackSize;
-	long   radialStackCounter[MAX_POWDER_CLASSES];
+	long	radialStackSize;
+	long	radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	float     *meanradialAverage;
 	pthread_mutex_t meanradialAverage_mutex;
@@ -327,6 +346,7 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
+	void freePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
    void updateRadialMap(void);
    void getGapCorrelation(void);

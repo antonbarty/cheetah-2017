@@ -27,8 +27,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	int opalfail = eventData->specFail;
 	int specWidth = eventData->specWidth;
 	int specHeight = eventData->specHeight;
-	
-	int spectra = global->espectrum1D;
+	int spectra = global->espectrum;
 	
 	if(global->generateDarkcal && !opalfail && spectra){
 		eventData->energySpectrumExist = 1;
@@ -103,10 +102,15 @@ void genSpectrumBackground(cEventData *eventData, cGlobal *global, int specWidth
 
 
 void saveIntegratedRunSpectrum(cGlobal *global) {
+    
+    // Simply return if spectrum is not asked for
+    if(global->espectrum == 0)
+        return;
 
+    
 	int     spectrumpix = global->espectrumWidth*global->espectrumLength;
-	double *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
-	double *espectrumScale = (double*) calloc(global->espectrumLength, sizeof(double));
+	double  *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
+	double  *espectrumScale = (double*) calloc(global->espectrumLength, sizeof(double));
 	char	filename[1024];
 	int     maxindex = 0;
 	int     evspread = global->espectrumSpreadeV;
@@ -156,6 +160,7 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 	pthread_mutex_unlock(&global->nespechits_mutex);
 	return;
 }
+
 
 void readSpectrumDarkcal(cGlobal *global, char *filename) {
 

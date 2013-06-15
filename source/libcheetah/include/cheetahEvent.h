@@ -26,7 +26,7 @@ public:
 	long		threadNum;
 	long        frameNumber;
 	long        frameNum;
-
+	uint stackSlice;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
@@ -85,7 +85,6 @@ public:
 	char		timeString[1024];
 	char		eventname[1024];
 	char		eventSubdir[1024];
-	char            cxiFilename[1024];
 
 	bool		beamOn;
 	unsigned	runNumber;
@@ -118,7 +117,7 @@ public:
 	double		phaseCavityCharge2;
 	
 	// Thread management
-	int		threadID;
+	int	threadID;
 	int     useThreads;
 	
 } ;
@@ -132,6 +131,7 @@ void static cheetahError(const char *filename, int line, const char *format, ...
 	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
 	vfprintf(stderr,format,ap);
 	va_end(ap);
+	puts("");
 	abort();
 }
 

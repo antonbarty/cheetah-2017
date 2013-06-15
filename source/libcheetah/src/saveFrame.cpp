@@ -95,6 +95,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventSubdir, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
+
 	
 	/* 
  	 *  HDF5 variables
@@ -652,7 +653,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		if ( type == H5I_ATTR ) H5Aclose(id);
 	}
 	
-	H5Fclose(hdf_fileID); 
+	H5Fclose(hdf_fileID);
+
 }
 
 
@@ -755,6 +757,8 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	
 	H5Fclose(fh);
+	
+
 }
 
 void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {
