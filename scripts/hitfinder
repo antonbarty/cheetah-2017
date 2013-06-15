@@ -302,7 +302,7 @@ if [ $CHUNKS ]; then
 	done
 elif [ $QUE ]; then
 	#FULLCOMMAND="bsub -q psfehq -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
-	FULLCOMMAND="bsub -q psfehmpiq -n 10 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
+	FULLCOMMAND="bsub -q psfehmpiq -n 12 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	#FULLCOMMAND="bsub -q psfehq -n 6 -R "span[hosts=1]" -J $RUNDIR-$TAG -o $LOGFILE $CHEETAH $ARGS"
 	echo $FULLCOMMAND
 	$FULLCOMMAND

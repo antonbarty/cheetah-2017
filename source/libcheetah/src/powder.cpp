@@ -173,11 +173,6 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
         global->nPeaksMin[powderClass] = eventData->nPeaks;
         memcpy(global->detector[detID].correctedMin[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMin_mutex[powderClass]);
-        if(global->assemble2DImage) {
-            pthread_mutex_lock(&global->detector[detID].assembledMin_mutex[powderClass]);
-            memcpy(global->detector[detID].assembledMin[powderClass],eventData->detector[detID].image,sizeof(int16_t)*image_nn);
-            pthread_mutex_unlock(&global->detector[detID].assembledMin_mutex[powderClass]);
-        }
     }
 
     // Max nPeaks: Pattern
@@ -186,11 +181,6 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
         global->nPeaksMax[powderClass] = eventData->nPeaks;
         memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMax_mutex[powderClass]);
-        if(global->assemble2DImage) {
-            pthread_mutex_lock(&global->detector[detID].assembledMax_mutex[powderClass]);
-            memcpy(global->detector[detID].assembledMax[powderClass],eventData->detector[detID].image,sizeof(int16_t)*image_nn);
-            pthread_mutex_unlock(&global->detector[detID].assembledMax_mutex[powderClass]);
-        }
     }
 
 }
