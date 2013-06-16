@@ -352,7 +352,6 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
-	printf("photonEnergyeV = %f\n",eventData->photonEnergyeV);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
@@ -372,7 +371,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 			exit(1);
 		}
 	}
-	printf("photonEnergyeV = %f\n",eventData->photonEnergyeV);
 
   /*
    *	Remember to update global variables 
