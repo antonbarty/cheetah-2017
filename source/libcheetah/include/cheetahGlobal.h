@@ -39,6 +39,7 @@ public:
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 
+	float    fixedPhotonEnergyeV;
 	char     epicsPvFloatAddresses[MAX_EPICS_PVS][MAX_EPICS_PV_NAME_LENGTH];
 	int      nEpicsPvFloatValues;
 
