@@ -245,7 +245,11 @@ public:
 	/** @brief Python script to be hosted for shared memory visualization */
 	char     pythonFile[MAX_FILENAME_LENGTH];
     
-    bool saveCXI;
+	/** @brief Output 1 HDF5 per image by default */
+	bool saveCXI;
+
+	/** @brief  Only one thread during calibration */
+	int useSingleThreadCalibration;
 
 
 	/** @brief Toggle the verbosity of Cheetah. */

@@ -33,9 +33,7 @@
  */
 void *worker(void *threadarg) {
 
-  /*
-   *	Turn threadarg into a more useful form
-   */
+  // Turn threadarg into a more useful form
   cGlobal			*global;
   cEventData		*eventData;
   eventData = (cEventData*) threadarg;
@@ -50,9 +48,11 @@ void *worker(void *threadarg) {
   std::stringstream sstm1;
   std::ofstream outHit;
 
+
   //--------MONITORING---------//
 
   updateDatarate(eventData,global);
+
 
   //---INITIALIZATIONS-AND-PREPARATIONS---//
 
@@ -73,6 +73,7 @@ void *worker(void *threadarg) {
       eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
     }
   }
+
 	
   //---DETECTOR-CORRECTION---//
 
@@ -120,10 +121,12 @@ void *worker(void *threadarg) {
       memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
   }
 
+
   //---BACKGROUND-CORRECTION---//
 	  
   // Subtract persistent photon background (if darkcal subtraction from file, otherwise persitent background subtraction was done earlier)
   subtractPersistentBackground(eventData, global);
+
 
   //---HITFINDING---//
      
@@ -132,6 +135,7 @@ void *worker(void *threadarg) {
     hit = hitfinder(eventData, global);
     eventData->hit = hit;
   }
+
 
   //---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 
@@ -145,13 +149,14 @@ void *worker(void *threadarg) {
     updateBackgroundBuffer(eventData, global, 0); 
     calculatePersistentBackground(eventData,global);  
     global->updateCalibrated();
-    printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+    printf("r%04u:%li (%3.1fHz): Digesting initial frames (npeaks=%i)\n", global->runNumber, eventData->threadNum,global->datarateWorker, eventData->nPeaks);
     goto cleanup;
   }  else {
     // Update running backround estimate based on non-hits and calculate background from buffer
     updateBackgroundBuffer(eventData, global, hit); 
     calculatePersistentBackground(eventData,global);  
   }
+
 
   //---ASSEMBLE-AND-ACCUMULATE-DATA---//
 
@@ -186,6 +191,7 @@ void *worker(void *threadarg) {
   // integrate pattern
   integratePattern(eventData,global);
 
+
   //---WRITE-DATA-TO-H5---//
 
   // Keep int16 copy of corrected data (needed for saving images)
@@ -202,7 +208,7 @@ void *worker(void *threadarg) {
     writeCXI(eventData, global);
     pthread_mutex_unlock(&global->saveCXI_mutex);
     if(eventData->writeFlag){
-      printf("r%04u:%li (%2.1lf Hz): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
   } else {
     if(eventData->writeFlag){
@@ -218,6 +224,7 @@ void *worker(void *threadarg) {
   if(hit && global->savePeakInfo) {
     writePeakFile(eventData, global);
   }
+
 
   //---LOGBOOK-KEEPING---//
 
@@ -263,6 +270,7 @@ void *worker(void *threadarg) {
   fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
   pthread_mutex_unlock(&global->powderfp_mutex);
 	
+
   //---CLEANUP-AND-EXIT----//
  cleanup:
   // Decrement thread pool counter by one

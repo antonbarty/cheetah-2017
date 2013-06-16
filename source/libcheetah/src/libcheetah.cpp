@@ -434,7 +434,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         int				returnStatus;
         
         // Wait until we have a spare thread in the thread pool
-        while(global->nActiveThreads >= global->nThreads) {
+        while(global->nActiveThreads >= global->nThreads || (global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)) {
 	  usleep(1000);
         }
         

@@ -189,6 +189,9 @@ cGlobal::cGlobal(void) {
 
   // Output 1 HDF5 per image by default
   saveCXI = 0;
+
+  // Only one thread during calibration
+  useSingleThreadCalibration = 0;
 }
 
 
@@ -903,6 +906,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     saveCXI = atoi(value);
   } else if (!strcmp(tag, "pythonfile")) {
     strcpy(pythonFile, value);
+  } else if (!strcmp(tag, "usesinglethreadcalibration")) {
+    useSingleThreadCalibration = atoi(value);
   }
   // Unknown tags
   else {
