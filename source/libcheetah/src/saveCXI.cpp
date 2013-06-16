@@ -599,6 +599,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	free(imageXxX_pixelmask_shared);
       }
       free(image_pixelmask_shared);
+
+      
     }
   }
 

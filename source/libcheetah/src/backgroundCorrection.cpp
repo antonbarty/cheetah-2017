@@ -47,6 +47,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 
 void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
   DETECTOR_LOOP {
+    if(global->detector[detID].useSubtractPersistentBackground){
       /*
        *	Recalculate background from time to time
        */
@@ -75,14 +76,14 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	  pthread_mutex_unlock(&global->bgbuffer_mutex);
 	}
 
-	printf("Detector %li: Recalculating persistent background.\n",detID);
+	printf("Detector %li: Start calculation of persistent background.\n",detID);
 
 	pthread_mutex_lock(&global->selfdark_mutex);
 	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
 	pthread_mutex_unlock(&global->selfdark_mutex);
 	global->detector[detID].bgLastUpdate = eventData->threadNum;
 	global->detector[detID].bgCalibrated = 1;
-	printf("Detector %li: Recalculating persistent background done.\n",detID);      
+	printf("Detector %li: Persistent background calculated.\n",detID);      
 
 	free(frameBuffer);			
       } else {
@@ -90,23 +91,28 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	  pthread_mutex_unlock(&global->bgbuffer_mutex);			
 	}
       }
+    }
   }
 }
 
-
-
-// probably not needed
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
   DETECTOR_LOOP {
-    if (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter == 0){
-      long	pix_nn = global->detector[detID].pix_nn;
-      uint16_t	*raw_data = eventData->detector[detID].raw_data;
-      float	*background = global->detector[detID].selfdark;
-      pthread_mutex_lock(&global->bgbuffer_mutex);
-      for(long i = 0;i<pix_nn;i++){
-	background[i] = (float) raw_data[i];
+    if(global->detector[detID].useSubtractPersistentBackground && ((eventData->detector[detID].pedSubtracted && global->detector[detID].useDarkcalSubtraction) || (!eventData->detector[detID].pedSubtracted && !global->detector[detID].useDarkcalSubtraction))){
+      if (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter == 0){
+	long	pix_nn = global->detector[detID].pix_nn;
+	float	*background = global->detector[detID].selfdark;
+	pthread_mutex_lock(&global->bgbuffer_mutex);
+	if (global->detector[detID].useDarkcalSubtraction){
+	  for(long i = 0;i<pix_nn;i++){
+	    background[i] = eventData->detector[detID].detector_corrected_data[i];
+	  }
+	} else {
+	  for(long i = 0;i<pix_nn;i++){
+	    background[i] = (float) eventData->detector[detID].raw_data[i];
+	  }
+	}
+   	pthread_mutex_unlock(&global->bgbuffer_mutex);
       }
-      pthread_mutex_unlock(&global->bgbuffer_mutex);
     }
   }
 }
@@ -127,7 +133,7 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
       pthread_mutex_lock(&global->bgbuffer_mutex);
       if (global->detector[detID].useDarkcalSubtraction){
 	for(long i = 0;i<pix_nn;i++){
-	  frameBuffer[i+pix_nn*frameID] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
+	  frameBuffer[i+pix_nn*frameID] = (int16_t) lrint(eventData->detector[detID].detector_corrected_data[i]);
 	}
       } else {
 	for(long i = 0;i<pix_nn;i++){
@@ -180,12 +186,12 @@ void subtractPersistentBackground(float *data, float *background, int scaleBg, l
 		}
 		factor = top/s1;
 	}
-
 	// Do the weighted subtraction
 	for(long i=0; i<pix_nn; i++) {
 		data[i] -= (factor*background[i]);	
 	}	
 }
+
 
 
 /*
@@ -205,7 +211,7 @@ void calculatePersistentBackground(float *background, int16_t *frameBuffer, long
 		}
 		
 		// Find median value of the temporary array
-		background[i] = kth_smallest(buffer, bufferDepth, threshold);
+		background[i] = (float) kth_smallest(buffer, bufferDepth, threshold);
 	}
 	free (buffer);
 }
@@ -451,11 +457,11 @@ void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
       uint16_t  *maskMaxExtent = global->detector[detID].pixelmask_shared_max;
 
       // here the condition (eventData->threadNum%50 == 0) maked multiple initial calibrations unlikely
-      if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory)  && (eventData->threadNum%50 == 0) && !halopixCalibrated) ) { 
+      if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory)  /* && (eventData->threadNum%50 == 0) */ && !halopixCalibrated) ) { 
 	
 	pthread_mutex_lock(&global->halopixel_mutex);
 			
-	printf("Detector %li: Recalculating halo pixel mask.\n",detID);
+	printf("Detector %li: Calculating halo pixel mask.\n",detID);
 	nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
 	global->detector[detID].nhalo = nhalo;
 	global->detector[detID].halopixLastUpdate = eventData->threadNum;

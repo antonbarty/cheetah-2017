@@ -73,14 +73,15 @@ void *worker(void *threadarg) {
       eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
     }
   }
-
 	
   //---DETECTOR-CORRECTION---//
 
   // Check for saturated pixels before applying any other corrections
   checkSaturatedPixels(eventData, global);
 
-  // If no darkcal image subtract persistent background here
+  // If no darkcal file: Init background buffer here (background = photon background + static electronic offsets)
+  initBackgroundBuffer(eventData,global);
+  // If no darkcal file: Subtract persistent background here (background = photon background + static electronic offsets)
   subtractPersistentBackground(eventData, global);
   // Subtract darkcal image (static electronic offsets)
   subtractDarkcal(eventData, global);
@@ -115,18 +116,17 @@ void *worker(void *threadarg) {
   calculateHotPixelMask(eventData,global);
   applyHotPixelMask(eventData,global);
 
-  // Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+  // Save detector-corrections-only data (possibly needed later)
   DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorCorrectedOnly) 
-      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+    memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
   }
-
 
   //---BACKGROUND-CORRECTION---//
 	  
-  // Subtract persistent photon background (if darkcal subtraction from file, otherwise persitent background subtraction was done earlier)
+  // If darkcal file available: Init background buffer here (background = photon background)
+  initBackgroundBuffer(eventData,global);
+  // If darkcal file available: Subtract persistent background here (background = photon background)
   subtractPersistentBackground(eventData, global);
-
 
   //---HITFINDING---//
      
@@ -159,6 +159,12 @@ void *worker(void *threadarg) {
 
 
   //---ASSEMBLE-AND-ACCUMULATE-DATA---//
+
+  // Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+  DETECTOR_LOOP {
+    if(global->detector[detID].saveDetectorCorrectedOnly) 
+      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+  }
 
   // If using detector raw, do it here
   DETECTOR_LOOP {

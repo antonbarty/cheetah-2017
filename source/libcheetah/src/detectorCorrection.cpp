@@ -422,7 +422,7 @@ void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 	if(lockThreads)
 	  pthread_mutex_lock(&global->hotpixel_mutex);
 
-	printf("Detector %li: Recalculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
+	printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
 	nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
 	printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
 	global->detector[detID].nhot = nhot;
