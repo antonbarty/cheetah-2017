@@ -36,7 +36,7 @@ Now that you have cmake we can start the build:
 
 - If you're on psexport, make sure to log into one of the psana computers (it's not possible to compile anymore on psexport):
 
-	$ ssh psanafeh
+        $ ssh psanafeh
 
 - Create and go into a build directory:
 
