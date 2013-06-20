@@ -56,7 +56,7 @@ EMPTY CACHE:
 
 Press [enter] to edit option                              CMake Version 2.8.10.2
 Press [c] to configure
-Press [h] for help           Press [q] to quit without generating
+Press [h] for help               Press [q] to quit without generating
 Press [t] to toggle advanced mode (Currently Off)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -73,7 +73,7 @@ Press [t] to toggle advanced mode (Currently Off)
  CMAKE_INSTALL_PREFIX            */usr/local                                   
  HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
  HDF5_hdf5_LIBRARY_DEBUG          HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
- HDF5_hdf5_LIBRARY_RELEASE	  /reg/neh/home/barty/hdf5/lib/libhdf5.so      
+ HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
  RPATH_ON_INSTALLED_BINS         *ON                                           
 
 ANA_ARCH: ana architecture to be used                                           
