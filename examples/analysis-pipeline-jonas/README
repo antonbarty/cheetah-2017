@@ -1,0 +1,31 @@
+This is an example analysis pipeline that might be useful
+when beginning an analysis session for a particular 
+experiment.
+
+You will want to copy the contents of this directory to some
+place and modify scripts as needed.
+
+1. If you haven't run the cheetah before, you will first have to
+configure proper input files:
+- Go to the config directory and modify the script environ
+There are some scripts called "setup.bash" that may be handy.  
+- Go to config/mask and generate some masks
+- Go to config/geom and generate a reasonable cheetah geometry file
+- Go to config/ini/example and generate some cheetah config files
+
+2. Once you've obtained the proper input files, you can test run the
+cheetah on an experiment:
+- Go to hitfinder and try running run-cheetah-psana
+You have to modify the paths in run-cheetah-psana prior to execution.
+The ini files in the hitfinder directory are sample config files for
+the experiment cxi64813. You have to modify or replace them with proper
+config files for your experiment.
+
+Sorry, but you may also need to install a bunch of dependencies, e.g.
+- python with h5py
+- crystfel
+- make_pixelmap
+Or, use someone else's compiled programs.
+
+Written by R. Kirian
+Updated by J. Sellberg on April 11, 2013
