@@ -100,9 +100,9 @@ point to the ana-current directory, for example on psexport it is
  BUILD_PSANA                      ON                                           
  CMAKE_BUILD_TYPE                                                              
  CMAKE_INSTALL_PREFIX             /home/filipe/usr                             
- HDF5_C_INCLUDE_DIR               /opt/include                                 
+ HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
  HDF5_hdf5_LIBRARY_DEBUG         *HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
- HDF5_hdf5_LIBRARY_RELEASE        /opt/lib64/libhdf5.so                        
+ HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
  RPATH_ON_INSTALLED_BINS          ON                                           
 
 ANA_ARCH: ana architecture to be used                                           
