@@ -57,8 +57,9 @@ pro crawler_hdf5, hdf5dir, pattern
 		;; Sometimes this will tank when the file has not been completely written - fix later, solve now with catch errors
 		sfile = h5dir[i]+'/status.txt'
 		if file_test(sfile) then begin
-			;; Are there 3 lines?
-			if file_lines(sfile) eq 3 then begin
+			;; Are there 3 lines (the original format)?
+			nlines = file_lines(sfile)
+			if nlines eq 3 then begin
 				data1 = string('')
 				data2 = long(0)
 				data3 = long(0)
@@ -68,26 +69,42 @@ pro crawler_hdf5, hdf5dir, pattern
 				readf, lun, data3
 				close, lun
 				free_lun, lun
-			
-				status[i] = data1
-				processed[i] = data2
-				hits[i] = data3
-				
-				;; Is the file stale??
-				staletime = 20
-				if data1 eq 'Not finished' then begin
-					info = file_info(sfile)
-					mtime = info.mtime
-					now = systime(/sec)
-					if (now - mtime) gt (staletime*60) then begin
-						status[i] = 'Stalled?'
-					endif
-				endif
 			endif $
+			;; Or 6 lines (the 2nd generation format)?
+			else if nlines eq 6 then begin
+				data = read_csv(sfile)
+				data = data.field1
+
+				data1 = strsplit(data[2], '=', /extract)				
+				data1 = data1[1]
+
+				data2 = strsplit(data[3], '=', /extract)				
+				data2 = data1[1]
+
+				data3 = strsplit(data[4], '=', /extract)				
+				data3 = data3[1]
+			endif $
+			;; Not the right number of lines means some sort of race condition occurred
 			else begin
 				status[i] = 'Dont panic'
 				continue
 			endelse
+
+			;; Populate the array
+			status[i] = data1
+			processed[i] = data2
+			hits[i] = data3
+			
+			;; Is the file stale??
+			staletime = 20
+			if data1 eq 'Not finished' then begin
+				info = file_info(sfile)
+				mtime = info.mtime
+				now = systime(/sec)
+				if (now - mtime) gt (staletime*60) then begin
+					status[i] = 'Stalled?'
+				endif
+			endif
 		endif $
 		
 		;; Older versions won't 

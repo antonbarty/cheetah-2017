@@ -72,6 +72,8 @@ void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
+void readHitfinderThresholdMap(cGlobal*);
+void readHitfinderHistogram(cGlobal*);
 
 // peakfinders.cpp
 int peakfinder3(cGlobal*, cEventData*, int);

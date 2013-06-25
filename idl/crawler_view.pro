@@ -34,12 +34,13 @@ pro crawler_config, pState
 		info = read_csv(configFile)
 		info = info.field1		
 		if n_elements(info) eq 6 then begin
-			(*pstate).xtcdir = info[0]
-			(*pstate).h5dir = info[1]
-			(*pstate).h5filter = info[2]
-			(*pstate).geometry = info[3]
-			(*pstate).process = info[4]
-			(*pstate).cheetahIni = info[5]
+			info = strsplit(info, '=', /extract)
+			(*pstate).xtcdir = (info[0])[1]
+			(*pstate).h5dir = (info[1])[1]
+			(*pstate).h5filter = (info[2])[1]
+			(*pstate).geometry = (info[3])[1]
+			(*pstate).process = (info[4])[1]
+			(*pstate).cheetahIni = (info[5])[1]
 		endif $
 		
 		else begin
@@ -56,7 +57,7 @@ pro crawler_config, pState
 	print, 'HDF5 run filter: ', (*pState).h5filter
 	print, 'Process script: ', (*pState).process
 	print, 'Geometry file: ', (*pState).geometry
-	print, 'Cheetah .ini: ', (*pstate).cheetahIni
+	print, 'Default cheetah.ini: ', (*pstate).cheetahIni
 
 end
 
@@ -120,6 +121,38 @@ pro crawler_displayfile, filename
 end
 
 ;;
+;;	Snippet to update the datasets file
+;;
+pro crawler_updateDatasetLog, pstate
+	sState = *pState
+
+	;; Update datasets.txt files		
+	widget_control, sState.table, get_value = table_data
+	run = reform(table_data[0,*])
+	dataset = reform(table_data[sState.table_datasetcol,*])
+	dirname = reform(table_data[sState.table_dircol,*])
+	
+	openw, lun, 'datasets.txt', /get
+	printf, lun, '# Run, DatasetID, Directory'		
+	for i=0L, n_elements(dataset)-1 do begin
+		str = strcompress(string(run[i], ', ', dataset[i], ', ', dirname[i]))
+		printf, lun, str
+	endfor
+	close, lun
+	free_lun, lun
+
+	;openw, lun, 'directories.txt', /get
+	;printf, lun, '# Run, Directory'		
+	;for i=0L, n_elements(dataset)-1 do begin
+	;	str = strcompress(string(run[i], ', ', dirname[i]))
+	;	printf, lun, str
+	;endfor
+	;close, lun
+	;free_lun, lun
+
+end
+
+;;
 ;;	Dialog to start Cheetah
 ;;
 pro crawler_startCheetah, pState, run
@@ -150,23 +183,128 @@ pro crawler_startCheetah, pState, run
 	
 	;; Only do this if OK is pressed (!!)
 	if a.OK eq 1 then begin		
+		ini = a.ini
 		(*pstate).cheetahIni = a.ini
 		
-		for i=0, nruns do begin
-			cmnd = strcompress(string(cheetah, ' ', run[i], ' ', ini))
+		;; Base of the .ini filename is the run tag
+		wini = strpos(ini,'.ini')
+		if wini ne -1 then $
+			tag=strmid(ini,0,wini) $
+		else $
+			tag=ini
+		print, tag
+		
+		for i=0L, nruns do begin
+			cmnd = strcompress(string(cheetah, ' ', run[i], ' ', ini, ' ', tag))
+			dir = string(format='(%"r%04i-%s")', run[i], tag) 
 			print, cmnd
 			spawn, cmnd
 			
 			;; This is simply for eye candy - swap the Cheetah status label to 'Submitted'
 			w = where(table_runs eq run[i])
-			if w[0] ne -1 then $
-				widget_control, sState.table, use_table_select = [3, w[0], 3, w[0]], set_value = ['Submitted']
+			if w[0] ne -1 then begin
+				widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
+				widget_control, sState.table, use_table_select = [sState.table_statuscol, w[0], sState.table_statuscol, w[0]], set_value = ['Submitted']
+				widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir]
+			endif
 		endfor
 
+		;; Update the datasets file
+		crawler_updateDatasetLog, pstate
+		
 	endif
-
 end
 
+
+;;	Dialog to label a dataset
+;;
+pro crawler_labelDataset, pState, run
+
+  	sState = *pState
+	table_data = *(sState.table_pdata)
+	table_runs = reform(table_data[0,*])
+
+	nruns = n_elements(run)-1
+	startrun  = run[0]
+	endrun = run[nruns]
+	
+	ini = sState.cheetahIni
+	wini = strpos(ini,'.ini')
+	if wini ne -1 then tag=strmid(ini,0,wini) $
+		else tag=ini
+
+	desc = [ 	'1, base, , column', $
+				'0, label, Start run: '+startrun+', left', $
+				'0, label, End run: '+endrun+', left', $
+				'2, text, '+tag+', label_left=Dataset label:, width=50, tag=tag', $
+				'1, base,, row', $
+				'0, button, OK, Quit, Tag=OK', $
+				'2, button, Cancel, Quit' $
+	]		
+	a = cw_form(desc, /column, title='Start cheetah')
+	
+	;; Only do this if OK is pressed (!!)
+	if a.OK eq 1 then begin		
+		tag = a.tag
+
+		;; Swap labels to the new tag		
+		for i=0L, nruns do begin
+			w = where(table_runs eq run[i])
+			if w[0] ne -1 then begin 
+				widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
+			endif
+		endfor
+
+		;; Update the datasets file
+		crawler_updateDatasetLog, pstate
+		
+	endif
+end
+
+;;
+;;	Dialog to start post-processing
+;;
+pro crawler_postprocess, pState, run
+  	sState = *pState
+	table_data = *(sState.table_pdata)
+	table_runs = reform(table_data[0,*])
+
+	help, run
+	print, run
+
+	nruns = n_elements(run)-1
+	startrun  = run[0]
+	endrun = run[nruns]
+	command = sState.postprocess_command
+	
+	desc = [ 	'1, base, , column', $
+				'0, label, Start run: '+startrun+', left', $
+				'0, label, End run: '+endrun+', left', $
+				'0, label, Command format: bsub -q psfehq <command> <run#>, left', $
+				'2, text, '+command+', label_left=Command:, width=50, tag=command', $
+				'1, base,, row', $
+				'0, button, OK, Quit, Tag=OK', $
+				'2, button, Cancel, Quit' $
+	]		
+	a = cw_form(desc, /column, title='Start cheetah')
+	
+	;; Only do this if OK is pressed (!!)
+	if a.OK eq 1 then begin		
+		command = a.command
+		(*pstate).postprocess_command = a.command
+		
+		for i=0, nruns do begin
+			cmnd = strcompress(string('bsub -q psfehq ', command, ' ', run[i]))
+			print, cmnd
+			spawn, cmnd
+			
+			;; This is simply for eye candy - swap the CrystFEL status label to 'Submitted'
+			w = where(table_runs eq run[i])
+			if w[0] ne -1 then $
+				widget_control, sState.table, use_table_select = [sState.table_crystfelcol, w[0], sState.table_crystfelcol, w[0]], set_value = ['Submitted']
+		endfor
+	endif
+end
 
 
 ;;
@@ -179,9 +317,9 @@ pro crawler_updateTable, pState
   	sState = *pState
 	table = sState.table
 	
-	;screensize = get_screen_size()
-	;xview = screensize[0] - 140
-	;yview = screensize[1] - 140
+	screensize = get_screen_size()
+	xview = screensize[0] - 140
+	yview = screensize[1] - 140
 
 
 	;; Read crawler file
@@ -210,7 +348,9 @@ pro crawler_updateTable, pState
 	widget_control, table, column_labels=h
 	widget_control, table, row_labels = ''
 	widget_control, table, set_value = table_data
-	widget_control, table, set_table_select = [-1, nrows-1, -1, nrows-1]
+	
+	;; Select the last element (can be a pain in the neck!)
+	;widget_control, table, set_table_select = [-1, nrows-1, -1, nrows-1]
 
 
 	;; Column widths
@@ -218,6 +358,8 @@ pro crawler_updateTable, pState
 	cwidth = colwidth * !d.x_ch_size + 6
 	widget_control, table, column_widths = cwidth
 
+	;; Window width (silly idea?)
+	widget_control, table, scr_xsize=total(cwidth)+30
 
 
 	;; Remember table data for later
@@ -248,10 +390,10 @@ function crawler_whichRun, pState, runname=runname, dirname=dirname, pathname=pa
 	print, 'Selected rows: ', rowstart, rowend
 	table_data = *(sState.table_pdata)
 	run = reform(table_data[0,rowstart:rowend])
-	rundir = reform(table_data[4,rowstart:rowend])
+	rundir = reform(table_data[sState.table_dircol,rowstart:rowend])
 	
 	
-	;; Old way when we only knew the run number
+	;; Old way of determining the directory name when we only knew the run number
 	;h5filter = sState.h5filter
 	;part = strsplit(h5filter, '*', /extract)
 	;dir = string(format='(%"%s%04i%s")', part[0], fix(run), part[1])
@@ -346,12 +488,19 @@ pro crawler_event, ev
 		end
 
 		;;
-		;;	Launch Cheetah
+		;;	Action buttons
 		;;
+		;; Launch Cheetah
 		sState.button_cheetah : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
 			crawler_startCheetah, pState, run
 		end			
+
+		sState.button_postprocess : begin
+			run = crawler_whichRun(pstate, /run, /multiple)
+			crawler_postprocess, pState, run
+		end			
+
 
 		;; View hits
 		sState.button_hits : begin
@@ -397,6 +546,10 @@ pro crawler_event, ev
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
 			crawler_startCheetah, pState, run
+		end
+		sState.mbcheetah_label : begin
+			run = crawler_whichRun(pstate, /run, /multiple)
+			crawler_labelDataset, pState, run
 		end
 		sState.mbview_images : begin
 			dir = crawler_whichRun(pstate, /path)
@@ -493,6 +646,7 @@ pro crawler_view
 
 	mbfile = widget_button(bar, value='Cheetah')
 	mbcheetah_run = widget_button(mbfile, value='Process selected runs')
+	mbcheetah_label = widget_button(mbfile, value='Label dataset')
 
 	mbfile = widget_button(bar, value='View')
 	mbview_images = widget_button(mbfile, value='View HDF5 files')
@@ -509,6 +663,7 @@ pro crawler_view
 	button_refresh = widget_button(base2, value='Refresh')
 	button_viewtype = widget_button(base2, value='Dataset view', sensitive=0)
 	button_cheetah = widget_button(base2, value='Run Cheetah')
+	button_postprocess = widget_button(base2, value='Postprocess')
 	button_hits = widget_button(base2, value='View hits')
 	button_hitrate = widget_button(base2, value='Hitrate')
 	button_resolution = widget_button(base2, value='Resolution')
@@ -559,12 +714,18 @@ pro crawler_view
 			table_scrwidth : scrwidth, $
 			table_autorefresh : 60., $
 			
+			table_datasetcol : 1, $
+			table_statuscol : 3, $
+			table_crystfelcol : 4, $
+			table_dircol : 5, $
+			
 			mbfile_configure : mbfile_configure, $
 			mbfile_crawl : mbfile_crawl, $
 			mbfile_refresh : mbfile_refresh, $
 			mbfile_autorefresh : mbfile_autorefresh, $ 
 			mbfile_quit : mbfile_quit, $
 			mbcheetah_run : mbcheetah_run, $
+			mbcheetah_label : mbcheetah_label, $
 			
 			mbview_images : mbview_images, $
 			mbview_hitrate : mbview_hitrate, $
@@ -575,6 +736,7 @@ pro crawler_view
 			button_refresh : button_refresh, $
 			button_viewtype : button_viewtype, $
 			button_cheetah : button_cheetah, $
+			button_postprocess : button_postprocess, $
 			button_hits : button_hits, $
 			button_hitrate : button_hitrate, $
 			button_resolution : button_resolution, $
@@ -585,7 +747,8 @@ pro crawler_view
 			h5filter : 'Not set', $
 			process : 'Not set', $
 			geometry : 'Not set', $
-			cheetahIni : 'Not set' $
+			cheetahIni : 'Not set', $
+			postprocess_command : 'Not set' $
 	}
 	
 	pstate = ptr_new(sState)

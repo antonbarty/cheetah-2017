@@ -482,6 +482,8 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		histogram_ny = pix_ny;
 		histogram_depth = (histogramMax - histogramMin + 1) / histogramBinSize;
 		histogram_nn = (uint64_t)histogram_depth*(uint64_t)(histogram_nx*histogram_ny);
+		printf("\tHistogram size is %li x %li x %li\n",histogram_nx, histogram_ny, histogram_depth);
+
 		
 		float	histogramMemory;
 		float	histogramMemoryGb;
@@ -734,11 +736,11 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         
     if ( res < minres ){
       minres = res;
-      minres_pix = pix_r[i];
+      minres_pix = floor(pix_r[i]);
     }
     if ( res > maxres ){
       maxres = res;
-      maxres_pix = pix_r[i];
+      maxres_pix = ceil(pix_r[i]);
     }
     
     

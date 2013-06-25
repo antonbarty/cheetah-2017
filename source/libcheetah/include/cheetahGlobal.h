@@ -99,6 +99,28 @@ public:
 	int      hitfinderUsePeakmask;
 	/** @brief Path to the peak mask file. */
 	char     peaksearchFile[MAX_FILENAME_LENGTH];
+	
+	
+	/*
+	 *	Hitfinder histograms
+	 */
+	char	hitfinderHistogramFile[MAX_FILENAME_LENGTH];
+	float	*hitfinderHistogram;
+	float	hitfinderHistogramMin;
+	float	hitfinderHistogramMax;
+	float	hitfinderHistogramStep;
+	long	hitfinderHistogramDepth;
+	long	hitfinderHistogramNx;
+	long	hitfinderHistogramNy;
+	
+	
+	/*
+	 *	Hitfinder threshold maps
+	 */
+	char	hitfinderThresholdMapFile[MAX_FILENAME_LENGTH];
+	float	*hitfinderThresholdMap;
+	
+	
 	/** @brief Toggle the useage of the TOF-based hitfinder.
 	 *
 	 * Isn't this specified by hitfinderAlgorithm? */
