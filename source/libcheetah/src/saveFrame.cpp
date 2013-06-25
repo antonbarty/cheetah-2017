@@ -724,12 +724,13 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 /*
  *	Write test data to a simple HDF5 file
  */
-void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type) 
-{
+void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-	herr_t r;
-	hsize_t size[2];
-	hsize_t max_size[2];
+	herr_t		r;
+	hsize_t		size[2];
+	hsize_t		max_size[2];
+	hid_t		h5compression;
+	
 	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {
@@ -742,14 +743,20 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 		H5Fclose(fh);
 	}
 	
+	// Compression
+	//h5compression = H5P_DEFAULT;
+	h5compression = H5Pcreate(H5P_DATASET_CREATE);
+	
+	
 	size[0] = height;
 	size[1] = width;
 	max_size[0] = height;
 	max_size[1] = width;
 	sh = H5Screate_simple(2, size, max_size);
+	H5Pset_chunk(h5compression, 2, size);
+	H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
 	
-	dh = H5Dcreate(gh, "data", type, sh,
-	               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	if ( dh < 0 ) {
 		ERROR("Couldn't create dataset\n");
 		H5Fclose(fh);
@@ -758,8 +765,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	/* Muppet check */
 	H5Sget_simple_extent_dims(sh, size, max_size);
 	
-	r = H5Dwrite(dh, type, H5S_ALL,
-	             H5S_ALL, H5P_DEFAULT, data);
+	r = H5Dwrite(dh, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
 	if ( r < 0 ) {
 		ERROR("Couldn't write data\n");
 		H5Dclose(dh);
