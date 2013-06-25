@@ -65,7 +65,7 @@ namespace cheetah_ana_pkg {
 	static time_t startT = 0;
 
 
-        void sig_handler(int signo)
+	void sig_handler(int signo)
 	{
 	  if (signo == SIGINT){
 	    // Wait for threads to finish
@@ -963,46 +963,47 @@ namespace cheetah_ana_pkg {
 	}
 
 	/// Method which is called at the end of the run
-	void 
-	cheetah_ana_mod::endRun(Event& evt, Env& env)
+void cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
 		
-	/*
-	 *	Wait for all worker threads to finish
-	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
-	 */
-	time_t	tstart, tnow;
-	time(&tstart);
-	double	dtime;
-	float	maxwait = 60.;
-	int p=0, pp=0;
-	
-	while(cheetahGlobal.nActiveThreads > 0) {
-		p = cheetahGlobal.nActiveThreads;
-		if ( pp != p){
-			pp = p;
-			printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
-		}
-		time(&tnow);
-		dtime = difftime(tnow, tstart);
-		if(dtime > maxwait) {
-			printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
-			printf("\tGiving up and exiting anyway\n");
-			cheetahGlobal.nActiveThreads = 0;
-			break;
-		}
-		usleep(100000);
-	}
+		/*
+		 *	Wait for all worker threads to finish
+		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+		 */
+		time_t	tstart, tnow;
+		time(&tstart);
+		double	dtime;
+		float	maxwait = 60.;
+		int p=0, pp=0;
 		
-        printf("Writing accumulated CXIDB file\n");
-	writeAccumulatedCXI(&cheetahGlobal);
-	//closeCXIFiles(&cheetahGlobal);
+		while(cheetahGlobal.nActiveThreads > 0) {
+			p = cheetahGlobal.nActiveThreads;
+			if ( pp != p){
+				pp = p;
+				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+			}
+			time(&tnow);
+			dtime = difftime(tnow, tstart);
+			if(dtime > maxwait) {
+				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
+				printf("\tGiving up and exiting anyway\n");
+				cheetahGlobal.nActiveThreads = 0;
+				break;
+			}
+			usleep(100000);
+		}
+		
+		if(cheetahGlobal.saveCXI) {
+			printf("Writing accumulated CXIDB file\n");
+			writeAccumulatedCXI(&cheetahGlobal);
+			closeCXIFiles(&cheetahGlobal);
+		}
 	}
+
 
 	/// Method which is called once at the end of the job
 	///	Clean up all variables associated with libCheetah
-	void 
-	cheetah_ana_mod::endJob(Event& evt, Env& env)
+void cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
 	  cheetahExit(&cheetahGlobal);
 	  

@@ -513,7 +513,8 @@ void cheetahExit(cGlobal *global) {
 	global->writeFinalLog();
 
     // Close all CXI files
-    closeCXIFiles(global);
+	if(global->saveCXI)
+		closeCXIFiles(global);
 
 	
     // Save integrated run spectrum

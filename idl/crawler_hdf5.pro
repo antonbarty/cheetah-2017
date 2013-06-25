@@ -74,15 +74,12 @@ pro crawler_hdf5, hdf5dir, pattern
 			else if nlines eq 6 then begin
 				data = read_csv(sfile)
 				data = data.field1
-
-				data1 = strsplit(data[2], '=', /extract)				
+				data1 = strsplit(data[3], ':', /extract)				
 				data1 = data1[1]
-
-				data2 = strsplit(data[3], '=', /extract)				
-				data2 = data1[1]
-
-				data3 = strsplit(data[4], '=', /extract)				
-				data3 = data3[1]
+				data2 = strsplit(data[4], ':', /extract)				
+				data2 = long(data2[1])
+				data3 = strsplit(data[5], ':', /extract)				
+				data3 = long(data3[1])
 			endif $
 			;; Not the right number of lines means some sort of race condition occurred
 			else begin
