@@ -1114,14 +1114,37 @@ void cGlobal::updateLogfile(void){
   pthread_mutex_unlock(&peaksfp_mutex);
 }
 
+/*
+ *	Write (and keep over-writing) a little status file
+ */
 void cGlobal::writeStatus(const char* message) {
+	
+	// Current time
+	char	timestr[1024];
+	time_t	rawtime;
+	tm		*timeinfo;
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(timestr,80,"%c",timeinfo);
+
+	// Elapsed processing time
+	double	dtime;
+	int		hrs, mins, secs;
+	time(&tend);
+	dtime = difftime(tend,tstart);
+	hrs = (int) floor(dtime / 3600);
+	mins = (int) floor((dtime-3600*hrs)/60);
+	secs = (int) floor(dtime-3600*hrs-60*mins);
+
+	// Now write it to file
     FILE *fp;
     fp = fopen ("status.txt","w");
-    
-    fprintf(fp, "%s\n", message);
-    fprintf(fp, "%li\n", nprocessedframes);
-    fprintf(fp, "%li\n", nhits);
-
+	fprintf(fp, "# Cheetah status\n");
+	fprintf(fp, "Update time: %s\n",timestr);
+	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
+    fprintf(fp, "Status: %s\n", message);
+	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
+	fprintf(fp, "Number of hits: %li\n",nhits);
     fclose (fp);
 
     
