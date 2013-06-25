@@ -110,8 +110,11 @@ void saveHistogram(cGlobal *global, int detID) {
 	 */
 	char	filename[1024];
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-	hsize_t size[3];
-	hsize_t max_size[3];
+	hsize_t		size[3];
+	hsize_t		max_size[3];
+	hsize_t		chunk[3];
+	hid_t		h5compression;
+
     
 	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
 	printf("Writing histogram data to file: %s\n",filename);
@@ -126,6 +129,14 @@ void saveHistogram(cGlobal *global, int detID) {
 		H5Fclose(fh);
 	}
 	
+	if (global->h5compress) {
+		h5compression = H5Pcreate(H5P_DATASET_CREATE);
+		//H5Pset_chunk(h5compression, 2, chunksize);
+		//H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+	}
+	else {
+		h5compression = H5P_DEFAULT;
+	}
 
     
 	/*
@@ -153,8 +164,17 @@ void saveHistogram(cGlobal *global, int detID) {
 	size[1] = hist_nx;
 	size[2] = hist_depth;
 	sh = H5Screate_simple(3, size, NULL);
+
+	chunk[0] = 1;
+	chunk[1] = 1;
+	chunk[2] = hist_depth;
+	if (global->h5compress) {
+		H5Pset_chunk(h5compression, 3, chunk);
+		H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
+	}
+
 	
-	dh = H5Dcreate(gh, "histogram", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dh = H5Dcreate(gh, "histogram", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	if (dh < 0) ERROR("Could not create dataset.\n");
 	H5Dwrite(dh, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, histogramBuffer);
 	H5Dclose(dh);

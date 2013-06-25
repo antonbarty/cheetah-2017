@@ -107,7 +107,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	hsize_t 	size[2],max_size[2];
 	herr_t		hdf_error;
 	hid_t   	gid, gidCheetah;
-	//char 		fieldname[100]; 
+	hid_t		h5compression;
+	//char 		fieldname[100];
 	char        fieldID[1023];
 
 	
@@ -116,6 +117,22 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 */
 	hdf_fileID = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	
+	
+	/*
+	 *	Compressed HDF5?
+	 */
+	//ph = H5Pcreate(H5P_DATASET_CREATE);
+	//H5Pset_chunk(ph, 2, size);
+	//H5Pset_deflate(ph, 3);   // <--- this one
+	//dh = H5Dcreate2(gh, "data", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, ph, H5P_DEFAULT);
+	if (global->h5compress) {
+		h5compression = H5Pcreate(H5P_DATASET_CREATE);
+		//H5Pset_chunk(h5compression, 2, chunksize);
+		//H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+	}
+	else {
+		h5compression = H5P_DEFAULT;
+	}
 	
 	
 	
@@ -133,50 +150,54 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	if(global->saveAssembled) {
 		char fieldID[1023];
 		DETECTOR_LOOP {
-		  // data
-		  size[0] = global->detector[detID].image_nx;	// size[0] = height
-		  size[1] = global->detector[detID].image_nx;	// size[1] = width
-		  max_size[0] = global->detector[detID].image_nx;
-		  max_size[1] = global->detector[detID].image_nx;
-		  dataspace_id = H5Screate_simple(2, size, max_size);
-		  sprintf(fieldID, "assembleddata%li", detID);
-		  dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		  if ( dataset_id < 0 ) {
-		    ERROR("%li: Couldn't create dataset\n", info->threadNum);
-		    H5Fclose(hdf_fileID);
-		    return;
-		  }
-		  hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
-		  if ( hdf_error < 0 ) {
-		    ERROR("%li: Couldn't write data\n", info->threadNum);
-		    H5Dclose(dataspace_id);
-		    H5Fclose(hdf_fileID);
-		    return;
-		  }
-		  H5Dclose(dataset_id);
-		  H5Sclose(dataspace_id);
-		  // pixelmask
-		  dataspace_id = H5Screate_simple(2, size, max_size);
-		  if(global->savePixelmask){
-		    sprintf(fieldID, "assembledpixelmask%li", detID);
-		    dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		    if ( dataset_id < 0 ) {
-		      ERROR("%li: Couldn't create datasetkkkkkkkkkkkk\n", info->threadNum);
-		      H5Fclose(hdf_fileID);
-		      return;
-		    }
-		    hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image_pixelmask);
-		    if ( hdf_error < 0 ) {
-		      ERROR("%li: Couldn't write data\n", info->threadNum);
-		      H5Dclose(dataspace_id);
-		      H5Fclose(hdf_fileID);
-		      return;
-		    }
-		    H5Dclose(dataset_id);
-		    H5Sclose(dataspace_id);
-		  }
-
-		}	
+			// data
+			size[0] = global->detector[detID].image_nx;	// size[0] = height
+			size[1] = global->detector[detID].image_nx;	// size[1] = width
+			max_size[0] = global->detector[detID].image_nx;
+			max_size[1] = global->detector[detID].image_nx;
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			sprintf(fieldID, "assembleddata%li", detID);
+			if (global->h5compress) {
+				H5Pset_chunk(h5compression, 2, size);
+				H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+			}
+			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+			if ( dataset_id < 0 ) {
+				ERROR("%li: Couldn't create dataset\n", info->threadNum);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+			if ( hdf_error < 0 ) {
+				ERROR("%li: Couldn't write data\n", info->threadNum);
+				H5Dclose(dataspace_id);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			H5Dclose(dataset_id);
+			H5Sclose(dataspace_id);
+			// pixelmask
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			if(global->savePixelmask){
+				sprintf(fieldID, "assembledpixelmask%li", detID);
+				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+				if ( dataset_id < 0 ) {
+					ERROR("%li: Couldn't create dataset\n", info->threadNum);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image_pixelmask);
+				if ( hdf_error < 0 ) {
+					ERROR("%li: Couldn't write data\n", info->threadNum);
+					H5Dclose(dataspace_id);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
+			}
+			
+		}
 	}
 	// Save raw data (and pixelmask)
 	if(global->saveRaw) {
@@ -187,9 +208,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			max_size[0] = global->detector[detID].pix_ny;
 			max_size[1] = global->detector[detID].pix_nx;
 			dataspace_id = H5Screate_simple(2, size, max_size);
+			if (global->h5compress) {
+				H5Pset_chunk(h5compression, 2, size);
+				H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+			}
 			// rawdata
 			sprintf(fieldID, "rawdata%li", detID);
-			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 			if ( dataset_id < 0 ) {
 				ERROR("%li: Couldn't create dataset\n", info->threadNum);
 				H5Fclose(hdf_fileID);
@@ -207,27 +232,27 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			// pixelmask
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			if(global->savePixelmask){
-			  sprintf(fieldID, "pixelmask%li", detID);
-			  dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			  if ( dataset_id < 0 ) {
-			    ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			    H5Fclose(hdf_fileID);
-			    return;
-			  }
-			  hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].pixelmask);
-			  if ( hdf_error < 0 ) {
-			    ERROR("%li: Couldn't write data\n", info->threadNum);
-			    H5Dclose(dataspace_id);
-			    H5Fclose(hdf_fileID);
-			    return;
-			  }
-			  H5Dclose(dataset_id);
-			  H5Sclose(dataspace_id);
+				sprintf(fieldID, "pixelmask%li", detID);
+				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+				if ( dataset_id < 0 ) {
+					ERROR("%li: Couldn't create dataset\n", info->threadNum);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].pixelmask);
+				if ( hdf_error < 0 ) {
+					ERROR("%li: Couldn't write data\n", info->threadNum);
+					H5Dclose(dataspace_id);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
 			}
 		}
 	}
 		
-	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
+	// Create symbolic link from /data/data to whatever is deemed the 'main' data set
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/assembleddata",0,0);
@@ -270,13 +295,16 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		size[1] = global->AcqNumSamples;	
 		max_size[0] = 2;
 		max_size[1] = global->AcqNumSamples;
-		
+		if (global->h5compress) {
+			H5Pset_chunk(h5compression, 2, size);
+			H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+		}
 		double tempData[2][global->AcqNumSamples];
 		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
 		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
-		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 		if ( dataset_id < 0 ) {
 			
 		}
@@ -294,9 +322,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	if(info->pulnixFail == 0) {
 		size[0] = info->pulnixHeight;	
 		size[1] = info->pulnixWidth;	
-
+		if (global->h5compress) {
+			H5Pset_chunk(h5compression, 2, size);
+			H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+		}
 		dataspace_id = H5Screate_simple(2, size, size);
-		dataset_id = H5Dcreate(gid, "pulnixCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gid, "pulnixCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->pulnixImage);
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
@@ -308,9 +339,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	if(info->specFail == 0) {
 		size[0] = info->specHeight;
 		size[1] = info->specWidth;
-        
+		if (global->h5compress) {
+			H5Pset_chunk(h5compression, 2, size);
+			H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+		}
 		dataspace_id = H5Screate_simple(2, size, size);
-		dataset_id = H5Dcreate(gid, "energySpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_id = H5Dcreate(gid, "energySpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->specImage);
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);

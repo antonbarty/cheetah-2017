@@ -138,6 +138,7 @@ cGlobal::cGlobal(void) {
     savehits = 0;
     saveAssembled = 1;
     saveRaw = 0;
+	h5compress = 1;
     hdf5dump = 0;
     saveInterval = 1000;
     savePixelmask = 0;
@@ -705,6 +706,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "savepixelmask")) {
     savePixelmask = atoi(value);
+  }
+  else if (!strcmp(tag, "h5compress")) {
+	  h5compress = atoi(value);
   }
   else if (!strcmp(tag, "hdf5dump")) {
     hdf5dump = atoi(value);

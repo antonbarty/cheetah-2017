@@ -328,8 +328,10 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
      */
     hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
     //herr_t r;
-    hsize_t size[2];
-    hsize_t max_size[2];
+    hsize_t		size[2];
+    hsize_t		max_size[2];
+	hid_t		h5compression;
+
 	
     fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if ( fh < 0 ) {
@@ -341,30 +343,40 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         H5Fclose(fh);
     }
 	
+	if (global->h5compress) {
+		h5compression = H5Pcreate(H5P_DATASET_CREATE);
+	}
+	else {
+		h5compression = H5P_DEFAULT;
+	}
+
     // Write image data in Raw layout
     size[0] = detector->pix_ny;
     size[1] = detector->pix_nx;
     sh = H5Screate_simple(2, size, NULL);
     //H5Sget_simple_extent_dims(sh, size, max_size);
-	
-    dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (global->h5compress) {
+		H5Pset_chunk(h5compression, 2, size);
+		H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+	}
+    dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRaw);
     H5Dclose(dh);
     
-    dh = H5Dcreate(gh, "correcteddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrected);
     H5Dclose(dh);
 	
     //H5Sget_simple_extent_dims(sh, size, size);
-    dh = H5Dcreate(gh, "correcteddatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSquared);
     H5Dclose(dh);
 	
     //H5Sget_simple_extent_dims(sh, size, size);
-    dh = H5Dcreate(gh, "correcteddatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSigma);
     H5Dclose(dh);
@@ -385,9 +397,13 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         size[0] = detector->image_nn/detector->image_nx;
         size[1] = detector->image_nx;
         sh = H5Screate_simple(2, size, NULL);
-        
+		if (global->h5compress) {
+			H5Pset_chunk(h5compression, 2, size);
+			H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+		}
+
         //H5Sget_simple_extent_dims(sh, size, max_size);
-        dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
         if (dh < 0) ERROR("Could not create dataset.\n");
         H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
         H5Dclose(dh);

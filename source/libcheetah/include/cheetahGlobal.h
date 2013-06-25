@@ -229,6 +229,7 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+	int		 h5compress;
     
     bool saveCXI;
 
