@@ -34,6 +34,7 @@
 #include "PSEvt/EventId.h"
 #include "psddl_psana/bld.ddl.h"
 #include "psddl_psana/cspad.ddl.h"
+#include "psddl_psana/cspad2x2.ddl.h"
 #include "psddl_psana/evr.ddl.h"
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
@@ -108,6 +109,7 @@ namespace cheetah_ana_pkg {
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
 		m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
+		m_srcCspad2x2 = configStr("cspad2x2Source0","DetInfo(:Cspad2x2)");
 		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
 		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
@@ -717,10 +719,36 @@ namespace cheetah_ana_pkg {
 					return;
 				}
             }
-                        
+			/*
+			 *	CsPad 2x2
+			 */
+			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
+				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+				
+				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
+				singleQuad = evt.get(m_srcCspad2x2, m_key);
+				if (singleQuad.get()) {
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					const ndarray<const int16_t, 3>& data = singleQuad->data();
+					int partsize = asic_nx * asic_ny * 2;
+					for (unsigned s = 0; s < 2; s++) {
+						for (int y = 0; y < asic_ny; y++) {
+							for (int x = 0; x < asic_nx * 2; x++) {
+								eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+							}
+						}
+					}
+				} else {
+					printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					return;
+				}
+			}
+       
 			/*
 			 *
-			 *	The data format used for pnccd data has changed in recent releases. 
+			 *	The data format used for pnccd data has changed in recent releases.
 			 *	To get the full image data for pnccd you need to use Psana::PNCCD::FullFrameV1 type now instead of Psana::PNCCD:: FrameV1 
 			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psddl_psana/type.Psana.PNCCD.FullFrameV1.html
 			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:

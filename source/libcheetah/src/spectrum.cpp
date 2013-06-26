@@ -128,12 +128,19 @@ void saveEspectrumStacks(cGlobal *global) {
  */
 void saveEspectrumStack(cGlobal *global, int powderClass) {
 	
-    char	filename[1024];
+	char	filename[1024];
     float   *stack = global->espectrumStack[powderClass];
     long	speclength = global->espectrumLength;
     long    stackCounter = global->espectrumStackCounter[powderClass];
     long    stackSize = global->espectrumStackSize;
     pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
+	
+
+    if(!global->espectrum)
+        return;
+
+	if(global->espectrumStackCounter[powderClass]==0)
+		return;
 	
     // Lock
 	pthread_mutex_lock(&mutex);

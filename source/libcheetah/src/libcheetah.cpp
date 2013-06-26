@@ -520,7 +520,7 @@ void cheetahExit(cGlobal *global) {
 
 	
     // Save integrated run spectrum
-    saveIntegratedRunSpectrum(global);
+    //saveIntegratedRunSpectrum(global);	<-- this was causing crashes (debug!)
     
 	
     // Hitrate?
