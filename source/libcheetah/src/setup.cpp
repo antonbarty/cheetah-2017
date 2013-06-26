@@ -115,6 +115,7 @@ cGlobal::cGlobal(void) {
     espectrumWidth = 900;
     espectrumDarkSubtract = 0;
     espectrumSpreadeV = 40;
+	espectrumStackSize = 10000;
     strcpy(espectrumDarkFile, "No_file_specified");
     strcpy(espectrumScaleFile, "No_file_specified");
 
@@ -188,236 +189,250 @@ cGlobal::cGlobal(void) {
  */
 void cGlobal::setup() {
 
-  /*
-   *  Init timing
-   */
-  gettimeofday(&datarateWorkerTimevalLast,NULL);
-  
-
-  /*
-   *	Configure detectors
-   */
-  for(long i=0; i<nDetectors; i++) {
-    detector[i].configure();
-    detector[i].readDetectorGeometry(detector[i].geometryFile);
-    detector[i].readDarkcal(detector[i].darkcalFile);
-    detector[i].readGaincal(detector[i].gaincalFile);
-    detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
-    detector[i].readPeakmask(self, peaksearchFile);
-    detector[i].readBadpixelMask(detector[i].badpixelFile);
-    detector[i].readBaddataMask(detector[i].baddataFile);
-    detector[i].readWireMask(detector[i].wireMaskFile);
-  }
+	/*
+	 *  Init timing
+	 */
+	gettimeofday(&datarateWorkerTimevalLast,NULL);
+	
+	
+	/*
+	 *	Configure detectors
+	 */
+	for(long i=0; i<nDetectors; i++) {
+		detector[i].configure();
+		detector[i].readDetectorGeometry(detector[i].geometryFile);
+		detector[i].readDarkcal(detector[i].darkcalFile);
+		detector[i].readGaincal(detector[i].gaincalFile);
+		detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
+		detector[i].readPeakmask(self, peaksearchFile);
+		detector[i].readBadpixelMask(detector[i].badpixelFile);
+		detector[i].readBaddataMask(detector[i].baddataFile);
+		detector[i].readWireMask(detector[i].wireMaskFile);
+	}
 	
 
-  /*
-   * How many types of powder pattern do we need?
-   */
-  if(hitfinder==0)
-    nPowderClasses=1;
-  else
-    nPowderClasses=2;
-
-  if(generateDarkcal || generateGaincal)
-    nPowderClasses=1;
-
-  for(int i = 0; i<nPowderClasses; i++){
-    nPeaksMin[i] = 1000000000;
-    nPeaksMax[i] = 0;
-  }
+	/*
+	 * How many types of powder pattern do we need?
+	 */
+	if(hitfinder==0)
+		nPowderClasses=1;
+	else
+		nPowderClasses=2;
+	
+	if(generateDarkcal || generateGaincal)
+		nPowderClasses=1;
+	
+	for(int i = 0; i<nPowderClasses; i++){
+		nPeaksMin[i] = 1000000000;
+		nPeaksMax[i] = 0;
+	}
 
 	
-  if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
-    printf("Errors: hitfinderDetector > nDetectors\n");
-    printf("nDetectors = %i\n", nDetectors);
-    printf("hitfinderDetector = detector%i\n", hitfinderDetector);
-    printf("This doesn't make sense.\n");
-    printf("in void cGlobal::setup()\n");
-    printf("Quitting...\n");
-    exit(1);
-  }
 
-  /*
-   * Set up thread management
-   */
-  nActiveThreads = 0;
-  threadCounter = 0;
-  pthread_mutex_init(&nActiveThreads_mutex, NULL);
-  pthread_mutex_init(&hotpixel_mutex, NULL);
-  pthread_mutex_init(&halopixel_mutex, NULL);
-  pthread_mutex_init(&selfdark_mutex, NULL);
-  pthread_mutex_init(&bgbuffer_mutex, NULL);
-  pthread_mutex_init(&nhits_mutex, NULL);
-  pthread_mutex_init(&framefp_mutex, NULL);
-  pthread_mutex_init(&powderfp_mutex, NULL);
-  pthread_mutex_init(&peaksfp_mutex, NULL);
-  pthread_mutex_init(&subdir_mutex, NULL);
-  pthread_mutex_init(&nespechits_mutex, NULL);
-  pthread_mutex_init(&espectrumRun_mutex, NULL);
-  pthread_mutex_init(&espectrumBuffer_mutex, NULL);
-  pthread_mutex_init(&datarateWorker_mutex, NULL);  
-  pthread_mutex_init(&saveCXI_mutex, NULL);  
-  pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
-  threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	
+	if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
+		printf("Errors: hitfinderDetector > nDetectors\n");
+		printf("nDetectors = %i\n", nDetectors);
+		printf("hitfinderDetector = detector%i\n", hitfinderDetector);
+		printf("This doesn't make sense.\n");
+		printf("in void cGlobal::setup()\n");
+		printf("Quitting...\n");
+		exit(1);
+	}
 
-  /*
-   * Trap specific configurations and mutually incompatible options
-   */
-  if(generateDarkcal) {
-
-    printf("******************************************************************\n");
-    printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
-    printf("******************************************************************\n");
-
-    hitfinder = 0;
-    savehits = 0;
-    hdf5dump = 0;
-    saveRaw = 0;
+	/*
+	 * Set up thread management
+	 */
+	nActiveThreads = 0;
+	threadCounter = 0;
+	pthread_mutex_init(&nActiveThreads_mutex, NULL);
+	pthread_mutex_init(&hotpixel_mutex, NULL);
+	pthread_mutex_init(&halopixel_mutex, NULL);
+	pthread_mutex_init(&selfdark_mutex, NULL);
+	pthread_mutex_init(&bgbuffer_mutex, NULL);
+	pthread_mutex_init(&nhits_mutex, NULL);
+	pthread_mutex_init(&framefp_mutex, NULL);
+	pthread_mutex_init(&powderfp_mutex, NULL);
+	pthread_mutex_init(&peaksfp_mutex, NULL);
+	pthread_mutex_init(&subdir_mutex, NULL);
+	pthread_mutex_init(&nespechits_mutex, NULL);
+	pthread_mutex_init(&espectrumRun_mutex, NULL);
+	pthread_mutex_init(&espectrumBuffer_mutex, NULL);
+	pthread_mutex_init(&datarateWorker_mutex, NULL);
+	pthread_mutex_init(&saveCXI_mutex, NULL);
+	pthread_mutex_init(&pixelmask_shared_mutex, NULL);
+	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+	
+	/*
+	 * Trap specific configurations and mutually incompatible options
+	 */
+	if(generateDarkcal) {
+		
+		printf("******************************************************************\n");
+		printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
+		printf("******************************************************************\n");
+		
+		hitfinder = 0;
+		savehits = 0;
+		hdf5dump = 0;
+		saveRaw = 0;
         
-    powderSumHits = 0;
-    powderSumBlanks = 0;
-    powderthresh = -30000;
-    for(long i=0; i<nDetectors; i++) {
-      detector[i].cmModule = 0;
-      detector[i].cspadSubtractUnbondedPixels = 0;
-      detector[i].useDarkcalSubtraction = 0;
-      detector[i].useGaincal=0;
-      detector[i].useAutoHotpixel = 0;
-      detector[i].useSubtractPersistentBackground = 0;
-        detector[i].useLocalBackgroundSubtraction = 0;
-      detector[i].startFrames = 0;
-      detector[i].saveDetectorRaw = 1;
-      detector[i].saveDetectorCorrectedOnly = 1;
-    }
-  }
-
-  if(generateGaincal) {
-
-      printf("******************************************************************\n");
-      printf("keyword generategaincal set: this overrides some keyword values!!!\n");
-      printf("******************************************************************\n");
-
-    hitfinder = 0;
-    savehits = 0;
-    hdf5dump = 0;
-    saveRaw = 0;
-    powderSumHits = 0;
-    powderSumBlanks = 0;
-    powderthresh = -30000;
-    for(long i=0; i<nDetectors; i++) {
-      detector[i].cmModule = 0;
-      detector[i].cspadSubtractUnbondedPixels = 0;
-      detector[i].useDarkcalSubtraction = 1;
-      detector[i].useAutoHotpixel = 0;
-      detector[i].useSubtractPersistentBackground = 0;
-      detector[i].useGaincal=0;
-      detector[i].startFrames = 0;
-      detector[i].saveDetectorRaw = 1;
-      detector[i].saveDetectorCorrectedOnly = 1;
-    }
-  }
-
-  // Why?
-  if(saveRaw==0 && saveAssembled == 0) {
-    saveAssembled = 1;
-  }
-
-  /* Only save peak info for certain hitfinders */
-  if (( hitfinderAlgorithm == 3 ) ||
-      ( hitfinderAlgorithm == 5 ) ||
-      ( hitfinderAlgorithm == 6 ))
-    savePeakInfo = 1; 
-
-  /*
-   * Other stuff
-   */
-  npowderHits = 0;
-  npowderBlanks = 0;
-  nhits = 0;
-  nrecenthits = 0;
-  nespechits = 0;
-  nprocessedframes = 0;
-  nrecentprocessedframes = 0;
-  lastclock = clock()-10;
-  datarate = 1;
-  runNumber = 0;
-  time(&tstart);
-  avgGMD = 0;
-
-  for(long i=0; i<MAX_DETECTORS; i++) {
-    detector[i].bgCounter = 0;
-    detector[i].last_bg_update = 0;
-    detector[i].hotpixCounter = 0;
-    detector[i].last_hotpix_update = 0;
-    detector[i].hotpixRecalc = detector[i].bgRecalc;
-    detector[i].nhot = 0;
-    detector[i].halopixCounter = 0;
-    detector[i].last_halopix_update = 0;
-    detector[i].halopixRecalc = detector[i].bgRecalc;
-    detector[i].halopixMemory = detector[i].bgRecalc;
-    detector[i].nhalo = 0;
-    detector[i].detectorZprevious = 0;
-    detector[i].detectorZ = 0;
-    detector[i].detectorEncoderValue = 0;
-  }
-
-  // Make sure to use SLAC timezone!
-  setenv("TZ","US/Pacific",1);
-
-  /*
-   * Set up arrays for hot pixels, running backround, etc.
-   */
-  for(long i=0; i<nDetectors; i++) {
-    detector[i].allocatePowderMemory(self);
-  }
-
-  /*
-   * Set up array for run integrated energy spectrum
-   */
-  espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumRun[i] = 0;
-  }
+		powderSumHits = 0;
+		powderSumBlanks = 0;
+		powderthresh = -30000;
+		for(long i=0; i<nDetectors; i++) {
+			detector[i].cmModule = 0;
+			detector[i].cspadSubtractUnbondedPixels = 0;
+			detector[i].useDarkcalSubtraction = 0;
+			detector[i].useGaincal=0;
+			detector[i].useAutoHotpixel = 0;
+			detector[i].useSubtractPersistentBackground = 0;
+			detector[i].useLocalBackgroundSubtraction = 0;
+			detector[i].startFrames = 0;
+			detector[i].saveDetectorRaw = 1;
+			detector[i].saveDetectorCorrectedOnly = 1;
+		}
+	}
 	
-  /*
-   * Set up buffer array for calculation of energy spectrum background
-   */
-  espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumBuffer[i] = 0;
-  }
+	if(generateGaincal) {
+		
+		printf("******************************************************************\n");
+		printf("keyword generategaincal set: this overrides some keyword values!!!\n");
+		printf("******************************************************************\n");
+		
+		hitfinder = 0;
+		savehits = 0;
+		hdf5dump = 0;
+		saveRaw = 0;
+		powderSumHits = 0;
+		powderSumBlanks = 0;
+		powderthresh = -30000;
+		for(long i=0; i<nDetectors; i++) {
+			detector[i].cmModule = 0;
+			detector[i].cspadSubtractUnbondedPixels = 0;
+			detector[i].useDarkcalSubtraction = 1;
+			detector[i].useAutoHotpixel = 0;
+			detector[i].useSubtractPersistentBackground = 0;
+			detector[i].useGaincal=0;
+			detector[i].startFrames = 0;
+			detector[i].saveDetectorRaw = 1;
+			detector[i].saveDetectorCorrectedOnly = 1;
+		}
+	}
 
-  /*
-   * Set up Darkcal array for holding energy spectrum background
-   */
-  espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
-  for(long i=0; i<espectrumLength*espectrumWidth; i++) {
-    espectrumDarkcal[i] = 0;
-  }
+	// Why?
+	if(saveRaw==0 && saveAssembled == 0) {
+		saveAssembled = 1;
+	}
 	
-  /*
-   * Set up array for holding energy spectrum scale
-   */
-  espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
-  for(long i=0; i<espectrumLength; i++) {
-    espectrumScale[i] = 0;
-  }
+	/* Only save peak info for certain hitfinders */
+	if (( hitfinderAlgorithm == 3 ) ||
+		( hitfinderAlgorithm == 5 ) ||
+		( hitfinderAlgorithm == 6 ))
+		savePeakInfo = 1;
 	
-  readSpectrumDarkcal(self, espectrumDarkFile);
-  readSpectrumEnergyScale(self, espectrumScaleFile);
+	/*
+	 * Other stuff
+	 */
+	npowderHits = 0;
+	npowderBlanks = 0;
+	nhits = 0;
+	nrecenthits = 0;
+	nespechits = 0;
+	nprocessedframes = 0;
+	nrecentprocessedframes = 0;
+	lastclock = clock()-10;
+	datarate = 1;
+	runNumber = 0;
+	time(&tstart);
+	avgGMD = 0;
 	
-  /*
-   * Set up arrays for powder classes and radial stacks
-   * Currently only tracked for detector[0]  (generalise this later)
-   */
-  for(long i=0; i<nPowderClasses; i++) {
-    char  filename[1024];
-    powderlogfp[i] = NULL;
-    if(runNumber > 0) {
-      sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
-      powderlogfp[i] = fopen(filename, "w");
-    }
-  }
+	for(long i=0; i<MAX_DETECTORS; i++) {
+		detector[i].bgCounter = 0;
+		detector[i].last_bg_update = 0;
+		detector[i].hotpixCounter = 0;
+		detector[i].last_hotpix_update = 0;
+		detector[i].hotpixRecalc = detector[i].bgRecalc;
+		detector[i].nhot = 0;
+		detector[i].halopixCounter = 0;
+		detector[i].last_halopix_update = 0;
+		detector[i].halopixRecalc = detector[i].bgRecalc;
+		detector[i].halopixMemory = detector[i].bgRecalc;
+		detector[i].nhalo = 0;
+		detector[i].detectorZprevious = 0;
+		detector[i].detectorZ = 0;
+		detector[i].detectorEncoderValue = 0;
+	}
+
+	// Make sure to use SLAC timezone!
+	setenv("TZ","US/Pacific",1);
+	
+	/*
+	 * Set up arrays for hot pixels, running backround, etc.
+	 */
+	for(long i=0; i<nDetectors; i++) {
+		detector[i].allocatePowderMemory(self);
+	}
+
+	
+	/*
+	 *	Energy spectrum stuff
+	 */
+	// Set up array for run integrated energy spectrum
+	espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
+	for(long i=0; i<espectrumLength; i++) {
+		espectrumRun[i] = 0;
+	}
+	// Set up buffer array for calculation of energy spectrum background
+	espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+	for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+		espectrumBuffer[i] = 0;
+	}
+	// Set up Darkcal array for holding energy spectrum background
+	espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
+	for(long i=0; i<espectrumLength*espectrumWidth; i++) {
+		espectrumDarkcal[i] = 0;
+	}
+	//Set up array for holding energy spectrum scale
+	espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
+	for(long i=0; i<espectrumLength; i++) {
+		espectrumScale[i] = 0;
+	}
+	readSpectrumDarkcal(self, espectrumDarkFile);
+	readSpectrumEnergyScale(self, espectrumScaleFile);
+
+	/*
+	 *	Energy spectrum stacks
+	 */
+	if (espectrum) {
+		printf("Allocating spectral stacks\n");
+		int spectrumLength = espectrumLength;
+		
+		for(long i=0; i<nPowderClasses; i++) {
+			espectrumStackCounter[i] = 0;
+			espectrumStack[i] = (float *) calloc(espectrumStackSize*spectrumLength, sizeof(float));
+			for(long j=0; j<espectrumStackSize*spectrumLength; j++) {
+				espectrumStack[i][j] = 0;
+			}
+			pthread_mutex_init(&espectrumStack_mutex[i], NULL);
+		}
+		printf("Spectral stack allocated\n");
+	}
+	
+
+
+	/*
+	 * Set up arrays for powder classes and radial stacks
+	 * Currently only tracked for detector[0]  (generalise this later)
+	 */
+	for(long i=0; i<nPowderClasses; i++) {
+		char  filename[1024];
+		powderlogfp[i] = NULL;
+		if(runNumber > 0) {
+			sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
+			powderlogfp[i] = fopen(filename, "w");
+		}
+	}
 
 
 }

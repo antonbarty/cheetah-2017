@@ -323,6 +323,11 @@ public:
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;
 	double  *espectrumScale;
+	long	espectrumStackSize;
+	long	espectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *espectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
+
 	
 	// time keeping
 	time_t   tstart, tend;

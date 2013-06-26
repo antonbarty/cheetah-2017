@@ -457,6 +457,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         saveRunningSums(global);
 		saveHistograms(global);
         saveRadialStacks(global);
+		saveEspectrumStacks(global);
 		global->updateLogfile();
         global->writeStatus("Not finished");
 	}
@@ -510,6 +511,7 @@ void cheetahExit(cGlobal *global) {
     // Save powder patterns and other stuff
     saveRunningSums(global);
     saveRadialStacks(global);
+	saveEspectrumStacks(global);
 	global->writeFinalLog();
 
     // Close all CXI files

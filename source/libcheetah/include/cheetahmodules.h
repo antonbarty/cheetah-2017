@@ -81,6 +81,9 @@ int peakfinder6(cGlobal*, cEventData*, int);
 // spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void addToSpectrumStack(cEventData*, cGlobal*, int);
+void saveEspectrumStacks(cGlobal*);
+void saveEspectrumStack(cGlobal*, int);
 void genSpectrumBackground(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
