@@ -240,6 +240,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     double  *bufferAssembled;
     int16_t *bufferAssembledNPeaksMin;
     int16_t *bufferAssembledNPeaksMax;
+	long	nframes = detector->nPowderFrames[powderType];
 
     /*
      *	Filename
@@ -292,7 +293,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
     for(long i=0; i<pix_nn; i++){
         bufferCorrectedSigma[i] =
-        sqrt( fabs(bufferCorrectedSquared[i] - bufferCorrected[i]*bufferCorrected[i]) / detector->nPowderFrames[powderType] );
+        sqrt( fabs(bufferCorrectedSquared[i]/nframes - (bufferCorrected[i]/nframes)*(bufferCorrected[i]/nframes)) );
     }
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);

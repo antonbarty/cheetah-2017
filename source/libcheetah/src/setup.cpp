@@ -139,10 +139,10 @@ cGlobal::cGlobal(void) {
     savehits = 0;
     saveAssembled = 1;
     saveRaw = 0;
-	h5compress = 1;
+	h5compress = 5;
     hdf5dump = 0;
     saveInterval = 1000;
-    savePixelmask = 0;
+    savePixelmask = 1;
     saveCXI = 0;
 
     // Peak lists
