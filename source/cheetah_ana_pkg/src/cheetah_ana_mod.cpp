@@ -665,7 +665,8 @@ namespace cheetah_ana_pkg {
                         }
                         cout << endl;
                     }
-                        
+
+                    
                     uint16_t *quad_data[4];
                     long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
                     long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
@@ -684,6 +685,7 @@ namespace cheetah_ana_pkg {
 						if(el.quad() < 4){
 							// Which quadrant is this?
 							int quadrant = el.quad();
+							eventData->fiducial = el.fiducials();
 							
 							// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 							for (unsigned s = 0; s != data.shape()[0]; ++s) {

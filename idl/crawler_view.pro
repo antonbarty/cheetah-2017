@@ -751,6 +751,19 @@ pro crawler_view
 			postprocess_command : 'Not set' $
 	}
 	
+	;; Establish polite error handler to catch crashes
+	;; (only if not in debug mode)
+	if 1 then begin
+		catch, Error_status 
+		if Error_status ne 0 then begin
+			message = 'Execution error: ' + !error_state.msg
+			r = dialog_message(message,title='Error',/center,/error)
+			catch, /cancel
+			return
+		endif 
+	endif
+
+
 	pstate = ptr_new(sState)
 	WIDGET_CONTROL, base, SET_UVALUE=pState
 	crawler_config, pState
@@ -758,7 +771,7 @@ pro crawler_view
 
    	XMANAGER, 'Test', base, event='crawler_event', /NO_BLOCK
 
-	
+	catch, /cancel
 	
 end
 	

@@ -83,6 +83,10 @@ pro crawler_merge
 				hits = h5hits[h5index]
 				hitrate = h5hitrate[h5index]
 				hitrate = strmid(strcompress(hitrate,/remove_all),0,4)
+				if fdataset ne 0 then begin
+					if strpos(dir, dataset[wdataset]) ne -1 then $
+						break
+				endif
 			endfor
 		endif 
 		
