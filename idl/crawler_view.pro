@@ -6,6 +6,56 @@
 ; Could be implemented in sh, or perl, or python
 ;
 
+;;
+;;	Pick working directory
+;;
+pro crawler_pickdir
+		ifile = '.cheetah-crawler'
+
+		cd,'~'
+		
+		if file_test(ifile) eq 1 then begin
+			dirlist = read_csv(ifile)
+			dirlist = dirlist.field1
+			str = strjoin(dirlist,'|')
+			desc = [ 	'1, base, , column', $
+				'0, droplist, '+str+', label_left=Dataset:,  tag=selection', $
+				'1, base,, row', $
+				'0, button, Select experiment, Quit, Tag=OK', $
+				'0, button, Different directory, Quit, Tag=Other', $
+				'2, button, Cancel, Quit, tag=Cancel' $
+			]		
+			a = cw_form(desc, /column, title='Start cheetah')
+
+			;; Only do this if OK is pressed (!!)
+			if a.OK eq 1 then begin	
+				dir = dirlist[a.selection]
+			endif
+			
+			if a.Other eq 1 then begin
+				dir=dialog_pickfile(/dir)
+				dirlist = [dir, dirlist]			
+			endif
+			
+			if a.Cancel eq 1 then begin
+				return
+			endif
+		endif $
+		
+		else begin
+			dir=dialog_pickfile(/dir)
+			dirlist = [dir]
+		endelse
+
+		;; Write out the experiment list 
+		openw, lun, ifile, /get
+		printf, lun, transpose(dirlist)
+		close, lun
+		free_lun, lun
+
+		;; Go to this directory
+		cd,dir[0]
+end
 
 ;; 
 ;;	Set up a few locations and things
@@ -25,9 +75,7 @@ pro crawler_config, pState
 	;; Now try to read from the config file
 	configFile = 'crawler.config'
 	if file_test(configFile) ne 1 then begin
-		cd,'~'
-		dir=dialog_pickfile(/dir)
-		cd,dir[0]
+		crawler_pickdir
 	endif
 	
 	if file_test(configFile) eq 1 then begin
@@ -50,6 +98,11 @@ pro crawler_config, pState
 	else begin
 		crawler_configMenu, pState
 	endelse
+	
+	;; Set heading
+	spawn,'pwd', result
+	print,'Working directory: ', result
+	widget_control, (*pstate).base, base_set_title=result
 	
 
 	print, 'XTC directory: ', (*pState).xtcdir
@@ -88,12 +141,12 @@ pro crawler_configMenu, pState
 			
 			;; Save back out to file
 			openw, lun, 'crawler.config', /get
-			printf, lun, (*pstate).xtcdir
-			printf, lun, (*pstate).h5dir
-			printf, lun, (*pstate).h5filter
-			printf, lun, (*pstate).geometry
-			printf, lun, (*pstate).process
-			printf, lun, (*pstate).cheetahIni
+			printf, lun, 'xtcdir=',(*pstate).xtcdir
+			printf, lun, 'hdf5dir=',(*pstate).h5dir
+			printf, lun, 'hdf5filter=',(*pstate).h5filter
+			printf, lun, 'geometry=',(*pstate).geometry
+			printf, lun, 'process=',(*pstate).process
+			printf, lun, 'cheetahini=',(*pstate).cheetahIni
 			close, lun
 			free_lun, lun
 	endif
@@ -113,8 +166,8 @@ pro crawler_displayfile, filename
 	
 	print,'Displaying: ', filename
 	data = read_h5(filename)
-	img = histogram_clip(data, 0.005)
-	img = img > 0
+	data = data > 0
+	img = histogram_clip(data, 0.001)
 	loadct, 4
 	scrolldisplay, img, title=file_basename(filename)
 
@@ -574,6 +627,18 @@ pro crawler_event, ev
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			crawler_displayfile, f[0]
 		end
+		sState.mbview_bsub : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'bsub.log')
+			xdisplayfile, f[0]
+		end
+		sState.mbview_clog : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'log.txt')
+			xdisplayfile, f[0]
+		end
+		
+
 
 
 		sState.mbfile_autorefresh : begin
@@ -649,6 +714,8 @@ pro crawler_view
 	mbcheetah_label = widget_button(mbfile, value='Label dataset')
 
 	mbfile = widget_button(bar, value='View')
+	mbview_bsub = widget_button(mbfile, value='View bsub log file')
+	mbview_clog = widget_button(mbfile, value='View cheetah log file')
 	mbview_images = widget_button(mbfile, value='View HDF5 files')
 	mbview_hitrate = widget_button(mbfile, value='View hit rate plot')
 	mbview_resolution = widget_button(mbfile, value='View resolution plot')
@@ -733,6 +800,9 @@ pro crawler_view
 			mbview_powder : mbview_powder, $
 			mbview_powderdark : mbview_powderdark, $
 			
+			mbview_bsub : mbview_bsub, $
+			mbview_clog : mbview_clog, $
+			
 			button_refresh : button_refresh, $
 			button_viewtype : button_viewtype, $
 			button_cheetah : button_cheetah, $
@@ -753,15 +823,15 @@ pro crawler_view
 	
 	;; Establish polite error handler to catch crashes
 	;; (only if not in debug mode)
-	if 1 then begin
-		catch, Error_status 
-		if Error_status ne 0 then begin
-			message = 'Execution error: ' + !error_state.msg
-			r = dialog_message(message,title='Error',/center,/error)
-			catch, /cancel
-			return
-		endif 
-	endif
+	;if 1 then begin
+	;	catch, Error_status 
+	;	if Error_status ne 0 then begin
+	;		message = 'Execution error: ' + !error_state.msg
+	;		r = dialog_message(message,title='Error',/center,/error)
+	;		catch, /cancel
+	;		return
+	;	endif 
+	;endif
 
 
 	pstate = ptr_new(sState)
@@ -771,7 +841,7 @@ pro crawler_view
 
    	XMANAGER, 'Test', base, event='crawler_event', /NO_BLOCK
 
-	catch, /cancel
+	;catch, /cancel
 	
 end
 	
