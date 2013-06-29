@@ -64,28 +64,18 @@ public:
 	int			hit;
 	
 	
-	// Peak info
+	// Peak list
 	tPeakList	peaklist;
 	
 	
 	// Peak info
 	int	        nPeaks;
 	int	        nHot;
-	long		*peak_com_index;		// closest pixel corresponding to peak center of mass
-	float		*peak_com_x;			// peak center of mass x (in raw layout)
-	float		*peak_com_y;			// peak center of mass y (in raw layout)
-	float		*peak_com_x_assembled;	// peak center of mass x (in assembled layout)
-	float		*peak_com_y_assembled;	// peak center of mass y (in assembled layout)
-	float		*peak_com_r_assembled;	// peak center of mass r (in assembled layout)
-	float		*peak_intensity;		// integrated peak intensities
-	float		*peak_npix;				// Number of pixels in peak
-	float           *peak_snr;           // Signal-to-noise of peak
 	float		peakResolution;			// Radius of 80% of peaks
 	float		peakResolutionA;			// Radius of 80% of peaks
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
-	int			*good_peaks;           // Good peaks, after post peak-finding criteria	
 	
 	// Beamline data, etc
 	int			seconds;

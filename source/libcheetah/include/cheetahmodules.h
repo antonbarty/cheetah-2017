@@ -75,12 +75,9 @@ int  hitfinder(cEventData*, cGlobal*);
 
 // peakfinders.cpp
 int peakfinder(cGlobal*, cEventData*, int);
-int peakfinder3(cGlobal*, cEventData*, int);
-int peakfinder6(cGlobal*, cEventData*, int);
-int killNearbyPeaks(cEventData*, cGlobal*, int );
-int peakfinder3New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
-int peakfinder6New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
-long killNearbyPeaksNew(tPeakList*, float );
+int peakfinder3(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
+int peakfinder6(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
+int killNearbyPeaks(tPeakList*, float );
 
 
 

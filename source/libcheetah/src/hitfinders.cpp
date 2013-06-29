@@ -91,63 +91,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			
 	}
 	
-	// Statistics on the peaks, for certain hitfinders
-	/*
-	if( eventData->nPeaks > 1 &&
-	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 6 ) ) {
-		   
-		long	np;
-		long	kk;
-		float	resolution;
-		float	resolutionA;	
-		float	cutoff = 0.90;
-		long	pix_nn = global->detector[detID].pix_nn;
-		long	asic_nx = global->detector[detID].asic_nx;
-		long	asic_ny = global->detector[detID].asic_ny;
-		long	*inx = (long *) calloc(pix_nn, sizeof(long));
-		long	*iny = (long *) calloc(pix_nn, sizeof(long));
-
-
-		np = eventData->nPeaks;
-		if(np >= global->hitfinderNpeaksMax) 
-		   np = global->hitfinderNpeaksMax; 
-		kk = (long) floor(cutoff*np);
-	
-
-		// Pixel radius resolution (bigger is better)
-		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
-		for(long k=0; k<np; k++) 
-			buffer1[k] = eventData->peaklist.peak_com_r_assembled[k];
-		resolution = kth_smallest(buffer1, np, kk);		   
-		eventData->peakResolution = resolution;
-		free(buffer1);
-	
-		// Resolution to real space (in Angstrom)
-		// Crystallographic resolution d = lambda/sin(theta)
-		float z = global->detector[0].detectorZ;
-		float dx = global->detector[0].pixelSize;
-		double r = sqrt(z*z+dx*dx*resolution*resolution);
-		double sintheta = dx*resolution/r;
-		resolutionA = eventData->wavelengthA/sintheta;
-		eventData->peakResolutionA = resolutionA;
-
-		
-		// Now calculate q, A for each peak
-		float	q,A;
-		for(long k=0; k<np; k++) {
-			r = eventData->peaklist.peak_com_r_assembled[k];
-		}
-	
-		if(resolution > 0) {
-			float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
-			eventData->peakDensity = (cutoff*np)/area;
-		}
-
-		 free(inx);
-		 free(iny);	   
-	}
-	 */
-	
 	// Update central hit counter
 	if(hit) {
 		pthread_mutex_lock(&global->nhits_mutex);

@@ -132,17 +132,6 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	long NpeaksMax = global->hitfinderPeakBufferSize;
 	allocatePeakList(&(eventData->peaklist), NpeaksMax);
 	
-	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
-	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
-	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
 	/*
 	 *	Create arrays for energy spectrum data
@@ -186,17 +175,6 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	
 	freePeakList(eventData->peaklist);
 
-	free(eventData->peak_com_index);
-	free(eventData->peak_com_x);
-	free(eventData->peak_com_y);
-	free(eventData->peak_com_x_assembled);
-	free(eventData->peak_com_y_assembled);
-	free(eventData->peak_com_r_assembled);
-	free(eventData->peak_intensity);
-	free(eventData->peak_npix);
-	free(eventData->peak_snr);
-	free(eventData->good_peaks);
-	
 	
 	// Pulnix external camera
 	if(eventData->pulnixFail == 0){

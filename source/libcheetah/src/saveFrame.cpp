@@ -409,7 +409,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	// HDF5 version does not support extensible data types -> force it to be big instead
 	
-	long	nPeaks = info->peaklist.nPeaks;
+	long	nPeaks = info->nPeaks;
 	if(global->savePeakInfo && global->hitfinder && nPeaks > 0 ) {
 		hsize_t	maxNpeaks = 500;
 		maxNpeaks = nPeaks;
@@ -423,7 +423,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
 		
 		// Set all unused peaks to 0
-		for(uint i=0; i< 4*size[0]; i++) {
+		for(long i=0; i< 4*size[0]; i++) {
 			peak_info[i] = 0;
 		}
 		
@@ -454,6 +454,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		
 		// Save peak info in Raw layout
+		for(long i=0; i< 4*size[0]; i++) {
+			peak_info[i] = 0;
+		}
 		for (long i=0; i<nPeaks;i++){
 			peak_info[i*4+0] = info->peaklist.peak_com_x[i];
 			peak_info[i*4+1] = info->peaklist.peak_com_y[i];
