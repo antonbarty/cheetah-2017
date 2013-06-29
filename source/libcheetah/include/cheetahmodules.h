@@ -80,7 +80,7 @@ int peakfinder6(cGlobal*, cEventData*, int);
 int killNearbyPeaks(cEventData*, cGlobal*, int );
 int peakfinder3New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
 int peakfinder6New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
-void killNearbyPeaksNew(tPeakList*, float );
+long killNearbyPeaksNew(tPeakList*, float );
 
 
 

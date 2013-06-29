@@ -486,7 +486,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 	}
 	printf("Radial stacks allocated\n");
 	
-	
 	// Histogram memory
 	if(histogram) {
 		printf("Allocating histogram memory\n");

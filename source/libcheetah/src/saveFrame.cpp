@@ -731,10 +731,10 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 				eventData->peaklist.peak_com_r_assembled[i],
 				eventData->peaklist.peak_com_q[i],
 				eventData->peaklist.peak_com_res[i],
-				floorf(eventData->peaklist.peak_npix[i]),
+				(long) floorf(eventData->peaklist.peak_npix[i]),
 				eventData->peaklist.peak_totalintensity[i],
 				eventData->peaklist.peak_maxintensity[i],
-				eventData->peak_snr[i]  );
+				eventData->peaklist.peak_snr[i]  );
 		//fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);

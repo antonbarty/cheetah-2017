@@ -1072,7 +1072,7 @@ void cGlobal::writeInitialLog(void){
     printf("Aborting...");
     exit(1);
   }
-	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, SNR\n");
+	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, sigmaBG\n");
   pthread_mutex_unlock(&peaksfp_mutex);
 
 }

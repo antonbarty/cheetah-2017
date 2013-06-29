@@ -99,8 +99,6 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	long	hitfinderLocalBGRadius = global->hitfinderLocalBGRadius;
 	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
 	
-	hitfinderMinSNR = 0;
-	
 	// Data
 	float		*data = eventData->detector[detID].corrected_data;
 	
@@ -135,8 +133,8 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	/*
 	 *	eliminate closely spaced peaks
 	 */
-	if(hitfinderMinPeakSeparation > 0 )
-		killNearbyPeaksNew(peaklist, hitfinderMinPeakSeparation);
+	//if(hitfinderMinPeakSeparation > 0 )
+	//	killNearbyPeaksNew(peaklist, hitfinderMinPeakSeparation);
 	
 
 
@@ -213,7 +211,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 /*
  *	Find peaks that are too close together and remove them
  */
-void killNearbyPeaksNew(tPeakList *peaklist, float hitfinderMinPeakSeparation){
+long killNearbyPeaksNew(tPeakList *peaklist, float hitfinderMinPeakSeparation){
 	
 	int p, p1, p2, c;
 	int k = 0;
@@ -246,19 +244,25 @@ void killNearbyPeaksNew(tPeakList *peaklist, float hitfinderMinPeakSeparation){
 	c = 0;
 	for ( p=0; p < n; p++) {
 		if (killpeak[p] == 0) {
+			peaklist->peak_maxintensity[c] = peaklist->peak_maxintensity[p];
+			peaklist->peak_totalintensity[c] = peaklist->peak_totalintensity[p];
+			peaklist->peak_snr[c] = peaklist->peak_snr[p];
 			peaklist->peak_npix[c] = peaklist->peak_npix[p] ;
 			peaklist->peak_com_x[c] = peaklist->peak_com_x[p];
 			peaklist->peak_com_y[c] = peaklist->peak_com_y[p];
-			peaklist->peak_snr[c] = peaklist->peak_snr[p];
-			peaklist->peak_totalintensity[c] = peaklist->peak_totalintensity[p];
-			peaklist->peak_maxintensity[c] = peaklist->peak_maxintensity[p];
 			peaklist->peak_com_index[c] = peaklist->peak_com_index[p];
+			peaklist->peak_com_x_assembled[c] = peaklist->peak_com_x_assembled[p];
+			peaklist->peak_com_y_assembled[c] = peaklist->peak_com_y_assembled[p];
+			peaklist->peak_com_r_assembled[c] = peaklist->peak_com_r_assembled[p];
+			peaklist->peak_com_q[c] = peaklist->peak_com_q[p];
+			peaklist->peak_com_res[c] = peaklist->peak_com_res[p];
 			c++;
 		}
 	}
-	peaklist->nPeaks = c;
+	free(killpeak);
 	
-	free(killpeak);	
+	peaklist->nPeaks = c;
+	return c;
 }
 
 
@@ -288,7 +292,7 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 	// Variables for this hitfinder
 	long	nat = 0;
 	long	lastnat = 0;
-	long	counter;
+	long	counter=0;
 	float	total;
 	int		search_x[] = {-1,0,1,-1,1,-1,0,1};
 	int		search_y[] = {-1,-1,-1,0,0,1,1,1};
@@ -304,6 +308,9 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 	long	thisx;
 	long	thisy;
 	long	fs, ss;
+	float	com_x, com_y;
+	long	com_xi, com_yi;
+
 	
 	nat = 0;
 	counter = 0;
@@ -378,7 +385,7 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 									thisy = iny[p]+search_y[k]+mj*asic_ny;
 									e = thisx + thisy*pix_nx;
 									
-									//if(e < 0 || e >= global->pix_nn){
+									//if(e < 0 || e >= pix_nn){
 									//	printf("Array bounds error: e=%i\n",e);
 									//	continue;
 									//}
@@ -389,9 +396,9 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 										//	printf("Array bounds error: nat=%i\n",nat);
 										//	break
 										//}
-										totI += temp[e]; // add to integrated intensity
                                         if (temp[e] > maxI)
                                             maxI = temp[e];
+										totI += temp[e]; // add to integrated intensity
 										peak_com_x += temp[e]*( (float) thisx ); // for center of mass x
 										peak_com_y += temp[e]*( (float) thisy ); // for center of mass y
 										temp[e] = 0; // zero out this intensity so that we don't count it again
@@ -405,103 +412,116 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 						
                         // Too many or too few pixels means ignore this 'peak'
 						if(nat<hitfinderMinPixCount || nat>hitfinderMaxPixCount) {
-							//printf("\tnat=%i", nat);
                             continue;
                         }
 						
 						
-                        // Peak above acceptable SNR ratio? (turn off check by setting hitfinderMinSNR = 0)
+						/*
+						 *	Calculate signal-to-noise ratio
+						 */
                         float   localSigma=0;
-                        if(hitfinderMinSNR > 0) {
-                            long   com_x = lrint(peak_com_x/totI) - mi*asic_nx;
-                            long   com_y = lrint(peak_com_y/totI) - mj*asic_ny;
-							
-                            // Calculate standard deviation sigma in an annulus around this peak
-                            long    ringWidth = 2*hitfinderLocalBGRadius;
-                            float   thisr;
-							
-                            float   sum = 0;
-                            float   sumsquared = 0;
-                            long    np_sigma = 0;
-                            for(long bj=-ringWidth; bj<ringWidth; bj++){
-                                for(long bi=-ringWidth; bi<ringWidth; bi++){
-									
-                                    // Within annulus?
-                                    thisr = sqrt( bi*bi + bj*bj );
-                                    if(thisr < hitfinderLocalBGRadius || thisr > 2*hitfinderLocalBGRadius )
-                                        continue;
-									
-                                    // Within-ASIC check
-                                    if((com_x+bi) < 0)
-										continue;
-									if((com_x+bi) >= asic_nx)
-										continue;
-									if((com_y+bj) < 0)
-										continue;
-									if((com_y+bj) >= asic_ny)
-										continue;
-									
-                                    // Position of this point in data stream
-									thisx = com_x + bi + mi*asic_nx;
-									thisy = com_y + bj + mj*asic_ny;
-									e = thisx + thisy*pix_nx;
-									
-                                    // If over ADC threshold, this might be another peak (ignore)
-                                    if (temp[e] > ADCthresh)
-                                        continue;
-									
-                                    // Use this point to estimate standard deviation of local background signal
-                                    np_sigma++;
-                                    sum += temp[e];
-                                    sumsquared += temp[e]*temp[e];
-                                }
-                            }
-							
-                            // Standard deviation
-                            if (counter == 0)
-                                localSigma = 0;
-                            else
-                                localSigma = sqrt(sumsquared/np_sigma - (sum*sum/(np_sigma*np_sigma)));
 
-							// SNR
-							snr = maxI / localSigma;
-							
-                            // Skip this 'peak' if signal to noise criterion is not met
-                            //if( totI < localSigma*global->hitfinderMinSNR )
-                            //    continue;
-							//printf("\tsnr=%f",snr);
-                            if( maxI > localSigma*hitfinderMinSNR )
+						com_x = peak_com_x/fabs(totI);
+						com_y = peak_com_y/fabs(totI);
+
+						long   com_xi = lrint(com_x) - mi*asic_nx;
+						long   com_yi = lrint(com_y) - mj*asic_ny;
+						
+						// Calculate standard deviation sigma in an annulus around this peak
+						long    ringWidth = 2*hitfinderLocalBGRadius;
+						float   thisr;
+						
+						float   sum = 0;
+						float   sumsquared = 0;
+						long    np_sigma = 0;
+						for(long bj=-ringWidth; bj<ringWidth; bj++){
+							for(long bi=-ringWidth; bi<ringWidth; bi++){
+								
+								// Within annulus?
+								thisr = sqrt( bi*bi + bj*bj );
+								if(thisr < hitfinderLocalBGRadius || thisr > 2*hitfinderLocalBGRadius )
+									continue;
+								
+								// Within-ASIC check
+								if((com_xi+bi) < 0)
+									continue;
+								if((com_xi+bi) >= asic_nx)
+									continue;
+								if((com_yi+bj) < 0)
+									continue;
+								if((com_yi+bj) >= asic_ny)
+									continue;
+								
+								// Position of this point in data stream
+								thisx = com_xi + bi + mi*asic_nx;
+								thisy = com_yi + bj + mj*asic_ny;
+								e = thisx + thisy*pix_nx;
+								
+								// If over ADC threshold, this might be another peak (ignore)
+								if (temp[e] > ADCthresh)
+									continue;
+								
+								// Use this point to estimate standard deviation of local background signal
+								np_sigma++;
+								sum += temp[e];
+								sumsquared += temp[e]*temp[e];
+							}
+						}
+						
+						// Standard deviation
+						if (np_sigma == 0)
+							localSigma = 0;
+						else
+							localSigma = sqrt(sumsquared/np_sigma - (sum*sum/(np_sigma*np_sigma)));
+
+						// sigma
+						snr = (float) maxI/localSigma;
+						
+						// Skip this 'peak' if signal to noise criterion is not met
+						//if( totI < localSigma*global->hitfinderMinSNR )
+						//    continue;
+						//printf("\tsnr=%f",snr);
+
+						
+						// Signal to noise criterion (turn off check by setting hitfinderMinSNR = 0)
+						//printf("HitfinderMinSNR, Imax, sigma: %f, %f, %f\n", hitfinderMinSNR, maxI, localSigma);
+						if(hitfinderMinSNR > 0) {
+							if( maxI < (localSigma*hitfinderMinSNR) ){
                                 continue;
+							}
                         }
 						
 						
                         // This is a peak? If so, add info to peak list
 						if(nat>=hitfinderMinPixCount && nat<=hitfinderMaxPixCount ) {
 							
+							// This CAN happen!
+							if(totI == 0)
+								continue;
 							
-							// Only space to save the first NpeaksMax peaks
-							// Make sure we don't overflow this buffer whilst also retaining peak count
-							if ( counter >= hitfinderNpeaksMax ) {
-								counter++;
+							com_x = peak_com_x/fabs(totI);
+							com_y = peak_com_y/fabs(totI);
+							
+							e = lrint(com_x) + lrint(com_y)*pix_nx;
+							if(e < 0 || e >= pix_nn){
+								printf("Array bounds error: e=%i\n",e);
 								continue;
 							}
-							
-							
 
 							// Remember peak information
 							if (counter < hitfinderNpeaksMax) {
 								peaklist->peakNpix += nat;
 								peaklist->peakTotal += totI;
-
+								peaklist->peak_com_index[counter] = e;
 								peaklist->peak_npix[counter] = nat;
-								peaklist->peak_com_x[counter] = peak_com_x/totI;
-								peaklist->peak_com_y[counter] = peak_com_y/totI;
+								peaklist->peak_com_x[counter] = com_x;
+								peaklist->peak_com_y[counter] = com_y;
 								peaklist->peak_totalintensity[counter] = totI;
 								peaklist->peak_maxintensity[counter] = maxI;
-								peaklist->peak_snr[counter] =snr;
-								
-								e = lrint(peak_com_x/totI) + lrint(peak_com_y/totI)*pix_nx;
-								peaklist->peak_com_index[counter] = e;
+								peaklist->peak_snr[counter] = localSigma;
+								counter++;
+							}
+							else {
 								counter++;
 							}
 						}
@@ -512,7 +532,6 @@ int peakfinder3New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 	}
 	
     peaklist->nPeaks = counter;
-	
 	
 	free(temp);
 	free(inx);
@@ -554,6 +573,7 @@ int peakfinder6New(tPeakList *peaklist, float *data, char *mask, long asic_nx, l
 	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 	nat = 0;
 	lastnat = 0;
+	maxI = 0;
 	
 	/* For counting neighbor pixels */
 	int *nexte = (int *) calloc(pix_nn,sizeof(int));
