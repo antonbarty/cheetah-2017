@@ -145,6 +145,14 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
+	if(global->hitfinderFastScan) {
+		hit = hitfinderFastScan(eventData, global);
+		if(hit)
+			goto localBG;
+		else
+			goto logfile;
+	}
+	
     
     
 	/*
@@ -159,7 +167,8 @@ void *worker(void *threadarg) {
 	 */
 	subtractLocalBackground(eventData, global);
 			
-
+localBG:
+	
 	/*
 	 *	Subtract residual common mode offsets (cmModule=2)
 	 */
@@ -336,7 +345,8 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
 
-  
+logfile:
+
     /*
      *	If this is a hit, write out to our favourite HDF5 format
      *
@@ -374,7 +384,6 @@ void *worker(void *threadarg) {
         writePeakFile(eventData, global);
     }
 
-    
     /*
     *	Write out information on each frame to a log file
     */

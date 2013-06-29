@@ -93,6 +93,7 @@ cGlobal::cGlobal(void) {
     hitfinderMaxRes = 1e10;
     hitfinderResolutionUnitPixel = 0;
     hitfinderMinSNR = 40;
+	hitfinderFastScan = 0;
 
     // TOF (Aqiris)
     hitfinderUseTOF = 0;
@@ -854,6 +855,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinderminsnr")) {
     hitfinderMinSNR = atof(value);
+  }
+  else if (!strcmp(tag, "hitfinderfastscan")) {
+	  hitfinderFastScan = atof(value);
   }
   else if (!strcmp(tag, "selfdarkmemory")) {
     printf("The keyword selfDarkMemory has been changed.  It is\n"

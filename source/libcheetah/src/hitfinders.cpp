@@ -105,6 +105,97 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 }
 
+
+/*
+ *	Find peaks on the inner 4 2x2 modules
+ *	Calculate rest of detector only if needed
+ *	Tries to avoid bottleneck in subtractLocalBackground() on the whole detector even for blanks
+ */
+long hitfinderFastScan(cEventData *eventData, cGlobal *global){
+	
+	// Bad detector??
+	int	    detID = global->hitfinderDetector;
+	if(detID > global->nDetectors) {
+		printf("peakfinder: false detectorID %i\n",detID);
+		exit(1);
+	}
+
+	long	pix_nx = global->detector[detID].pix_nx;
+	long	pix_ny = global->detector[detID].pix_ny;
+	long	pix_nn = global->detector[detID].pix_nn;
+	long	asic_nx = global->detector[detID].asic_nx;
+	long	asic_ny = global->detector[detID].asic_ny;
+	long	nasics_x = global->detector[detID].nasics_x;
+	long	nasics_y = global->detector[detID].nasics_y;
+	long	radius = global->detector[detID].localBackgroundRadius;
+	float	*data = eventData->detector[detID].corrected_data;
+
+	float	hitfinderADCthresh = global->hitfinderADC;
+	float	hitfinderMinSNR = global->hitfinderMinSNR;
+	long	hitfinderMinPixCount = global->hitfinderMinPixCount;
+	long	hitfinderMaxPixCount = global->hitfinderMaxPixCount;
+	long	hitfinderLocalBGRadius = global->hitfinderLocalBGRadius;
+	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
+	tPeakList	*peaklist = &eventData->peaklist;
+	
+	char	*mask = (char*) calloc(pix_nn, sizeof(char));
+
+	//	Bad region masks  (data=0 to ignore regions)
+	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	for(long i=0;i<pix_nn;i++)
+		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+
+	
+	subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, 2);
+
+	
+	/*
+	 *	Call the appropriate peak finding algorithm
+	 */
+	long	nPeaks;
+	switch(global->hitfinderAlgorithm) {
+			
+		case 3 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder3(peaklist, data, mask, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
+			break;
+			
+		case 6 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder6(peaklist, data, mask, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius, hitfinderMinPeakSeparation);
+			break;
+            
+		default :
+			printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
+			printf("Stopping in confusion.\n");
+			exit(1);
+			break;
+	}
+
+	/*
+	 *	Is this a potential hit?
+	 */
+	int		hit;
+	eventData->nPeaks = nPeaks;
+	if(nPeaks >= global->hitfinderNpeaks/2 && nPeaks <= global->hitfinderNpeaksMax/2) {
+		
+		hit = 1;
+		printf("%li : Potential hit, npeaks(inner) = %li\n", eventData->threadNum, nPeaks);
+
+		// Do the rest of the local background subtraction
+		long offset = (2*asic_ny)*pix_nx;
+		subtractLocalBackground(data+offset, radius, asic_nx, asic_ny, nasics_x, 6);
+	}
+	
+	return hit;
+}
+
+
+
+
+
+/*
+ *	Start of calculations for hitfinders
+ */
+
 void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC_threshold,uint16_t pixel_options,long *nat,float *tat){
 
   *nat = 0;
