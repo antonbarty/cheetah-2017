@@ -9,10 +9,15 @@
 
 
 #include <stdarg.h>
+#include "peakfinders.h"
 
 
 #ifndef CHEETAHEVENT_H
 #define CHEETAHEVENT_H
+
+// Need to announce this is included from elsewhere
+//typedef tPeakList;
+
 
 /*
  *	Structure used for passing information to worker threads
@@ -57,6 +62,10 @@ public:
 
 	// Hit finding
 	int			hit;
+	
+	
+	// Peak info
+	tPeakList	peaklist;
 	
 	
 	// Peak info

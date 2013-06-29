@@ -583,6 +583,14 @@ pro crawler_event, ev
 			crawler_displayfile, f[0]
 		end
 
+		sState.mbfile_unlock : begin
+			widget_control, sState.mbfile_configure, sensitive=1
+			widget_control, sState.mbfile_crawl, sensitive=1
+			widget_control, sState.mbcheetah_run, sensitive=1
+			widget_control, sState.mbcheetah_label, sensitive=1
+			widget_control, sState.button_postprocess, sensitive=1
+			widget_control, sState.button_cheetah, sensitive=1
+		end
 
 		;;
 		;; Menu bar items duplicate buttons
@@ -703,15 +711,16 @@ pro crawler_view
 	;; Menu bar items
 	;;
 	mbfile = widget_button(bar, value='File')
-	mbfile_configure = widget_button(mbfile, value='Configure')
-	mbfile_crawl = widget_button(mbfile, value='Start crawler')
+	mbfile_configure = widget_button(mbfile, value='Configure', sensitive=0)
+	mbfile_crawl = widget_button(mbfile, value='Start crawler', sensitive=0)
 	mbfile_refresh = widget_button(mbfile, value='Refresh table')
+	mbfile_unlock = widget_button(mbfile, value='Unlock command operations')
 	mbfile_autorefresh = widget_button(mbfile, value='Auto refresh table')
 	mbfile_quit = widget_button(mbfile, value='Quit')
 
 	mbfile = widget_button(bar, value='Cheetah')
-	mbcheetah_run = widget_button(mbfile, value='Process selected runs')
-	mbcheetah_label = widget_button(mbfile, value='Label dataset')
+	mbcheetah_run = widget_button(mbfile, value='Process selected runs', sensitive=0)
+	mbcheetah_label = widget_button(mbfile, value='Label dataset', sensitive=0)
 
 	mbfile = widget_button(bar, value='View')
 	mbview_bsub = widget_button(mbfile, value='View bsub log file')
@@ -729,7 +738,7 @@ pro crawler_view
 	base2 = widget_base(base, /row)
 	button_refresh = widget_button(base2, value='Refresh')
 	button_viewtype = widget_button(base2, value='Dataset view', sensitive=0)
-	button_cheetah = widget_button(base2, value='Run Cheetah')
+	button_cheetah = widget_button(base2, value='Run Cheetah', sensitive=0)
 	button_postprocess = widget_button(base2, value='Postprocess')
 	button_hits = widget_button(base2, value='View hits')
 	button_hitrate = widget_button(base2, value='Hitrate')
@@ -789,6 +798,7 @@ pro crawler_view
 			mbfile_configure : mbfile_configure, $
 			mbfile_crawl : mbfile_crawl, $
 			mbfile_refresh : mbfile_refresh, $
+			mbfile_unlock : mbfile_unlock , $ 
 			mbfile_autorefresh : mbfile_autorefresh, $ 
 			mbfile_quit : mbfile_quit, $
 			mbcheetah_run : mbcheetah_run, $

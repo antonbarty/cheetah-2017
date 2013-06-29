@@ -94,11 +94,11 @@ pro crawler_hdf5, hdf5dir, pattern
 			
 			;; Is the file stale??
 			staletime = 20
-			if data1 eq 'Not finished' then begin
-				info = file_info(sfile)
-				mtime = info.mtime
-				now = systime(/sec)
-				if (now - mtime) gt (staletime*60) then begin
+			info = file_info(sfile)
+			mtime = info.mtime
+			now = systime(/sec)
+			if (now - mtime) gt (staletime*60) then begin
+				if strpos(status[i], 'Not finished') ne -1 then begin
 					status[i] = 'Stalled?'
 				endif
 			endif

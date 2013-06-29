@@ -129,8 +129,10 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
 	long NpeaksMax = global->hitfinderPeakBufferSize;
+	allocatePeakList(&(eventData->peaklist), NpeaksMax);
+	
+	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
 	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
 	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
 	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
@@ -181,6 +183,9 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
 	}
+	
+	freePeakList(eventData->peaklist);
+
 	free(eventData->peak_com_index);
 	free(eventData->peak_com_x);
 	free(eventData->peak_com_y);

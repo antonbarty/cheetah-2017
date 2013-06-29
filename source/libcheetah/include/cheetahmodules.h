@@ -74,8 +74,14 @@ void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 int  hitfinder(cEventData*, cGlobal*);
 
 // peakfinders.cpp
+int peakfinder(cGlobal*, cEventData*, int);
 int peakfinder3(cGlobal*, cEventData*, int);
 int peakfinder6(cGlobal*, cEventData*, int);
+int killNearbyPeaks(cEventData*, cGlobal*, int );
+int peakfinder3New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
+int peakfinder6New(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
+void killNearbyPeaksNew(tPeakList*, float );
+
 
 
 // spectrum.cpp

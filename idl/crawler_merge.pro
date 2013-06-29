@@ -104,7 +104,8 @@ pro crawler_merge
 		endif 		
 		
 		str = strcompress(string(xtcrun[i], ',', ds, ',', xtcstatus[i], ',', status, ',', status2, ',', dir, ',', processed, ',', hits, ',', hits2, ',', hitrate))
-		printf, fout, str
+		writeu, fout, str
+		printf, fout, ' '
 		
 	endfor
 	

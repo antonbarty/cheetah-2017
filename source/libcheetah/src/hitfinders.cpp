@@ -12,6 +12,7 @@
 #include "median.h"
 #include "hitfinders.h"
 #include "peakfinders.h"
+#include "cheetahmodules.h"
 
 
 /*
@@ -23,13 +24,14 @@
  *		4 - Use TOF
  *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
- *              7 - Laser on event code (usually EVR41)
+ *      7 - Laser on event code (usually EVR41)
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 	// Dereference stuff
 	int	    detID = global->hitfinderDetector;
 	int		hit=0;
+	int		nPeaks;
 	
 	/*
 	 *	Default values for some metrics
@@ -56,16 +58,24 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = hitfinder2(global,eventData,detID);
 	  break;
 			
-	case 3 : 	// Count number of Bragg peaks
-	  hit = peakfinder3(global,eventData, detID);			
+	case 3 : 	// Count number of Bragg peaks (Anton's algorithm)
+		nPeaks = peakfinder(global,eventData, detID);
+		eventData->nPeaks = nPeaks;
+		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+			hit = 1;
+		//hit = peakfinder3(global,eventData, detID);
 	  break;	
 
 	case 4 :	// Use TOF signal to find hits
 	  hit = hitfinder4(global,eventData,detID);
 	  break;
 						
-	case 6 : 	// Count number of Bragg peaks
-	  hit = peakfinder6(global,eventData, detID);
+	case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
+		nPeaks = peakfinder(global,eventData, detID);
+		eventData->nPeaks = nPeaks;
+		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+			hit = 1;
+		//hit = peakfinder6(global,eventData, detID);
 	  break;
             
 	case 7 : 	// Return laser on event code
@@ -82,17 +92,18 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	}
 	
 	// Statistics on the peaks, for certain hitfinders
+	/*
 	if( eventData->nPeaks > 1 &&
-	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
+	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 6 ) ) {
 		   
 		long	np;
-		long  kk;
+		long	kk;
 		float	resolution;
 		float	resolutionA;	
-		float	cutoff = 0.95;
-		long		pix_nn = global->detector[detID].pix_nn;
-		long		asic_nx = global->detector[detID].asic_nx;
-		long		asic_ny = global->detector[detID].asic_ny;
+		float	cutoff = 0.90;
+		long	pix_nn = global->detector[detID].pix_nn;
+		long	asic_nx = global->detector[detID].asic_nx;
+		long	asic_ny = global->detector[detID].asic_ny;
 		long	*inx = (long *) calloc(pix_nn, sizeof(long));
 		long	*iny = (long *) calloc(pix_nn, sizeof(long));
 
@@ -102,12 +113,11 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		   np = global->hitfinderNpeaksMax; 
 		kk = (long) floor(cutoff*np);
 	
-	
 
 		// Pixel radius resolution (bigger is better)
 		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
 		for(long k=0; k<np; k++) 
-			buffer1[k] = eventData->peak_com_r_assembled[k];
+			buffer1[k] = eventData->peaklist.peak_com_r_assembled[k];
 		resolution = kth_smallest(buffer1, np, kk);		   
 		eventData->peakResolution = resolution;
 		free(buffer1);
@@ -121,16 +131,22 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		resolutionA = eventData->wavelengthA/sintheta;
 		eventData->peakResolutionA = resolutionA;
 
+		
+		// Now calculate q, A for each peak
+		float	q,A;
+		for(long k=0; k<np; k++) {
+			r = eventData->peaklist.peak_com_r_assembled[k];
+		}
 	
 		if(resolution > 0) {
 			float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
 			eventData->peakDensity = (cutoff*np)/area;
 		}
-		free(inx); 			
-		free(iny);	
 
-	   
+		 free(inx);
+		 free(iny);	   
 	}
+	 */
 	
 	// Update central hit counter
 	if(hit) {

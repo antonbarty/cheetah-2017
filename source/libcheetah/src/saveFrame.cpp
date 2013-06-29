@@ -409,15 +409,16 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	// HDF5 version does not support extensible data types -> force it to be big instead
 	
-	if(global->savePeakInfo && global->hitfinder && info->nPeaks > 0 ) {
+	long	nPeaks = info->peaklist.nPeaks;
+	if(global->savePeakInfo && global->hitfinder && nPeaks > 0 ) {
 		hsize_t	maxNpeaks = 500;
-		maxNpeaks = info->nPeaks;
+		maxNpeaks = nPeaks;
 		//size[0] = info->nPeaks;		// size[0] = height
-		size[0] = maxNpeaks;			// size[0] = height
+		size[0] = nPeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
 		//max_size[0] = H5S_UNLIMITED;
-		//max_size[0] = info->nPeaks;
-		max_size[0] = maxNpeaks;
+		//max_size[0] = info->peaklist.nPeaks_max;
+		max_size[0] = nPeaks;
 		max_size[1] = 4;
 		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
 		
@@ -427,11 +428,11 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		
 		// Save peak info in Assembled layout
-		for (long i=0; i<info->nPeaks;i++){
-			peak_info[i*4+0] = info->peak_com_x_assembled[i];
-			peak_info[i*4+1] = info->peak_com_y_assembled[i];
-			peak_info[i*4+2] = info->peak_intensity[i];
-			peak_info[i*4+3] = info->peak_npix[i];
+		for (long i=0; i<nPeaks;i++){
+			peak_info[i*4+0] = info->peaklist.peak_com_x_assembled[i]; // info->peak_com_x_assembled[i];
+			peak_info[i*4+1] = info->peaklist.peak_com_y_assembled[i];
+			peak_info[i*4+2] = info->peaklist.peak_totalintensity[i];
+			peak_info[i*4+3] = info->peaklist.peak_npix[i];
 		}
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
@@ -453,11 +454,11 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		
 		// Save peak info in Raw layout
-		for (long i=0; i<info->nPeaks;i++){
-			peak_info[i*4+0] = info->peak_com_x[i];
-			peak_info[i*4+1] = info->peak_com_y[i];
-			peak_info[i*4+2] = info->peak_intensity[i];
-			peak_info[i*4+3] = info->peak_npix[i];
+		for (long i=0; i<nPeaks;i++){
+			peak_info[i*4+0] = info->peaklist.peak_com_x[i];
+			peak_info[i*4+1] = info->peaklist.peak_com_y[i];
+			peak_info[i*4+2] = info->peaklist.peak_totalintensity[i];
+			peak_info[i*4+3] = info->peaklist.peak_npix[i];
 		}
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
@@ -707,18 +708,34 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	// Dump peak info to file
 	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", eventData->eventname);
-	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
-	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
-	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
-	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
-	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
-	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
-	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
+	//fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	//fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+	//fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+	//fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+	//fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+	//fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+	//fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+	//fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+	//fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
 	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
+		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f\n",
+				eventData->frameNumber,
+				eventData->eventname,
+				eventData->photonEnergyeV,
+				eventData->wavelengthA,
+				(float)(eventData->gmd21+eventData->gmd21)/2,
+				eventData->peaklist.peak_com_index[i],
+				eventData->peaklist.peak_com_x[i],
+				eventData->peaklist.peak_com_y[i],
+				eventData->peaklist.peak_com_r_assembled[i],
+				eventData->peaklist.peak_com_q[i],
+				eventData->peaklist.peak_com_res[i],
+				floorf(eventData->peaklist.peak_npix[i]),
+				eventData->peaklist.peak_totalintensity[i],
+				eventData->peaklist.peak_maxintensity[i],
+				eventData->peak_snr[i]  );
+		//fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
 	
