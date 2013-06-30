@@ -133,8 +133,8 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	/*
 	 *	eliminate closely spaced peaks
 	 */
-	//if(hitfinderMinPeakSeparation > 0 )
-	//	killNearbyPeaks(peaklist, hitfinderMinPeakSeparation);
+	if(hitfinderMinPeakSeparation > 0 )
+		nPeaks = killNearbyPeaks(peaklist, hitfinderMinPeakSeparation);
 	
 
 
@@ -180,6 +180,9 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	resolutionA = eventData->wavelengthA/sintheta;
 	peaklist->peakResolutionA = resolutionA;
 	eventData->peakResolutionA = resolutionA;
+	eventData->peakResolution = resolution;
+	eventData->peakTotal = peaklist->peakTotal;
+	eventData->peakNpix = peaklist->peakNpix;
 	
 	
 	/*
@@ -213,35 +216,50 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
  */
 int killNearbyPeaks(tPeakList *peaklist, float hitfinderMinPeakSeparation){
 	
-	int p, p1, p2, c;
+	int p, p1, p2;
 	int k = 0;
 	int n = peaklist->nPeaks;
-	float d;
-	float d2 =  hitfinderMinPeakSeparation * hitfinderMinPeakSeparation;
+	float	x1, x2;
+	float	y1, y2;
+	float	d2;
+	float	min_dsq =  hitfinderMinPeakSeparation * hitfinderMinPeakSeparation;
+
 	
-	char *killpeak = (char *) calloc(peaklist->nPeaks_max,sizeof(char));
+	if(hitfinderMinPeakSeparation <= 0 ) {
+		return n;
+	}
+	
+	char *killpeak = (char *) calloc(n,sizeof(char));
+	for(long i=0; i<n; i++)
+		killpeak[i] = 0;
 	
 	if ( n > peaklist->nPeaks_max )
 		n = peaklist->nPeaks_max;
 	
-	if(hitfinderMinPeakSeparation > 0 ) {
-		for ( p1=0; p1 < n; p1++) {
-			for ( p2=p1+1; p2 < n; p2++) {
-				d = pow(peaklist->peak_com_x[p1] - peaklist->peak_com_x[p2], 2) + pow(peaklist->peak_com_y[p1] - peaklist->peak_com_y[p2], 2) ;
-				if ( d <= d2 ) {
-					if ( peaklist->peak_snr[p1] > peaklist->peak_snr[p2]) {
-						killpeak[p2] = 1;
-						k++;
-					} else {
-						killpeak[p1] = 1;
-						k++;
-					}
+	for ( p1=0; p1 < n; p1++) {
+		x1 = peaklist->peak_com_x_assembled[p1];
+		y1 = peaklist->peak_com_y_assembled[p1];
+		for ( p2=p1+1; p2 < n; p2++) {
+			x2 = peaklist->peak_com_x_assembled[p2];
+			y2 = peaklist->peak_com_y_assembled[p2];
+			
+			d2 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+			
+			if ( d2 <= min_dsq ) {
+				if ( peaklist->peak_maxintensity[p1] > peaklist->peak_maxintensity[p2]) {
+					killpeak[p1] = 0;
+					killpeak[p2] = 1;
+					k++;
+				} else {
+					killpeak[p1] = 1;
+					killpeak[p2] = 0;
+					k++;
 				}
 			}
 		}
 	}
 	
-	c = 0;
+	long c=0;
 	for ( p=0; p < n; p++) {
 		if (killpeak[p] == 0) {
 			peaklist->peak_maxintensity[c] = peaklist->peak_maxintensity[p];

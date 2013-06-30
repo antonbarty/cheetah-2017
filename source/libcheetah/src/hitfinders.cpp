@@ -185,6 +185,8 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 		subtractLocalBackground(data+offset, radius, asic_nx, asic_ny, nasics_x, 6);
 	}
 	
+	free(mask);
+	
 	return hit;
 }
 

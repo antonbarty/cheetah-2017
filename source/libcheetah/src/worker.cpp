@@ -188,7 +188,6 @@ localBG:
 	calculateHotPixelMask(global);
 	applyHotPixelMask(eventData,global);
 
-	updateDatarate(eventData,global);
 
 	
     
@@ -346,6 +345,7 @@ localBG:
 	}
 
 logfile:
+	updateDatarate(eventData,global);
 
     /*
      *	If this is a hit, write out to our favourite HDF5 format

@@ -38,6 +38,7 @@ pro crawler_hdf5, hdf5dir, pattern
 	processed = lonarr(ndir)
 	hits = lonarr(ndir)
 	hitrate = fltarr(ndir)	
+	mt = lon64arr(ndir)
 	
 	for i=0L, ndir-1 do begin
 		
@@ -52,7 +53,6 @@ pro crawler_hdf5, hdf5dir, pattern
 			continue
 		endif 
 
-	
 		;; Newer versions of Cheetah will output a brief status.txt file
 		;; Sometimes this will tank when the file has not been completely written - fix later, solve now with catch errors
 		sfile = h5dir[i]+'/status.txt'
@@ -102,6 +102,8 @@ pro crawler_hdf5, hdf5dir, pattern
 					status[i] = 'Stalled?'
 				endif
 			endif
+			info = file_info(sfile)
+			mt[i] = info.mtime
 		endif $
 		
 		;; Older versions won't 
@@ -111,6 +113,8 @@ pro crawler_hdf5, hdf5dir, pattern
 			;; Otherwise, look at log.txt to check for 'clean exit'
 			s = 'Queued'
 			if file_test(h5dir[i]+ '/log.txt') then begin 
+				info = file_info(h5dir[i]+ '/log.txt')
+				mt[i] = info.mtime
 				command = 'tail -n 2 ' +h5dir[i]+ '/log.txt | head -n 1'
 				spawn, command, r
 				w2 = strpos(r, 'Cheetah clean exit')
@@ -173,11 +177,11 @@ pro crawler_hdf5, hdf5dir, pattern
 	;; Populate the output table
 	openw, fout, 'hdf5.txt', /get
 	
-	printf, fout, '# Run, status, directory, processed, hits, hitrate%'
+	printf, fout, '# Run, status, directory, processed, hits, hitrate%, mtime'
 	
 	for i = 0L, n_elements(run)-1 do begin	
 
-		str = strcompress(string(run[i], ',', status[i], ',', h5dir_short[i], ',', processed[i], ',', hits[i], ',', hitrate[i]))
+		str = strcompress(string(run[i], ',', status[i], ',', h5dir_short[i], ',', processed[i], ',', hits[i], ',', hitrate[i], ',', mt[i] ))
 		printf, fout, str
 
 	endfor

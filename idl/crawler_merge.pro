@@ -40,6 +40,7 @@ pro crawler_merge
 	h5processed = h5.field4
 	h5hits = h5.field5
 	h5hitrate = h5.field6
+	h5mtime = h5.field7
 	
 	;; CrystFEL info
 	fcrystfel = file_test('crystfel.txt')
@@ -75,8 +76,10 @@ pro crawler_merge
 		hitrate = '---'
 		whdf5 = where(h5run eq xtcrun[i])
 		if whdf5[0] ne -1 then begin
+			s = sort(h5mtime[whdf5])
+			mtime = 0
 			for j=0L, n_elements(whdf5)-1 do begin
-				h5index = whdf5[j]
+				h5index = whdf5[s[j]]
 				status = h5status[h5index]
 				dir = h5dir[h5index]
 				processed = h5processed[h5index]
