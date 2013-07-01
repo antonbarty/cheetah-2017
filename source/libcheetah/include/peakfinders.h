@@ -25,6 +25,7 @@ public:
 
 	float		*peak_maxintensity;		// Maximum intensity in peak
 	float		*peak_totalintensity;	// Integrated intensity in peak
+	float		*peak_sigma;			// Signal-to-noise ratio of peak
 	float		*peak_snr;				// Signal-to-noise ratio of peak
 	float		*peak_npix;				// Number of pixels in peak
 	float		*peak_com_x;			// peak center of mass x (in raw layout)

@@ -326,6 +326,7 @@ public:
 	void readBaddataMask(char *);
 	void readWireMask(char *);
 
+
 //private:
 
 	int parseConfigTag(char*, char*);

@@ -87,7 +87,7 @@ cGlobal::cGlobal(void) {
     hitfinderMinPeakSeparation = 0;
     hitfinderSubtractLocalBG = 0;
     hitfinderLocalBGRadius = 4;
-    hitfinderLocalBGThickness = 5;
+    hitfinderLocalBGThickness = 4;
     //hitfinderLimitRes = 1;
     hitfinderMinRes = 0;
     hitfinderMaxRes = 1e10;
@@ -437,6 +437,45 @@ void cGlobal::setup() {
 
 
 }
+
+void cGlobal::freeMutexes(void) {
+	pthread_mutex_unlock(&nActiveThreads_mutex);
+	pthread_mutex_unlock(&hotpixel_mutex);
+	pthread_mutex_unlock(&halopixel_mutex);
+	pthread_mutex_unlock(&selfdark_mutex);
+	pthread_mutex_unlock(&bgbuffer_mutex);
+	pthread_mutex_unlock(&nhits_mutex);
+	pthread_mutex_unlock(&framefp_mutex);
+	pthread_mutex_unlock(&powderfp_mutex);
+	pthread_mutex_unlock(&peaksfp_mutex);
+	pthread_mutex_unlock(&subdir_mutex);
+	pthread_mutex_unlock(&nespechits_mutex);
+	pthread_mutex_unlock(&espectrumRun_mutex);
+	pthread_mutex_unlock(&espectrumBuffer_mutex);
+	pthread_mutex_unlock(&datarateWorker_mutex);
+	pthread_mutex_unlock(&saveCXI_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_mutex);
+	for(long i=0; i<nDetectors; i++) {
+		for(long j=0; j<nPowderClasses; j++) {
+			pthread_mutex_unlock(&detector[i].powderRaw_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderRawSquared_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderCorrected_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderCorrectedSquared_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderAssembled_mutex[j]);
+			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
+			pthread_mutex_unlock(&detector[i].correctedMin_mutex[j]);
+			pthread_mutex_unlock(&detector[i].correctedMax_mutex[j]);
+			pthread_mutex_unlock(&detector[i].assembledMin_mutex[j]);
+			pthread_mutex_unlock(&detector[i].assembledMax_mutex[j]);
+		}
+	}
+	if (espectrum)
+		for(long i=0; i<nPowderClasses; i++)
+			pthread_mutex_unlock(&espectrumStack_mutex[i]);
+
+	
+}
+
 
 
 /*
@@ -1076,7 +1115,7 @@ void cGlobal::writeInitialLog(void){
     printf("Aborting...");
     exit(1);
   }
-	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, sigmaBG\n");
+	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, sigmaBG, SNR\n");
   pthread_mutex_unlock(&peaksfp_mutex);
 
 }

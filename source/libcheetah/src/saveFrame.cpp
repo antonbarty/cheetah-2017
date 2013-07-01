@@ -722,7 +722,7 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	//fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
 	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f\n",
+		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
 				eventData->frameNumber,
 				eventData->eventname,
 				eventData->photonEnergyeV,
@@ -737,6 +737,7 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 				(long) floorf(eventData->peaklist.peak_npix[i]),
 				eventData->peaklist.peak_totalintensity[i],
 				eventData->peaklist.peak_maxintensity[i],
+				eventData->peaklist.peak_sigma[i],
 				eventData->peaklist.peak_snr[i]  );
 		//fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
 	}

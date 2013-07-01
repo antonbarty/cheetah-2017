@@ -31,6 +31,7 @@ void allocatePeakList(tPeakList *peak, long NpeaksMax) {
 	peak->nPeaks_max = NpeaksMax;
 	peak->peak_maxintensity = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_totalintensity = (float *) calloc(NpeaksMax, sizeof(float));
+	peak->peak_sigma = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
@@ -50,6 +51,7 @@ void allocatePeakList(tPeakList *peak, long NpeaksMax) {
 void freePeakList(tPeakList peak) {
 	free(peak.peak_maxintensity);
 	free(peak.peak_totalintensity);
+	free(peak.peak_sigma);
 	free(peak.peak_snr);
 	free(peak.peak_npix);
 	free(peak.peak_com_x);
@@ -265,6 +267,7 @@ int killNearbyPeaks(tPeakList *peaklist, float hitfinderMinPeakSeparation){
 			peaklist->peak_maxintensity[c] = peaklist->peak_maxintensity[p];
 			peaklist->peak_totalintensity[c] = peaklist->peak_totalintensity[p];
 			peaklist->peak_snr[c] = peaklist->peak_snr[p];
+			peaklist->peak_sigma[c] = peaklist->peak_sigma[p];
 			peaklist->peak_npix[c] = peaklist->peak_npix[p] ;
 			peaklist->peak_com_x[c] = peaklist->peak_com_x[p];
 			peaklist->peak_com_y[c] = peaklist->peak_com_y[p];
@@ -457,7 +460,8 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 								
 								// Within annulus?
 								thisr = sqrt( bi*bi + bj*bj );
-								if(thisr < hitfinderLocalBGRadius || thisr > 2*hitfinderLocalBGRadius )
+								//if(thisr < hitfinderLocalBGRadius || thisr > 2*hitfinderLocalBGRadius )
+								if(thisr < hitfinderLocalBGRadius)
 									continue;
 								
 								// Within-ASIC check
@@ -536,7 +540,8 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 								peaklist->peak_com_y[counter] = com_y;
 								peaklist->peak_totalintensity[counter] = totI;
 								peaklist->peak_maxintensity[counter] = maxI;
-								peaklist->peak_snr[counter] = localSigma;
+								peaklist->peak_sigma[counter] = localSigma;
+								peaklist->peak_snr[counter] = snr;
 								counter++;
 							}
 							else {

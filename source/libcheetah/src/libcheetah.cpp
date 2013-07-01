@@ -404,6 +404,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
             if(dtime > maxwait) {
                 printf("\tApparent thread lock - no free thread for %li seconds.\n", dtime);
                 printf("\tGiving up and resetting the thread counter\n");
+				global->freeMutexes();
                 global->nActiveThreads = 0;
                 break;
             }
@@ -484,6 +485,7 @@ void cheetahExit(cGlobal *global) {
       if(dtime > maxwait) {
         printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
         printf("\tGiving up and exiting anyway\n");
+		global->freeMutexes();
         break;
       }
     }

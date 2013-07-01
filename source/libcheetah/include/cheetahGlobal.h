@@ -375,6 +375,8 @@ public:
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
+	void freeMutexes(void);
+
 
 
 private:
