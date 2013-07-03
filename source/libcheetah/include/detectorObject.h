@@ -278,7 +278,7 @@ public:
 	/*
 	 * Powder patterns/sums for this detector
 	 */
-	FILE     *powderlogfp[MAX_POWDER_CLASSES];
+//	FILE     *powderlogfp[MAX_POWDER_CLASSES];
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
@@ -352,7 +352,8 @@ public:
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
-	double    detectorZ;
+    double      detectorZ;
+
 
 };
 

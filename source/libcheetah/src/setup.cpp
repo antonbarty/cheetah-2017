@@ -321,7 +321,7 @@ void cGlobal::setup() {
 		}
 	}
 
-	// Why?
+	// Make sure to save something...
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}
@@ -426,6 +426,7 @@ void cGlobal::setup() {
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
 	 */
+    pthread_mutex_lock(&powderfp_mutex);
 	for(long i=0; i<nPowderClasses; i++) {
 		char  filename[1024];
 		powderlogfp[i] = NULL;
@@ -434,6 +435,7 @@ void cGlobal::setup() {
 			powderlogfp[i] = fopen(filename, "w");
 		}
 	}
+    pthread_mutex_unlock(&powderfp_mutex);
 
 
 }
@@ -1160,21 +1162,15 @@ void cGlobal::updateLogfile(void){
   nrecentprocessedframes = 0;
 
 
-  // Flush frame file buffer
-  pthread_mutex_lock(&framefp_mutex);
-  fflush(framefp);
-  fflush(cleanedfp);
-  pthread_mutex_unlock(&framefp_mutex);
+    // Flush frame file buffer
+    fflush(framefp);
+    fflush(cleanedfp);
+    
+    fflush(peaksfp);
+    for(long i=0; i<nPowderClasses; i++) {
+        fflush(powderlogfp[i]);
+    }
 
-  pthread_mutex_lock(&powderfp_mutex);
-  for(long i=0; i<nPowderClasses; i++) {
-    fflush(powderlogfp[i]);
-  }
-  pthread_mutex_unlock(&powderfp_mutex);
-
-  pthread_mutex_lock(&peaksfp_mutex);
-  fflush(peaksfp);
-  pthread_mutex_unlock(&peaksfp_mutex);
 }
 
 /*
@@ -1278,22 +1274,18 @@ void cGlobal::writeFinalLog(void){
   fclose (fp);
 
 
-  // Close frame buffers
-  pthread_mutex_lock(&framefp_mutex);
-  if(framefp != NULL)
-    fclose(framefp);
-  if(cleanedfp != NULL)
-    fclose(cleanedfp);
-  pthread_mutex_unlock(&framefp_mutex);
+    // Close frame buffers
+    if(framefp != NULL)
+        fclose(framefp);
+    if(cleanedfp != NULL)
+        fclose(cleanedfp);
+    if(peaksfp != NULL)
+        fclose(peaksfp);
+    
+    for(long i=0; i<nPowderClasses; i++) {
+        if(powderlogfp[i] != NULL)
+            fclose(powderlogfp[i]);
+    }
 
-  pthread_mutex_lock(&powderfp_mutex);
-  for(long i=0; i<nPowderClasses; i++) {
-    fclose(powderlogfp[i]);
-  }
-  pthread_mutex_unlock(&powderfp_mutex);
-
-  pthread_mutex_lock(&peaksfp_mutex);
-  fclose(peaksfp);
-  pthread_mutex_unlock(&peaksfp_mutex);
 
 }

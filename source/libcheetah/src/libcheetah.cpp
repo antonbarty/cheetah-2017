@@ -45,22 +45,27 @@ void cheetahInit(cGlobal *global) {
  *  libCheetah function for start of a new run
  */
 void cheetahNewRun(cGlobal *global) {
-  // Wait for all workers to finish
-  while(global->nActiveThreads > 0) {
-    printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-    usleep(100000);
-  }
-  // Reset the powder log files
-  if(global->runNumber > 0) {
-    for(long i=0; i<global->nPowderClasses; i++) {
-      char	filename[1024];
-      if(global->powderlogfp[i] != NULL)
-	fclose(global->powderlogfp[i]);
-      sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
-      global->powderlogfp[i] = fopen(filename, "w");
-      fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+    // Wait for all workers to finish
+    while(global->nActiveThreads > 0) {
+        printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+        usleep(100000);
     }
-  }
+    
+    // Reset the powder log files
+    pthread_mutex_lock(&global->powderfp_mutex);
+
+    if(global->runNumber > 0) {
+        for(long i=0; i<global->nPowderClasses; i++) {
+            if(global->powderlogfp[i] != NULL)
+                fclose(global->powderlogfp[i]);
+
+            char	filename[1024];
+            sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
+            global->powderlogfp[i] = fopen(filename, "w");
+            fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+        }
+    }
+    pthread_mutex_unlock(&global->powderfp_mutex);
 }
 
 

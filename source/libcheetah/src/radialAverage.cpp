@@ -242,8 +242,11 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
 
 
     writeSimpleHDF5(filename, detector->radialAverageStack[powderClass], detector->radial_nn, nRows, H5T_NATIVE_FLOAT);
-    fflush(global->powderlogfp[powderClass]);
-    pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);			
+    for(long i=0; i<global->nPowderClasses; i++) {
+        fflush(global->powderlogfp[i]);
+    }
+
+    pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);
 
 }
 

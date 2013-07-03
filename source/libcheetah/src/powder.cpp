@@ -214,14 +214,14 @@ void saveRunningSums(cGlobal *global, int detID) {
 	
     // Compute and save darkcal
     if(global->generateDarkcal) {
-        savePowderPattern(global, detID, 0);
         saveDarkcal(global, detID);
+        savePowderPattern(global, detID, 0);
     }
 	
     // Compute and save gain calibration
     if(global->generateGaincal) {
-        savePowderPattern(global, detID, 0);
         saveGaincal(global, detID);
+        savePowderPattern(global, detID, 0);
     }
 }
 
@@ -505,7 +505,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         free(bufferAssembledNPeaksMin);
         free(bufferAssembledNPeaksMax);
     }
-    fflush(global->powderlogfp[powderType]);
+    for(long i=0; i<global->nPowderClasses; i++) {
+        fflush(global->powderlogfp[i]);
+    }
 
 }
 
@@ -540,41 +542,53 @@ void saveDarkcal(cGlobal *global, int detID) {
  */
 void saveGaincal(cGlobal *global, int detID) {
 	
+	printf("Processing gaincal\n");
+
 	// Dereference common variables
 	cPixelDetectorCommon     *detector = &(global->detector[detID]);
 	long	pix_nn = detector->pix_nn;
-	char	filename[1024];
+    float   nframes;
 	
-	printf("Processing gaincal\n");
-	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
-	// Calculate average intensity per frame
+	// Grab a snapshot of the current running sum
 	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
-	double *buffer = (double*) calloc(pix_nn, sizeof(double));
+	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	for(long i=0; i<pix_nn; i++)
-		buffer[i] = (detector->powderCorrected[0][i]/detector->nPowderFrames[0]);
+		buffer[i] = detector->powderCorrected[0][i];
+    for(long i=0; i<pix_nn; i++)
+		buffer[i] /= detector->nPowderFrames[0];
 	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
-	
+
+    
+    
 	// Find median value (this value will become gain=1)
+	float	dc;
 	float *buffer2 = (float*) calloc(pix_nn, sizeof(float));
 	for(long i=0; i<pix_nn; i++) {
 		buffer2[i] = buffer[i];
 	}
-	float	dc;
 	dc = kth_smallest(buffer2, pix_nn, lrint(0.5*pix_nn));
 	printf("offset=%f\n",dc);
 	free(buffer2);
+    
+    // Trap a potential error condition
 	if(dc <= 0){
 		printf("Error calculating gain, offset = %f\n",dc);
 		return;
 	}
-	// gain=1 for a median value pixel, and is bounded between a gain of 0.1 and 10
+    
+    // Calculate gain
+	// gain=1 for a median value pixel
+    // Possibly bound gain between 0.1 and 10
 	for(long i=0; i<pix_nn; i++) {
-		buffer[i] /= (double) dc;
-		if(buffer[i] < 0.1 || buffer[i] > 10)
-			buffer[i]=0;
+		buffer[i] /= (float) dc;
+		//if(buffer[i] < 0.1 || buffer[i] > 10)
+		//	buffer[i]=0;
 	}
+
+	char	filename[1024];
+	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
 	printf("Saving gaincal to file: %s\n", filename);
-	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_DOUBLE);
+	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
 	free(buffer);
 }
 
