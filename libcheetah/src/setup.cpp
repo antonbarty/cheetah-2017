@@ -502,7 +502,7 @@ void cGlobal::parseConfigFile(char* filename) {
     /* skip empty lines */
     if ( strlen(cbuf) <= 1) continue;
 
-    /* Print our for sanity */
+    /* Print out for sanity */
     printf("\t%s",cbuf);
 
 		
@@ -661,8 +661,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     generateGaincal = atoi(value);
   }
   else if (!strcmp(tag, "subtractbg")) {
-    printf("The keyword subtractBg has been changed.  It is\n"
-	   "now known as useDarkcalSubtraction.\n"
+    printf("The keyword subtractBg has been changed. It is\n"
+	   "now toggled by darkcal.\n"
+	   "Modify your ini file and try again...\n");
+    fail = 1;
+  }
+  else if (!strcmp(tag, "usedarkcalsubtraction")) {
+    printf("The keyword useDarkcalSubtraction has been changed.  It is\n"
+	   "now toggled by darkcal.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }

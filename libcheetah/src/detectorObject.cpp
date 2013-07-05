@@ -260,8 +260,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     bgMemory = atoi(value);
   }
   else if (!strcmp(tag, "useautohotpixel")) {
-    // useAutoHotpixel = atoi(value);
-    // Eventually delete this, but not during beamtime!
+	  printf("The keyword useAutoHotPixel has been changed.  It is\n"
+			 "now toggled by hotpixFreq and/or hotpixADC.\n"
+			 "Modify your ini file and try again...\n");
+	  fail = 1;
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
