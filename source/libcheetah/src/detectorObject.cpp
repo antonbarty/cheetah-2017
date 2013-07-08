@@ -41,10 +41,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	strcpy(detectorConfigFile, "No_file_specified");
 	strcpy(geometryFile, "No_file_specified");
 	strcpy(badpixelFile, "No_file_specified");
+	strcpy(baddataFile, "No_file_specified");
 	strcpy(darkcalFile, "No_file_specified");
 	strcpy(wireMaskFile, "No_file_specified");
 	strcpy(gaincalFile, "No_file_specified");
-
+    
 	// Default ASIC layout (cspad)
 	asic_nx = CSPAD_ASIC_NX;
 	asic_ny = CSPAD_ASIC_NY;
@@ -54,9 +55,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	pix_nx = asic_nx*nasics_x;
 	pix_ny = asic_ny*nasics_y;
 	pix_nn = pix_nx*pix_ny;
-	pixelSize = 110e-6;
-
-
+	pixelSize = 109.92e-6;
+    
 	// Detector Z position
 	//strcpy(detectorZpvname, "CXI:DS1:MMS:06.RBV");
 	strcpy(detectorZpvname,"");
@@ -222,15 +222,33 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     useGaincal = 1;
   }
   else if (!strcmp(tag, "badpixelmap")) {
-    strcpy(badpixelFile, value);
-    useBadPixelMask = 1;
+      printf("The keyword badPixelMap has been changed.  It is\n"
+             "now known as badPixelMask.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
+  else if (!strcmp(tag, "badpixelmask")) {
+      strcpy(badpixelFile, value);
+      useBadPixelMask = 1;
   }
   else if (!strcmp(tag, "applybadpixelmap")) {
-    applyBadPixelMask = atoi(value);
+      printf("The keyword applyBadPixelMap has been changed.  It is\n"
+             "now known as applyBadPixelMask.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
+  else if (!strcmp(tag, "applybadpixelmask")) {
+      applyBadPixelMask = atoi(value);
   }
   else if (!strcmp(tag, "baddatamap")) {
-    strcpy(baddataFile, value);
-    useBadDataMask = 1;
+      printf("The keyword badDataMap has been changed.  It is\n"
+             "now known as badDataMask.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
+  else if (!strcmp(tag, "baddatamask")) {
+      strcpy(baddataFile, value);
+      useBadDataMask = 1;
   }
   else if (!strcmp(tag, "wiremask")) {
     strcpy(wireMaskFile, value);
@@ -275,8 +293,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     bgMemory = atoi(value);
   }
   else if (!strcmp(tag, "useautohotpixel")) {
-    // useAutoHotpixel = atoi(value);
-    // Eventually delete this, but not during beamtime!
+	  printf("The keyword useAutoHotPixel has been changed.  It is\n"
+			 "now toggled by hotpixFreq and/or hotpixADC.\n"
+			 "Modify your ini file and try again...\n");
+	  fail = 1;
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
@@ -393,9 +413,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammaxmemorygb")) {
 	  histogramMaxMemoryGb = atof(value);
 	}
-
-
-
+    
 	// Unknown tags
 	else {
 		fail = 1;
