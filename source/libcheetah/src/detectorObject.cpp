@@ -213,6 +213,18 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "geometry")) {
     strcpy(geometryFile, value);
   }
+  else if (!strcmp(tag, "subtractbg")) {
+      printf("The keyword subtractBg has been changed.  It is\n"
+             "now toggled by darkcal.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
+  else if (!strcmp(tag, "usedarkcalsubtraction")) {
+      printf("The keyword useDarkcalSubtraction has been changed.  It is\n"
+             "now toggled by darkcal.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
   else if (!strcmp(tag, "darkcal")) {
     strcpy(darkcalFile, value);
     useDarkcalSubtraction = 1;
@@ -266,10 +278,22 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     saveDetectorRaw = atoi(value);
   }
   else if (!strcmp(tag, "beamcenterx")) {
-    beamCenterPixX  = atof(value);
+      printf("The keyword beamCenterX has been changed. It is\n"
+             "now known as beamCenterPixX.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
   }
   else if (!strcmp(tag, "beamcentery")) {
-    beamCenterPixY  = atof(value);
+      printf("The keyword beamCenterY has been changed. It is\n"
+             "now known as beamCenterPixY.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  } 
+  else if (!strcmp(tag, "beamcenterpixx")) {
+      beamCenterPixX  = atof(value);
+  }
+  else if (!strcmp(tag, "beamcenterpixy")) {
+      beamCenterPixY  = atof(value);
   } 
   else if (!strcmp(tag, "detectorzpvname")) {
     strcpy(detectorZpvname, value);
@@ -326,13 +350,19 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "halopixmindeviation")) {
     halopixMinDeviation = atof(value);
   }
+  else if (!strcmp(tag, "subtractcmmodule")) {
+      printf("The keyword subtractcmModule has been changed. It is\n"
+             "now known as cmModule.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
   else if (!strcmp(tag, "cmmodule")) {
     cmModule = atoi(value);
   }
   else if (!strcmp(tag, "cmfloor")) {
     cmFloor = atof(value);
   }
-    
+  
   // Local background subtraction
   else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
     useLocalBackgroundSubtraction = atoi(value);
