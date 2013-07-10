@@ -114,7 +114,14 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	hotpixMemory = 50;
 	// Kill persistently hot pixels
 	applyAutoHotpixel = 0;
-
+    
+	// Polarization correction
+	usePolarizationCorrection = 0;
+    horizontalFractionOfPolarization = 1.0;
+    
+	// Solid angle correction
+	useSolidAngleCorrection = 0;
+    
 	// Identify persistently illuminated pixels (halo)
 	useAutoHalopixel = 0;
 	halopixMinDeviation = 100;
@@ -332,11 +339,20 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     useAutoHotpixel = 1;
     applyAutoHotpixel = 1;
   }
-  else if (!strcmp(tag, "applyautohotpixel")) {
-    applyAutoHotpixel = atoi(value);
-  }
   else if (!strcmp(tag, "hotpixmemory")) {
-    hotpixMemory = atoi(value);
+      hotpixMemory = atoi(value);
+  }
+  else if (!strcmp(tag, "applyautohotpixel")) {
+      applyAutoHotpixel = atoi(value);
+  }
+  else if (!strcmp(tag, "usepolarizationcorrection")) {
+      usePolarizationCorrection = atoi(value);
+  }
+  else if (!strcmp(tag, "horizontalfractionofpolarization")) {
+      horizontalFractionOfPolarization = atof(value);
+  }
+  else if (!strcmp(tag, "usesolidanglecorrection")) {
+      useSolidAngleCorrection = atoi(value);
   }
   else if (!strcmp(tag, "useautohalopixel")) {
     useAutoHalopixel = atoi(value);
@@ -650,6 +666,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   pix_x = (float *) calloc(nn, sizeof(float));
   pix_y = (float *) calloc(nn, sizeof(float));
   pix_z = (float *) calloc(nn, sizeof(float));
+  pix_dist = (float *) calloc(nn, sizeof(float));
   pix_kx = (float *) calloc(nn, sizeof(float));
   pix_ky = (float *) calloc(nn, sizeof(float));
   pix_kz = (float *) calloc(nn, sizeof(float));
@@ -752,7 +769,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   res,minres,maxres;
   double	 sin_theta;
   long     minres_pix,maxres_pix;
-	long c = 0;	
+  long c = 0;	
   minres = 100000;
   maxres = 0.0;
   minres_pix = 10000000;
@@ -765,10 +782,11 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     y = pix_y[i]*pixelSize;
     z = pix_z[i]*pixelSize + detectorZ*cameraLengthScale;
     r = sqrt(x*x + y*y + z*z);
-		
+    
+    // assuming incident beam is along +z direction, unit is in inverse A (without 2*pi)
     kx = (x/r)/wavelengthA;
     ky = (y/r)/wavelengthA;
-    kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
+    kz = (z/r - 1)/wavelengthA;
     kr = sqrt(kx*kx + ky*ky + kz*kz);
     //res = 1.0/kr;
     sin_theta = sqrt(x*x+y*y)/r;
@@ -779,6 +797,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     pix_kz[i] = kz;
     pix_kr[i] = kr;
     pix_res[i] = res;
+    pix_dist[i] = r;
         
     if ( res < minres ){
       minres = res;

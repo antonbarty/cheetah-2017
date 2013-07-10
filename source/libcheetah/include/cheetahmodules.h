@@ -17,6 +17,8 @@ void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
+void applyPolarizationCorrection(cEventData*, cGlobal*);
+void applySolidAngleCorrection(cEventData*, cGlobal*);
 void calculateHaloPixelMask(cGlobal*);
 void updateHaloBuffer(cEventData*, cGlobal*,int);
 
@@ -27,6 +29,8 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
+void applyPolarizationCorrection(float*, float*, float*, float*, double, double, long);
+void applySolidAngleCorrection(float*, float*, float*, double, long);
 long calculateHaloPixelMask(uint16_t*, float*, float, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
@@ -105,7 +109,7 @@ void saveHistogram(cGlobal*, int);
 
 
 
-// RadialAverage.cpp
+// radialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
 void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
 void calculateRadialAverage(double*, double*, double*, cGlobal*, int);

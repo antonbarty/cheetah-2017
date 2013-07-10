@@ -29,7 +29,7 @@ public:
 	/** @brief Default constructor (set default values) */
 	cGlobal();
 
-	/** @brief What's this? */
+	/** @brief Pointer to the instance of the class */
 	cGlobal     *self;
 
 	/** @brief Path to the global configuration file */

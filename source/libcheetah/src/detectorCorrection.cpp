@@ -463,6 +463,57 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 }
 
 
+
+/*
+ *	Apply polarization correction
+ *	The polarization correction is calculated using classical electrodynamics (expression from Hura et al JCP 2000)
+ */
+void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if (global->detector[detID].usePolarizationCorrection) {
+			float	*data = eventData->detector[detID].corrected_data;
+            float   *pix_x = global->detector[detID].pix_x;
+            float   *pix_y = global->detector[detID].pix_y;
+            float   *pix_dist = global->detector[detID].pix_dist;
+			long	pix_nn = global->detector[detID].pix_nn;
+            float   pixelSize = global->detector[detID].pixelSize;
+            double  horizontalFraction = global->detector[detID].horizontalFractionOfPolarization;
+            
+			applyPolarizationCorrection(data, pix_x, pix_y, pix_dist, pixelSize, horizontalFraction, pix_nn);
+		}
+	}
+}
+
+void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float *pix_dist, double pixelSize, double horizontalFraction, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] /= horizontalFraction*(1 - pix_x[i]*pix_x[i]*pixelSize*pixelSize/(pix_dist[i]*pix_dist[i])) + (1 - horizontalFraction)*(1 - pix_y[i]*pix_y[i]*pixelSize*pixelSize/(pix_dist[i]*pix_dist[i]));
+	}
+}
+
+
+
+/*
+ *	Apply solid angle correction
+ */
+void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if(global->detector[detID].useSolidAngleCorrection) {
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*data = eventData->detector[detID].corrected_data;
+			
+			//applySolidAngleCorrection(data, phi, theta, horizontalFraction, pix_nn);
+		}
+	}
+}
+
+void applySolidAngleCorrection(float *data, float *phi, float *theta, double horizontalFraction, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] /= horizontalFraction*(1 - sin(phi[i])*sin(phi[i])*sin(theta[i])*sin(theta[i])) + (1 - horizontalFraction)*(1 - cos(phi[i])*cos(phi[i])*sin(theta[i])*sin(theta[i]));
+	}
+}
+
+
+
 // Read out artifact compensation for pnCCD back detector
 /*
     Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.

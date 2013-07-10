@@ -117,7 +117,7 @@ void *worker(void *threadarg) {
 
 	
     /*
-     *	Apply bad pixel map
+     *	Apply bad pixel mask
      */
     applyBadPixelMask(eventData, global);
 	
@@ -165,7 +165,7 @@ void *worker(void *threadarg) {
 
 	
 	/*
-	 *	Apply bad pixels
+	 *	Apply bad pixel mask again after photon background subtraction
 	 */
 	applyBadPixelMask(eventData, global);
 	
@@ -176,9 +176,24 @@ void *worker(void *threadarg) {
 	identifyHotPixels(eventData, global);
 	calculateHotPixelMask(global);
 	applyHotPixelMask(eventData,global);
-
+    
+    
+	/*
+	 *	Apply polarization correction
+	 */
+	applyPolarizationCorrection(eventData, global);
+	
+    
+	/*
+	 *	Apply solid angle correction
+	 */
+	applySolidAngleCorrection(eventData, global);
+	
+    
+	/*
+	 *	Update data rate
+	 */    
 	updateDatarate(eventData,global);
-
 	
     
     /*

@@ -132,6 +132,7 @@ public:
 	float  *pix_x;
 	float  *pix_y;
 	float  *pix_z;
+    float  *pix_dist; // total distance [m] between pixel and scattering source
 
 	// Reciprocal space pixel coordinates (inverse A, no factor of 2*pi)
 	float  *pix_kx;
@@ -161,7 +162,6 @@ public:
 	float   *pix_r;
 	float   *pix_kr;
 	float   *pix_res;
-
 
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
@@ -223,6 +223,11 @@ public:
 	long   last_hotpix_update;
 	// Apply persistently hot pixels
 	int    applyAutoHotpixel;
+	// Apply polarization correction
+    int    usePolarizationCorrection;
+    double horizontalFractionOfPolarization;
+	// Apply solid angle correction
+    int    useSolidAngleCorrection;
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
