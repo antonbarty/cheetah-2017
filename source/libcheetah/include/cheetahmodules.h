@@ -29,8 +29,9 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
-void applyPolarizationCorrection(float*, float*, float*, float*, double, double, long);
-void applySolidAngleCorrection(float*, float*, float*, double, long);
+void applyPolarizationCorrection(float*, float*, float*, float*, float, double, long);
+void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float, double, float, double, long);
+void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 long calculateHaloPixelMask(uint16_t*, float*, float, long, long);
 
 void pnccdOffsetCorrection(cEventData*, cGlobal*);

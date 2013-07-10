@@ -69,7 +69,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	beamCenterPixX = 0;
 	beamCenterPixY = 0;
-
+    
 	// Bad pixel mask    
 	useBadPixelMask = 0;
 	applyBadPixelMask = 1;
@@ -121,6 +121,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Solid angle correction
 	useSolidAngleCorrection = 0;
+	solidAngleAlgorithm = 1;
     
 	// Identify persistently illuminated pixels (halo)
 	useAutoHalopixel = 0;
@@ -353,6 +354,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "usesolidanglecorrection")) {
       useSolidAngleCorrection = atoi(value);
+  }
+  else if (!strcmp(tag, "solidanglealgorithm")) {
+      solidAngleAlgorithm = atoi(value);
   }
   else if (!strcmp(tag, "useautohalopixel")) {
     useAutoHalopixel = atoi(value);
@@ -774,7 +778,10 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   maxres = 0.0;
   minres_pix = 10000000;
   maxres_pix = 0;
-
+  
+  // also update constant term of solid angle when detector has moved
+  solidAngleConst = pixelSize*pixelSize/(detectorZ*cameraLengthScale*detectorZ*cameraLengthScale);
+  
   printf("Recalculating K-space coordinates\n");
 
   for (long i=0; i<pix_nn; i++ ) {

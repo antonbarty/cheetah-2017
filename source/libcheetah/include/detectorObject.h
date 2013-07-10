@@ -177,7 +177,10 @@ public:
 	// Beam center
 	double  beamCenterPixX;
 	double  beamCenterPixY;
-
+    
+    // Solid angle
+    double  solidAngleConst; // constant term of the solid angle for each pixel
+    
 	/*
 	 *  Flags for detector processing options
 	 */
@@ -228,6 +231,7 @@ public:
     double horizontalFractionOfPolarization;
 	// Apply solid angle correction
     int    useSolidAngleCorrection;
+    int    solidAngleAlgorithm;
 	// Identify persistently illuminated pixels (Halo)
 	int    useAutoHalopixel;
 	float  halopixMinDeviation;
