@@ -25,7 +25,13 @@ You also need to compile the giraffe library. It can be downloaded through:
 
     $ git clone https://github.com/feldkamp/giraffe
 
-If you don't have git installed, you can follow the link and `Download ZIP`. If you're on psexport there is a pre-compiled version of the giraffe library available in `/reg/neh/home3/sellberg/source/giraffe` which is specified as default when building and installing.
+If you don't have git installed, you can follow the link and click `Download ZIP`. Follow the instructions in `giraffe/README` to compile the library:
+
+    $ cd giraffe
+    $ scons -c
+    $ scons
+
+If you're on psexport there is a pre-compiled version of the giraffe library available in `/reg/neh/home3/sellberg/source/giraffe` which is specified as default when building and installing.
 
 
 Finally you need to have LCLS's ana available somewhere. If you're building 
@@ -39,7 +45,7 @@ ask LCLS about getting a portable version of ana.
 
 ### Building and Installing
 
-Now that you have cmake we can start the build:
+Now that you have cmake and giraffe we can start the build:
 
 - If you're on psexport, make sure to log into one of the psana computers (it's not possible to compile anymore on psexport):
 
@@ -97,6 +103,8 @@ point to the ana-current directory, for example on psexport it is
 `/reg/g/psdm/sw/releases/ana-current`
 
 - You can also specify the `CMAKE_INSTALL_PREFIX`. I set mine to `~/local`
+
+- If you have compiled the giraffe library on your own, set `GIRAFFE_DIR` accordingly.
 
 - Press "c" to configure. 
 
