@@ -140,7 +140,7 @@ build directory.
 
         $ make
 
-- If you want to install just do.
+- If you want to install just do:
 
         $ make install
 
