@@ -98,6 +98,7 @@ cGlobal::cGlobal(void) {
   hitfinderMinSNR = 40;
   hitfinderIgnoreHaloPixels = 1;
   hitfinderDownsampling = 1;
+  hitfinderOnDetectorCorrectedData = 0;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -780,6 +781,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinderignorehalopixels")) {
     hitfinderIgnoreHaloPixels = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderondetectorcorrecteddata")) {
+    hitfinderOnDetectorCorrectedData = atoi(value);
   }
 
 

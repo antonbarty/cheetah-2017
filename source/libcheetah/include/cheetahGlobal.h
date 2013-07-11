@@ -156,6 +156,8 @@ public:
 	int      hitfinderIgnoreHaloPixels;
 	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
 	long      hitfinderDownsampling;
+	/** @brief Data for hitfinding only based on detector corrected data (photon correction ignored for hitfinding). Only hitfinder 1. */
+	long      hitfinderOnDetectorCorrectedData;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];

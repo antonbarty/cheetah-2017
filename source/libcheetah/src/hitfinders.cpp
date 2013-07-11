@@ -49,7 +49,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	 */
  	switch(global->hitfinderAlgorithm) {
 		
-	case 0 :	// Everything is a hit. Used for converting xtc to hdf
+	case 0 :	// Everything is a hit. Used for converting xtc to hdf5
 	  hit = 1;
 	  break;	
 
@@ -189,6 +189,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   int       hit = 0;
   long      nat = 0;
   float     tat = 0.;
+  float *hitfinderData;
   uint16_t  *mask;
   float     *data;
   long	    pix_nn;
@@ -200,11 +201,17 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     pixel_options |= PIXEL_IS_IN_HALO;
   }
   
+  if (global->hitfinderOnDetectorCorrectedData) {
+    hitfinderData = eventData->detector[detID].detector_corrected_data;
+  } else {
+    hitfinderData = eventData->detector[detID].corrected_data;
+  }
+
   if (global->hitfinderDownsampling > 1) {
     long pix_nn_0 = global->detector[detID].pix_nn;  
     long pix_nx_0 = global->detector[detID].pix_nx;  
     long pix_ny_0 = global->detector[detID].pix_ny;  
-    float *data_0 = eventData->detector[detID].corrected_data;
+    float *data_0 = hitfinderData;
     uint16_t *mask_0 = eventData->detector[detID].pixelmask;
     long pix_nx = pix_ny_0/global->hitfinderDownsampling;  
     pix_nn = (pix_ny_0/global->hitfinderDownsampling)*pix_nx;
@@ -214,7 +221,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     downsampleMask(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
   } else {
     pix_nn = global->detector[detID].pix_nn;  
-    data = eventData->detector[detID].corrected_data;
+    data = hitfinderData;
     mask = eventData->detector[detID].pixelmask;
   }
 

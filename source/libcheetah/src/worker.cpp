@@ -214,12 +214,12 @@ void *worker(void *threadarg) {
     writeCXI(eventData, global);
     pthread_mutex_unlock(&global->saveCXI_mutex);
     if(eventData->writeFlag){
-      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
     }
   } else {
     if(eventData->writeFlag){
       writeHDF5(eventData, global);
-      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventname, eventData->nPeaks);
+      printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
     }
   }
   if(!eventData->writeFlag){

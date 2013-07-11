@@ -86,6 +86,7 @@ public:
 	unsigned	fiducial;
 	char		timeString[1024];
 	char		eventname[1024];
+	char		eventStamp[1024];
 	char		eventSubdir[1024];
 
 	bool		beamOn;

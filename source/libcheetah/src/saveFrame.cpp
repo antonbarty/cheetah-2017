@@ -43,6 +43,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,event->fiducial);
+	sprintf(event->eventStamp,"LCLS_%s_r%04u_%s_%x",buffer1,global->runNumber,buffer2,event->fiducial);
 }
 
 
