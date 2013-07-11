@@ -21,7 +21,14 @@ If you're on psexport you can just do:
     $ export HDF5_ROOT=~barty/hdf5
 
 
-You also need to have LCLS's ana available somewhere. If you're building 
+You also need to compile the giraffe library. It can be downloaded through:
+
+    $ git clone https://github.com/feldkamp/giraffe
+
+If you don't have git installed, you can follow the link and `Download ZIP`. If you're on psexport there is a pre-compiled version of the giraffe library available in `/reg/neh/home3/sellberg/source/giraffe` which is specified as default when building and installing.
+
+
+Finally you need to have LCLS's ana available somewhere. If you're building 
 at CFEL, LCLS or Uppsala this should already be available. 
 
 If not you can try to use the scripts/download_psana.py to download it 
@@ -71,6 +78,8 @@ Press [t] to toggle advanced mode (Currently Off)
  BUILD_PSANA                     *ON                                           
  CMAKE_BUILD_TYPE                *                                             
  CMAKE_INSTALL_PREFIX            */usr/local                                   
+ GIRAFFE_DIR                      /reg/neh/home3/sellberg/source/giraffe                                                                             
+ GIRAFFE_LIB                      /reg/neh/home3/sellberg/source/giraffe/libgiraffe_shared.so                                                   
  HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
  HDF5_hdf5_LIBRARY_DEBUG          HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
  HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
@@ -87,7 +96,7 @@ Press [t] to toggle advanced mode (Currently Off)
 point to the ana-current directory, for example on psexport it is 
 `/reg/g/psdm/sw/releases/ana-current`
 
-- You can also specify the `CMAKE_INSTALL_PREFIX`. I set mine to `~/usr`
+- You can also specify the `CMAKE_INSTALL_PREFIX`. I set mine to `~/local`
 
 - Press "c" to configure. 
 
@@ -99,7 +108,9 @@ point to the ana-current directory, for example on psexport it is
  BUILD_CHEETAH_MYANA              OFF                                          
  BUILD_PSANA                      ON                                           
  CMAKE_BUILD_TYPE                                                              
- CMAKE_INSTALL_PREFIX             /home/filipe/usr                             
+ CMAKE_INSTALL_PREFIX             /reg/neh/home3/sellberg/local                                                                                      
+ GIRAFFE_DIR                      /reg/neh/home3/sellberg/source/giraffe                                                                             
+ GIRAFFE_LIB                      /reg/neh/home3/sellberg/source/giraffe/libgiraffe_shared.so                                                        
  HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
  HDF5_hdf5_LIBRARY_DEBUG         *HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
  HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
