@@ -84,11 +84,11 @@ Press [t] to toggle advanced mode (Currently Off)
  BUILD_PSANA                     *ON                                           
  CMAKE_BUILD_TYPE                *                                             
  CMAKE_INSTALL_PREFIX            */usr/local                                   
- GIRAFFE_DIR                      /reg/neh/home3/sellberg/source/giraffe                                                                             
- GIRAFFE_LIB                      /reg/neh/home3/sellberg/source/giraffe/libgiraffe_shared.so                                                   
- HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
- HDF5_hdf5_LIBRARY_DEBUG          HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
- HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
+ GIRAFFE_DIR                     */reg/neh/home3/sellberg/source/giraffe                                                                             
+ GIRAFFE_LIB                     */reg/neh/home3/sellberg/source/giraffe/libgiraffe_shared.so                                                   
+ HDF5_C_INCLUDE_DIR              */reg/neh/home/barty/hdf5/include             
+ HDF5_hdf5_LIBRARY_DEBUG         *HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
+ HDF5_hdf5_LIBRARY_RELEASE       */reg/neh/home/barty/hdf5/lib/libhdf5.so      
  RPATH_ON_INSTALLED_BINS         *ON                                           
 
 ANA_ARCH: ana architecture to be used                                           
@@ -120,7 +120,7 @@ point to the ana-current directory, for example on psexport it is
  GIRAFFE_DIR                      /reg/neh/home3/sellberg/source/giraffe                                                                             
  GIRAFFE_LIB                      /reg/neh/home3/sellberg/source/giraffe/libgiraffe_shared.so                                                        
  HDF5_C_INCLUDE_DIR               /reg/neh/home/barty/hdf5/include             
- HDF5_hdf5_LIBRARY_DEBUG         *HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
+ HDF5_hdf5_LIBRARY_DEBUG          HDF5_hdf5_LIBRARY_DEBUG-NOTFOUND             
  HDF5_hdf5_LIBRARY_RELEASE        /reg/neh/home/barty/hdf5/lib/libhdf5.so      
  RPATH_ON_INSTALLED_BINS          ON                                           
 
