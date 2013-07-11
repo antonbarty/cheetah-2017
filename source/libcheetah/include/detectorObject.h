@@ -312,8 +312,33 @@ public:
 	long	radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
-
-
+    
+	/*
+	 *  Angular correlation stacks for this detector
+	 */
+    int     useAngularCorrelation;
+    int     sumAngularCorrelation;		// set to nonzero to sum cross-correlation patterns for different hits
+	int		autoCorrelateOnly;		// set to nonzero to only calculate autocorrelation (q1=q2)
+	int		angularCorrelationNormalization;	// switch between normalization algorithms: 1 = intensity, 2 = variance
+	int		angularCorrelationQScale;		// customize the scale for the Q-range of the correlation algorithms
+    double 	angularCorrelationStartQ;		// 1 = startQ/stopQ are in units of radial distance [pixels]
+    double 	angularCorrelationStopQ;		// 2 = startQ/stopQ are in absolute units of momentum transfer [Å-1], 3 = startQ/stopQ are in absolute units of perpendicualar momentum transfer [Å-1]
+    int 	angularCorrelationNumQ;		// number of q values between start and stop
+    double 	angularCorrelationStartPhi;	// start angle in degrees, default: 0
+    double 	angularCorrelationStopPhi;		// stop angle in degrees, default: 360
+    int 	angularCorrelationNumPhi;		// number of angular steps, default: 256 (attention: if possible, use powers of 2, that makes FFT especially fast)
+    int 	angularCorrelationNumDelta;	// number of angular lag steps, default: 0 (it then calculates suitable number from correlationNumPhi with the same step length)
+	int		*angularCorrelationLUT;		// lookup table (LUT) needed for the fast correlation
+	int		angularCorrelationLUTdim1;		// dim1 of LUT
+	int		angularCorrelationLUTdim2;		// dim2 of LUT
+	int		angularCorrelationOutput;		// switch between output formats: 1 = hdf5, 2 = bin, 3 = hdf5+bin, 4 = tiff, 5 = tiff+hdf5, 6 = tiff+bin, 7 = tiff+hdf5+bin
+    
+    //	long	angularCorrelationStackSize;
+//	long	angularCorrelationStackCounter[MAX_POWDER_CLASSES];
+//	double  *angularCorrelationAverageStack[MAX_POWDER_CLASSES];
+//	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
+    
+    
 
 public:
 

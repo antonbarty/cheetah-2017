@@ -316,7 +316,15 @@ void *worker(void *threadarg) {
      */
     calculateRadialAverage(eventData, global);
     addToRadialAverageStack(eventData, global);
-
+    
+    
+    /*
+     *  Calculate angular correlation
+     *  Maintain angular correlation stack
+     */
+    calculateAngularCorrelation(eventData, global);
+    //addToAngularCorrelationStack(eventData, global);
+    
     
     /*
      * calculate the one dimesional beam spectrum

@@ -108,8 +108,6 @@ void addToHistogram(cEventData*, cGlobal*, int);
 void saveHistograms(cGlobal*);
 void saveHistogram(cGlobal*, int);
 
-
-
 // radialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
 void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
@@ -118,7 +116,16 @@ void addToRadialAverageStack(cEventData*, cGlobal*);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
-    
+
+// angularCorrelation.cpp
+void calculateAngularCorrelation(cEventData*, cGlobal*);
+//void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
+//void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
+//void addToRadialAverageStack(cEventData*, cGlobal*);
+//void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
+//void saveRadialAverageStack(cGlobal*, int, int);
+//void saveRadialStacks(cGlobal*);
+
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);
 

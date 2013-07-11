@@ -136,8 +136,24 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	histogramBinSize = 1;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
-
-
+    
+	// Angular correlation analysis
+	useAngularCorrelation = 0;
+	sumAngularCorrelation = 0;
+	autoCorrelateOnly = 1;
+	angularCorrelationNormalization = 1;
+	angularCorrelationQScale = 1;
+    angularCorrelationStartQ = 100;
+    angularCorrelationStopQ = 600;
+    angularCorrelationNumQ = 51;
+    angularCorrelationStartPhi = 0;
+    angularCorrelationStopPhi = 360;
+    angularCorrelationNumPhi = 256;
+	angularCorrelationNumDelta = 0;
+	angularCorrelationLUTdim1 = 100;
+	angularCorrelationLUTdim2 = 100;
+	angularCorrelationOutput = 1;
+    
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
 
@@ -445,7 +461,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
 	else if (!strcmp(tag, "startframes")) {
 		startFrames = atoi(value);
-	}
+  }
 	
 	// Histograms
 	else if (!strcmp(tag, "histogram")) {
@@ -463,6 +479,54 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammaxmemorygb")) {
 	  histogramMaxMemoryGb = atof(value);
 	}
+    
+    // Angular correlation analysis
+	else if (!strcmp(tag, "useangularcorrelation")) {
+        useAngularCorrelation = atoi(value);
+	}
+	else if (!strcmp(tag, "sumangularcorrelation")) {
+        sumAngularCorrelation = atoi(value);
+	}
+	else if (!strcmp(tag, "autocorrelateonly")) {
+        autoCorrelateOnly = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationnormalization")) {
+        angularCorrelationNormalization = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationqscale")) {
+        angularCorrelationQScale = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationstartq")) {
+        angularCorrelationStartQ = atof(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationstopq")) {
+        angularCorrelationStopQ = atof(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationnumq")) {
+        angularCorrelationNumQ = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationstartphi")) {
+        angularCorrelationStartPhi = atof(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationstopphi")) {
+        angularCorrelationStopPhi = atof(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationnumphi")) {
+        angularCorrelationNumPhi = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationnumdelta")) {
+        angularCorrelationNumDelta = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationlutdim1")) {
+        angularCorrelationLUTdim1 = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationlutdim2")) {
+        angularCorrelationLUTdim2 = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationoutput")) {
+        angularCorrelationOutput = atoi(value);
+	}
+    
     
 	// Unknown tags
 	else {

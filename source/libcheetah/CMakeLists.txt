@@ -6,6 +6,8 @@ mark_as_advanced(CLEAR HDF5_C_INCLUDE_DIR)
 mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_RELEASE)
 mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_DEBUG)
 
+# Add Giraffe library
+set(GIRAFFE_DIR "/reg/neh/home3/sellberg/source/giraffe" CACHE FILEPATH "Directory of giraffe library")
 
 # Add source files here
 LIST(APPEND sources "src/assemble2DImage.cpp" "src/backgroundCorrection.cpp")
@@ -16,14 +18,17 @@ LIST(APPEND sources "src/powder.cpp" "src/peakfinders.cpp")
 LIST(APPEND sources "src/radialAverage.cpp" "src/saveCXI.cpp")
 LIST(APPEND sources "src/saveFrame.cpp" "src/setup.cpp")
 LIST(APPEND sources "src/spectrum.cpp" "src/worker.cpp")
-LIST(APPEND sources "src/histogram.cpp" )
+LIST(APPEND sources "src/histogram.cpp" "src/angularCorrelation.cpp")
 
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})
+include_directories(${GIRAFFE_DIR})
 
 add_library(cheetah SHARED ${sources})
 
-target_link_libraries(cheetah ${HDF5_LIBRARIES})
+find_library(GIRAFFE_LIB libgiraffe_shared.so PATHS ${GIRAFFE_DIR})
+
+target_link_libraries(cheetah ${HDF5_LIBRARIES} ${GIRAFFE_LIB})
 
 set_target_properties(
  cheetah
