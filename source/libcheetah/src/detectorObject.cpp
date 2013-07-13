@@ -141,6 +141,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useAngularCorrelation = 0;
 	sumAngularCorrelation = 0;
 	autoCorrelateOnly = 1;
+	angularCorrelationAlgorithm = 1;
 	angularCorrelationNormalization = 1;
 	angularCorrelationQScale = 1;
     angularCorrelationStartQ = 100;
@@ -489,6 +490,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "autocorrelateonly")) {
         autoCorrelateOnly = atoi(value);
+	}
+	else if (!strcmp(tag, "angularcorrelationalgorithm")) {
+        angularCorrelationAlgorithm = atoi(value);
 	}
 	else if (!strcmp(tag, "angularcorrelationnormalization")) {
         angularCorrelationNormalization = atoi(value);

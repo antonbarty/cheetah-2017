@@ -345,20 +345,36 @@ void cGlobal::setup() {
   avgGMD = 0;
 
   for(long i=0; i<MAX_DETECTORS; i++) {
-    detector[i].bgCounter = 0;
-    detector[i].last_bg_update = 0;
-    detector[i].hotpixCounter = 0;
-    detector[i].last_hotpix_update = 0;
-    detector[i].hotpixRecalc = detector[i].bgRecalc;
-    detector[i].nhot = 0;
-    detector[i].halopixCounter = 0;
-    detector[i].last_halopix_update = 0;
-    detector[i].halopixRecalc = detector[i].bgRecalc;
-    detector[i].halopixMemory = detector[i].bgRecalc;
-    detector[i].nhalo = 0;
-    detector[i].detectorZprevious = 0;
-    detector[i].detectorZ = 0;
-    detector[i].detectorEncoderValue = 0;
+      detector[i].bgCounter = 0;
+      detector[i].last_bg_update = 0;
+      detector[i].hotpixCounter = 0;
+      detector[i].last_hotpix_update = 0;
+      detector[i].hotpixRecalc = detector[i].bgRecalc;
+      detector[i].nhot = 0;
+      detector[i].halopixCounter = 0;
+      detector[i].last_halopix_update = 0;
+      detector[i].halopixRecalc = detector[i].bgRecalc;
+      detector[i].halopixMemory = detector[i].bgRecalc;
+      detector[i].nhalo = 0;
+      detector[i].detectorZprevious = 0;
+      detector[i].detectorZ = 0;
+      detector[i].detectorEncoderValue = 0;
+      if (detector[i].useAngularCorrelation) {
+          if (!detector[i].angularCorrelationNumDelta) 
+              detector[i].angularCorrelationNumDelta = (int) ceil(detector[i].angularCorrelationNumPhi/2.0+1);
+          if (detector[i].angularCorrelationNormalization < 1 || detector[i].angularCorrelationNormalization > 2) {
+              printf("Invalid option detector #%d: angularCorrelationNormalization = %d, set to default value (1 = intensity)", i, detector[i].angularCorrelationNormalization);
+              detector[i].angularCorrelationNormalization = 1;
+          }
+          if (detector[i].angularCorrelationQScale < 1 || detector[i].angularCorrelationQScale > 3) {
+              printf("Invalid option detector #%d: angularCorrelationQScale = %d, set to default value (1 = pixels)", i, detector[i].angularCorrelationQScale);
+              detector[i].angularCorrelationQScale = 1;
+          }
+          if (detector[i].angularCorrelationOutput < 1 || detector[i].angularCorrelationOutput > 7) {
+              printf("Invalid option detector #%d: angularCorrelationOutput = %d, set to default value (1 = hdf5)", i, detector[i].angularCorrelationOutput);
+              detector[i].angularCorrelationOutput = 1;
+          }
+      }
   }
 
   // Make sure to use SLAC timezone!

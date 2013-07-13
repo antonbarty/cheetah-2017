@@ -36,87 +36,122 @@ using std::endl;
 //-------------------------------------------------------------------
 void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
     
-    //prepare some things for output
-    arraydataIO *io = new arraydataIO;
-    std::ostringstream osst;
-    osst << eventData->eventname;
-    string eventname_str = osst.str();
-    
-    //create cross correlator object that takes care of the computations
-    //the arguments that are passed to the constructor determine 2D/3D calculations with/without mask
-    CrossCorrelator *cc = NULL;
-    
     DETECTOR_LOOP {
 		if (global->detector[detID].useAngularCorrelation) {
-
-            cout << "calculateAngularCorrelation(): made arraydataIO and CrossCorrelator for detector" << detID << endl;
             
+            // prepare some things for output
+            arraydataIO *io = new arraydataIO;
+            std::ostringstream osst;
+            osst << eventData->eventname;
+            string eventname_str = osst.str();
+            
+            // create cross correlator object that takes care of the computations
+            CrossCorrelator *cc = NULL;
+            
+            // derefence variables from eventData and global
+            float	*data = eventData->detector[detID].corrected_data;
+            long	pix_nn = global->detector[detID].pix_nn;
+            
+            if (global->detector[detID].angularCorrelationQScale == 2) { // |q| [Å-1], no 2*pi factor
+                float   *pix_kx = global->detector[detID].pix_kx;
+                float   *pix_ky = global->detector[detID].pix_ky;
+                float   *pix_kr = global->detector[detID].pix_kr;
+                float   pix_qx[pix_nn];
+                float   pix_qy[pix_nn];
+                for (long i=0; i<pix_nn; i++) {
+                    float q_rescale = pix_kr[i]/sqrt(pix_kx[i]*pix_kx[i] + pix_ky[i]*pix_ky[i]);
+                    pix_qx[i] = pix_kx[i]*q_rescale;
+                    pix_qy[i] = pix_ky[i]*q_rescale;
+                }
+                
+                if (global->detector[detID].autoCorrelateOnly) {
+                    cc = new CrossCorrelator( // auto-correlation 2D case, no mask, q pixel map [Å-1]
+                                             data, pix_qx, pix_qy, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumPhi, global->detector[detID].angularCorrelationNumQ );
+                } else {
+                    cc = new CrossCorrelator( // full cross-correlation 3D case, no mask, q pixel map [Å-1]
+                                             data, pix_kx, pix_ky, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumPhi );
+                }
+            } else if (global->detector[detID].angularCorrelationQScale == 3) {  // |q_perp| [Å-1], no 2*pi factor
+                float   *pix_kx = global->detector[detID].pix_kx;
+                float   *pix_ky = global->detector[detID].pix_ky;
+                
+                if (global->detector[detID].autoCorrelateOnly) {
+                    cc = new CrossCorrelator( // auto-correlation 2D case, no mask, q pixel map [Å-1]
+                                             data, pix_kx, pix_ky, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumPhi, global->detector[detID].angularCorrelationNumQ );
+                } else {
+                    cc = new CrossCorrelator( // full cross-correlation 3D case, no mask, q pixel map [Å-1]
+                                             data, pix_kx, pix_ky, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumPhi );
+                }
+            } else { // pixels
+                float   *pix_x = global->detector[detID].pix_x;
+                float   *pix_y = global->detector[detID].pix_y;
+                
+                if (global->detector[detID].autoCorrelateOnly) {
+                    cc = new CrossCorrelator( // auto-correlation 2D case, no mask, r pixel map [pixels]
+                                             data, pix_x, pix_y, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumPhi, global->detector[detID].angularCorrelationNumQ );
+                } else {
+                    cc = new CrossCorrelator( // full cross-correlation 3D case, no mask, r pixel map [pixels]
+                                             data, pix_x, pix_y, pix_nn, 
+                                             global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumQ, global->detector[detID].angularCorrelationNumPhi );
+                }
+            }
+            
+            // set bad pixel mask, if necessary
+            if (global->detector[detID].useBadPixelMask){
+                uint16_t *mask = eventData->detector[detID].pixelmask;
+                cc->setMask( mask, pix_nn );
+            }
+            
+            // normalize by variance, if necessary
+            if (global->detector[detID].angularCorrelationNormalization == 2){
+                cc->setVarianceEnable(true);
+            }
+            
+            // turn on debug level inside the CrossCorrelator, if needed
+            DEBUGL1_ONLY cc->setDebug(1);
+            DEBUGL2_ONLY cc->setDebug(2);
+            
+            //--------------------------------------------------------------------------------------------alg1
+            if (global->detector[detID].angularCorrelationAlgorithm == 1) {							
+                DEBUGL1_ONLY cout << "XCCA regular (algorithm 1)" << endl;
+                
+                cc->calculatePolarCoordinates(global->detector[detID].angularCorrelationStartQ, global->detector[detID].angularCorrelationStopQ);
+                cc->calculateXCCA();
+                
+                io->writeToTiff( "data1/"+eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled
+                
+                io->writeToTiff( "data1/"+eventname_str+"-acca.tif", cc->autoCorr(), 1 );   // 0: unscaled, 1: scaled
+                
+            //--------------------------------------------------------------------------------------------alg2
+            /*
+            } else if (global->detector[detID].angularCorrelationAlgorithm == 2) {
+                DEBUGL1_ONLY cout << "XCCA fast (algorithm 2)" << endl;
+                cc->setLookupTable( global->detector[detID].angularCorrelationLUT, global->detector[detID].angularCorrelationLUTdim1, global->detector[detID].angularCorrelationLUTdim2 );
+                cc->calculatePolarCoordinates_FAST(global->detector[detID].angularCorrelationStartQ, global->detector[detID].angularCorrelationStopQ);
+                
+                // need to protect the FFTW at the core with a mutex, not thread-safe!!
+                //pthread_mutex_lock(&global->detector[detID].angularCorrelationFFT_mutex);
+                cc->calculateXCCA_FAST();
+                //pthread_mutex_unlock(&global->detector[detID].angularCorrelationFFT_mutex);
+                
+                io->writeToTiff( eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled
+            */
+            } else {
+                cerr << "ERROR in calculateAngularCorrelation: correlation algorithm " << global->detector[detID].angularCorrelationAlgorithm << " not known." << endl;
+            }
+            
+            delete io;
+            delete cc;
         }
     }
+    
     
     /*
-    if (global->autoCorrelateOnly) {
-        if (global->correlationQScale == 1) {
-            cc = new CrossCorrelator( //auto-correlation 2D case, no mask, r pixel map [pixels]
-                                     threadInfo->corrected_data, global->pix_x, global->pix_y, RAW_DATA_LENGTH, 
-                                     global->correlationNumPhi, global->correlationNumQ );
-            
-        } else {
-            cc = new CrossCorrelator( //auto-correlation 2D case, no mask, q pixel map [Å-1]
-                                     threadInfo->corrected_data, threadInfo->pix_qx, threadInfo->pix_qy, RAW_DATA_LENGTH, 
-                                     global->correlationNumPhi, global->correlationNumQ );
-        }
-    } else {
-        if (global->correlationQScale == 1) {
-            cc = new CrossCorrelator( //full cross-correlation 3D case, no mask, r pixel map [pixels]
-                                     threadInfo->corrected_data, global->pix_x, global->pix_y, RAW_DATA_LENGTH, 
-                                     global->correlationNumQ, global->correlationNumQ, global->correlationNumPhi );	
-        } else {
-            cc = new CrossCorrelator( //full cross-correlation 3D case, no mask, q pixel map [Å-1]
-                                     threadInfo->corrected_data, threadInfo->pix_qx, threadInfo->pix_qy, RAW_DATA_LENGTH, 
-                                     global->correlationNumQ, global->correlationNumQ, global->correlationNumPhi );	
-        }
-    }
-    
-    //set bad pixel mask, if necessary
-    if (global->useBadPixelMask){
-        cc->setMask( global->badpixelmask, RAW_DATA_LENGTH );
-    }
-    
-    //normalize by variance, if necessary
-    if (global->correlationNormalization == 2){
-        cc->setVarianceEnable(true);
-    }
-    
-    //turn on debug level inside the CrossCorrelator, if needed
-    DEBUGL1_ONLY cc->setDebug(1); 
-    DEBUGL2_ONLY cc->setDebug(2);
-    
-    //--------------------------------------------------------------------------------------------alg1
-    if (global->useCorrelation == 1) {							
-        DEBUGL1_ONLY cout << "XCCA regular (algorithm 1)" << endl;
-        
-        cc->calculatePolarCoordinates(global->correlationStartQ, global->correlationStopQ);
-        cc->calculateXCCA();
-        
-		//--------------------------------------------------------------------------------------------alg2
-    } else if (global->useCorrelation == 2) {					
-        DEBUGL1_ONLY cout << "XCCA fast (algorithm 2)" << endl;
-        cc->setLookupTable( global->correlationLUT, global->correlationLUTdim1, global->correlationLUTdim2 );
-        cc->calculatePolarCoordinates_FAST(global->correlationStartQ, global->correlationStopQ);
-        
-        // need to protect the FFTW at the core with a mutex, not thread-safe!!
-        pthread_mutex_lock(&global->correlationFFT_mutex);
-        cc->calculateXCCA_FAST();
-        pthread_mutex_unlock(&global->correlationFFT_mutex);
-        
-        io->writeToTiff( eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled
-        
-    } else {
-        cerr << "ERROR in correlate: correlation algorithm " << global->useCorrelation << " not known." << endl;
-    }
-    
-    
     //--------------------------------------------------------------------------------------------save to sum
     //add to threadInfo->correlation
     //pthread_mutex_lock(&global->correlation_mutex);
@@ -180,8 +215,6 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
     }
     //pthread_mutex_unlock(&global->correlation_mutex);
     */
-    delete io;
-    delete cc;
 }
 
 

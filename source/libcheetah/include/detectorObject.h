@@ -319,6 +319,7 @@ public:
     int     useAngularCorrelation;
     int     sumAngularCorrelation;		// set to nonzero to sum cross-correlation patterns for different hits
 	int		autoCorrelateOnly;		// set to nonzero to only calculate autocorrelation (q1=q2)
+    int     angularCorrelationAlgorithm; // 1 = regular, 2 = FFT
 	int		angularCorrelationNormalization;	// switch between normalization algorithms: 1 = intensity, 2 = variance
 	int		angularCorrelationQScale;		// customize the scale for the Q-range of the correlation algorithms
     double 	angularCorrelationStartQ;		// 1 = startQ/stopQ are in units of radial distance [pixels]
