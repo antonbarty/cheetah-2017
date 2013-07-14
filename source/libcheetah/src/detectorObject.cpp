@@ -489,14 +489,11 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
   bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
   hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
   halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float)); 
-
-  for(long j=0; j<pix_nn; j++) {
-    selfdark[j] = 0;
-  }
-    
+  
   // Powder sums and mutexes
   for(long i=0; i<nPowderClasses; i++) {
     nPowderFrames[i] = 0;
+    // calloc initializes all bits to zero (eq to 0 for int, long, uint, float, double), so no need for further initialization
     powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
     powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
@@ -517,28 +514,12 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     pthread_mutex_init(&correctedMax_mutex[i], NULL);		
     pthread_mutex_init(&assembledMin_mutex[i], NULL);
     pthread_mutex_init(&assembledMax_mutex[i], NULL);
-	  
-	for(long j=0; j<pix_nn; j++) {
-		powderRaw[i][j] = 0;
-		powderCorrected[i][j] = 0;
-		powderCorrectedSquared[i][j] = 0;
-	  }
-	  for(long j=0; j<image_nn; j++) {
-		  powderAssembled[i][j] = 0;
-	  }
-	  
-  }
-	
     
 	// Radial stacks
 	printf("Allocating radial stacks\n");
 	for(long i=0; i<nPowderClasses; i++) {
 		radialStackCounter[i] = 0;
 		radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
-			
-		for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-			radialAverageStack[i][j] = 0;
-		}
 	}
 	printf("Radial stacks allocated\n");
 	
@@ -568,11 +549,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		// Allocate memory
 		histogramData = (uint16_t*) calloc(histogram_nn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
-
-		// Zero array (there may be a faster way to do this)
-		for(uint64_t j=0; j<histogram_nn; j++) {
-			histogramData[j] = 0;
-		}
 	}
 }
 
