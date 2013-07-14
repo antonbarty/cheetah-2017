@@ -471,11 +471,11 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detID].usePolarizationCorrection) {
-			float	*data = eventData->detector[detID].corrected_data;
+            float	*data = eventData->detector[detID].corrected_data;
             float   *pix_x = global->detector[detID].pix_x;
             float   *pix_y = global->detector[detID].pix_y;
             float   *pix_dist = global->detector[detID].pix_dist;
-			long	pix_nn = global->detector[detID].pix_nn;
+            long	pix_nn = global->detector[detID].pix_nn;
             float   pixelSize = global->detector[detID].pixelSize;
             double  horizontalFraction = global->detector[detID].horizontalFractionOfPolarization;
             

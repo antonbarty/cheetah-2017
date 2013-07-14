@@ -329,12 +329,14 @@ public:
     double 	angularCorrelationStopPhi;		// stop angle in degrees, default: 360
     int 	angularCorrelationNumPhi;		// number of angular steps, default: 256 (attention: if possible, use powers of 2, that makes FFT especially fast)
     int 	angularCorrelationNumDelta;	// number of angular lag steps, default: 0 (it then calculates suitable number from correlationNumPhi with the same step length)
-	int		*angularCorrelationLUT;		// lookup table (LUT) needed for the fast correlation
+    int		*angularCorrelationLUT;		// lookup table (LUT) needed for the fast correlation (algorithm 2)
 	int		angularCorrelationLUTdim1;		// dim1 of LUT
 	int		angularCorrelationLUTdim2;		// dim2 of LUT
 	int		angularCorrelationOutput;		// switch between output formats: 1 = hdf5, 2 = bin, 3 = hdf5+bin, 4 = tiff, 5 = tiff+hdf5, 6 = tiff+bin, 7 = tiff+hdf5+bin
+    long	angularCorrelation_nn;          // length of global angular correlation arrays
+    double  *powderAngularCorrelation[MAX_POWDER_CLASSES];    // array of angular correlation sums
     
-    //	long	angularCorrelationStackSize;
+//	long    angularCorrelationStackSize;
 //	long	angularCorrelationStackCounter[MAX_POWDER_CLASSES];
 //	double  *angularCorrelationAverageStack[MAX_POWDER_CLASSES];
 //	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
@@ -348,6 +350,7 @@ public:
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
 	void freePowderMemory(cGlobal*);
+    void createLookupTable(cGlobal*, int*, int, int);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);

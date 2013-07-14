@@ -17,6 +17,8 @@
 #include <hdf5.h>
 #include <fenv.h>
 #include <stdlib.h>
+#include <iostream>
+#include <sstream>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -642,6 +644,36 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 			histogramData[j] = 0;
 		}
 	}
+    
+    // Angular correlation memory
+	if (useAngularCorrelation) {
+		printf("Allocating memory for angular correlations\n");
+        
+        // define length of correlation arrays
+		if (autoCorrelateOnly) {
+            angularCorrelation_nn = angularCorrelationNumQ*angularCorrelationNumDelta;
+		} else {
+			angularCorrelation_nn = angularCorrelationNumQ*angularCorrelationNumQ*angularCorrelationNumDelta;
+		}
+        
+        // allocate arrays for look-up tables (LUT)
+        if (angularCorrelationAlgorithm == 2) {
+            createLookupTable(global, angularCorrelationLUT, angularCorrelationLUTdim1, angularCorrelationLUTdim2); // <-- important that this is done after detector geometry is determined
+        } else {
+            angularCorrelationLUT = NULL;
+        }
+        
+        // allocate arrays for powder sums
+        for(long i=0; i<nPowderClasses; i++) {
+            if (sumAngularCorrelation) {
+                powderAngularCorrelation[i] = (double*) calloc(angularCorrelation_nn, sizeof(double));
+            } else {
+                powderAngularCorrelation[i] = NULL;
+            }
+        }
+        
+		printf("Memory for angular correlations allocated\n");
+    }
 }
 
 
@@ -672,7 +704,115 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 	if(histogram) {
 		free(histogramData);
 	}
+    
+	if (useAngularCorrelation) {
+        // deallocate array for look-up tables (LUT)
+        if (angularCorrelationLUT)
+            delete[] angularCorrelationLUT;
+        
+        // deallocate arrays for powder sums
+        for(long i=0; i<nPowderClasses; i++) {
+            if (powderAngularCorrelation[i])
+                free(powderAngularCorrelation[i]);
+        }
+	}
+}
 
+
+
+/*
+ *	Create lookup table (LUT) for the fast angular correlation algorithm (angularCorrelationAlgorithm = 2)
+ */
+void cPixelDetectorCommon::createLookupTable(cGlobal *global, int *LUT, int lutNx, int lutNy) {
+	//write lookup table for fast angular correlation
+	int lutSize = lutNx*lutNy;
+	std::cout << "Creating lookup table (LUT) of size " << lutNx << " x " << lutNy << " (" << lutSize << " entries)" << std::endl;
+	if (LUT) {		// free memory of old LUT first, if necessary
+  		delete[] LUT;
+	}
+	LUT = new int[lutSize];
+	
+	//initialize to zero!
+	for (int i=0; i<lutSize; i++) {
+  		LUT[i] = 0;
+	}
+	
+	//find max and min of the q-calibration arrays
+    double	xmax = -1e9;
+    double	xmin =  1e9;
+    double	ymax = -1e9;
+    double	ymin =  1e9;
+    for (long i=0;i<pix_nn;i++) {
+        if (pix_x[i] > xmax) xmax = (double) pix_x[i];
+        if (pix_x[i] < xmin) xmin = (double) pix_x[i];
+        if (pix_y[i] > ymax) ymax = (double) pix_y[i];
+        if (pix_y[i] < ymin) ymin = (double) pix_y[i];
+    }
+	double qx_range = fabs(xmax - xmin);
+    double qx_stepsize = qx_range/(double)(lutNx-1);
+	double qy_range = fabs(ymax - ymin);
+    double qy_stepsize = qy_range/(double)(lutNy-1);
+	std::cout << "\tLUT x-values: min=" << xmin << ", max=" << xmax << ", range=" << qx_range << ", stepsize=" << qx_stepsize << std::endl;
+	std::cout << "\tLUT y-values: min=" << ymin << ", max=" << ymax << ", range=" << qy_range << ", stepsize=" << qy_stepsize << std::endl;
+	
+	int lutFailCount = 0;
+	for (int i = 0; i < pix_nn; i++){           //go through the whole the q-calibration array
+        //get q-values from qx and qy arrays
+        //and determine at what index (ix, iy) to put them in the lookup table
+		const double ix = (pix_x[i]-xmin) / qx_stepsize;
+		const double iy = (pix_y[i]-ymin) / qy_stepsize;
+		
+		//fill table at the found coordinates with the data index
+		//overwriting whatever value it had before
+	    //(the add-one-half->floor trick is to achieve reasonable rounded integers)
+		int lutindex = (int) ( floor(ix+0.5) + lutNx*floor(iy+0.5) );
+		//int lutindex = (int) ( floor(ix) + lutNx*floor(iy) );
+        
+		if (lutindex < 0 || lutindex >= lutSize) {
+			lutFailCount++;
+            ERROR("Lookup table index out of bounds\n\t (was trying to set LUT[%d] = %d )\n\tLUT: pix_x, pix_y = (%f, %f) --> ix, iy = (%f, %f)\n", lutindex, i, pix_x[i], pix_y[i], ix, iy);
+		} else {
+			LUT[lutindex] = i;
+		}
+        
+		/////////////////////////////////////////////////////////////////////////////////////////
+		//ATTENTION: THIS METHOD WILL LEAD TO A LOSS OF DATA,
+		//ESPECIALLY FOR SMALL TABLE SIZES,
+		//BUT IT WILL BUY A LOT OF SPEED IN THE LOOKUP PROCESS
+		//--> this should be improved to a more precise version, 
+		//    maybe even one that allows the lookup(x,y) to interpolate
+		//    for that to work, we need to find the four closest points in the data or so
+		//    (for instance, instead of one index, the table could contain 
+		//    a vector of all applicable indices)
+		/////////////////////////////////////////////////////////////////////////////////////////
+		
+		if (global->debugLevel>2 && (i<=100 || pix_nn-i<=200) ){	//print the first and the last  entries to check
+			std::cout << "setting LUT[" << lutindex << "] = " << i << "";
+			std::cout << "   LUT: pix_x, pix_y = (" << pix_x[i] << ", " << pix_y[i] << ") --> ix, iy = (" << ix << ", " << iy << ")" << std::endl;
+		}
+	}//for
+	//after all is done, set the zero element to zero 
+	//to make sure a failure of lookup() doesn't result in an actual value
+	LUT[0] = 0;		
+	
+	std::cout << "\tLUT created ";
+	std::cout << "(info: LUT assignment failed in " << lutFailCount << " of " << lutSize << " cases)" << std::endl;
+	
+	
+	//explicit output to test...
+	if (global->debugLevel>2) {
+		std::ostringstream osst;
+		osst << "-------------------LUT begin---------------------------------" << std::endl;
+        for (int j = 0; j<lutNy; j++){
+			osst << " [";
+			for (int i = 0; i<lutNx; i++) {
+				osst << " " << LUT[i+lutNx*j];
+			}
+			osst << "]" << std::endl;
+		}
+		osst << "------------------LUT end----------------------------------" << std::endl;		
+		std::cout << osst.str() << std::endl;
+	}//if	
 }
 
 

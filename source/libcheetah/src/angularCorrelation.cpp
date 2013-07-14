@@ -123,24 +123,29 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
                 cc->calculatePolarCoordinates(global->detector[detID].angularCorrelationStartQ, global->detector[detID].angularCorrelationStopQ);
                 cc->calculateXCCA();
                 
-                io->writeToTiff( "data1/"+eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled
-                
-                io->writeToTiff( "data1/"+eventname_str+"-acca.tif", cc->autoCorr(), 1 );   // 0: unscaled, 1: scaled
-                
+                if (global->savehits) {
+                    io->writeToTiff( "data1/"+eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled                    
+                    io->writeToTiff( "data1/"+eventname_str+"-acca.tif", cc->autoCorr(), 1 );   // 0: unscaled, 1: scaled
+                }
             //--------------------------------------------------------------------------------------------alg2
-            /*
             } else if (global->detector[detID].angularCorrelationAlgorithm == 2) {
                 DEBUGL1_ONLY cout << "XCCA fast (algorithm 2)" << endl;
-                cc->setLookupTable( global->detector[detID].angularCorrelationLUT, global->detector[detID].angularCorrelationLUTdim1, global->detector[detID].angularCorrelationLUTdim2 );
+                
+                int	*LUT = global->detector[detID].angularCorrelationLUT;
+                cc->setLookupTable(LUT, global->detector[detID].angularCorrelationLUTdim1, global->detector[detID].angularCorrelationLUTdim2);
+                cout << "ERROR: calculatePolarCoordinates_FAST() currently crashes in giraffe..." << endl;
+                ERROR(" --- DO NOT USE THIS ALGORITHM ---");
                 cc->calculatePolarCoordinates_FAST(global->detector[detID].angularCorrelationStartQ, global->detector[detID].angularCorrelationStopQ);
                 
                 // need to protect the FFTW at the core with a mutex, not thread-safe!!
-                //pthread_mutex_lock(&global->detector[detID].angularCorrelationFFT_mutex);
+                pthread_mutex_lock(&global->angularCorrelationFFT_mutex);
                 cc->calculateXCCA_FAST();
-                //pthread_mutex_unlock(&global->detector[detID].angularCorrelationFFT_mutex);
+                pthread_mutex_unlock(&global->angularCorrelationFFT_mutex);
                 
-                io->writeToTiff( eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled
-            */
+                if (global->savehits) {
+                    io->writeToTiff( "data1/"+eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled                    
+                    io->writeToTiff( "data1/"+eventname_str+"-acca.tif", cc->autoCorr(), 1 );   // 0: unscaled, 1: scaled
+                }
             } else {
                 cerr << "ERROR in calculateAngularCorrelation: correlation algorithm " << global->detector[detID].angularCorrelationAlgorithm << " not known." << endl;
             }

@@ -257,7 +257,8 @@ void cGlobal::setup() {
   pthread_mutex_init(&espectrumBuffer_mutex, NULL);
   pthread_mutex_init(&datarateWorker_mutex, NULL);  
   pthread_mutex_init(&saveCXI_mutex, NULL);  
-  pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
+  pthread_mutex_init(&pixelmask_shared_mutex, NULL);
+  pthread_mutex_init(&angularCorrelationFFT_mutex, NULL);
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 
   /*
