@@ -260,7 +260,51 @@ void writeHDF5(cEventData *info, cGlobal *global){
     }
 	
     
-
+	/*
+	 *	Save angular correlation
+	 */
+    DETECTOR_LOOP {
+        if (global->detector[detID].useAngularCorrelation) {
+            if (global->detector[detID].autoCorrelateOnly) {
+                // read in writeSimpleHDF5() as width = global->correlationNumDelta, height = global->correlationNumQ
+                // writeSimpleHDF5() worked fine, be consistent!
+                size[0] = global->detector[detID].angularCorrelationNumQ;       // size[0] = height
+                size[1] = global->detector[detID].angularCorrelationNumDelta;   // size[1] = width
+                max_size[0] = global->detector[detID].angularCorrelationNumQ;
+                max_size[1] = global->detector[detID].angularCorrelationNumDelta;
+                dataspace_id = H5Screate_simple(2, size, max_size);                
+            } else {
+                // read in writeSimpleHDF5() as width = global->correlationNumDelta, height = global->correlationNumQ, depth = global->correlationNumQ
+                // writeSimpleHDF5() never worked properly, make global->correlationNumDelta last dimension since it's the last index in the loops in angularCorrelation.cpp
+                size[0] = global->detector[detID].angularCorrelationNumQ;       // size[0] = height
+                size[1] = global->detector[detID].angularCorrelationNumQ;       // size[1] = width
+                size[2] = global->detector[detID].angularCorrelationNumDelta;   // size[2] = depth
+                max_size[0] = global->detector[detID].angularCorrelationNumQ;
+                max_size[1] = global->detector[detID].angularCorrelationNumQ;
+                max_size[2] = global->detector[detID].angularCorrelationNumDelta;
+                dataspace_id = H5Screate_simple(3, size, max_size);
+            }
+            
+            sprintf(fieldID, "angularCorrelation%li", detID);
+            dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if ( dataset_id < 0 ) {
+                ERROR("%li: Couldn't create dataset\n", info->threadNum);
+                H5Fclose(hdf_fileID);
+                return;
+            }
+            hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].angularCorrelation);
+            if ( hdf_error < 0 ) {
+                ERROR("%li: Couldn't write data\n", info->threadNum);
+                H5Dclose(dataspace_id);
+                H5Fclose(hdf_fileID);
+                return;
+            }
+            H5Dclose(dataset_id);
+            
+            H5Sclose(dataspace_id);
+        }
+    }
+    
 	
 	/*
 	 *	Save TOF data (Aqiris)
@@ -758,7 +802,6 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	H5Fclose(fh);
 	
-
 }
 
 void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {

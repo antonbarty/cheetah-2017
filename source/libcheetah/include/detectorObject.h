@@ -385,6 +385,7 @@ public:
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
+	double    *angularCorrelation;
 	double    detectorZ;
 
 };

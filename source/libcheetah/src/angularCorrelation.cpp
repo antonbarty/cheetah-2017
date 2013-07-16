@@ -103,8 +103,18 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
             
             // set bad pixel mask, if necessary
             if (global->detector[detID].useBadPixelMask){
-                uint16_t *mask = eventData->detector[detID].pixelmask;
+                // Allocate integer mask for where to calculate correlation
+                int     *mask = (int *) calloc(pix_nn, sizeof(int));
+                for (long i=0; i<pix_nn; i++) {
+                    mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
+                    // this could later be exchanged to
+                    //mask[i] = isBitOptionSet(eventData->detector[detID].pixelmask[i],(PIXEL_IS_PERFECT));
+                }
+                
                 cc->setMask( mask, pix_nn );
+                
+                // Remember to free the mask
+                free(mask); 
             }
             
             // normalize by variance, if necessary
@@ -123,10 +133,6 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
                 cc->calculatePolarCoordinates(global->detector[detID].angularCorrelationStartQ, global->detector[detID].angularCorrelationStopQ);
                 cc->calculateXCCA();
                 
-                if (global->savehits) {
-                    io->writeToTiff( "data1/"+eventname_str+"-polar.tif", cc->polar(), 1 );		// 0: unscaled, 1: scaled                    
-                    io->writeToTiff( "data1/"+eventname_str+"-acca.tif", cc->autoCorr(), 1 );   // 0: unscaled, 1: scaled
-                }
             //--------------------------------------------------------------------------------------------alg2
             } else if (global->detector[detID].angularCorrelationAlgorithm == 2) {
                 DEBUGL1_ONLY cout << "XCCA fast (algorithm 2)" << endl;
@@ -150,43 +156,36 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
                 cerr << "ERROR in calculateAngularCorrelation: correlation algorithm " << global->detector[detID].angularCorrelationAlgorithm << " not known." << endl;
             }
             
+            //--------------------------------------------------------------------------------------------save to sum
+            // add to eventData->detector[detID].angularCorrelation
+            double  *correlation = eventData->detector[detID].angularCorrelation;
+            
+            if (global->detector[detID].autoCorrelateOnly) {
+                // autocorrelation only (q1=q2)
+                for (int i=0; i < cc->nQ(); i++) {
+                    for (int k=0; k < cc->nLag(); k++) {
+                        correlation[i*cc->nLag() + k] = cc->autoCorr()->get(i,k);
+                    }
+                }				
+            } else {
+                // cross-correlation
+                for (int i=0; i < cc->nQ(); i++) {
+                    for (int j=0; j < cc->nQ(); j++) {
+                        for (int k=0; k < cc->nLag(); k++) {
+                            correlation[i*cc->nQ()*cc->nLag() + j*cc->nLag() + k] = cc->crossCorr()->get(i,j,k);
+                        }
+                    }
+                }
+            }
+            
             delete io;
             delete cc;
         }
     }
-    
-    
+
     /*
-    //--------------------------------------------------------------------------------------------save to sum
-    //add to threadInfo->correlation
+     
     //pthread_mutex_lock(&global->correlation_mutex);
-    if (global->useCorrelation && global->sumCorrelation) {
-        
-        if (threadInfo->correlation) {
-            free(threadInfo->correlation);
-        }
-        threadInfo->correlation = (double*) calloc(global->correlation_nn, sizeof(double));
-        
-        if (global->autoCorrelateOnly) {
-            // autocorrelation only (q1=q2)
-            for (int i=0; i < cc->nQ(); i++) {
-                for (int k=0; k < cc->nLag(); k++) {
-                    threadInfo->correlation[i*cc->nLag() + k] = cc->autoCorr()->get(i,k);
-                }
-            }				
-        } else {
-            // cross-correlation
-            for (int i=0; i < cc->nQ(); i++) {
-                for (int j=0; j < cc->nQ(); j++) {
-                    for (int k=0; k < cc->nLag(); k++) {
-                        threadInfo->correlation[i*cc->nQ()*cc->nLag() + j*cc->nLag() + k] = cc->crossCorr()->get(i,j,k);
-                    }
-                }
-            }
-        }
-        
-    }
-    
     
     //--------------------------------------------------------------------------------------------output for this shot
     // check if hits should be saved to disk
@@ -219,7 +218,8 @@ void calculateAngularCorrelation(cEventData *eventData, cGlobal *global) {
         }
     }
     //pthread_mutex_unlock(&global->correlation_mutex);
-    */
+     
+     */
 }
 
 
