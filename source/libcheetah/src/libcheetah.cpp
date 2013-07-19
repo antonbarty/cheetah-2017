@@ -554,7 +554,7 @@ void cheetahExit(cGlobal *global) {
     
     // Cleanup
     for(long i=0; i<global->nDetectors; i++) {
-		global->detector[i].freePowderMemory(global);
+		global->detector[i].freeDetectorMemory(global);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);
