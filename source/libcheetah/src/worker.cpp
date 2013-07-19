@@ -437,7 +437,7 @@ void *worker(void *threadarg) {
     fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
     fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
     fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
+    fprintf(global->powderlogfp[hit], "%g\n", eventData->laserDelay);
     pthread_mutex_unlock(&global->powderfp_mutex);
 
     

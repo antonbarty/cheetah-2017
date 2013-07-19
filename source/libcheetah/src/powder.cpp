@@ -171,7 +171,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     if(eventData->nPeaks < global->nPeaksMin[powderClass]){
         pthread_mutex_lock(&global->detector[detID].correctedMin_mutex[powderClass]);
         global->nPeaksMin[powderClass] = eventData->nPeaks;
-        memcpy(global->detector[detID].correctedMin[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
+        //memcpy(global->detector[detID].correctedMin[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMin_mutex[powderClass]);
     }
 
@@ -179,7 +179,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     if(eventData->nPeaks > global->nPeaksMax[powderClass]){
         pthread_mutex_lock(&global->detector[detID].correctedMax_mutex[powderClass]);
         global->nPeaksMax[powderClass] = eventData->nPeaks;
-        memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
+        //memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMax_mutex[powderClass]);
     }
 
@@ -299,16 +299,17 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     calculateRadialAverage(bufferCorrectedSigma, radialAverageCorrectedSigma, radialAverageCorrectedCounter, global, detID);
 
 
-    float *bufferCorrectedNPeaksMin = (float*) calloc(pix_nn,sizeof(float));
-    pthread_mutex_lock(&detector->correctedMin_mutex[powderType]);
-    memcpy(bufferCorrectedNPeaksMin, detector->correctedMin[powderType], pix_nn*sizeof(float));
-    pthread_mutex_unlock(&detector->correctedMin_mutex[powderType]);
+    //float *bufferCorrectedNPeaksMin = (float*) calloc(pix_nn,sizeof(float));
+    //pthread_mutex_lock(&detector->correctedMin_mutex[powderType]);
+    //memcpy(bufferCorrectedNPeaksMin, detector->correctedMin[powderType], pix_nn*sizeof(float));
+    //pthread_mutex_unlock(&detector->correctedMin_mutex[powderType]);
 
-    float *bufferCorrectedNPeaksMax = (float*) calloc(pix_nn,sizeof(float));
-    pthread_mutex_lock(&detector->correctedMax_mutex[powderType]);
-    memcpy(bufferCorrectedNPeaksMax, detector->correctedMax[powderType], pix_nn*sizeof(float));
-    pthread_mutex_unlock(&detector->correctedMax_mutex[powderType]);
-
+    //float *bufferCorrectedNPeaksMax = (float*) calloc(pix_nn,sizeof(float));
+    //pthread_mutex_lock(&detector->correctedMax_mutex[powderType]);
+    //memcpy(bufferCorrectedNPeaksMax, detector->correctedMax[powderType], pix_nn*sizeof(float));
+    //pthread_mutex_unlock(&detector->correctedMax_mutex[powderType]);
+    
+    /*
     if(global->assemble2DImage) {
         bufferAssembledNPeaksMin = (int16_t*) calloc(image_nn,sizeof(int16_t));
         pthread_mutex_lock(&detector->assembledMin_mutex[powderType]);
@@ -320,8 +321,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         memcpy(bufferAssembledNPeaksMax, detector->assembledMax[powderType], image_nn*sizeof(int16_t));
         pthread_mutex_unlock(&detector->assembledMax_mutex[powderType]);
     }
-  
-
+     */
     
     /*
      *	Mess of stuff for writing the compound HDF5 file
@@ -477,16 +477,16 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     free(bufferCorrected);
     free(bufferCorrectedSquared);
     free(bufferCorrectedSigma);
-    free(bufferCorrectedNPeaksMin);
-    free(bufferCorrectedNPeaksMax);
+    //free(bufferCorrectedNPeaksMin);
+    //free(bufferCorrectedNPeaksMax);
     free(radialAverageCorrected);
     free(radialAverageCorrectedSquared);
     free(radialAverageCorrectedSigma);
     free(radialAverageCorrectedCounter);
     if(global->assemble2DImage) {
         free(bufferAssembled);
-        free(bufferAssembledNPeaksMin);
-        free(bufferAssembledNPeaksMax);
+        //free(bufferAssembledNPeaksMin);
+        //free(bufferAssembledNPeaksMax);
     }
     fflush(global->powderlogfp[powderType]);
 

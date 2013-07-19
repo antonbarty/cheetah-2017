@@ -291,10 +291,10 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
-	float   *correctedMin[MAX_POWDER_CLASSES];
-	float   *assembledMin[MAX_POWDER_CLASSES];
-	float   *correctedMax[MAX_POWDER_CLASSES];
-	float   *assembledMax[MAX_POWDER_CLASSES];
+	//float   *correctedMin[MAX_POWDER_CLASSES];
+	//float   *assembledMin[MAX_POWDER_CLASSES];
+	//float   *correctedMax[MAX_POWDER_CLASSES];
+	//float   *assembledMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderRawSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
@@ -349,7 +349,7 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
-	void freePowderMemory(cGlobal*);
+	void freeDetectorMemory(cGlobal*);
     void createLookupTable(cGlobal*, int*, int, int);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
