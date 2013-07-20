@@ -246,12 +246,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
       useBadPixelMask = 1;
   }
   else if (!strcmp(tag, "applybadpixelmap")) {
-      printf("The keyword applyBadPixelMap has been changed.  It is\n"
-             "now known as applyBadPixelMask.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  }
-  else if (!strcmp(tag, "applybadpixelmask")) {
       applyBadPixelMask = atoi(value);
   }
   else if (!strcmp(tag, "baddatamap")) {
@@ -274,21 +268,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     saveDetectorRaw = atoi(value);
   }
   else if (!strcmp(tag, "beamcenterx")) {
-      printf("The keyword beamCenterX has been changed. It is\n"
-             "now known as beamCenterPixX.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  }
-  else if (!strcmp(tag, "beamcentery")) {
-      printf("The keyword beamCenterY has been changed. It is\n"
-             "now known as beamCenterPixY.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  } 
-  else if (!strcmp(tag, "beamcenterpixx")) {
       beamCenterPixX  = atof(value);
   }
-  else if (!strcmp(tag, "beamcenterpixy")) {
+  else if (!strcmp(tag, "beamcentery")) {
       beamCenterPixY  = atof(value);
   } 
   else if (!strcmp(tag, "detectorzpvname")) {

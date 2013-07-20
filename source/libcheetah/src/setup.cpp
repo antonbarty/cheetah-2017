@@ -982,14 +982,14 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "detectorName=%s\n",detector[i].detectorName);
         fprintf(fp, "geometry=%s\n",detector[i].geometryFile);
         fprintf(fp, "pixelSize=%f\n",detector[i].pixelSize);
-        fprintf(fp, "beamCenterPixX=%f\n",detector[i].beamCenterPixX);
-        fprintf(fp, "beamCenterPixY=%f\n",detector[i].beamCenterPixY);
+        fprintf(fp, "beamCenterX=%f\n",detector[i].beamCenterPixX);
+        fprintf(fp, "beamCenterY=%f\n",detector[i].beamCenterPixY);
         fprintf(fp, "defaultCameraLengthMm=%f\n",detector[i].defaultCameraLengthMm);
         fprintf(fp, "cameraLengthOffset=%f\n",detector[i].cameraLengthOffset);
         fprintf(fp, "cameraLengthScale=%f\n",detector[i].cameraLengthScale);
         fprintf(fp, "fixedCameraLengthMm=%f\n",detector[i].fixedCameraLengthMm);
         fprintf(fp, "badPixelMap=%s\n",detector[i].badpixelFile);
-        fprintf(fp, "applyBadPixelMask=%d\n",detector[i].applyBadPixelMask);
+        fprintf(fp, "applyBadPixelMap=%d\n",detector[i].applyBadPixelMask);
         fprintf(fp, "badDataMap=%s\n",detector[i].baddataFile);
         fprintf(fp, "wiremaskFile=%s\n",detector[i].wireMaskFile);
         fprintf(fp, "darkcal=%s\n",detector[i].darkcalFile);
