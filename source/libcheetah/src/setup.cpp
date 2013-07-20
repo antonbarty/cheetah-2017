@@ -988,9 +988,9 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "cameraLengthOffset=%f\n",detector[i].cameraLengthOffset);
         fprintf(fp, "cameraLengthScale=%f\n",detector[i].cameraLengthScale);
         fprintf(fp, "fixedCameraLengthMm=%f\n",detector[i].fixedCameraLengthMm);
-        fprintf(fp, "badPixelMask=%s\n",detector[i].badpixelFile);
+        fprintf(fp, "badPixelMap=%s\n",detector[i].badpixelFile);
         fprintf(fp, "applyBadPixelMask=%d\n",detector[i].applyBadPixelMask);
-        fprintf(fp, "badDataMask=%s\n",detector[i].baddataFile);
+        fprintf(fp, "badDataMap=%s\n",detector[i].baddataFile);
         fprintf(fp, "wiremaskFile=%s\n",detector[i].wireMaskFile);
         fprintf(fp, "darkcal=%s\n",detector[i].darkcalFile);
         fprintf(fp, "cmModule=%d\n",detector[i].cmModule);

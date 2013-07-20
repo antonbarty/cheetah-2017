@@ -242,12 +242,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     useGaincal = 1;
   }
   else if (!strcmp(tag, "badpixelmap")) {
-      printf("The keyword badPixelMap has been changed.  It is\n"
-             "now known as badPixelMask.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  }
-  else if (!strcmp(tag, "badpixelmask")) {
       strcpy(badpixelFile, value);
       useBadPixelMask = 1;
   }
@@ -261,12 +255,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
       applyBadPixelMask = atoi(value);
   }
   else if (!strcmp(tag, "baddatamap")) {
-      printf("The keyword badDataMap has been changed.  It is\n"
-             "now known as badDataMask.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  }
-  else if (!strcmp(tag, "baddatamask")) {
       strcpy(baddataFile, value);
       useBadDataMask = 1;
   }
