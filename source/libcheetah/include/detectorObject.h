@@ -314,7 +314,7 @@ public:
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
     
 	/*
-	 *  Angular correlation stacks for this detector
+	 *  Angular correlations for this detector
 	 */
     int     useAngularCorrelation;
     int     sumAngularCorrelation;		// set to nonzero to sum cross-correlation patterns for different hits
@@ -335,11 +335,12 @@ public:
 	int		angularCorrelationOutput;		// switch between output formats: 1 = hdf5, 2 = bin, 3 = hdf5+bin, 4 = tiff, 5 = tiff+hdf5, 6 = tiff+bin, 7 = tiff+hdf5+bin
     long	angularCorrelation_nn;          // length of global angular correlation arrays
     double  *powderAngularCorrelation[MAX_POWDER_CLASSES];    // array of angular correlation sums
-    
-//	long    angularCorrelationStackSize;
-//	long	angularCorrelationStackCounter[MAX_POWDER_CLASSES];
-//	double  *angularCorrelationAverageStack[MAX_POWDER_CLASSES];
-//	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderAngularCorrelation_mutex[MAX_POWDER_CLASSES];
+    int     saveAngularCorrelationStacks;   // set to nonzero to save stacks of angular correlations
+    long    angularCorrelationStackSize;    // controls size of stack
+    long	angularCorrelationStackCounter[MAX_POWDER_CLASSES]; // counts number of angular correlations in stack
+    double  *angularCorrelationStack[MAX_POWDER_CLASSES];   // array of stacked angular correlations
+    pthread_mutex_t angularCorrelationStack_mutex[MAX_POWDER_CLASSES];
     
     
 

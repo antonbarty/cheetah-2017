@@ -119,12 +119,12 @@ void saveRadialStacks(cGlobal*);
 
 // angularCorrelation.cpp
 void calculateAngularCorrelation(cEventData*, cGlobal*);
-//void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
-//void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
-//void addToRadialAverageStack(cEventData*, cGlobal*);
-//void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
-//void saveRadialAverageStack(cGlobal*, int, int);
-//void saveRadialStacks(cGlobal*);
+void addToAngularCorrelationStack(cEventData*, cGlobal*);
+void addToAngularCorrelationStack(cEventData*, cGlobal*, int, int);
+void saveAngularCorrelationStacks(cGlobal*);
+void saveAngularCorrelationStack(cGlobal*, int, int);
+void addToCorrelationSum(cEventData*, cGlobal*);
+void addToCorrelationSum(cEventData*, cGlobal*, int, int);
 
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);

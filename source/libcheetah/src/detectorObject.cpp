@@ -156,6 +156,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	angularCorrelationLUTdim1 = 100;
 	angularCorrelationLUTdim2 = 100;
 	angularCorrelationOutput = 1;
+    saveAngularCorrelationStacks = 0;
+    angularCorrelationStackSize = 1000;
+    
     
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
@@ -532,6 +535,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "angularcorrelationoutput")) {
         angularCorrelationOutput = atoi(value);
 	}
+    else if (!strcmp(tag, "saveangularcorrelationstacks")) {
+        saveAngularCorrelationStacks = atoi(value);
+    }
+    else if (!strcmp(tag, "angularcorrelationstacksize")) {
+        angularCorrelationStackSize = atoi(value);
+    }
     
     
 	// Unknown tags
@@ -639,11 +648,28 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
         }
         
         // allocate arrays for powder sums
-        for(long i=0; i<nPowderClasses; i++) {
+        for (long i=0; i<nPowderClasses; i++) {
             if (sumAngularCorrelation) {
+                // check powder flags which the correlations depend on
+                if (!global->powderSumBlanks && !global->powderSumHits) {
+                    // force hits to be summed, since the correlations are saved to the same file and use the same counters
+                    global->powderSumHits = 1;
+                }
                 powderAngularCorrelation[i] = (double*) calloc(angularCorrelation_nn, sizeof(double));
+                pthread_mutex_init(&powderAngularCorrelation_mutex[i], NULL);
             } else {
                 powderAngularCorrelation[i] = NULL;
+            }
+        }
+        
+        // allocate arrays for angular correlation stacks
+        for (long i=0; i<nPowderClasses; i++) {
+            angularCorrelationStackCounter[i] = 0;
+            if (saveAngularCorrelationStacks) {
+                angularCorrelationStack[i] = (double *) calloc(radial_nn*global->radialStackSize, sizeof(double));
+                pthread_mutex_init(&angularCorrelationStack_mutex[i], NULL);
+            } else {
+                angularCorrelationStack[i] = NULL;
             }
         }
         

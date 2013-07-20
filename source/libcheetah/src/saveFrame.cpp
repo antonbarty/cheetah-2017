@@ -104,7 +104,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	hid_t		dataspace_id;
 	hid_t		dataset_id;
 	hid_t		datatype;
-	hsize_t 	size[2],max_size[2];
+	hsize_t 	size[3],max_size[3];
 	herr_t		hdf_error;
 	hid_t   	gid, gidCheetah;
 	//char 		fieldname[100]; 

@@ -355,3 +355,147 @@ void writeXCCA(tThreadInfo *info, cGlobal *global, CrossCorrelator *cc, char *ev
 
 */
 
+
+
+/*
+ *	Add angular correlation to stack
+ */
+void addToAngularCorrelationStack(cEventData *eventData, cGlobal *global){
+    
+    // Loop over all detectors
+    DETECTOR_LOOP {
+        // Sorting parameter
+        int powderClass = eventData->hit;
+        
+        if (global->detector[detID].useAngularCorrelation && global->detector[detID].saveAngularCorrelationStacks) {
+            addToAngularCorrelationStack(eventData, global, powderClass, detID);
+        }
+    }
+    
+}
+
+
+void addToAngularCorrelationStack(cEventData *eventData, cGlobal *global, int powderClass, int detID){
+    
+    // Dereference global variables
+    cPixelDetectorCommon     *detector = &global->detector[detID];
+    double  *stack = detector->angularCorrelationStack[powderClass];
+    double  *correlation = eventData->detector[detID].angularCorrelation;
+    long	correlation_nn = detector->angularCorrelation_nn;
+    long    stackSize = detector->angularCorrelationStackSize;
+    
+    pthread_mutex_t mutex = detector->angularCorrelationStack_mutex[powderClass];
+    pthread_mutex_lock(&mutex);
+    
+    // Data offsets
+    long stackoffset = detector->angularCorrelationStackCounter[powderClass] % stackSize;
+    long dataoffset = stackoffset*correlation_nn;
+    
+    // Copy data
+    for (long i=0; i<correlation_nn; i++) {
+        stack[dataoffset+i] = correlation[i];
+    }
+    
+    // Increment counter
+    detector->angularCorrelationStackCounter[powderClass] += 1;
+    
+    // Save data once stack is full
+    if ((detector->angularCorrelationStackCounter[powderClass] % stackSize) == 0) {
+        
+        printf("Saving angular correlation stack: %i %i\n", detID, powderClass);
+        saveAngularCorrelationStack(global, powderClass, detID);
+        
+        for (long j=0; j<stackSize*correlation_nn; j++)
+            stack[j] = 0;
+    }
+    
+    pthread_mutex_unlock(&mutex);
+    
+}
+
+
+
+/*
+ *	Wrapper for saving all angular average stacks
+ */
+void saveAngularCorrelationStacks(cGlobal *global) {
+    
+    bool printout = true;
+    
+    // Loop over all detectors
+    DETECTOR_LOOP {
+        if (global->detector[detID].useAngularCorrelation && global->detector[detID].saveAngularCorrelationStacks) {
+            if (printout) {
+                printf("Saving angular correlation stacks\n");
+                printout = false;
+            }
+            
+            // Loop over all powder classes
+            for (int powderType=0; powderType<global->nPowderClasses; powderType++) {
+                saveAngularCorrelationStack(global, powderType, detID);
+            }
+        }
+    }
+    
+}
+
+
+
+/*
+ *  Save angular correlation stack
+ */
+void saveAngularCorrelationStack(cGlobal *global, int powderClass, int detID) {
+    
+    cPixelDetectorCommon *detector = &global->detector[detID];
+    
+    char    filename[1024];
+    long    frameNum = detector->angularCorrelationStackCounter[powderClass];
+    long    nRows = detector->angularCorrelationStackSize;
+    if (frameNum % nRows != 0)
+        nRows = (frameNum % nRows);
+    
+    sprintf(filename,"r%04u-correlationstack-detector%d-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum-nRows);
+    printf("Saving angular correlation stack: %s\n", filename);
+    
+    writeSimpleHDF5(filename, detector->angularCorrelationStack[powderClass], detector->angularCorrelation_nn, nRows, H5T_NATIVE_DOUBLE);
+    fflush(global->powderlogfp[powderClass]);
+
+}
+
+
+
+/*
+ *  Sum angular correlation data
+ */
+void addToCorrelationSum(cEventData *eventData, cGlobal *global) {
+    
+    int hit = eventData->hit;
+    
+    // Loop over all detectors
+    DETECTOR_LOOP {
+        if (global->detector[detID].useAngularCorrelation && global->detector[detID].sumAngularCorrelation) {
+            // The angular correlation sums for each powder class are controlled by the same flags as the powder sums
+            if (!hit && global->powderSumBlanks) {
+                addToCorrelationSum(eventData, global, 0, detID);
+            }
+            if (hit && global->powderSumHits) {
+                addToCorrelationSum(eventData, global, 1, detID);
+            }
+        }
+    }
+}
+
+
+void addToCorrelationSum(cEventData *eventData, cGlobal *global, int powderClass, int detID){
+	
+    // Dereference common variables
+    long	correlation_nn = global->detector[detID].angularCorrelation_nn;
+    double  *correlation = eventData->detector[detID].angularCorrelation;
+    
+    // Add to running sum
+    pthread_mutex_lock(&global->detector[detID].powderAngularCorrelation_mutex[powderClass]);
+    for (long i=0; i<correlation_nn; i++) 
+        global->detector[detID].powderAngularCorrelation[powderClass][i] += correlation[i];
+    pthread_mutex_unlock(&global->detector[detID].powderAngularCorrelation_mutex[powderClass]);			
+    
+}

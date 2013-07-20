@@ -323,7 +323,8 @@ void *worker(void *threadarg) {
      *  Maintain angular correlation stack
      */
     calculateAngularCorrelation(eventData, global);
-    //addToAngularCorrelationStack(eventData, global);
+    addToAngularCorrelationStack(eventData, global);
+	addToCorrelationSum(eventData, global);
     
     
     /*

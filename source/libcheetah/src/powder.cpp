@@ -223,6 +223,7 @@ void saveRunningSums(cGlobal *global, int detID) {
         savePowderPattern(global, detID, 0);
         saveGaincal(global, detID);
     }
+    
 }
 
 
@@ -323,13 +324,28 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     }
      */
     
+    // Angular correlations
+    double  *bufferCorrelation = NULL;
+    if (global->detector[detID].useAngularCorrelation && global->detector[detID].sumAngularCorrelation) {
+        long    correlation_nn = global->detector[detID].angularCorrelation_nn;
+        bufferCorrelation = (double*) calloc(correlation_nn, sizeof(double));
+        
+        pthread_mutex_lock(&detector->powderAngularCorrelation_mutex[powderType]);
+        for(long i=0; i<correlation_nn; i++){
+            //bufferCorrelation[i] = global->detector[detID].powderAngularCorrelation[powderType][i] / detector->nPowderFrames[powderType];
+            bufferCorrelation[i] = global->detector[detID].powderAngularCorrelation[powderType][i];
+        }
+        pthread_mutex_unlock(&detector->powderAngularCorrelation_mutex[powderType]);
+        
+    }
+    
     /*
      *	Mess of stuff for writing the compound HDF5 file
      */
     hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
     //herr_t r;
-    hsize_t size[2];
-    hsize_t max_size[2];
+    hsize_t size[3];
+    hsize_t max_size[3];
 	
     fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if ( fh < 0 ) {
@@ -408,7 +424,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     else {
         H5Lcreate_soft( "/data/correcteddata", fh, "/data/data",0,0);
     }
-
+    
     // Save radial averages
     size[0] = radial_nn;
     max_size[0] = radial_nn;
@@ -436,6 +452,35 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     H5Dclose(dh);
     H5Sclose(sh);
 	
+    // Save angular correlations
+    if (global->detector[detID].useAngularCorrelation && global->detector[detID].sumAngularCorrelation) {
+        
+        // Determine dimensions of correlation data
+        if (global->detector[detID].autoCorrelateOnly) {
+            size[0] = global->detector[detID].angularCorrelationNumQ;       // size[0] = height
+            size[1] = global->detector[detID].angularCorrelationNumDelta;   // size[1] = width
+            max_size[0] = global->detector[detID].angularCorrelationNumQ;
+            max_size[1] = global->detector[detID].angularCorrelationNumDelta;
+            sh = H5Screate_simple(2, size, max_size);                
+        } else {
+            size[0] = global->detector[detID].angularCorrelationNumQ;       // size[0] = height
+            size[1] = global->detector[detID].angularCorrelationNumQ;       // size[1] = width
+            size[2] = global->detector[detID].angularCorrelationNumDelta;   // size[2] = depth
+            max_size[0] = global->detector[detID].angularCorrelationNumQ;
+            max_size[1] = global->detector[detID].angularCorrelationNumQ;
+            max_size[2] = global->detector[detID].angularCorrelationNumDelta;
+            sh = H5Screate_simple(3, size, max_size);
+        }
+        
+        // Write correlation data
+        dh = H5Dcreate(gh, "angularCorrelation", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if (dh < 0) ERROR("Could not create dataset.\n");
+        H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrelation);
+        H5Dclose(dh);
+        
+        H5Sclose(sh);
+    }
+    
 	
     // Save frame count
     size[0] = 1;
@@ -488,6 +533,8 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         //free(bufferAssembledNPeaksMin);
         //free(bufferAssembledNPeaksMax);
     }
+    if (bufferCorrelation)
+        free(bufferCorrelation);
     fflush(global->powderlogfp[powderType]);
 
 }
