@@ -191,6 +191,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
  *  Also for deciding whether to calculate gain, darkcal, etc.
  */
 void saveRunningSums(cGlobal *global) {
+    printf("Saving powder patterns to file\n");
     for(int detID=0; detID<global->nDetectors; detID++) {
         saveRunningSums(global, detID);
     }
@@ -202,9 +203,7 @@ void saveRunningSums(cGlobal *global, int detID) {
     // Assemble 2D powder patterns using geometry (since we don't sum assembled patterns any more)
     assemble2Dpowder(global);
 
-
     //	Save powder patterns from different classes
-    printf("Writing intermediate powder patterns to file\n");
     for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
         if(global->powderSumBlanks && powderType == 0)
             savePowderPattern(global, detID, powderType);
@@ -239,8 +238,8 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     long	pix_nn = detector->pix_nn;
     long	image_nn = detector->image_nn;
     double  *bufferAssembled;
-    int16_t *bufferAssembledNPeaksMin;
-    int16_t *bufferAssembledNPeaksMax;
+    //int16_t *bufferAssembledNPeaksMin;
+    //int16_t *bufferAssembledNPeaksMax;
 
     /*
      *	Filename
