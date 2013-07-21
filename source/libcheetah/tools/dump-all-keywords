@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo " "
+echo " "
+echo "Global keywords"
+echo "============================"
+./dump-global-keywords
+echo " "
+echo " "
+echo "Detectors-specific keywords"
+echo "============================"
+./dump-detector-keywords
+
