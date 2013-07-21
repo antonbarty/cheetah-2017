@@ -263,6 +263,18 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     strcpy(gaincalFile, value);
     useGaincal = 1;
   }
+  else if (!strcmp(tag, "usebadpixelmask")) {
+      printf("The keyword useBadPixelMask has been changed.  It is\n"
+             "now toggled by badPixelMap.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
+  else if (!strcmp(tag, "badpixelmask")) {
+      printf("The keyword badPixelMask has been changed.  It is\n"
+             "now known as badPixelMap.\n"
+             "Modify your ini file and try again...\n");
+      fail = 1;
+  }
   else if (!strcmp(tag, "badpixelmap")) {
       strcpy(badpixelFile, value);
       useBadPixelMask = 1;
