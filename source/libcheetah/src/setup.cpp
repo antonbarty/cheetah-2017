@@ -676,18 +676,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "generategaincal")) {
     generateGaincal = atoi(value);
   }
-  else if (!strcmp(tag, "subtractbg")) {
-    printf("The keyword subtractBg has been changed.  It is\n"
-	   "now known as useDarkcalSubtraction.\n"
-	   "Modify your ini file and try again...\n");
-    fail = 1;
-  }
-  else if (!strcmp(tag, "usedarkcalsubtraction")) {
-      printf("The keyword useDarkcalSubtraction has been changed.  It is\n"
-             "now toggled by darkcal.\n"
-             "Modify your ini file and try again...\n");
-      fail = 1;
-  }
   else if (!strcmp(tag, "hitfinder")) {
     hitfinder = atoi(value);
   }
@@ -1016,12 +1004,16 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "hotpixFreq=%f\n",detector[i].hotpixFreq);
         fprintf(fp, "hotpixADC=%d\n",detector[i].hotpixADC);
         fprintf(fp, "hotpixMemory=%d\n",detector[i].hotpixMemory);
+        fprintf(fp, "usePolarizationCorrection=%d\n",detector[i].usePolarizationCorrection);
+        fprintf(fp, "horizontalFractionOfPolarization=%d\n",detector[i].horizontalFractionOfPolarization);
+        fprintf(fp, "useSolidAngleCorrection=%d\n",detector[i].useSolidAngleCorrection);
+        fprintf(fp, "solidAngleAlgorithm=%d\n",detector[i].solidAngleAlgorithm);
         fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
         fprintf(fp, "pixelSaturationADC=%ld\n",detector[i].pixelSaturationADC);
         fprintf(fp, "useAutoHalopixel=%d\n",detector[i].useAutoHalopixel);
         fprintf(fp, "halopixMinDeviation=%f\n",detector[i].halopixMinDeviation);
-        fprintf(fp, "halopixMemory=%li\n",detector[i].halopixMemory);
-        fprintf(fp, "halopixRecalc=%ld\n",detector[i].halopixRecalc);
+        fprintf(fp, "halopixelMemory=%li\n",detector[i].halopixMemory);
+        fprintf(fp, "halopixelRecalc=%ld\n",detector[i].halopixRecalc);
         fprintf(fp, "histogram=%d\n",detector[i].histogram);
         fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
         fprintf(fp, "histogramMax=%ld\n",detector[i].histogramMax);
