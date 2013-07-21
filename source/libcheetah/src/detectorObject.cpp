@@ -722,9 +722,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     ky = (y/r)/wavelengthA;
     kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
     kr = sqrt(kx*kx + ky*ky + kz*kz);
-    //res = 1.0/kr;
-    sin_theta = sqrt(x*x+y*y)/r;
-    res = wavelengthA/(sin_theta);
+    res = 1.0/kr;
         
     pix_kx[i] = kx;
     pix_ky[i] = ky;
@@ -745,7 +743,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     // Generate resolution limit mask
     if (!global->hitfinderResolutionUnitPixel){
       // (resolution in Angstrom (!!!))
-      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+      if (res < global->hitfinderMaxRes && res > global->hitfinderMinRes ) 
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
       else
 	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
