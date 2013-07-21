@@ -25,6 +25,7 @@ using std::endl;
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
+#include "util.h"
 
 #include "crosscorrelator.h"
 #include "arrayclasses.h"

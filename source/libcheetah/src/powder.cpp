@@ -19,7 +19,7 @@
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
 #include "median.h"
-
+#include "util.h"
 
 
 /*
@@ -51,7 +51,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     // Dereference common variable
     //long	radial_nn = global->detector[detID].radial_nn;
     long	pix_nn = global->detector[detID].pix_nn;
-    long	image_nn = global->detector[detID].image_nn;
+    //long	image_nn = global->detector[detID].image_nn;
 
     double  *buffer;
 	

@@ -366,15 +366,15 @@ void cGlobal::setup() {
           if (!detector[i].angularCorrelationNumDelta) 
               detector[i].angularCorrelationNumDelta = (int) ceil(detector[i].angularCorrelationNumPhi/2.0+1);
           if (detector[i].angularCorrelationNormalization < 1 || detector[i].angularCorrelationNormalization > 2) {
-              printf("Invalid option detector #%d: angularCorrelationNormalization = %d, set to default value (1 = intensity)", i, detector[i].angularCorrelationNormalization);
+              printf("Invalid option detector #%li: angularCorrelationNormalization = %d, set to default value (1 = intensity)", i, detector[i].angularCorrelationNormalization);
               detector[i].angularCorrelationNormalization = 1;
           }
           if (detector[i].angularCorrelationQScale < 1 || detector[i].angularCorrelationQScale > 3) {
-              printf("Invalid option detector #%d: angularCorrelationQScale = %d, set to default value (1 = pixels)", i, detector[i].angularCorrelationQScale);
+              printf("Invalid option detector #%li: angularCorrelationQScale = %d, set to default value (1 = pixels)", i, detector[i].angularCorrelationQScale);
               detector[i].angularCorrelationQScale = 1;
           }
           if (detector[i].angularCorrelationOutput < 1 || detector[i].angularCorrelationOutput > 7) {
-              printf("Invalid option detector #%d: angularCorrelationOutput = %d, set to default value (1 = hdf5)", i, detector[i].angularCorrelationOutput);
+              printf("Invalid option detector #%li: angularCorrelationOutput = %d, set to default value (1 = hdf5)", i, detector[i].angularCorrelationOutput);
               detector[i].angularCorrelationOutput = 1;
           }
       }
@@ -1024,7 +1024,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "hotpixADC=%d\n",detector[i].hotpixADC);
         fprintf(fp, "hotpixMemory=%d\n",detector[i].hotpixMemory);
         fprintf(fp, "usePolarizationCorrection=%d\n",detector[i].usePolarizationCorrection);
-        fprintf(fp, "horizontalFractionOfPolarization=%d\n",detector[i].horizontalFractionOfPolarization);
+        fprintf(fp, "horizontalFractionOfPolarization=%f\n",detector[i].horizontalFractionOfPolarization);
         fprintf(fp, "useSolidAngleCorrection=%d\n",detector[i].useSolidAngleCorrection);
         fprintf(fp, "solidAngleAlgorithm=%d\n",detector[i].solidAngleAlgorithm);
         fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
