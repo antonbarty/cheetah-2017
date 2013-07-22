@@ -561,6 +561,12 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->cheetahVal.confVal.self = H5Gcreate(cxi->cheetahVal.self, "configuration", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   confVal = cxi->cheetahVal.confVal;
 
+    sprintf(buffer,"nProcessedFrames");
+    cxi->cheetahVal.sharedVal.nProcessedFrames = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);
+    sprintf(buffer,"nHits");
+    cxi->cheetahVal.sharedVal.nHits = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);
+    sprintf(buffer,"hitrate");
+    cxi->cheetahVal.sharedVal.hitrate = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_FLOAT);    
   DETECTOR_LOOP{
     char buffer[1024];
     sprintf(buffer,"detector%ld_lastBgUpdate",detID);
@@ -577,6 +583,11 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
     sprintf(buffer,"detector%ld_haloPixCounter",detID);
     cxi->cheetahVal.sharedVal.haloPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+      POWDER_LOOP {
+          sprintf(buffer,"detector%ld_class%ld_nFrames", detID, powID);
+          cxi->cheetahVal.sharedVal.nFrames[detID][powID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);          
+      }      
+      
     sprintf(buffer,"detector%ld_detectorName",detID);
     createAndWriteDataset(buffer,confVal.self,global->detector[detID].detectorName,MAX_FILENAME_LENGTH);
     sprintf(buffer,"detector%ld_geometryFile",detID);
