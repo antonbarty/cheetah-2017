@@ -42,7 +42,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 	timestatic=localtime_r( &eventTime, &timelocal );	
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
-	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%06li.h5",buffer1,global->runNumber,buffer2,event->frameNumber);
+	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%06d.h5",buffer1,global->runNumber,buffer2,event->fiducial);
 }
 
 
