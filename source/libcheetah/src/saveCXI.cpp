@@ -530,6 +530,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     cxi->lcls.detector_positions.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
     sprintf(buffer,"detector%li-EncoderValue", detID +1);
     cxi->lcls.detector_EncoderValues.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
+    sprintf(buffer,"detector%li-SolidAngleConst", detID +1);
+    cxi->lcls.detector_SolidAngleConst.push_back(createScalarStack(buffer, cxi->lcls.self,H5T_NATIVE_DOUBLE));
   }
 
   // Save cheetah variables  
@@ -603,6 +605,14 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     createAndWriteDataset(buffer,confVal.self,&global->detector[detID].saveDetectorRaw);
     sprintf(buffer,"detector%ld_useAutoHotpixel",detID);
     createAndWriteDataset(buffer,confVal.self,&global->detector[detID].useAutoHotpixel);
+      sprintf(buffer,"detector%ld_usePolarizationCorrection",detID);
+      createAndWriteDataset(buffer,confVal.self,&global->detector[detID].usePolarizationCorrection);
+      sprintf(buffer,"detector%ld_horizontalFractionOfPolarization",detID);
+      createAndWriteDataset(buffer,confVal.self,&global->detector[detID].horizontalFractionOfPolarization);
+      sprintf(buffer,"detector%ld_useSolidAngleCorrection",detID);
+      createAndWriteDataset(buffer,confVal.self,&global->detector[detID].useSolidAngleCorrection);
+      sprintf(buffer,"detector%ld_solidAngleAlgorithm",detID);
+      createAndWriteDataset(buffer,confVal.self,&global->detector[detID].solidAngleAlgorithm);
     sprintf(buffer,"detector%ld_maskSaturatedPixels",detID);
     createAndWriteDataset(buffer,confVal.self,&global->detector[detID].maskSaturatedPixels);
     sprintf(buffer,"detector%ld_pixelSaturationADC",detID);
@@ -907,8 +917,9 @@ void writeCXI(cEventData *info, cGlobal *global ){
   }
   /*Write LCLS informations*/
   DETECTOR_LOOP{
-    writeScalarToStack(cxi->lcls.detector_positions[detID],stackSlice,global->detector[detID].detectorZ);
-    writeScalarToStack(cxi->lcls.detector_EncoderValues[detID],stackSlice,detID);
+      writeScalarToStack(cxi->lcls.detector_positions[detID],stackSlice,global->detector[detID].detectorZ);
+      writeScalarToStack(cxi->lcls.detector_EncoderValues[detID],stackSlice,global->detector[detID].detectorEncoderValue);
+      writeScalarToStack(cxi->lcls.detector_SolidAngleConst[detID],stackSlice,global->detector[detID].solidAngleConst);
   }
   writeScalarToStack(cxi->lcls.machineTime,stackSlice,info->seconds);
   writeScalarToStack(cxi->lcls.fiducial,stackSlice,info->fiducial);

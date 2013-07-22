@@ -80,6 +80,7 @@ typedef struct{
   hid_t evr41;
   std::vector<hid_t> detector_positions;
   std::vector<hid_t> detector_EncoderValues;
+  std::vector<hid_t> detector_SolidAngleConst;
   hid_t eventTimeString;
 }LCLS;
 
