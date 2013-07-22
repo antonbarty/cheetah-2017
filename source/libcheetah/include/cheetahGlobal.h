@@ -74,6 +74,8 @@ public:
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
+	/** @brief Invert thit status (i.e. save "misses" if desired) */
+	int      hitfinderInvertHit;
 	int      hitfinderDetector;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;

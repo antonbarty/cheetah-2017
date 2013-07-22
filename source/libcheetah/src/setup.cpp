@@ -70,6 +70,7 @@ cGlobal::cGlobal(void) {
 
     // Hitfinding
     hitfinder = 0;
+    hitfinderInvertHit = 0;
     hitfinderDetector = 0;
     hitfinderADC = 100;
     hitfinderTAT = 1e3;
@@ -683,6 +684,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinder")) {
     hitfinder = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderinverthit")) {
+    hitfinderInvertHit = atoi(value);
   }
   else if (!strcmp(tag, "hitfinderdetector")) {
     hitfinderDetector = atoi(value);
