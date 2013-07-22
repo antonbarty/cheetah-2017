@@ -100,7 +100,7 @@ namespace cheetah_ana_pkg {
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	  : Module(name)
 	{
-		cout << "*** Constructor ***" << endl;
+		//cout << "*** Constructor ***" << endl;
 		/* If SIT_DATA is undefined set it to the builtin value */
 		setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
 
@@ -130,7 +130,7 @@ namespace cheetah_ana_pkg {
 	/// Method which is called once at the beginning of the job
 	void cheetah_ana_mod::beginJob(Event& evt, Env& env)
 	{
-		cout << "*** beginJob ***" << endl;
+		//cout << "*** beginJob ***" << endl;
 		time(&startT);
 		cheetahInit(&cheetahGlobal);
 		if(cheetahGlobal.saveCXI){
@@ -145,7 +145,7 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
 	cout << "Experiment = " << env.experiment() << endl;
-	cout << "*** beginRun ***" << endl;
+	//cout << "*** beginRun ***" << endl;
 		int runNumber = 0;
 		PSTime::Time evtTime;
 		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
