@@ -978,5 +978,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
   }
     writeScalarToStack(cxi->cheetahVal.sharedVal.nProcessedFrames,stackSlice,global->nprocessedframes);
     writeScalarToStack(cxi->cheetahVal.sharedVal.nHits,stackSlice,global->nhits);
-    writeScalarToStack(cxi->cheetahVal.sharedVal.hitrate,stackSlice,global->hitrate);
+    // Calculate overall hit rate
+    float hitrate = 100.*( global->nhits / (float) global->nprocessedframes);    
+    writeScalarToStack(cxi->cheetahVal.sharedVal.hitrate,stackSlice,hitrate);
 }
