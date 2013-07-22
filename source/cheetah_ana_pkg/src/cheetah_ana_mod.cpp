@@ -341,7 +341,7 @@ namespace cheetah_ana_pkg {
             
 		}
 		else {
-			printf("Failed to get fiducial (Psana::EvrData::DataV3.get() failed)\n");
+			//printf("Failed to get fiducial (Psana::EvrData::DataV3.get() failed)\n");
 			fiducial = frameNumber;
 		}
 
