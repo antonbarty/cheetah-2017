@@ -971,6 +971,12 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
     writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
     writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
-    writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
+    writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);
+      POWDER_LOOP{
+          writeScalarToStack(cxi->cheetahVal.sharedVal.nFrames[detID][powID],stackSlice,global->detector[detID].nPowderFrames[powID]);
+      }
   }
+    writeScalarToStack(cxi->cheetahVal.sharedVal.nProcessedFrames,stackSlice,global->nprocessedframes);
+    writeScalarToStack(cxi->cheetahVal.sharedVal.nHits,stackSlice,global->nhits);
+    writeScalarToStack(cxi->cheetahVal.sharedVal.hitrate,stackSlice,global->hitrate);
 }

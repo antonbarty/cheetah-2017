@@ -116,6 +116,10 @@ typedef struct{
   hid_t nHalo[MAX_DETECTORS];
   hid_t lastHaloPixUpdate[MAX_DETECTORS];
   hid_t haloPixCounter[MAX_DETECTORS];
+    hid_t nFrames[MAX_DETECTORS][MAX_POWDER_CLASSES];
+    hid_t nProcessedFrames;
+    hid_t nHits;
+    hid_t hitrate;
 }SharedValues;
 
 typedef struct{
@@ -152,7 +156,7 @@ typedef struct{
   CheetahValues cheetahVal;
   
   /*  This counter defines where in the file each image is stored.
-   *  It is atomically incremented by each thread */
+   *  It is automatically incremented by each thread */
   uint stackCounter;
 }File;
 
