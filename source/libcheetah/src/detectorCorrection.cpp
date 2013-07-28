@@ -559,6 +559,34 @@ void pnccdOffsetCorrection(float *data) {
 }
 
 
+void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
+  DETECTOR_LOOP {
+    if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineInterpolation == 1)) {
+      // lines in direction of the slow changing dimension 
+      long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
+      long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
+      long x,y,i,i0,i1;
+      long x_min = 1;
+      long x_max = nx-1;
+      float *data = eventData->detector[detID].corrected_data;
+      uint16_t *mask = eventData->detector[detID].pixelmask;
+      uint16_t mask_out_bits = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_SHADOWED || PIXEL_IS_TO_BE_IGNORED || PIXEL_IS_BAD  || PIXEL_IS_MISSING;
+      for(y=0; y<ny; y++){
+	for(x=x_min;x<=x_max;x=x+2){
+	  i = nx*y+x;
+	  i0 = nx*y+x-1;
+	  i1 = nx*y+x+1;
+	  if (isNoneOfBitOptionsSet(mask[i0],mask_out_bits) && isNoneOfBitOptionsSet(mask[i1],mask_out_bits)){
+	    data[i] = (data[i0]+data[i1])/2.;
+	  }
+	}
+      }	    
+    }
+  }
+}
+
+
+// The following can be fixed also with an adequate geometry as well.
 /*
  * Fix pnccd wiring error
  *
@@ -587,7 +615,7 @@ void pnccdOffsetCorrection(float *data) {
 void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
         if(strcmp(global->detector[detID].detectorType, "pnccd") == 0 ) {
-            if(global->detector[detID].usePnccdOffsetCorrection == 1) {
+            if(global->detector[detID].usePnccdFixWiringError == 1) {
                 float	*data = eventData->detector[detID].corrected_data;
                 pnccdFixWiringError(data);
             }
@@ -596,7 +624,6 @@ void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
 }
 
 
-// Can be fixed with an adequate geometry as well.
 void pnccdFixWiringError(float *data) {
   long	i,j;
   long    nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;

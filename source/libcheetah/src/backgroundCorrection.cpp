@@ -387,21 +387,49 @@ void checkSaturatedPixels(uint16_t *raw_data, uint16_t *mask, long pix_nn, long 
 	}
 }
 
+void checkPnccdSaturatedPixels(cEventData *eventData, cGlobal *global){
+  DETECTOR_LOOP {
+    if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].maskPnccdSaturatedPixels == 1)) {
+      uint16_t	*data = eventData->detector[detID].raw_data;
+      uint16_t	*mask = eventData->detector[detID].pixelmask;
+      long i,x,y,mx,my,q;
+      long asic_nx = PNCCD_ASIC_NX;
+      long asic_ny = PNCCD_ASIC_NY;
+      long nasics_x = PNCCD_nASICS_X;
+      long nasics_y = PNCCD_nASICS_Y;
+      uint16_t saturation_threshold[4] = {8500,5600,10000,5600};
+      // Loop over quadrants
+      for(my=0; my<nasics_y; my++){
+	for(mx=0; mx<nasics_x; mx++){
+	  q = mx+my*nasics_x;
+	  for(y=0; y<asic_ny; y++){
+	    for(x=0; x<asic_nx; x++){
+	      i = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + mx*asic_nx + x;
+	      if (data[i] > saturation_threshold[q]){
+		mask[i] |= PIXEL_IS_SATURATED; 
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
 
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
+  DETECTOR_LOOP {
+    if (global->detector[detID].maskSaturatedPixels) {
+      uint16_t	*raw_data = eventData->detector[detID].raw_data;
+      uint16_t	*mask = eventData->detector[detID].pixelmask;
+      long		nn = global->detector[detID].pix_nn;
+      long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
+      checkSaturatedPixels(raw_data, mask, nn, pixelSaturationADC);
+    }
+  }
+}	
+    
 
-    DETECTOR_LOOP {
-      if (global->detector[detID].maskSaturatedPixels) {
-			
-			uint16_t	*raw_data = eventData->detector[detID].raw_data;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		nn = global->detector[detID].pix_nn;
-			long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
-			
-			checkSaturatedPixels(raw_data, mask, nn, pixelSaturationADC);
-		}
-	}	
-}
+
 
 
 

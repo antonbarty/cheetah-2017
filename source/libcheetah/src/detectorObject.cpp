@@ -77,6 +77,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   // Saturated pixels
   maskSaturatedPixels = 0;
   pixelSaturationADC = 15564;  // 95% of 2^14 ??
+  maskPnccdSaturatedPixels = 0;
 
   // Static dark calibration (electronic offsets)
   useDarkcalSubtraction = 0;
@@ -122,8 +123,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   halopixRecalc = bgRecalc;
   halopixMemory = bgRecalc;
     
-  // correction for PNCCD read out artifacts 
+  // corrections for PNCCD errors and read out artifacts 
   usePnccdOffsetCorrection = 0;
+  usePnccdFixWiringError = 0;
+  usePnccdLineInterpolation = 0;
 
   // Saving options
   saveDetectorCorrectedOnly = 0;
@@ -132,6 +135,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   // Downsampling factor (1: no downsampling)
   downsampling = 1;
   downsamplingRescale = 1.;
+  downsamplingConservative = 1;
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -247,6 +251,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "downsamplingrescale")) {
     downsamplingRescale = atof(value);
   }
+  else if (!strcmp(tag, "downsamplingconservative")) {
+    downsamplingConservative = atoi(value);
+  }
   else if (!strcmp(tag, "savedetectorcorrectedonly")) {
     saveDetectorCorrectedOnly = atoi(value);
   }
@@ -273,6 +280,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "cameralengthscale")) {
     cameraLengthScale  = atof(value);
+  }
+  else if ((!strcmp(tag, "maskpnccdsaturatedpixels"))){
+    maskPnccdSaturatedPixels = atoi(value);
   }
   else if ((!strcmp(tag, "masksaturatedpixels")) || (!strcmp(tag, "usemasksaturatedpixels"))) {
     maskSaturatedPixels = atoi(value);
@@ -356,8 +366,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     cspadSubtractUnbondedPixels = atoi(value);
   }
   else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
-    //usePnccdOffsetCorrection = atoi(value);
-    usePnccdOffsetCorrection = 1;
+    usePnccdOffsetCorrection = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdfixwiringerror")) {
+    usePnccdFixWiringError = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdlineinterpolation")) {
+    usePnccdLineInterpolation = atoi(value);
   }
   else if (!strcmp(tag, "bgrecalc")) {
     bgRecalc = atoi(value);

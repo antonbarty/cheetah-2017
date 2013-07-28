@@ -64,7 +64,8 @@ static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;                // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
-static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_SHADOWED || PIXEL_IS_IN_PEAKMASK || PIXEL_IS_TO_BE_IGNORED || PIXEL_IS_BAD || PIXEL_IS_OUT_OF_RESOLUTION_LIMITS || PIXEL_IS_MISSING || PIXEL_IS_MISSING;   // all bits
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_SHADOWED || PIXEL_IS_IN_PEAKMASK || PIXEL_IS_TO_BE_IGNORED || PIXEL_IS_BAD || PIXEL_IS_OUT_OF_RESOLUTION_LIMITS || PIXEL_IS_MISSING || PIXEL_IS_IN_HALO;   // all bits
+//static const uint16_t PIXEL_IS_ALL = 65535;
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -153,6 +154,8 @@ public:
 	long  downsampling;
 	/** @brief Rescale intensities after downsamping but before saving to image (avoid clamping to maximum value of 16-bit int) (1.: no rescaling) */
 	float downsamplingRescale;
+	/** @brief If set to 1 (default) pixel values are summed up no matter what the mask value is set to */
+	long  downsamplingConservative;
 
 	// ASIC module size
 	long  asic_nx;
@@ -202,6 +205,8 @@ public:
 	// Saturated pixels
 	int    maskSaturatedPixels;
 	long   pixelSaturationADC;
+	// Mask pnccd saturated pixels (thresholds hardcoded, for every quadrant different)
+	int    maskPnccdSaturatedPixels;
 	// Local background subtraction
 	int    useLocalBackgroundSubtraction;
 	long   localBackgroundRadius;
@@ -245,7 +250,10 @@ public:
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
 	int    usePnccdOffsetCorrection;
-	
+	// correction for wiring error (can be fixed also with an adequate geometry)
+	int    usePnccdFixWiringError;
+	// correction for intensity drop in every 2nd line, interpolation of all affected lines
+	int    usePnccdLineInterpolation;
 
 	// Saving options
 	int   saveDetectorCorrectedOnly;

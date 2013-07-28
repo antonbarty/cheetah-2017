@@ -78,6 +78,7 @@ void *worker(void *threadarg) {
 
   // Check for saturated pixels before applying any other corrections
   checkSaturatedPixels(eventData, global);
+  checkPnccdSaturatedPixels(eventData, global);
 
   // If no darkcal file: Init background buffer here (background = photon background + static electronic offsets)
   initBackgroundBuffer(eventData,global);
@@ -95,9 +96,11 @@ void *worker(void *threadarg) {
   // Fix pnCCD errors:
   // pnCCD offset correction (read out artifacts prominent in lines with high signal)
   // pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+  // pnCCD signal drop in every second line (fast changing dimension) is fixed by interpolation
   //  (these corrections will be automatically skipped for any non-pnCCD detector)
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
+  pnccdLineInterpolation(eventData, global);
 	
   // Apply gain correction
   applyGainCorrection(eventData, global);
