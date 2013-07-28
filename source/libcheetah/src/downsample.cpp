@@ -92,6 +92,7 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
       imgXxX[i] *= downsampling*downsampling/tempN[i];
     }
   }
+  free(tempN);
 }
 
 // sub-pixels that have any of the mask_out_bits set are disregarded. New super-pixels are rescaled accordingly. Super-pixels with all sub-pixels masked out are set to 0
@@ -134,6 +135,7 @@ void downsampleImageNonConservative(int16_t *img,int16_t *imgXxX,long img_nn, lo
   }
 
   free(temp);
+  free(tempN);
 }
 
 
@@ -156,7 +158,7 @@ void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long
   }
 }
 
-// downsample mask by only masking if all sub-pixels share a bit
+// downsample mask by only masking if all sub-pixels share a bit, if all pixels are having any of the critical bits set they are masked too 
 void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
   long x0,y0;
   long x1,y1;
@@ -186,6 +188,9 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
       mskXxX[i1] = tempM[i1];
     }
   }
+
+  free(tempN);
+  free(tempM);
 }
 
 void downsample(cEventData *eventData, cGlobal *global){
