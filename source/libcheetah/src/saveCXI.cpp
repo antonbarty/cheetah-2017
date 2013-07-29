@@ -792,10 +792,13 @@ void writeAccumulatedCXI(cGlobal * global){
       free(sum_corrected_angCnt);
       free(sum_correctedSq_ang);
       free(sum_correctedSq_angCnt);
+      free(sigma_raw);
+      free(sigma_corrected);
       free(sigma_corrected_ang);
       free(sigma_corrected_angCnt);
     }      
   }
+  delete cxi;
 }
 
 static void  closeCXI(CXI::File * cxi){
