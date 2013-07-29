@@ -798,7 +798,6 @@ void writeAccumulatedCXI(cGlobal * global){
       free(sigma_corrected_angCnt);
     }      
   }
-  delete cxi;
 }
 
 static void  closeCXI(CXI::File * cxi){
@@ -816,6 +815,7 @@ static void  closeCXI(CXI::File * cxi){
       H5Dset_extent(ids[i], block);
     }
   }
+  delete cxi;
 }
 
 void closeCXIFiles(cGlobal * global){
