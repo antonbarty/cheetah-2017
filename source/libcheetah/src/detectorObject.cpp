@@ -1118,7 +1118,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 }
 
 cPixelDetectorEvent::cPixelDetectorEvent() {
-
+  /* FM: Warning. This is not run when malloc'ed*/
   detectorZ=0;
 
 }

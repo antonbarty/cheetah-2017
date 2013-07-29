@@ -332,8 +332,8 @@ public:
 class cPixelDetectorEvent {
 
 public:
-
-	cPixelDetectorEvent();
+  /* FM: Warning. Constructor is not run when class is malloc'ed*/
+  	cPixelDetectorEvent();
 	
 	int       cspad_fail;
 	uint16_t  *raw_data;

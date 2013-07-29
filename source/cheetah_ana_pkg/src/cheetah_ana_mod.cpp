@@ -546,7 +546,9 @@ namespace cheetah_ana_pkg {
 		std::vector<std::string> pvNames = estore.pvNames();
         
 		// Detector position
-		float detectorPosition[MAX_DETECTORS];
+                // Don't forget to initialize them
+                std::vector<float> detectorPosition(MAX_DETECTORS,0);
+
 		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
 			if (pv && pv->numElements() > 0) {
