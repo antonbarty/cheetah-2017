@@ -1012,7 +1012,10 @@ namespace cheetah_ana_pkg {
 	  time(&endT);
 	  double dif = difftime(endT,startT);
 	  cout << "time taken: " << dif << " seconds" << endl;
-	  exit(1);
+          // We shouldn't exit, and specially not with a value of 1
+          //	  exit(1);
+          // Just retuning allows the proper destructors to be called
+          return;
 	}
 
 } // namespace cheetah_ana_pkg
