@@ -585,7 +585,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
       if (matched == 0){
 	printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
-	exit(0);
+	exit(1);
       }
 
     }
@@ -601,7 +601,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
   if (exitCheetah != 0){
     printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
-    exit(0);
+    exit(1);
   }
 
   printf("Configured %d detectors\n",nDetectors);
