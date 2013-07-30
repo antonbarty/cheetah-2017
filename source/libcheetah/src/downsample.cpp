@@ -171,7 +171,7 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
   tempM = (uint16_t *) calloc(imgXxX_nn,sizeof(uint16_t));
 
   for(i1 = 0;i1<imgXxX_nn;i1++){
-    mskXxX[i1] = 2047;
+    mskXxX[i1] = 0;
   }
   for(i0 = 0;i0<img_nn;i0++){
     x0 = i0%img_nx;
@@ -184,11 +184,10 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
     tempN[i1] += (uint16_t) isAnyOfBitOptionsSet(msk[i0],mask_out_bits);
   }
   for(i1 = 0;i1<imgXxX_nn;i1++){
-    if (tempN[i1] == downsampling*downsampling){
-      mskXxX[i1] = tempM[i1];
+    if (tempN[i1] != downsampling*downsampling){
+      mskXxX[i1] &= ~mask_out_bits;
     }
   }
-
   free(tempN);
   free(tempM);
 }

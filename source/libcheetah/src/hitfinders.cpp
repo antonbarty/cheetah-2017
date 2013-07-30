@@ -218,13 +218,13 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     pix_nn = (pix_ny_0/global->hitfinderDownsampling)*pix_nx;
     data = (float *) calloc(pix_nn,sizeof(float));
     mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
-    if (global->detector[detID].downsamplingConservative ==1){
-      downsampleImageConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
-      downsampleMaskConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
-    } else {
-      downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.,mask_0);
-      downsampleMaskNonConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);      
-    }
+    //if (global->detector[detID].downsamplingConservative ==1){
+    downsampleImageConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
+    downsampleMaskConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);
+      //} else {
+    //  downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.,mask_0);
+    //  downsampleMaskNonConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);      
+    //}
     
   } else {
     pix_nn = global->detector[detID].pix_nn;  
