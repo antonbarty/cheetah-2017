@@ -277,7 +277,7 @@ void cGlobal::setup() {
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
-        
+        hitfinderFastScan = 0;
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
@@ -302,6 +302,7 @@ void cGlobal::setup() {
 		printf("******************************************************************\n");
 		
 		hitfinder = 0;
+        hitfinderFastScan = 0;
 		savehits = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
@@ -314,6 +315,7 @@ void cGlobal::setup() {
 			detector[i].useDarkcalSubtraction = 1;
 			detector[i].useAutoHotpixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
+            detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].useGaincal=0;
 			detector[i].startFrames = 0;
 			detector[i].saveDetectorRaw = 1;

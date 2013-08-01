@@ -165,7 +165,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
             
 		default :
 			printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
-			printf("Stopping in confusion.\n");
+			printf("Stopping in hitfinderFastScan.\n");
 			exit(1);
 			break;
 	}

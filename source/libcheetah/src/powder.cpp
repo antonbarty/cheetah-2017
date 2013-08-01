@@ -358,7 +358,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     //H5Sget_simple_extent_dims(sh, size, max_size);
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 2, size);
-		H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+		H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 	}
     dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
@@ -400,7 +400,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         sh = H5Screate_simple(2, size, NULL);
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
+			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 
         //H5Sget_simple_extent_dims(sh, size, max_size);

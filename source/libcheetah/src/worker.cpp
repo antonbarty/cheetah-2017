@@ -145,12 +145,12 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
-	if(global->hitfinderFastScan) {
+	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
 		hit = hitfinderFastScan(eventData, global);
 		if(hit)
 			goto localBG;
 		else
-			goto logfile;
+			goto hitknown;
 	}
 	
     
@@ -233,6 +233,7 @@ localBG:
 		eventData->hit = hit;
 	}
 	
+hitknown: 
 	/*
 	 *	Identify halo pixels
 	 */

@@ -228,7 +228,7 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
 	
 	// We re-use stacks, what is this number?
 	long	stackNum = stackCounter / stackSize;
-	if(stackNum == 0) stackNum =1;
+	//if(stackNum == 0) stackNum =1;
 	
 	// If stack is not full, how many rows are full?
     long    nRows = stackSize;

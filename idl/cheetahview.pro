@@ -1,8 +1,8 @@
 ;;
-;;	FEL_Browser
+;;	Cheetahview
 ;;	Tool for snooping through FEL diffraction images
 ;;
-;;	Anton Barty, 2007-2008
+;;	Anton Barty, 2009-2013
 ;;
 
 ;;

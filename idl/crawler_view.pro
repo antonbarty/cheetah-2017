@@ -645,7 +645,16 @@ pro crawler_event, ev
 			f = file_search(dir,'log.txt')
 			xdisplayfile, f[0]
 		end
+		sState.mbview_cstatus : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'status.txt')
+			xdisplayfile, f[0]
+		end
 		
+		sState.mbview_waxs : begin
+			runs = crawler_whichRun(pstate, /path, /multiple)
+			waxsview, runs
+		end
 
 
 
@@ -725,11 +734,13 @@ pro crawler_view
 	mbfile = widget_button(bar, value='View')
 	mbview_bsub = widget_button(mbfile, value='View bsub log file')
 	mbview_clog = widget_button(mbfile, value='View cheetah log file')
+	mbview_cstatus = widget_button(mbfile, value='View cheetah status file')
 	mbview_images = widget_button(mbfile, value='View HDF5 files')
 	mbview_hitrate = widget_button(mbfile, value='View hit rate plot')
 	mbview_resolution = widget_button(mbfile, value='View resolution plot')
 	mbview_powder = widget_button(mbfile, value='View virtual powder')
 	mbview_powderdark = widget_button(mbfile, value='View virtual powder (dark)')
+	mbview_waxs = widget_button(mbfile, value='View WAXS traces')
 
 
 	;;
@@ -809,9 +820,11 @@ pro crawler_view
 			mbview_resolution : mbview_resolution, $
 			mbview_powder : mbview_powder, $
 			mbview_powderdark : mbview_powderdark, $
+			mbview_waxs : mbview_waxs, $
 			
 			mbview_bsub : mbview_bsub, $
 			mbview_clog : mbview_clog, $
+			mbview_cstatus : mbview_cstatus, $
 			
 			button_refresh : button_refresh, $
 			button_viewtype : button_viewtype, $
