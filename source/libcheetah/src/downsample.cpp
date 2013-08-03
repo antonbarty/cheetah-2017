@@ -179,13 +179,19 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    mskXxX[i1] &= msk[i0];
-    tempM[i1] |= msk[i0];
-    tempN[i1] += (uint16_t) isAnyOfBitOptionsSet(msk[i0],mask_out_bits);
+    if (isAnyOfBitOptionsSet(msk[i0],mask_out_bits)){
+      // at least one mask-out-bit is set
+      tempM[i1] |= msk[i0];
+    } else {
+      // no mask-out-bit is set
+      tempN[i1] += 1;
+      mskXxX[i1] |= msk[i0];
+    }
   }
   for(i1 = 0;i1<imgXxX_nn;i1++){
-    if (tempN[i1] != downsampling*downsampling){
-      mskXxX[i1] &= ~mask_out_bits;
+    // pixels with all subpixels crucially bad will be masked out conservatively
+    if (tempN[i1] == 0){
+      mskXxX[i1] = tempM[i1];
     }
   }
   free(tempN);
