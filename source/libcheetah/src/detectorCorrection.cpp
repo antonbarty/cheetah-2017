@@ -20,6 +20,8 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
+void pnccdOffsetCorrection1(float *data);
+void pnccdOffsetCorrection2(float *data,uint16_t *mask);
 
 
 /*
@@ -475,6 +477,10 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 
     This is what the detector map looks like:
  
+	---> x
+        |
+	v y
+
  
         insensitive pixels at the edge
              |                 | 
@@ -491,20 +497,23 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
              ^                 ^
              |                 | 
         insensitive pixels at the edge
-
+	
+	
 */
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
   DETECTOR_LOOP {
     if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
       float	*data = eventData->detector[detID].corrected_data;
-      pnccdOffsetCorrection(data);
+      uint16_t	*mask = eventData->detector[detID].pixelmask;
+      pnccdOffsetCorrection1(data);
+      //pnccdOffsetCorrection2(data,mask);
     }
   }
 }		
 
 
-void pnccdOffsetCorrection(float *data) {
+void pnccdOffsetCorrection1(float *data) {
     float sum,m;
     int i,j,x,y,mx,my,x_;
     int q;
@@ -513,7 +522,7 @@ void pnccdOffsetCorrection(float *data) {
     int nasics_x = PNCCD_nASICS_X;
     int nasics_y = PNCCD_nASICS_Y;
     int x_insens_start[4] = {11,1012,11,1012};
-    int x_sens_start[4] = {511,512,511,511};
+    int x_sens_start[4] = {511,512,511,512};
     int insensitve_border_width = 12;
     int Nxsens = 500;
     float sumThreshold = 50000.;
@@ -558,6 +567,63 @@ void pnccdOffsetCorrection(float *data) {
     }
 }
 
+/*
+void pnccdOffsetCorrection2(float *data,uint16_t *mask) {
+  float sum,avg;
+  int i,j,x,y,mx,my,x_,y_;
+  int q,s,Nsum;
+  int asic_nx = PNCCD_ASIC_NX;
+  int asic_ny = PNCCD_ASIC_NY;
+  int nasics_x = PNCCD_nASICS_X;
+  int nasics_y = PNCCD_nASICS_Y;
+  int nstripes = 4;
+  int stripe_nx = asic_nx/nstripes;
+  int stripe_ny = asic_ny;
+  int x_sens_start = 448;
+  int x_sens_stop = 576;
+  int insensitve_border_width = 12;
+  int x0[4] = {0,512,0,512};
+  int y0[4] = {0,0,512,512};
+  int y0_insensitive[4] = {0,0,1011,1011};
+  uint16_t mask_out_bits = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_BAD || PIXEL_IS_MISSING;
+
+  // Loop over quadrants
+  for(my=0; my<nasics_y; my++){
+    for(mx=0; mx<nasics_x; mx++){
+      q = mx+my*nasics_x;
+      // Loop over stripes
+      for(s=0; s<nstripes; s++){
+	// sum over insensitive pixels
+	sum = 0.;
+	Nsum = 0;
+	for(x_=0; x_<stripe_nx; x_++){
+	  x = x0[q]+x_;
+	  if((x<x_sens_start) || (x>x_sens_stop)){
+	    for(y_=0;y_<insensitve_border_width; y_++){
+	      y = y0_insensitive[q]+y_;
+	      j = y * asic_nx*nasics_x + x;		
+	      if(isNoneOfBitOptionsSet(mask[j],mask_out_bits)){
+		sum += data[j];
+		Nsum += 1;
+	      }
+	    }
+	  }
+	}
+	// subtract average value from all pixels in stripe
+	avg = sum/((float) Nsum);
+	for(x_=0; x_<stripe_nx; x_++){
+	  x = x0[q]+x_;
+	  for(y_=0;y_<stripe_ny; y_++){
+	    y = y0[q]+y_;
+	    j = y * asic_nx*nasics_x + x;
+	    data[j] -= avg;
+	  }
+	}
+      }
+    }
+  }
+}
+*/
 
 void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
   DETECTOR_LOOP {
