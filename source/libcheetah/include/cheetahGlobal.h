@@ -184,6 +184,7 @@ public:
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
+    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */

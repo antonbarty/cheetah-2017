@@ -126,6 +126,7 @@ cGlobal::cGlobal(void) {
     powderthresh = 0.0;
     powderSumHits = 1;
     powderSumBlanks = 0;
+    powderSumWithBackgroundSubtraction = 1;
 
     // Radial average stacks
     saveRadialStacks=0;
@@ -841,6 +842,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "powdersumblanks")) {
     powderSumBlanks = atoi(value);
+  }
+  else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
+      powderSumWithBackgroundSubtraction = atoi(value);
   }
   else if (!strcmp(tag, "hitfinderadc")) {
     hitfinderADC = atoi(value);

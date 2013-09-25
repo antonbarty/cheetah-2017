@@ -39,7 +39,6 @@ pro crawler_merge
 	h5dir = h5.field3
 	h5processed = h5.field4
 	h5hits = h5.field5
-	h5hitrate = h5.field6
 	h5mtime = h5.field7
 	
 	;; CrystFEL info

@@ -178,7 +178,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	if(nPeaks >= global->hitfinderNpeaks/2 && nPeaks <= global->hitfinderNpeaksMax/2) {
 		
 		hit = 1;
-		printf("%li : Potential hit, npeaks(inner) = %li\n", eventData->threadNum, nPeaks);
+		//printf("%li : Potential hit, npeaks(prescan) = %li\n", eventData->threadNum, nPeaks);
 
 		// Do the rest of the local background subtraction
 		long offset = (2*asic_ny)*pix_nx;

@@ -129,9 +129,10 @@ void *worker(void *threadarg) {
      *	(possibly needed later)
      */
     DETECTOR_LOOP {
-        memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+        //memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
 		
         for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].detector_corrected_data[i] = eventData->detector[detID].corrected_data[i];
             eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
         }
     }
@@ -259,26 +260,25 @@ hitknown:
     
     
 	/*
-	 *	Maintain a running sum of data (powder patterns)
-	 *    and strongest non-hit and weakest hit
+	 *	Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
 	 */
-	addToPowder(eventData, global);
+    if(global->powderSumWithBackgroundSubtraction)
+        addToPowder(eventData, global);
 
 	
     
 
 	/*
-	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+	 *	Revert to uncorrected data
 	 */
+    // Revert to data without photon background subtracted, only detector corrections applied
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorCorrectedOnly) 
 		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	
-	/*
-	 *	If reverting to detector raw data, do it here
-	 */
+    // Revert to raw detector data
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorRaw)
 			for(long i=0;i<global->detector[detID].pix_nn;i++)
@@ -304,6 +304,12 @@ hitknown:
         goto cleanup;
 	}
     
+
+    /*
+	 *	Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
+	 */
+    if(!global->powderSumWithBackgroundSubtraction)
+        addToPowder(eventData, global);
 
     
     /*
