@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="Generator" content="iWeb 3.0.4" />
-    <meta name="iWeb-Build" content="local-build-20130418" />
+    <meta name="iWeb-Build" content="local-build-20130925" />
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
     <meta name="viewport" content="width=700" />
     <title>Cheetah installation</title>
@@ -58,17 +58,17 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
         </div>
         <div style="margin-left: 0px; position: relative; width: 700px; z-index: 5; " id="body_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id2" style="height: 20px; left: 20px; position: absolute; top: 125px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id2" style="height: 20px; left: 20px; position: absolute; top: 172px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">2. What else is needed</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">2. Dependencies</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id3" style="height: 290px; left: 17px; position: absolute; top: 146px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id3" style="height: 290px; left: 17px; position: absolute; top: 193px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_662_290" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="paragraph_style_1">External libraries<br /></p>
@@ -85,7 +85,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
                 <p class="Free_Form"><br /></p>
                 <p class="Free_Form">If you are compiling on the SLAC machines (eg; psexport.slac.stanford.edu) you can get a copy of cmake this way:<br /></p>
                 <p class="Free_Form">    export PATH=~filipe/cmake/bin:${PATH}<br /></p>
-                <p class="Free_Form">If your HDF5 is not installed in a standard location set the HDF5_ROOT environment variable to point to it, e.g.:<br /></p>
+                <p class="Free_Form">If the HDF5 library is not installed in a standard location set the HDF5_ROOT environment variable to point to it, e.g.:<br /></p>
                 <p class="Free_Form">    export HDF5_ROOT=${HOME}/local<br /></p>
                 <p class="Free_Form"><br /></p>
                 <p class="paragraph_style_1">XTC file reader<br /></p>
@@ -99,7 +99,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id4" style="height: 20px; left: 20px; position: absolute; top: 464px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id4" style="height: 20px; left: 20px; position: absolute; top: 511px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">2. Building Cheetah with psana</p>
@@ -109,7 +109,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id5" style="height: 162px; left: 17px; position: absolute; top: 485px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id5" style="height: 162px; left: 17px; position: absolute; top: 532px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_662_162" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">With all dependencies installed we can start the build:<br /></p>
@@ -138,25 +138,24 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id7" style="height: 82px; left: 19px; position: absolute; top: 28px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_662_82" style="padding: 0px; ">
+          <div id="id7" style="height: 120px; left: 19px; position: absolute; top: 28px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_662_120" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">The source code for Cheetah is open-source and available from Github:<br /></p>
-                <ol>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><a onclick="window.open(this.href); return false;" title="https://github.com/antonbarty/cheetah" href="https://github.com/antonbarty/cheetah" onkeypress="window.open(this.href); return false;" class="class2">Cheetah on github</a><br /></p>
-                  </li>
-                </ol>
-                <p class="Free_Form">Please follow the download instructions on github. <br /></p>
-                <p class="Free_Form">If you have a copy of Git installed we recommend obtaining Cheetah using version control as follows:<br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">    &gt; git clone https://github.com/antonbarty/cheetah.git </p>
+                <p style="padding-top: 0pt; " class="Free_Form">Cheetah is open-source (GPL v3) and can be downloaded here:<br /></p>
+                <p class="Free_Form">    <a title="Installation_files/cheetah-2013.3.tar.gz" href="Installation_files/cheetah-2013.3.tar.gz">cheetah-2013.3.tar.gz</a><br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">Cheetah is also available from Github for those interested in using version control:<br /></p>
+                <p class="Free_Form"><a onclick="window.open(this.href); return false;" title="https://github.com/antonbarty/cheetah" href="https://github.com/antonbarty/cheetah" onkeypress="window.open(this.href); return false;" class="class2">    https://github.com/antonbarty/cheetah/</a><br /></p>
+                <p class="Free_Form">Please follow the download instructions on github:<br /></p>
+                <p class="Free_Form">    &gt; git clone git://github.com/antonbarty/cheetah.git<br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">(assuming you have a version of git already installed) </p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id9" style="height: 100px; left: 293px; position: absolute; top: 1010px; width: 100px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id9" style="height: 100px; left: 293px; position: absolute; top: 1024px; width: 100px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_100_100" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <div class="paragraph Free_Form" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id8" style="height: 92px; position: relative; width: 92px; " class="style_SkipStroke_2 shape-with-text inline-block"><div class="text-content graphic_textbox_layout_style_default_External_92_92" style="padding: 0px; "><div class="graphic_textbox_layout_style_default"></div></div></div></div>
@@ -167,15 +166,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id10" style="height: 100px; left: 293px; position: absolute; top: 275px; width: 100px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_100_100" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default"></div>
-            </div>
-          </div>
-          
-
-
-          <div id="id11" style="height: 190px; left: 19px; position: absolute; top: 877px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id10" style="height: 190px; left: 19px; position: absolute; top: 924px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_662_190" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">- It's possible that you have to specify ANA_RELEASE manually. It should<br /></p>
@@ -197,20 +188,20 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 323px; width: 450px;  height: 323px; left: 232px; position: absolute; top: 540px; width: 450px; z-index: 1; " class="tinyText style_SkipStroke_3">
+          <div style="height: 323px; width: 450px;  height: 323px; left: 232px; position: absolute; top: 587px; width: 450px; z-index: 1; " class="tinyText style_SkipStroke_3">
             <img src="Installation_files/droppedImage.png" alt="" style="border: none; height: 323px; width: 451px; " />
           </div>
-          <div style="height: 1110px; line-height: 1110px; " class="spacer"> </div>
+          <div style="height: 1124px; line-height: 1124px; " class="spacer"> </div>
         </div>
-        <div style="height: 520px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
+        <div style="height: 567px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div style="height: 323px; width: 450px;  height: 323px; left: 232px; position: absolute; top: -79px; width: 450px; z-index: 1; " class="tinyText style_SkipStroke_3">
+          <div style="height: 323px; width: 450px;  height: 323px; left: 232px; position: absolute; top: -32px; width: 450px; z-index: 1; " class="tinyText style_SkipStroke_3">
             <img src="Installation_files/droppedImage_1.png" alt="" style="border: none; height: 323px; width: 451px; " />
           </div>
           
 
 
-          <div id="id12" style="height: 61px; left: 19px; position: absolute; top: 282px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id11" style="height: 61px; left: 19px; position: absolute; top: 329px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_662_61" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">This will place an executable copy of psana in the specified directory ready for use. </p>
@@ -220,17 +211,17 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id13" style="height: 20px; left: 21px; position: absolute; top: 500px; width: 644px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id12" style="height: 20px; left: 21px; position: absolute; top: 547px; width: 644px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content Normal_External_644_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_4"><a class="class3" title="Configuration.html" href="Configuration.html">Next</a></p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_3"><a class="class3" title="Configuration.html" href="Configuration.html">Next</a></p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id14" style="height: 20px; left: 20px; position: absolute; top: 344px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id13" style="height: 20px; left: 20px; position: absolute; top: 391px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">3. The psana environment</p>
@@ -240,16 +231,16 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id15" style="height: 92px; left: 17px; position: absolute; top: 365px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id14" style="height: 92px; left: 17px; position: absolute; top: 412px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_662_92" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Reading of XTC files is supported through the use of the psana framework, which is provided and maintained by SLAC.  In case of errors with psana make sure to follow the setup instructions on the SLAC web site.  The following links may be of use:<br /></p>
                 <ol>
                   <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><a title="https://confluence.slac.stanford.edu/display/PCDS/Analysis+Workbook.+Account+Setup" href="https://confluence.slac.stanford.edu/display/PCDS/Analysis+Workbook.+Account+Setup">Setting up your account to use psana at SLAC</a><br /></p>
+                    <p style="text-indent: -8px; " class="paragraph_style_4"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><a title="https://confluence.slac.stanford.edu/display/PCDS/Analysis+Workbook.+Account+Setup" href="https://confluence.slac.stanford.edu/display/PCDS/Analysis+Workbook.+Account+Setup">Setting up your account to use psana at SLAC</a><br /></p>
                   </li>
                   <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Installing psana at home<br /></p>
+                    <p style="text-indent: -8px; " class="paragraph_style_4"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Installing psana at home<br /></p>
                   </li>
                 </ol>
               </div>
