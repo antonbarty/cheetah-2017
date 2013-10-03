@@ -157,19 +157,27 @@ end
 ;;
 ;;	Display a single HDF5 file (eg: virtual powder)
 ;;
-pro crawler_displayfile, filename
+pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry
 	
 	if filename eq '' then begin
 		print,'File does not exist'
 		return
 	endif
 	
+	if NOT KEYWORD_SET(field) then $
+		field = 'data/data'
+	if NOT KEYWORD_SET(geometry) then $
+		geometry=''
+	
 	print,'Displaying: ', filename
-	data = read_h5(filename)
+	data = read_h5(filename, field=field)
 	data = data > 0
 	img = histogram_clip(data, 0.001)
+	if keyword_set(gamma) then $
+		img = img ^ gamma
+
 	loadct, 4
-	scrolldisplay, img, title=file_basename(filename)
+	scrolldisplay, img, title=file_basename(filename), geometry=geometry
 
 end
 
@@ -603,6 +611,9 @@ pro crawler_event, ev
 		end
 		sState.mbfile_crawl : begin
 			crawler_autorun, xtcdir=(*pState).xtcdir, hdf5dir=(*pState).h5dir, hdf5filter=(*pState).h5filter
+			if sState.table_autorefresh ne 0 then begin
+					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
+			endif
 		end
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
@@ -635,6 +646,16 @@ pro crawler_event, ev
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			crawler_displayfile, f[0]
 		end
+		sState.mbview_peakpowder : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class1-sum.h5')
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry
+		end
+		sState.mbview_peakpowderdark : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class0-sum.h5')
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry
+		end
 		sState.mbview_bsub : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'bsub.log')
@@ -655,6 +676,13 @@ pro crawler_event, ev
 			runs = crawler_whichRun(pstate, /path, /multiple)
 			waxsview, runs
 		end
+		sState.mbview_badpix : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class0-sum.h5')
+			print, f
+			mask = badpix_from_darkcal(f, /save)
+		end
+		
 
 
 
@@ -740,7 +768,10 @@ pro crawler_view
 	mbview_resolution = widget_button(mbfile, value='View resolution plot')
 	mbview_powder = widget_button(mbfile, value='View virtual powder')
 	mbview_powderdark = widget_button(mbfile, value='View virtual powder (dark)')
+	mbview_peakpowder = widget_button(mbfile, value='View peakfinder virtual powder')
+	mbview_peakpowderdark = widget_button(mbfile, value='View peakfinder virtual powder (dark)')
 	mbview_waxs = widget_button(mbfile, value='View WAXS traces')
+	mbview_badpix = widget_button(mbfile, value='Make bad pixel mask from darkcal')
 
 
 	;;
@@ -820,6 +851,10 @@ pro crawler_view
 			mbview_resolution : mbview_resolution, $
 			mbview_powder : mbview_powder, $
 			mbview_powderdark : mbview_powderdark, $
+			mbview_peakpowder : mbview_peakpowder, $
+			mbview_peakpowderdark : mbview_peakpowderdark, $
+			mbview_badpix : mbview_badpix, $
+
 			mbview_waxs : mbview_waxs, $
 			
 			mbview_bsub : mbview_bsub, $

@@ -445,6 +445,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+	powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
     powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
     correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
     correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
@@ -466,6 +467,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		powderRaw[i][j] = 0;
 		powderCorrected[i][j] = 0;
 		powderCorrectedSquared[i][j] = 0;
+		powderPeaks[i][j] = 0;
 	  }
 	  for(long j=0; j<image_nn; j++) {
 		  powderAssembled[i][j] = 0;
@@ -535,6 +537,7 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 		free(powderRaw[j]);
 		free(powderCorrected[j]);
 		free(powderCorrectedSquared[j]);
+		free(powderPeaks[j]);
 		free(powderAssembled[j]);
 		free(radialAverageStack[j]);
 		pthread_mutex_destroy(&powderRaw_mutex[j]);

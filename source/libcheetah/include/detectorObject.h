@@ -286,7 +286,8 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
-	float   *correctedMin[MAX_POWDER_CLASSES];
+	double   *powderPeaks[MAX_POWDER_CLASSES];
+	float	*correctedMin[MAX_POWDER_CLASSES];
 	float   *assembledMin[MAX_POWDER_CLASSES];
 	float   *correctedMax[MAX_POWDER_CLASSES];
 	float   *assembledMax[MAX_POWDER_CLASSES];
