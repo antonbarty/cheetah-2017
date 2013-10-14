@@ -1073,7 +1073,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
     writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
     writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
-    if(global->TOFPresent){
+    if(info->TOFPresent){
       write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
       write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
     }

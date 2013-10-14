@@ -887,7 +887,6 @@ namespace cheetah_ana_pkg {
 		//	Copy TOF (aqiris) channel into Cheetah event for processing
 		//  SLAC libraries are not thread safe: must copy data into event structure for processing
 		//eventData->TOFPresent = 0; // DO NOT READ TOF
-		eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 		if (cheetahGlobal.TOFPresent==1){
 		  int chan = cheetahGlobal.TOFchannel;
 		  Pds::Src src;
@@ -919,9 +918,10 @@ namespace cheetah_ana_pkg {
 		    memcpy(eventData->TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
 		    free(tempTime);
 		    free(tempVoltage);
+		    eventData->TOFPresent = 1;
+		  } else {
+		    eventData->TOFPresent = 0;
 		  }
-		  else
-		    eventData->TOFPresent = cheetahGlobal.TOFPresent ;	
 		}
 		
 		//	Copy Pulnix camera into Cheetah event for processing
