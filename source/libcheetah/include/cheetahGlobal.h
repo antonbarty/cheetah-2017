@@ -129,23 +129,18 @@ public:
 	 * The outer radius of the annulus is thus hitfinderLocalBGradius +
 	 * hitfinderLocalBGThickness.*/
 	int      hitfinderLocalBGThickness;
-	/** @brief Toggle the useage of a resolution-based annulus mask. */
-	//int      hitfinderLimitRes;
 	/** @brief Minimum resolution to be considered in hitfinding.
-	 * If hitfinderResolutionUnitPixel==0 (default) the unit of
-	 * hitfinderMinRes and hitfinderMaxRes is angstrom and pixels
-	 * below the defined resolution limit will be not considered
-	 * for hitfinding.
-	 * If hitfinderResolutionUnitPixel==1 the unit of hitfinderMinRes
-	 * and hitfinderMaxRes is pixel and pixels within a circle of
-	 * radius hitfinderMinRes pixels will be not considered for hitfinding.
+	 * If the unit is Angstrom (hitfinderResolutionUnitPixel==0) this means the minimum (smallest) resolution element.
+	 * If the unit is pixel (hitfinderResolutionUnitPixel==1) this means the minimum distance from the center.
 	 */
 	float    hitfinderMinRes;
 	/** @brief The maximum resolution to be considered in hitfinding.
-	 * See hitfinderMinRes for more details. */
+	 * If the unit is Angstrom (hitfinderResolutionUnitPixel==0) this means the maximum (largest) resolution element. 
+	 * If the unit is pixel (hitfinderResolutionUnitPixel==1) this means the maximum distance from the center.
+	 */
 	float    hitfinderMaxRes;
-	/** @brief hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel
-	 * and not angstrom. See hitfinderMinRes for more details.
+	/** @brief If set to "1" hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel
+	 * and not angstrom. See hitfinderMinRes and hitfinderMaxRes for more details. 
 	 */
 	int      hitfinderResolutionUnitPixel;
 	/** @brief Binary map of pixels excluded based on resolution. */
