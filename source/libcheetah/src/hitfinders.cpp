@@ -234,9 +234,15 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
   eventData->peakNpix = nat;
   eventData->nPeaks = nat;
 
+	// n pixels above threshold
   if(nat >= global->hitfinderMinPixCount){
     hit = 1;
   }
+	// But not more than max (unless set to 0)
+  if(global->hitfinderMaxPixCount != 0 && nat > global->hitfinderMaxPixCount){
+		hit = 0;
+	}
+	
   return hit;
 }
 

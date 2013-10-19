@@ -244,16 +244,21 @@ public:
 	// Histogram stack
 	int		histogram;
 	long	histogramMin;
-	long	histogramMax;
+	long	histogramNbins;
 	long	histogramBinSize;
-	float	histogramMaxMemoryGb;
-	long	histogram_nx;
-	long	histogram_ny;
-	long	histogram_depth;
+	long	histogram_fs_min;
+	long	histogram_fs_max;
+	long	histogram_ss_min;
+	long	histogram_ss_max;
+	long	histogram_nfs;
+	long	histogram_nss;
+	long	histogram_nn;
 	long	histogram_count;
-	uint64_t	histogram_nn;
+	float	histogramMaxMemoryGb;
+	uint64_t	histogram_nnn;
 	uint16_t	*histogramData;
 	pthread_mutex_t histogram_mutex;
+	//long	histogram_depth;
 
 	
 	

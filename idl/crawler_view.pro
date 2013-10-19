@@ -721,6 +721,12 @@ end
 pro crawler_view
 
 	;;
+	;;	Device options must be set
+	;;
+	device, decomposed=0
+	device, retain=3
+
+	;;
 	;;	Estimate the screen size
 	;;
 	screensize = get_screen_size()
