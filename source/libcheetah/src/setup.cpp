@@ -461,6 +461,7 @@ void cGlobal::freeMutexes(void) {
 	pthread_mutex_unlock(&datarateWorker_mutex);
 	pthread_mutex_unlock(&saveCXI_mutex);
 	pthread_mutex_unlock(&pixelmask_shared_mutex);
+	
 	for(long i=0; i<nDetectors; i++) {
 		for(long j=0; j<nPowderClasses; j++) {
 			pthread_mutex_unlock(&detector[i].powderRaw_mutex[j]);
@@ -473,7 +474,9 @@ void cGlobal::freeMutexes(void) {
 			pthread_mutex_unlock(&detector[i].correctedMax_mutex[j]);
 			pthread_mutex_unlock(&detector[i].assembledMin_mutex[j]);
 			pthread_mutex_unlock(&detector[i].assembledMax_mutex[j]);
+			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
 		}
+		pthread_mutex_unlock(&detector[i].histogram_mutex);
 	}
 	if (espectrum)
 		for(long i=0; i<nPowderClasses; i++)
@@ -481,6 +484,7 @@ void cGlobal::freeMutexes(void) {
 
 	
 }
+
 
 
 
