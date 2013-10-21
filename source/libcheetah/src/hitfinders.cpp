@@ -58,7 +58,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = hitfinder2(global,eventData,detID);
 	  break;
 			
-	case 3 : 	// Count number of Bragg peaks (Anton's algorithm)
+	case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
 		nPeaks = peakfinder(global,eventData, detID);
 		eventData->nPeaks = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
@@ -82,7 +82,15 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = eventData->laserEventCodeOn;
 	  eventData->nPeaks = eventData->laserEventCodeOn;
 	  break;
-			
+
+		
+	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
+		nPeaks = peakfinder(global,eventData, detID);
+		eventData->nPeaks = nPeaks;
+		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+			hit = 1;
+		break;
+
 	default :
 	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 	  printf("Stopping in confusion.\n");
@@ -128,6 +136,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	long	nasics_x = global->detector[detID].nasics_x;
 	long	nasics_y = global->detector[detID].nasics_y;
 	long	radius = global->detector[detID].localBackgroundRadius;
+	float	*pix_r = global->detector[detID].pix_r;
 	float	*data = eventData->detector[detID].corrected_data;
 
 	float	hitfinderADCthresh = global->hitfinderADC;
@@ -161,6 +170,10 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 			
 		case 6 : 	// Count number of Bragg peaks
 			nPeaks = peakfinder6(peaklist, data, mask, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius, hitfinderMinPeakSeparation);
+			break;
+
+		case 8 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder8(peaklist, data, mask, pix_r, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
 			break;
             
 		default :

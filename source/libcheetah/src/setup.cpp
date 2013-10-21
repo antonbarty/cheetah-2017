@@ -332,7 +332,8 @@ void cGlobal::setup() {
 	/* Only save peak info for certain hitfinders */
 	if (( hitfinderAlgorithm == 3 ) ||
 		( hitfinderAlgorithm == 5 ) ||
-		( hitfinderAlgorithm == 6 ))
+		( hitfinderAlgorithm == 6 ) ||
+		( hitfinderAlgorithm == 8 ))
 		savePeakInfo = 1;
 	
 	/*
