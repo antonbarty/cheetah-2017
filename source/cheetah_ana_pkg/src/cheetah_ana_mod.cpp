@@ -637,17 +637,20 @@ namespace cheetah_ana_pkg {
 			if(strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
             
 				// Pull out front or back detector depending on detID=0 or 1
+				shared_ptr<Psana::CsPad::DataV1> data1;
 				shared_ptr<Psana::CsPad::DataV2> data2;
 				if (cheetahGlobal.detector[detID].detectorID == 0) {
+					data1 = evt.get(m_srcCspad0, m_key);
 					data2 = evt.get(m_srcCspad0, m_key);
-                }
+				}
 				else if (cheetahGlobal.detector[detID].detectorID == 1) {
+					data1 = evt.get(m_srcCspad1, m_key);
 					data2 = evt.get(m_srcCspad1, m_key);
-                }
-            
-				// copy data into event structure if successful
-				if (data2.get()) {
-                
+				}
+           
+
+				// V2 of the cspad structure
+				 if (data2.get()) {
                     if (verbose) {
                         cout << "CsPad::DataV2:";
                         int nQuads = data2->quads_shape()[0];
@@ -713,12 +716,83 @@ namespace cheetah_ana_pkg {
 						free(quad_data[quadrant]);
                     }
                 }
-                
+
+				// V1 of the cspad data structure (less likely these days, but we came across it once already)
+				else if (data1.get()) {
+					if (verbose) {
+						cout << "CsPad::DataV2:";
+						int nQuads = data1->quads_shape()[0];
+						for (int q = 0; q < nQuads; ++ q) {
+							const Psana::CsPad::ElementV1& el = data1->quads(q);
+							cout << "\n  Element #" << q;
+							cout << "\n    virtual_channel = " << el.virtual_channel();
+							cout << "\n    lane = " << el.lane();
+							cout << "\n    tid = " << el.tid();
+							cout << "\n    acq_count = " << el.acq_count();
+							cout << "\n    op_code = " << el.op_code();
+							cout << "\n    quad = " << el.quad();
+							cout << "\n    seq_count = " << el.seq_count();
+							cout << "\n    ticks = " << el.ticks();
+							cout << "\n    fiducials = " << el.fiducials();
+							cout << "\n    frame_type = " << el.frame_type();
+						}
+						cout << endl;
+					}
+					
+					
+					uint16_t *quad_data[4];
+					long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+					long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+					long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+					
+					
+					// Allocate memory for detector data and set to zero
+					int nQuads = data1->quads_shape()[0];
+					for(int quadrant=0; quadrant<4; quadrant++)
+						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					
+					// loop over elements (quadrants)
+					for (int q = 0; q < nQuads; ++ q) {
+						const Psana::CsPad::ElementV1& el = data1->quads(q);
+						const ndarray<const int16_t, 3>& data = el.data();
+						if(el.quad() < 4){
+							// Which quadrant is this?
+							int quadrant = el.quad();
+							eventData->fiducial = el.fiducials();
+							
+							// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+							for (unsigned s = 0; s != data.shape()[0]; ++s) {
+								memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
+							}
+						}
+					}
+					
+					// Assemble data from all four quadrants into one large array (rawdata layout)
+					// Memcpy is necessary for thread safety.
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					for(int quadrant=0; quadrant<4; quadrant++) {
+						long	i,j,ii;
+						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
+							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
+							j = k / (2*asic_nx);
+							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
+							eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
+						}
+					}
+					// quadrant data no longer needed
+					for(int quadrant=0; quadrant<4; quadrant++) {
+						free(quad_data[quadrant]);
+					}
+				}
+
+				// Neither V1 nor V2
 				else {
 					printf("%li: cspad frame data not available\n", frameNumber);
 					return;
 				}
             }
+			
+			
 			/*
 			 *	CsPad 2x2
 			 */
