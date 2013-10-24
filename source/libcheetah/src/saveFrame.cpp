@@ -421,6 +421,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		max_size[0] = nPeaks;
 		max_size[1] = 4;
 		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
+		long	nPeaksMax = info->peaklist.nPeaks_max;
 		
 		// Set all unused peaks to 0
 		for(uint i=0; i< 4*size[0]; i++) {
@@ -428,7 +429,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		
 		// Save peak info in Assembled layout
-		for (long i=0; i<nPeaks;i++){
+		for (long i=0; i<nPeaks && i<nPeaksMax;i++){
 			peak_info[i*4+0] = info->peaklist.peak_com_x_assembled[i]; // info->peak_com_x_assembled[i];
 			peak_info[i*4+1] = info->peaklist.peak_com_y_assembled[i];
 			peak_info[i*4+2] = info->peaklist.peak_totalintensity[i];

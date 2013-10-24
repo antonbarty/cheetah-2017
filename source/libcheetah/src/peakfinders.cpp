@@ -28,7 +28,15 @@ int box_snr(float*, char*, int, int, int, int, float*, float*, float*);
  *	Create arrays for remembering Bragg peak data
  */
 void allocatePeakList(tPeakList *peak, long NpeaksMax) {
-	peak->nPeaks_max = NpeaksMax;
+	peak->nPeaks = 0;
+	peak->nPeaks_max = NpeaksMax;	
+	peak->nHot = 0;
+	peak->peakResolution = 0;
+	peak->peakResolutionA = 0;
+	peak->peakDensity = 0;
+	peak->peakNpix = 0;
+	peak->peakTotal = 0;
+	
 	peak->peak_maxintensity = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_totalintensity = (float *) calloc(NpeaksMax, sizeof(float));
 	peak->peak_sigma = (float *) calloc(NpeaksMax, sizeof(float));
@@ -562,6 +570,7 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 								peaklist->peak_sigma[counter] = localSigma;
 								peaklist->peak_snr[counter] = snr;
 								counter++;
+								peaklist->nPeaks = counter;
 							}
 							else {
 								counter++;
@@ -573,7 +582,6 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 		}
 	}
 	
-    peaklist->nPeaks = counter;
 	
 	free(temp);
 	free(inx);
@@ -941,6 +949,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 								peaklist->peak_sigma[counter] = localSigma;
 								peaklist->peak_snr[counter] = snr;
 								counter++;
+								peaklist->nPeaks = counter;
 							}
 							else {
 								counter++;
@@ -951,8 +960,6 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 			}
 		}
 	}
-	
-    peaklist->nPeaks = counter;
 	
 	free(temp);
 	free(inx);
@@ -1171,6 +1178,7 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 						peaklist->peak_maxintensity[counter] = maxI;
 						peaklist->peak_snr[counter] =snr;
 						peaklist->peak_com_index[counter] = e;
+						peaklist->nPeaks = counter+1;
 						//peaklist->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
 						//peaklist->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
 						//peaklist->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
@@ -1193,7 +1201,6 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 		}
 	}
 	
-	peaklist->nPeaks = counter;
 	
 nohit:
 	

@@ -152,7 +152,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 		pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
 		long	ci, cx, cy, val, e;
 
-		for(long i=0; i<eventData->nPeaks; i++) {
+		for(long i=0; i<=eventData->peaklist.nPeaks && i<eventData->peaklist.nPeaks_max; i++) {
+						
 			// Peak position and value
 			ci = eventData->peaklist.peak_com_index[i];
 			cx = lrint(eventData->peaklist.peak_com_x[i]);
@@ -166,8 +167,9 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 			
 			// Element in 1D array
 			e = cx + pix_nx*cy;
-			//global->detector[detID].powderPeaks[powderClass][e] += val;
-			global->detector[detID].powderPeaks[powderClass][ci] += val;
+			if(e < 0 || e > (pix_nn-1) ) continue;
+			global->detector[detID].powderPeaks[powderClass][e] += val;
+			//global->detector[detID].powderPeaks[powderClass][ci] += val;
 		}
 		pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
 	}
