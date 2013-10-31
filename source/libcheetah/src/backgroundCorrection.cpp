@@ -95,12 +95,18 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
   }
 }
 
+
+/*
+ *  Set background to the first frame by default
+ *  (possibly not needed...)
+ */
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
   DETECTOR_LOOP {
     if(global->detector[detID].useSubtractPersistentBackground && ((eventData->detector[detID].pedSubtracted && global->detector[detID].useDarkcalSubtraction) || (!eventData->detector[detID].pedSubtracted && !global->detector[detID].useDarkcalSubtraction))){
       if (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter == 0){
 	long	pix_nn = global->detector[detID].pix_nn;
 	float	*background = global->detector[detID].selfdark;
+                
 	pthread_mutex_lock(&global->bgbuffer_mutex);
 	if (global->detector[detID].useDarkcalSubtraction){
 	  for(long i = 0;i<pix_nn;i++){

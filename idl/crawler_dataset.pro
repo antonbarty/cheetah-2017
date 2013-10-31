@@ -29,13 +29,9 @@ pro crawler_dataset, datasetfile
 	endelse
 		
 	
-	last_dataset = max(datarun)
-	last_xtc = max(xtcrun)
-	
-	
 	;; Populate the output table
 	openw, fout, datasetfile, /get
-	printf, fout, '#Run, DatasetID'
+	printf, fout, '#Run, DatasetInfo, Directory'
 	
 	for i = 0L, n_elements(xtcrun)-1 do begin	
 		
@@ -45,11 +41,9 @@ pro crawler_dataset, datasetfile
 			tag = '---' $
 		else $
 			tag = dataset[w]
-			
 
 		str = strcompress(string(xtcrun[i], ',', tag))
 		printf, fout, str
-
 	endfor
 	
 	close, fout

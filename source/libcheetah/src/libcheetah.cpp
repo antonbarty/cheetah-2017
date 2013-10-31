@@ -68,6 +68,7 @@ void cheetahInit(cGlobal *global) {
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
+    global->writeStatus("Started");
 
 	// Set better error handlers for HDF5
 	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
@@ -90,17 +91,22 @@ void cheetahNewRun(cGlobal *global) {
     printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
     usleep(100000);
   }
+    
   // Reset the powder log files
+    pthread_mutex_lock(&global->powderfp_mutex);
+
   if(global->runNumber > 0) {
     for(long i=0; i<global->nPowderClasses; i++) {
-      char	filename[1024];
       if(global->powderlogfp[i] != NULL)
 	fclose(global->powderlogfp[i]);
+
+            char	filename[1024];
       sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
       global->powderlogfp[i] = fopen(filename, "w");
       fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
     }
   }
+    pthread_mutex_unlock(&global->powderfp_mutex);
 }
 
 
@@ -115,7 +121,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
-	eventData = (cEventData*) calloc(sizeof(cEventData), 1);
+	eventData = (cEventData*) calloc(sizeof(cEventData),1);
 	eventData->pGlobal = global;
 
     /*
@@ -173,16 +179,10 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 */
 	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
 	long NpeaksMax = global->hitfinderPeakBufferSize;
-	eventData->peak_com_index = (long *) calloc(NpeaksMax, sizeof(long));
-	eventData->peak_intensity = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_npix = (float *) calloc(NpeaksMax, sizeof(float));	
-	eventData->peak_snr = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_x_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_y_assembled = (float *) calloc(NpeaksMax, sizeof(float));
-	eventData->peak_com_r_assembled = (float *) calloc(NpeaksMax, sizeof(float));
 	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
+	
+	allocatePeakList(&(eventData->peaklist), NpeaksMax);
+	
 	
 	/*
 	 *	Create arrays for energy spectrum data
@@ -223,15 +223,8 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].radialAverage);
 		free(eventData->detector[detID].radialAverageCounter);
 	}
-	free(eventData->peak_com_index);
-	free(eventData->peak_com_x);
-	free(eventData->peak_com_y);
-	free(eventData->peak_com_x_assembled);
-	free(eventData->peak_com_y_assembled);
-	free(eventData->peak_com_r_assembled);
-	free(eventData->peak_intensity);
-	free(eventData->peak_npix);
-	free(eventData->peak_snr);
+	
+	freePeakList(eventData->peaklist);
 	free(eventData->good_peaks);
 	
 	
@@ -404,8 +397,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
      *  This measures how fast Cheetah could conceivably process the data
      */
 	if(global->ioSpeedTest==2) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #1\n", global->runNumber, eventData->frameNumber, global->datarate);		
-		free(eventData);
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
+        cheetahDestroyEvent(eventData);
 		return;
 	}
 	
@@ -433,10 +426,34 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_t	threadAttribute;
         int				returnStatus;
         
-        // Wait until we have a spare thread in the thread pool
+	time_t	tstart, tnow;
+	time(&tstart);
+	double	dtime;
+	float	maxwait = 60.;
+	double  dnextmsg = 1;
+        
+        /*
+         *  Wait until we have a spare thread in the thread pool
+         *  If nothing happens for 2 minutes, assume we have some sort of thread lockup and keep going anyway
+         */
         while(global->nActiveThreads >= global->nThreads || (global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)) {
-	  usleep(500);
-        }
+	  usleep(10000);
+	  if (!(global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)){
+	      time(&tnow);
+	      dtime = difftime(tnow, tstart);
+	      if(dtime > dnextmsg) {
+		printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
+		dnextmsg += 1;
+	      }
+	      if(dtime > maxwait) {
+		printf("\tApparent thread lock - no free thread for %li seconds.\n", dtime);
+		printf("\tGiving up and resetting the thread counter\n");
+		global->freeMutexes();
+		global->nActiveThreads = 0;
+		break;
+	      }
+	    }
+	}
         
         // Set detached state
         pthread_attr_init(&threadAttribute);
@@ -452,7 +469,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	  global->nActiveThreads += 1;
 	  global->threadCounter += 1;
 	  pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	}else{
+		}
+		else{
 	  printf("Error: thread creation failed (frame skipped)\n");
         }
         pthread_attr_destroy(&threadAttribute);
@@ -466,14 +484,15 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
     
 	
 	/*
-	 *	Save periodic powder patterns
+	 *	Save some types of information from time to timeperiodic powder patterns
 	 */
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-        for(long detID=0; detID<global->nDetectors; detID++) {
-            saveRunningSums(global, detID);
-        }
+        saveRunningSums(global);
+		saveHistograms(global);
         saveRadialStacks(global);
+		saveEspectrumStacks(global);
 		global->updateLogfile();
+        global->writeStatus("Not finished");
 	}
 	
 }
@@ -485,12 +504,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
  */
 void cheetahExit(cGlobal *global) {
 
-
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
-    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
-    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
 
     /*
      *	Wait for all worker threads to finish
@@ -509,24 +522,31 @@ void cheetahExit(cGlobal *global) {
       if(dtime > maxwait) {
         printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
         printf("\tGiving up and exiting anyway\n");
+		global->freeMutexes();
         break;
       }
     }
     
+    // Calculate mean photon energy
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
+    printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
+    
 	
-    // Save powder patterns
-    for(long detID=0; detID<global->nDetectors; detID++) {
-        saveRunningSums(global, detID);
-    }
+    // Save powder patterns and other stuff
+    saveRunningSums(global);
     saveRadialStacks(global);
+	saveEspectrumStacks(global);
 	global->writeFinalLog();
 
     // Close all CXI files
+	if(global->saveCXI)
     closeCXIFiles(global);
 
 	
     // Save integrated run spectrum
-    saveIntegratedRunSpectrum(global);
+    //saveIntegratedRunSpectrum(global);	<-- this was causing crashes (debug!)
     
 	
     // Hitrate?
@@ -544,25 +564,7 @@ void cheetahExit(cGlobal *global) {
     
     // Cleanup
     for(long i=0; i<global->nDetectors; i++) {
-      free(global->detector[i].darkcal);
-      free(global->detector[i].selfdark);
-      free(global->detector[i].gaincal);
-      free(global->detector[i].bg_buffer);
-      free(global->detector[i].hotpix_buffer);
-      free(global->detector[i].halopix_buffer);
-      for(long j=0; j<global->nPowderClasses; j++) {
-	free(global->detector[i].powderRaw[j]);
-	free(global->detector[i].powderCorrected[j]);
-	free(global->detector[i].powderCorrectedSquared[j]);
-	free(global->detector[i].powderAssembled[j]);
-	free(global->detector[i].radialAverageStack[j]);
-	pthread_mutex_destroy(&global->detector[i].powderRaw_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderRawSquared_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderCorrected_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderCorrectedSquared_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].powderAssembled_mutex[j]);
-	pthread_mutex_destroy(&global->detector[i].radialStack_mutex[j]);
-      }
+      global->detector[i].freePowderMemory(global);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);
@@ -577,7 +579,7 @@ void cheetahExit(cGlobal *global) {
     pthread_mutex_destroy(&global->nespechits_mutex);
     pthread_mutex_destroy(&global->gmd_mutex);
 
-    
+    global->writeStatus("Finished");    
     printf("Cheetah clean exit\n");
 }
 

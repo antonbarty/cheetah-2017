@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="Generator" content="iWeb 3.0.4" />
-    <meta name="iWeb-Build" content="local-build-20130418" />
+    <meta name="iWeb-Build" content="local-build-20131023" />
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
     <meta name="viewport" content="width=700" />
     <title>￼</title>
@@ -51,7 +51,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           <div id="id2" style="height: 43px; left: 20px; position: absolute; top: 20px; width: 515px; z-index: 1; " class="style_SkipStroke shape-with-text">
             <div class="text-content Normal_External_515_43" style="padding: 0px; ">
               <div class="Normal">
-                <div class="paragraph Header" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id1" style="height: 43px; position: relative; width: 515px; " class="style_SkipStroke shape-with-text inline-block"><div class="text-content Normal_External_515_43" style="padding: 0px; "><div class="Normal"><p style="padding-bottom: 0pt; padding-top: 0pt; " class="Header">Cheetah setup</p></div></div></div></div>
+                <div class="paragraph Header" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id1" style="height: 43px; position: relative; width: 515px; " class="style_SkipStroke shape-with-text inline-block"><div class="text-content Normal_External_515_43" style="padding: 0px; "><div class="Normal"><p style="padding-bottom: 0pt; padding-top: 0pt; " class="Header">Experiment setup</p></div></div></div></div>
               </div>
               <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
             </div>
@@ -59,358 +59,370 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
         </div>
         <div style="margin-left: 0px; position: relative; width: 700px; z-index: 5; " id="body_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id3" style="height: 20px; left: 20px; position: absolute; top: 320px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id3" style="height: 246px; left: 16px; position: absolute; top: 5px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_246" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">Cheetah does not magically know the details about your experiment - it is necessary to tell Cheetah about the location and format of data files, detector calibration, and what analysis to perform.  <br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">Most of this mess has been hidden behind a few configuration scripts which you will need to edit in order to provide the necessary information. This page will guide you through the key steps in setting up these scripts from scratch for a new experiment.<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">First, know the location of your data and where temporary files can be written.<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">At CXI, all data for your experiment will usually be in a location such as<br /></p>
+                <p class="Free_Form">    /reg/d/psdm/cxi/cxi12345<br /></p>
+                <p class="Free_Form">In this directory will be subdirectories with the raw data (xtc/), somewhere to write temporary files (scratch/), and a few other directories that don’t matter for now. <br /></p>
+                <p class="Free_Form">    [psexport02] cxi12345 &gt; ls<br /></p>
+                <p class="Free_Form">    calib  ftc  hdf5  res  scratch  usr  xtc<br /></p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id4" style="height: 20px; left: 20px; position: absolute; top: 296px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">2. Finding the workflow scripts</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">1. Download the template</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id4" style="height: 120px; left: 16px; position: absolute; top: 5px; width: 664px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_664_120" style="padding: 0px; ">
+          <div id="id5" style="height: 120px; left: 16px; position: absolute; top: 316px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_120" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">Cheetah is not omniscient - it is necessary to tell Cheetah about the location and format of data files, detector calibration, and what analysis to perform.  Meanwhile, the need to use third-party frameworks for reading data files in XTC format complicates the setup procedure as Cheetah has work within workflow constraints and computing environments imposed by others.   <br /></p>
+                <p style="padding-top: 0pt; " class="Free_Form">Expand the file /reg/g/cfel/cheetah/template.tar into the location where you want files to be placed:<br /></p>
                 <p class="Free_Form"><br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">The easiest way to hide all of this mess is to use scripts to coordinate the data analysis workflow.  Several such scripts can be found in the examples folder.   This page will guide you through the key steps in setting up these scripts for an experiment.</p>
+                <p class="Free_Form">&gt; tar -xvf /reg/g/cfel/cheetah/template.tar<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">This will create the cheetah directory with a number of sub-directories containing a ‘starter kit’ of files:<br /></p>
+                <p class="Free_Form">&gt; ls cheetah<br /></p>
+                <p class="Free_Form">calib  gui  hdf5  process<br /></p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id5" style="height: 148px; left: 16px; position: absolute; top: 341px; width: 330px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_330_148" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">Have a look in the examples folder of the cheetah distribution, where you will find examples of the Cheetah analysis workflow.  These scripts need to be set up once per experiment, so copy these scripts to somewhere related to your analysis project where they can be edited and retained for later use (for example: a scratch or data directory).<br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">This page describes the analysis-pipeline-anton, although analysis-pipeline-rick is very similar and uses some of the same scripts. The choice is a matter of preference.</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 119px; width: 318px;  height: 119px; left: 355px; position: absolute; top: 345px; width: 318px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage.jpg" alt="" style="border: none; height: 120px; width: 318px; " />
-          </div>
-          
-
-
-          <div id="id6" style="height: 20px; left: 20px; position: absolute; top: 537px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id6" style="height: 20px; left: 20px; position: absolute; top: 465px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">3. Setting up the workflow scripts</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">2. edit gui/crawler.config</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id7" style="height: 401px; left: 16px; position: absolute; top: 557px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_401" style="padding: 0px; ">
+          <div id="id7" style="height: 54px; left: 16px; position: absolute; top: 486px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_54" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">In order to automate execution and hide as much complexity as possible, Cheetah needs to know the following information:<br /></p>
-                <ol>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Location of the XTC data files<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Where to put the output data files<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Where your copy of Cheetah is installed<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Where to find the Cheetah and psana configuration files<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>Which batch queue jobs should be submitted to (if any)<br /></p>
-                  </li>
-                </ol>
-                <p class="Free_Form"><br /></p>
-                <p class="Free_Form"><br /></p>
-                <p class="paragraph_style_2">3.1 The process script<br /></p>
-                <p class="Free_Form">Locate the script called ‘process’.  This script specifies important things such as data locations and calls the more complicated hitfinder script.  The good news is that once everything is working, this is often the only script which needs modifying when changing from one experiment to another.<br /></p>
-                <p class="Free_Form"><br /></p>
-                <p class="Free_Form">Edit the following configuration variables to match your experiment: <br /></p>
-                <ol>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>XTCDIR points to the data directory containing XTC data files<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>H5DIR points to the directory into which Cheetah output will be saved (make sure you have write access and plenty of available space - terabytes of output are not uncommon!)<br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>CONFIGDIR points to the folder containing your process script.  Specifying this as a full path enables this script to be called from other directories. <br /></p>
-                  </li>
-                  <li style="line-height: 14px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_1"><span style="font-size: 12px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span>PSANA points to the location of the psana executable (usually just psana, but can be a fully expanded path).  Use ‘which psana’ to find out which version will be called by default. If in doubt specify a complete path.<br /></p>
-                  </li>
-                </ol>
-                <p class="Free_Form"><br /></p>
-                <p class="Free_Form">The HITFINDER and PSANA_CONFIG fields can probably be left alone - they are there in case your cheetah.ini and psana configuration files are in other locations.  Hitfinder itself is a separate script that takes care of finding all XTC files for a given run, creating the data destination directory, putting configuration files in the right location, and calling psana with the appropriate arguments to begin processing.  Hitfinder is probably best left alone for now. <br /></p>
+                <p style="padding-top: 0pt; " class="Free_Form">Edit the file cheetah/gui/crawler.config<br /></p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id8" style="height: 20px; left: 20px; position: absolute; top: 171px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id8" style="height: 64px; left: 16px; position: absolute; top: 735px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_64" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">xtcdir should point to the location of your XTC files<br /></p>
+                <p class="Free_Form">hdf5dir should point to where you want the Cheetah output to go.  By default let this be the cheetah/hdf5 directory expanded by the template (but it can be elsewhere).<br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">The rest can be left alone for now.</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id9" style="height: 20px; left: 20px; position: absolute; top: 848px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">1. What the scripts do</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">3. edit process/process</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id9" style="height: 92px; left: 16px; position: absolute; top: 191px; width: 660px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+          <div id="id10" style="height: 92px; left: 16px; position: absolute; top: 873px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_92" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">The purpose of the workflow scripts is to hide as much execution complexity as possible so that analysis can be started using the single command:<br /></p>
+                <p style="padding-top: 0pt; " class="Free_Form">Edit the file cheetah/process/process<br /></p>
                 <p class="Free_Form"><br /></p>
-                <p class="Free_Form">    &gt; process &lt;run&gt; &lt;configuration.ini&gt; <br /></p>
-                <p class="Free_Form"><br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">Achieving this simplicity of course requires a little bit of setup work, which we describe below. </p>
+                <p class="Free_Form">This script is a front-end to making Cheetah run, enabling data to be processed from the command line by simply typing the one-line command<br /></p>
+                <p class="Free_Form">    &gt; ./process &lt;Run#&gt; &lt;cheetah.ini&gt; &lt;tag&gt;<br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">This is the command executed by the ‘Run Cheetah’ button on the front of the GUI. </p>
               </div>
             </div>
           </div>
-          <div style="height: 958px; line-height: 958px; " class="spacer"> </div>
+          
+
+
+          <div id="id11" style="height: 134px; left: 16px; position: absolute; top: 1343px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_134" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">It should only be necessary to edit the experiment name. The rest should should not need modification, but should be self-explanatory if changes need to be made (for example configuration files in ${expt}/res instead of ${expt}/scratch).<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">The last three lines are various options for calling the hitfinder script using either (i) the SLAC batch queue, (ii) the SLAC batch queue with a separate job for each XTC stream, or (iii) output to the terminal.  Probably no need to change these (ii adds some speed at the expense of complexity, while option iii is useful for debugging if things go really wrong)<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">Actual details of the job submission process are hidden in the script hitfinder.  Probably no need to to touch the hitfinder script at all unless there are problems with how jobs are submitted to the batch queue (search for lines containing ‘bsub’).</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 227px; width: 516px;  height: 227px; left: 12px; position: absolute; top: 510px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage.png" alt="" style="border: none; height: 227px; width: 516px; " />
+          </div>
+          
+
+
+          <div style="height: 370px; width: 516px;  height: 370px; left: 20px; position: absolute; top: 971px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_1.png" alt="" style="border: none; height: 370px; width: 516px; " />
+          </div>
+          <div style="height: 1477px; line-height: 1477px; " class="spacer"> </div>
         </div>
-        <div style="height: 3769px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
+        <div style="height: 2842px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id10" style="height: 417px; left: 16px; position: absolute; top: 2384px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_417" style="padding: 0px; ">
+          <div id="id12" style="height: 907px; left: 24px; position: absolute; top: 1588px; width: 651px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_651_907" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style">Note that certain mistakes in the .ini file cause Cheetah to halt with an error.  The most common causes of this are:<br /></span></p>
+                <p style="padding-top: 0pt; " class="paragraph_style_1"><span class="style">Configuring what Cheetah does is done by editing the cheetah.ini file.  <br /></span></p>
+                <p class="paragraph_style_1"><span class="style"><br /></span></p>
+                <p class="paragraph_style_1"><span class="style">There is a sample nanocrystal analysis file in process/lys.ini, and will look for Bragg peaks to find hits. <br /></span></p>
+                <p class="paragraph_style_1"><span class="style">Open this file and edit it.<br /></span></p>
+                <p class="paragraph_style_1"><span class="style"><br /></span></p>
+                <p class="paragraph_style_1"><span class="style">In particular, change the line starting with “darkcal=” to point to the dark calibration file you just created.<br /></span></p>
+                <p class="paragraph_style_1"><span class="style"><br /></span></p>
+                <div class="paragraph paragraph_style_1"><span class="style"></span><div style="height: 370px; width: 516px;  height: 370px; position: relative; width: 516px; " class="tinyText style_SkipStroke_3 inline-block"><img src="Configuration_files/droppedImage_2.png" alt="" style="border: none; height: 370px; width: 516px; " /></div><span class="tinyText"> </span><span class="style"><br /></span></div>
+                <p class="paragraph_style_1"><span class="style"><br /></span></p>
+                <p class="Free_Form"><span class="style">Select a run with data and </span>click the “Run Cheetah” button and specify ‘lys.ini’ as the configuration file<br /></p>
+                <p class="Free_Form">(it is possible to select more than one run at a time).<br /></p>
+                <p class="Free_Form"><span class="style"><br /></span></p>
+                <div class="paragraph Free_Form"><span class="style"></span><div style="height: 206px; width: 483px;  height: 206px; position: relative; width: 483px; " class="tinyText style_SkipStroke_3 inline-block"><img src="Configuration_files/droppedImage_3.png" alt="" style="border: none; height: 206px; width: 483px; " /></div><span class="tinyText"> </span><span class="style"><br /></span></div>
+                <p class="Free_Form"><span class="style"><br /></span></p>
+                <p class="paragraph_style_1"><span class="style">And things should start to happen.  <br /></span></p>
+                <p class="paragraph_style_1"><span class="style">Once again jobs should appear in the batch queue<br /></span></p>
+                <p class="Free_Form">&gt; bjobs -u all -q psfehq<br /></p>
+                <p class="Free_Form">690066  barty   RUN   psfehq     psexport02  6*psana1311 r0001      Oct 23 07:3<br /></p>
+                <p class="Free_Form">If the crawler is running, the Cheetah status and number of processed frames should update periodically<br /></p>
+                <p class="Free_Form">Data should start to appear in the cheetah/hdf5 directory<br /></p>
+                <p class="paragraph_style_1"><br /></p>
+                <p class="Free_Form">If not, something is wrong and it’s time for debugging.  In particular look at the output of hdf5/run0xxx/bsub.log.<span class="style"><br /></span></p>
+                <p class="paragraph_style_1"><span class="style"><br /></span></p>
+                <p class="paragraph_style_1"><span class="style">The setup is now done and it’s time for optimisation of the output.<br /></span></p>
+              </div>
+              <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id13" style="height: 20px; left: 20px; position: absolute; top: 59px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. Start the gui</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 113px; width: 429px;  height: 113px; left: 12px; position: absolute; top: 106px; width: 429px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_4.png" alt="" style="border: none; height: 114px; width: 429px; " />
+          </div>
+          
+
+
+          <div id="id14" style="height: 36px; left: 16px; position: absolute; top: 81px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_36" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">Start the GUI interface using the cheetah-gui command as described on the <a title="Getting_started.html" href="Getting_started.html">getting started</a> page.<br /></p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 112px; width: 183px;  height: 112px; left: 484px; position: absolute; top: 107px; width: 183px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage.jpg" alt="" style="border: none; height: 113px; width: 183px; " />
+          </div>
+          
+
+
+          <div style="height: 95px; width: 300px;  height: 95px; left: 381px; position: absolute; top: 237px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_5.png" alt="" style="border: none; height: 95px; width: 300px; " />
+          </div>
+          
+
+
+          <div id="id15" style="height: 246px; left: 16px; position: absolute; top: 238px; width: 356px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_356_246" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">Click the IDL virtual machine box to dismiss it.<br /></p>
+                <p class="Free_Form">(The Cheetah GUI uses the IDL virtual machine as an environment, which can be <a title="http://www.exelisvis.com/Support/HelpArticlesDetail/TabId/219/ArtMID/900/ArticleID/12395/The-IDL-Virtual-Machine.aspx" href="http://www.exelisvis.com/Support/HelpArticlesDetail/TabId/219/ArtMID/900/ArticleID/12395/The-IDL-Virtual-Machine.aspx">downloaded and used for free</a> if you want to run the image browser at home.)<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">You should then be presented with a list of all previous experiments.  <br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">Either select one of the existing experiments, or use ‘Different Directory’ to navigate to the location of the cheetah/gui folder described above and click OK.<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">This should bring up the interface shown on the <a title="Getting_started.html" href="Getting_started.html">getting started</a> page.<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">This should be sufficient to view an existing data set set up by someone else. </p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 263px; width: 300px;  height: 263px; left: 381px; position: absolute; top: 328px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_6.png" alt="" style="border: none; height: 263px; width: 300px; " />
+          </div>
+          
+
+
+          <div id="id16" style="height: 20px; left: 20px; position: absolute; top: 635px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. enabling command operations and the crawler</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id17" style="height: 64px; left: 16px; position: absolute; top: 654px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_64" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Processing of data and updating of the GUI table as an experiment progresses requires the crawler to be started. This little process runs in the background gathering information on the status of XTC files available on disk and the progress of Cheetah jobs.   It can overwrite the current table contents, and only one person should run this at any one time (even though many people can view the GUI at once). </p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 175px; width: 167px;  height: 175px; left: 340px; position: absolute; top: 712px; width: 167px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_1.jpg" alt="" style="border: none; height: 175px; width: 167px; " />
+          </div>
+          
+
+
+          <div style="height: 178px; width: 164px;  height: 178px; left: 521px; position: absolute; top: 711px; width: 164px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_2.jpg" alt="" style="border: none; height: 178px; width: 164px; " />
+          </div>
+          
+
+
+          <div id="id18" style="height: 176px; left: 16px; position: absolute; top: 737px; width: 303px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_303_176" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">To start the crawler it is first necessary to go <br /></p>
+                <p class="Free_Form">    File-&gt;Unlock command operations<br /></p>
+                <p class="Free_Form">then <br /></p>
+                <p class="Free_Form">    File-&gt;Start Crawler<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">Unlocking command operations enables the Crawler option and the “Run Cheetah” button.  This step is deliberately added in order to force one to think before overwriting existing data. <br /></p>
+                <p class="Free_Form"><br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">A little window with the crawler should appear on screen.  Look in the terminal for any errors. </p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 85px; width: 295px;  height: 85px; left: 368px; position: absolute; top: 898px; width: 295px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_7.png" alt="" style="border: none; height: 85px; width: 295px; " />
+          </div>
+          
+
+
+          <div id="id19" style="height: 20px; left: 20px; position: absolute; top: 1021px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. create a dark calibration file</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id20" style="height: 78px; left: 16px; position: absolute; top: 1044px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_78" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">The detector needs to be corrected for static offsets, often known as ‘dark frames’.  Make sure to take one at the start of the experiment and every few hours during the experiment. <br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">Click the “Run Cheetah” button and specify ‘darkcal.ini’ as the configuration file. <br /></p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 206px; width: 483px;  height: 206px; left: 36px; position: absolute; top: 1112px; width: 483px; z-index: 1; " class="tinyText style_SkipStroke_3">
+            <img src="Configuration_files/droppedImage_8.png" alt="" style="border: none; height: 206px; width: 483px; " />
+          </div>
+          
+
+
+          <div id="id21" style="height: 176px; left: 16px; position: absolute; top: 1347px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_176" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">The job should now be go to the batch queue for processing.<br /></p>
+                <p class="Free_Form">Jobs should appear in the batch queue<br /></p>
+                <p class="Free_Form">&gt; bjobs -u all -q psfehq<br /></p>
+                <p class="Free_Form">690066  barty   RUN   psfehq     psexport02  6*psana1311 r0001      Oct 23 07:3<br /></p>
+                <p class="Free_Form">If the crawler is running, the Cheetah status and number of processed frames should update periodically<br /></p>
+                <p class="Free_Form">Data should start to appear in the cheetah/hdf5 directory<br /></p>
+                <p class="Free_Form">In particular, a file called r00xx-CxiDs1-darkcal.h5 should start to appear.<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">If not, something is wrong and it’s time for debugging<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">If all goes well, wait for the job to finish then copy the file r00xx-CxiDs1-darkcal.h5 into the cheetah/calib/darkcal directory. </p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id22" style="height: 20px; left: 20px; position: absolute; top: 1560px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. Edit your cheetah.ini file</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id23" style="height: 20px; left: 20px; position: absolute; top: 2511px; width: 515px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. Time for a cuppa</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id24" style="height: 313px; left: 16px; position: absolute; top: 2529px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_313" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="paragraph_style_1"><span class="style">Setup of the guI should now be done and it’s time for optimisation of the output.<br /></span></p>
+                <p class="Free_Form"><span class="style"><br /></span></p>
+                <p class="Free_Form"><span class="style">Before we go, a few hints:<br /></span></p>
                 <ol>
-                  <li style="line-height: 15px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; position: relative; top: 1px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><span class="style">An unknown tag name (usually a typo); or <br /></span></p>
+                  <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="1">
+                    <p style="text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">1)</span><span style="width: 3px; " class="inline-block"></span><span class="style">It is convenient to start a new .ini file for each type of sample.  The name of the .ini file is used by the GUI to tag runs and update the table, and ends up as the tag name on the HDF5 directories created.  Separate names helps keep separate samples apart, and makes it easy to copy/tar/grep directories based on sample name or other eperiment parameters.  This helps keep things organised. </span>Use a symbolic link if the files are really the same. <br /></p>
                   </li>
-                  <li style="line-height: 15px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; position: relative; top: 1px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><span class="style">A configuration file that can not be found (eg: requested detector geometry or mask can not be found)<br /></span></p>
+                  <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="2">
+                    <p style="padding-bottom: 0pt; text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">2)</span><span style="width: 3px; " class="inline-block"></span>Review your output.  Often.  No analysis should ever be done completely blind.  Use the ‘Show hits” button to look at images and refine the hit finding parameters. </p>
                   </li>
                 </ol>
-                <p class="paragraph_style_2"><span class="style">These errors are reported to the command line so should be relatively easy to identify. <br /></span></p>
-                <p class="paragraph_style_2"><span class="style"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style">Assuming we are working with hitfinding nanocrystal data collected using the cspad detector on the CXI instrument at LCLS, here are some key parameters which must be properly set in order for Cheetah to run.  <br /></span></p>
-                <p class="paragraph_style_2"><span class="style"><br /></span></p>
-                <p class="paragraph_style_2">geometry=<br /></p>
-                <p class="Free_Form">Specify the location to a geometry pixelmap file.  <br /></p>
-                <p class="Free_Form">There is an example file located in config/geometry/CxiDs1-geometry.h5.  Cheetah will run without a geometry file (comment out the line with a #) - but image assembly and anything involving radial averages will not work without knowing the detector geometry. <br /></p>
-                <p class="Free_Form"><br /></p>
-                <p class="paragraph_style_2">darkcal=<br /></p>
-                <p class="Free_Form">Specify the location to dark frame calibration of the detector.  <br /></p>
-                <p class="Free_Form">There is an example file located in config/darkcal/CxiDs1-darkcal.h5.  Cheetah will run without a darkcal file (comment out the line with a #).  When using local and persistent background subtraction darkcals can be ignored, as both of these background subtraction methods provide their own offset estimation.  However when saving detector raw data a dark calibration is required or else static offsets in detector reading will not be subtracted.  <br /></p>
-                <p class="Free_Form"><br /></p>
-                <p class="paragraph_style_2">badpixmap=<br /></p>
-                <p class="Free_Form">Specify the location to a pixel map specifying known bad pixels on the detector.  <br /></p>
-                <p class="Free_Form">For example, with the cspad data pixels at the edge of each ASIC consistently read unreliable values.  Cheetah will run fine without a darkcal file (comment out the line with a #). These pixels are set to zero at the start of analysis.<br /></p>
-                <p class="Free_Form"><br /></p>
-                <p class="Free_Form"><br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">Once all of this is set up, you should see Cheetah start to run as shown below.</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div class="tinyText" style="height: 20px; left: 24px; position: absolute; top: 3749px; width: 644px; z-index: 1; ">
-            <img usemap="#map1" id="shapeimage_1" src="Configuration_files/shapeimage_1.png" style="border: none; height: 35px; left: -9px; position: absolute; top: -9px; width: 662px; z-index: 1; " alt="Next" title="" /><map name="map1" id="map1"><area href="Optimisation.html" title="Optimisation.html" onmouseover="IMmouseover('shapeimage_1', '0');" alt="Optimisation.html" onmouseout="IMmouseout('shapeimage_1', '0');" shape="rect" coords="615, 9, 653, 26" /><area href="Optimisation.html" title="Optimisation.html" alt="Optimisation.html" coords="9, 9, 653, 29" /></map><img style="height: 17px; left: 606px; position: absolute; top: 0px; width: 38px; " id="shapeimage_1_link_0" alt="shapeimage_1_link_0" src="Configuration_files/shapeimage_1_link_0.png" />
-          </div>
-          
-
-
-          <div style="height: 370px; width: 516px;  height: 370px; left: 92px; position: absolute; top: -2px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage.png" alt="" style="border: none; height: 370px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id11" style="height: 33px; left: 16px; position: absolute; top: 365px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_33" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Now try executing the process script on some test run.  You should see something like this:</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id12" style="height: 120px; left: 16px; position: absolute; top: 1272px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_120" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form"><br /></p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 396px; width: 516px;  height: 396px; left: 92px; position: absolute; top: 402px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_1.png" alt="" style="border: none; height: 396px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id13" style="height: 33px; left: 16px; position: absolute; top: 798px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_33" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Which after some time will probably fall in a heap with an error similar to the one shown here:</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 396px; width: 516px;  height: 396px; left: 92px; position: absolute; top: 830px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_2.png" alt="" style="border: none; height: 396px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id14" style="height: 50px; left: 24px; position: absolute; top: 1221px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_50" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Excellent!  Getting this error at this point is actually success because it means that all the files are in the right place and Cheetah is being called without error. The hard part is now over and it is time to set up the cheetah.ini file that configures how Cheetah itself runs.</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id15" style="height: 93px; left: 24px; position: absolute; top: 1280px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_93" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2">3.2 psana.cfg<br /></p>
-                <p style="padding-bottom: 0pt; " class="Free_Form">At this point we mention that XTC files must be read through psana, thus there is a chance that the psana.cfg file may also need modification.  This file specifies the Cheetah module to load for processing, as well as which detectors are read into Cheetah.  The detector information in particular may need to be changed for different experiment configurations and different instruments.  Hopefully this file does not need to be modified, but now you know it’s there just in case. </p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 396px; width: 516px;  height: 396px; left: 92px; position: absolute; top: 1369px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_3.png" alt="" style="border: none; height: 396px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id16" style="height: 20px; left: 20px; position: absolute; top: 1805px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
-            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
-              <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">3. Configuring Cheetah</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id17" style="height: 148px; left: 16px; position: absolute; top: 1828px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_148" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style">It is now time to set up what analysis Cheetah should perform.  This is done by editing the cheetah.ini file.  <br /></span></p>
-                <p class="paragraph_style_2"><span class="style"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style">Creating separate ini files to go with different samples is often a good idea as parameters for different samples may be slightly different (see the section on </span><a title="Optimisation.html" href="Optimisation.html" class="style">optimisation</a><span class="style"> later on).  Using the </span><span class="style_1">process</span><span class="style"> script it is very easy to specify different configurations on the command line. <br /></span></p>
-                <p class="paragraph_style_2"><span class="style"><br /></span></p>
-                <p style="padding-bottom: 0pt; " class="paragraph_style_2"><span class="style">Locate the sample cheetah.ini file in the analysis-pipeline/process directory, create a copy to work with, and open it in your favourite text editor.  It should look something like this.  All fields are specified in a tag=value format, with ‘#’ at the start of a line denoting a commented out field.   The order of parameters is not important.  In case of duplicate tags, the later tags overrides earlier values. </span></p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 396px; width: 516px;  height: 396px; left: 84px; position: absolute; top: 1997px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_4.png" alt="" style="border: none; height: 396px; width: 516px; " />
-          </div>
-          
-
-
-          <div style="height: 396px; width: 516px;  height: 396px; left: 80px; position: absolute; top: 2806px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_5.png" alt="" style="border: none; height: 396px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id18" style="height: 20px; left: 20px; position: absolute; top: 3488px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
-            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
-              <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">4. Using the batch farm</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id19" style="height: 64px; left: 16px; position: absolute; top: 3511px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_64" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style">Running </span><span class="style_1">Cheetah</span><span class="style"> from the command line is fine for debugging, but rapidly gets tedious once multiple jobs must be processed at once.  To distribute the processing load SLAC has a batch processing queue for use with CXI data.  <br /></span></p>
-                <p style="padding-bottom: 0pt; " class="paragraph_style_2"><span class="style">Once everything is debugged, </span><span class="style_1">hitfinder</span><span class="style"> can submit jobs to this batch queue using the ‘-q’ option.  In the process script, simply comment out the second line and uncomment the last line to switch to batch queue operation. </span></p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id20" style="height: 20px; left: 20px; position: absolute; top: 3601px; width: 515px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
-            <div class="text-content Normal_External_515_20" style="padding: 0px; ">
-              <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style">5. automatic data processing</p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id21" style="height: 92px; left: 16px; position: absolute; top: 3624px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_92" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style">Data can be processed automatically as soon as it is available on the analysis disk system.  <br /></span></p>
-                <p class="paragraph_style_2"><span class="style">This is coordinated using the </span><span class="style_1">autorun.pro</span><span class="style"> script.  This script does the following:<br /></span></p>
-                <ol>
-                  <li style="line-height: 15px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; position: relative; top: 1px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><span class="style">Checks the last XTC file that has finished copying (no .inprogress tag);<br /></span></p>
-                  </li>
-                  <li style="line-height: 15px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; position: relative; top: 1px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><span class="style">Checks whether Cheetah is already running on that data set<br /></span></p>
-                  </li>
-                  <li style="line-height: 15px; padding-left: 18px; text-indent: -8px; " class="full-width">
-                    <p style="text-indent: -8px; " class="paragraph_style_3"><span style="font-size: 12px; position: relative; top: 1px; " class="Bullet">•</span><span style="width: 3px; " class="inline-block"></span><span class="style">If not already being processed, starts a hit finder job on the newly available data set<br /></span></p>
-                  </li>
-                </ol>
-                <p style="padding-bottom: 0pt; " class="paragraph_style_2"><span class="style">Have a look at the </span><span class="style_1">autorun.pro</span><span class="style"> script to figure out operation.  This system could probably be refined in the future. </span></p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div id="id22" style="height: 33px; left: 16px; position: absolute; top: 3213px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_33" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_2"><span class="style">Data should also start to appear in the target directory:</span></p>
-              </div>
-            </div>
-          </div>
-          
-
-
-          <div style="height: 188px; width: 516px;  height: 188px; left: 80px; position: absolute; top: 3236px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_3">
-            <img src="Configuration_files/droppedImage_6.png" alt="" style="border: none; height: 188px; width: 516px; " />
-          </div>
-          
-
-
-          <div id="id23" style="height: 36px; left: 16px; position: absolute; top: 3422px; width: 651px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_651_36" style="padding: 0px; ">
-              <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style">Success!<br /></span></p>
-                <p style="padding-bottom: 0pt; " class="paragraph_style_2"><span class="style">Now comes the question of </span><a title="Optimisation.html" href="Optimisation.html" class="style">optimising</a><span class="style"> the analysis for your particular data set. </span></p>
               </div>
             </div>
           </div>

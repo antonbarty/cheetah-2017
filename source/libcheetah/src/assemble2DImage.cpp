@@ -19,6 +19,10 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
+
+/*
+ *  Assemble data into a realistic 2d image using raw data and geometry
+ */
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
   if(global->assemble2DImage) {
@@ -37,20 +41,46 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 }
 
 
-void assemble2Dmask(cEventData *eventData, cGlobal *global) {
+/*
+ *  Assemble 2D powder patterns into a realistic 2D image using geometry
+ *  This is not called very often (once when powder patterns are about to be saved)
+ */
+void assemble2Dpowder(cGlobal *global) {
 
-  if(global->assemble2DMask) {
     DETECTOR_LOOP {
       long		pix_nn = global->detector[detID].pix_nn;
       long		image_nx = global->detector[detID].image_nx;
       long		image_nn = global->detector[detID].image_nn;
       float		*pix_x = global->detector[detID].pix_x;
       float		*pix_y = global->detector[detID].pix_y;
-      uint16_t        *pixelmask = eventData->detector[detID].pixelmask;
-      uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
       int             assembleInterpolation = global->assembleInterpolation;
-      assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+        cPixelDetectorCommon     *detector = &(global->detector[detID]);
+
+        // Floating point buffer
+        float   *fdata = (float*) calloc(pix_nn,sizeof(float));
+        float   *fimage = (float*) calloc(image_nn,sizeof(float));
+        
+        
+        // Assemble each powder type
+        for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+            double  *data = detector->powderCorrected[powderType];
+            double  *image = detector->powderAssembled[powderType];
+
+            // Assembly is done using float; powder data is double (!!)
+            for(long i=0; i<pix_nn; i++)
+                fdata[i] = (float) data[i];
+            
+            // Assemble image
+            assemble2Dimage(fimage, fdata, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+
+            // Assembly is done using float; powder data is double (!!)
+            for(long i=0; i<image_nn; i++)
+                image[i] = (double) fimage[i];
     }
+        
+        // Cleanup
+        free(fdata);
+        free(fimage);
   }
 }
 
@@ -63,8 +93,52 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
  */
 void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
 
-  if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
+    // Assembly is done using floating point by default
+    float	*temp = (float*) calloc(image_nn,sizeof(float));
+    assemble2Dimage(temp, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    
+    // Check for int16 overflow
+    for(long i=0;i<image_nn;i++){
+        if(lrint(temp[i]) > 32767)
+            temp[i]=32767;
+        if(lrint(temp[i]) < -32767)
+            temp[i]=-32767;
+    }
   
+    // Copy interpolated image across into int_16 image array
+    for(long i=0;i<image_nn;i++){
+        image[i] = (int16_t) lrint(temp[i]);
+    }
+
+    free(temp);
+}
+
+
+
+
+    
+    
+void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
+    
+    if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
+        // Loop through all pixels and interpolate onto regular grid
+        float	x, y;
+        long	ix, iy;
+        long	image_index;
+        
+        for(long i=0;i<pix_nn;i++){
+            x = pix_x[i] + image_nx/2.;
+            y = pix_y[i] + image_nx/2.;
+            // round to nearest neighbor
+            ix = (long) (x+0.5);
+            iy = (long) (y+0.5);
+            
+            image_index = ix + image_nx*iy;
+            image[image_index]= corrected_data[i];
+        }
+    }
+
+    else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
     // Allocate temporary arrays for pixel interpolation (needs to be floating point)
     float	*data = (float*) calloc(image_nn,sizeof(float));
     float	*weight = (float*) calloc(image_nn,sizeof(float));
@@ -133,20 +207,9 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
 	data[i] /= weight[i];
     }
     
-	
-    
-    // Check for int16 overflow
-    for(long i=0;i<image_nn;i++){
-      if(lrint(data[i]) > 32767) 
-	data[i]=32767;
-      if(lrint(data[i]) < -32767) 
-	data[i]=-32767;
-    }
-	
-	
-    // Copy interpolated image across into int_16 image array
-    for(long i=0;i<image_nn;i++){
-      image[i] = (int16_t) lrint(data[i]);
+        // Copy to output array
+        for(long i=0; i<image_nn; i++){
+            image[i] = data[i];
     }
 	
 	
@@ -154,36 +217,31 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     free(data);
     free(weight);
   }
-  else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
+ }
 
-    // Loop through all pixels and interpolate onto regular grid
-    float	x, y;
-    long	ix, iy;
-    long	image_index;
     
-    for(long i=0;i<pix_nn;i++){
-      x = pix_x[i] + image_nx/2.;
-      y = pix_y[i] + image_nx/2.;
-      // round to nearest neighbor
-      ix = (long) (x+0.5);
-      iy = (long) (y+0.5);
 
-      image_index = ix + image_nx*iy;
-      if (image_index >= image_nn || image_index < 0)
-	{
-	  printf("Image index over/underflow %li %ld %li\n", ix, iy, image_index);
-	  continue;
-	}
-      // Check for int16 overflow
-      if(lrint(corrected_data[i]) > 32767) 
-	image[image_index]=32767;
-      else if(lrint(corrected_data[i]) < -32767) 
-	image[image_index]=-32767;
-      else
-	image[image_index]= (int16_t) lrint(corrected_data[i]);
+
+/*
+ *  Assemble mask data into a realistic 2d image using raw data and geometry
+ */
+void assemble2Dmask(cEventData *eventData, cGlobal *global) {
+    
+    if(global->assemble2DMask) {
+        DETECTOR_LOOP {
+            long		pix_nn = global->detector[detID].pix_nn;
+            long		image_nx = global->detector[detID].image_nx;
+            long		image_nn = global->detector[detID].image_nn;
+            float		*pix_x = global->detector[detID].pix_x;
+            float		*pix_y = global->detector[detID].pix_y;
+            uint16_t  *pixelmask = eventData->detector[detID].pixelmask;
+            uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+            int       assembleInterpolation = global->assembleInterpolation;
+            assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
     }
   }	
 }
+
 
 
 /*

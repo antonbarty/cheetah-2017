@@ -1,8 +1,8 @@
 ;;
-;;	FEL_Browser
+;;	Cheetahview
 ;;	Tool for snooping through FEL diffraction images
 ;;
-;;	Anton Barty, 2007-2008
+;;	Anton Barty, 2009-2013
 ;;
 
 ;;
@@ -55,9 +55,11 @@ function cheetah_peakcircles, filename, image, pState, peakx, peaky
 	
 	;; Create circles
 	for i=0L, npeaks-1 do begin
-		temp = peakcircles[peakx[i]:peakx[i]+19, peaky[i]:peaky[i]+19]
+		xx = round(peakx[i])
+		yy = round(peaky[i])
+		temp = peakcircles[xx:xx+19, yy:yy+19]
 		temp += circle
-		peakcircles[peakx[i]:peakx[i]+19, peaky[i]:peaky[i]+19] = temp
+		peakcircles[xx:xx+19, yy:yy+19] = temp
 	endfor
 	
 	peakcircles = peakcircles < 1
@@ -941,6 +943,13 @@ pro cheetah_event, ev
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
 			(*pstate).image_boost = 10
+			(*pstate).circleHDF5Peaks = 1
+			(*pstate).findPeaks = 0
+			(*pstate).savePeaks = 0
+			widget_control, sState.menu_circleHDF5Peaks, set_button = (*pstate).circleHDF5Peaks
+			widget_control, sState.menu_findPeaks, set_button = 0
+			widget_control, sState.menu_savePeaks, set_button = 0
+
 			cheetah_displayImage, pState
 		end
 		
@@ -1112,8 +1121,8 @@ pro cheetahview, geometry=geometry, dir=dir
 
 	mbview = widget_button(bar, value='View')
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
-	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer: wl = d sin(theta))', /checked)
-	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer: wl = 2d sin(theta))', /checked)
+	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer, wl = d sin(theta))', /checked)
+	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer, wl = 2d sin(theta))', /checked)
 	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
 	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
 	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)

@@ -56,13 +56,16 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
+void writeCXIHitstats(cEventData *info, cGlobal *global);
 void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
 herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
+void assemble2Dpowder(cGlobal*);
 void assemble2Dmask(cEventData*, cGlobal*);
+void assemble2Dimage(float*, float*, float*, float*, long, long, long, int);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
@@ -77,15 +80,23 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
+long hitfinderFastScan(cEventData*, cGlobal*);
 
 // peakfinders.cpp
-int peakfinder3(cGlobal*, cEventData*, int);
-int peakfinder6(cGlobal*, cEventData*, int);
+int peakfinder(cGlobal*, cEventData*, int);
+int peakfinder3(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
+int peakfinder6(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
+int peakfinder8(tPeakList*, float*, char*, float*, long, long, long, long, float, float, long, long, long);
+int killNearbyPeaks(tPeakList*, float );
+
 
 
 // spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void addToSpectrumStack(cEventData*, cGlobal*, int);
+void saveEspectrumStacks(cGlobal*);
+void saveEspectrumStack(cGlobal*, int);
 void genSpectrumBackground(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
@@ -95,11 +106,20 @@ void readSpectrumEnergyScale(cGlobal*, char*);
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
 void addToPowder(cEventData*, cGlobal*, int, int);
+void saveRunningSums(cGlobal*);
 void saveRunningSums(cGlobal*, int);
 void saveDarkcal(cGlobal*, int);
 void saveGaincal(cGlobal*, int);
 void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
+
+// histogram.cpp
+void addToHistogram(cEventData*, cGlobal*);
+void addToHistogram(cEventData*, cGlobal*, int);
+void saveHistograms(cGlobal*);
+void saveHistogram(cGlobal*, int);
+
+
 
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);

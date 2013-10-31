@@ -154,6 +154,8 @@ public:
 	/** @brief Data for hitfinding only based on detector corrected data (photon correction ignored for hitfinding). Only hitfinder 1. */
 	long      hitfinderOnDetectorCorrectedData;
 
+	int		hitfinderFastScan;
+
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */
@@ -168,6 +170,7 @@ public:
 	double   AcqSampleInterval;
     
 	/** @brief Toggle energy spectrum creation. */
+    int      espectrum;
 	int      espectrum1D;
 	/** @brief Angle of spectra from horizontal (clockwise). */
 	double   espectrumTiltAng;
@@ -189,6 +192,7 @@ public:
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
+    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
@@ -241,6 +245,7 @@ public:
 	int      hdf5dump;
 	/** @brief Python script to be hosted for shared memory visualization */
 	char     pythonFile[MAX_FILENAME_LENGTH];
+	int		 h5compress;
     
 	/** @brief Output 1 HDF5 per image by default */
 	bool saveCXI;
@@ -342,6 +347,11 @@ public:
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;
 	double  *espectrumScale;
+	long	espectrumStackSize;
+	long	espectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *espectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
+
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -386,8 +396,11 @@ public:
 
 	void writeInitialLog(void);
 	void updateLogfile(void);
+    void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
+	void freeMutexes(void);
+
 
 
 private:

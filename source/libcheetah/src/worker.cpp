@@ -36,9 +36,9 @@ void *worker(void *threadarg) {
   // Turn threadarg into a more useful form
   cGlobal			*global;
   cEventData		*eventData;
+  int             hit = 0;
   eventData = (cEventData*) threadarg;
   global = eventData->pGlobal;
-  int	hit = 0;
 
   std::vector<int> myvector;
   std::stringstream sstm;
@@ -56,6 +56,14 @@ void *worker(void *threadarg) {
 
   //---INITIALIZATIONS-AND-PREPARATIONS---//
 
+  /*
+   *  Inside-thread speed test
+   */
+  if(global->ioSpeedTest==3) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #3 (exiting within thread)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+    
   // Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
   // Acqiris data (i.e. temporal profile of the laser diode signal) is available...
   // Hopefully this never happens again... 
@@ -108,22 +116,47 @@ void *worker(void *threadarg) {
   // Apply bad pixel map
   applyBadPixelMask(eventData, global);
 
-  // Local background subtraction
-  subtractLocalBackground(eventData, global);
-			
-  // Subtract residual common mode offsets (cmModule=2)
-  cspadModuleSubtract2(eventData, global);
-
-  // Identify and kill hot pixels
-  identifyHotPixels(eventData, global);
-  calculateHotPixelMask(eventData,global);
-  applyHotPixelMask(eventData,global);
-
   // Save detector-corrections-only data (possibly needed later)
   DETECTOR_LOOP {
     memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
   }
+  
+  //  Inside-thread speed test
+  if(global->ioSpeedTest==4) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+  
+  if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
+    hit = hitfinderFastScan(eventData, global);
+    if(hit)
+      goto localBG;
+    else
+      goto hitknown;
+  }
 
+  // Local background subtraction
+  subtractLocalBackground(eventData, global);
+
+ localBG:	
+
+  // Subtract residual common mode offsets (cmModule=2)
+  cspadModuleSubtract2(eventData, global);
+  
+  // Apply bad pixels
+  applyBadPixelMask(eventData, global);
+	
+  // Identify and kill hot pixels
+  identifyHotPixels(eventData, global);
+  calculateHotPixelMask(eventData,global);
+  applyHotPixelMask(eventData,global);
+	
+  // Inside-thread speed test
+  if(global->ioSpeedTest==5) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+    
   //---BACKGROUND-CORRECTION---//
 	  
   // If darkcal file available: Init background buffer here (background = photon background)
@@ -132,15 +165,16 @@ void *worker(void *threadarg) {
   subtractPersistentBackground(eventData, global);
 
   //---HITFINDING---//
-     
-  // Hitfinding
   if(global->hitfinder){ 
     hit = hitfinder(eventData, global);
     eventData->hit = hit;
   }
 
-
   //---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
+ hitknown: 
+	
+  // Update running backround estimate based on non-hits
+  updateBackgroundBuffer(eventData, global, hit); 
 
   // Identify halo pixels
   updateHaloBuffer(eventData,global,hit);
@@ -159,21 +193,30 @@ void *worker(void *threadarg) {
     updateBackgroundBuffer(eventData, global, hit); 
     calculatePersistentBackground(eventData,global);  
   }
-
-
+    
+  // Inside-thread speed test
+  if(global->ioSpeedTest==6) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #6 (after hitfinding)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+    
   //---ASSEMBLE-AND-ACCUMULATE-DATA---//
 
-  // Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-  DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorCorrectedOnly) 
-      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
-  }
+  // Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
+  if(global->powderSumWithBackgroundSubtraction)
+    addToPowder(eventData, global);
 
-  // If using detector raw, do it here
   DETECTOR_LOOP {
-    if(global->detector[detID].saveDetectorRaw)
-      for(long i=0;i<global->detector[detID].pix_nn;i++)
+    // Revert to raw detector data
+    if(global->detector[detID].saveDetectorRaw){
+      for(long i=0;i<global->detector[detID].pix_nn;i++){
 	eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+      }
+    }
+    // Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+    else if (global->detector[detID].saveDetectorCorrectedOnly) {
+      memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+    }
   }
 
   // Assemble to realistic image
@@ -182,9 +225,16 @@ void *worker(void *threadarg) {
 
   // Downsample assembled image
   downsample(eventData,global);
-
-  // Maintain a running sums of data ("powder" patterns)
-  addToPowder(eventData, global);
+	
+  // Inside-thread speed test
+  if(global->ioSpeedTest==7) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder sum and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+  
+  // Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
+  if(!global->powderSumWithBackgroundSubtraction)
+    addToPowder(eventData, global);
 
   // Calculate radial average and maintain radial average stack
   calculateRadialAverage(eventData, global); 
@@ -200,6 +250,21 @@ void *worker(void *threadarg) {
   // integrate pattern
   integratePattern(eventData,global);
 
+  // Inside-thread speed test
+  if(global->ioSpeedTest==8) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #8 (radial average and spectrum)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
+
+  // Maintain a running sum of data (powder patterns)
+  //  and strongest non-hit and weakest hit
+  addToHistogram(eventData, global);
+
+  // Inside-thread speed test
+  if(global->ioSpeedTest==9) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #9 (After histograms)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
 
   //---WRITE-DATA-TO-H5---//
 
@@ -209,23 +274,37 @@ void *worker(void *threadarg) {
       eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
     }
   }
-  
-  // If this is a hit, write out to our favourite HDF5 format
-  eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+
+  updateDatarate(eventData,global);  
+
   if(global->saveCXI==1){
-    pthread_mutex_lock(&global->saveCXI_mutex);
-    writeCXI(eventData, global);
-    pthread_mutex_unlock(&global->saveCXI_mutex);
-    if(eventData->writeFlag){
+    writeCXIHitstats(eventData, global);
+  }
+
+ logfile:
+  eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+
+  // If this is a hit, write out to our favourite HDF5 format
+  // Put here anything only needed for data saved to file (why waste the time on events that are not saved)
+  // eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
+
+  //if( (hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ) ){
+  
+  
+  if(eventData->writeFlag){
+    // Which save format?
+    if(global->saveCXI){
       printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
-    }
-  } else {
-    if(eventData->writeFlag){
-      writeHDF5(eventData, global);
+      pthread_mutex_lock(&global->saveCXI_mutex);
+      writeCXI(eventData, global);
+      pthread_mutex_unlock(&global->saveCXI_mutex);
+    } else {
       printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
+      writeHDF5(eventData, global);
     }
   }
-  if(!eventData->writeFlag){
+  // This frame is not going to be saved, but print anyway
+  else {
     printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
   }
 
@@ -233,7 +312,6 @@ void *worker(void *threadarg) {
   if(hit && global->savePeakInfo) {
     writePeakFile(eventData, global);
   }
-
 
   //---LOGBOOK-KEEPING---//
 
@@ -260,24 +338,33 @@ void *worker(void *threadarg) {
   pthread_mutex_unlock(&global->framefp_mutex);
 
   // Keep track of what has gone into each image class
-  pthread_mutex_lock(&global->powderfp_mutex);
-  fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
-  fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
-  fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
-  fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
-  fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
-  fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
-  fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
-  pthread_mutex_unlock(&global->powderfp_mutex);
+  if(global->powderlogfp[hit] != NULL) {
+    pthread_mutex_lock(&global->powderfp_mutex);
+    fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+    fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
+    fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
+    fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
+    fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
+    fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
+    fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
+    fprintf(global->powderlogfp[hit], "%d\n", eventData->samplePumped);
+    pthread_mutex_unlock(&global->powderfp_mutex);
+  }
+  
+  // Inside-thread speed test
+  if(global->ioSpeedTest==10) {
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #1 (after saving frames)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    goto cleanup;
+  }
 	
 
   //---CLEANUP-AND-EXIT----//
@@ -317,39 +404,39 @@ void *worker(void *threadarg) {
  */
 void evr41fudge(cEventData *t, cGlobal *g){
 	
-	if ( g->TOFPresent == 0 ) {
-		//printf("Acqiris not present; can't fudge EVR41...\n");
-		return;
-	}
+  if ( g->TOFPresent == 0 ) {
+    //printf("Acqiris not present; can't fudge EVR41...\n");
+    return;
+  }
  
-	//int nCh = g->AcqNumChannels;
-	//int nSamp = g->AcqNumSamples;
-	double * Vtof = t->TOFVoltage;
-	int i;
-	double Vtot = 0;
-	double Vmax = 0;
-	int tCounts = 0;
-	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
-		Vtot += Vtof[i];
-		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
-		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
-	}
+  //int nCh = g->AcqNumChannels;
+  //int nSamp = g->AcqNumSamples;
+  double * Vtof = t->TOFVoltage;
+  int i;
+  double Vtot = 0;
+  double Vmax = 0;
+  int tCounts = 0;
+  for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
+    Vtot += Vtof[i];
+    if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
+    if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
+  }
 	
 
-	bool acqLaserOn = false;
-	if ( tCounts >= 1 ) {
-		acqLaserOn = true;
-	}
-	//if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
-	//if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
-	if ( acqLaserOn != t->laserEventCodeOn ) {
-		if ( acqLaserOn ) {
-			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");
-		} else {
-			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 0 )\n");
-		}
-		t->laserEventCodeOn = acqLaserOn;
-	}
+  bool acqLaserOn = false;
+  if ( tCounts >= 1 ) {
+    acqLaserOn = true;
+  }
+  //if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
+  //if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
+  if ( acqLaserOn != t->laserEventCodeOn ) {
+    if ( acqLaserOn ) {
+      printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");
+    } else {
+      printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 0 )\n");
+    }
+    t->laserEventCodeOn = acqLaserOn;
+  }
 }
 
 

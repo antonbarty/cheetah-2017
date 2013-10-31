@@ -12,11 +12,11 @@
 #include "median.h"
 #include "hitfinders.h"
 #include "peakfinders.h"
+#include "cheetahmodules.h"
 
 void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
 void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
 void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx);
-
 
 /*
  *	Various flavours of hitfinder
@@ -28,13 +28,13 @@ void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, lon
  *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
  *              7 - Laser on event code (usually EVR41)
- *              8 - Use TOF peak
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 	// Dereference stuff
 	int	    detID = global->hitfinderDetector;
 	int		hit=0;
+	int		nPeaks;
 	
 	/*
 	 *	Default values for some metrics
@@ -61,28 +61,40 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = hitfinder2(global,eventData,detID);
 	  break;
 			
-	case 3 : 	// Count number of Bragg peaks
-	  hit = peakfinder3(global,eventData, detID);			
+	case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
+	  nPeaks = peakfinder(global,eventData, detID);
+	  eventData->nPeaks = nPeaks;
+	  if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+	    hit = 1;
+	  //hit = peakfinder3(global,eventData, detID);
 	  break;	
 
 	case 4 :	// Use TOF signal to find hits
 	  hit = hitfinder4(global,eventData,detID);
 	  break;
 						
-	case 6 : 	// Count number of Bragg peaks
-	  hit = peakfinder6(global,eventData, detID);
+	case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
+	  nPeaks = peakfinder(global,eventData, detID);
+	  eventData->nPeaks = nPeaks;
+	  if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+	    hit = 1;
+	  //hit = peakfinder6(global,eventData, detID);
 	  break;
             
 	case 7 : 	// Return laser on event code
 	  hit = eventData->laserEventCodeOn;
 	  eventData->nPeaks = eventData->laserEventCodeOn;
 	  break;
-
-	case 8 :	// Use TOF signal, maximum peak, to find hits
+	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
+	  nPeaks = peakfinder(global,eventData, detID);
+	  eventData->nPeaks = nPeaks;
+	  if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
+	    hit = 1;
+	  break;
+	case 9 :	// Use TOF signal, maximum peak, to find hits
 	  hit = hitfinder8(global,eventData,detID);
 	  break;
-
-	case 9 :	// Use TOF signal, maximum peak, excluding classical htis
+	case 10 :	// Use TOF signal, maximum peak, excluding classical htis (this was 8 earlier, but it overlapped with Anton's new hitfinder)
 	  hit = hitfinder8(global,eventData,detID);
 	  if (hit)
 	    {
@@ -100,57 +112,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			
 	}
 	
-	// Statistics on the peaks, for certain hitfinders
-	if( eventData->nPeaks > 1 &&
-	   ( global->hitfinderAlgorithm == 3 || global->hitfinderAlgorithm == 5 || global->hitfinderAlgorithm == 6 ) ) {
-		   
-		long	np;
-		long  kk;
-		float	resolution;
-		float	resolutionA;	
-		float	cutoff = 0.95;
-		long		pix_nn = global->detector[detID].pix_nn;
-		long		asic_nx = global->detector[detID].asic_nx;
-		long		asic_ny = global->detector[detID].asic_ny;
-		long	*inx = (long *) calloc(pix_nn, sizeof(long));
-		long	*iny = (long *) calloc(pix_nn, sizeof(long));
-
-
-		np = eventData->nPeaks;
-		if(np >= global->hitfinderNpeaksMax) 
-		   np = global->hitfinderNpeaksMax; 
-		kk = (long) floor(cutoff*np);
-	
-	
-
-		// Pixel radius resolution (bigger is better)
-		float *buffer1 = (float*) calloc(global->hitfinderNpeaksMax, sizeof(float));
-		for(long k=0; k<np; k++) 
-			buffer1[k] = eventData->peak_com_r_assembled[k];
-		resolution = kth_smallest(buffer1, np, kk);		   
-		eventData->peakResolution = resolution;
-		free(buffer1);
-	
-		// Resolution to real space (in Angstrom)
-		// Crystallographic resolution d = lambda/sin(theta)
-		float z = global->detector[0].detectorZ;
-		float dx = global->detector[0].pixelSize;
-		double r = sqrt(z*z+dx*dx*resolution*resolution);
-		double sintheta = dx*resolution/r;
-		resolutionA = eventData->wavelengthA/sintheta;
-		eventData->peakResolutionA = resolutionA;
-
-	
-		if(resolution > 0) {
-			float	area = (3.141*resolution*resolution)/(asic_ny*asic_nx);
-			eventData->peakDensity = (cutoff*np)/area;
-		}
-		free(inx); 			
-		free(iny);	
-
-	   
-	}
-	
 	// Update central hit counter
 	if(hit) {
 		pthread_mutex_lock(&global->nhits_mutex);
@@ -160,10 +121,108 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	}
 	
 
-	
+		   
 	return(hit);
 	
 }
+
+
+/*
+ *	Find peaks on the inner 4 2x2 modules
+ *	Calculate rest of detector only if needed
+ *	Tries to avoid bottleneck in subtractLocalBackground() on the whole detector even for blanks
+ */
+long hitfinderFastScan(cEventData *eventData, cGlobal *global){
+	
+	// Bad detector??
+	int	    detID = global->hitfinderDetector;
+	if(detID > global->nDetectors) {
+		printf("peakfinder: false detectorID %i\n",detID);
+		exit(1);
+	}
+
+	long	pix_nx = global->detector[detID].pix_nx;
+	long	pix_ny = global->detector[detID].pix_ny;
+		long		pix_nn = global->detector[detID].pix_nn;
+		long		asic_nx = global->detector[detID].asic_nx;
+		long		asic_ny = global->detector[detID].asic_ny;
+	long	nasics_x = global->detector[detID].nasics_x;
+	long	nasics_y = global->detector[detID].nasics_y;
+	long	radius = global->detector[detID].localBackgroundRadius;
+	float	*pix_r = global->detector[detID].pix_r;
+	float	*data = eventData->detector[detID].corrected_data;
+
+	float	hitfinderADCthresh = global->hitfinderADC;
+	float	hitfinderMinSNR = global->hitfinderMinSNR;
+	long	hitfinderMinPixCount = global->hitfinderMinPixCount;
+	long	hitfinderMaxPixCount = global->hitfinderMaxPixCount;
+	long	hitfinderLocalBGRadius = global->hitfinderLocalBGRadius;
+	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
+	tPeakList	*peaklist = &eventData->peaklist;
+
+	char	*mask = (char*) calloc(pix_nn, sizeof(char));
+	
+	//	Bad region masks  (data=0 to ignore regions)
+	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	for(long i=0;i<pix_nn;i++)
+		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+	
+
+	subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, 2);
+	
+
+	/*
+	 *	Call the appropriate peak finding algorithm
+	 */
+	long	nPeaks;
+	switch(global->hitfinderAlgorithm) {
+	
+		case 3 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder3(peaklist, data, mask, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
+			break;
+
+		case 6 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder6(peaklist, data, mask, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius, hitfinderMinPeakSeparation);
+			break;
+	   
+		case 8 : 	// Count number of Bragg peaks
+			nPeaks = peakfinder8(peaklist, data, mask, pix_r, asic_nx, asic_ny, nasics_x, 2, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
+			break;
+	
+		default :
+			printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
+			printf("Stopping in hitfinderFastScan.\n");
+			exit(1);
+			break;
+	}
+	
+	/*
+	 *	Is this a potential hit?
+	 */
+	int		hit;
+	eventData->nPeaks = nPeaks;
+	if(nPeaks >= global->hitfinderNpeaks/2 && nPeaks <= global->hitfinderNpeaksMax/2) {
+
+		hit = 1;
+		//printf("%li : Potential hit, npeaks(prescan) = %li\n", eventData->threadNum, nPeaks);
+	
+		// Do the rest of the local background subtraction
+		long offset = (2*asic_ny)*pix_nx;
+		subtractLocalBackground(data+offset, radius, asic_nx, asic_ny, nasics_x, 6);
+	}
+	
+	free(mask);
+	
+	return hit;
+}
+
+
+
+
+
+/*
+ *	Start of calculations for hitfinders
+ */
 
 void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC_threshold,uint16_t pixel_options,long *nat,float *tat){
 
@@ -241,10 +300,16 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     free(data);
     free(mask);
   }
-
+  
+  // n pixels above threshold
   if(nat >= global->hitfinderMinPixCount){
     hit = 1;
   }
+	// But not more than max (unless set to 0)
+  if(global->hitfinderMaxPixCount != 0 && nat > global->hitfinderMaxPixCount){
+		hit = 0;
+	}
+	
   return hit;
 }
 

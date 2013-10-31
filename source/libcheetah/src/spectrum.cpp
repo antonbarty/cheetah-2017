@@ -27,8 +27,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	int opalfail = eventData->specFail;
 	int specWidth = eventData->specWidth;
 	int specHeight = eventData->specHeight;
-	
-	int spectra = global->espectrum1D;
+	int spectra = global->espectrum;
 	
 	if(global->generateDarkcal && !opalfail && spectra){
 		eventData->energySpectrumExist = 1;
@@ -37,6 +36,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	if(hit && !opalfail && spectra){
 		eventData->energySpectrumExist = 1;
 		integrateSpectrum(eventData,global,specWidth,specHeight);
+		addToSpectrumStack(eventData,global, hit);
 	}
 	return;
 }
@@ -62,6 +62,106 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
 		}
 	}
 	return;
+}
+
+
+void addToSpectrumStack(cEventData *eventData, cGlobal *global, int powderClass){
+	
+	
+    float   *stack = global->espectrumStack[powderClass];
+    double  *spectrum = eventData->energySpectrum1D;
+    long	speclength = global->espectrumLength;
+    long    stackCounter = global->espectrumStackCounter[powderClass];
+    long    stackSize = global->espectrumStackSize;
+    pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
+
+    // Lock
+	pthread_mutex_lock(&mutex);
+	
+    // Data offsets
+    long stackoffset = stackCounter % stackSize;
+    long dataoffset = stackoffset*speclength;
+	
+    // Copy data and increment counter
+    for(long i=0; i<speclength; i++) {
+        stack[dataoffset+i] = (float) spectrum[i];
+    }
+	
+    // Increment counter
+    global->espectrumStackCounter[powderClass] += 1;
+	
+	
+    // Save data once stack is full
+    if((stackCounter % stackSize) == 0) {
+        
+        printf("Saving espectrum stack: %i\n", powderClass);
+        saveEspectrumStack(global, powderClass);
+        
+        for(long j=0; j<speclength*stackSize; j++)
+            global->espectrumStack[powderClass][j] = 0;
+    }
+	
+    pthread_mutex_unlock(&mutex);
+	
+}
+
+/*
+ *	Wrapper for saving all radial stacks
+ */
+void saveEspectrumStacks(cGlobal *global) {
+
+    if(!global->espectrum)
+        return;
+    
+    printf("Saving spectral stacks\n");
+	
+	for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+		saveEspectrumStack(global, powderType);
+	}
+}
+
+
+
+
+/*
+ *  Save radial average stack
+ */
+void saveEspectrumStack(cGlobal *global, int powderClass) {
+	
+	char	filename[1024];
+    float   *stack = global->espectrumStack[powderClass];
+    long	speclength = global->espectrumLength;
+    long    stackCounter = global->espectrumStackCounter[powderClass];
+    long    stackSize = global->espectrumStackSize;
+    pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
+	
+
+    if(!global->espectrum)
+        return;
+
+	if(global->espectrumStackCounter[powderClass]==0)
+		return;
+	
+    // Lock
+	pthread_mutex_lock(&mutex);
+
+	
+	// We re-use stacks, what is this number?
+	long	stackNum = stackCounter / stackSize;
+ 	if(stackNum == 0) stackNum = 1;
+	
+	// If stack is not full, how many rows are full?
+    long    nRows = stackSize;
+    if(stackCounter % stackSize != 0)
+        nRows = (stackCounter % stackSize);
+	
+	
+    sprintf(filename,"r%04u-espectrumstack-class%i-stack%li.h5", global->runNumber, powderClass, stackNum);
+    printf("Saving spectral stack: %s\n", filename);
+    writeSimpleHDF5(filename, stack, speclength, nRows, H5T_NATIVE_FLOAT);
+	
+	pthread_mutex_unlock(&mutex);
+	
 }
 
 
@@ -103,10 +203,15 @@ void genSpectrumBackground(cEventData *eventData, cGlobal *global, int specWidth
 
 
 void saveIntegratedRunSpectrum(cGlobal *global) {
+    
+    // Simply return if spectrum is not asked for
+    if(global->espectrum == 0)
+        return;
 
+    
 	int     spectrumpix = global->espectrumWidth*global->espectrumLength;
-	double *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
-	double *espectrumScale = (double*) calloc(global->espectrumLength, sizeof(double));
+	double  *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
+	double  *espectrumScale = (double*) calloc(global->espectrumLength, sizeof(double));
 	char	filename[1024];
 	int     maxindex = 0;
 	int     evspread = global->espectrumSpreadeV;
@@ -156,6 +261,7 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 	pthread_mutex_unlock(&global->nespechits_mutex);
 	return;
 }
+
 
 void readSpectrumDarkcal(cGlobal *global, char *filename) {
 

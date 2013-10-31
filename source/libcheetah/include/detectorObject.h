@@ -28,6 +28,8 @@ static const unsigned  CSPAD_ASIC_NX = 194;  // ASIC nx = extent of one ASIC in 
 static const unsigned  CSPAD_ASIC_NY = 185;  // ASIC ny = extent of one ASIC in y
 static const unsigned  CSPAD_nASICS_X = 8;   // 8 ASICs across in raw data stream
 static const unsigned  CSPAD_nASICS_Y = 8;   // 8 ASICs down in raw data stresm
+
+//  CSPAD 2x2 //
 static const unsigned  CSPAD2x2_nASICS_X = 2;   // 2 ASICs across in raw data stream
 static const unsigned  CSPAD2x2_nASICS_Y = 2;   // 2 ASICs down in raw data stresm
 
@@ -254,6 +256,28 @@ public:
 	// correction for intensity drop in every 2nd line, interpolation of all affected lines
 	int    usePnccdLineInterpolation;
 
+	// Histogram stack
+	int		histogram;
+	long	histogramMin;
+	long	histogramNbins;
+	long	histogramBinSize;
+	long	histogram_fs_min;
+	long	histogram_fs_max;
+	long	histogram_ss_min;
+	long	histogram_ss_max;
+	long	histogram_nfs;
+	long	histogram_nss;
+	long	histogram_nn;
+	long	histogram_count;
+	float	histogramMaxMemoryGb;
+	uint64_t	histogram_nnn;
+	uint16_t	*histogramData;
+	pthread_mutex_t histogram_mutex;
+	//long	histogram_depth;
+
+	
+	
+
 	// Saving options
 	int   saveDetectorCorrectedOnly;
 	int   saveDetectorRaw;
@@ -276,7 +300,7 @@ public:
 	/*
 	 * Powder patterns/sums for this detector
 	 */
-	FILE     *powderlogfp[MAX_POWDER_CLASSES];
+//	FILE     *powderlogfp[MAX_POWDER_CLASSES];
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
@@ -284,6 +308,7 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
+	double   *powderPeaks[MAX_POWDER_CLASSES];
 	float   *correctedMin[MAX_POWDER_CLASSES];
 	float   *assembledMin[MAX_POWDER_CLASSES];
 	float   *correctedMax[MAX_POWDER_CLASSES];
@@ -313,6 +338,7 @@ public:
 	void configure(void);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
+	void freePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
@@ -321,6 +347,7 @@ public:
 	void readBadpixelMask(char *);
 	void readBaddataMask(char *);
 	void readWireMask(char *);
+
 
 //private:
 
@@ -350,6 +377,7 @@ public:
 	float     *radialAverageCounter;
 	double    detectorZ;
 	float sum;
+
 
 };
 
