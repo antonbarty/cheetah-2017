@@ -147,10 +147,12 @@ public:
 
 	// Assembled image size
 	long  image_nx;
+	long  image_ny;
 	long  image_nn;
 
 	// Assembled downsampled image size
 	long  imageXxX_nx;
+	long  imageXxX_ny;
 	long  imageXxX_nn;
 	/** @brief Downsampling factor (1: no downsampling) */
 	long  downsampling;
@@ -309,6 +311,9 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
+	double   *powderAssembledSquared[MAX_POWDER_CLASSES];
+	double   *powderDownsampled[MAX_POWDER_CLASSES];
+	double   *powderDownsampledSquared[MAX_POWDER_CLASSES];
 	double   *powderPeaks[MAX_POWDER_CLASSES];
 	float   *correctedMin[MAX_POWDER_CLASSES];
 	float   *assembledMin[MAX_POWDER_CLASSES];
@@ -319,6 +324,9 @@ public:
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderAssembledSquared_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderDownsampled_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderDownsampledSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];

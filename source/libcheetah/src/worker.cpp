@@ -203,8 +203,17 @@ void *worker(void *threadarg) {
   //---ASSEMBLE-AND-ACCUMULATE-DATA---//
 
   // Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
-  if(global->powderSumWithBackgroundSubtraction)
+  if(global->powderSumWithBackgroundSubtraction){
+    // If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we might skip it if image is not going to be saved
+    if(global->assemblePowders){
+      // Assemble to realistic image
+      assemble2Dimage(eventData, global);
+      assemble2Dmask(eventData, global);
+      // Downsample assembled image
+      downsample(eventData,global);
+    }
     addToPowder(eventData, global);
+  }
 
   DETECTOR_LOOP {
     // Revert to raw detector data
@@ -219,13 +228,6 @@ void *worker(void *threadarg) {
     }
   }
 
-  // Assemble to realistic image
-  assemble2Dimage(eventData, global);
-  assemble2Dmask(eventData, global);
-
-  // Downsample assembled image
-  downsample(eventData,global);
-	
   // Inside-thread speed test
   if(global->ioSpeedTest==7) {
     printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder sum and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
@@ -233,8 +235,17 @@ void *worker(void *threadarg) {
   }
   
   // Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
-  if(!global->powderSumWithBackgroundSubtraction)
+  if(!global->powderSumWithBackgroundSubtraction){
+    // If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we might skip it if image is not going to be saved
+    if(global->assemblePowders){
+      // Assemble to realistic image
+      assemble2Dimage(eventData, global);
+      assemble2Dmask(eventData, global);
+      // Downsample assembled image
+      downsample(eventData,global);
+    }
     addToPowder(eventData, global);
+  }
 
   // Calculate radial average and maintain radial average stack
   calculateRadialAverage(eventData, global); 
@@ -288,11 +299,17 @@ void *worker(void *threadarg) {
   // Put here anything only needed for data saved to file (why waste the time on events that are not saved)
   // eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
 
-  //if( (hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ) ){
-  
-  
+  // If we have not assembled and downsampled yet we do it here.
+  if(!global->assemblePowders){
+    // Assemble to realistic image
+    assemble2Dimage(eventData, global);
+    assemble2Dmask(eventData, global);
+    // Downsample assembled image
+    downsample(eventData,global);
+  }
+
   if(eventData->writeFlag){
-    // Which save format?
+    // one CXI or many H5?
     if(global->saveCXI){
       printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s slice %u (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->stackSlice, eventData->nPeaks);
       pthread_mutex_lock(&global->saveCXI_mutex);

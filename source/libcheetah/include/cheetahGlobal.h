@@ -197,6 +197,8 @@ public:
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
+	/** @brief Toggle whether or not additional assembled powders and downsampled images shall be generated. This might slow down execution of cheetah. */
+	int     assemblePowders;
 
 
 	/** @brief Interval between saving of powder patterns, etc. */

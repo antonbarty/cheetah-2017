@@ -845,15 +845,8 @@ void writeAccumulatedCXI(cGlobal * global){
   cPixelDetectorCommon *detector;
   long	radial_nn;
   long	pix_nn,pix_nx,pix_ny;
-  long	image_nn;
-
-  //long NEvents = global->hitVector.size();
-  //bool * temp = (bool*) calloc(NEvents, sizeof(bool));
-  //for (long i=0;i<NEvents;i++){
-  //  temp[i] = global->hitVector[i];
-  //}
-  //createAndWriteDataset("hitVector",sharedVal.self,temp,NEvents);
-  //free(temp);
+  long	image_nn,image_nx,image_ny;
+  long	imageXxX_nn,imageXxX_nx,imageXxX_ny;
 
   DETECTOR_LOOP{
     POWDER_LOOP{
@@ -863,68 +856,112 @@ void writeAccumulatedCXI(cGlobal * global){
       pix_nx =  detector->pix_nx;
       pix_ny =  detector->pix_ny;
       image_nn = detector->image_nn;
+      image_nx = detector->image_nx;
+      image_ny = detector->image_ny;
+      imageXxX_nn = detector->imageXxX_nn;
+      imageXxX_nx = detector->imageXxX_nx;
+      imageXxX_ny = detector->imageXxX_ny;
       char buffer[1024];
 
       // Dereference/create arrays to be written to file
       // SUM(data)
-      double * sum_raw = detector->powderRaw[powID];
-      double * sum_corrected = detector->powderCorrected[powID];
-      double * sum_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
-      double * sum_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
-      calculateRadialAverage(sum_corrected,sum_corrected_ang,sum_corrected_angCnt,global,detID);
-
-      // SUM(data*data)
-      double * sum_rawSq = detector->powderRawSquared[powID];
-      double * sum_correctedSq = detector->powderCorrectedSquared[powID];
-      double * sum_correctedSq_ang = (double*) calloc(radial_nn, sizeof(double));
-      double * sum_correctedSq_angCnt = (double*) calloc(radial_nn, sizeof(double));
-      calculateRadialAverage(sum_correctedSq,sum_correctedSq_ang,sum_correctedSq_angCnt,global,detID);
-
+      // SUMSQ(data*data)
+      // MEAN(data)
       // SIGMA(data) = sqrt(SUM(data*data)-SUM(data)*SUM(data)) / N
+      // ANG, ANGCNT: radial projection
+
+      // raw
+      double * sum_raw = detector->powderRaw[powID];
+      double * sum_rawSq = detector->powderRawSquared[powID];     
+      double * mean_raw = (double*) calloc(pix_nn, sizeof(double));
       double * sigma_raw = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
+	mean_raw[i] = sum_raw[i]/(1.*detector->nPowderFrames[powID]);
 	sigma_raw[i] =
-	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_rawSq[i] - sum_raw[i]*sum_raw[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
       }
+      double * mean_raw_radial = (double*) calloc(radial_nn, sizeof(double));
+      double * mean_raw_angCnt = (double*) calloc(radial_nn, sizeof(double));
+      calculateRadialAverage(mean_raw,mean_raw_radial,mean_raw_angCnt,global,detID);
+      sprintf(buffer,"detector%li_class%li_mean_raw",detID,powID);
+      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_raw,pix_nx,pix_ny);
+      sprintf(buffer,"detector%li_class%li_mean_raw_radial",detID,powID);
+      createAndWriteDataset(buffer, sharedVal.self,mean_raw_radial,radial_nn);
+      sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
+      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_raw,pix_nx,pix_ny);
+
+      // corrected
+      double * sum_corrected = detector->powderCorrected[powID];
+      double * sum_correctedSq = detector->powderCorrectedSquared[powID];
+      double * mean_corrected = (double*) calloc(pix_nn, sizeof(double));
       double * sigma_corrected = (double *) calloc(pix_nn,sizeof(double));
       for(long i = 0; i<pix_nn; i++){
+	mean_corrected[i] = sum_corrected[i]/(1.*detector->nPowderFrames[powID]);
 	sigma_corrected[i] =
-	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/detector->nPowderFrames[powID]) / detector->nPowderFrames[powID] );
+	  sqrt( fabs(sum_correctedSq[i] - sum_corrected[i]*sum_corrected[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
       }      
-      double * sigma_corrected_ang = (double*) calloc(radial_nn, sizeof(double));
-      double * sigma_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
-      calculateRadialAverage(sum_corrected,sum_corrected_ang,sum_corrected_angCnt,global,detID);
-
-      // SUM(data)
-      sprintf(buffer,"detector%li_class%li_sum_raw",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sum_raw,pix_nx,pix_ny);
-      sprintf(buffer,"detector%li_class%li_sum_corrected",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sum_corrected,pix_nx,pix_ny);
-      sprintf(buffer,"detector%li_class%li_sum_corrected_angAvg",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sum_corrected_ang,radial_nn);
-
-      // SUM(data*data)
-      sprintf(buffer,"detector%li_class%li_sum_rawSq",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sum_rawSq,pix_nx,pix_ny);
-      sprintf(buffer,"detector%li_class%li_sum_correctedSq",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sum_correctedSq,pix_nx,pix_ny);
-      sprintf(buffer,"detector%li_class%li_sum_correctedSq_angAvg",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sum_correctedSq_ang,radial_nn);
-
-      // SIGMA(data)
-      sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sigma_raw,pix_nx,pix_ny);
+      double * mean_corrected_radial = (double*) calloc(radial_nn, sizeof(double));
+      double * mean_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
+      calculateRadialAverage(mean_corrected,mean_corrected_radial,mean_corrected_angCnt,global,detID);
+      sprintf(buffer,"detector%li_class%li_mean_corrected",detID,powID);
+      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_corrected,pix_nx,pix_ny);
+      sprintf(buffer,"detector%li_class%li_mean_corrected_radial",detID,powID);
+      createAndWriteDataset(buffer, sharedVal.self,mean_corrected_radial,radial_nn);
       sprintf(buffer,"detector%li_class%li_sigma_corrected",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sigma_corrected,pix_nx,pix_ny);
-      sprintf(buffer,"detector%li_class%li_sigma_corrected_angAvg",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,sigma_corrected_ang,radial_nn);
+      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_corrected,pix_nx,pix_ny);
 
-      free(sum_corrected_ang);
-      free(sum_corrected_angCnt);
-      free(sum_correctedSq_ang);
-      free(sum_correctedSq_angCnt);
-      free(sigma_corrected_ang);
-      free(sigma_corrected_angCnt);
+      // assembled
+      double * sum_assembled = detector->powderAssembled[powID];
+      double * sum_assembledSq = detector->powderAssembledSquared[powID];
+      double * mean_assembled = (double*) calloc(image_nn, sizeof(double));
+      double * sigma_assembled = (double*) calloc(image_nn, sizeof(double));
+      if(global->assemblePowders && global->assemble2DImage) {
+	for(long i = 0; i<image_nn; i++){
+	  mean_assembled[i] = sum_assembled[i]/(1.*detector->nPowderFrames[powID]);
+	  sigma_assembled[i] =
+	    sqrt( fabs(sum_assembledSq[i] - sum_assembled[i]*sum_assembled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
+	}
+	sprintf(buffer,"detector%li_class%li_mean_assembled",detID,powID);
+	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_assembled,image_nx,image_ny);
+	sprintf(buffer,"detector%li_class%li_sigma_assembled",detID,powID);
+	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_assembled,image_nx,image_ny);
+      }
+
+      // downsampled
+      double * sum_downsampled = detector->powderDownsampled[powID];
+      double * sum_downsampledSq = detector->powderDownsampledSquared[powID];
+      double * mean_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
+      double * sigma_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
+      if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+	for(long i = 0; i<imageXxX_nn; i++){
+	  mean_downsampled[i] = sum_downsampled[i]/(1.*detector->nPowderFrames[powID]);
+	  sigma_downsampled[i] =
+	    sqrt( fabs(sum_downsampledSq[i] - sum_downsampled[i]*sum_downsampled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
+	}
+	sprintf(buffer,"detector%li_class%li_mean_downsampled",detID,powID);
+	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_downsampled,imageXxX_nx,imageXxX_ny);
+	sprintf(buffer,"detector%li_class%li_sigma_downsampled",detID,powID);
+	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_downsampled,imageXxX_nx,imageXxX_ny);
+      }
+
+      free(mean_corrected_radial);
+      free(mean_corrected_angCnt);
+      free(mean_raw_radial);
+      free(mean_raw_angCnt);
+      free(mean_raw);
+      free(mean_corrected);
+      free(sigma_raw);
+      free(sigma_corrected);
+      if(global->assemblePowders){
+	if(global->assemble2DImage) {
+	  free(mean_assembled);
+	  free(sigma_assembled);
+	}
+	if(global->detector[detID].downsampling > 1){
+	  free(mean_downsampled);
+	  free(sigma_downsampled);
+	}
+      }
     }      
   }
 }

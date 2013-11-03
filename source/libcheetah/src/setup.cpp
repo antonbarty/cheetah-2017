@@ -79,7 +79,8 @@ cGlobal::cGlobal(void) {
   hitfinderNpeaksMax = 100000;
   hitfinderAlgorithm = 3;
   hitfinderMinPixCount = 3;
-  hitfinderMaxPixCount = 20;
+  // hitfinderMaxPixCount is a new feature. For backwards compatibility it should be neutral by default, therefore hitfinderMaxPixCount = 0
+  hitfinderMaxPixCount = 0;
   hitfinderUsePeakmask = 0;
   hitfinderCheckGradient = 0;
   hitfinderMinGradient = 0;
@@ -135,7 +136,8 @@ cGlobal::cGlobal(void) {
   powderthresh = 0.0;
   powderSumHits = 1;
   powderSumBlanks = 0;
-    powderSumWithBackgroundSubtraction = 1;
+  powderSumWithBackgroundSubtraction = 1;
+  assemblePowders = 0;
 
   // Radial average stacks
   saveRadialStacks=0;
@@ -198,6 +200,7 @@ cGlobal::cGlobal(void) {
   // Only one thread during calibration
   useSingleThreadCalibration = 0;
   strcpy(cxiFilename, "");
+
 
 }
 
@@ -911,6 +914,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
       powderSumWithBackgroundSubtraction = atoi(value);
   }
+  else if (!strcmp(tag, "assemblepowders")){
+      assemblePowders = atoi(value);
+  }
   else if (!strcmp(tag, "hitfinderadc")) {
     hitfinderADC = atoi(value);
   }
@@ -1099,6 +1105,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "powderThresh=%f\n",powderthresh);
   fprintf(fp, "powderSumHits=%d\n",powderSumHits);
   fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
+  fprintf(fp, "assemblePowders=%d\n",assemblePowders);
   fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
   fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
   fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);

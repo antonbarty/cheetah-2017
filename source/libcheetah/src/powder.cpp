@@ -53,7 +53,14 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     long	pix_nn = global->detector[detID].pix_nn;
     long	pix_nx = global->detector[detID].pix_nx;
     long	pix_ny = global->detector[detID].pix_ny;
+
     long	image_nn = global->detector[detID].image_nn;
+    long	image_nx = global->detector[detID].image_nx;
+    long	image_ny = global->detector[detID].image_ny;
+
+    long	imageXxX_nn = global->detector[detID].imageXxX_nn;
+    long	imageXxX_nx = global->detector[detID].imageXxX_nx;
+    long	imageXxX_ny = global->detector[detID].imageXxX_ny;
 
     double  *buffer;
 	
@@ -145,7 +152,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     free(buffer);
 
 
-	/*
+    /*
      *  Sum of peaks centroids
      */
 	if (eventData->nPeaks > 0) {
@@ -173,31 +180,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
 		}
 		pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
 	}
-	
-    
-    /*
-     *  Do not sum assembled data here: it takes more time than expected to assemble the required 2D image.
-     *  Instead sum raw data and assemble2Dimage before saving
-     */
-    /*
-    if(global->assemble2DImage) {
-        // Assembled data
-        pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-        if(!global->usePowderThresh) {
-            for(long i=0; i<image_nn; i++)
-                global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-        }
-        else {
-            for(long i=0; i<image_nn; i++){
-                if(eventData->detector[detID].image[i] > global->powderthresh)
-                    global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-            }
-        }
-        pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-    }
-     */
 
-    
     // Min nPeaks: Pattern
     if(eventData->nPeaks < global->nPeaksMin[powderClass]){
         pthread_mutex_lock(&global->detector[detID].correctedMin_mutex[powderClass]);
@@ -213,6 +196,48 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
         memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMax_mutex[powderClass]);
     }
+   
+    // Only assemble data if explicitly specified by configuration
+    if(global->assemblePowders) {
+      if(global->assemble2DImage){
+        // Assembled data
+        pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+        if(!global->usePowderThresh) {
+	  for(long i=0; i<image_nn; i++){
+	      global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+	      global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+	  }
+        }
+        else {
+            for(long i=0; i<image_nn; i++){
+                if(eventData->detector[detID].image[i] > global->powderthresh)
+                    global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+		    global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+            }
+        }
+        pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+      }
+      if(global->detector[detID].downsampling > 1){
+	// Downsampled data
+	pthread_mutex_lock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+	if(!global->usePowderThresh) {
+	  for(long i=0; i<imageXxX_nn; i++){
+	      global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+	      global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
+	  }
+        }
+        else {
+            for(long i=0; i<imageXxX_nn; i++){
+                if(eventData->detector[detID].image[i] > global->powderthresh)
+                    global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+                    global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
+            }
+        }
+        pthread_mutex_unlock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+      }
+    }
+    
+    
 
 }
 
@@ -300,21 +325,19 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     calculateRadialAverage(bufferCorrected, radialAverageCorrected, radialAverageCorrectedCounter, global, detID);
 
-	// Peak powder
+    // Peak powder
     double *bufferPeaks = (double*) calloc(pix_nn, sizeof(double));
     pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
     memcpy(bufferPeaks, detector->powderPeaks[powderType], pix_nn*sizeof(double));
     pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
     calculateRadialAverage(bufferCorrected, radialAverageCorrected, radialAverageCorrectedCounter, global, detID);
 
-    
     // Assembled image for viewing
     bufferAssembled = (double*) calloc(image_nn, sizeof(double));
     pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
     memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
     pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
     
-	
     // Data squared (for calculation of variance)
     double *bufferCorrectedSquared = (double*) calloc(pix_nn, sizeof(double));
     double *radialAverageCorrectedSquared = (double*) calloc(radial_nn, sizeof(double));
@@ -322,7 +345,6 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     memcpy(bufferCorrectedSquared, detector->powderCorrectedSquared[powderType], pix_nn*sizeof(double));
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
     calculateRadialAverage(bufferCorrectedSquared, radialAverageCorrectedSquared, radialAverageCorrectedCounter, global, detID);
-
 	
     // Sigma (variance)
     double *bufferCorrectedSigma = (double*) calloc(pix_nn, sizeof(double));
@@ -336,7 +358,6 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
     calculateRadialAverage(bufferCorrectedSigma, radialAverageCorrectedSigma, radialAverageCorrectedCounter, global, detID);
-
 
     float *bufferCorrectedNPeaksMin = (float*) calloc(pix_nn,sizeof(float));
     pthread_mutex_lock(&detector->correctedMin_mutex[powderType]);

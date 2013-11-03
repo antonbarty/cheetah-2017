@@ -489,8 +489,11 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-	powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
+    powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
     powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+    powderAssembledSquared[i] = (double*) calloc(image_nn, sizeof(double));
+    powderDownsampled[i] = (double*) calloc(image_nn, sizeof(double));
+    powderDownsampledSquared[i] = (double*) calloc(image_nn, sizeof(double));
     correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
     correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
     assembledMin[i] = (float*) calloc(image_nn, sizeof(float));
@@ -501,21 +504,14 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     pthread_mutex_init(&powderCorrected_mutex[i], NULL);
     pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
     pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+    pthread_mutex_init(&powderAssembledSquared_mutex[i], NULL);
+    pthread_mutex_init(&powderDownsampled_mutex[i], NULL);
+    pthread_mutex_init(&powderDownsampledSquared_mutex[i], NULL);
     pthread_mutex_init(&radialStack_mutex[i], NULL);
     pthread_mutex_init(&correctedMin_mutex[i], NULL);
     pthread_mutex_init(&correctedMax_mutex[i], NULL);		
     pthread_mutex_init(&assembledMin_mutex[i], NULL);
     pthread_mutex_init(&assembledMax_mutex[i], NULL);
-	  
-	for(long j=0; j<pix_nn; j++) {
-		powderRaw[i][j] = 0;
-		powderCorrected[i][j] = 0;
-		powderCorrectedSquared[i][j] = 0;
-		powderPeaks[i][j] = 0;
-	  }
-	  for(long j=0; j<image_nn; j++) {
-		  powderAssembled[i][j] = 0;
-	  }
 	  
   }
 	
@@ -559,10 +555,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
     
-		// Zero array (there may be a faster way to do this)
-		for(uint64_t j=0; j<histogram_nnn; j++) {
-			histogramData[j] = 0;
-		}
 	}
 }
 
@@ -735,8 +727,9 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   if(fabs(xmin) > max) max = fabs(xmin);
   if(fabs(ymin) > max) max = fabs(ymin);
   image_nx = 2*(unsigned)max;
-  image_nn = image_nx*image_nx;
-  printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
+  image_ny = image_nx;
+  image_nn = image_nx*image_ny;
+  printf("\tImage output array will be %li x %li\n",image_ny,image_nx);
 	
   // Apply image center shift
   for(i=0;i<nn;i++){
@@ -758,6 +751,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   // How big must we make the output downsampled image?
   imageXxX_nx = image_nx/downsampling;
   imageXxX_nn = image_nn/downsampling/downsampling;
+  imageXxX_ny = imageXxX_nx;
 }
 
 
