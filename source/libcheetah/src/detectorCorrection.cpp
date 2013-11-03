@@ -20,8 +20,7 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-void pnccdOffsetCorrection1(float *data);
-void pnccdOffsetCorrection2(float *data,uint16_t *mask);
+void pnccdOffsetCorrection(float *data,uint16_t *mask);
 
 
 /*
@@ -505,13 +504,14 @@ void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
   DETECTOR_LOOP {
     if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
       float	*data = eventData->detector[detID].corrected_data;
-      pnccdOffsetCorrection1(data);
+      uint16_t *mask = eventData->detector[detID].pixelmask;
+      pnccdOffsetCorrection(data,mask);
     }
   }
 }		
 
 
-void pnccdOffsetCorrection1(float *data) {
+void pnccdOffsetCorrection(float *data,uint16_t *mask) {
     float sum,m;
     int i,j,x,y,mx,my,x_;
     int q;
@@ -558,6 +558,7 @@ void pnccdOffsetCorrection1(float *data) {
                         j = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + x;
                         data[j] -= m;
                         data[j] -= (m*offset_m[q]+offset_c[q])*float(500-x_);
+			mask[j] |= PIXEL_IS_ARTIFACT_CORRECTED;
                     }
                 }
             }
