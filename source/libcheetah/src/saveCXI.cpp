@@ -580,9 +580,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	// /entry_1/image_j/mask_shared
 	uint16_t *imageXxX_pixelmask_shared = (uint16_t*) calloc(global->detector[detID].imageXxX_nn,sizeof(uint16_t));
 	if(global->detector[detID].downsamplingConservative==1){
-	  downsampleMaskConservative(image_pixelmask_shared,imageXxX_pixelmask_shared,global->detector[detID].image_nn,global->detector[detID].image_nx,global->detector[detID].imageXxX_nn,global->detector[detID].imageXxX_nx);
+	  downsampleMaskConservative(image_pixelmask_shared,imageXxX_pixelmask_shared,global->detector[detID].image_nn,global->detector[detID].image_nx,global->detector[detID].imageXxX_nn,global->detector[detID].imageXxX_nx,global->detector[detID].downsampling);
 	} else {
-	  downsampleMaskNonConservative(image_pixelmask_shared,imageXxX_pixelmask_shared,global->detector[detID].image_nn,global->detector[detID].image_nx,global->detector[detID].imageXxX_nn,global->detector[detID].imageXxX_nx);
+	  downsampleMaskNonConservative(image_pixelmask_shared,imageXxX_pixelmask_shared,global->detector[detID].image_nn,global->detector[detID].image_nx,global->detector[detID].imageXxX_nn,global->detector[detID].imageXxX_nx,global->detector[detID].downsampling);
 	}
 	createAndWriteDataset("mask_shared", imgXxX.self, imageXxX_pixelmask_shared, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny);
 	// /entry_1/image_j/detector_1

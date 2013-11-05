@@ -14,10 +14,6 @@
 #include "peakfinders.h"
 #include "cheetahmodules.h"
 
-void downsampleImage(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
-void downsampleImage(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale);
-void downsampleMask(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx);
-
 /*
  *	Various flavours of hitfinder
  *		0 - Everything is a hit
@@ -277,8 +273,8 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
     pix_nn = (pix_ny_0/global->hitfinderDownsampling)*pix_nx;
     data = (float *) calloc(pix_nn,sizeof(float));
     mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
-    downsampleImageConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.);
-    downsampleMaskConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx);    
+    downsampleImageConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.,global->hitfinderDownsampling);
+    downsampleMaskConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx,global->hitfinderDownsampling);    
   } else {
     pix_nn = global->detector[detID].pix_nn;  
     data = hitfinderData;

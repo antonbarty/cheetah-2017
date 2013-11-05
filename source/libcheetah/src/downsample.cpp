@@ -18,10 +18,9 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 
-void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale){
+void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, long downsampling){
   long x0,y0;
   long x1,y1;
-  long downsampling = img_nx/imgXxX_nx;
   long i0,i1;
 
   for(i0 = 0;i0<img_nn;i0++){
@@ -34,7 +33,7 @@ void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_
   }
 }
 
-void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale){
+void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, long downsampling){
   long i;
   float int16_t_max = 32767.;
 
@@ -43,7 +42,7 @@ void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long 
     temp[i] = (float) img[i];
   }
   float *  tempXxX = (float *) calloc(imgXxX_nn,sizeof(float));
-  downsampleImageConservative(temp,tempXxX,img_nn,img_nx,imgXxX_nn,imgXxX_nx,rescale);
+  downsampleImageConservative(temp,tempXxX,img_nn,img_nx,imgXxX_nn,imgXxX_nx,rescale,downsampling);
   for(i = 0;i<imgXxX_nn;i++){
     // Check for overflow and clamp in case
     if(tempXxX[i]>int16_t_max){
@@ -59,10 +58,9 @@ void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long 
 
 
 // sub-pixels that have any of the mask_out_bits set are disregarded. New super-pixels are rescaled accordingly. Super-pixels with all sub-pixels masked out are set to 0
-void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, uint16_t *msk){
+void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, uint16_t *msk, long downsampling){
   long x0,y0;
   long x1,y1;
-  long downsampling = img_nx/imgXxX_nx;
   long i0,i1,i;
   uint16_t mask_out_bits = PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
   bool good_pixel;
@@ -88,10 +86,9 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
 }
 
 
-void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
+void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
   long x0,y0;
   long x1,y1;
-  long downsampling = img_nx/imgXxX_nx;
   long imgXxX_ny = imgXxX_nn/imgXxX_nx;
   long i0,i1;
 
@@ -103,18 +100,15 @@ void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long
     y0 = i0/img_nx;
     x1 = x0/downsampling;
     y1 = y0/downsampling;
-    if ((x1<imgXxX_nx)&&(y1<imgXxX_ny)){
-      i1 = y1*imgXxX_nx + x1;
-      mskXxX[i1] |= msk[i0];
-    }
+    i1 = y1*imgXxX_nx + x1;
+    mskXxX[i1] |= msk[i0];
   }
 }
 
 // downsample mask by only masking if all sub-pixels share a bit, if all pixels are having any of the critical bits set they are masked too 
-void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx){
+void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
   long x0,y0;
   long x1,y1;
-  long downsampling = img_nx/imgXxX_nx;
   long imgXxX_ny = imgXxX_nn/imgXxX_nx;
   long i0,i1;
   long *tempN;
@@ -132,15 +126,13 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    if ((x1<imgXxX_nx)&&(y1<imgXxX_ny)){
-      if (isAnyOfBitOptionsSet(msk[i0],mask_out_bits)){
-	// at least one mask-out-bit is set
-	tempM[i1] |= msk[i0];
-      } else {
-	// no mask-out-bit is set
-	tempN[i1] += 1;
-	mskXxX[i1] |= msk[i0];
-      }
+    if (isAnyOfBitOptionsSet(msk[i0],mask_out_bits)){
+      // at least one mask-out-bit is set
+      tempM[i1] |= msk[i0];
+    } else {
+      // no mask-out-bit is set
+      tempN[i1] += 1;
+      mskXxX[i1] |= msk[i0];
     }
   }
   for(i1 = 0;i1<imgXxX_nn;i1++){
@@ -158,6 +150,7 @@ void downsample(cEventData *eventData, cGlobal *global){
   DETECTOR_LOOP {
     if(global->detector[detID].downsampling > 1){
 
+      long              downsampling = global->detector[detID].downsampling;
       long		image_nx = global->detector[detID].image_nx;
       long		image_nn = global->detector[detID].image_nn;
       float		*image = eventData->detector[detID].image;
@@ -169,11 +162,11 @@ void downsample(cEventData *eventData, cGlobal *global){
       float             rescale = global->detector[detID].downsamplingRescale;
 
       if (global->detector[detID].downsamplingConservative == 1){
-	downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,rescale);
-	downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx);
+	downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,rescale,downsampling);
+	downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
       } else {
-	downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,rescale,image_pixelmask);
-	downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx);	
+	downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,rescale,image_pixelmask,downsampling);
+	downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);	
       }
       
     }
