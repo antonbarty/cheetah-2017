@@ -91,7 +91,7 @@ void assemble2Dpowder(cGlobal *global) {
  *	input data: float
  *	output data: int16_t
  */
-void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
+void  assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation){
 
     // Assembly is done using floating point by default
     float	*temp = (float*) calloc(image_nn,sizeof(float));

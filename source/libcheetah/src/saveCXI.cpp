@@ -573,11 +573,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	CXI::Image imgXxX;
 	imgXxX.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// /entry_1/image_j/data
-	long imageXxX_ny = global->detector[detID].imageXxX_nn/global->detector[detID].imageXxX_nx;
-	imgXxX.data = create2DStack("data", imgXxX.self, global->detector[detID].imageXxX_nx, imageXxX_ny, H5T_STD_I16LE);
+	imgXxX.data = create2DStack("data", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_STD_I16LE);
 	if(global->savePixelmask){
 	  // /entry_1/image_j/mask
-	  imgXxX.mask = create2DStack("mask", imgXxX.self, global->detector[detID].imageXxX_nx, imageXxX_ny, H5T_NATIVE_UINT16);
+	  imgXxX.mask = create2DStack("mask", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_NATIVE_UINT16);
 	}
 	// /entry_1/image_j/mask_shared
 	uint16_t *imageXxX_pixelmask_shared = (uint16_t*) calloc(global->detector[detID].imageXxX_nn,sizeof(uint16_t));
@@ -586,7 +585,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	} else {
 	  downsampleMaskNonConservative(image_pixelmask_shared,imageXxX_pixelmask_shared,global->detector[detID].image_nn,global->detector[detID].image_nx,global->detector[detID].imageXxX_nn,global->detector[detID].imageXxX_nx);
 	}
-	createAndWriteDataset("mask_shared", imgXxX.self, imageXxX_pixelmask_shared, global->detector[detID].imageXxX_nx, imageXxX_ny);
+	createAndWriteDataset("mask_shared", imgXxX.self, imageXxX_pixelmask_shared, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny);
 	// /entry_1/image_j/detector_1
 	H5Lcreate_soft(detectorPath,imgXxX.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
 	// /entry_1/image_j/source_1
@@ -596,7 +595,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	// /entry_1/image_j/data_space
 	imgXxX.dataSpace = createStringStack("data_space",imgXxX.self);
 	// /entry_1/image_j/thumbnail
-	imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, imageXxX_ny/CXI::thumbnailScale, H5T_STD_I16LE);
+	imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, global->detector[detID].imageXxX_ny/CXI::thumbnailScale, H5T_STD_I16LE);
 	// /entry_1/image_j/experiment_identifier
 	H5Lcreate_soft("/entry_1/experiment_identifier",imgXxX.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 	cxi->entry.images.push_back(imgXxX);

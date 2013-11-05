@@ -117,14 +117,14 @@ void cheetahNewRun(cGlobal *global) {
  */
 cEventData* cheetahNewEvent(cGlobal	*global) {
 
-    /*
+        /*
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
 	eventData = (cEventData*) calloc(sizeof(cEventData),1);
 	eventData->pGlobal = global;
 
-    /*
+	/*
 	 *	Initialise any common default values
 	 */
 	eventData->useThreads = 0;
@@ -147,6 +147,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	DETECTOR_LOOP {
 		long	pix_nn = global->detector[detID].pix_nn;
 		long	image_nn = global->detector[detID].image_nn;
+		long	imageXxX_nn = global->detector[detID].imageXxX_nn;
 		long	radial_nn = global->detector[detID].radial_nn;
 		
 		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
@@ -157,14 +158,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detID].image = (int16_t*) calloc(image_nn,sizeof(int16_t));
 		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
-		//if(global->detector[detID].downsampling > 1){
-		  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
-		  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-		//}
-		//else {
-		//  eventData->detector[detID].imageXxX = (int16_t*) calloc(image_nn,sizeof(int16_t));
-		//  eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-		//}
+		eventData->detector[detID].imageXxX = (int16_t*) calloc(imageXxX_nn,sizeof(int16_t));
+		eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
 
 		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
