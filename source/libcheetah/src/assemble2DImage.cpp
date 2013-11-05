@@ -87,7 +87,7 @@ void assemble2Dpowder(cGlobal *global) {
    
     
 void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
-    
+ 
     if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
         // Loop through all pixels and interpolate onto regular grid
         float	x, y;

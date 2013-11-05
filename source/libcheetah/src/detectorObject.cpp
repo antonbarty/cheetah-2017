@@ -749,7 +749,7 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   radial_nn = (long int) ceil(radial_max)+1;
 
   // How big must we make the output downsampled image?
-  imageXxX_nx = image_nx/downsampling;
+  imageXxX_nx = image_nx/downsampling - (image_nx % 2);
   imageXxX_ny = imageXxX_nx;
   imageXxX_nn = imageXxX_nx*imageXxX_ny;
 

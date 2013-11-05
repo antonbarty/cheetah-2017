@@ -543,7 +543,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       CXI::Image img;
       img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
       // /entry_1/image_i/data
-      img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_STD_I16LE);
+      img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_NATIVE_FLOAT);
       if(global->savePixelmask){
 	// /entry_1/image_i/mask
 	img.mask = create2DStack("mask", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_NATIVE_UINT16);
@@ -561,7 +561,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       // /entry_1/image_i/data_space
       img.dataSpace = createStringStack("data_space",img.self);
       // /entry_1/image_i/thumbnail
-      img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_STD_I16LE);
+      img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_NATIVE_FLOAT);
       // /entry_1/image_i/experiment_identifier
       H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
       cxi->entry.images.push_back(img);
@@ -572,7 +572,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	CXI::Image imgXxX;
 	imgXxX.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// /entry_1/image_j/data
-	imgXxX.data = create2DStack("data", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_STD_I16LE);
+	imgXxX.data = create2DStack("data", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_NATIVE_FLOAT);
 	if(global->savePixelmask){
 	  // /entry_1/image_j/mask
 	  imgXxX.mask = create2DStack("mask", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_NATIVE_UINT16);
@@ -594,7 +594,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	// /entry_1/image_j/data_space
 	imgXxX.dataSpace = createStringStack("data_space",imgXxX.self);
 	// /entry_1/image_j/thumbnail
-	imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, global->detector[detID].imageXxX_ny/CXI::thumbnailScale, H5T_STD_I16LE);
+	imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, global->detector[detID].imageXxX_ny/CXI::thumbnailScale, H5T_NATIVE_FLOAT);
 	// /entry_1/image_j/experiment_identifier
 	H5Lcreate_soft("/entry_1/experiment_identifier",imgXxX.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 	cxi->entry.images.push_back(imgXxX);
@@ -1032,7 +1032,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
   writeStringToStack(cxi->entry.experimentIdentifier,stackSlice,info->eventname);
   // put it back
   info->eventname[strlen(info->eventname)] = '.';
-
+  
   DETECTOR_LOOP {    
     /* Save assembled image under image groups */
     writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
@@ -1059,10 +1059,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
       writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
       writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
       delete [] thumbnail;      
-
       if (global->detector[detID].downsampling > 1){
 	imgID = detID * 2 + 1;
 	if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
+	printf("%g ",info->detector[detID].imageXxX[100]);
 	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
 	if(global->savePixelmask){
 	  if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}

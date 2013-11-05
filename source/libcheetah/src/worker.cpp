@@ -228,6 +228,7 @@ void *worker(void *threadarg) {
     }
   }
 
+
   // Inside-thread speed test
   if(global->ioSpeedTest==7) {
     printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder sum and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
@@ -287,6 +288,7 @@ void *worker(void *threadarg) {
 
  logfile:
   eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+
 
   // If this is a hit, write out to our favourite HDF5 format
   // Put here anything only needed for data saved to file (why waste the time on events that are not saved)
