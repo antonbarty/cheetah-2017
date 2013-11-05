@@ -224,7 +224,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].corrected_data_int16);
+			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+			for(long i=0;i<global->detector[detID].pix_nn;i++){
+			  corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int16);
+			free(corrected_data_int16);
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", info->threadNum);
 				H5Dclose(dataspace_id);

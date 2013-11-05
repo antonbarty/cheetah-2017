@@ -376,11 +376,10 @@ public:
 	uint16_t  *raw_data;
 	float     *detector_corrected_data;
 	float     *corrected_data;
-	int16_t   *corrected_data_int16;
 	uint16_t  *pixelmask;
-	int16_t   *image;
+	float     *image;
 	uint16_t  *image_pixelmask;
-	int16_t   *imageXxX;
+	float     *imageXxX;
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;

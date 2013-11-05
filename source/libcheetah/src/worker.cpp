@@ -279,13 +279,6 @@ void *worker(void *threadarg) {
 
   //---WRITE-DATA-TO-H5---//
 
-  // Keep int16 copy of corrected data (needed for saving images)
-  DETECTOR_LOOP {
-    for(long i=0;i<global->detector[detID].pix_nn;i++){
-      eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
-    }
-  }
-
   updateDatarate(eventData,global);  
 
   if(global->saveCXI==1){

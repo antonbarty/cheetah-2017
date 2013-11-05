@@ -205,11 +205,11 @@ void downsample(cEventData *eventData, cGlobal *global){
 
       long		image_nx = global->detector[detID].image_nx;
       long		image_nn = global->detector[detID].image_nn;
-      int16_t		*image = eventData->detector[detID].image;
+      float		*image = eventData->detector[detID].image;
       uint16_t	        *image_pixelmask = eventData->detector[detID].image_pixelmask;
       long		imageXxX_nx = global->detector[detID].imageXxX_nx;
       long		imageXxX_nn = global->detector[detID].imageXxX_nn;
-      int16_t		*imageXxX = eventData->detector[detID].imageXxX;
+      float		*imageXxX = eventData->detector[detID].imageXxX;
       uint16_t	        *imageXxX_pixelmask = eventData->detector[detID].imageXxX_pixelmask;
       float             rescale = global->detector[detID].downsamplingRescale;
 

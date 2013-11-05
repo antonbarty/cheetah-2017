@@ -543,16 +543,15 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
       CXI::Image img;
       img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
       // /entry_1/image_i/data
-      long image_ny = global->detector[detID].image_nn/global->detector[detID].image_nx;
-      img.data = create2DStack("data", img.self, global->detector[detID].image_nx, image_ny, H5T_STD_I16LE);
+      img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_STD_I16LE);
       if(global->savePixelmask){
 	// /entry_1/image_i/mask
-	img.mask = create2DStack("mask", img.self, global->detector[detID].image_nx, image_ny, H5T_NATIVE_UINT16);
+	img.mask = create2DStack("mask", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_NATIVE_UINT16);
       }
       // /entry_1/image_i/mask_shared
       uint16_t *image_pixelmask_shared = (uint16_t*) calloc(global->detector[detID].image_nn,sizeof(uint16_t));
       assemble2Dmask(image_pixelmask_shared, global->detector[detID].pixelmask_shared, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_nn, global->detector[detID].image_nx, global->detector[detID].image_nn, global->assembleInterpolation);
-      createAndWriteDataset("mask_shared", img.self, image_pixelmask_shared, global->detector[detID].image_nx, image_ny);
+      createAndWriteDataset("mask_shared", img.self, image_pixelmask_shared, global->detector[detID].image_nx, global->detector[detID].image_ny);
       // /entry_1/image_i/detector_1
       H5Lcreate_soft(detectorPath,img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
       // /entry_1/image_i/source_1
@@ -1045,7 +1044,6 @@ void writeCXI(cEventData *info, cGlobal *global ){
       imgID = detID * 2;
     }
     char buffer[1024];
-    long image_ny = global->detector[detID].image_nn/global->detector[detID].image_nx;
     sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
     writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
     if(global->saveAssembled){
@@ -1055,7 +1053,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].image_pixelmask);
       }
-      int16_t * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,image_ny,CXI::thumbnailScale);
+      float * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_ny,CXI::thumbnailScale);
       if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
       write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
       writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
@@ -1064,14 +1062,13 @@ void writeCXI(cEventData *info, cGlobal *global ){
 
       if (global->detector[detID].downsampling > 1){
 	imgID = detID * 2 + 1;
-	long imageXxX_ny = global->detector[detID].imageXxX_nn/global->detector[detID].imageXxX_nx;
 	if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
 	if(global->savePixelmask){
 	  if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
 	  write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].imageXxX_pixelmask);
 	}
-	int16_t * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
+	float * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,global->detector[detID].imageXxX_ny,CXI::thumbnailScale);
 	if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
 	write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
 	writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
@@ -1081,13 +1078,18 @@ void writeCXI(cEventData *info, cGlobal *global ){
     }
     if(global->saveRaw){
       if (cxi->entry.instrument.detectors[detID].data<0){ERROR("No valid dataset.");}
-      write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,info->detector[detID].corrected_data_int16);
+      int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+      for(long i=0;i<global->detector[detID].pix_nn;i++){
+	corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
+      }
+      write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,corrected_data_int16);
       if(global->savePixelmask){
 	write2DToStack(cxi->entry.instrument.detectors[detID].mask,stackSlice,info->detector[detID].pixelmask);
       }
-      int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+      int16_t * thumbnail = generateThumbnail(corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
       write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
       delete [] thumbnail;
+      free(corrected_data_int16);
     }
   }
   /*Write LCLS informations*/

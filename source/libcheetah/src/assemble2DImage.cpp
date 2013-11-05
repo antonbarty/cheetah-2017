@@ -33,7 +33,7 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
       float		*pix_x = global->detector[detID].pix_x;
       float		*pix_y = global->detector[detID].pix_y;
       float		*corrected_data = eventData->detector[detID].corrected_data;
-      int16_t		*image = eventData->detector[detID].image;
+      float		*image = eventData->detector[detID].image;
       int             assembleInterpolation = global->assembleInterpolation;
       assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
     }
@@ -84,39 +84,7 @@ void assemble2Dpowder(cGlobal *global) {
   }
 }
 
-
-
-/*
- *	Interpolate raw (corrected) cspad data into a physical 2D image
- *	input data: float
- *	output data: int16_t
- */
-void  assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation){
-
-    // Assembly is done using floating point by default
-    float	*temp = (float*) calloc(image_nn,sizeof(float));
-    assemble2Dimage(temp, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
-    
-    // Check for int16 overflow
-    for(long i=0;i<image_nn;i++){
-        if(lrint(temp[i]) > 32767)
-            temp[i]=32767;
-        if(lrint(temp[i]) < -32767)
-            temp[i]=-32767;
-    }
-  
-    // Copy interpolated image across into int_16 image array
-    for(long i=0;i<image_nn;i++){
-        image[i] = (int16_t) lrint(temp[i]);
-    }
-
-    free(temp);
-}
-
-
-
-
-    
+   
     
 void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
     
