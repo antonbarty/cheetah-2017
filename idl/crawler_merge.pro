@@ -64,6 +64,7 @@ pro crawler_merge
 			wdataset = where(datarun eq xtcrun[i])
 			if wdataset[0] ne -1 then begin
 				ds = dataset[wdataset] 
+				dsdir = datasetdir[wdataset] 
 			endif
 		endif
 
@@ -88,7 +89,8 @@ pro crawler_merge
 				hitrate = strmid(strcompress(hitrate,/remove_all),0,4)
 				if fdataset ne 0 then begin
 					if strpos(dir, dataset[wdataset]) ne -1 then $
-						break
+						if dir eq datasetdir[wdataset] then $
+							break
 				endif
 			endfor
 		endif 
