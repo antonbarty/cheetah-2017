@@ -8,17 +8,17 @@ else
 	eval RUN=\$$i
 	echo "Initializing directory for $RUN"
 	mkdir $RUN
-	if [ -f cheetah_$RUN.ini ];
+	if [ -f $CONFDIR/cheetah_$RUN.ini ];
 	then
-	    cp cheetah_$RUN.ini $RUN/cheetah.ini
+	    cp $CONFDIR/cheetah_$RUN.ini $RUN/cheetah.ini
 	else
-	    cp cheetah.ini $RUN/
+	    cp $CONFDIR/cheetah.ini $RUN/
 	fi
-	if [ -f psana_$RUN.cfg ];
+	if [ -f $CONFDIR/psana_$RUN.cfg ];
 	then
-	    cp psana_$RUN.cfg $RUN/psana.cfg
+	    cp $CONFDIR/psana_$RUN.cfg $RUN/psana.cfg
 	else
-	    cp psana.cfg $RUN/
+	    cp $CONFDIR/psana.cfg $RUN/
 	fi
 	cd $RUN
 	echo "#!/bin/bash" > process.sh
