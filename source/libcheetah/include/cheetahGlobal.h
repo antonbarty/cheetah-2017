@@ -149,6 +149,7 @@ public:
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
 	
+	int		hitfinderFastScan;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -186,6 +187,7 @@ public:
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
+    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
@@ -232,6 +234,7 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+	int		 h5compress;
     
     bool saveCXI;
 
@@ -325,6 +328,11 @@ public:
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;
 	double  *espectrumScale;
+	long	espectrumStackSize;
+	long	espectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *espectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
+
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -371,6 +379,8 @@ public:
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
+	void freeMutexes(void);
+
 
 
 private:

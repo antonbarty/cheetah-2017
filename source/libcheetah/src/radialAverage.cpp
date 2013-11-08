@@ -223,18 +223,30 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
 
     char	filename[1024];
     long    frameNum = detector->radialStackCounter[powderClass];
-    long    nRows = detector->radialStackSize;
-    if(frameNum % nRows != 0)
-        nRows = (frameNum % nRows);
-
-    sprintf(filename,"r%04u-radialstack-detector%d-class%i.h5", global->runNumber, detID, powderClass);
+	long    stackCounter = detector->radialStackCounter[powderClass];
+    long    stackSize = detector->radialStackSize;
+	
+	// We re-use stacks, what is this number?
+	long	stackNum = stackCounter / stackSize;
+	//if(stackNum == 0) stackNum =1;
+	
+	// If stack is not full, how many rows are full?
+    long    nRows = stackSize;
+    if(stackCounter % stackSize != 0)
+        nRows = (stackCounter % stackSize);
+	
+	
+    sprintf(filename,"r%04u-radialstack-detector%d-class%i-stack%li.h5", global->runNumber, detID, powderClass, stackNum);
     //sprintf(filename,"r%04u-radialstack-detector%d-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum);
     printf("Saving radial stack: %s\n", filename);
 
 
     writeSimpleHDF5(filename, detector->radialAverageStack[powderClass], detector->radial_nn, nRows, H5T_NATIVE_FLOAT);
-    fflush(global->powderlogfp[powderClass]);
-    pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);			
+    for(long i=0; i<global->nPowderClasses; i++) {
+        fflush(global->powderlogfp[i]);
+    }
+
+    pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);
 
 }
 

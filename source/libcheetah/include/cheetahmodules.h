@@ -72,15 +72,23 @@ void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
+long hitfinderFastScan(cEventData*, cGlobal*);
 
 // peakfinders.cpp
-int peakfinder3(cGlobal*, cEventData*, int);
-int peakfinder6(cGlobal*, cEventData*, int);
+int peakfinder(cGlobal*, cEventData*, int);
+int peakfinder3(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long);
+int peakfinder6(tPeakList*, float*, char*, long, long, long, long, float, float, long, long, long, float);
+int peakfinder8(tPeakList*, float*, char*, float*, long, long, long, long, float, float, long, long, long);
+int killNearbyPeaks(tPeakList*, float );
+
 
 
 // spectrum.cpp
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
+void addToSpectrumStack(cEventData*, cGlobal*, int);
+void saveEspectrumStacks(cGlobal*);
+void saveEspectrumStack(cGlobal*, int);
 void genSpectrumBackground(cEventData*, cGlobal*, int, int);
 void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);

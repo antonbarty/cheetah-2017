@@ -34,6 +34,7 @@
 #include "PSEvt/EventId.h"
 #include "psddl_psana/bld.ddl.h"
 #include "psddl_psana/cspad.ddl.h"
+#include "psddl_psana/cspad2x2.ddl.h"
 #include "psddl_psana/evr.ddl.h"
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
@@ -65,7 +66,7 @@ namespace cheetah_ana_pkg {
 	static time_t startT = 0;
 
 
-        void sig_handler(int signo)
+	void sig_handler(int signo)
 	{
 	  if (signo == SIGINT){
 	    // Wait for threads to finish
@@ -108,6 +109,7 @@ namespace cheetah_ana_pkg {
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
 		m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
+		m_srcCspad2x2 = configStr("cspad2x2Source0","DetInfo(:Cspad2x2)");
 		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
 		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
@@ -364,11 +366,35 @@ namespace cheetah_ana_pkg {
         double peakCurrent = 0;
 		double DL2energyGeV = 0;
 	
+		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
+        // Ebeam v4
+		if (ebeam4.get()) {
+			charge = ebeam4->ebeamCharge();
+			L3Energy = ebeam4->ebeamL3Energy();
+			LTUPosX = ebeam4->ebeamLTUPosX();
+			LTUPosY = ebeam4->ebeamLTUPosY();
+			LTUAngX = ebeam4->ebeamLTUAngX();
+			LTUAngY = ebeam4->ebeamLTUAngY();
+			PkCurrBC2 = ebeam4->ebeamPkCurrBC2();
+			
+            peakCurrent = ebeam4->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam4->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge4=" << charge << "\n"
+                << "* fEbeamL3Energy4=" << L3Energy << "\n"
+                << "* fEbeamLTUPosX4=" << LTUPosX << "\n"
+                << "* fEbeamLTUPosY4=" << LTUPosY << "\n"
+                << "* fEbeamLTUAngX4=" << LTUAngX << "\n"
+                << "* fEbeamLTUAngY4=" << LTUAngY << "\n"
+                << "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
+			}
+		}
         // Ebeam v3
 		if (ebeam3.get()) {
 			charge = ebeam3->ebeamCharge();
@@ -637,17 +663,20 @@ namespace cheetah_ana_pkg {
 			if(strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
             
 				// Pull out front or back detector depending on detID=0 or 1
+				shared_ptr<Psana::CsPad::DataV1> data1;
 				shared_ptr<Psana::CsPad::DataV2> data2;
 				if (cheetahGlobal.detector[detID].detectorID == 0) {
+					data1 = evt.get(m_srcCspad0, m_key);
 					data2 = evt.get(m_srcCspad0, m_key);
-                }
+				}
 				else if (cheetahGlobal.detector[detID].detectorID == 1) {
+					data1 = evt.get(m_srcCspad1, m_key);
 					data2 = evt.get(m_srcCspad1, m_key);
-                }
-            
-				// copy data into event structure if successful
-				if (data2.get()) {
-                
+				}
+           
+
+				// V2 of the cspad structure
+				 if (data2.get()) {
                     if (verbose) {
                         cout << "CsPad::DataV2:";
                         int nQuads = data2->quads_shape()[0];
@@ -667,7 +696,8 @@ namespace cheetah_ana_pkg {
                         }
                         cout << endl;
                     }
-                        
+
+                    
                     uint16_t *quad_data[4];
                     long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
                     long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
@@ -686,6 +716,7 @@ namespace cheetah_ana_pkg {
 						if(el.quad() < 4){
 							// Which quadrant is this?
 							int quadrant = el.quad();
+							eventData->fiducial = el.fiducials();
 							
 							// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
 							for (unsigned s = 0; s != data.shape()[0]; ++s) {
@@ -711,16 +742,113 @@ namespace cheetah_ana_pkg {
 						free(quad_data[quadrant]);
                     }
                 }
-                
+
+				// V1 of the cspad data structure (less likely these days, but we came across it once already)
+				else if (data1.get()) {
+					if (verbose) {
+						cout << "CsPad::DataV2:";
+						int nQuads = data1->quads_shape()[0];
+						for (int q = 0; q < nQuads; ++ q) {
+							const Psana::CsPad::ElementV1& el = data1->quads(q);
+							cout << "\n  Element #" << q;
+							cout << "\n    virtual_channel = " << el.virtual_channel();
+							cout << "\n    lane = " << el.lane();
+							cout << "\n    tid = " << el.tid();
+							cout << "\n    acq_count = " << el.acq_count();
+							cout << "\n    op_code = " << el.op_code();
+							cout << "\n    quad = " << el.quad();
+							cout << "\n    seq_count = " << el.seq_count();
+							cout << "\n    ticks = " << el.ticks();
+							cout << "\n    fiducials = " << el.fiducials();
+							cout << "\n    frame_type = " << el.frame_type();
+						}
+						cout << endl;
+					}
+					
+					
+					uint16_t *quad_data[4];
+					long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+					long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+					long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+					
+					
+					// Allocate memory for detector data and set to zero
+					int nQuads = data1->quads_shape()[0];
+					for(int quadrant=0; quadrant<4; quadrant++)
+						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					
+					// loop over elements (quadrants)
+					for (int q = 0; q < nQuads; ++ q) {
+						const Psana::CsPad::ElementV1& el = data1->quads(q);
+						const ndarray<const int16_t, 3>& data = el.data();
+						if(el.quad() < 4){
+							// Which quadrant is this?
+							int quadrant = el.quad();
+							eventData->fiducial = el.fiducials();
+							
+							// Read 2x1 "sections" into data array in DAQ format, i.e., 2x8 array of asics (two bytes / pixel)
+							for (unsigned s = 0; s != data.shape()[0]; ++s) {
+								memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
+							}
+						}
+					}
+					
+					// Assemble data from all four quadrants into one large array (rawdata layout)
+					// Memcpy is necessary for thread safety.
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					for(int quadrant=0; quadrant<4; quadrant++) {
+						long	i,j,ii;
+						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
+							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
+							j = k / (2*asic_nx);
+							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
+							eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
+						}
+					}
+					// quadrant data no longer needed
+					for(int quadrant=0; quadrant<4; quadrant++) {
+						free(quad_data[quadrant]);
+					}
+				}
+
+				// Neither V1 nor V2
 				else {
 					printf("%li: cspad frame data not available\n", frameNumber);
 					return;
 				}
             }
-                        
+			
+			
+			/*
+			 *	CsPad 2x2
+			 */
+			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
+				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+				
+				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
+				singleQuad = evt.get(m_srcCspad2x2, m_key);
+				if (singleQuad.get()) {
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					const ndarray<const int16_t, 3>& data = singleQuad->data();
+					int partsize = asic_nx * asic_ny * 2;
+					for (unsigned s = 0; s < 2; s++) {
+						for (int y = 0; y < asic_ny; y++) {
+							for (int x = 0; x < asic_nx * 2; x++) {
+								eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+							}
+						}
+					}
+				} else {
+					printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					return;
+				}
+			}
+       
 			/*
 			 *
-			 *	The data format used for pnccd data has changed in recent releases. 
+			 *	The data format used for pnccd data has changed in recent releases.
 			 *	To get the full image data for pnccd you need to use Psana::PNCCD::FullFrameV1 type now instead of Psana::PNCCD:: FrameV1 
 			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psddl_psana/type.Psana.PNCCD.FullFrameV1.html
 			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:
@@ -965,46 +1093,47 @@ namespace cheetah_ana_pkg {
 	}
 
 	/// Method which is called at the end of the run
-	void 
-	cheetah_ana_mod::endRun(Event& evt, Env& env)
+void cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
 		
-	/*
-	 *	Wait for all worker threads to finish
-	 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
-	 */
-	time_t	tstart, tnow;
-	time(&tstart);
-	double	dtime;
-	float	maxwait = 60.;
-	int p=0, pp=0;
-	
-	while(cheetahGlobal.nActiveThreads > 0) {
-		p = cheetahGlobal.nActiveThreads;
-		if ( pp != p){
-			pp = p;
-			printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
-		}
-		time(&tnow);
-		dtime = difftime(tnow, tstart);
-		if(dtime > maxwait) {
-			printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
-			printf("\tGiving up and exiting anyway\n");
-			cheetahGlobal.nActiveThreads = 0;
-			break;
-		}
-		usleep(100000);
-	}
+		/*
+		 *	Wait for all worker threads to finish
+		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+		 */
+		time_t	tstart, tnow;
+		time(&tstart);
+		double	dtime;
+		float	maxwait = 60.;
+		int p=0, pp=0;
 		
-        printf("Writing accumulated CXIDB file\n");
-	writeAccumulatedCXI(&cheetahGlobal);
-	//closeCXIFiles(&cheetahGlobal);
+		while(cheetahGlobal.nActiveThreads > 0) {
+			p = cheetahGlobal.nActiveThreads;
+			if ( pp != p){
+				pp = p;
+				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+			}
+			time(&tnow);
+			dtime = difftime(tnow, tstart);
+			if(dtime > maxwait) {
+				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
+				printf("\tGiving up and exiting anyway\n");
+				cheetahGlobal.nActiveThreads = 0;
+				break;
+			}
+			usleep(100000);
+		}
+		
+		if(cheetahGlobal.saveCXI) {
+			printf("Writing accumulated CXIDB file\n");
+			writeAccumulatedCXI(&cheetahGlobal);
+			closeCXIFiles(&cheetahGlobal);
+		}
 	}
+
 
 	/// Method which is called once at the end of the job
 	///	Clean up all variables associated with libCheetah
-	void 
-	cheetah_ana_mod::endJob(Event& evt, Env& env)
+void cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
 	  cheetahExit(&cheetahGlobal);
 	  

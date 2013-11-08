@@ -19,8 +19,8 @@ pro crawler_autorun_event, ev
 
 			widget_control, sState.text, set_value='XTC files'
 			crawler_xtc, sState.xtcdir
-			widget_control, sState.text, set_value='Datasets'
-			crawler_dataset, sState.datasetdb
+			;widget_control, sState.text, set_value='Datasets'
+			;crawler_dataset, sState.datasetdb
 			widget_control, sState.text, set_value='Scanning HDF5 directories'
 			crawler_hdf5, sState.hdf5dir, sState.hdf5filter
 			widget_control, sState.text, set_value='Merging'
@@ -51,7 +51,7 @@ pro crawler_autorun, xtcdir=xtcdir, hdf5dir=hdf5dir, hdf5filter=hdf5filter, data
 	if NOT KEYWORD_SET(hdf5dir) then $
 		hdf5dir = '/reg/d/psdm/cxi/cxi69113/scratch/hdf5'
 	if NOT KEYWORD_SET(hdf5filter) then $
-		hdf5filter = 'r*-ab'
+		hdf5filter = 'r*'
 	if NOT KEYWORD_SET(datasetdb) then $
 		datasetdb = 'datasets.txt'
 

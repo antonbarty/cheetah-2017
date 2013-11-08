@@ -124,8 +124,14 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Histogram stack
 	histogram = 0;
 	histogramMin = -100;
-	histogramMax = 100;
+	histogramNbins = 200;
 	histogramBinSize = 1;
+	histogram_fs_min = 0;
+	histogram_fs_max = 1552;
+	histogram_nfs = 1552;
+	histogram_ss_min = 0;
+	histogram_ss_max = 1480;
+	histogram_nss = 1480;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
 
@@ -160,7 +166,19 @@ void cPixelDetectorCommon::configure(void) {
     pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
     pix_nn = pix_nx * pix_ny;
     pixelSize = 110e-6;
-  } 
+  }
+  else if(strcmp(detectorName, "CxiSc2") == 0) {
+	  strcpy(detectorType, "cspad2x2");
+	  asic_nx = CSPAD_ASIC_NX;
+	  asic_ny = CSPAD_ASIC_NY;
+	  asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+	  nasics_x = CSPAD2x2_nASICS_X;
+	  nasics_y = CSPAD2x2_nASICS_Y;
+	  pix_nx = nasics_x*asic_nx;
+	  pix_ny = nasics_y*asic_ny;
+	  pix_nn = pix_nx * pix_ny;
+	  pixelSize = 110e-6;
+  }	
   else if(strcmp(detectorName, "pnCCD") == 0 ) {
     strcpy(detectorType, "pnccd");
     asic_nx = PNCCD_ASIC_NX;
@@ -384,11 +402,23 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammin")) {
 	  histogramMin = atoi(value);
 	}
-	else if (!strcmp(tag, "histogrammax")) {
-	  histogramMax = atoi(value);
+	else if (!strcmp(tag, "histogramnbins")) {
+	  histogramNbins = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrambinsize")) {
 	  histogramBinSize = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_fs_min")) {
+		histogram_fs_min = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_fs_max")) {
+		histogram_fs_max = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_ss_min")) {
+		histogram_ss_min = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_ss_max")) {
+		histogram_ss_max = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrammaxmemorygb")) {
 	  histogramMaxMemoryGb = atof(value);
@@ -433,6 +463,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
     powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
+	powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
     powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
     correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
     correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
@@ -454,6 +485,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		powderRaw[i][j] = 0;
 		powderCorrected[i][j] = 0;
 		powderCorrectedSquared[i][j] = 0;
+		powderPeaks[i][j] = 0;
 	  }
 	  for(long j=0; j<image_nn; j++) {
 		  powderAssembled[i][j] = 0;
@@ -478,18 +510,18 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 	// Histogram memory
 	if(histogram) {
 		printf("Allocating histogram memory\n");
-		histogram_nx = pix_nx;
-		histogram_ny = pix_ny;
-		histogram_depth = (histogramMax - histogramMin + 1) / histogramBinSize;
-		histogram_nn = (uint64_t)histogram_depth*(uint64_t)(histogram_nx*histogram_ny);
+		histogram_nfs = histogram_fs_max - histogram_fs_min;
+		histogram_nss = histogram_ss_max - histogram_ss_min;
+		histogram_nn = histogram_nfs*histogram_nss;
+		histogram_nnn = (uint64_t) histogramNbins * (uint64_t)(histogram_nn);
 		
 		float	histogramMemory;
 		float	histogramMemoryGb;
-		histogramMemory = (histogram_nn * sizeof(uint16_t));
+		histogramMemory = (histogram_nnn * sizeof(uint16_t));
 		histogramMemoryGb = histogramMemory / (1024LL*1024LL*1024LL);
 		if (histogramMemoryGb > histogramMaxMemoryGb) {
 			printf("Size of histogram buffer would exceed allowed size:\n");
-			printf("Histogram depth: %li\n", histogram_depth);
+			printf("Histogram depth: %li\n", histogramNbins);
 			printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 			printf("Maximum histogram buffer size (GB): %f\n", histogramMaxMemoryGb);
 			printf("Set histogramMaxMemoryGb to a larger value in cheetah.ini if you really want to use a bigger array\n");
@@ -498,11 +530,11 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 		
 		// Allocate memory
-		histogramData = (uint16_t*) calloc(histogram_nn, sizeof(uint16_t));
+		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
 
 		// Zero array (there may be a faster way to do this)
-		for(uint64_t j=0; j<histogram_nn; j++) {
+		for(uint64_t j=0; j<histogram_nnn; j++) {
 			histogramData[j] = 0;
 		}
 	}
@@ -524,6 +556,7 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 		free(powderRaw[j]);
 		free(powderCorrected[j]);
 		free(powderCorrectedSquared[j]);
+		free(powderPeaks[j]);
 		free(powderAssembled[j]);
 		free(radialAverageStack[j]);
 		pthread_mutex_destroy(&powderRaw_mutex[j]);

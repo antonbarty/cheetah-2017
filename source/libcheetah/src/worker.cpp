@@ -127,9 +127,10 @@ void *worker(void *threadarg) {
      *	(possibly needed later)
      */
     DETECTOR_LOOP {
-        memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+        //memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
 		
         for(long i=0;i<global->detector[detID].pix_nn;i++){
+            eventData->detector[detID].detector_corrected_data[i] = eventData->detector[detID].corrected_data[i];
             eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
         }
     }
@@ -143,6 +144,14 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
+	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
+		hit = hitfinderFastScan(eventData, global);
+		if(hit)
+			goto localBG;
+		else
+			goto hitknown;
+	}
+	
     
     
 	/*
@@ -157,7 +166,8 @@ void *worker(void *threadarg) {
 	 */
 	subtractLocalBackground(eventData, global);
 			
-
+localBG:
+	
 	/*
 	 *	Subtract residual common mode offsets (cmModule=2)
 	 */
@@ -177,7 +187,6 @@ void *worker(void *threadarg) {
 	calculateHotPixelMask(global);
 	applyHotPixelMask(eventData,global);
 
-	updateDatarate(eventData,global);
 
 	
     
@@ -229,6 +238,7 @@ void *worker(void *threadarg) {
 		eventData->hit = hit;
 	}
 	
+hitknown: 
 	/*
 	 *	Identify halo pixels
 	 */
@@ -254,26 +264,25 @@ void *worker(void *threadarg) {
     
     
 	/*
-	 *	Maintain a running sum of data (powder patterns)
-	 *    and strongest non-hit and weakest hit
+	 *	Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
 	 */
-	addToPowder(eventData, global);
+    if(global->powderSumWithBackgroundSubtraction)
+        addToPowder(eventData, global);
 
 	
     
 
 	/*
-	 *	Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
+	 *	Revert to uncorrected data
 	 */
+    // Revert to data without photon background subtracted, only detector corrections applied
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorCorrectedOnly) 
 		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	
-	/*
-	 *	If reverting to detector raw data, do it here
-	 */
+    // Revert to raw detector data
 	DETECTOR_LOOP {
 		if(global->detector[detID].saveDetectorRaw)
 			for(long i=0;i<global->detector[detID].pix_nn;i++)
@@ -299,6 +308,12 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
+
+    /*
+	 *	Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
+	 */
+    if(!global->powderSumWithBackgroundSubtraction)
+        addToPowder(eventData, global);
 
     
     /*
@@ -340,7 +355,9 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
 
-  
+logfile:
+	updateDatarate(eventData,global);
+
     /*
      *	If this is a hit, write out to our favourite HDF5 format
      *
@@ -378,7 +395,6 @@ void *worker(void *threadarg) {
         writePeakFile(eventData, global);
     }
 
-    
     /*
     *	Write out information on each frame to a log file
     */
@@ -404,26 +420,27 @@ void *worker(void *threadarg) {
     pthread_mutex_unlock(&global->framefp_mutex);
 
     // Keep track of what has gone into each image class
-    pthread_mutex_lock(&global->powderfp_mutex);
-    fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
-    fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
-    fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
-    fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
-    fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
-    fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
-    fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
-    pthread_mutex_unlock(&global->powderfp_mutex);
-
-    
+    if(global->powderlogfp[hit] != NULL) {
+        pthread_mutex_lock(&global->powderfp_mutex);
+        fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+        fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
+        fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->wavelengthA);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->detector[0].detectorZ);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd1);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->gmd2);
+        fprintf(global->powderlogfp[hit], "%i, ", eventData->energySpectrumExist);
+        fprintf(global->powderlogfp[hit], "%d, ", eventData->nPeaks);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->peakNpix);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->peakTotal);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->peakResolution);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->peakDensity);
+        fprintf(global->powderlogfp[hit], "%d, ", eventData->laserEventCodeOn);
+        fprintf(global->powderlogfp[hit], "%g, ", eventData->laserDelay);
+        fprintf(global->powderlogfp[hit], "%d\n", eventData->samplePumped);
+        pthread_mutex_unlock(&global->powderfp_mutex);
+    }
     /*
      *  Inside-thread speed test
      */
@@ -536,4 +553,5 @@ void updateDatarate(cEventData *eventData, cGlobal *global){
 
   
 }
+
 

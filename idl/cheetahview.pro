@@ -1,8 +1,8 @@
 ;;
-;;	FEL_Browser
+;;	Cheetahview
 ;;	Tool for snooping through FEL diffraction images
 ;;
-;;	Anton Barty, 2007-2008
+;;	Anton Barty, 2009-2013
 ;;
 
 ;;
@@ -299,7 +299,7 @@ pro cheetah_displayImage, pState, image
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo')
+			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
 		endif
 		if (*pState).findPeaks then begin
 			peakinfo = cheetah_findpeaks(data, pState)
