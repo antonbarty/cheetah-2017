@@ -1,0 +1,32 @@
+#!/bin/bash
+if [ $# -eq 0 ];
+then
+    echo "USAGE: run_cheetah_test rXXXX [rYYYY, rZZZZ, ...]"
+    echo "The following enviromnmental variables need to be defined: XTCDIR, CONFDIR and H5DIR"
+else
+    cd $H5DIR
+    for (( i=1; i<=$#; i++ )); do
+	eval RUN=\$$i
+	echo "Processing $RUN"
+	mkdir $RUN
+	if [ -f $CONFDIR/cheetah_$RUN.ini ];
+	then
+	    cp $CONFDIR/cheetah_$RUN.ini $RUN/cheetah.ini
+	else
+	    cp $CONFDIR/cheetah.ini $RUN/
+	fi
+	if [ -f $CONFDIR/psana_$RUN.cfg ];
+	then
+	    cp $CONFDIR/psana_$RUN.cfg $RUN/psana.cfg
+	else
+	    cp $CONFDIR/psana.cfg $RUN/
+	fi
+	echo "#!/bin/bash\n" > $RUN/process.sh
+	echo "psana -n 500 -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUN/process.sh
+	chmod u+x $RUN/process.sh
+	cd $RUN
+	./process.sh
+	cd ..
+	echo "Exit from processing $RUN"
+    done
+fi
