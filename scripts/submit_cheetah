@@ -4,6 +4,7 @@ then
     echo "USAGE: submit_cheetah rXXXX [rYYYY, rZZZZ, ...]"
     echo "The following enviromnmental variables need to be defined: XTCDIR, CONFDIR and H5DIR"
 else
+    cd $H5DIR
     for (( i=1; i<=$#; i++ )); do
 	eval RUN=\$$i
 	echo "Initializing directory for $RUN"
