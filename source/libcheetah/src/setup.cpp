@@ -96,7 +96,7 @@ cGlobal::cGlobal(void) {
   hitfinderMaxRes = 0.;
   hitfinderResolutionUnitPixel = 0;
   hitfinderMinSNR = 40;
-  hitfinderIgnoreHaloPixels = 1;
+  hitfinderIgnoreHaloPixels = 0;
   hitfinderDownsampling = 1;
   hitfinderOnDetectorCorrectedData = 0;
   hitfinderFastScan = 0;

@@ -140,7 +140,7 @@ void *worker(void *threadarg) {
 
  localBG:	
 
-  // Subtract residual common mode offsets (cmModule=2)
+  // Subtract residual common mode offsets (cmModule=2) 
   cspadModuleSubtract2(eventData, global);
   
   // Apply bad pixels
