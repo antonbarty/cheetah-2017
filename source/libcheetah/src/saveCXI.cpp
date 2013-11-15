@@ -1062,7 +1062,6 @@ void writeCXI(cEventData *info, cGlobal *global ){
       if (global->detector[detID].downsampling > 1){
 	imgID = detID * 2 + 1;
 	if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
-	printf("%g ",info->detector[detID].imageXxX[100]);
 	write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
 	if(global->savePixelmask){
 	  if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
