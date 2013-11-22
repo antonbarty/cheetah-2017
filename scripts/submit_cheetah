@@ -28,7 +28,7 @@ else
 	echo "#SBATCH -N1" >> process.sh
 	echo "#SBATCH -n20" >> process.sh
 	echo "cd $H5DIR/$RUNDIR" >> process.sh
-	echo "psana -n 1000 -c psana.cfg  $XTCDIR/*$RUN*.xtc > cheetah_messages.txt" >> process.sh
+	echo "psana -c psana.cfg  $XTCDIR/*$RUN*.xtc > cheetah_messages.txt" >> process.sh
 	echo "cd .." >> process.sh
 	echo "rm $RUN" >> process.sh
 	echo "ln -s $RUNDIR $RUN" >> process.sh

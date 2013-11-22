@@ -24,7 +24,7 @@ else
 	    cp $CONFDIR/psana.cfg $RUNDIR/
 	fi
 	echo "#!/bin/bash\n" > $RUNDIR/process.sh
-	echo "psana -n 300 -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUNDIR/process.sh
+	echo "psana -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUNDIR/process.sh
 	chmod u+x $RUNDIR/process.sh
 	cd $RUNDIR
 	./process.sh
