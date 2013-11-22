@@ -124,7 +124,18 @@ void *worker(void *threadarg) {
     applyBadPixelMask(eventData, global);
 	
 	
-    /* 
+    /*
+     *  Fix pnCCD errors:
+     *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
+     *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
+     *  (these corrections will be automatically skipped for any non-pnCCD detector)
+     */
+    pnccdOffsetCorrection(eventData, global);
+    pnccdFixWiringError(eventData, global);
+	
+
+	
+    /*
      *	Keep memory of data with only detector artefacts subtracted 
      *	(possibly needed later)
      */
@@ -220,16 +231,6 @@ localBG:
 		}
     }
 
-		
-    /*
-     *  Fix pnCCD errors:
-     *      pnCCD offset correction (read out artifacts prominent in lines with high signal)
-     *      pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-     *  (these corrections will be automatically skipped for any non-pnCCD detector)
-     */
-    pnccdOffsetCorrection(eventData, global);
-    pnccdFixWiringError(eventData, global);
-   
 	
 	/*
 	 *	Hitfinding
@@ -324,9 +325,15 @@ hitknown:
     calculateRadialAverage(eventData, global);
     addToRadialAverageStack(eventData, global);
 
+	
+	/*
+	 *	FEE spectrometer data
+	 */
+	addFEEspectrumToStack(eventData, global, hit);
     
+		
     /*
-     * calculate the one dimesional beam spectrum
+     * calculate the one dimesional beam spectrum from CXI camera
      */
     integrateSpectrum(eventData, global);
     integrateRunSpectrum(eventData, global);

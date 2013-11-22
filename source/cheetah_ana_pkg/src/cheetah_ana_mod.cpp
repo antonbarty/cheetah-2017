@@ -116,6 +116,7 @@ namespace cheetah_ana_pkg {
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
 		m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
+		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(:FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
         m_srcSpec = configStr("spectrumSource","DetInfo()");
@@ -344,7 +345,7 @@ namespace cheetah_ana_pkg {
             
 		}
 		else {
-			printf("Failed to get fiducial (Psana::EvrData::DataV3.get() failed)\n");
+			printf("Event %li: Warning: Psana::EvrData::DataV3 failed\n", frameNumber);
 			fiducial = frameNumber;
 		}
 
@@ -397,7 +398,7 @@ namespace cheetah_ana_pkg {
 			}
 		}
         // Ebeam v3
-		if (ebeam3.get()) {
+		else if (ebeam3.get()) {
 			charge = ebeam3->ebeamCharge();
 			L3Energy = ebeam3->ebeamL3Energy();
 			LTUPosX = ebeam3->ebeamLTUPosX();
@@ -489,8 +490,12 @@ namespace cheetah_ana_pkg {
                 << "* fEbeamLTUAngY0=" << LTUAngY << endl;
 			}
 		}
-        
+		else {
+			printf("Event %li: Warning: Psana::Bld::BldDataEBeam failed\n", frameNumber);
+		}
 
+        
+		
         /*
          *  Calculate photon energy and wavelength
          *  Calculate the resonant photon energy (ie: photon wavelength)
@@ -536,7 +541,11 @@ namespace cheetah_ana_pkg {
 			if (verbose) {
 				cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
 			}
-		} 
+		}
+		else {
+			printf("Event %li: Warning: Psana::Bld::BldDataFEEGasDetEnergy failed\n", frameNumber);
+		}
+
 
 		
         /*
@@ -561,6 +570,10 @@ namespace cheetah_ana_pkg {
                          << "* charge2=" << charge2 << endl;
             }
 		}
+		//else {
+		//	printf("Event %li: Warning: Psana::Bld::BldDataPhaseCavity failed\n", frameNumber);
+		//}
+
 
         
         
@@ -647,6 +660,40 @@ namespace cheetah_ana_pkg {
 		eventData->pGlobal = &cheetahGlobal;
         
 		
+		
+		/*
+         *  FEE photon inline spectrometer
+         *  Psana::Bld::BldDataSpectrometerV0.get()
+         */
+		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0 = evt.get(m_srcFeeSpec);
+		eventData->FEEspec_present=0;
+		if(cheetahGlobal.useFEEspectrum) {
+			if (FEEspectrum0.get()) {
+				const ndarray<const uint32_t, 1>& hproj = FEEspectrum0->hproj();
+				const ndarray<const uint32_t, 1>& vproj = FEEspectrum0->vproj();
+				if (!hproj.empty() &&  !vproj.empty()) {
+					long	hsize = hproj.shape()[0];
+					long	vsize = hproj.shape()[0];
+					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
+					
+					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
+					eventData->FEEspec_vproj = (uint32_t*) calloc(vsize, sizeof(uint32_t));
+					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));
+					// The next line often throws a fatal memcpy() error.  No time to figure out why
+					// For now, comment out as spectrum is contained in FEEspec_hproj so we don't actually need this right now
+					//memcpy(eventData->FEEspec_vproj, vproj.data(), vsize*sizeof(uint32_t));
+					eventData->FEEspec_present = 1;
+				}
+				else {
+					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV0\n", frameNumber);
+				}
+			}
+			else {
+				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometerV0.get() failed\n", frameNumber);
+			}
+		}
+		
+
 		
 		
  				
@@ -812,7 +859,7 @@ namespace cheetah_ana_pkg {
 
 				// Neither V1 nor V2
 				else {
-					printf("%li: cspad frame data not available\n", frameNumber);
+					printf("Event %li: Warning: cspad frame data not available\n", frameNumber);
 					return;
 				}
             }

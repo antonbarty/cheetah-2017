@@ -92,6 +92,11 @@ int killNearbyPeaks(tPeakList*, float );
 
 
 // spectrum.cpp
+void addFEEspectrumToStack(cEventData*, cGlobal*, int);
+void saveFEEspectrumStack(cGlobal*, int);
+void saveSpectrumStacks(cGlobal*);
+
+
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
 void addToSpectrumStack(cEventData*, cGlobal*, int);

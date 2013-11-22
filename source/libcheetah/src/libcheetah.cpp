@@ -56,14 +56,20 @@ void cheetahNewRun(cGlobal *global) {
 
     if(global->runNumber > 0) {
         for(long i=0; i<global->nPowderClasses; i++) {
+            char	filename[1024];
+
+            sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
             if(global->powderlogfp[i] != NULL)
                 fclose(global->powderlogfp[i]);
-
-            char	filename[1024];
-            sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
             global->powderlogfp[i] = fopen(filename, "w");
             fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
-        }
+
+            sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
+			if(global->FEElogfp[i] != NULL)
+                fclose(global->FEElogfp[i]);
+            global->FEElogfp[i] = fopen(filename, "w");
+            fprintf(global->FEElogfp[i], "Stack element, eventData->frameNumber, eventData->eventname\n");
+		}
     }
     pthread_mutex_unlock(&global->powderfp_mutex);
 }
@@ -197,6 +203,11 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
+	}
+
+	if(eventData->FEEspec_present == 1) {
+		free(eventData->FEEspec_hproj);
+		free(eventData->FEEspec_vproj);
 	}
     
     free(eventData->energySpectrum1D);
@@ -451,7 +462,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         saveRunningSums(global);
 		saveHistograms(global);
         saveRadialStacks(global);
-		saveEspectrumStacks(global);
+		saveSpectrumStacks(global);
 		global->updateLogfile();
         global->writeStatus("Not finished");
 	}
@@ -506,7 +517,7 @@ void cheetahExit(cGlobal *global) {
     // Save powder patterns and other stuff
     saveRunningSums(global);
     saveRadialStacks(global);
-	saveEspectrumStacks(global);
+	saveSpectrumStacks(global);
 	global->writeFinalLog();
 
     // Close all CXI files
