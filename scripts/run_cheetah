@@ -8,25 +8,29 @@ else
     for (( i=1; i<=$#; i++ )); do
 	eval RUN=\$$i
 	echo "Processing $RUN"
-	mkdir $RUN
+	eval RUNDIR=$RUN"_"$(date -d "today" +"%Y%m%d_%H%M")
+	echo "Creating directory: "$RUNDIR
+	mkdir $RUNDIR
 	if [ -f $CONFDIR/cheetah_$RUN.ini ];
 	then
-	    cp $CONFDIR/cheetah_$RUN.ini $RUN/cheetah.ini
+	    cp $CONFDIR/cheetah_$RUN.ini $RUNDIR/cheetah.ini
 	else
-	    cp $CONFDIR/cheetah.ini $RUN/
+	    cp $CONFDIR/cheetah.ini $RUNDIR/
 	fi
 	if [ -f $CONFDIR/psana_$RUN.cfg ];
 	then
-	    cp $CONFDIR/psana_$RUN.cfg $RUN/psana.cfg
+	    cp $CONFDIR/psana_$RUN.cfg $RUNDIR/psana.cfg
 	else
-	    cp $CONFDIR/psana.cfg $RUN/
+	    cp $CONFDIR/psana.cfg $RUNDIR/
 	fi
-	echo "#!/bin/bash\n" > $RUN/process.sh
-	echo "psana -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUN/process.sh
-	chmod u+x $RUN/process.sh
-	cd $RUN
+	echo "#!/bin/bash\n" > $RUNDIR/process.sh
+	echo "psana -n 300 -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUNDIR/process.sh
+	chmod u+x $RUNDIR/process.sh
+	cd $RUNDIR
 	./process.sh
 	cd ..
+	echo "Setting link from "$RUN" to directory "$RUNDIR
+	ln -s $RUNDIR $RUN
 	echo "Exit from processing $RUN"
     done
 fi

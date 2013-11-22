@@ -258,6 +258,8 @@ public:
 	int    usePnccdFixWiringError;
 	// correction for intensity drop in every 2nd line, interpolation of all affected lines
 	int    usePnccdLineInterpolation;
+	// declare pixel bad if they are located in bad lines
+	int    usePnccdLineMasking;
 
 	// Histogram stack
 	int		histogram;

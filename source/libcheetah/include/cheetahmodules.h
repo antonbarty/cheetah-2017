@@ -30,6 +30,8 @@ void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
 void pnccdFixWiringError(float*);
 void pnccdLineInterpolation(cEventData*, cGlobal*);
+void pnccdLineMasking(cEventData*, cGlobal*);
+
 
 // backgroundCorrection.cpp
 void subtractLocalBackground(cEventData*, cGlobal*);

@@ -571,7 +571,7 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask) {
 void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
   DETECTOR_LOOP {
     if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineInterpolation == 1)) {
-      // lines in direction of the slow changing dimension 
+      // lines in direction of the slowly changing dimension 
       long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
       long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
       long x,y,i,i0,i1;
@@ -587,6 +587,32 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 	  i1 = nx*y+x+1;
 	  if (isNoneOfBitOptionsSet(mask[i0],mask_out_bits) && isNoneOfBitOptionsSet(mask[i1],mask_out_bits)){
 	    data[i] = (data[i0]+data[i1])/2.;
+	  }
+	}
+      }	    
+    }
+  }
+}
+
+void pnccdLineMasking(cEventData *eventData,cGlobal *global){
+  DETECTOR_LOOP {
+    if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineMasking == 1)) {
+      // lines in direction of the slowly changing dimension 
+      long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
+      long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
+      long x,y,i,i0,i1;
+      long x_min = 1;
+      long x_max = nx-1;
+      float *data = eventData->detector[detID].corrected_data;
+      uint16_t *mask = eventData->detector[detID].pixelmask;
+      for(y=0; y<ny; y++){
+	for(x=x_min;x<=x_max;x=x+2){
+	  i = nx*y+x;
+	  i0 = nx*y+x-1;
+	  i1 = nx*y+x+1;
+	  mask[i] |= PIXEL_IS_BAD;
+	  if (global->detector[detID].usePnccdLineInterpolation == 1){
+	    mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
 	  }
 	}
       }	    

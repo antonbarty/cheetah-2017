@@ -141,6 +141,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   usePnccdOffsetCorrection = 0;
   usePnccdFixWiringError = 0;
   usePnccdLineInterpolation = 0;
+  usePnccdLineMasking = 0;
 
   // Saving options
   saveDetectorCorrectedOnly = 0;
@@ -387,6 +388,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "usepnccdlineinterpolation")) {
     usePnccdLineInterpolation = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdlinemasking")) {
+    usePnccdLineMasking = atoi(value);
   }
   else if (!strcmp(tag, "bgrecalc")) {
     bgRecalc = atoi(value);

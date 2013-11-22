@@ -8,26 +8,30 @@ else
     for (( i=1; i<=$#; i++ )); do
 	eval RUN=\$$i
 	echo "Initializing directory for $RUN"
-	mkdir $RUN
+	eval RUNDIR=$RUN"_"$(date -d "today" +"%Y%m%d_%H%M")
+	mkdir $RUNDIR
 	if [ -f $CONFDIR/cheetah_$RUN.ini ];
 	then
-	    cp $CONFDIR/cheetah_$RUN.ini $RUN/cheetah.ini
+	    cp $CONFDIR/cheetah_$RUN.ini $RUNDIR/cheetah.ini
 	else
-	    cp $CONFDIR/cheetah.ini $RUN/
+	    cp $CONFDIR/cheetah.ini $RUNDIR/
 	fi
 	if [ -f $CONFDIR/psana_$RUN.cfg ];
 	then
-	    cp $CONFDIR/psana_$RUN.cfg $RUN/psana.cfg
+	    cp $CONFDIR/psana_$RUN.cfg $RUNDIR/psana.cfg
 	else
-	    cp $CONFDIR/psana.cfg $RUN/
+	    cp $CONFDIR/psana.cfg $RUNDIR/
 	fi
-	cd $RUN
+	cd $RUNDIR
 	echo "#!/bin/bash" > process.sh
 	echo "#SBATCH --job-name=Cth$RUN" >> process.sh
 	echo "#SBATCH -N1" >> process.sh
 	echo "#SBATCH -n20" >> process.sh
-	echo "cd $H5DIR/$RUN" >> process.sh
-	echo "psana -c psana.cfg  $XTCDIR/*$RUN*.xtc > cheetah_messages.txt" >> process.sh
+	echo "cd $H5DIR/$RUNDIR" >> process.sh
+	echo "psana -n 1000 -c psana.cfg  $XTCDIR/*$RUN*.xtc > cheetah_messages.txt" >> process.sh
+	echo "cd .." >> process.sh
+	echo "rm $RUN" >> process.sh
+	echo "ln -s $RUNDIR $RUN" >> process.sh
 	sbatch process.sh
 	echo "Cheetah job submitted for $RUN"
 	cd ..

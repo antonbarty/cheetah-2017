@@ -109,6 +109,7 @@ void *worker(void *threadarg) {
   pnccdOffsetCorrection(eventData, global);
   pnccdFixWiringError(eventData, global);
   pnccdLineInterpolation(eventData, global);
+  pnccdLineMasking(eventData, global);
 	
   // Apply gain correction
   applyGainCorrection(eventData, global);
