@@ -693,7 +693,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	// Iterate a few times to reduce the effect of positive outliers (ie: peaks)
 	long	thisr;
 	float	thisoffset, thissigma;
-	for(counter=0; counter<3; counter++) {
+	for(counter=0; counter<5; counter++) {
 		for(long i=0; i<lmaxr; i++) {
 			roffset[i] = 0;
 			rsigma[i] = 0;

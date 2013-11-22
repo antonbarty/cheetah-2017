@@ -31,7 +31,7 @@ public:
 	long		threadNum;
 	long        frameNumber;
 	long        frameNum;
-	uint stackSlice;
+	uint		stackSlice;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];

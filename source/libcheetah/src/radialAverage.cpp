@@ -104,7 +104,7 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	long	rbin;
 	for(long i=0; i<pix_nn; i++){
 
-        // Don't count bad pixels in radial average
+	// Don't count bad pixels in radial average
 	  if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
             continue;
         

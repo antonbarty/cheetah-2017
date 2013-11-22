@@ -161,12 +161,17 @@ void *worker(void *threadarg) {
 	 */
 	subtractPersistentBackground(eventData, global);
 
-    	
+
+	/*
+	 *	Radial background subtraction
+	 */
+    subtractRadialBackground(eventData, global);
 
 	/*
 	 *	Local background subtraction
 	 */
 	subtractLocalBackground(eventData, global);
+	
 			
 localBG:
 	

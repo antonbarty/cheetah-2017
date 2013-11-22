@@ -31,6 +31,7 @@
 #include "MsgLogger/MsgLogger.h"
 // to work with detector data include corresponding 
 // header from psddl_psana package
+// Includes can be found in /reg/g/psdm/sw/releases/ana-current.psddl_psana/include/...
 #include "PSEvt/EventId.h"
 #include "psddl_psana/bld.ddl.h"
 #include "psddl_psana/cspad.ddl.h"

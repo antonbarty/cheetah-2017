@@ -685,7 +685,7 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			print, f
-			mask = badpix_from_darkcal(f, /save)
+			mask = badpix_from_darkcal(f, /save, /edge)
 		end
 		
 
@@ -770,6 +770,10 @@ pro crawler_view
 	mbcheetah_run = widget_button(mbfile, value='Process selected runs', sensitive=0)
 	mbcheetah_label = widget_button(mbfile, value='Label dataset', sensitive=0)
 
+	mbtool = widget_button(bar, value='Tools')
+	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
+
+
 	mbfile = widget_button(bar, value='View')
 	mbview_bsub = widget_button(mbfile, value='View bsub log file')
 	mbview_clog = widget_button(mbfile, value='View cheetah log file')
@@ -782,7 +786,6 @@ pro crawler_view
 	mbview_peakpowder = widget_button(mbfile, value='View peakfinder virtual powder')
 	mbview_peakpowderdark = widget_button(mbfile, value='View peakfinder virtual powder (dark)')
 	mbview_waxs = widget_button(mbfile, value='View WAXS traces')
-	mbview_badpix = widget_button(mbfile, value='Make bad pixel mask from darkcal')
 
 
 	;;
