@@ -373,7 +373,7 @@ end
 ;;
 ;;	Update and populate the table
 ;;
-function crawler_readTable, header=header
+function crawler_readTable, mode, header=header
 
 	;; Read crawler file
 	data = read_csv('crawler.txt',header=header)
@@ -382,13 +382,59 @@ function crawler_readTable, header=header
 	
 	ncols = ntags
 	nrows = n_elements(data.(0))
-	table_data= strarr(ncols, nrows)
+	
+	switch mode of
+		;; Normal column view
+		0 : begin
+			table_data= strarr(ncols, nrows)
+			for i=0, ncols-1 do begin
+				a = string(data.(i))
+				a = strcompress(a)
+				table_data[i,*] = a
+			endfor
+			break
+			end
+		
+		;; Data set view
+		1 : begin
+			!EXCEPT=0
+			dataset = data.(1)
+			dataset_s = sort(dataset)
+			dataset_sorted = dataset[dataset_s]
+			dataset_u = uniq(dataset_sorted)
+			dataset_name = dataset_sorted[dataset_u]
+			dataset_n = n_elements(dataset_name)
+			
+			table_data = strarr(ncols, dataset_n)
+			table_data[*] = '---'
+			
+			;; Fix non-existent data (otherwise prints a nasty message)
+			w6 = where(data.(6) eq '---')
+			w7 = where(data.(7) eq '---')
+			if w6[0] ne -1 then data.(6)[w6] = '0'
+			if w7[0] ne -1 then data.(7)[w7] = '0'
+			
+			for i=0, dataset_n-1 do begin
+				w = where(dataset eq dataset_name[i])
+				np = total(long(data.(6)[w]))
+				nh = total(long(data.(7)[w]))
+				perc = 100.*nh/np
+				if not finite(np) then np = '---'
+				if not finite(nh) then nh = '---'
+				if not finite(perc) then perc = '---'
+				table_data(0,i) = n_elements(w)
+				table_data(1,i) = dataset_name[i]
+				table_data(6,i) = string(long(np))
+				table_data(7,i) = string(long(nh))
+				table_data(9,i) = perc
+				junk = check_math()
+			endfor
+			table_data = strcompress(table_data)
+			break
+			end
+			
+	endswitch		
 
-	for i=0, ncols-1 do begin
-		a = string(data.(i))
-		a = strcompress(a)
-		table_data[i,*] = a
-	endfor
 
 	return, table_data
 end
@@ -410,8 +456,8 @@ pro crawler_updateTable, pState
 	xview = screensize[0] - 140
 	yview = screensize[1] - 140
 
-
-	table_data = crawler_readTable(header=h)
+	;; Read table data
+	table_data = crawler_readTable(sState.table_viewmode, header=h)
 	s = size(table_data,/dim)
 	ncols = s[0]
 	nrows = s[1]
@@ -556,9 +602,28 @@ pro crawler_event, ev
 			endif
 		end
 				
-				
+		;; 
+		;;	Change view type
+		;;
 		sState.button_viewtype : begin
-		
+			switch sState.table_viewmode of
+				0 : begin
+					widget_control, sState.button_viewtype,  set_value = 'Run view'
+					(*pState).table_viewmode = 1
+					break
+					end
+				1 : begin
+					widget_control, sState.button_viewtype,  set_value = 'Dataset view'
+					(*pState).table_viewmode = 0
+					break
+					end
+				else : begin	
+					widget_control, sState.button_viewtype,  set_value = 'Dataset view'
+					(*pState).table_viewmode = 0
+					break
+					end			
+			endswitch				
+			crawler_updateTable, pState
 		end
 
 		;;
@@ -804,7 +869,7 @@ pro crawler_view
 	;;
 	base2 = widget_base(base, /row)
 	button_refresh = widget_button(base2, value='Refresh')
-	button_viewtype = widget_button(base2, value='Dataset view', sensitive=0)
+	button_viewtype = widget_button(base2, value='Dataset view')
 	button_cheetah = widget_button(base2, value='Run Cheetah', sensitive=0)
 	button_postprocess = widget_button(base2, value='Postprocess')
 	button_hits = widget_button(base2, value='View hits')
@@ -861,6 +926,7 @@ pro crawler_view
 			table_statuscol : 3, $
 			table_crystfelcol : 4, $
 			table_dircol : 5, $
+			table_viewmode : 0, $
 			
 			mbfile_configure : mbfile_configure, $
 			mbfile_crawl : mbfile_crawl, $
