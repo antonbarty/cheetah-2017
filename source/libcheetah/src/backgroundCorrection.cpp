@@ -245,7 +245,6 @@ void subtractRadialBackground(cEventData *eventData, cGlobal *global){
 			free(mask);
 		}
 	}
-	
 }
 
 

@@ -157,6 +157,11 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
+	
+	/*
+	 *	This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
+	 *	Useful for local background subtraction (which is effective but slow)
+	 */
 	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
 		hit = hitfinderFastScan(eventData, global);
 		if(hit)
@@ -165,7 +170,6 @@ void *worker(void *threadarg) {
 			goto hitknown;
 	}
 	
-    
     
 	/*
 	 *	Subtract persistent photon background
@@ -326,11 +330,6 @@ hitknown:
     addToRadialAverageStack(eventData, global);
 
 	
-	/*
-	 *	FEE spectrometer data
-	 */
-	addFEEspectrumToStack(eventData, global, hit);
-    
 		
     /*
      * calculate the one dimesional beam spectrum from CXI camera
@@ -396,13 +395,24 @@ logfile:
         printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
     }
     
+
+	/*
+	 *	FEE spectrometer data stack 
+	 *	(needs knowledge of subdirectory for file list, which is why it's done here)
+	 */
+	addFEEspectrumToStack(eventData, global, hit);
+    
+	
+
     /*
      *	If this is a hit, write out peak info to peak list file
      */
     if(hit && global->savePeakInfo) {
         writePeakFile(eventData, global);
     }
+	
 
+	
     /*
     *	Write out information on each frame to a log file
     */

@@ -76,7 +76,7 @@ void addFEEspectrumToStack(cEventData *eventData, cGlobal *global, int powderCla
 	
 	
 	// Write filename to log file in sync with stack positions (** Important for being able to index the patterns!)
-	fprintf(global->FEElogfp[powderClass], "%li, %li, %s\n", stackCounter, eventData->frameNumber, eventData->eventname);
+	fprintf(global->FEElogfp[powderClass], "%li, %li, %s/%s\n", stackCounter, eventData->frameNumber, eventData->eventSubdir, eventData->eventname);
 
 
     // Increment counter

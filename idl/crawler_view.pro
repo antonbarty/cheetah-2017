@@ -373,24 +373,10 @@ end
 ;;
 ;;	Update and populate the table
 ;;
-pro crawler_updateTable, pState
-
-	print,'Refreshing table'
-
-  	sState = *pState
-	table = sState.table
-	
-	screensize = get_screen_size()
-	xview = screensize[0] - 140
-	yview = screensize[1] - 140
-
+function crawler_readTable, header=header
 
 	;; Read crawler file
-	if file_test('crawler.txt') eq 0 then begin
-		print,'Crawler file does not exist'
-		return
-	endif
-	data = read_csv('crawler.txt',header=h)
+	data = read_csv('crawler.txt',header=header)
 	ntags = n_tags(data)
 	names = tag_names(data)
 	
@@ -404,6 +390,31 @@ pro crawler_updateTable, pState
 		table_data[i,*] = a
 	endfor
 
+	return, table_data
+end
+
+pro crawler_updateTable, pState
+
+	print,'Refreshing table'
+  	sState = *pState
+	table = sState.table
+
+	;; Does the file exist?
+	if file_test('crawler.txt') eq 0 then begin
+		print,'Crawler file does not exist'
+		return
+	endif
+
+	;; Get screen size
+	screensize = get_screen_size()
+	xview = screensize[0] - 140
+	yview = screensize[1] - 140
+
+
+	table_data = crawler_readTable(header=h)
+	s = size(table_data,/dim)
+	ncols = s[0]
+	nrows = s[1]
 
 	;; Update the table	
 	widget_control, table, table_xsize = ncols

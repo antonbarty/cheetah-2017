@@ -299,7 +299,7 @@ void cGlobal::setup() {
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
 			detector[i].saveDetectorRaw = 1;
-			detector[i].saveDetectorCorrectedOnly = 1;
+			detector[i].saveDetectorCorrectedOnly = 0;
 		}
 	}
 	
