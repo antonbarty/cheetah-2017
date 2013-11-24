@@ -21,8 +21,8 @@ pro crawler_pickdir
 			desc = [ 	'1, base, , column', $
 				'0, droplist, '+str+', label_left=Dataset:,  tag=selection', $
 				'1, base,, row', $
-				'0, button, Select experiment, Quit, Tag=OK', $
-				'0, button, Different directory, Quit, Tag=Other', $
+				'0, button, Go to selected experiment, Quit, Tag=OK', $
+				'0, button, Find a different experiment, Quit, Tag=Other', $
 				'2, button, Cancel, Quit, tag=Cancel' $
 			]		
 			a = cw_form(desc, /column, title='Start cheetah')
@@ -64,12 +64,12 @@ end
 pro crawler_config, pState
 	
 	;; First set some sensible defaults
-	(*pstate).xtcdir = '../../xtc'
+	(*pstate).xtcdir = '../../../xtc'
 	(*pstate).h5dir = '../hdf5'
-	(*pstate).h5filter = 'r*-ab' 
-	(*pstate).geometry = '../calib/geometry/2may13-v2.h5'
-	(*pstate).process = '../anton/process/process'
-	(*pstate).cheetahIni = '2dx.ini'
+	(*pstate).h5filter = 'r*' 
+	(*pstate).geometry = '../calib/geometry/cspad-front-12feb2013.h5'
+	(*pstate).process = '../process/process'
+	(*pstate).cheetahIni = 'lys.ini'
 
 
 	;; Now try to read from the config file
@@ -263,7 +263,7 @@ pro crawler_startCheetah, pState, run
 			print, cmnd
 			spawn, cmnd
 			
-			;; This is simply for eye candy - swap the Cheetah status label to 'Submitted'
+			;; Swap the Cheetah status label to 'Submitted'
 			w = where(table_runs eq run[i])
 			if w[0] ne -1 then begin
 				widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
@@ -330,7 +330,8 @@ end
 pro crawler_postprocess, pState, run
   	sState = *pState
 	table_data = *(sState.table_pdata)
-	table_runs = reform(table_data[0,*])
+	table_run = reform(table_data[0,*])
+	table_rundir = reform(table_data[sState.table_dircol, *])
 
 	help, run
 	print, run
@@ -343,7 +344,8 @@ pro crawler_postprocess, pState, run
 	desc = [ 	'1, base, , column', $
 				'0, label, Start run: '+startrun+', left', $
 				'0, label, End run: '+endrun+', left', $
-				'0, label, Command format: bsub -q psfehq <command> <run#>, left', $
+				'0, label, Command format: <command> <rundir>, left', $
+				;'0, label, Command format: bsub -q psfehq <command> <rundir>, left', $
 				'2, text, '+command+', label_left=Command:, width=50, tag=command', $
 				'1, base,, row', $
 				'0, button, OK, Quit, Tag=OK', $
@@ -357,14 +359,19 @@ pro crawler_postprocess, pState, run
 		(*pstate).postprocess_command = a.command
 		
 		for i=0, nruns do begin
-			cmnd = strcompress(string('bsub -q psfehq ', command, ' ', run[i]))
+			w = where(table_run eq run[i])
+			if w[0] eq -1 then continue
+			dir = table_rundir[w]
+			path = strcompress(sState.h5dir+'/'+dir, /remove_all)
+						
+			;cmnd = strcompress(string('bsub -q psfehq ', command, ' ', run[i]))
+			;cmnd = strcompress(string(command, ' ', path))
+			cmnd = command +  ' ' + path
 			print, cmnd
-			spawn, cmnd
+			spawn, cmnd, /sh
 			
-			;; This is simply for eye candy - swap the CrystFEL status label to 'Submitted'
-			w = where(table_runs eq run[i])
-			if w[0] ne -1 then $
-				widget_control, sState.table, use_table_select = [sState.table_crystfelcol, w[0], sState.table_crystfelcol, w[0]], set_value = ['Submitted']
+			;; Change the CrystFEL status label to 'Submitted'
+			widget_control, sState.table, use_table_select = [sState.table_crystfelcol, w[0], sState.table_crystfelcol, w[0]], set_value = ['Submitted']
 		endfor
 	endif
 end
@@ -383,7 +390,7 @@ function crawler_readTable, mode, header=header
 	ncols = ntags
 	nrows = n_elements(data.(0))
 	
-	switch mode of
+	case mode of
 		;; Normal column view
 		0 : begin
 			table_data= strarr(ncols, nrows)
@@ -392,11 +399,21 @@ function crawler_readTable, mode, header=header
 				a = strcompress(a)
 				table_data[i,*] = a
 			endfor
-			break
 			end
 		
-		;; Data set view
 		1 : begin
+			table_data= strarr(ncols, nrows)
+			dataset = data.(1)
+			dataset_sort = sort(dataset)
+			for i=0, ncols-1 do begin
+				a = string(data.(i))
+				a = strcompress(a)
+				table_data[i,*] = a[dataset_sort]
+			endfor
+			end
+
+		;; Data set view
+		2 : begin
 			!EXCEPT=0
 			dataset = data.(1)
 			dataset_s = sort(dataset)
@@ -430,10 +447,10 @@ function crawler_readTable, mode, header=header
 				junk = check_math()
 			endfor
 			table_data = strcompress(table_data)
-			break
 			end
+
 			
-	endswitch		
+	endcase
 
 
 	return, table_data
@@ -606,23 +623,21 @@ pro crawler_event, ev
 		;;	Change view type
 		;;
 		sState.button_viewtype : begin
-			switch sState.table_viewmode of
-				0 : begin
-					widget_control, sState.button_viewtype,  set_value = 'Run view'
-					(*pState).table_viewmode = 1
-					break
-					end
-				1 : begin
-					widget_control, sState.button_viewtype,  set_value = 'Dataset view'
-					(*pState).table_viewmode = 0
-					break
-					end
-				else : begin	
-					widget_control, sState.button_viewtype,  set_value = 'Dataset view'
-					(*pState).table_viewmode = 0
-					break
-					end			
-			endswitch				
+		
+			case sState.table_viewmode of
+				0 : (*pState).table_viewmode = 1
+				1 : (*pState).table_viewmode = 2
+				2 : (*pState).table_viewmode = 0
+				else : (*pState).table_viewmode = 0
+			endcase				
+		
+			case (*pState).table_viewmode of
+				0 : widget_control, sState.button_viewtype,  set_value = 'Dataset view'
+				1 : widget_control, sState.button_viewtype,  set_value = 'Summary'
+				2 : widget_control, sState.button_viewtype,  set_value = 'Run view'
+				else : widget_control, sState.button_viewtype,  set_value = 'Dataset view'
+			endcase				
+
 			crawler_updateTable, pState
 		end
 
@@ -967,7 +982,7 @@ pro crawler_view
 			process : 'Not set', $
 			geometry : 'Not set', $
 			cheetahIni : 'Not set', $
-			postprocess_command : 'Not set' $
+			postprocess_command : '../process/postprocess.sh' $
 	}
 	
 	;; Establish polite error handler to catch crashes
