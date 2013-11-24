@@ -310,8 +310,8 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
-	int nPeaksMin[MAX_POWDER_CLASSES];
-	int nPeaksMax[MAX_POWDER_CLASSES];
+	int		nPeaksMin[MAX_POWDER_CLASSES];
+	int		nPeaksMax[MAX_POWDER_CLASSES];
 
 
     // counters updated with event data
@@ -323,7 +323,19 @@ public:
 	long     nrecenthits;
     long     nespechits;
     
-	// variable to hold the updating run integrated spectrum
+	
+	// FEE spectrum
+	int		useFEEspectrum;
+	long	FEEspectrumStackSize;
+	long	FEEspectrumWidth;
+	long	FEEspectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
+	FILE    *FEElogfp[MAX_POWDER_CLASSES];
+
+	
+	
+	// CXI downstream spectrometer
 	double  *espectrumRun;
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;

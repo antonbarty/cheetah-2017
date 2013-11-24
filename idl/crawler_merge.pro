@@ -26,14 +26,14 @@ pro crawler_merge
 	;; Dataset info
 	fdataset = file_test('datasets.txt')
 	if fdataset ne 0 then begin
-		dataset = read_csv('datasets.txt')	
+		dataset = read_csv('datasets.txt', header=head)	
 		datarun = dataset.field1
 		datasetdir = dataset.field3
 		dataset = dataset.field2
 	endif
 
 	;; HDF5 info
-	h5 = read_csv('hdf5.txt')	
+	h5 = read_csv('hdf5.txt', header=head)	
 	h5run = h5.field1
 	h5status = h5.field2
 	h5dir = h5.field3
@@ -45,7 +45,7 @@ pro crawler_merge
 	;; CrystFEL info
 	fcrystfel = file_test('crystfel.txt')
 	if fcrystfel ne 0 then begin
-		cf = read_csv('crystfel.txt')
+		cf = read_csv('crystfel.txt', header=head)
 		cfrun = cf.field1
 		cfstatus = cf.field2
 		cfindexed = cf.field3

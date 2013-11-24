@@ -91,6 +91,7 @@ private:
   Source m_srcEvr;
   Source m_srcBeam;
   Source m_srcFee;
+  Source m_srcFeeSpec;
   Source m_srcCav;
   Source m_srcAcq;
   Source m_srcCam;

@@ -15,6 +15,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 
 #include "detectorObject.h"
@@ -50,7 +51,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 /*
  *	Update the subdirectory name
  */
-void makeSubdir(cEventData *event, cGlobal *global) {
+void assignSubdir(cEventData *event, cGlobal *global) {
 
 	long filesPerDirectory = 1000;
 	
@@ -84,7 +85,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 *	and put it in the current working sub-directory
 	 */
 	char outfile[1024];
-	makeSubdir(info, global);
+	assignSubdir(info, global);
 	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
 
 	
