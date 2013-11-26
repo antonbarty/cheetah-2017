@@ -477,7 +477,7 @@ pro crawler_updateTable, pState
 	table_data = crawler_readTable(sState.table_viewmode, header=h)
 	s = size(table_data,/dim)
 	ncols = s[0]
-	nrows = s[1]
+	if n_elements(s) gt 1 then nrows = s[1] else nrows=1
 
 	;; Update the table	
 	widget_control, table, table_xsize = ncols
