@@ -102,7 +102,16 @@ namespace cheetah_ana_pkg {
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 	  : Module(name)
 	{
-		//cout << "*** Constructor ***" << endl;
+		cout << "*** Constructor ***" << endl;
+        
+        printf("Note: Support for the FEE spectrometer was added on 24 November 2013.\n");
+        printf("This may require the following line to be added to your psana.conf file:\n");
+        printf("    feeSpectrum = BldInfo(FEE-SPEC0)\n");
+        printf("There have been reports of psana crashing with the error\n");
+        printf("Standard exception caught in runApp(): PSEvt::Exception: Source string cannot be parsed: 'BldInfo(:FEE-SPEC0)' [in function parse at PSEvt/src/Source.cpp:409]\n");
+        printf("if this line is not present, even though a default value has been specified\n");
+
+        
 		/* If SIT_DATA is undefined set it to the builtin value */
 		setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
 
