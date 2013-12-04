@@ -609,6 +609,7 @@ namespace cheetah_ana_pkg {
      *  Copy all image data into event structure for processing
      */
     eventData->frameNumber = frameNumber;
+    eventData->frameNumberIncludingSkipped = frameNumberIncludingSkipped;
     eventData->seconds = sec;
     eventData->nanoSeconds = nsec;
     eventData->fiducial = fiducial;

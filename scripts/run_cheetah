@@ -29,7 +29,8 @@ else
 	cd $RUNDIR
 	./process.sh
 	cd ..
-	echo "Setting link from "$RUN" to directory "$RUNDIR
+	echo "Setting link from $RUN to directory $RUNDIR"
+	rm $RUN
 	ln -s $RUNDIR $RUN
 	echo "Exit from processing $RUN"
     done
