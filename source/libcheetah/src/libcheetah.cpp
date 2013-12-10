@@ -529,9 +529,10 @@ void cheetahExit(cGlobal *global) {
 	
     // Save powder patterns and other stuff
     saveRunningSums(global);
+    saveHistograms(global);
     saveRadialStacks(global);
-	saveEspectrumStacks(global);
-	global->writeFinalLog();
+    saveEspectrumStacks(global);
+    global->writeFinalLog();
 
     // Close all CXI files
 	if(global->saveCXI)
