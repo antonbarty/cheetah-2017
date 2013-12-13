@@ -459,6 +459,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
      We'll rely on HDF5 automatic error reporting. It's usually loud enough.
   */
 
+  puts("Creating Skeleton");
   CXI::File * cxi = new CXI::File;
   hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
   H5Fclose(fid);

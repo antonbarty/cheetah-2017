@@ -441,6 +441,14 @@ void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 
 void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
   DETECTOR_LOOP{
+    /* FOR TESTING
+    printf("updateHaloBuffer\n");
+    printf("global->detector[%i].useAutoHalopixel=%i\n",detID,global->detector[detID].useAutoHalopixel);
+    printf("hit=%i\n",hit);
+    printf("global->detector[%i].halopixIncludeHits=%i\n",detID,global->detector[detID].halopixIncludeHits);
+    printf("global->detector[%i].useSubtractPersistentBackground=%i\n",detID,global->detector[detID].useSubtractPersistentBackground);
+    printf("global->detector[%i].bgCalibrated=%i\n",detID,global->detector[detID].bgCalibrated);
+    */
     if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (!global->detector[detID].useSubtractPersistentBackground || global->detector[detID].bgCalibrated)){
       float	*frameData = eventData->detector[detID].corrected_data;
       float     *frameBuffer = global->detector[detID].halopix_buffer;
@@ -448,6 +456,7 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
       long	bufferDepth = global->detector[detID].halopixMemory;
       long	frameID = eventData->threadNum%bufferDepth;
 
+      //puts("Update halo buffer");
       float	*buffer = (float *) malloc(pix_nn*sizeof(float));
       for(long i=0; i<pix_nn; i++){
 	buffer[i] = fabs(frameData[i]);
@@ -497,6 +506,9 @@ void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
 			
 	printf("Detector %li: Calculating halo pixel mask.\n",detID);
 	nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
+	if (nhalo == pix_nn){
+	  printf("Warning: Detector %li: All pixels are in halo pixel mask.\n",detID);
+	}
 	global->detector[detID].nhalo = nhalo;
 	global->detector[detID].halopixLastUpdate = eventData->threadNum;
 	global->detector[detID].halopixCalibrated = 1;

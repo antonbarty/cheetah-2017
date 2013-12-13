@@ -51,10 +51,18 @@ void *worker(void *threadarg) {
 
   //--------MONITORING---------//
 
+  DEBUGL2_ONLY {
+    DEBUG("Monitoring");
+  }
+
   updateDatarate(eventData,global);
 
 
   //---INITIALIZATIONS-AND-PREPARATIONS---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Initializations and preparations");
+  }
 
   /*
    *  Inside-thread speed test
@@ -83,6 +91,10 @@ void *worker(void *threadarg) {
   }
 	
   //---DETECTOR-CORRECTION---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Detector correction");
+  }
 
   // Check for saturated pixels before applying any other corrections
   checkSaturatedPixels(eventData, global);
@@ -159,6 +171,10 @@ void *worker(void *threadarg) {
   }
     
   //---BACKGROUND-CORRECTION---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Background correction");
+  }
 	  
   // If darkcal file available: Init background buffer here (background = photon background)
   initBackgroundBuffer(eventData,global);
@@ -166,6 +182,11 @@ void *worker(void *threadarg) {
   subtractPersistentBackground(eventData, global);
 
   //---HITFINDING---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Hit finding");
+  }
+
   if(global->hitfinder){ 
     hit = hitfinder(eventData, global);
     eventData->hit = hit;
@@ -173,6 +194,10 @@ void *worker(void *threadarg) {
 
   //---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
  hitknown: 
+
+  DEBUGL2_ONLY {
+    DEBUG("Procedures depending on hit tag");
+  }
 	
   // Update running backround estimate based on non-hits
   updateBackgroundBuffer(eventData, global, hit); 
@@ -202,6 +227,10 @@ void *worker(void *threadarg) {
   }
     
   //---ASSEMBLE-AND-ACCUMULATE-DATA---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Assemble and accumulate data");
+  }
 
   // Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
   if(global->powderSumWithBackgroundSubtraction){
@@ -281,6 +310,10 @@ void *worker(void *threadarg) {
 
   //---WRITE-DATA-TO-H5---//
 
+  DEBUGL2_ONLY {
+    DEBUG("Write data to h5");
+  }
+
   updateDatarate(eventData,global);  
 
   if(global->saveCXI==1){
@@ -327,6 +360,10 @@ void *worker(void *threadarg) {
   }
 
   //---LOGBOOK-KEEPING---//
+
+  DEBUGL2_ONLY {
+    DEBUG("Logbook keeping");
+  }
 
   // Write out information on each frame to a log file
   pthread_mutex_lock(&global->framefp_mutex);
@@ -382,6 +419,11 @@ void *worker(void *threadarg) {
 
   //---CLEANUP-AND-EXIT----//
  cleanup:
+
+  DEBUGL2_ONLY {
+    DEBUG("Clean up and exit");
+  }
+
   // Decrement thread pool counter by one
   pthread_mutex_lock(&global->nActiveThreads_mutex);
   global->nActiveThreads -= 1;

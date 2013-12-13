@@ -1305,6 +1305,11 @@ void cGlobal::updateCalibrated(void){
     temp *= ((detector[detID].useAutoHotpixel == 0) || detector[detID].hotpixCalibrated);
     temp *= ((detector[detID].useAutoHalopixel == 0) || detector[detID].halopixCalibrated);
     temp *= ((detector[detID].useSubtractPersistentBackground == 0) || detector[detID].bgCalibrated);
+    /* FOR TESTING
+    printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHotpixel,detector[detID].hotpixCalibrated);
+    printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHalopixel,detector[detID].halopixCalibrated);
+    printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detID,detector[detID].useSubtractPersistentBackground,detector[detID].bgCalibrated);
+    */
   }
   calibrated = temp;
 }
