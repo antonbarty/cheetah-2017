@@ -20,13 +20,19 @@ if(rhel5)
   set(ANA_ARCH "x86_64-rhel5-gcc41-opt" CACHE STRING "ana architecture to be used")
 endif(rhel5)
 
-
-LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils acqdata andordata bld camdata compressdata controldata
-  cspad2x2data cspaddata encoderdata epics evrdata fccddata fexampdata flidata gsc16aidata indexdata
-  ipimbdata lusidata oceanopticsdata opal1kdata orcadata phasicsdata pnccddata princetondata pulnixdata
-  quartzdata timepixdata usdusbdata xampsdata xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
-  ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
-  m dl)
+LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils  
+ ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
+ ExpNameDb psddl_psana psana Core Cint RIO Net Hist
+ Graf Graf3d Gpad Tree Rint Postscript Matrix Physics
+ MathCore Thread m dl)
+ 
+LIST(APPEND pdsdata_libs acqdata andordata bld camdata
+  compressdata controldata cspad2x2data cspaddata
+  encoderdata epics evrdata fccddata fexampdata flidata
+  gsc16aidata indexdata ipimbdata lusidata oceanopticsdata
+  opal1kdata orcadata phasicsdata pnccddata princetondata
+  pulnixdata quartzdata timepixdata usdusbdata xampsdata
+  xtcdata psddl_pdsdata)
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first
