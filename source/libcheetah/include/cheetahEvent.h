@@ -57,10 +57,18 @@ public:
 	int             specWidth, specHeight;
 	unsigned short  *specImage;
 	
-	// energy spectrum data
+	// energy spectrum data (2D camera downstream)
 	int             energySpectrumExist;
 	double          *energySpectrum1D;
 
+	// FEE energy spectrum data
+	int				FEEspec_present;
+	uint32_t		*FEEspec_hproj;
+	uint32_t		*FEEspec_vproj;
+	long			FEEspec_hproj_size;
+	long			FEEspec_vproj_size;
+	
+	
 
 	// Hit finding
 	int			hit;

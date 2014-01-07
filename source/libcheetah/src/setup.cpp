@@ -118,7 +118,14 @@ cGlobal::cGlobal(void) {
   //tofType = Pds::DetInfo::Acqiris;
   //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
 
-  // energy spectrum default configuration
+	
+	// FEE spectrum
+	useFEEspectrum = 0;
+	FEEspectrumStackSize = 200000;
+	FEEspectrumWidth = 1024;
+
+	
+    // CXI downstream energy spectrum default configuration
     espectrum = 0;
     espectrum1D = 0;
   espectrumTiltAng = 0;
@@ -331,7 +338,7 @@ void cGlobal::setup() {
 			detector[i].useLocalBackgroundSubtraction = 0;
       detector[i].startFrames = 0;
       detector[i].saveDetectorRaw = 1;
-      detector[i].saveDetectorCorrectedOnly = 1;
+			detector[i].saveDetectorCorrectedOnly = 0;
     }
   }
 
@@ -461,11 +468,22 @@ void cGlobal::setup() {
 			for(long j=0; j<espectrumStackSize*spectrumLength; j++) {
 				espectrumStack[i][j] = 0;
 			}
-			pthread_mutex_init(&espectrumStack_mutex[i], NULL);
 		}
 		printf("Spectral stack allocated\n");
 	}
 	
+	if (useFEEspectrum) {
+		printf("Allocating FEE spectrum stacks\n");
+		for(long i=0; i<nPowderClasses; i++) {
+			FEEspectrumStackCounter[i] = 0;
+			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
+		}
+	}
+
+	for(long i=0; i<nPowderClasses; i++) {
+		pthread_mutex_init(&espectrumStack_mutex[i], NULL);
+		pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
+	}
 
 
 	/*
@@ -476,9 +494,12 @@ void cGlobal::setup() {
   for(long i=0; i<nPowderClasses; i++) {
     char  filename[1024];
     powderlogfp[i] = NULL;
+		FEElogfp[i] = NULL;
     if(runNumber > 0) {
       sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
       powderlogfp[i] = fopen(filename, "w");
+            sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",runNumber,i);
+			powderlogfp[i] = fopen(filename, "w");
     }
   }
     pthread_mutex_unlock(&powderfp_mutex);
@@ -520,12 +541,13 @@ void cGlobal::freeMutexes(void) {
 		}
 		pthread_mutex_unlock(&detector[i].histogram_mutex);
 	}
-	if (espectrum)
-		for(long i=0; i<nPowderClasses; i++)
-			pthread_mutex_unlock(&espectrumStack_mutex[i]);
 
   nCXIEvents = 0;
   nCXIHits = 0;
+  for(long i=0; i<nPowderClasses; i++) {
+    pthread_mutex_unlock(&espectrumStack_mutex[i]);
+    pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
+  }
 }
 
 
@@ -865,6 +887,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 
 
   // Energy spectrum parameters
+  else if (!strcmp(tag, "usefeespectrum")) {
+      useFEEspectrum = atoi(value);
+  }
   else if (!strcmp(tag, "espectrum")) {
       espectrum = atoi(value);
   }
@@ -1252,13 +1277,13 @@ void cGlobal::updateLogfile(void){
   nrecentprocessedframes = 0;
 
 
-  // Flush frame file buffer
+    // Flush frame file buffers
   fflush(framefp);
   fflush(cleanedfp);
-
     fflush(peaksfp);
   for(long i=0; i<nPowderClasses; i++) {
     fflush(powderlogfp[i]);
+        fflush(FEElogfp[i]);
   }
 
 }
@@ -1390,6 +1415,8 @@ void cGlobal::writeFinalLog(void){
   for(long i=0; i<nPowderClasses; i++) {
         if(powderlogfp[i] != NULL)
     fclose(powderlogfp[i]);
+        if(FEElogfp[i] != NULL)
+            fclose(FEElogfp[i]);
   }
 
 

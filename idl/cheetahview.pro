@@ -299,7 +299,7 @@ pro cheetah_displayImage, pState, image
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo')
+			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
 		endif
 		if (*pState).findPeaks then begin
 			peakinfo = cheetah_findpeaks(data, pState)

@@ -225,6 +225,121 @@ void calculatePersistentBackground(float *background, int16_t *frameBuffer, long
 
 
 
+/*
+ *	Radial average background subtraction
+ */
+void subtractRadialBackground(cEventData *eventData, cGlobal *global){
+	
+	DETECTOR_LOOP {
+        if(global->detector[detID].useRadialBackgroundSubtraction) {
+			long		pix_nn = global->detector[detID].pix_nn;
+			float		*pix_r = global->detector[detID].pix_r;
+			float		*data = eventData->detector[detID].corrected_data;
+			float		sigmaThresh = 5;
+			
+			//	Masks for bad regions  (mask=0 to ignore regions)
+			char		*mask = (char*) calloc(pix_nn, sizeof(char));
+			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+			for(long i=0;i<pix_nn; i++)
+				mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+			
+			subtractRadialBackground(data, pix_r, mask, pix_nn, sigmaThresh);
+			
+			free(mask);
+		}
+	}
+}
+
+
+void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn, float sigmaThresh) {
+	
+	
+	/*
+	 *	Determine noise and offset as a funciton of radius
+	 *	Be more sophisticated than a simple radial average:
+	 *	Exclude things that look like they might be peaks from the background calculations (pixels > 5 sigma)
+	 *	Code copied from peakfinder8 where it was originally tested
+	 */
+	float	fminr, fmaxr;
+	long	lminr, lmaxr;
+	fminr = 1e9;
+	fmaxr = -1e9;
+	
+	// Figure out radius bounds
+	for(long i=0;i<pix_nn;i++){
+		if (pix_r[i] > fmaxr)
+			fmaxr = pix_r[i];
+		if (pix_r[i] < fminr)
+			fminr = pix_r[i];
+	}
+	lmaxr = ceil(fmaxr)+1;
+	lminr = 0;
+	
+	// Allocate and zero arrays
+	float	*rsigma = (float*) calloc(lmaxr, sizeof(float));
+	float	*roffset = (float*) calloc(lmaxr, sizeof(float));
+	long	*rcount = (long*) calloc(lmaxr, sizeof(long));
+	float	*rthreshold = (float*) calloc(lmaxr, sizeof(float));
+	for(long i=0; i<lmaxr; i++) {
+		rthreshold[i] = 1e9;
+	}
+	
+	// Compute sigma and average of data values at each radius
+	// From this, compute the ADC threshold to be applied at each radius
+	// Iterate a few times to reduce the effect of positive outliers (ie: peaks)
+	long	thisr;
+	float	thisoffset, thissigma;
+	for(long counter=0; counter<5; counter++) {
+		for(long i=0; i<lmaxr; i++) {
+			roffset[i] = 0;
+			rsigma[i] = 0;
+			rcount[i] = 0;
+		}
+		for(long i=0;i<pix_nn;i++){
+			if(mask[i] != 0) {
+				thisr = lrint(pix_r[i]);
+				if(data[i] < rthreshold[thisr]) {
+					roffset[thisr] += data[i];
+					rsigma[thisr] += (data[i]*data[i]);
+					rcount[thisr] += 1;
+				}
+			}
+		}
+		for(long i=0; i<lmaxr; i++) {
+			if(rcount[i] == 0) {
+				roffset[i] = 0;
+				rsigma[i] = 0;
+				rthreshold[i] = 1e9;
+				//rthreshold[i] = ADCthresh;		// For testing
+			}
+			else {
+				thisoffset = roffset[i]/rcount[i];
+				thissigma = sqrt(rsigma[i]/rcount[i] - ((roffset[i]/rcount[i])*(roffset[i]/rcount[i])));
+				roffset[i] = thisoffset;
+				rsigma[i] = thissigma;
+				rthreshold[i] = roffset[i] + sigmaThresh*rsigma[i];
+				//rthreshold[i] = ADCthresh;		// For testing
+			}
+		}
+	}
+
+	
+	/*
+	 *	Now do the actual background subtraction
+	 *	(a trivial operation once we know the radial background profile)
+	 */
+	for(long i=0; i<pix_nn; i++) {
+		thisr = lrint(pix_r[i]);
+		data[i] -= roffset[thisr];
+	}
+	
+	
+	free(roffset);
+	free(rsigma);
+	free(rcount);
+	free(rthreshold);
+
+}
 
 
 
@@ -326,15 +441,6 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 								continue;
 							}
 							median_buffer[counter] = asic_buffer[e];
-							
-							// Element in raw data array
-							//ee = (j+jj+mj*asic_ny)*pix_nx;
-							//ee += i+ii+mi*asic_nx;
-							//if(ee < 0 || ee >= pix_nn){
-							//	printf("Error: Array bounds error: e = %li > %li\n",e,pix_nn);
-							//	continue;
-							//}
-							//median_buffer[counter] = data[ee];
 							
 							counter++;
 						}

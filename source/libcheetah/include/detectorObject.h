@@ -213,6 +213,7 @@ public:
 	int    maskPnccdSaturatedPixels;
 	// Local background subtraction
 	int    useLocalBackgroundSubtraction;
+	int    useRadialBackgroundSubtraction;
 	long   localBackgroundRadius;
 	// Running background subtraction
 	int    useSubtractPersistentBackground;

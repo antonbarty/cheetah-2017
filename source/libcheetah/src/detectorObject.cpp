@@ -108,6 +108,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
   useLocalBackgroundSubtraction = 0;
   localBackgroundRadius = 3;
 	
+	// Radial background subtraction
+	useRadialBackgroundSubtraction = 0;
+
   // Identify persistently hot pixels
   useAutoHotpixel = 0;
   hotpixFreq = 0.9;
@@ -354,6 +357,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "localbackgroundradius")) {
     localBackgroundRadius = atoi(value);
+  }
+  else if (!strcmp(tag, "useradialbackgroundsubtraction")) {
+	  useRadialBackgroundSubtraction = atoi(value);
   }
     
   else if (!strcmp(tag, "pixelsaturationadc")) {

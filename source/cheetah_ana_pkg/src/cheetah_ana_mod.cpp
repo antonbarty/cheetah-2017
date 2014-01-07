@@ -31,6 +31,7 @@
 #include "MsgLogger/MsgLogger.h"
 // to work with detector data include corresponding 
 // header from psddl_psana package
+// Includes can be found in /reg/g/psdm/sw/releases/ana-current.psddl_psana/include/...
 #include "PSEvt/EventId.h"
 #include "psddl_psana/bld.ddl.h"
 #include "psddl_psana/cspad.ddl.h"
@@ -108,6 +109,15 @@ namespace cheetah_ana_pkg {
     : Module(name)
   {
     cout << "*** Constructor ***" << endl;
+        
+        printf("Note: Support for the FEE spectrometer was added on 24 November 2013.\n");
+        printf("This may require the following line to be added to your psana.conf file:\n");
+        printf("    feeSpectrum = BldInfo(FEE-SPEC0)\n");
+        printf("There have been reports of psana crashing with the error\n");
+        printf("Standard exception caught in runApp(): PSEvt::Exception: Source string cannot be parsed: 'BldInfo(:FEE-SPEC0)' [in function parse at PSEvt/src/Source.cpp:409]\n");
+        printf("if this line is not present, even though a default value has been specified\n");
+
+        
     /* If SIT_DATA is undefined set it to the builtin value */
     setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
 
@@ -121,6 +131,7 @@ namespace cheetah_ana_pkg {
     m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
     m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
     m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
+		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(:FEE-SPEC0)");
     m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
     m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
     m_srcSpec = configStr("spectrumSource","DetInfo()");
@@ -360,7 +371,7 @@ namespace cheetah_ana_pkg {
             
     }
     else {
-      printf("Failed to get fiducial (Psana::EvrData::DataV3.get() failed)\n");
+			printf("Event %li: Warning: Psana::EvrData::DataV3 failed\n", frameNumber);
       fiducial = frameNumber;
     }
 
@@ -383,13 +394,37 @@ namespace cheetah_ana_pkg {
     double peakCurrent = 0;
     double DL2energyGeV = 0;
 		
+		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
     shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
     shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
     shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
     shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
+        // Ebeam v4
+		if (ebeam4.get()) {
+			charge = ebeam4->ebeamCharge();
+			L3Energy = ebeam4->ebeamL3Energy();
+			LTUPosX = ebeam4->ebeamLTUPosX();
+			LTUPosY = ebeam4->ebeamLTUPosY();
+			LTUAngX = ebeam4->ebeamLTUAngX();
+			LTUAngY = ebeam4->ebeamLTUAngY();
+			PkCurrBC2 = ebeam4->ebeamPkCurrBC2();
+			
+            peakCurrent = ebeam4->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam4->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge4=" << charge << "\n"
+                << "* fEbeamL3Energy4=" << L3Energy << "\n"
+                << "* fEbeamLTUPosX4=" << LTUPosX << "\n"
+                << "* fEbeamLTUPosY4=" << LTUPosY << "\n"
+                << "* fEbeamLTUAngX4=" << LTUAngX << "\n"
+                << "* fEbeamLTUAngY4=" << LTUAngY << "\n"
+                << "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
+			}
+		}
     // Ebeam v3
-    if (ebeam3.get()) {
+		else if (ebeam3.get()) {
       charge = ebeam3->ebeamCharge();
       L3Energy = ebeam3->ebeamL3Energy();
       LTUPosX = ebeam3->ebeamLTUPosX();
@@ -481,6 +516,10 @@ namespace cheetah_ana_pkg {
 	     << "* fEbeamLTUAngY0=" << LTUAngY << endl;
       }
     }
+		else {
+			printf("Event %li: Warning: Psana::Bld::BldDataEBeam failed\n", frameNumber);
+		}
+
 		
 
     /*
@@ -529,6 +568,10 @@ namespace cheetah_ana_pkg {
 	cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
       }
     } 
+		else {
+			printf("Event %li: Warning: Psana::Bld::BldDataFEEGasDetEnergy failed\n", frameNumber);
+		}
+
 
 		
     /*
@@ -553,6 +596,10 @@ namespace cheetah_ana_pkg {
 	     << "* charge2=" << charge2 << endl;
       }
     }
+		//else {
+		//	printf("Event %li: Warning: Psana::Bld::BldDataPhaseCavity failed\n", frameNumber);
+		//}
+
 
 
 
@@ -639,8 +686,48 @@ namespace cheetah_ana_pkg {
     eventData->phaseCavityCharge1 = charge2;	
     eventData->pGlobal = &cheetahGlobal;
 
-    //	Copy raw cspad image data into Cheetah event structure for processing
-    //  SLAC libraries are not thread safe: must copy data into event structure for processing
+	
+        /*
+         *  FEE photon inline spectrometer
+         *  Psana::Bld::BldDataSpectrometerV0.get()
+         */
+		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0 = evt.get(m_srcFeeSpec);
+		eventData->FEEspec_present=0;
+		if(cheetahGlobal.useFEEspectrum) {
+			if (FEEspectrum0.get()) {
+				const ndarray<const uint32_t, 1>& hproj = FEEspectrum0->hproj();
+				const ndarray<const uint32_t, 1>& vproj = FEEspectrum0->vproj();
+				if (!hproj.empty() &&  !vproj.empty()) {
+					long	hsize = hproj.shape()[0];
+					long	vsize = hproj.shape()[0];
+					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
+					
+					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
+					eventData->FEEspec_vproj = (uint32_t*) calloc(vsize, sizeof(uint32_t));
+					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));
+					// The next line often throws a fatal memcpy() error.  No time to figure out why
+					// For now, comment out as spectrum is contained in FEEspec_hproj so we don't actually need this right now
+					//memcpy(eventData->FEEspec_vproj, vproj.data(), vsize*sizeof(uint32_t));
+					eventData->FEEspec_present = 1;
+				}
+				else {
+					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV0\n", frameNumber);
+				}
+			}
+			else {
+				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometerV0.get() failed\n", frameNumber);
+			}
+		}
+		
+
+		
+		
+ 				
+	/*
+         *  Copy primary area detector data into Cheetah event structure
+         *  SLAC libraries are not thread safe: so we must copy the data and not simply pass a pointer
+         */
+
     for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
       
       /*

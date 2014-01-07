@@ -33,8 +33,10 @@ void pnccdLineInterpolation(cEventData*, cGlobal*);
 void pnccdLineMasking(cEventData*, cGlobal*);
 
 
+
 // backgroundCorrection.cpp
 void subtractLocalBackground(cEventData*, cGlobal*);
+void subtractRadialBackground(cEventData*, cGlobal*);
 void checkSaturatedPixels(cEventData*, cGlobal*);
 void checkPnccdSaturatedPixels(cEventData*, cGlobal*);
 void subtractPersistentBackground(cEventData*, cGlobal*);
@@ -42,12 +44,14 @@ void updateBackgroundBuffer(cEventData*, cGlobal*, int);
 void calculatePersistentBackground(cEventData*, cGlobal*);
 void initBackgroundBuffer(cEventData*, cGlobal*);
 void subtractLocalBackground(float*, long, long, long, long, long);
+void subtractRadialBackground(float*, float*, char*, long, float);
 void checkSaturatedPixels(uint16_t*, uint16_t*, long, long);
 void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
 void updateHaloBuffer(cEventData*, cGlobal*,int);
 void calculateHaloPixelMask(cEventData*,cGlobal*);
 long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
+
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
@@ -56,12 +60,14 @@ void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
+
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
 void writeCXIHitstats(cEventData *info, cGlobal *global);
 void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
 herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
+
 
 // assemble2DImage.cpp
 void assemble2Dimage(cEventData*, cGlobal*);
@@ -79,9 +85,11 @@ void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long
 void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, uint16_t *msk,long downsampling);
 void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
 
+
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 long hitfinderFastScan(cEventData*, cGlobal*);
+
 
 // peakfinders.cpp
 int peakfinder(cGlobal*, cEventData*, int);
@@ -93,6 +101,11 @@ int killNearbyPeaks(tPeakList*, float );
 
 
 // spectrum.cpp
+void addFEEspectrumToStack(cEventData*, cGlobal*, int);
+void saveFEEspectrumStack(cGlobal*, int);
+void saveSpectrumStacks(cGlobal*);
+
+
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
 void addToSpectrumStack(cEventData*, cGlobal*, int);
@@ -104,6 +117,7 @@ void saveIntegratedRunSpectrum(cGlobal*);
 void readSpectrumDarkcal(cGlobal*, char *);
 void readSpectrumEnergyScale(cGlobal*, char*);
 
+
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
 void addToPowder(cEventData*, cGlobal*, int, int);
@@ -113,6 +127,7 @@ void saveDarkcal(cGlobal*, int);
 void saveGaincal(cGlobal*, int);
 void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
+
 
 // histogram.cpp
 void addToHistogram(cEventData*, cGlobal*);

@@ -344,7 +344,19 @@ public:
     long nCXIEvents;
     long nCXIHits;
     
-	// variable to hold the updating run integrated spectrum
+	
+	// FEE spectrum
+	int		useFEEspectrum;
+	long	FEEspectrumStackSize;
+	long	FEEspectrumWidth;
+	long	FEEspectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
+	FILE    *FEElogfp[MAX_POWDER_CLASSES];
+
+	
+	
+	// CXI downstream spectrometer
 	double  *espectrumRun;
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;

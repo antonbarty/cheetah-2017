@@ -15,6 +15,7 @@
 #include <hdf5.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 
 #include "detectorObject.h"
@@ -51,7 +52,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 /*
  *	Update the subdirectory name
  */
-void makeSubdir(cEventData *event, cGlobal *global) {
+void assignSubdir(cEventData *event, cGlobal *global) {
 
 	long filesPerDirectory = 1000;
 	
@@ -85,7 +86,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 *	and put it in the current working sub-directory
 	 */
 	char outfile[1024];
-	makeSubdir(info, global);
+	assignSubdir(info, global);
 	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
 
 	
@@ -717,17 +718,30 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	}
 	
 	// Dump peak info to file
-	pthread_mutex_lock(&global->peaksfp_mutex);
-	//fprintf(global->peaksfp, "%s\n", eventData->eventname);
-	//fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
-	//fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
-	//fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
-	//fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
-	//fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
-	//fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
-	//fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
-	//fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
+	// Version 1 of the peak info format
+	// (stream file)
+	pthread_mutex_lock(&global->peaksfp_mutex);
+	fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
+	
+	for(long i=0; i<eventData->nPeaks; i++) {
+		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i]);
+	}
+	pthread_mutex_unlock(&global->peaksfp_mutex);
+
+	
+	// Version 2 of the peak info format
+	// (one big CSV file)
+	/*
+	pthread_mutex_lock(&global->peaksfp_mutex);
 	for(long i=0; i<eventData->nPeaks; i++) {
 		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
 				eventData->frameNumber,
@@ -746,9 +760,9 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 				eventData->peaklist.peak_maxintensity[i],
 				eventData->peaklist.peak_sigma[i],
 				eventData->peaklist.peak_snr[i]  );
-		//fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peak_com_x_assembled[i], eventData->peak_com_y_assembled[i], eventData->peak_com_x[i], eventData->peak_com_y[i], eventData->peak_npix[i], eventData->peak_intensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
+	 */
 	
 	
 }

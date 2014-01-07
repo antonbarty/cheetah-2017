@@ -128,30 +128,31 @@ void *worker(void *threadarg) {
 	
   // Apply bad pixel map
   applyBadPixelMask(eventData, global);
-
-  // Save detector-corrections-only data (possibly needed later)
-  DETECTOR_LOOP {
-    memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
-  }
-  
+ 
   //  Inside-thread speed test
   if(global->ioSpeedTest==4) {
     printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
     goto cleanup;
   }
   
+  // This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
+  // Useful for local background subtraction (which is effective but slow)
   if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
     hit = hitfinderFastScan(eventData, global);
     if(hit)
-      goto localBG;
+      goto localBGCalculated;
     else
       goto hitknown;
   }
 
-  // Local background subtraction
+  // Local background subtraction 
   subtractLocalBackground(eventData, global);
 
- localBG:	
+ localBGCalculated:
+  // Keep memory of data with only detector artefacts subtracted (possibly needed later)
+  DETECTOR_LOOP {
+    memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+  }
 
   // Subtract residual common mode offsets (cmModule=2) 
   cspadModuleSubtract2(eventData, global);
@@ -180,6 +181,8 @@ void *worker(void *threadarg) {
   initBackgroundBuffer(eventData,global);
   // If darkcal file available: Subtract persistent background here (background = photon background)
   subtractPersistentBackground(eventData, global);
+  // Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end - not to be crunched with detector )
+  subtractRadialBackground(eventData, global);
 
   //---HITFINDING---//
 
@@ -354,7 +357,11 @@ void *worker(void *threadarg) {
     printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
   }
 
-  // If this is a hit, write out peak info to peak list file
+  // FEE spectrometer data stack 
+  // (needs knowledge of subdirectory for file list, which is why it's done here)
+  addFEEspectrumToStack(eventData, global, hit);
+    
+  // If this is a hit, write out peak info to peak list file	
   if(hit && global->savePeakInfo) {
     writePeakFile(eventData, global);
   }

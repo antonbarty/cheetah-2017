@@ -685,41 +685,47 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	long	*rcount = (long*) calloc(lmaxr, sizeof(long));
 	float	*rthreshold = (float*) calloc(lmaxr, sizeof(float));
 	for(long i=0; i<lmaxr; i++) {
-		roffset[i] = 0;
-		rsigma[i] = 0;
-		rcount[i] = 0;
-		rthreshold[i] = 0;
+		rthreshold[i] = 1e9;
 	}
 	
 	// Compute sigma and average of data values at each radius
 	// From this, compute the ADC threshold to be applied at each radius
+	// Iterate a few times to reduce the effect of positive outliers (ie: peaks)
 	long	thisr;
 	float	thisoffset, thissigma;
-	for(long i=0;i<pix_nn;i++){
-		if(mask[i] != 0) {
-			thisr = lrint(pix_r[i]);
-			roffset[thisr] += temp[i];
-			rsigma[thisr] += (temp[i]*temp[i]);
-			rcount[thisr] += 1;
-		}
-	}
-	for(long i=0; i<lmaxr; i++) {
-		if(rcount[i] == 0) {
+	for(counter=0; counter<5; counter++) {
+		for(long i=0; i<lmaxr; i++) {
 			roffset[i] = 0;
 			rsigma[i] = 0;
-			rthreshold[i] = 1e9;
-			//rthreshold[i] = ADCthresh;		// For testing
+			rcount[i] = 0;
 		}
-		else {
-			thisoffset = roffset[i]/rcount[i];
-			thissigma = sqrt(rsigma[i]/rcount[i] - ((roffset[i]/rcount[i])*(roffset[i]/rcount[i])));
-			roffset[i] = thisoffset;
-			rsigma[i] = thissigma;
-			rthreshold[i] = roffset[i] + hitfinderMinSNR*rsigma[i];
-			//rthreshold[i] = ADCthresh;		// For testing
+		for(long i=0;i<pix_nn;i++){
+			if(mask[i] != 0) {
+				thisr = lrint(pix_r[i]);
+				if(temp[i] < rthreshold[thisr]) {
+					roffset[thisr] += temp[i];
+					rsigma[thisr] += (temp[i]*temp[i]);
+					rcount[thisr] += 1;
+				}
+			}
+		}
+		for(long i=0; i<lmaxr; i++) {
+			if(rcount[i] == 0) {
+				roffset[i] = 0;
+				rsigma[i] = 0;
+				rthreshold[i] = 1e9;
+				//rthreshold[i] = ADCthresh;		// For testing
+			}
+			else {
+				thisoffset = roffset[i]/rcount[i];
+				thissigma = sqrt(rsigma[i]/rcount[i] - ((roffset[i]/rcount[i])*(roffset[i]/rcount[i])));
+				roffset[i] = thisoffset;
+				rsigma[i] = thissigma;
+				rthreshold[i] = roffset[i] + hitfinderMinSNR*rsigma[i];
+				//rthreshold[i] = ADCthresh;		// For testing
+			}
 		}
 	}
-	
 	
 	
 	// Loop over modules (8x8 array)
