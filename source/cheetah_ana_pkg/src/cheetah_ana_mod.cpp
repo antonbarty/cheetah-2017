@@ -149,7 +149,7 @@ namespace cheetah_ana_pkg {
   /// Method which is called once at the beginning of the job
   void cheetah_ana_mod::beginJob(Event& evt, Env& env)
   {
-    cout << "*** beginJob ***" << endl;
+		//cout << "*** beginJob ***" << endl;
     time(&startT);
     cheetahInit(&cheetahGlobal);
     if(cheetahGlobal.saveCXI){
@@ -164,7 +164,7 @@ namespace cheetah_ana_pkg {
   void cheetah_ana_mod::beginRun(Event& evt, Env& env)
   {
     cout << "Experiment = " << env.experiment() << endl;
-    cout << "*** beginRun ***" << endl;
+	//cout << "*** beginRun ***" << endl;
     int runNumber = 0;
     PSTime::Time evtTime;
     boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
@@ -612,7 +612,9 @@ namespace cheetah_ana_pkg {
     std::vector<std::string> pvNames = estore.pvNames();
 
     // Detector position
-    float detectorPosition[MAX_DETECTORS];
+                // Don't forget to initialize them
+                std::vector<float> detectorPosition(MAX_DETECTORS,0);
+
     for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
       shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
       if (pv && pv->numElements() > 0) {
@@ -1214,7 +1216,10 @@ namespace cheetah_ana_pkg {
     time(&endT);
     double dif = difftime(endT,startT);
     cout << "time taken: " << dif << " seconds" << endl;
-    exit(1);
+          // We shouldn't exit, and specially not with a value of 1
+          //	  exit(1);
+          // Just retuning allows the proper destructors to be called
+          return;
   }
 
 } // namespace cheetah_ana_pkg

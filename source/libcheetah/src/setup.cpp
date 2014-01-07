@@ -72,6 +72,7 @@ cGlobal::cGlobal(void) {
 
   // Hitfinding
   hitfinder = 0;
+    hitfinderInvertHit = 0;
   hitfinderDetector = 0;
   hitfinderADC = 100;
   hitfinderTAT = 1e3;
@@ -715,7 +716,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
       if (matched == 0){
 	printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
-	exit(0);
+	exit(1);
       }
 
     }
@@ -731,7 +732,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
   if (exitCheetah != 0){
     printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
-    exit(0);
+    exit(1);
   }
 
   printf("Configured %d detectors\n",nDetectors);
@@ -763,6 +764,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
    */
   if (!strcmp(tag, "defaultphotonenergyev")) {
     defaultPhotonEnergyeV = atof(value);
+  }
+  else if (!strcmp(tag, "fixedphotonenergyev")){
+    fixedPhotonEnergyeV = atof(value);
   }
   else if (!strcmp(tag, "saveepicspvfloat")) {
     strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
@@ -813,6 +817,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinder")) {
     hitfinder = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderinverthit")) {
+    hitfinderInvertHit = atoi(value);
   }
   else if (!strcmp(tag, "hitfinderdetector")) {
     hitfinderDetector = atoi(value);

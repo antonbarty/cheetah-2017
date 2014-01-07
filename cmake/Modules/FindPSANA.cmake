@@ -44,6 +44,19 @@ foreach(ana_lib IN LISTS ana_libs)
 	LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
 endforeach(ana_lib)
 
+foreach(ana_lib IN LISTS pdsdata_libs)
+	# Clear variable first
+	SET(ANA_${ana_lib}_LIBRARY "ANA_${ana_lib}_LIBRARY-NOTFOUND" CACHE INTERNAL "Internal" FORCE)
+	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/)
+	SET(ANA_${ana_lib}_LIBRARY ${ANA_${ana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
+#	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
+	# Only add the libraries we do find
+	if(NOT ${ANA_${ana_lib}_LIBRARY} STREQUAL "ANA_${ana_lib}_LIBRARY-NOTFOUND" )	
+		message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
+		LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
+	endif()
+endforeach(ana_lib)
+
 #clear var
 SET(PSANA_INCLUDES)
 LIST(APPEND PSANA_INCLUDES ${ANA_RELEASE}/include ${ANA_RELEASE}/arch/${ANA_ARCH}/geninc)

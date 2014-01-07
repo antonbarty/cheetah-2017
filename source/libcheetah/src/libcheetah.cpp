@@ -390,6 +390,26 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
+	/*
+	 * In case people forget to turn on the beamline data.
+	 */
+	if (global->fixedPhotonEnergyeV > 0) {
+		eventData->photonEnergyeV = global->fixedPhotonEnergyeV;
+		eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
+	}
+   
+	/* Further wavelength testing */
+	if ( ! isfinite(eventData->photonEnergyeV ) ) {
+		if ( global->defaultPhotonEnergyeV > 0 ) {
+			eventData->photonEnergyeV = global->defaultPhotonEnergyeV;
+			eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
+		} else {
+			printf("Bad value for photon energy.\n");
+			printf("Try setting the keyword defaultPhotonEnergyeV or fixedPhotonEnergyeV\n");
+			exit(1);
+		}
+	}
+
   /*
    *	Remember to update global variables 
    */
@@ -450,7 +470,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		dnextmsg += 1;
 	      }
 	      if(dtime > maxwait) {
-		printf("\tApparent thread lock - no free thread for %li seconds.\n", dtime);
+                printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
 		printf("\tGiving up and resetting the thread counter\n");
 		global->freeMutexes();
 		global->nActiveThreads = 0;

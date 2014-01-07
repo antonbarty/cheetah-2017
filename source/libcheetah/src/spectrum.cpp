@@ -427,7 +427,6 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 
 void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	
-	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	char        groupname[1024];
 	char        fieldname[1024];
 	hid_t       file_id;
@@ -494,6 +493,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	dataclass = H5Tget_class(datatype_id);
 	size = H5Tget_size(datatype_id);
 		
+	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	H5Dread(dataset_id, datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, energyscale);
 	for(int i=0; i<global->espectrumLength; i++) {
 		global->espectrumScale[i] = energyscale[i];

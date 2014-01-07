@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "saveCXI.h"
+#include "util.h"
 
 herr_t
 cheetahHDF5ErrorHandler(hid_t,void *)
@@ -67,7 +68,7 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
 	  res += src[yy*srcWidth+xx];
 	} 
       }
-      dst[y*dstWidth+x] = res/(scale*scale);
+      dst[y*dstWidth+x] = (short int) res/(scale*scale);
     }
   }
   return dst;
@@ -987,6 +988,7 @@ static void  closeCXI(CXI::File * cxi){
   }
   H5Fflush(cxi->self, H5F_SCOPE_GLOBAL);
   H5Fclose(cxi->self);
+  delete cxi;
 }
 
 void closeCXIFiles(cGlobal * global){

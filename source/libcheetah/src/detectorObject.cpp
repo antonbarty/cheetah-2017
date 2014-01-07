@@ -777,9 +777,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   x, y, z, r;
   double   kx,ky,kz,kr;
   double   res,minres,maxres;
-  double	 sin_theta;
   long     minres_pix,maxres_pix;
-  //long c = 0;	
   minres = 1.e10;
   maxres = 0.;
   minres_pix = 0;
@@ -797,9 +795,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     ky = (y/r)/wavelengthA;
     kz = (z/r - 1)/wavelengthA;                 // assuming incident beam is along +z direction
     kr = sqrt(kx*kx + ky*ky + kz*kz);
-    //res = 1.0/kr;
-    sin_theta = sqrt(x*x+y*y)/r;
-    res = wavelengthA/(sin_theta);
+    res = 1.0/kr;
         
     pix_kx[i] = kx;
     pix_ky[i] = ky;
@@ -809,6 +805,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
         
     if ( res > minres ){
       minres = res;
+
       maxres_pix = pix_r[i];
     }
     if ( res < maxres ){
@@ -1196,7 +1193,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 }
 
 cPixelDetectorEvent::cPixelDetectorEvent() {
-
+  /* FM: Warning. This is not run when malloc'ed*/
   detectorZ=0;
 
 }

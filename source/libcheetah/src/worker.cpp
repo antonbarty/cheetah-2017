@@ -192,6 +192,12 @@ void *worker(void *threadarg) {
 
   if(global->hitfinder){ 
     hit = hitfinder(eventData, global);
+		if (global->hitfinderInvertHit == 1){
+			if ( hit == 1 ) 
+				hit = 0;
+			else
+				hit = 1;
+		}
     eventData->hit = hit;
   }
 
