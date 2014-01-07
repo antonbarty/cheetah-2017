@@ -19,7 +19,6 @@
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
 #include "median.h"
-#include "util.h"
 
 
 /*

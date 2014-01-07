@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "saveCXI.h"
-#include "util.h"
 
 herr_t
 cheetahHDF5ErrorHandler(hid_t,void *)
