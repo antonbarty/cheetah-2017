@@ -560,14 +560,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   cxi->cheetahVal.confVal.self = H5Gcreate(cxi->cheetahVal.self, "configuration", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   confVal = cxi->cheetahVal.confVal;
 
-    char buffer[1024];
-    sprintf(buffer,"nProcessedFrames");
-    cxi->cheetahVal.sharedVal.nProcessedFrames = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);
-    sprintf(buffer,"nHits");
-    cxi->cheetahVal.sharedVal.nHits = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);
-    sprintf(buffer,"hitrate");
-    cxi->cheetahVal.sharedVal.hitrate = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_FLOAT);    
   DETECTOR_LOOP{
+    char buffer[1024];
     sprintf(buffer,"detector%ld_lastBgUpdate",detID);
     cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
     sprintf(buffer,"detector%ld_nHot",detID);
@@ -582,10 +576,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
     sprintf(buffer,"detector%ld_haloPixCounter",detID);
     cxi->cheetahVal.sharedVal.haloPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
-      POWDER_LOOP {
-          sprintf(buffer,"detector%ld_class%ld_nFrames", detID, powID);
-          cxi->cheetahVal.sharedVal.nFrames[detID][powID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self, H5T_NATIVE_LONG);          
-      }      
       
     sprintf(buffer,"detector%ld_detectorName",detID);
     createAndWriteDataset(buffer,confVal.self,global->detector[detID].detectorName,MAX_FILENAME_LENGTH);
@@ -743,7 +733,16 @@ void writeAccumulatedCXI(cGlobal * global){
   long	radial_nn;
   long	pix_nn,pix_nx,pix_ny;
   long	image_nn;
+    char buffer[1024];
 
+    sprintf(buffer,"nProcessedFrames");
+    createAndWriteDataset(buffer, sharedVal.self, &global->nprocessedframes);
+    sprintf(buffer,"nHits");
+    createAndWriteDataset(buffer, sharedVal.self, &global->nhits);
+    // Calculate overall hit rate
+    float hitrate = 100.*( global->nhits / (float) global->nprocessedframes);    
+    sprintf(buffer,"hitrate");
+    createAndWriteDataset(buffer, sharedVal.self, &hitrate);
   DETECTOR_LOOP{
     POWDER_LOOP{
       detector = &global->detector[detID];
@@ -752,7 +751,6 @@ void writeAccumulatedCXI(cGlobal * global){
       pix_nx =  detector->pix_nx;
       pix_ny =  detector->pix_ny;
       image_nn = detector->image_nn;
-      char buffer[1024];
 
       // Dereference/create arrays to be written to file
       // SUM(data)
@@ -786,7 +784,7 @@ void writeAccumulatedCXI(cGlobal * global){
 
       // SUM(data)
       sprintf(buffer,"detector%li_class%li_sum_raw",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sum_raw,pix_nx,pix_ny);
+      createAndWriteDataset(buffer, sharedVal.self,sum_raw,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_sum_corrected",detID,powID);
       createAndWriteDataset(buffer, sharedVal.self,sum_corrected,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_sum_corrected_angAvg",detID,powID);
@@ -808,6 +806,10 @@ void writeAccumulatedCXI(cGlobal * global){
       sprintf(buffer,"detector%li_class%li_sigma_corrected_angAvg",detID,powID);
       createAndWriteDataset(buffer, sharedVal.self,sigma_corrected_ang,radial_nn);
       
+        // nFrames
+        sprintf(buffer,"detector%li_class%li_nFrames", detID, powID);
+        createAndWriteDataset(buffer, sharedVal.self, &global->detector[detID].nPowderFrames[powID]);
+        
       free(sum_corrected_ang);
       free(sum_corrected_angCnt);
       free(sum_correctedSq_ang);
@@ -982,13 +984,5 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
     writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].last_halopix_update);  
     writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);
-      POWDER_LOOP{
-          writeScalarToStack(cxi->cheetahVal.sharedVal.nFrames[detID][powID],stackSlice,global->detector[detID].nPowderFrames[powID]);
-      }
   }
-    writeScalarToStack(cxi->cheetahVal.sharedVal.nProcessedFrames,stackSlice,global->nprocessedframes);
-    writeScalarToStack(cxi->cheetahVal.sharedVal.nHits,stackSlice,global->nhits);
-    // Calculate overall hit rate
-    float hitrate = 100.*( global->nhits / (float) global->nprocessedframes);    
-    writeScalarToStack(cxi->cheetahVal.sharedVal.hitrate,stackSlice,hitrate);
 }
