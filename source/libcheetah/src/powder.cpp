@@ -21,7 +21,6 @@
 #include "median.h"
 
 
-
 /*
  *	Maintain running powder patterns
  */
@@ -51,7 +50,16 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     // Dereference common variable
     //long	radial_nn = global->detector[detID].radial_nn;
     long	pix_nn = global->detector[detID].pix_nn;
+    long	pix_nx = global->detector[detID].pix_nx;
+    long	pix_ny = global->detector[detID].pix_ny;
+
     long	image_nn = global->detector[detID].image_nn;
+    long	image_nx = global->detector[detID].image_nx;
+    long	image_ny = global->detector[detID].image_ny;
+
+    long	imageXxX_nn = global->detector[detID].imageXxX_nn;
+    long	imageXxX_nx = global->detector[detID].imageXxX_nx;
+    long	imageXxX_ny = global->detector[detID].imageXxX_ny;
 
     double  *buffer;
 	
@@ -142,31 +150,36 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     pthread_mutex_unlock(&global->detector[detID].powderCorrectedSquared_mutex[powderClass]);
     free(buffer);
 
-    
-    
-    /*
-     *  Do not sum assembled data here: it takes more time than expected to assemble the required 2D image.
-     *  Instead sum raw data and assemble2Dimage before saving
-     */
-    /*
-    if(global->assemble2DImage) {
-        // Assembled data
-        pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-        if(!global->usePowderThresh) {
-            for(long i=0; i<image_nn; i++)
-                global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-        }
-        else {
-            for(long i=0; i<image_nn; i++){
-                if(eventData->detector[detID].image[i] > global->powderthresh)
-                    global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-            }
-        }
-        pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-    }
-     */
 
-    
+    /*
+     *  Sum of peaks centroids
+     */
+	if (eventData->nPeaks > 0) {
+		pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+		long	ci, cx, cy, val, e;
+
+		for(long i=0; i<=eventData->peaklist.nPeaks && i<eventData->peaklist.nPeaks_max; i++) {
+						
+			// Peak position and value
+			ci = eventData->peaklist.peak_com_index[i];
+			cx = lrint(eventData->peaklist.peak_com_x[i]);
+			cy = lrint(eventData->peaklist.peak_com_y[i]);
+			val = eventData->peaklist.peak_totalintensity[i];
+			
+			// Bounds check
+			if(cx < 0 || cx > (pix_nx-1) ) continue;
+			if(cy < 0 || cy > (pix_ny-1) ) continue;
+			if(ci < 0 || cx > (pix_nn-1) ) continue;
+			
+			// Element in 1D array
+			e = cx + pix_nx*cy;
+			if(e < 0 || e > (pix_nn-1) ) continue;
+			global->detector[detID].powderPeaks[powderClass][e] += val;
+			//global->detector[detID].powderPeaks[powderClass][ci] += val;
+		}
+		pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+	}
+
     // Min nPeaks: Pattern
     if(eventData->nPeaks < global->nPeaksMin[powderClass]){
         pthread_mutex_lock(&global->detector[detID].correctedMin_mutex[powderClass]);
@@ -182,6 +195,48 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
         //memcpy(global->detector[detID].correctedMax[powderClass],eventData->detector[detID].corrected_data,sizeof(float)*pix_nn);
         pthread_mutex_unlock(&global->detector[detID].correctedMax_mutex[powderClass]);
     }
+   
+    // Only assemble data if explicitly specified by configuration
+    if(global->assemblePowders) {
+      if(global->assemble2DImage){
+        // Assembled data
+        pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+        if(!global->usePowderThresh) {
+	  for(long i=0; i<image_nn; i++){
+	      global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+	      global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+	  }
+        }
+        else {
+            for(long i=0; i<image_nn; i++){
+                if(eventData->detector[detID].image[i] > global->powderthresh)
+                    global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+		    global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+            }
+        }
+        pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+      }
+      if(global->detector[detID].downsampling > 1){
+	// Downsampled data
+	pthread_mutex_lock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+	if(!global->usePowderThresh) {
+	  for(long i=0; i<imageXxX_nn; i++){
+	      global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+	      global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
+	  }
+        }
+        else {
+            for(long i=0; i<imageXxX_nn; i++){
+                if(eventData->detector[detID].image[i] > global->powderthresh)
+                    global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+                    global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
+            }
+        }
+        pthread_mutex_unlock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+      }
+    }
+    
+    
 
 }
 
@@ -213,14 +268,14 @@ void saveRunningSums(cGlobal *global, int detID) {
 	
     // Compute and save darkcal
     if(global->generateDarkcal) {
-        savePowderPattern(global, detID, 0);
         saveDarkcal(global, detID);
+        savePowderPattern(global, detID, 0);
     }
 	
     // Compute and save gain calibration
     if(global->generateGaincal) {
-        savePowderPattern(global, detID, 0);
         saveGaincal(global, detID);
+        savePowderPattern(global, detID, 0);
     }
 }
 
@@ -239,6 +294,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     double  *bufferAssembled;
     //int16_t *bufferAssembledNPeaksMin;
     //int16_t *bufferAssembledNPeaksMax;
+	long	nframes = detector->nPowderFrames[powderType];
 
     /*
      *	Filename
@@ -267,14 +323,19 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     calculateRadialAverage(bufferCorrected, radialAverageCorrected, radialAverageCorrectedCounter, global, detID);
 
-    
+    // Peak powder
+    double *bufferPeaks = (double*) calloc(pix_nn, sizeof(double));
+    pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
+    memcpy(bufferPeaks, detector->powderPeaks[powderType], pix_nn*sizeof(double));
+    pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
+    calculateRadialAverage(bufferCorrected, radialAverageCorrected, radialAverageCorrectedCounter, global, detID);
+
     // Assembled image for viewing
     bufferAssembled = (double*) calloc(image_nn, sizeof(double));
     pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
     memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
     pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
     
-	
     // Data squared (for calculation of variance)
     double *bufferCorrectedSquared = (double*) calloc(pix_nn, sizeof(double));
     double *radialAverageCorrectedSquared = (double*) calloc(radial_nn, sizeof(double));
@@ -282,7 +343,6 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     memcpy(bufferCorrectedSquared, detector->powderCorrectedSquared[powderType], pix_nn*sizeof(double));
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
     calculateRadialAverage(bufferCorrectedSquared, radialAverageCorrectedSquared, radialAverageCorrectedCounter, global, detID);
-
 	
     // Sigma (variance)
     double *bufferCorrectedSigma = (double*) calloc(pix_nn, sizeof(double));
@@ -291,13 +351,15 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
     for(long i=0; i<pix_nn; i++){
         bufferCorrectedSigma[i] =
-        sqrt( fabs(bufferCorrectedSquared[i] - bufferCorrected[i]*bufferCorrected[i]) / detector->nPowderFrames[powderType] );
+        sqrt( fabs(bufferCorrectedSquared[i]/nframes - (bufferCorrected[i]/nframes)*(bufferCorrected[i]/nframes)) );
     }
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
     calculateRadialAverage(bufferCorrectedSigma, radialAverageCorrectedSigma, radialAverageCorrectedCounter, global, detID);
 
-
+	// NOTE: CorrectedNPeaksMin/Max AssembledNPeaksMin/Max are commented out
+	// (including allocation) since they are not saved to powder sum file
+	
     //float *bufferCorrectedNPeaksMin = (float*) calloc(pix_nn,sizeof(float));
     //pthread_mutex_lock(&detector->correctedMin_mutex[powderType]);
     //memcpy(bufferCorrectedNPeaksMin, detector->correctedMin[powderType], pix_nn*sizeof(float));
@@ -327,8 +389,10 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
      */
     hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
     //herr_t r;
-    hsize_t size[2];
-    hsize_t max_size[2];
+    hsize_t		size[2];
+    hsize_t		max_size[2];
+	hid_t		h5compression;
+
 	
     fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if ( fh < 0 ) {
@@ -340,30 +404,45 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         H5Fclose(fh);
     }
 	
+	if (global->h5compress) {
+		h5compression = H5Pcreate(H5P_DATASET_CREATE);
+	}
+	else {
+		h5compression = H5P_DEFAULT;
+	}
+
     // Write image data in Raw layout
     size[0] = detector->pix_ny;
     size[1] = detector->pix_nx;
     sh = H5Screate_simple(2, size, NULL);
     //H5Sget_simple_extent_dims(sh, size, max_size);
-	
-    dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (global->h5compress) {
+		H5Pset_chunk(h5compression, 2, size);
+		H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
+	}
+    dh = H5Dcreate(gh, "rawdata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferRaw);
     H5Dclose(dh);
     
-    dh = H5Dcreate(gh, "correcteddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrected);
     H5Dclose(dh);
+
+	dh = H5Dcreate(gh, "peakpowder", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+    if (dh < 0) ERROR("Could not create dataset.\n");
+    H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferPeaks);
+    H5Dclose(dh);
 	
     //H5Sget_simple_extent_dims(sh, size, size);
-    dh = H5Dcreate(gh, "correcteddatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddatasquared", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSquared);
     H5Dclose(dh);
 	
     //H5Sget_simple_extent_dims(sh, size, size);
-    dh = H5Dcreate(gh, "correcteddatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    dh = H5Dcreate(gh, "correcteddatasigma", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferCorrectedSigma);
     H5Dclose(dh);
@@ -384,9 +463,13 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         size[0] = detector->image_nn/detector->image_nx;
         size[1] = detector->image_nx;
         sh = H5Screate_simple(2, size, NULL);
-        
+		if (global->h5compress) {
+			H5Pset_chunk(h5compression, 2, size);
+			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
+		}
+
         //H5Sget_simple_extent_dims(sh, size, max_size);
-        dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dh = H5Dcreate(gh, "assembleddata", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
         if (dh < 0) ERROR("Could not create dataset.\n");
         H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferAssembled);
         H5Dclose(dh);
@@ -478,6 +561,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     free(bufferCorrectedSigma);
     //free(bufferCorrectedNPeaksMin);
     //free(bufferCorrectedNPeaksMax);
+	free(bufferPeaks);
     free(radialAverageCorrected);
     free(radialAverageCorrectedSquared);
     free(radialAverageCorrectedSigma);
@@ -487,7 +571,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         //free(bufferAssembledNPeaksMin);
         //free(bufferAssembledNPeaksMax);
     }
-    fflush(global->powderlogfp[powderType]);
+    for(long i=0; i<global->nPowderClasses; i++) {
+        fflush(global->powderlogfp[i]);
+    }
 
 }
 
@@ -522,42 +608,54 @@ void saveDarkcal(cGlobal *global, int detID) {
  */
 void saveGaincal(cGlobal *global, int detID) {
 	
-  // Dereference common variables
-  cPixelDetectorCommon     *detector = &(global->detector[detID]);
-  long	pix_nn = detector->pix_nn;
-  char	filename[1024];
+	printf("Processing gaincal\n");
+
+	// Dereference common variables
+	cPixelDetectorCommon     *detector = &(global->detector[detID]);
+	long	pix_nn = detector->pix_nn;
+    float   nframes;
 	
-  printf("Processing gaincal\n");
-  sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
-  // Calculate average intensity per frame
-  pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
-  double *buffer = (double*) calloc(pix_nn, sizeof(double));
-  for(long i=0; i<pix_nn; i++)
-    buffer[i] = (detector->powderCorrected[0][i]/detector->nPowderFrames[0]);
-  pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
-	
-  // Find median value (this value will become gain=1)
-  float *buffer2 = (float*) calloc(pix_nn, sizeof(float));
-  for(long i=0; i<pix_nn; i++) {
-    buffer2[i] = buffer[i];
-  }
-  float	dc;
-  dc = kth_smallest(buffer2, pix_nn, lrint(0.5*pix_nn));
-  printf("offset=%f\n",dc);
-  free(buffer2);
-  if(dc <= 0){
-    printf("Error calculating gain, offset = %f\n",dc);
-    return;
-  }
-  // gain=1 for a median value pixel, and is bounded between a gain of 0.1 and 10
-  for(long i=0; i<pix_nn; i++) {
-    buffer[i] /= (double) dc;
-    if(buffer[i] < 0.1 || buffer[i] > 10)
-      buffer[i]=0;
-  }
-  printf("Saving gaincal to file: %s\n", filename);
-  writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_DOUBLE);	
-  free(buffer);	
+	// Grab a snapshot of the current running sum
+	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
+	float *buffer = (float*) calloc(pix_nn, sizeof(float));
+	for(long i=0; i<pix_nn; i++)
+		buffer[i] = detector->powderCorrected[0][i];
+    for(long i=0; i<pix_nn; i++)
+		buffer[i] /= detector->nPowderFrames[0];
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
+
+    
+    
+	// Find median value (this value will become gain=1)
+	float	dc;
+	float *buffer2 = (float*) calloc(pix_nn, sizeof(float));
+	for(long i=0; i<pix_nn; i++) {
+		buffer2[i] = buffer[i];
+	}
+	dc = kth_smallest(buffer2, pix_nn, lrint(0.5*pix_nn));
+	printf("offset=%f\n",dc);
+	free(buffer2);
+    
+    // Trap a potential error condition
+	if(dc <= 0){
+		printf("Error calculating gain, offset = %f\n",dc);
+		return;
+	}
+    
+    // Calculate gain
+	// gain=1 for a median value pixel
+    // Possibly bound gain between 0.1 and 10
+	for(long i=0; i<pix_nn; i++) {
+		buffer[i] /= (float) dc;
+		//if(buffer[i] < 0.1 || buffer[i] > 10)
+		//	buffer[i]=0;
+	}
+
+	char	filename[1024];
+	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
+	printf("Saving gaincal to file: %s\n", filename);
+	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
+	free(buffer);
 }
 
 

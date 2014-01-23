@@ -18,6 +18,7 @@
 
 #define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
 
+
 /** @brief Global variables.
  *
  * Configuration parameters, and things that don't change often.
@@ -64,6 +65,8 @@ public:
 	long     startAtFrame;
 	/** @brief Skip all frames after this one. */
 	long     stopAtFrame;
+	/** @brief Skip a random fraction of the given size (value between 0. and 1.). */
+	float    skipFract;
 
 	/** @brief Toggle the creation of a darkcal image. */
 	int      generateDarkcal;
@@ -74,6 +77,8 @@ public:
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
+	/** @brief Invert thit status (i.e. save "misses" if desired) */
+	int      hitfinderInvertHit;
 	int      hitfinderDetector;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
@@ -110,6 +115,10 @@ public:
 	int      hitfinderTOFMaxSample;
 	/** @brief Intensity threshold of TOF for hitfinding. */
 	double   hitfinderTOFThresh;
+	/** @brief Window used for moving average in some TOF hitfinding. */
+	double   hitfinderTOFWindow;
+	/** @brief Peak count constraint used in some TOF hitfinding. */
+	double   hitfinderTOFMinCount;
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
@@ -123,30 +132,32 @@ public:
 	 * The outer radius of the annulus is thus hitfinderLocalBGradius +
 	 * hitfinderLocalBGThickness.*/
 	int      hitfinderLocalBGThickness;
-	/** @brief Toggle the useage of a resolution-based annulus mask. */
-	//int      hitfinderLimitRes;
 	/** @brief Minimum resolution to be considered in hitfinding.
-	 * If hitfinderResolutionUnitPixel==0 (default) the unit of
-	 * hitfinderMinRes and hitfinderMaxRes is angstrom and pixels
-	 * below the defined resolution limit will be not considered
-	 * for hitfinding.
-	 * If hitfinderResolutionUnitPixel==1 the unit of hitfinderMinRes
-	 * and hitfinderMaxRes is pixel and pixels within a circle of
-	 * radius hitfinderMinRes pixels will be not considered for hitfinding.
+	 * If the unit is Angstrom (hitfinderResolutionUnitPixel==0) this means the minimum (smallest) resolution element.
+	 * If the unit is pixel (hitfinderResolutionUnitPixel==1) this means the minimum distance from the center.
 	 */
 	float    hitfinderMinRes;
 	/** @brief The maximum resolution to be considered in hitfinding.
-	 * See hitfinderMinRes for more details. */
+	 * If the unit is Angstrom (hitfinderResolutionUnitPixel==0) this means the maximum (largest) resolution element. 
+	 * If the unit is pixel (hitfinderResolutionUnitPixel==1) this means the maximum distance from the center.
+	 */
 	float    hitfinderMaxRes;
-	/** @brief hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel
-	 * and not angstrom. See hitfinderMinRes for more details.
+	/** @brief If set to "1" hitfinderMinRes und hitfinderMaxRes will be interpreted in unit detector pixel
+	 * and not angstrom. See hitfinderMinRes and hitfinderMaxRes for more details. 
 	 */
 	int      hitfinderResolutionUnitPixel;
 	/** @brief Binary map of pixels excluded based on resolution. */
 	int     *hitfinderResMask;
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
-	
+	/** @brief Toggle ignoring halo pixels during hitfinding. */
+	int      hitfinderIgnoreHaloPixels;
+	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
+	long      hitfinderDownsampling;
+	/** @brief Data for hitfinding only based on detector corrected data (photon correction ignored for hitfinding). Only hitfinder 1. */
+	long      hitfinderOnDetectorCorrectedData;
+
+	int		hitfinderFastScan;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -184,10 +195,13 @@ public:
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
+    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
+	/** @brief Toggle whether or not additional assembled powders and downsampled images shall be generated. This might slow down execution of cheetah. */
+	int     assemblePowders;
 
 
 	/** @brief Interval between saving of powder patterns, etc. */
@@ -203,6 +217,10 @@ public:
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
 
+	/** @brief The number of initial calibration frames */
+	long       nInitFrames;
+	/** @brief flag encoding status of calibration  */
+	int       calibrated;
 
 	/** @brief The Epics process variable for the pump laser delay. */
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
@@ -230,8 +248,15 @@ public:
 	 * of hit status.
 	 */
 	int      hdf5dump;
+	/** @brief Python script to be hosted for shared memory visualization */
+	char     pythonFile[MAX_FILENAME_LENGTH];
+	int		 h5compress;
     
-    bool saveCXI;
+	/** @brief Output 1 HDF5 per image by default */
+	bool saveCXI;
+
+	/** @brief  Only one thread during calibration */
+	int useSingleThreadCalibration;
 
 
 	/** @brief Toggle the verbosity of Cheetah. */
@@ -293,6 +318,8 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
+	//pthread_mutex_t  hitVector_mutex;
+	pthread_mutex_t  gmd_mutex;
 
 	/*
 	 *	Common variables
@@ -317,12 +344,31 @@ public:
 	long     nrecentprocessedframes;
 	long     nrecenthits;
     long     nespechits;
+    long nCXIEvents;
+    long nCXIHits;
     
-	// variable to hold the updating run integrated spectrum
+	
+	// FEE spectrum
+	int		useFEEspectrum;
+	long	FEEspectrumStackSize;
+	long	FEEspectrumWidth;
+	long	FEEspectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
+	FILE    *FEElogfp[MAX_POWDER_CLASSES];
+
+	
+	
+	// CXI downstream spectrometer
 	double  *espectrumRun;
 	double  *espectrumBuffer;
 	double  *espectrumDarkcal;
 	double  *espectrumScale;
+	long	espectrumStackSize;
+	long	espectrumStackCounter[MAX_POWDER_CLASSES];
+	float   *espectrumStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
+
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -363,12 +409,15 @@ public:
 	 * @brief What's this for?
 	**/
 	void setup(void);
+	void updateCalibrated(void);
 
 	void writeInitialLog(void);
 	void updateLogfile(void);
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
+	void freeMutexes(void);
+
 
 
 private:

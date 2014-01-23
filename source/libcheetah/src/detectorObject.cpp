@@ -38,7 +38,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	//detectorPdsDetInfo = Pds::DetInfo::CxiDs1;
 
 	// Calibration files
-	strcpy(detectorConfigFile, "No_file_specified");
+	//strcpy(detectorConfigFile, "No_file_specified");
 	strcpy(geometryFile, "No_file_specified");
 	strcpy(badpixelFile, "No_file_specified");
 	strcpy(baddataFile, "No_file_specified");
@@ -77,6 +77,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Saturated pixels
 	maskSaturatedPixels = 0;
 	pixelSaturationADC = 15564;  // 95% of 2^14 ??
+	maskPnccdSaturatedPixels = 0;
 
 	// Static dark calibration (electronic offsets)
 	useDarkcalSubtraction = 0;
@@ -107,6 +108,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useLocalBackgroundSubtraction = 0;
 	localBackgroundRadius = 3;
 
+	// Radial background subtraction
+	useRadialBackgroundSubtraction = 0;
+	
 	// Identify persistently hot pixels
 	useAutoHotpixel = 0;
 	hotpixFreq = 0.9;
@@ -125,6 +129,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Identify persistently illuminated pixels (halo)
 	useAutoHalopixel = 0;
+	halopixIncludeHits = 0;
 	halopixMinDeviation = 100;
 	halopixRecalc = bgRecalc;
 	halopixMemory = bgRecalc;
@@ -132,21 +137,31 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Histogram stack
 	histogram = 0;
 	histogramMin = -100;
-	histogramMax = 100;
+	histogramNbins = 200;
 	histogramBinSize = 1;
+	histogram_fs_min = 0;
+	histogram_fs_max = 1552;
+	histogram_nfs = 1552;
+	histogram_ss_min = 0;
+	histogram_ss_max = 1480;
+	histogram_nss = 1480;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
-
-
+	
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
-
+	usePnccdFixWiringError = 0;
+	usePnccdLineInterpolation = 0;
+	usePnccdLineMasking = 0;	
+	
 	// Saving options
 	saveDetectorCorrectedOnly = 0;
 	saveDetectorRaw = 0;
 
-	// No downsampling
+	// Downsampling factor (1: no downsampling)
 	downsampling = 1;
+	downsamplingRescale = 1.;
+	downsamplingConservative = 1;
 }
 
 void cPixelDetectorCommon::configure(void) {
@@ -168,8 +183,18 @@ void cPixelDetectorCommon::configure(void) {
     pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
     pix_nn = pix_nx * pix_ny;
     pixelSize = 110e-6;
-  } 
-  else if(strcmp(detectorName, "pnCCD") == 0 ) {
+  } else if(strcmp(detectorName, "CxiSc2") == 0) {
+    strcpy(detectorType, "cspad2x2");
+    asic_nx = CSPAD_ASIC_NX;
+    asic_ny = CSPAD_ASIC_NY;
+    asic_nn = CSPAD_ASIC_NX * CSPAD_ASIC_NY;
+    nasics_x = CSPAD2x2_nASICS_X;
+    nasics_y = CSPAD2x2_nASICS_Y;
+    pix_nx = nasics_x*asic_nx;
+    pix_ny = nasics_y*asic_ny;
+    pix_nn = pix_nx * pix_ny;
+    pixelSize = 110e-6;
+  } else if(strcmp(detectorName, "pnCCD") == 0 ) {
     strcpy(detectorType, "pnccd");
     asic_nx = PNCCD_ASIC_NX;
     asic_ny = PNCCD_ASIC_NY;
@@ -273,6 +298,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "downsampling")) {
     downsampling = atoi(value);
   }
+  else if (!strcmp(tag, "downsamplingrescale")) {
+    downsamplingRescale = atof(value);
+  }
+  else if (!strcmp(tag, "downsamplingconservative")) {
+    downsamplingConservative = atoi(value);
+  }
   else if (!strcmp(tag, "savedetectorcorrectedonly")) {
     saveDetectorCorrectedOnly = atoi(value);
   }
@@ -300,27 +331,27 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "cameralengthscale")) {
     cameraLengthScale  = atof(value);
   }
-  else if (!strcmp(tag, "masksaturatedpixels")) {
+  else if ((!strcmp(tag, "maskpnccdsaturatedpixels"))){
+    maskPnccdSaturatedPixels = atoi(value);
+  }
+  else if ((!strcmp(tag, "masksaturatedpixels")) || (!strcmp(tag, "usemasksaturatedpixels"))) {
     maskSaturatedPixels = atoi(value);
   }
   else if (!strcmp(tag, "bgmemory")) {
     bgMemory = atoi(value);
   }
   else if (!strcmp(tag, "useautohotpixel")) {
-	  printf("The keyword useAutoHotPixel has been changed.  It is\n"
-			 "now toggled by hotpixFreq and/or hotpixADC.\n"
-			 "Modify your ini file and try again...\n");
-	  fail = 1;
+    useAutoHotpixel = atoi(value);
   }
   else if (!strcmp(tag, "hotpixfreq")) {
     hotpixFreq = atof(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
+    //useAutoHotpixel = 1;
+    //applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixadc")) {
     hotpixADC = atoi(value);
-    useAutoHotpixel = 1;
-    applyAutoHotpixel = 1;
+    //useAutoHotpixel = 1;
+    //applyAutoHotpixel = 1;
   }
   else if (!strcmp(tag, "hotpixmemory")) {
       hotpixMemory = atoi(value);
@@ -343,10 +374,10 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "useautohalopixel")) {
     useAutoHalopixel = atoi(value);
   }
-  else if (!strcmp(tag, "halopixelmemory")) {
+  else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory"))) {
     halopixMemory = atoi(value);
   }
-  else if (!strcmp(tag, "halopixelrecalc")) {
+  else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc"))) {
     halopixRecalc = atoi(value);
   }
   else if (!strcmp(tag, "halopixmindeviation")) {
@@ -358,9 +389,14 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
              "Modify your ini file and try again...\n");
       fail = 1;
   }
+  else if (!strcmp(tag, "halopixincludehits")) {
+    halopixIncludeHits = atoi(value);
+  }
+  // depreciated?
   else if (!strcmp(tag, "cmmodule")) {
     cmModule = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "cmfloor")) {
     cmFloor = atof(value);
   }
@@ -371,6 +407,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "localbackgroundradius")) {
     localBackgroundRadius = atoi(value);
+  }
+  else if (!strcmp(tag, "useradialbackgroundsubtraction")) {
+	  useRadialBackgroundSubtraction = atoi(value);
   }
     
   else if (!strcmp(tag, "pixelsaturationadc")) {
@@ -388,18 +427,26 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "usebackgroundbuffermutex")) {
     useBackgroundBufferMutex = atoi(value);
   }
-  else if (!strcmp(tag, "subtractbehindwires")) {
+  else if ( (!strcmp(tag, "subtractbehindwires")) || (!strcmp(tag, "usesubtractbehindwires")) ){
     cspadSubtractBehindWires = atoi(value);
   }
   else if (!strcmp(tag, "invertgain")) {
     invertGain = atoi(value);
   }
-  else if (!strcmp(tag, "subtractunbondedpixels")) {
+  else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) ) {
     cspadSubtractUnbondedPixels = atoi(value);
   }
   else if (!strcmp(tag, "usepnccdoffsetcorrection")) {
-    //usePnccdOffsetCorrection = atoi(value);
-    usePnccdOffsetCorrection = 1;
+    usePnccdOffsetCorrection = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdfixwiringerror")) {
+    usePnccdFixWiringError = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdlineinterpolation")) {
+    usePnccdLineInterpolation = atoi(value);
+  }
+  else if (!strcmp(tag, "usepnccdlinemasking")) {
+    usePnccdLineMasking = atoi(value);
   }
   else if (!strcmp(tag, "bgrecalc")) {
     bgRecalc = atoi(value);
@@ -410,9 +457,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "bgincludehits")) {
     bgIncludeHits = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "bgnobeamreset")) {
     bgNoBeamReset = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "bgfiducialglitchreset")) {
     bgFiducialGlitchReset = atoi(value);
   }	
@@ -425,9 +474,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
-	else if (!strcmp(tag, "startframes")) {
-		startFrames = atoi(value);
-	}
+  else if (!strcmp(tag, "startframes")) {
+    startFrames = atoi(value);
+  } 
 	
 	// Histograms
 	else if (!strcmp(tag, "histogram")) {
@@ -436,11 +485,23 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammin")) {
 	  histogramMin = atoi(value);
 	}
-	else if (!strcmp(tag, "histogrammax")) {
-	  histogramMax = atoi(value);
+	else if (!strcmp(tag, "histogramnbins")) {
+	  histogramNbins = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrambinsize")) {
 	  histogramBinSize = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_fs_min")) {
+		histogram_fs_min = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_fs_max")) {
+		histogram_fs_max = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_ss_min")) {
+		histogram_ss_min = atoi(value);
+	}
+	else if (!strcmp(tag, "histogram_ss_max")) {
+		histogram_ss_max = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrammaxmemorygb")) {
 	  histogramMaxMemoryGb = atof(value);
@@ -451,7 +512,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		fail = 1;
 	}
 
-	return fail;
+  return fail;
 
 }
 
@@ -470,6 +531,10 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
     bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
     hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
     halopix_buffer = (float*) calloc(halopixRecalc*pix_nn, sizeof(float)); 
+	halopix_mutexes = (pthread_mutex_t*) calloc(halopixMemory, sizeof(pthread_mutex_t));
+	for (long j=0; j<halopixMemory; j++) {
+		pthread_mutex_init(&halopix_mutexes[j], NULL);
+	}
     
     // Powder sums and mutexes
     for(long i=0; i<nPowderClasses; i++) {
@@ -479,22 +544,29 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
         powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
         powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
         powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-        powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+		powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
+		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
+		powderAssembledSquared[i] = (double*) calloc(image_nn, sizeof(double));
+		powderDownsampled[i] = (double*) calloc(image_nn, sizeof(double));
+		powderDownsampledSquared[i] = (double*) calloc(image_nn, sizeof(double));
         //correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
         //correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
         //assembledMin[i] = (float*) calloc(image_nn, sizeof(float));
         //assembledMax[i] = (float*) calloc(image_nn, sizeof(float));
         
-        pthread_mutex_init(&powderRaw_mutex[i], NULL);
-        pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-        pthread_mutex_init(&powderCorrected_mutex[i], NULL);
-        pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
-        pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-        pthread_mutex_init(&radialStack_mutex[i], NULL);
-        pthread_mutex_init(&correctedMin_mutex[i], NULL);
-        pthread_mutex_init(&correctedMax_mutex[i], NULL);		
-        pthread_mutex_init(&assembledMin_mutex[i], NULL);
-        pthread_mutex_init(&assembledMax_mutex[i], NULL);
+		pthread_mutex_init(&powderRaw_mutex[i], NULL);
+		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderCorrected_mutex[i], NULL);
+		pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
+		pthread_mutex_init(&powderAssembledSquared_mutex[i], NULL);
+		pthread_mutex_init(&powderDownsampled_mutex[i], NULL);
+		pthread_mutex_init(&powderDownsampledSquared_mutex[i], NULL);
+		pthread_mutex_init(&radialStack_mutex[i], NULL);
+		pthread_mutex_init(&correctedMin_mutex[i], NULL);
+		pthread_mutex_init(&correctedMax_mutex[i], NULL);		
+		pthread_mutex_init(&assembledMin_mutex[i], NULL);
+		pthread_mutex_init(&assembledMax_mutex[i], NULL);
     }
 	
     // Radial stacks
@@ -508,18 +580,18 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 	// Histogram memory
 	if(histogram) {
 		printf("Allocating histogram memory\n");
-		histogram_nx = pix_nx;
-		histogram_ny = pix_ny;
-		histogram_depth = (histogramMax - histogramMin + 1) / histogramBinSize;
-		histogram_nn = (uint64_t)histogram_depth*(uint64_t)(histogram_nx*histogram_ny);
+		histogram_nfs = histogram_fs_max - histogram_fs_min;
+		histogram_nss = histogram_ss_max - histogram_ss_min;
+		histogram_nn = histogram_nfs*histogram_nss;
+		histogram_nnn = (uint64_t) histogramNbins * (uint64_t)(histogram_nn);
 		
 		float	histogramMemory;
 		float	histogramMemoryGb;
-		histogramMemory = (histogram_nn * sizeof(uint16_t));
+		histogramMemory = (histogram_nnn * sizeof(uint16_t));
 		histogramMemoryGb = histogramMemory / (1024LL*1024LL*1024LL);
 		if (histogramMemoryGb > histogramMaxMemoryGb) {
 			printf("Size of histogram buffer would exceed allowed size:\n");
-			printf("Histogram depth: %li\n", histogram_depth);
+			printf("Histogram depth: %li\n", histogramNbins);
 			printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 			printf("Maximum histogram buffer size (GB): %f\n", histogramMaxMemoryGb);
 			printf("Set histogramMaxMemoryGb to a larger value in cheetah.ini if you really want to use a bigger array\n");
@@ -528,7 +600,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 		
 		// Allocate memory
-		histogramData = (uint16_t*) calloc(histogram_nn, sizeof(uint16_t));
+		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
 	}
     
@@ -566,6 +638,7 @@ void cPixelDetectorCommon::freeDetectorMemory(cGlobal* global) {
         free(powderRawSquared[j]);
 		free(powderCorrected[j]);
 		free(powderCorrectedSquared[j]);
+		free(powderPeaks[j]);
 		free(powderAssembled[j]);
 		//free(correctedMin[j]);
 		//free(assembledMin[j]);
@@ -608,23 +681,33 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   printf("\t%s\n",filename);
 	
 	
-  // Check whether pixel map file exists!
-  FILE* fp = fopen(filename, "r");
-  if (fp) 	// file exists
-    fclose(fp);
-  else {		// file doesn't exist
-    printf("Error: Detector geometry file does not exist: %s\n",filename);
-    exit(1);
-  }
-	
-	
-  // Read pixel locations from file
   cData2d		detector_x;
   cData2d		detector_y;
   cData2d		detector_z;
-  detector_x.readHDF5(filename, (char *) "x");
-  detector_y.readHDF5(filename, (char *) "y");
-  detector_z.readHDF5(filename, (char *) "z");
+  
+  // Check whether pixel map file exists!
+  FILE* fp = fopen(filename, "r");
+  if (fp) { 	// file exists
+    fclose(fp);
+    // Read pixel locations from file
+    detector_x.readHDF5(filename, (char *) "x");
+    detector_y.readHDF5(filename, (char *) "y");
+    detector_z.readHDF5(filename, (char *) "z");
+  } else {		// file doesn't exist
+    printf("Detector geometry file does not exist: %s, make standard geometry.\n",filename);
+    detector_x.create(pix_nx,pix_ny);
+    detector_y.create(pix_nx,pix_ny);
+    detector_z.create(pix_nx,pix_ny);
+    for (long i=0;i<pix_ny;i++){
+      for(long j=0;j<pix_nx;j++){
+	detector_x.data[i+j*pix_ny] = j-pix_nx/2.;
+	detector_y.data[i+j*pix_ny] = i-pix_ny/2.;
+	detector_z.data[i+j*pix_ny] = 0.;
+      }
+    }
+  }
+	
+	
 	
   // Sanity check that all detector arrays are the same size (!)
   if (detector_x.nn != detector_y.nn || detector_x.nn != detector_z.nn) {
@@ -704,11 +787,10 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
     goto bounds;
   }
 
-  fesetround(1);
-  xmax = lrint(xmax);
-  xmin = lrint(xmin);
-  ymax = lrint(ymax);
-  ymin = lrint(ymin);
+  xmax = (long) (xmax + 0.5);
+  xmin = (long) (xmin + 0.5);
+  ymax = (long) (ymax + 0.5);
+  ymin = (long) (ymin + 0.5);
   printf("\tImage bounds:\n");
   printf("\tx range %.0f to %.0f\n",xmin,xmax);
   printf("\ty range %.0f to %.0f\n",ymin,ymax);
@@ -720,13 +802,14 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   if(fabs(xmin) > max) max = fabs(xmin);
   if(fabs(ymin) > max) max = fabs(ymin);
   image_nx = 2*(unsigned)max;
-  image_nn = image_nx*image_nx;
-  printf("\tImage output array will be %li x %li\n",image_nx,image_nx);
+  image_ny = image_nx;
+  image_nn = image_nx*image_ny;
+  printf("\tImage output array will be %li x %li\n",image_ny,image_nx);
 	
   // Apply image center shift
   for(i=0;i<nn;i++){
-    pix_x[i] -= beamCenterPixX;
-    pix_y[i] -= beamCenterPixY;
+    pix_x[i] -= beamCenterPixX + 0.5;
+    pix_y[i] -= beamCenterPixY + 0.5;
   }
 	
 
@@ -741,8 +824,12 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
   radial_nn = (long int) ceil(radial_max)+1;
 
   // How big must we make the output downsampled image?
-  imageXxX_nx = image_nx/downsampling;
-  imageXxX_nn = image_nn/downsampling/downsampling;
+  imageXxX_nx = (long)ceil(image_nx/(double)downsampling);
+  imageXxX_ny = imageXxX_nx;
+  imageXxX_nn = imageXxX_nx*imageXxX_ny;
+  if (downsampling>1){
+    printf("\tDownsampled image output array will be %li x %li\n",imageXxX_ny,imageXxX_nx);
+  }
 }
 
 
@@ -755,17 +842,15 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
   double   x, y, z, r;
   double   kx,ky,kz,kr;
   double   res,minres,maxres;
-  double	 sin_theta;
   long     minres_pix,maxres_pix;
-  long c = 0;	
-  minres = 100000;
-  maxres = 0.0;
-  minres_pix = 10000000;
-  maxres_pix = 0;
-  
-  // also update constant term of solid angle when detector has moved
-  solidAngleConst = pixelSize*pixelSize/(detectorZ*cameraLengthScale*detectorZ*cameraLengthScale);
-  
+  minres = 1.e10;
+  maxres = 0.;
+  minres_pix = 0;
+  maxres_pix = 1000000;
+
+	// also update constant term of solid angle when detector has moved
+	solidAngleConst = pixelSize*pixelSize/(detectorZ*cameraLengthScale*detectorZ*cameraLengthScale);
+	
   printf("Recalculating K-space coordinates\n");
 
   for (long i=0; i<pix_nn; i++ ) {
@@ -779,9 +864,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     ky = (y/r)/wavelengthA;
     kz = (z/r - 1)/wavelengthA;
     kr = sqrt(kx*kx + ky*ky + kz*kz);
-    //res = 1.0/kr;
-    sin_theta = sqrt(x*x+y*y)/r;
-    res = wavelengthA/(sin_theta);
+    res = 1.0/kr;
         
     pix_kx[i] = kx;
     pix_ky[i] = ky;
@@ -790,20 +873,20 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
     pix_res[i] = res;
     pix_dist[i] = r;
         
-    if ( res < minres ){
+    if ( res > minres ){
       minres = res;
-      minres_pix = pix_r[i];
-    }
-    if ( res > maxres ){
-      maxres = res;
+
       maxres_pix = pix_r[i];
     }
-    
+    if ( res < maxres ){
+      maxres = res;
+      minres_pix = pix_r[i];
+    }
     
     // Generate resolution limit mask
     if (!global->hitfinderResolutionUnitPixel){
       // (resolution in Angstrom (!!!))
-      if (pix_r[i] < global->hitfinderMaxRes && pix_r[i] > global->hitfinderMinRes ) 
+      if (pix_res[i] < global->hitfinderMaxRes && pix_res[i] > global->hitfinderMinRes ) 
 	pixelmask_shared[i] &= ~PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
       else
 	pixelmask_shared[i] |= PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
@@ -1180,7 +1263,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 }
 
 cPixelDetectorEvent::cPixelDetectorEvent() {
-
+  /* FM: Warning. This is not run when malloc'ed*/
   detectorZ=0;
 
 }

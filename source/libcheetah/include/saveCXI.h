@@ -16,7 +16,9 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
+
 namespace CXI{
+  const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
 typedef struct{
     hid_t self;
@@ -37,6 +39,8 @@ typedef struct{
   hid_t data;
   hid_t mask;
   hid_t mask_shared;
+  hid_t mask_shared_min;
+  hid_t mask_shared_max;
   hid_t thumbnail;
   hid_t dataType;
   hid_t dataSpace;
@@ -82,6 +86,8 @@ typedef struct{
   std::vector<hid_t> detector_EncoderValues;
   std::vector<hid_t> detector_SolidAngleConst;
   hid_t eventTimeString;
+  hid_t tofTime;
+  hid_t tofVoltage;
 }LCLS;
 
 typedef struct{
@@ -92,6 +98,7 @@ typedef struct{
   hid_t self;
   hid_t eventName;
   hid_t frameNumber;
+  hid_t frameNumberIncludingSkipped;
   hid_t threadID;
   hid_t gmd1;
   hid_t gmd2;
@@ -105,6 +112,7 @@ typedef struct{
   hid_t laserEventCodeOn;
   hid_t laserDelay;
   hid_t hit;
+  std::vector<hid_t> sums;
 }UnsharedValues;
 
 typedef struct{
@@ -116,6 +124,8 @@ typedef struct{
   hid_t nHalo[MAX_DETECTORS];
   hid_t lastHaloPixUpdate[MAX_DETECTORS];
   hid_t haloPixCounter[MAX_DETECTORS];
+  hid_t hit;
+  hid_t nPeaks;
 }SharedValues;
 
 typedef struct{

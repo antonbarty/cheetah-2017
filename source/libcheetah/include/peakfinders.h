@@ -9,20 +9,23 @@
 #ifndef cheetah_peakfinders_h
 #define cheetah_peakfinders_h
 
-int peakfinder3(cGlobal *global, cEventData *eventData, int detID);
-int peakfinder6(cGlobal *global, cEventData *eventData, int detID);
-int killNearbyPeaks(cEventData *eventData,cGlobal *global, int detID);
-
-int box_snr(float * im, uint16_t * mask, uint16_t combined_pixel_options, int center, int radius, int thickness,
-            int stride, float * SNR, float * background, float * backgroundSigma);
-
 
 
 typedef struct {
 public:
 	long	    nPeaks;
+	long	    nHot;
+	float		peakResolution;			// Radius of 80% of peaks
+	float		peakResolutionA;		// Radius of 80% of peaks
+	float		peakDensity;			// Density of peaks within this 80% figure
+	float		peakNpix;				// Number of pixels in peaks
+	float		peakTotal;				// Total integrated intensity in peaks
+	int			memoryAllocated;
+	long		nPeaks_max;
+
 	float		*peak_maxintensity;		// Maximum intensity in peak
 	float		*peak_totalintensity;	// Integrated intensity in peak
+	float		*peak_sigma;			// Signal-to-noise ratio of peak
 	float		*peak_snr;				// Signal-to-noise ratio of peak
 	float		*peak_npix;				// Number of pixels in peak
 	float		*peak_com_x;			// peak center of mass x (in raw layout)
@@ -31,14 +34,8 @@ public:
 	float		*peak_com_x_assembled;	// peak center of mass x (in assembled layout)
 	float		*peak_com_y_assembled;	// peak center of mass y (in assembled layout)
 	float		*peak_com_r_assembled;	// peak center of mass r (in assembled layout)
-
-	long	    nHot;
-	float		peakResolution;			// Radius of 80% of peaks
-	float		peakResolutionA;		// Radius of 80% of peaks
-	float		peakDensity;			// Density of peaks within this 80% figure
-	float		peakNpix;				// Number of pixels in peaks
-	float		peakTotal;				// Total integrated intensity in peaks
-	
+	float		*peak_com_q;			// Scattering vector of this peak
+	float		*peak_com_res;			// REsolution of this peak
 } tPeakList;
 
 
@@ -50,8 +47,8 @@ public:
 //	free();
 //}
 
-void freePeakList(tPeakList*);
-void allocatePeakList(tPeakList*, long); 
+void allocatePeakList(tPeakList*, long);
+void freePeakList(tPeakList);
 
 
 #endif

@@ -104,7 +104,7 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	long	rbin;
 	for(long i=0; i<pix_nn; i++){
 
-        // Don't count bad pixels in radial average
+	// Don't count bad pixels in radial average
 	  if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
             continue;
         
@@ -217,20 +217,25 @@ void saveRadialStacks(cGlobal *global) {
 void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
 
     cPixelDetectorCommon     *detector = &global->detector[detID];
-
+	
+	// NOTE: these mutex locks should be commented out as it has already been
+	// done in addToRadialAverageStack and it seems that multiple locks
+	// in the same thread results in threads freezing at the end of run...
+	
     //pthread_mutex_lock(&detector->radialStack_mutex[powderClass]);
 
     char	filename[1024];
     long    frameNum = detector->radialStackCounter[powderClass];
     long    nRows = detector->radialStackSize;
+	
+	// If stack is not full, how many rows are full?
     if(frameNum % nRows != 0)
         nRows = (frameNum % nRows);
 
     //sprintf(filename,"r%04u-radialstack-detector%d-class%i.h5", global->runNumber, detID, powderClass);
     sprintf(filename,"r%04u-radialstack-detector%d-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum-nRows);
     printf("Saving radial stack: %s\n", filename);
-
-
+	
     writeSimpleHDF5(filename, detector->radialAverageStack[powderClass], detector->radial_nn, nRows, H5T_NATIVE_FLOAT);
     fflush(global->powderlogfp[powderClass]);
     //pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);			

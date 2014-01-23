@@ -8,6 +8,7 @@
 
 #ifndef CHEETAH_H
 #define CHEETAH_H
+#include "peakfinders.h"
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"

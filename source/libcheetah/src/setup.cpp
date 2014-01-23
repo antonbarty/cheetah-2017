@@ -2,7 +2,7 @@
  *  setup.cpp
  *  cheetah
  *
- *  Created by Anton Barty on 7/2/11.
+ *  created by Anton Barty on 7/2/11.
  *  Copyright 2011 CFEL. All rights reserved.
  *
  */
@@ -17,6 +17,7 @@
 #include <fenv.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <algorithm>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -29,155 +30,185 @@
  */
 cGlobal::cGlobal(void) {
 
-    // ini file to use
-    strcpy(configFile, "cheetah.ini");
-    strcpy(configOutFile, "cheetah.out");
-    
-    // Default experiment info (in case beamline data is missing...)
-    defaultPhotonEnergyeV = 0;
-    fixedPhotonEnergyeV = 0;
-    
-    // Detector info
-    nDetectors = 0;
-    for(long i=0; i<MAX_DETECTORS; i++) {
-        strcpy(detector[i].detectorConfigFile, "No_file_specified");
-        strcpy(detector[i].configGroup,"none");
-        detector[i].detectorID = i;
-    }
-    
-    // Statistics
-    summedPhotonEnergyeV = 0;
-    meanPhotonEnergyeV = 0;
-    datarateWorker = 1.;
-    datarateWorkerMemory = 0.95;
-    datarateWorkerSkipCounter = 0;
-    lastTimingFrame = 0;
+  // ini file to use
+  strcpy(configFile, "cheetah.ini");
+  strcpy(configOutFile, "cheetah.out");
 
-    // Pv values
-    strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
-    laserDelay = std::numeric_limits<float>::quiet_NaN();
-    laserDelay = 0;
+  // Default experiment info (in case beamline data is missing...)
+  defaultPhotonEnergyeV = 0;
+	fixedPhotonEnergyeV = 0;
 
-    // Misc. PV values
-    nEpicsPvFloatValues = 0;
+  // Detector info
+  nDetectors = 0;
+  for(long i=0; i<MAX_DETECTORS; i++) {
+    //strcpy(detector[i].detectorConfigFile, "No_file_specified");
+    strcpy(detector[i].configGroup,"none");
+    detector[i].detectorID = i;
+  }
 
-    // Start and stop frames
-    startAtFrame = 0;
-    stopAtFrame = 0;
+  // Statistics
+  summedPhotonEnergyeV = 0;
+  meanPhotonEnergyeV = 0;
+  datarateWorker = 1.;
+  datarateWorkerMemory = 0.95;
+  datarateWorkerSkipCounter = 0;
+  lastTimingFrame = 0;
 
-    // Calibrations
-    generateDarkcal = 0;
-    generateGaincal = 0;
+  // Pv values
+  strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+  laserDelay = std::numeric_limits<float>::quiet_NaN();
+  laserDelay = 0;
 
-    // Hitfinding
-    hitfinder = 0;
-    hitfinderDetector = 0;
-    hitfinderADC = 100;
-    hitfinderTAT = 1e3;
-    hitfinderNpeaks = 50;
-    hitfinderNpeaksMax = 100000;
-    hitfinderAlgorithm = 3;
-    hitfinderMinPixCount = 3;
-    hitfinderMaxPixCount = 20;
-    hitfinderUsePeakmask = 0;
-    hitfinderCheckGradient = 0;
-    hitfinderMinGradient = 0;
-    strcpy(peaksearchFile, "No_file_specified");
-    savePeakInfo = 0;
-    hitfinderCheckPeakSeparation = 0;
-    hitfinderMinPeakSeparation = 0;
-    hitfinderSubtractLocalBG = 0;
-    hitfinderLocalBGRadius = 4;
-    hitfinderLocalBGThickness = 5;
-    //hitfinderLimitRes = 1;
-    hitfinderMinRes = 0;
-    hitfinderMaxRes = 1e10;
-    hitfinderResolutionUnitPixel = 0;
-    hitfinderMinSNR = 40;
+  // Misc. PV values
+  nEpicsPvFloatValues = 0;
 
-    // TOF (Acqiris)
-    hitfinderUseTOF = 0;
-    hitfinderTOFMinSample = 0;
-    hitfinderTOFMaxSample = 1000;
-    hitfinderTOFThresh = 100;
+  // Start and stop frames
+  startAtFrame = 0;
+  stopAtFrame = 0;
+  skipFract = 0.;
 
-    // TOF configuration
-    TOFPresent = 0;
-    TOFchannel = 1;
-    strcpy(tofName, "CxiSc1");
-    //tofType = Pds::DetInfo::Acqiris;
-    //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+  // Calibrations
+  generateDarkcal = 0;
+  generateGaincal = 0;
 
-    // energy spectrum default configuration
+  // Hitfinding
+  hitfinder = 0;
+    hitfinderInvertHit = 0;
+  hitfinderDetector = 0;
+  hitfinderADC = 100;
+  hitfinderTAT = 1e3;
+  hitfinderNpeaks = 50;
+  hitfinderNpeaksMax = 100000;
+  hitfinderAlgorithm = 3;
+  hitfinderMinPixCount = 3;
+  // hitfinderMaxPixCount is a new feature. For backwards compatibility it should be neutral by default, therefore hitfinderMaxPixCount = 0
+  hitfinderMaxPixCount = 0;
+  hitfinderUsePeakmask = 0;
+  hitfinderCheckGradient = 0;
+  hitfinderMinGradient = 0;
+  strcpy(peaksearchFile, "No_file_specified");
+  savePeakInfo = 0;
+  hitfinderCheckPeakSeparation = 0;
+  hitfinderMinPeakSeparation = 0;
+  hitfinderSubtractLocalBG = 0;
+  hitfinderLocalBGRadius = 4;
+    hitfinderLocalBGThickness = 4;
+  //hitfinderLimitRes = 1;
+  hitfinderMinRes = 1.e10;
+  hitfinderMaxRes = 0.;
+  hitfinderResolutionUnitPixel = 0;
+  hitfinderMinSNR = 40;
+  hitfinderIgnoreHaloPixels = 0;
+  hitfinderDownsampling = 1;
+  hitfinderOnDetectorCorrectedData = 0;
+  hitfinderFastScan = 0;
+
+	// TOF (Aqiris)
+  hitfinderUseTOF = 0;
+  hitfinderTOFMinSample = 0;
+  hitfinderTOFMaxSample = 1000;
+  hitfinderTOFThresh = 100;
+  hitfinderTOFMinCount = 1;
+  hitfinderTOFWindow = 3;
+
+  // TOF configuration
+  TOFPresent = 0;
+  TOFchannel = 0;
+  strcpy(tofName, "CxiSc1");
+  // Has to be looked up automatically
+  AcqNumSamples = 12288;
+  //tofType = Pds::DetInfo::Acqiris;
+  //tofPdsDetInfo = Pds::DetInfo::CxiSc1;
+	
+	// FEE spectrum
+	useFEEspectrum = 0;
+	FEEspectrumStackSize = 200000;
+	FEEspectrumWidth = 1024;
+
+    // CXI downstream energy spectrum default configuration
     espectrum = 0;
     espectrum1D = 0;
-    espectrumTiltAng = 0;
-    espectrumLength = 1080;
-    espectrumWidth = 900;
-    espectrumDarkSubtract = 0;
-    espectrumSpreadeV = 40;
-    strcpy(espectrumDarkFile, "No_file_specified");
-    strcpy(espectrumScaleFile, "No_file_specified");
+  espectrumTiltAng = 0;
+  espectrumLength = 1080;
+  espectrumWidth = 900;
+  espectrumDarkSubtract = 0;
+  espectrumSpreadeV = 40;
+	espectrumStackSize = 10000;
+  strcpy(espectrumDarkFile, "No_file_specified");
+  strcpy(espectrumScaleFile, "No_file_specified");
 
-    // Powder pattern generation
-    nPowderClasses = 2;
-    usePowderThresh = 0;
-    powderthresh = 0.0;
-    powderSumHits = 1;
-    powderSumBlanks = 0;
+  // Powder pattern generation
+  nPowderClasses = 2;
+  usePowderThresh = 0;
+  powderthresh = 0.0;
+  powderSumHits = 1;
+  powderSumBlanks = 0;
+  powderSumWithBackgroundSubtraction = 1;
+  assemblePowders = 0;
 
-    // Radial average stacks
-    saveRadialStacks=0;
-    radialStackSize=10000;
+  // Radial average stacks
+  saveRadialStacks=0;
+  radialStackSize=10000;
 
-    // Assemble options
-    assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
+  // Assemble options
+  assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
     assemble2DImage = 0;
     assemble2DMask = 0;
 
-    // Saving options
-    savehits = 0;
-    saveAssembled = 1;
-    saveRaw = 0;
-    hdf5dump = 0;
-    saveInterval = 1000;
-    savePixelmask = 0;
-    saveCXI = 0;
+  // Saving options
+  savehits = 0;
+  saveAssembled = 1;
+  saveRaw = 0;
+	h5compress = 5;
+  hdf5dump = 0;
+  saveInterval = 1000;
+  savePixelmask = 1;
+  saveCXI = 0;
 
-    // Peak lists
-    savePeakList = 1;
+  // Visualization
+  pythonFile[0] = 0;
 
-    // Verbosity
-    debugLevel = 0;
+  // Peak lists
+  savePeakList = 1;
 
-    // I/O speed test?
-    ioSpeedTest = 0;
+  // Verbosity
+  debugLevel = 2;
 
-    // Default to only a few threads
-    nThreads = 16;
-    useHelperThreads = 0;
-    threadPurge = 10000;
+  // I/O speed test?
+  ioSpeedTest = 0;
 
-    // Saving to subdirectories
-    subdirFileCount = -1;
-    subdirNumber = 0;
-    strcpy(subdirName, "");
+  // Default to only a few threads
+  nThreads = 16;
+  // depreciated?
+  useHelperThreads = 0;
+  // depreciated?
+  threadPurge = 10000;
+	
+  // Saving to subdirectories
+  subdirFileCount = -1;
+  subdirNumber = 0;
+  strcpy(subdirName, "");
 
 
-    // Log files
-    strcpy(logfile, "log.txt");
-    strcpy(framefile, "frames.txt");
-    strcpy(cleanedfile, "cleaned.txt");
-    strcpy(peaksfile, "peaks.txt");
+  // Log files
+  strcpy(logfile, "log.txt");
+  strcpy(framefile, "frames.txt");
+  strcpy(cleanedfile, "cleaned.txt");
+  strcpy(peaksfile, "peaks.txt");
 
-    // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
-    fudgeevr41 = 0; // this means no fudge by default
-    lasttime = 0;
-    laserPumpScheme = 0;
+  // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
+  fudgeevr41 = 0; // this means no fudge by default
+  lasttime = 0;
+  laserPumpScheme = 0;
 
     // Do not output 1 HDF5 per image by default
-    saveCXI = 0;
-    strcpy(cxiFilename, "");
+  saveCXI = 0;
+
+  // Only one thread during calibration
+  useSingleThreadCalibration = 0;
+  strcpy(cxiFilename, "");
+
+
 }
 
 
@@ -203,6 +234,11 @@ void cGlobal::setup() {
     detector[i].readDarkcal(detector[i].darkcalFile);
     detector[i].readGaincal(detector[i].gaincalFile);
     detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
+    detector[i].pixelmask_shared_max = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
+    detector[i].pixelmask_shared_min = (uint16_t*) malloc(detector[i].pix_nn*sizeof(uint16_t));
+    for(long j=0; j<detector[i].pix_nn; j++){
+      detector[i].pixelmask_shared_min[j] = PIXEL_IS_ALL;
+    }
     detector[i].readPeakmask(self, peaksearchFile);
     detector[i].readBadpixelMask(detector[i].badpixelFile);
     detector[i].readBaddataMask(detector[i].baddataFile);
@@ -227,8 +263,9 @@ void cGlobal::setup() {
   }
 
 	
-  if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
-    printf("Errors: hitfinderDetector > nDetectors\n");
+
+  if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
+    printf("Error: hitfinderDetector > nDetectors\n");
     printf("nDetectors = %i\n", nDetectors);
     printf("hitfinderDetector = detector%i\n", hitfinderDetector);
     printf("This doesn't make sense.\n");
@@ -259,21 +296,35 @@ void cGlobal::setup() {
   pthread_mutex_init(&saveCXI_mutex, NULL);  
   pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
   threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
+  pthread_mutex_init(&gmd_mutex, NULL);  
+
+  // Set number of frames for initial calibrations
+  nInitFrames = 0;
+  long temp;
+  for (long detID=0; detID<MAX_DETECTORS; detID++){
+    temp = detector[detID].startFrames;
+    nInitFrames = std::max(nInitFrames,temp);
+    detector[detID].halopixCalibrated = 0;
+    detector[detID].hotpixCalibrated = 0;
+    detector[detID].bgCalibrated = 0;
+  }
+  calibrated = 0;
 
   /*
    * Trap specific configurations and mutually incompatible options
    */
   if(generateDarkcal) {
 
-    printf("******************************************************************\n");
-    printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
-    printf("******************************************************************\n");
+		printf("******************************************************************\n");
+		printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
+		printf("******************************************************************\n");
 
     hitfinder = 0;
     savehits = 0;
     hdf5dump = 0;
     saveRaw = 0;
-        
+    nInitFrames = 0;
+    hitfinderFastScan = 0;
     powderSumHits = 0;
     powderSumBlanks = 0;
     powderthresh = -30000;
@@ -284,23 +335,27 @@ void cGlobal::setup() {
       detector[i].useGaincal=0;
       detector[i].useAutoHotpixel = 0;
       detector[i].useSubtractPersistentBackground = 0;
-        detector[i].useLocalBackgroundSubtraction = 0;
+			detector[i].useLocalBackgroundSubtraction = 0;
       detector[i].startFrames = 0;
       detector[i].saveDetectorRaw = 1;
-      detector[i].saveDetectorCorrectedOnly = 1;
+			detector[i].saveDetectorCorrectedOnly = 0;
     }
   }
 
   if(generateGaincal) {
 
-      printf("******************************************************************\n");
-      printf("keyword generategaincal set: this overrides some keyword values!!!\n");
-      printf("******************************************************************\n");
+		printf("******************************************************************\n");
+		printf("keyword generategaincal set: this overrides some keyword values!!!\n");
+		printf("******************************************************************\n");
 
     hitfinder = 0;
+        hitfinderFastScan = 0;
     savehits = 0;
     hdf5dump = 0;
     saveRaw = 0;
+
+    nInitFrames = 0;
+
     powderSumHits = 0;
     powderSumBlanks = 0;
     powderthresh = -30000;
@@ -310,6 +365,7 @@ void cGlobal::setup() {
       detector[i].useDarkcalSubtraction = 1;
       detector[i].useAutoHotpixel = 0;
       detector[i].useSubtractPersistentBackground = 0;
+            detector[i].useLocalBackgroundSubtraction = 0;
       detector[i].useGaincal=0;
       detector[i].startFrames = 0;
       detector[i].saveDetectorRaw = 1;
@@ -317,7 +373,7 @@ void cGlobal::setup() {
     }
   }
 
-  // Why?
+	// Make sure to save something...
   if(saveRaw==0 && saveAssembled == 0) {
     saveAssembled = 1;
   }
@@ -325,7 +381,8 @@ void cGlobal::setup() {
   /* Only save peak info for certain hitfinders */
   if (( hitfinderAlgorithm == 3 ) ||
       ( hitfinderAlgorithm == 5 ) ||
-      ( hitfinderAlgorithm == 6 ))
+		( hitfinderAlgorithm == 6 ) ||
+		( hitfinderAlgorithm == 8 ))
     savePeakInfo = 1; 
 
   /*
@@ -346,20 +403,20 @@ void cGlobal::setup() {
 
   for(long i=0; i<MAX_DETECTORS; i++) {
     detector[i].bgCounter = 0;
-    detector[i].last_bg_update = 0;
+    detector[i].bgLastUpdate = 0;
     detector[i].hotpixCounter = 0;
-    detector[i].last_hotpix_update = 0;
+    detector[i].hotpixLastUpdate = 0;
     detector[i].hotpixRecalc = detector[i].bgRecalc;
     detector[i].nhot = 0;
     detector[i].halopixCounter = 0;
-    detector[i].last_halopix_update = 0;
+    detector[i].halopixLastUpdate = 0;
     detector[i].halopixRecalc = detector[i].bgRecalc;
     detector[i].halopixMemory = detector[i].bgRecalc;
     detector[i].nhalo = 0;
     detector[i].detectorZprevious = 0;
     detector[i].detectorZ = 0;
     detector[i].detectorEncoderValue = 0;
-  }
+  }  
 
   // Make sure to use SLAC timezone!
   setenv("TZ","US/Pacific",1);
@@ -371,56 +428,129 @@ void cGlobal::setup() {
     detector[i].allocatePowderMemory(self);
   }
 
+	
   /*
-   * Set up array for run integrated energy spectrum
+	 *	Energy spectrum stuff
    */
+	// Set up array for run integrated energy spectrum
   espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
   for(long i=0; i<espectrumLength; i++) {
     espectrumRun[i] = 0;
   }
-	
-  /*
-   * Set up buffer array for calculation of energy spectrum background
-   */
+	// Set up buffer array for calculation of energy spectrum background
   espectrumBuffer = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
   for(long i=0; i<espectrumLength*espectrumWidth; i++) {
     espectrumBuffer[i] = 0;
   }
-
-  /*
-   * Set up Darkcal array for holding energy spectrum background
-   */
+	// Set up Darkcal array for holding energy spectrum background
   espectrumDarkcal = (double *) calloc(espectrumLength*espectrumWidth, sizeof(double));
   for(long i=0; i<espectrumLength*espectrumWidth; i++) {
     espectrumDarkcal[i] = 0;
   }
-	
-  /*
-   * Set up array for holding energy spectrum scale
-   */
+	//Set up array for holding energy spectrum scale
   espectrumScale = (double *) calloc(espectrumLength, sizeof(double));
   for(long i=0; i<espectrumLength; i++) {
     espectrumScale[i] = 0;
   }
-	
   readSpectrumDarkcal(self, espectrumDarkFile);
   readSpectrumEnergyScale(self, espectrumScaleFile);
 	
   /*
+	 *	Energy spectrum stacks
+	 */
+	if (espectrum) {
+		printf("Allocating spectral stacks\n");
+		int spectrumLength = espectrumLength;
+		
+		for(long i=0; i<nPowderClasses; i++) {
+			espectrumStackCounter[i] = 0;
+			espectrumStack[i] = (float *) calloc(espectrumStackSize*spectrumLength, sizeof(float));
+			for(long j=0; j<espectrumStackSize*spectrumLength; j++) {
+				espectrumStack[i][j] = 0;
+			}
+		}
+		printf("Spectral stack allocated\n");
+	}
+	
+	if (useFEEspectrum) {
+		printf("Allocating FEE spectrum stacks\n");
+		for(long i=0; i<nPowderClasses; i++) {
+			FEEspectrumStackCounter[i] = 0;
+			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
+		}
+	}
+
+	for(long i=0; i<nPowderClasses; i++) {
+		pthread_mutex_init(&espectrumStack_mutex[i], NULL);
+		pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
+	}
+
+
+	/*
    * Set up arrays for powder classes and radial stacks
    * Currently only tracked for detector[0]  (generalise this later)
    */
+    pthread_mutex_lock(&powderfp_mutex);
   for(long i=0; i<nPowderClasses; i++) {
     char  filename[1024];
     powderlogfp[i] = NULL;
+		FEElogfp[i] = NULL;
     if(runNumber > 0) {
       sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
       powderlogfp[i] = fopen(filename, "w");
+            sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",runNumber,i);
+			powderlogfp[i] = fopen(filename, "w");
     }
   }
+    pthread_mutex_unlock(&powderfp_mutex);
 
 
 }
+
+void cGlobal::freeMutexes(void) {
+	pthread_mutex_unlock(&nActiveThreads_mutex);
+	pthread_mutex_unlock(&hotpixel_mutex);
+	pthread_mutex_unlock(&halopixel_mutex);
+	pthread_mutex_unlock(&selfdark_mutex);
+	pthread_mutex_unlock(&bgbuffer_mutex);
+	pthread_mutex_unlock(&nhits_mutex);
+	pthread_mutex_unlock(&framefp_mutex);
+	pthread_mutex_unlock(&powderfp_mutex);
+	pthread_mutex_unlock(&peaksfp_mutex);
+	pthread_mutex_unlock(&subdir_mutex);
+	pthread_mutex_unlock(&nespechits_mutex);
+	pthread_mutex_unlock(&espectrumRun_mutex);
+	pthread_mutex_unlock(&espectrumBuffer_mutex);
+	pthread_mutex_unlock(&datarateWorker_mutex);
+	pthread_mutex_unlock(&saveCXI_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_mutex);
+	
+	for(long i=0; i<nDetectors; i++) {
+		for(long j=0; j<nPowderClasses; j++) {
+			pthread_mutex_unlock(&detector[i].powderRaw_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderRawSquared_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderCorrected_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderCorrectedSquared_mutex[j]);
+			pthread_mutex_unlock(&detector[i].powderAssembled_mutex[j]);
+			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
+			pthread_mutex_unlock(&detector[i].correctedMin_mutex[j]);
+			pthread_mutex_unlock(&detector[i].correctedMax_mutex[j]);
+			pthread_mutex_unlock(&detector[i].assembledMin_mutex[j]);
+			pthread_mutex_unlock(&detector[i].assembledMax_mutex[j]);
+			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
+		}
+		pthread_mutex_unlock(&detector[i].histogram_mutex);
+	}
+
+  nCXIEvents = 0;
+  nCXIHits = 0;
+  for(long i=0; i<nPowderClasses; i++) {
+    pthread_mutex_unlock(&espectrumStack_mutex[i]);
+    pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
+  }
+}
+
+
 
 
 /*
@@ -585,7 +715,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
       if (matched == 0){
 	printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
-	exit(0);
+	exit(1);
       }
 
     }
@@ -601,7 +731,7 @@ void cGlobal::parseConfigFile(char* filename) {
 
   if (exitCheetah != 0){
     printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
-    exit(0);
+    exit(1);
   }
 
   printf("Configured %d detectors\n",nDetectors);
@@ -644,6 +774,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "startatframe")) {
     startAtFrame = atoi(value);
   }
+  else if (!strcmp(tag, "skipfract")) {
+    skipFract = atof(value);
+  }
   else if (!strcmp(tag, "stopatframe")) {
     stopAtFrame = atoi(value);
   }
@@ -665,8 +798,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   // Processing options
   else if (!strcmp(tag, "subtractcmmodule")) {
-    printf("The keyword subtractcmModule has been changed. It is\n"
-	   "now known as cmModule.\n"
+    printf("The keyword subtractcmModule is depreciated.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
@@ -678,6 +810,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "hitfinder")) {
     hitfinder = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderinverthit")) {
+    hitfinderInvertHit = atoi(value);
   }
   else if (!strcmp(tag, "hitfinderdetector")) {
     hitfinderDetector = atoi(value);
@@ -696,13 +831,17 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
   else if (!strcmp(tag, "saveassembled")) {
     saveAssembled = atoi(value);
-    assemble2DImage = 1;
+    assemble2DImage = saveAssembled;
+    assemble2DMask = saveAssembled;
   }
   else if (!strcmp(tag, "assembleinterpolation")) {
     assembleInterpolation = atoi(value);
   }
   else if (!strcmp(tag, "savepixelmask")) {
     savePixelmask = atoi(value);
+  }
+  else if (!strcmp(tag, "h5compress")) {
+	  h5compress = atoi(value);
   }
   else if (!strcmp(tag, "hdf5dump")) {
     hdf5dump = atoi(value);
@@ -711,7 +850,11 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     saveInterval = atoi(value);
   }
   // Time-of-flight
-  else if (!strcmp(tag, "tofname")) {
+  else if (!strcmp(tag, "tofpresent")) {
+    TOFPresent = atoi(value);
+  }
+  // depreciated?
+    else if (!strcmp(tag, "tofname")) {
     strcpy(tofName, value);
   }
   else if (!strcmp(tag, "tofchannel")) {
@@ -729,13 +872,29 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindertofthresh")) {
     hitfinderTOFThresh = atof(value);
   }
+  else if (!strcmp(tag, "hitfindertofmincount")) {
+    hitfinderTOFMinCount = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfindertofwindow")) {
+    hitfinderTOFWindow = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderignorehalopixels")) {
+    hitfinderIgnoreHaloPixels = atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderondetectorcorrecteddata")) {
+    hitfinderOnDetectorCorrectedData = atoi(value);
+  }
+
 
   // Energy spectrum parameters
+  else if (!strcmp(tag, "usefeespectrum")) {
+      useFEEspectrum = atoi(value);
+  }
   else if (!strcmp(tag, "espectrum")) {
       espectrum = atoi(value);
   }
   else if (!strcmp(tag, "espectrum1d")) {
-      espectrum1D = atoi(value);
+    espectrum1D = atoi(value);
   }
   else if (!strcmp(tag, "espectrumtiltang")) {
     espectrumTiltAng = atoi(value);
@@ -780,6 +939,12 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "powdersumblanks")) {
     powderSumBlanks = atoi(value);
   }
+  else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
+      powderSumWithBackgroundSubtraction = atoi(value);
+  }
+  else if (!strcmp(tag, "assemblepowders")){
+      assemblePowders = atoi(value);
+  }
   else if (!strcmp(tag, "hitfinderadc")) {
     hitfinderADC = atoi(value);
   }
@@ -804,6 +969,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindermingradient")) {
     hitfinderMinGradient = atof(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "hitfindercluster")) {
     hitfinderCluster = atoi(value);
   }
@@ -849,20 +1015,32 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfinderminsnr")) {
     hitfinderMinSNR = atof(value);
   }
+  else if (!strcmp(tag, "hitfinderdownsampling")) {
+    hitfinderDownsampling = (long) atoi(value);
+  }
+  else if (!strcmp(tag, "hitfinderfastscan")) {
+	  hitfinderFastScan = atof(value);
+  }
   else if (!strcmp(tag, "selfdarkmemory")) {
     printf("The keyword selfDarkMemory has been changed.  It is\n"
 	   "now known as bgMemory.\n"
 	   "Modify your ini file and try again...\n");
     fail = 1;
   }
+  // depreciated?
   else if (!strcmp(tag, "fudgeevr41")) {
     fudgeevr41 = atoi(value);
   }
+  // depreciated?
   else if (!strcmp(tag, "laserpumpscheme")) {
     laserPumpScheme = atoi(value);
   }
   else if (!strcmp(tag, "savecxi")) {
     saveCXI = atoi(value);
+  } else if (!strcmp(tag, "pythonfile")) {
+    strcpy(pythonFile, value);
+  } else if (!strcmp(tag, "usesinglethreadcalibration")) {
+    useSingleThreadCalibration = atoi(value);
   }
   // Unknown tags
   else {
@@ -943,6 +1121,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "nThreads=%ld\n",nThreads);
     fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
     fprintf(fp, "threadPurge=%ld\n",threadPurge);
+	fprintf(fp, "pythonfile=%s\n", pythonFile);
     fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
     fprintf(fp, "tofName=%s\n",tofName);
     fprintf(fp, "tofChannel=%d\n",TOFchannel);
@@ -1091,6 +1270,7 @@ void cGlobal::writeInitialLog(void){
     printf("Aborting...");
     exit(1);
   }
+	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, sigmaBG, SNR\n");
   pthread_mutex_unlock(&peaksfp_mutex);
 
 }
@@ -1135,34 +1315,66 @@ void cGlobal::updateLogfile(void){
   nrecentprocessedframes = 0;
 
 
-  // Flush frame file buffer
-  pthread_mutex_lock(&framefp_mutex);
+    // Flush frame file buffers
   fflush(framefp);
   fflush(cleanedfp);
-  pthread_mutex_unlock(&framefp_mutex);
-
-  pthread_mutex_lock(&powderfp_mutex);
+    fflush(peaksfp);
   for(long i=0; i<nPowderClasses; i++) {
     fflush(powderlogfp[i]);
+        fflush(FEElogfp[i]);
   }
-  pthread_mutex_unlock(&powderfp_mutex);
 
-  pthread_mutex_lock(&peaksfp_mutex);
-  fflush(peaksfp);
-  pthread_mutex_unlock(&peaksfp_mutex);
 }
 
+/*
+ *	Write (and keep over-writing) a little status file
+ */
 void cGlobal::writeStatus(const char* message) {
+	
+	// Current time
+	char	timestr[1024];
+	time_t	rawtime;
+	tm		*timeinfo;
+	time(&rawtime);
+	timeinfo=localtime(&rawtime);
+	strftime(timestr,80,"%c",timeinfo);
+
+	// Elapsed processing time
+	double	dtime;
+	int		hrs, mins, secs;
+	time(&tend);
+	dtime = difftime(tend,tstart);
+	hrs = (int) floor(dtime / 3600);
+	mins = (int) floor((dtime-3600*hrs)/60);
+	secs = (int) floor(dtime-3600*hrs-60*mins);
+
+	// Now write it to file
     FILE *fp;
     fp = fopen ("status.txt","w");
-    
-    fprintf(fp, "%s\n", message);
-    fprintf(fp, "%li\n", nprocessedframes);
-    fprintf(fp, "%li\n", nhits);
-
+	fprintf(fp, "# Cheetah status\n");
+	fprintf(fp, "Update time: %s\n",timestr);
+	fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
+    fprintf(fp, "Status: %s\n", message);
+	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
+	fprintf(fp, "Number of hits: %li\n",nhits);
     fclose (fp);
 
-    
+
+}
+
+void cGlobal::updateCalibrated(void){
+  int temp = 1;
+  for(long detID=0; detID<MAX_DETECTORS; detID++) {
+    temp *= ((detector[detID].useAutoHotpixel == 0) || detector[detID].hotpixCalibrated);
+    temp *= ((detector[detID].useAutoHalopixel == 0) || detector[detID].halopixCalibrated);
+    temp *= ((detector[detID].useSubtractPersistentBackground == 0) || detector[detID].bgCalibrated);
+    /* FOR TESTING
+    printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHotpixel,detector[detID].hotpixCalibrated);
+    printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHalopixel,detector[detID].halopixCalibrated);
+    printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detID,detector[detID].useSubtractPersistentBackground,detector[detID].bgCalibrated);
+    */
+  }
+  calibrated = temp;
 }
 
 
@@ -1231,21 +1443,19 @@ void cGlobal::writeFinalLog(void){
 
 
   // Close frame buffers
-  pthread_mutex_lock(&framefp_mutex);
   if(framefp != NULL)
     fclose(framefp);
   if(cleanedfp != NULL)
     fclose(cleanedfp);
-  pthread_mutex_unlock(&framefp_mutex);
+    if(peaksfp != NULL)
+        fclose(peaksfp);
 
-  pthread_mutex_lock(&powderfp_mutex);
   for(long i=0; i<nPowderClasses; i++) {
+        if(powderlogfp[i] != NULL)
     fclose(powderlogfp[i]);
+        if(FEElogfp[i] != NULL)
+            fclose(FEElogfp[i]);
   }
-  pthread_mutex_unlock(&powderfp_mutex);
 
-  pthread_mutex_lock(&peaksfp_mutex);
-  fclose(peaksfp);
-  pthread_mutex_unlock(&peaksfp_mutex);
 
 }

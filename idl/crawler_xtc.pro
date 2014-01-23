@@ -30,7 +30,7 @@ pro crawler_xtc, xtcdir
 	endif
 
 	rstart = strpos(xtc[0], 'r')
-	run = strmid(xtc, rstart+1, 4)
+	run = long(strmid(xtc, rstart+1, 4))
 	
 	;; Sort the list
 	run = run[sort(run)]
@@ -42,7 +42,7 @@ pro crawler_xtc, xtcdir
 	;; Find the XTC files still copying
 	xtc_pending = file_search(xtcdir+'*.xtc.inprogress')
 	xtc_pending = file_basename(xtc_pending)
-	run_pending = strmid(xtc_pending, rstart+1, 4)
+	run_pending = long(strmid(xtc_pending, rstart+1, 4))
 
 
 	;; Populate the output table
@@ -55,7 +55,7 @@ pro crawler_xtc, xtcdir
 		w = where(run_pending eq run[i])
 		if w[0] ne -1 then tag = 'Copying'
 		
-		str = strcompress(string(run[i], ',', tag))
+		str = strcompress(string(run[i], ', ', tag))
 		printf, fout, str
 	endfor
 	

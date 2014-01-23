@@ -21,6 +21,132 @@
 #include "data2d.h"
 
 
+
+/*
+ *	Wrapper for saving all FEE spectral stacks
+ */
+void saveSpectrumStacks(cGlobal *global) {
+	
+    if(global->useFEEspectrum) {
+		printf("Saving FEE spectral stacks\n");
+		for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+			saveFEEspectrumStack(global, powderType);
+		}
+	}
+	
+	if(global->espectrum) {
+		printf("Saving CXI spectral stacks\n");
+		for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+			saveEspectrumStack(global, powderType);
+		}
+	}
+}
+
+
+
+
+/*
+ *	FEE spectrometer
+ */
+
+void addFEEspectrumToStack(cEventData *eventData, cGlobal *global, int powderClass){
+	
+    float   *stack = global->FEEspectrumStack[powderClass];
+    uint32_t  *spectrum = eventData->FEEspec_hproj;
+    long	speclength = global->FEEspectrumWidth;
+    long    stackCounter = global->FEEspectrumStackCounter[powderClass];
+    long    stackSize = global->FEEspectrumStackSize;
+
+	// No FEE data means go home
+	if(!eventData->FEEspec_present)
+		return;
+		
+	
+    // Lock
+	pthread_mutex_lock(&global->FEEspectrumStack_mutex[powderClass]);
+	
+    // Data offsets
+    long stackoffset = stackCounter % stackSize;
+    long dataoffset = stackoffset*speclength;
+	
+    // Copy data and increment counter
+    for(long i=0; i<speclength; i++) {
+        stack[dataoffset+i] = (float) spectrum[i];
+    }
+	
+	
+	// Write filename to log file in sync with stack positions (** Important for being able to index the patterns!)
+	fprintf(global->FEElogfp[powderClass], "%li, %li, %s/%s\n", stackCounter, eventData->frameNumber, eventData->eventSubdir, eventData->eventname);
+
+
+    // Increment counter
+    global->FEEspectrumStackCounter[powderClass] += 1;
+	
+	
+    // Save data once stack is full
+    if((global->FEEspectrumStackCounter[powderClass] % stackSize) == 0) {
+        printf("Saving FEE spectrum stack: %i\n", powderClass);
+        saveFEEspectrumStack(global, powderClass);
+        
+        for(long j=0; j<speclength*stackSize; j++)
+            global->FEEspectrumStack[powderClass][j] = 0;
+    }
+	
+    pthread_mutex_unlock(&global->FEEspectrumStack_mutex[powderClass]);
+}
+
+
+/*
+ *  Save FEE spectral stacks
+ */
+void saveFEEspectrumStack(cGlobal *global, int powderClass) {
+	
+    if(!global->useFEEspectrum)
+        return;
+	
+	char	filename[1024];
+    float   *stack = global->FEEspectrumStack[powderClass];
+    long	speclength = global->FEEspectrumWidth;
+    long    stackCounter = global->FEEspectrumStackCounter[powderClass];
+    long    stackSize = global->FEEspectrumStackSize;
+    pthread_mutex_t mutex = global->FEEspectrumStack_mutex[powderClass];
+	
+	if(global->FEEspectrumStackCounter[powderClass]==0)
+		return;
+	
+    // Lock
+	pthread_mutex_lock(&mutex);
+	
+	
+	// We re-use stacks, what is this number?
+	long	stackNum = stackCounter / stackSize;
+ 	if(stackNum == 0) stackNum = 1;
+	
+	// If stack is not full, how many rows are full?
+    long    nRows = stackSize;
+    if(stackCounter % stackSize != 0)
+        nRows = (stackCounter % stackSize);
+	
+    sprintf(filename,"r%04u-FEEspectrum-class%i-stack%li.h5", global->runNumber, powderClass, stackNum);
+    printf("Saving FEE spectral stack: %s\n", filename);
+    writeSimpleHDF5(filename, stack, speclength, nRows, H5T_NATIVE_FLOAT);
+	
+	
+	// Flush stack index buffer
+	if(global->FEElogfp[powderClass] != NULL)
+		fflush(global->FEElogfp[powderClass]);
+	
+	pthread_mutex_unlock(&mutex);
+	
+}
+
+
+
+
+/*
+ *	CXI spectrometer
+ */
+
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	// proceed if event is a 'hit', spectrum data exists & spectrum required
 	int hit = eventData->hit;
@@ -36,6 +162,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	if(hit && !opalfail && spectra){
 		eventData->energySpectrumExist = 1;
 		integrateSpectrum(eventData,global,specWidth,specHeight);
+		addToSpectrumStack(eventData,global, hit);
 	}
 	return;
 }
@@ -61,6 +188,104 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
 		}
 	}
 	return;
+}
+
+
+void addToSpectrumStack(cEventData *eventData, cGlobal *global, int powderClass){
+	
+    float   *stack = global->espectrumStack[powderClass];
+    double  *spectrum = eventData->energySpectrum1D;
+    long	speclength = global->espectrumLength;
+    long    stackCounter = global->espectrumStackCounter[powderClass];
+    long    stackSize = global->espectrumStackSize;
+    pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
+
+    // Lock
+	pthread_mutex_lock(&mutex);
+	
+    // Data offsets
+    long stackoffset = stackCounter % stackSize;
+    long dataoffset = stackoffset*speclength;
+	
+    // Copy data and increment counter
+    for(long i=0; i<speclength; i++) {
+        stack[dataoffset+i] = (float) spectrum[i];
+    }
+	
+    // Increment counter
+    global->espectrumStackCounter[powderClass] += 1;
+	
+	
+    // Save data once stack is full
+    if((stackCounter % stackSize) == 0) {
+        
+        printf("Saving espectrum stack: %i\n", powderClass);
+        saveEspectrumStack(global, powderClass);
+        
+        for(long j=0; j<speclength*stackSize; j++)
+            global->espectrumStack[powderClass][j] = 0;
+    }
+	
+    pthread_mutex_unlock(&mutex);
+	
+}
+
+/*
+ *	Wrapper for saving all radial stacks
+ */
+void saveEspectrumStacks(cGlobal *global) {
+
+    if(!global->espectrum)
+        return;
+    
+    printf("Saving spectral stacks\n");
+	
+	for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+		saveEspectrumStack(global, powderType);
+	}
+}
+
+
+
+/*
+ *  Save radial average stack
+ */
+void saveEspectrumStack(cGlobal *global, int powderClass) {
+	
+	char	filename[1024];
+    float   *stack = global->espectrumStack[powderClass];
+    long	speclength = global->espectrumLength;
+    long    stackCounter = global->espectrumStackCounter[powderClass];
+    long    stackSize = global->espectrumStackSize;
+    pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
+	
+
+    if(!global->espectrum)
+        return;
+
+	if(global->espectrumStackCounter[powderClass]==0)
+		return;
+	
+    // Lock
+	pthread_mutex_lock(&mutex);
+
+	
+	// We re-use stacks, what is this number?
+	long	stackNum = stackCounter / stackSize;
+ 	if(stackNum == 0) stackNum = 1;
+	
+	// If stack is not full, how many rows are full?
+    long    nRows = stackSize;
+    if(stackCounter % stackSize != 0)
+        nRows = (stackCounter % stackSize);
+	
+	
+    sprintf(filename,"r%04u-espectrumstack-class%i-stack%li.h5", global->runNumber, powderClass, stackNum);
+    printf("Saving spectral stack: %s\n", filename);
+    writeSimpleHDF5(filename, stack, speclength, nRows, H5T_NATIVE_FLOAT);
+	
+	pthread_mutex_unlock(&mutex);
+	
 }
 
 
@@ -202,7 +427,6 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 
 void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	
-	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	char        groupname[1024];
 	char        fieldname[1024];
 	hid_t       file_id;
@@ -269,6 +493,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	dataclass = H5Tget_class(datatype_id);
 	size = H5Tget_size(datatype_id);
 		
+	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	H5Dread(dataset_id, datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, energyscale);
 	for(int i=0; i<global->espectrumLength; i++) {
 		global->espectrumScale[i] = energyscale[i];
