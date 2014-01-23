@@ -857,6 +857,7 @@ void writeAccumulatedCXI(cGlobal * global){
   long	pix_nn,pix_nx,pix_ny;
   long	image_nn,image_nx,image_ny;
   long	imageXxX_nn,imageXxX_nx,imageXxX_ny;
+	char buffer[1024];
 
     sprintf(buffer,"nProcessedFrames");
     createAndWriteDataset(buffer, sharedVal.self, &global->nprocessedframes);
@@ -879,7 +880,6 @@ void writeAccumulatedCXI(cGlobal * global){
       imageXxX_nn = detector->imageXxX_nn;
       imageXxX_nx = detector->imageXxX_nx;
       imageXxX_ny = detector->imageXxX_ny;
-      char buffer[1024];
 
       // Dereference/create arrays to be written to file
       // SUM(data)
