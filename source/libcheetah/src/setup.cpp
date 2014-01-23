@@ -1195,8 +1195,12 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "halopixelRecalc=%ld\n",detector[i].halopixRecalc);
         fprintf(fp, "histogram=%d\n",detector[i].histogram);
         fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
-        fprintf(fp, "histogramMax=%ld\n",detector[i].histogramMax);
+        fprintf(fp, "histogramNbins=%ld\n",detector[i].histogramNbins);
         fprintf(fp, "histogramBinSize=%ld\n",detector[i].histogramBinSize);
+        fprintf(fp, "histogram_fs_min=%ld\n",detector[i].histogram_fs_min);
+        fprintf(fp, "histogram_fs_max=%ld\n",detector[i].histogram_fs_max);
+        fprintf(fp, "histogram_ss_min=%ld\n",detector[i].histogram_ss_min);
+        fprintf(fp, "histogram_ss_max=%ld\n",detector[i].histogram_ss_max);
         fprintf(fp, "histogramMaxMemoryGb=%f\n",detector[i].histogramMaxMemoryGb);
         fprintf(fp, "downsampling=%ld\n",detector[i].downsampling);
         fprintf(fp, "saveDetectorRaw=%d\n",detector[i].saveDetectorRaw);
