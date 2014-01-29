@@ -1,30 +1,31 @@
 
-find_package(PSANA REQUIRED)
+FIND_PACKAGE(PSANA REQUIRED)
 
-find_package(HDF5 REQUIRED)
+FIND_PACKAGE(HDF5 REQUIRED)
 
 
-LIST(APPEND sources "src/cheetah_ana_mod.cpp")
+LIST(APPEND SOURCES "src/cheetah_ana_mod.cpp")
 
-add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
+ADD_DEFINITIONS(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
-include_directories("include")
-include_directories(${PSANA_INCLUDES} ${CHEETAH_INCLUDES})
-include_directories(${HDF5_INCLUDE_DIR})
+INCLUDE_DIRECTORIES("include")
+INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
+INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
 
-add_library(cheetah_ana_pkg SHARED ${sources})
+ADD_LIBRARY(cheetah_ana_pkg SHARED ${SOURCES})
 
-add_dependencies(cheetah_ana_pkg cheetah)
+ADD_DEPENDENCIES(cheetah_ana_pkg cheetah)
 
-target_link_libraries(cheetah_ana_pkg ${PSANA_LIBRARIES} ${CHEETAH_LIBRARY})
+TARGET_LINK_LIBRARIES(cheetah_ana_pkg ${PSANA_LIBRARIES} cheetah )
 
-set_target_properties(
+
+SET_TARGET_PROPERTIES(
  cheetah_ana_pkg
  PROPERTIES SOVERSION 1
  VERSION 1
 )
 
-install(TARGETS cheetah_ana_pkg
+INSTALL(TARGETS cheetah_ana_pkg
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
   LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})

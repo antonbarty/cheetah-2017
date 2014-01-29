@@ -1,19 +1,19 @@
 
-find_package(MYANA REQUIRED)
+FIND_PACKAGE(MYANA REQUIRED)
 
-list(APPEND sources "src/cheetah-myana.cpp" "src/myana/main.cc")
+LIST(APPEND SOURCES "src/cheetah-myana.cpp" "src/myana/main.cc")
 
-include_directories("include")
-include_directories(${PSANA_INCLUDES} ${CHEETAH_INCLUDES})
-include_directories(${MYANA_INCLUDES})
+INCLUDE_DIRECTORIES("include")
+INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
+INCLUDE_DIRECTORIES(${MYANA_INCLUDES})
 
-add_executable(cheetah_myana ${sources})
+ADD_EXECUTABLE(cheetah_myana ${SOURCES})
 
-add_dependencies(cheetah_myana cheetah)
+ADD_DEPENDENCIES(cheetah_myana cheetah)
 
-target_link_libraries(cheetah_myana ${CHEETAH_LIBRARY} ${MYANA_LIBRARIES})
+TARGET_LINK_LIBRARIES(cheetah_myana ${MYANA_LIBRARIES} cheetah )
 
-install(TARGETS cheetah_myana
+INSTALL(TARGETS cheetah_myana
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
   LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
