@@ -29,7 +29,7 @@ OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." ON )
 OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
 
 INCLUDE_DIRECTORIES("${CMAKE_SOURCE_DIR}/source/libcheetah/include")
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/source/libcheetah/)
+LINK_DIRECTORIES("${CMAKE_BINARY_DIR}/source/libcheetah/")
 
 ADD_SUBDIRECTORY(source)
 
