@@ -33,7 +33,9 @@ pro crawler_pickdir
 			endif
 			
 			if a.Other eq 1 then begin
-				dir=dialog_pickfile(/dir)
+;				dir=dialog_pickfile(/dir)
+				dir=dialog_pickfile(filter='crawler.config',/fix_filter, title='Please select crawler directory')
+				dir = file_dirname(dir)
 				dirlist = [dir, dirlist]			
 			endif
 			
@@ -43,7 +45,8 @@ pro crawler_pickdir
 		endif $
 		
 		else begin
-			dir=dialog_pickfile(/dir)
+			dir=dialog_pickfile(filter='crawler.config',/fix_filter, title='Please select the crawler.config file')
+			dir = file_dirname(dir)
 			dirlist = [dir]
 		endelse
 
@@ -58,7 +61,11 @@ pro crawler_pickdir
 end
 
 ;; 
-;;	Set up a few locations and things
+;;	Try to auto-detect a configuration
+;; 	- If there is a .cheetah-crawler file in this directory, use it (normally ~/.cheetah-crawler)
+;;	- If there is a crawler.config file, use it
+;;  - Navigate to a directory with a crawler.config file
+;; 	- Only then, launch the configuration tool
 ;;  Quick and dirty: ultimately should be read from a config file
 ;;
 pro crawler_config, pState
@@ -72,12 +79,26 @@ pro crawler_config, pState
 	(*pstate).cheetahIni = 'lys.ini'
 
 
-	;; Now try to read from the config file
+	;; Configuration file names
 	configFile = 'crawler.config'
-	if file_test(configFile) ne 1 then begin
+	ifile = '.cheetah-crawler'
+
+	;; If there is a .cheetah-crawler file here, go into the 'pick experiment' dialog (which changes the cwd)	
+	if file_test(ifile) eq 1 then begin
+		crawler_pickdir
+	endif $
+	
+	;; If there is no config file here, but there is a .cheetah-crawler in the home directory, pick the experiment
+	else if file_test(configFile) eq 0 AND file_test('~/'+ifile) eq 1 then begin
+		crawler_pickdir
+	endif $
+
+	else if file_test(configFile) eq 0 then begin	
 		crawler_pickdir
 	endif
 	
+		
+	;; Read the crawler.config file if there is a crawler.config but no .cheetah-crawler in the current directory
 	if file_test(configFile) eq 1 then begin
 		info = read_csv(configFile)
 		info = info.field1		
@@ -89,13 +110,12 @@ pro crawler_config, pState
 			(*pstate).geometry = (info[3])[1]
 			(*pstate).process = (info[4])[1]
 			(*pstate).cheetahIni = (info[5])[1]
-		endif $
-		
-		else begin
-			crawler_configMenu, pState
-		endelse		
-	endif $	
+		endif 
+	endif  $
+	
+	;; Else select the directory (sort of redundant as selection is called from the pickdir function)
 	else begin
+		;;crawler_pickdir
 		crawler_configMenu, pState
 	endelse
 	
@@ -655,6 +675,11 @@ pro crawler_event, ev
 			crawler_postprocess, pState, run
 		end			
 
+		sState.button_crystfel : begin
+			run = crawler_whichRun(pstate, /run, /multiple)
+			crawler_postprocess, pState, run
+		end			
+
 
 		;; View hits
 		sState.button_hits : begin
@@ -692,6 +717,7 @@ pro crawler_event, ev
 			widget_control, sState.mbcheetah_label, sensitive=1
 			widget_control, sState.button_postprocess, sensitive=1
 			widget_control, sState.button_cheetah, sensitive=1
+			widget_control, sState.button_crystfel, sensitive=1
 		end
 
 		;;
@@ -886,6 +912,7 @@ pro crawler_view
 	button_refresh = widget_button(base2, value='Refresh')
 	button_viewtype = widget_button(base2, value='Dataset view')
 	button_cheetah = widget_button(base2, value='Run Cheetah', sensitive=0)
+	button_crystfel = widget_button(base2, value='Run CrystFEL', sensitive=0)
 	button_postprocess = widget_button(base2, value='Postprocess')
 	button_hits = widget_button(base2, value='View hits')
 	button_hitrate = widget_button(base2, value='Hitrate')
@@ -970,6 +997,7 @@ pro crawler_view
 			button_refresh : button_refresh, $
 			button_viewtype : button_viewtype, $
 			button_cheetah : button_cheetah, $
+			button_crystfel : button_crystfel, $
 			button_postprocess : button_postprocess, $
 			button_hits : button_hits, $
 			button_hitrate : button_hitrate, $

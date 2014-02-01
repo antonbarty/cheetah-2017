@@ -722,6 +722,8 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 				roffset[i] = thisoffset;
 				rsigma[i] = thissigma;
 				rthreshold[i] = roffset[i] + hitfinderMinSNR*rsigma[i];
+				if(rthreshold[i] < ADCthresh)
+					rthreshold[i] = ADCthresh;
 				//rthreshold[i] = ADCthresh;		// For testing
 			}
 		}
