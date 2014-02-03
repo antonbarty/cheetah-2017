@@ -56,7 +56,6 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     long	image_nn = global->detector[detID].image_nn;
 
     double  *buffer;
-	
     
 	// Increment counter of number of powder patterns
 	pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
@@ -71,8 +70,9 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
      *  Sum of raw detector data (no thresholds)
      */
     pthread_mutex_lock(&global->detector[detID].powderRaw_mutex[powderClass]);
-    for(long i=0; i<pix_nn; i++) 
+    for(long i=0; i<pix_nn; i++) {
         global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].raw_data[i];
+		}
     pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
 
     
@@ -98,28 +98,34 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     }
     pthread_mutex_unlock(&global->detector[detID].powderRawSquared_mutex[powderClass]);
     free(buffer);
-    
 
-    
+	/*
+     *  Sum of corrected data (with any powder threshold or masks)
+     */
+    pthread_mutex_lock(&global->detector[detID].powderMax_mutex[powderClass]);
+	if(global->usePowderMax) {
+       	for(long i=0; i<pix_nn; i++) {
+			if(global->detector[detID].powderMax[powderClass][i] < eventData->detector[detID].corrected_data[i])
+           		global->detector[detID].powderMax[powderClass][i] = eventData->detector[detID].corrected_data[i];
+    	}
+	}
+    pthread_mutex_unlock(&global->detector[detID].powderMax_mutex[powderClass]);    
     
     /*
      *  Sum of corrected data (with any powder threshold or masks)
      */
     pthread_mutex_lock(&global->detector[detID].powderCorrected_mutex[powderClass]);
-    if(!global->usePowderThresh) {
-        for(long i=0; i<pix_nn; i++)
-            global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
-    }
+	if(!global->usePowderThresh) {
+       	for(long i=0; i<pix_nn; i++)
+           	global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
+    	}
     else {
-        for(long i=0; i<pix_nn; i++) {
-            if(eventData->detector[detID].corrected_data[i] > global->powderthresh)
-                global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
-        }
-    }
+       	for(long i=0; i<pix_nn; i++) {
+			if(eventData->detector[detID].corrected_data[i] > global->powderthresh)
+               	global->detector[detID].powderCorrected[powderClass][i] += eventData->detector[detID].corrected_data[i];
+    	}	
+	} 
     pthread_mutex_unlock(&global->detector[detID].powderCorrected_mutex[powderClass]);
-
-    
-
 
     /*
      *  Sum of corrected data squared (with any powder threshold or masks, for calculating variance)

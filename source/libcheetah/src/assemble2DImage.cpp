@@ -63,7 +63,12 @@ void assemble2Dpowder(cGlobal *global) {
         
         // Assemble each powder type
         for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
-            double  *data = detector->powderCorrected[powderType];
+			double  *data;
+			if (global->usePowderMax) {
+            	data = detector->powderMax[powderType];
+			} else {
+				data = detector->powderCorrected[powderType];
+			}
             double  *image = detector->powderAssembled[powderType];
 
             // Assembly is done using float; powder data is double (!!)

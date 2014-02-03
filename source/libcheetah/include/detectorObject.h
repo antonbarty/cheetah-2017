@@ -292,6 +292,7 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
+	double   *powderMax[MAX_POWDER_CLASSES];
 	double   *powderPeaks[MAX_POWDER_CLASSES];
 	float	*correctedMin[MAX_POWDER_CLASSES];
 	float   *assembledMin[MAX_POWDER_CLASSES];
@@ -302,6 +303,7 @@ public:
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderMax_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];

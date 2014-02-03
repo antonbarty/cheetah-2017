@@ -189,6 +189,8 @@ public:
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
+	/** @brief Toggle the creation of a virtual powder using maximum pixels. */
+	int      usePowderMax;
 
 
 	/** @brief Interval between saving of powder patterns, etc. */
