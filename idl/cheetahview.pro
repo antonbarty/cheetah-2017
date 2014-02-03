@@ -271,7 +271,7 @@ function cheetah_peakfinder8, data, pstate
 	y = (*pstate).pixmap_y/(*pstate).pixmap_dx
 
 	;; Call external peakfinder8
-	peaks = peakfinder8(data, peaks_minsnr, x=x, y=y, minpix=minpix, maxpix=maxpix, minr=peaks_minres, maxr=peaks_maxres, iter=3)
+	peaks = peakfinder8(data, peaks_minsnr, x=x, y=y, minpix=minpix, maxpix=maxpix, minr=peaks_minres, maxr=peaks_maxres, iter=3, minADC=adc_thresh)
 	
 	;; Transform output format
 	out = transpose([[peaks.fs],[peaks.ss],[peaks.total],[peaks.npix]])

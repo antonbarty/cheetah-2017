@@ -299,6 +299,65 @@ pro crawler_startCheetah, pState, run
 end
 
 
+;;
+;;	Dialog to start general user-defined post-processing
+;;
+pro crawler_runCrystFEL, pState, run
+  	sState = *pState
+	table_data = *(sState.table_pdata)
+	table_run = reform(table_data[0,*])
+	table_rundir = reform(table_data[sState.table_dircol, *])
+
+	help, run
+	print, run
+
+	nruns = n_elements(run)-1
+	startrun  = run[0]
+	endrun = run[nruns]
+	command = '../process/run_crystfel.sh'
+	ini = sState.crystfelIni
+
+
+	
+	desc = [ 	'1, base, , column', $
+				'0, label, Start run: '+startrun+', left', $
+				'0, label, End run: '+endrun+', left', $
+				'0, label, Queue handler: '+command+', left', $
+				'2, text, '+ini+', label_left=CrystFEL script:, width=50, tag=ini', $
+				'1, base,, row', $
+				'0, button, OK, Quit, Tag=OK', $
+				'2, button, Cancel, Quit' $
+	]		
+	a = cw_form(desc, /column, title='Start CrystFEL')
+	
+	;; Only do this if OK is pressed (!!)
+	if a.OK eq 1 then begin		
+		ini = a.ini
+		(*pstate).crystfelIni = ini
+		
+		for i=0, nruns do begin
+			w = where(table_run eq run[i])
+			if w[0] eq -1 then continue
+			
+			dir = table_rundir[w]
+			path = strcompress(sState.h5dir+'/'+dir, /remove_all)
+			label = file_basename(path)
+
+			qtag = string(format='(%"indx%04i")', run[i])  
+			cmnd = command + ' ' + ini + ' ' + path + ' ' + label + ' ' + qtag
+			;cmnd = strcompress(string(command, ' ', path, ' ', ini, ' ', label, ' ', qtag))
+			;print, cmnd
+			spawn, cmnd, /sh
+
+			
+			;; Change the CrystFEL status label to 'Submitted'
+			widget_control, sState.table, use_table_select = [sState.table_crystfelcol, w[0], sState.table_crystfelcol, w[0]], set_value = ['Submitted']
+		endfor
+	endif
+end
+
+
+;;
 ;;	Dialog to label a dataset
 ;;
 pro crawler_labelDataset, pState, run
@@ -345,7 +404,7 @@ pro crawler_labelDataset, pState, run
 end
 
 ;;
-;;	Dialog to start post-processing
+;;	Dialog to start general user-defined post-processing
 ;;
 pro crawler_postprocess, pState, run
   	sState = *pState
@@ -677,7 +736,7 @@ pro crawler_event, ev
 
 		sState.button_crystfel : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
-			crawler_postprocess, pState, run
+			crawler_runCrystFEL, pState, run
 		end			
 
 
@@ -1010,6 +1069,7 @@ pro crawler_view
 			process : 'Not set', $
 			geometry : 'Not set', $
 			cheetahIni : 'Not set', $
+			crystfelIni : '../process/lys.crystfel', $
 			postprocess_command : '../process/postprocess.sh' $
 	}
 	

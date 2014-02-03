@@ -8,6 +8,7 @@
 ; Run in this order
 ;	crawler_xtc
 ;	crawler_hdf5
+;	crawler_crystfel
 ;	crawler_dataset
 ;	crawler_merge
 ;
@@ -100,7 +101,7 @@ pro crawler_merge
 		hits2 = '---'
 		if fcrystfel ne 0 then begin
 			wcf = where(cfrun eq xtcrun[i])
-			if whcf[0] ne -1 then begin
+			if wcf[0] ne -1 then begin
 				for j=0L, n_elements(wcf)-1 do begin
 					status2 = cfstatus[wcf[j]]
 					hits2 = cfindexed[wcf[j]]
