@@ -995,7 +995,7 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 10
+			(*pstate).image_boost = 2
 			(*pstate).circleHDF5Peaks = 1
 			(*pstate).findPeaks = 0
 			(*pstate).savePeaks = 0
@@ -1225,7 +1225,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  currentFileNum : 0L, $
 				  h5field : "data/data", $
 				  image_gamma : 1.0, $
-				  image_boost : 10., $
+				  image_boost : 2., $
 				  image_max : 16000., $
 				  image_zoom : 1.0, $
 				  image_size: size(image,/dim), $
