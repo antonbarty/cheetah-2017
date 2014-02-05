@@ -461,13 +461,17 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   puts("Creating Skeleton");
   CXI::File * cxi = new CXI::File;
-  hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-  H5Fclose(fid);
-  // Closing off the newly created file to allow sharing to work
-  printf("Reopening #%s#\n", filename);
   hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG);
-  fid = H5Fopen(filename, H5F_ACC_RDWR, fapl_id);
+  if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){||
+    ERROR("Cannot set file access properties.\n");
+  }
+#ifdef H5F_ACC_SWMR_WRITE
+  if(H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+    ERROR("Cannot set file access properties.\n");
+  }
+#endif
+
+  hid_t fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
   if( fid<0 ) {ERROR("Cannot create file.\n");}
   cxi->self = fid;
   cxi->stackCounter = 0;
@@ -814,6 +818,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   createAndWriteDataset("hitfinderMinSNR",confVal.self,&global->hitfinderMinSNR);
   createAndWriteDataset("saveCXI",confVal.self,&global->saveCXI);
 
+
+#ifdef H5F_ACC_SWMR_READ
+  H5Fstart_swmr_write(cxi->self);
+#endif
   return cxi;
 }
 
