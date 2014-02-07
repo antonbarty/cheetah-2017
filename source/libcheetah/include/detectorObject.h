@@ -39,6 +39,12 @@ static const unsigned  PNCCD_ASIC_NY = 512;	// ASIC ny = extent of one ASIC in y
 static const unsigned  PNCCD_nASICS_X = 2;		// 2 ASICs across in raw data stream
 static const unsigned  PNCCD_nASICS_Y = 2;		// 2 ASICs down in raw data stresm
 
+//	SACLA mpCCD	//
+static const unsigned  mpCCD_ASIC_NX = 512;     // ASIC nx = extent of one ASIC in x
+static const unsigned  mpCCD_ASIC_NY = 1024;	// ASIC ny = extent of one ASIC in y
+static const unsigned  mpCCD_nASICS_X = 1;		// 2 ASICs across in raw data stream
+static const unsigned  mpCCD_nASICS_Y = 8;		// 2 ASICs down in raw data stresm
+
 
 static const unsigned int cbufsize = 1024;
 

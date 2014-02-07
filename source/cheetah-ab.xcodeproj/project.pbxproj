@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D5697FD18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D5697FB18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp */; };
 		4DA51BE7189AC55000C97F32 /* main-sacla-hdf5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */; };
-		4DA51BE8189ACCA600C97F32 /* liblibcheetah.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA51BE1189AC1B200C97F32 /* liblibcheetah.dylib */; };
+		4DA51BE8189ACCA600C97F32 /* libcheetah.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */; };
 		4DA51BEB189ACD4100C97F32 /* assemble2DImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D929174F9F80004A0BB4 /* assemble2DImage.cpp */; };
 		4DA51BEC189ACD4400C97F32 /* backgroundCorrection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D92A174F9F80004A0BB4 /* backgroundCorrection.cpp */; };
 		4DA51BED189ACD4600C97F32 /* data2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D92B174F9F80004A0BB4 /* data2d.cpp */; };
@@ -51,6 +52,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4D5697FB18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "sacla-hdf5-reader.cpp"; sourceTree = "<group>"; };
+		4D5697FC18A4E63C0008E0C2 /* sacla-hdf5-reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "sacla-hdf5-reader.h"; sourceTree = "<group>"; };
 		4D93D91A174F9F80004A0BB4 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
 		4D93D91C174F9F80004A0BB4 /* cheetah.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cheetah.ini; sourceTree = "<group>"; };
 		4D93D91E174F9F80004A0BB4 /* cheetah.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cheetah.h; sourceTree = "<group>"; };
@@ -89,7 +92,7 @@
 		4D93D954174F9F98004A0BB4 /* run-cheetah-psana */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "run-cheetah-psana"; sourceTree = "<group>"; };
 		4D93D956174F9F98004A0BB4 /* cheetah_ana_mod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cheetah_ana_mod.h; sourceTree = "<group>"; };
 		4D93D958174F9F98004A0BB4 /* cheetah_ana_mod.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cheetah_ana_mod.cpp; sourceTree = "<group>"; };
-		4DA51BE1189AC1B200C97F32 /* liblibcheetah.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibcheetah.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libcheetah.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE5189AC39500C97F32 /* cheetah-sacla */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "cheetah-sacla"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "main-sacla-hdf5.cpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -99,7 +102,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4DA51BE8189ACCA600C97F32 /* liblibcheetah.dylib in Frameworks */,
+				4DA51BE8189ACCA600C97F32 /* libcheetah.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,17 +119,17 @@
 		4D93D904174F9F52004A0BB4 = {
 			isa = PBXGroup;
 			children = (
+				4DA51BE5189AC39500C97F32 /* cheetah-sacla */,
+				4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */,
 				4D93D94B174F9F98004A0BB4 /* cheetah_ana_pkg */,
 				4DA51BD1189ABA3D00C97F32 /* cheetah-sacla */,
 				4D93D919174F9F80004A0BB4 /* libcheetah */,
-				4DA51BE5189AC39500C97F32 /* cheetah-sacla */,
 			);
 			sourceTree = "<group>";
 		};
 		4D93D919174F9F80004A0BB4 /* libcheetah */ = {
 			isa = PBXGroup;
 			children = (
-				4DA51BE1189AC1B200C97F32 /* liblibcheetah.dylib */,
 				4D93D91A174F9F80004A0BB4 /* CMakeLists.txt */,
 				4D93D91B174F9F80004A0BB4 /* examples */,
 				4D93D91D174F9F80004A0BB4 /* include */,
@@ -236,6 +239,8 @@
 			isa = PBXGroup;
 			children = (
 				4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */,
+				4D5697FC18A4E63C0008E0C2 /* sacla-hdf5-reader.h */,
+				4D5697FB18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp */,
 			);
 			path = "cheetah-sacla";
 			sourceTree = "<group>";
@@ -285,7 +290,7 @@
 			);
 			name = libcheetah;
 			productName = libcheetah;
-			productReference = 4DA51BE1189AC1B200C97F32 /* liblibcheetah.dylib */;
+			productReference = 4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
@@ -320,6 +325,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D5697FD18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp in Sources */,
 				4DA51BE7189AC55000C97F32 /* main-sacla-hdf5.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -391,6 +397,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/usr/local/include,
 				);
+				INSTALL_PATH = /usr/local;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
@@ -428,6 +435,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/usr/local/include,
 				);
+				INSTALL_PATH = /usr/local;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				"OTHER_LDFLAGS[arch=*]" = (
@@ -445,6 +453,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -476,6 +485,7 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				ENABLE_NS_ASSERTIONS = NO;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
@@ -501,7 +511,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_PREFIX = "";
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -530,7 +540,7 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				ENABLE_NS_ASSERTIONS = NO;
-				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_PREFIX = "";
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_UNROLL_LOOPS = YES;
@@ -567,6 +577,7 @@
 				4DA51BD7189ABA3D00C97F32 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4DA51BE2189AC1B200C97F32 /* Build configuration list for PBXNativeTarget "libcheetah" */ = {
 			isa = XCConfigurationList;
@@ -575,6 +586,7 @@
 				4DA51BE4189AC1B200C97F32 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
