@@ -839,8 +839,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
     }    
   }  
   free(obj_id_list);
-  H5Fstart_swmr_write(cxi->self);
-  H5Fstart_swmr_write(cxi->self);
+  if(H5Fstart_swmr_write(cxi->self) < 0){
+    ERROR("Cannot change to SWMR mode.\n");
+  }
 
   /* Painfully reopen datasets.
      This part of the code is a bit
