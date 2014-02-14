@@ -320,6 +320,7 @@ public:
 	pthread_mutex_t  pixelmask_shared_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
+	pthread_mutex_t  swmr_mutex;
 
 	/*
 	 *	Common variables

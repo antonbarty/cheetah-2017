@@ -1248,16 +1248,25 @@ void closeCXIFiles(cGlobal * global){
 }
 
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_lock(&global->swmr_mutex);
+#endif
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
 
   writeScalarToStack(cxi->cheetahVal.sharedVal.hit,global->nCXIEvents,info->hit);
   writeScalarToStack(cxi->cheetahVal.sharedVal.nPeaks,global->nCXIEvents,info->nPeaks);
   global->nCXIEvents += 1;
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 }
 
 
 void writeCXI(cEventData *info, cGlobal *global ){
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_lock(&global->swmr_mutex);
+#endif
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
 
@@ -1397,8 +1406,8 @@ void writeCXI(cEventData *info, cGlobal *global ){
   }
 #ifdef H5F_ACC_SWMR_WRITE  
   H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+  pthread_mutex_unlock(&global->swmr_mutex);
 #endif
-
 }
 
 
