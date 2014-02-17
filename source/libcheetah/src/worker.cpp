@@ -166,7 +166,7 @@ void *worker(void *threadarg) {
 	 *	Identify and kill hot pixels
 	 */
 	identifyHotPixels(eventData, global);
-	calculateHotPixelMask(global);
+	calculateHotPixelMask(eventData, global);
 	applyHotPixelMask(eventData,global);
     
     
@@ -182,23 +182,9 @@ void *worker(void *threadarg) {
 	applySolidAngleCorrection(eventData, global);
 	
     
-    /*
-     *	Skip first set of frames to build up running estimate of background...
-     */
-    DETECTOR_LOOP {
-		if (eventData->threadNum < global->detector[detID].startFrames || 
-            (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) ||
-            (global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
-                updateBackgroundBuffer(eventData, global, 0);
-                updateHaloBuffer(eventData,global,0);
-                printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
-            goto cleanup;
-		}
-	}
-	
   // Inside-thread speed test
   if(global->ioSpeedTest==5) {
-    printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+    printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background/polarization/solid angle correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
     goto cleanup;
   }
     
