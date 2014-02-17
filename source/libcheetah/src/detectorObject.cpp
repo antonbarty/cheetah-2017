@@ -485,6 +485,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogrammin")) {
 	  histogramMin = atoi(value);
 	}
+	else if (!strcmp(tag, "histogrammax")) {
+		printf("The keyword histogramMax has been changed.  It is\n"
+			   "now controlled by histogramNbins.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
+	}
 	else if (!strcmp(tag, "histogramnbins")) {
 	  histogramNbins = atoi(value);
 	}
