@@ -417,7 +417,7 @@ logfile:
     *	Write out information on each frame to a log file
     */
     pthread_mutex_lock(&global->framefp_mutex);
-    fprintf(global->framefp, "%s, ", eventData->eventname);
+    fprintf(global->framefp, "%s/%s, ", eventData->eventSubdir, eventData->eventname);
     fprintf(global->framefp, "%li, ", eventData->frameNumber);
     fprintf(global->framefp, "%li, ", eventData->threadNum);
     fprintf(global->framefp, "%i, ", eventData->hit);
@@ -440,7 +440,7 @@ logfile:
     // Keep track of what has gone into each image class
     if(global->powderlogfp[hit] != NULL) {
         pthread_mutex_lock(&global->powderfp_mutex);
-        fprintf(global->powderlogfp[hit], "%s, ", eventData->eventname);
+        fprintf(global->powderlogfp[hit], "%s/%s, ", eventData->eventSubdir, eventData->eventname);
         fprintf(global->powderlogfp[hit], "%li, ", eventData->frameNumber);
         fprintf(global->powderlogfp[hit], "%li, ", eventData->threadNum);
         fprintf(global->powderlogfp[hit], "%g, ", eventData->photonEnergyeV);

@@ -308,8 +308,8 @@ namespace cheetah_ana_pkg {
          */
 		int     numEvrData = 0;
 		int     fiducial = 0;
-        bool    beamOn;
-        bool    laserOn;
+        bool    beamOn = 0;
+        bool    laserOn = 0;
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
 
 		if (data3.get()) {
@@ -668,7 +668,10 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityCharge1 = charge2;
 		eventData->pGlobal = &cheetahGlobal;
         
-		
+		/*
+		 *	Make sure to record the visible pump laser on/off state
+		 */
+		eventData->laserEventCodeOn = laserOn;
 		
 		/*
          *  FEE photon inline spectrometer
