@@ -80,6 +80,8 @@ void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 long hitfinderFastScan(cEventData*, cGlobal*);
+void sortPowderClass(cEventData*, cGlobal*);
+
 
 
 // peakfinders.cpp

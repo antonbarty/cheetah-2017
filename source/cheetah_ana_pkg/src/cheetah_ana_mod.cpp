@@ -672,6 +672,7 @@ namespace cheetah_ana_pkg {
 		 *	Make sure to record the visible pump laser on/off state
 		 */
 		eventData->laserEventCodeOn = laserOn;
+		eventData->pumpLaserOn = laserOn;
 		
 		/*
          *  FEE photon inline spectrometer

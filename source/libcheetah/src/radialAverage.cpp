@@ -139,7 +139,7 @@ void addToRadialAverageStack(cEventData *eventData, cGlobal *global){
         return;
     
     // Sorting parameter
-    int powderClass = eventData->hit;
+    int powderClass = eventData->powderClass;
 
     // Loop over all detectors
     DETECTOR_LOOP {
