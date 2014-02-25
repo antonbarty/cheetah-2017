@@ -73,10 +73,10 @@ cGlobal::cGlobal(void) {
     hitfinderDetector = 0;
     hitfinderADC = 100;
     hitfinderTAT = 1e3;
-    hitfinderNpeaks = 50;
-    hitfinderNpeaksMax = 100000;
-    hitfinderAlgorithm = 3;
-    hitfinderMinPixCount = 3;
+    hitfinderNpeaks = 20;
+    hitfinderNpeaksMax = 10000;
+    hitfinderAlgorithm = 8;
+    hitfinderMinPixCount = 2;
     hitfinderMaxPixCount = 20;
     hitfinderUsePeakmask = 0;
     hitfinderCheckGradient = 0;

@@ -347,6 +347,12 @@ pro cheetah_displayImage, pState, image
 				data -= m
 		endif
 		
+		;; Apply histogram clipping (cap top and bottom fraction)
+		if (*pState).image_histclip ne 0 then begin
+			hist_thresh = (*pState).image_histclip
+			data = histogram_clip(data, hist_thresh, hist_thresh)
+		endif
+
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
@@ -878,9 +884,10 @@ pro cheetah_event, ev
 		;;
 		sState.menu_display : begin
 			desc = [ 	'1, base, , column', $
-						'0, float, '+string(sState.image_gamma)+', label_left=Gamma:, width=10, tag=image_gamma', $
-						'0, float, '+string(sState.image_boost)+', label_left=Boost:, width=10, tag=image_boost', $
-						'0, float, '+string(sState.image_max)+', label_left=Max value:, width=10, tag=image_max', $
+						'0, float, '+string(sState.image_gamma)+', label_left=Gamma:, width=20, tag=image_gamma', $
+						'0, float, '+string(sState.image_boost)+', label_left=Boost:, width=20, tag=image_boost', $
+						'0, float, '+string(sState.image_histclip)+', label_left=Histogram clip:, width=20, tag=image_histclip', $
+						'0, float, '+string(sState.image_max)+', label_left=Max value:, width=20, tag=image_max', $
 						'2, text, '+string(sState.h5field)+', label_left=HDF5 field:, width=50, tag=h5field', $
 						'1, base,, row', $
 						'0, button, OK, Quit, Tag=OK', $
@@ -891,6 +898,7 @@ pro cheetah_event, ev
 			if a.OK eq 1 then begin		
 				(*pstate).image_max = a.image_max
 				(*pstate).image_gamma = a.image_gamma
+				(*pstate).image_histclip = a.image_histclip
 				(*pstate).image_boost = a.image_boost
 				(*pstate).h5field = a.h5field
 			endif
@@ -986,7 +994,8 @@ pro cheetah_event, ev
 			loadct, 4, /silent		
 			(*pstate).colour_table = 4
 			(*pstate).image_gamma = 0.25
-			(*pstate).image_boost = 2
+			(*pstate).image_boost = 1
+			(*pstate).image_histclip = 0.0001
 			cheetah_displayImage, pState
 		end
 
@@ -995,7 +1004,8 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 2
+			(*pstate).image_boost = 1
+			(*pstate).image_histclip = 0.0001
 			(*pstate).circleHDF5Peaks = 1
 			(*pstate).findPeaks = 0
 			(*pstate).savePeaks = 0
@@ -1228,6 +1238,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  image_boost : 2., $
 				  image_max : 16000., $
 				  image_zoom : 1.0, $
+				  image_histclip : 0.0, $
 				  image_size: size(image,/dim), $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
