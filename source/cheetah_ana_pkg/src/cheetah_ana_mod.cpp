@@ -615,7 +615,7 @@ namespace cheetah_ana_pkg {
                 // Don't forget to initialize them
                 std::vector<float> detectorPosition(MAX_DETECTORS,0);
 
-    for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
+    for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
       shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
       if (pv && pv->numElements() > 0) {
 	const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
@@ -627,7 +627,7 @@ namespace cheetah_ana_pkg {
     }
 
     // get laserDelay only for Neutze TiSa delay
-    for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
+    for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
       shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.laserDelayPV);
       if (pv && pv->numElements() > 0) {
 	const float& value = estore.value(cheetahGlobal.laserDelayPV,0);
