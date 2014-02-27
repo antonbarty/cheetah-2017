@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <vector>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -102,6 +105,7 @@ cGlobal::cGlobal(void) {
   hitfinderDownsampling = 1;
   hitfinderOnDetectorCorrectedData = 0;
   hitfinderFastScan = 0;
+	strcpy(hitlistFile, "No_file_specified");
 
 	// TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -262,8 +266,11 @@ void cGlobal::setup() {
     nPeaksMax[i] = 0;
   }
 
+	// read hits from list if used as hitfinder
+	if (hitfinder == 1 && hitfinderAlgorithm == 11) {
+		readHits(hitlistFile);
+	}
 	
-
   if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
     printf("Error: hitfinderDetector > nDetectors\n");
     printf("nDetectors = %i\n", nDetectors);
@@ -796,6 +803,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     strcpy(peaksearchFile, value);
     hitfinderUsePeakmask = 1;
   }
+  else if (!strcmp(tag, "hitlist")) {
+	  strcpy(hitlistFile, value);
+  }
   // Processing options
   else if (!strcmp(tag, "subtractcmmodule")) {
     printf("The keyword subtractcmModule is depreciated.\n"
@@ -1103,6 +1113,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
     fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
     fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
+    fprintf(fp, "hitlist=%s\n",hitlistFile);
     fprintf(fp, "peakmask=%s\n",peaksearchFile);
     fprintf(fp, "powderThresh=%f\n",powderthresh);
     fprintf(fp, "powderSumHits=%d\n",powderSumHits);
@@ -1462,4 +1473,35 @@ void cGlobal::writeFinalLog(void){
   }
 
 
+}
+
+
+/*
+ *	Read in list of hits from text file
+ */
+void cGlobal::readHits(char *filename) {
+	
+	printf("Reading list of hits:\n");
+	printf("\t%s\n",filename);
+	
+	std::ifstream infile;
+	infile.open(filename);
+	if (infile.fail()) {
+		std::cout << "\tUnable to open " << filename << std::endl;
+		infile.clear();
+		printf("\tDisabling the hitfinder\n");
+		hitfinder = 0;
+		return;
+	}
+	
+	std::string line;
+	while (true) {
+		std::getline(infile, line);
+		if (infile.fail()) break;
+		if (line[0] != '#') {
+			hitlist.push_back(line);
+		}
+	}
+	
+	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
 }

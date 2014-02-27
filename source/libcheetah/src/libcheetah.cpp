@@ -372,6 +372,19 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
         eventData->detector[detID].detectorZ = global->detector[detID].detectorZ;        
         
     }
+    
+    
+    /*
+     *  Check if listfinder is used and whether the hit list contains the event
+	 *  this should be done before threading so that we are sure the hits are checked in the order of the data stream!
+     */
+	if (global->hitfinder && global->hitfinderAlgorithm == 11) {
+		int hit = hitfinder(eventData, global);
+		if (global->hitfinderInvertHit == 1) {
+			hit = (hit == 0) ? 1 : 0;
+		}
+		eventData->hit = hit;
+	}
 }
 
 
@@ -438,6 +451,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
      */
     if(eventData->useThreads == 0) {
         worker((void *)eventData);
+		// jas: shouldn't we clean up eventData also in single thread mode???
+		//cheetahDestroyEvent(eventData);
     }
   	
 	/*

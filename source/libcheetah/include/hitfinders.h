@@ -1,4 +1,5 @@
 #include "cheetahmodules.h"
+#include <string>
 
 #ifndef HITFINDERS_H
 #define HITFINDERS_H
@@ -8,5 +9,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID);
 int hitfinder2(cGlobal *global, cEventData *eventData, long detID);
 int hitfinder4(cGlobal *global, cEventData *eventData, long detID);
 int hitfinder8(cGlobal *global, cEventData *eventData, long detID);
+bool containsEvent(std::string event, cGlobal *global);
 
 #endif

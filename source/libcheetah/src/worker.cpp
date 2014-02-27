@@ -131,6 +131,19 @@ void *worker(void *threadarg) {
   // Apply gain correction
   applyGainCorrection(eventData, global);
 	
+	
+	/*
+	 *	Apply polarization correction
+	 */
+	applyPolarizationCorrection(eventData, global);
+	
+    
+	/*
+	 *	Apply solid angle correction
+	 */
+	applySolidAngleCorrection(eventData, global);
+	
+    
   // Apply bad pixel map
   applyBadPixelMask(eventData, global);
  
@@ -149,6 +162,10 @@ void *worker(void *threadarg) {
     else
       goto hitknown;
   }
+	
+	// This bit checks if the listfinder algorithm has been used, in which case we jump directly to after hit detection
+	if (global->hitfinder && global->hitfinderAlgorithm == 11)
+		goto hitknown;
 
   // Local background subtraction 
   subtractLocalBackground(eventData, global);
@@ -162,6 +179,7 @@ void *worker(void *threadarg) {
   // Subtract residual common mode offsets (cmModule=2) 
   cspadModuleSubtract2(eventData, global);
   
+	
 	/*
 	 *	Identify and kill hot pixels
 	 */
@@ -169,18 +187,6 @@ void *worker(void *threadarg) {
 	calculateHotPixelMask(eventData, global);
 	applyHotPixelMask(eventData,global);
     
-    
-	/*
-	 *	Apply polarization correction
-	 */
-	applyPolarizationCorrection(eventData, global);
-	
-    
-	/*
-	 *	Apply solid angle correction
-	 */
-	applySolidAngleCorrection(eventData, global);
-	
     
   // Inside-thread speed test
   if(global->ioSpeedTest==5) {
