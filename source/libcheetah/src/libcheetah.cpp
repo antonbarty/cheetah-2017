@@ -343,8 +343,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
                 printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
             }	
             global->detector[detID].detectorZprevious = global->detector[detID].detectorZ;
-            for(long i=0; i<global->nDetectors; i++) 
-                global->detector[detID].updateKspace(global, eventData->wavelengthA);
+            global->detector[detID].updateKspace(global, eventData->wavelengthA);
             
         }	
     }
