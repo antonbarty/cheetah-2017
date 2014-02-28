@@ -446,12 +446,10 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
      *  so every event is called in sequence, and cheetah runs in a single thread.
      *
 	 *	In non-threaded mode, the worker does not clean up its own eventData structure when done:
-     *      eventData remains available after the worker exits and must be explicitly freed by the user
+     *      eventData remains available after the worker exits and must be explicitly freed by the user using cheetahDestroyEvent(eventData);
      */
     if(eventData->useThreads == 0) {
         worker((void *)eventData);
-		// jas: shouldn't we clean up eventData also in single thread mode???
-		//cheetahDestroyEvent(eventData);
     }
   	
 	/*

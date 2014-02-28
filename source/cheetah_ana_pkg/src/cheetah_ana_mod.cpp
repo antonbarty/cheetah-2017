@@ -888,31 +888,8 @@ namespace cheetah_ana_pkg {
 
 	// Neither V1 nor V2
 	else {
-	  printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-	  return;
-	}
-      }
-      else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
-	long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-	long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-	long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-
-	shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
-	singleQuad = evt.get(m_srcCspad2x2, m_key);
-	if (singleQuad.get()) {
-	  eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-	  const ndarray<const int16_t, 3>& data = singleQuad->data();
-	  int partsize = asic_nx * asic_ny * 2;
-	  for (unsigned s = 0; s < 2; s++) {
-	    for (int y = 0; y < asic_ny; y++) {
-	      for (int x = 0; x < asic_nx * 2; x++) {
-		eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
-	      }
-	    }
-	  }
-			   
-	} else {
-	  printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+	  printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+		cheetahDestroyEvent(eventData);
 	  return;
 	}
       }
@@ -940,7 +917,8 @@ namespace cheetah_ana_pkg {
 	    }
 	  }
 	} else {
-	  printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+	  printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+		cheetahDestroyEvent(eventData);
 	  return;
 	}
       }
@@ -982,14 +960,15 @@ namespace cheetah_ana_pkg {
 	  memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 	}
 	else {
-	  printf("%li: pnCCD frame data not available (detectorID=%li)\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+	  printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+		cheetahDestroyEvent(eventData);
 	  return;
 	}
       }
 			
       // Didn't find any recognised detectors??
       else {
-	printf("Unknown detector type: %s/n", cheetahGlobal.detector[detID].detectorType);
+	printf("Error: Unknown detector type: %s, aborting./n", cheetahGlobal.detector[detID].detectorType);
 	exit(1);
       }
 
@@ -1154,7 +1133,7 @@ namespace cheetah_ana_pkg {
     }
 
         
-    // Call cheetah
+    // Call cheetah in multi-threaded mode (ensures that cheetah cleans up event data when done)
     cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
   }
   // End of psana event method
