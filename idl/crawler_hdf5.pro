@@ -42,7 +42,7 @@ pro crawler_hdf5, hdf5dir, pattern
 	
 	for i=0L, ndir-1 do begin
 		
-		s = 'Queued'		
+		s = 'Submitted'		
 	
 		catch, Error_status 
 		if Error_status ne 0 then begin
@@ -111,7 +111,7 @@ pro crawler_hdf5, hdf5dir, pattern
 			;; Clean exit?
 			;; Directory exists means job has at least been sent to the queue
 			;; Otherwise, look at log.txt to check for 'clean exit'
-			s = 'Queued'
+			s = 'Submitted'
 			if file_test(h5dir[i]+ '/log.txt') then begin 
 				info = file_info(h5dir[i]+ '/log.txt')
 				mt[i] = info.mtime

@@ -73,10 +73,10 @@ cGlobal::cGlobal(void) {
     hitfinderDetector = 0;
     hitfinderADC = 100;
     hitfinderTAT = 1e3;
-    hitfinderNpeaks = 50;
-    hitfinderNpeaksMax = 100000;
-    hitfinderAlgorithm = 3;
-    hitfinderMinPixCount = 3;
+    hitfinderNpeaks = 20;
+    hitfinderNpeaksMax = 10000;
+    hitfinderAlgorithm = 8;
+    hitfinderMinPixCount = 2;
     hitfinderMaxPixCount = 20;
     hitfinderUsePeakmask = 0;
     hitfinderCheckGradient = 0;
@@ -94,6 +94,9 @@ cGlobal::cGlobal(void) {
     hitfinderResolutionUnitPixel = 0;
     hitfinderMinSNR = 40;
 	hitfinderFastScan = 0;
+	
+	// Sorting (eg: pump laser on/off)
+	sortPumpLaserOn = 0;
 
     // TOF (Aqiris)
     hitfinderUseTOF = 0;
@@ -230,6 +233,9 @@ void cGlobal::setup() {
 	
 	if(generateDarkcal || generateGaincal)
 		nPowderClasses=1;
+	
+	if(sortPumpLaserOn)
+		nPowderClasses *= 2;
 	
 	for(int i = 0; i<nPowderClasses; i++){
 		nPeaksMin[i] = 1000000000;
@@ -822,6 +828,12 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindertofthresh")) {
     hitfinderTOFThresh = atof(value);
   }
+	
+	// Sorting
+  else if (!strcmp(tag, "sortpumplaseron")) {
+	  sortPumpLaserOn = atoi(value);
+  }
+	
 
   // Energy spectrum parameters
   else if (!strcmp(tag, "usefeespectrum")) {
@@ -1133,7 +1145,7 @@ void cGlobal::writeInitialLog(void){
     exit(1);
   }
 
-  fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped\n");
+  fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
 
   sprintf(cleanedfile,"cleaned.txt");
   cleanedfp = fopen (cleanedfile,"w");
