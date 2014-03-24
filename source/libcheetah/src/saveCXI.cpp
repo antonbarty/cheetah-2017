@@ -782,6 +782,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   createAndWriteDataset("hitfinderUseTOF",confVal.self,&global->hitfinderUseTOF);
   createAndWriteDataset("hitfinderTOFMinSample",confVal.self,&global->hitfinderTOFMinSample);
   createAndWriteDataset("hitfinderTOFMaxSample",confVal.self,&global->hitfinderTOFMaxSample);
+  createAndWriteDataset("hitfinderTOFMeanBackground",confVal.self,&global->hitfinderTOFMeanBackground);
   createAndWriteDataset("hitfinderTOFThresh",confVal.self,&global->hitfinderTOFThresh);
   createAndWriteDataset("saveRadialStacks",confVal.self,&global->saveRadialStacks);
   createAndWriteDataset("radialStackSize",confVal.self,&global->radialStackSize);

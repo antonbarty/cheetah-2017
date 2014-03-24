@@ -113,6 +113,8 @@ public:
 	int      hitfinderTOFMinSample;
 	/** @brief Last sample in the TOF scan to consider. */
 	int      hitfinderTOFMaxSample;
+	/** @brief Mean voltage of TOF signal for TOF hitfinding */
+	double   hitfinderTOFMeanBackground;
 	/** @brief Intensity threshold of TOF for hitfinding. */
 	double   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */

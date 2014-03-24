@@ -99,6 +99,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	      eventData->nPeaks = nPeaks;
 	    }
 	  break;
+	case 11 : // Use TOF signal, voltage above threshold
+	  hit = hitfinderTOF(global, eventData, detID);
+	  break;
+
 			
 	default :
 	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
@@ -440,3 +444,19 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 }
 
 
+
+/* A TOF hitfinder counting the number of protons in the TOF signal given the TOF mean background, the proton window
+   and TOF voltage threshold for protons. Every frame with nr. of protons at least TOFMinCount is considered a hit. */
+ 
+int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
+  int hit = 0;
+  if (eventData->TOFPresent==1){
+    int count = 0;
+    for (int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+      count += floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
+    }
+    hit = (count >= global->hitfinderTOFMinCount);
+    eventData->nPeaks = count;
+  }
+  return hit;
+}

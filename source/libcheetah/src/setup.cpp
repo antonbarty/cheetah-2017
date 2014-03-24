@@ -106,6 +106,7 @@ cGlobal::cGlobal(void) {
   hitfinderUseTOF = 0;
   hitfinderTOFMinSample = 0;
   hitfinderTOFMaxSample = 1000;
+  hitfinderTOFMeanBackground = 2;
   hitfinderTOFThresh = 100;
   hitfinderTOFMinCount = 1;
   hitfinderTOFWindow = 3;
@@ -876,6 +877,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   else if (!strcmp(tag, "hitfindertofmaxsample")) {
     hitfinderTOFMaxSample = atoi(value);
   }
+  else if (!strcmp(tag, "hitfindertofmeanbackground")) {
+    hitfinderTOFMeanBackground = atof(value);
+  }
   else if (!strcmp(tag, "hitfindertofthresh")) {
     hitfinderTOFThresh = atof(value);
   }
@@ -1117,6 +1121,7 @@ void cGlobal::writeConfigurationLog(void){
   fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
   fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
   fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
+  fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
   fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
   fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
   fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
