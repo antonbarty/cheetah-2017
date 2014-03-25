@@ -716,6 +716,7 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	// Version 1 of the peak info format
 	// (stream file)
+	/*
 	pthread_mutex_lock(&global->peaksfp_mutex);
 	fprintf(global->peaksfp, "%s\n", eventData->eventname);
 	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
@@ -728,14 +729,15 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
 	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i]);
+		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
+	 */
 
 	
 	// Version 2 of the peak info format
 	// (one big CSV file)
-	/*
+	
 	pthread_mutex_lock(&global->peaksfp_mutex);
 	for(long i=0; i<eventData->nPeaks; i++) {
 		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
@@ -757,7 +759,6 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 				eventData->peaklist.peak_snr[i]  );
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
-	 */
 	
 	
 }
