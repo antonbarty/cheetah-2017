@@ -72,6 +72,7 @@ public:
 
 	// Hit finding
 	int			hit;
+	int			powderClass;
 	
 	
 	// Peak list
@@ -111,9 +112,9 @@ public:
 	double		gmd21;
 	double		gmd22;
     
+	int         pumpLaserOn;
 	bool        laserEventCodeOn;
 	double      laserDelay;
-	int         samplePumped;
 	
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV

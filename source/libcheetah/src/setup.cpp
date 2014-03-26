@@ -76,6 +76,7 @@ cGlobal::cGlobal(void) {
   hitfinderDetector = 0;
   hitfinderADC = 100;
   hitfinderTAT = 1e3;
+
   hitfinderNpeaks = 50;
   hitfinderNpeaksMax = 100000;
   hitfinderAlgorithm = 3;
@@ -101,6 +102,9 @@ cGlobal::cGlobal(void) {
   hitfinderDownsampling = 1;
   hitfinderOnDetectorCorrectedData = 0;
   hitfinderFastScan = 0;
+
+	// Sorting (eg: pump laser on/off)
+	sortPumpLaserOn = 0;
 
   // TOF (Aqiris)
   hitfinderUseTOF = 0;
@@ -259,6 +263,9 @@ void cGlobal::setup() {
   if(generateDarkcal || generateGaincal)
     nPowderClasses=1;
 
+	if(sortPumpLaserOn)
+		nPowderClasses *= 2;
+	
   for(int i = 0; i<nPowderClasses; i++){
     nPeaksMin[i] = 1000000000;
     nPeaksMax[i] = 0;
@@ -897,6 +904,12 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
   }
 
 
+	// Sorting
+  else if (!strcmp(tag, "sortpumplaseron")) {
+	  sortPumpLaserOn = atoi(value);
+  }
+	
+
   // Energy spectrum parameters
   else if (!strcmp(tag, "usefeespectrum")) {
       useFEEspectrum = atoi(value);
@@ -1224,7 +1237,7 @@ void cGlobal::writeInitialLog(void){
     exit(1);
   }
 
-  fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->samplePumped\n");
+  fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
 
   sprintf(cleanedfile,"cleaned.txt");
   cleanedfp = fopen (cleanedfile,"w");

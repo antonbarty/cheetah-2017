@@ -89,6 +89,8 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 long hitfinderFastScan(cEventData*, cGlobal*);
+void sortPowderClass(cEventData*, cGlobal*);
+
 
 
 // peakfinders.cpp

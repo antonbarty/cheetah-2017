@@ -161,6 +161,9 @@ public:
 
 	int		hitfinderFastScan;
 
+	// Sorting criteria
+	int		sortPumpLaserOn;
+
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */

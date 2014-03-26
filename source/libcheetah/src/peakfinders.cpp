@@ -147,7 +147,16 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 			break;
 	}
 	
+	
+	/*
+	 *	Too many peaks for the peaklist counter?
+	 */
+	if (nPeaks > peaklist->nPeaks_max) {
+		nPeaks = peaklist->nPeaks_max;
+		peaklist->nPeaks = peaklist->nPeaks_max;
+	}
 
+	
 	/*
 	 *	eliminate closely spaced peaks
 	 */
@@ -160,12 +169,12 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	 *	Find physical position of peaks on assembled detector
 	 */
 	long np = nPeaks;
-	if (np > peaklist->nPeaks_max)
+	if (np > peaklist->nPeaks_max) {
 		np = peaklist->nPeaks_max;
+	}
 	
-	// Extract radius, etc
 	long e;
-	for(long k=0; k<np; k++) {
+	for(long k=0; k<nPeaks && k<peaklist->nPeaks_max; k++) {
 		e = peaklist->peak_com_index[k];
 		peaklist->peak_com_x_assembled[k] = global->detector[detID].pix_x[e];
 		peaklist->peak_com_y_assembled[k] = global->detector[detID].pix_y[e];
@@ -224,7 +233,6 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	
 	
 	// Return number of peaks
-	nPeaks = peaklist->nPeaks;
 	return nPeaks;
 }
 
@@ -616,7 +624,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	// Variables for this hitfinder
 	long	nat = 0;
 	long	lastnat = 0;
-	long	counter=0;
+	//long	counter=0;
 	float	total;
 	int		search_x[] = {0,-1,0,1,-1,1,-1,0,1};
 	int		search_y[] = {0,-1,-1,-1,0,0,1,1,1};
@@ -639,7 +647,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	
 	
 	nat = 0;
-	counter = 0;
+	//counter = 0;
 	total = 0.0;
 	snr=0;
 	maxI = 0;
@@ -693,7 +701,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	// Iterate a few times to reduce the effect of positive outliers (ie: peaks)
 	long	thisr;
 	float	thisoffset, thissigma;
-	for(counter=0; counter<5; counter++) {
+	for(long counter=0; counter<5; counter++) {
 		for(long i=0; i<lmaxr; i++) {
 			roffset[i] = 0;
 			rsigma[i] = 0;
@@ -722,6 +730,8 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 				roffset[i] = thisoffset;
 				rsigma[i] = thissigma;
 				rthreshold[i] = roffset[i] + hitfinderMinSNR*rsigma[i];
+				if(rthreshold[i] < ADCthresh)
+					rthreshold[i] = ADCthresh;
 				//rthreshold[i] = ADCthresh;		// For testing
 			}
 		}
@@ -729,6 +739,8 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	
 	
 	// Loop over modules (8x8 array)
+	//counter = 0;
+	long peakCounter = 0;
 	for(long mj=0; mj<nasics_y; mj++){
 		for(long mi=0; mi<nasics_x; mi++){
 			
@@ -943,22 +955,22 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 							}
 							
 							// Remember peak information
-							if (counter < hitfinderNpeaksMax) {
+							if (peakCounter < hitfinderNpeaksMax) {
 								peaklist->peakNpix += nat;
 								peaklist->peakTotal += totI;
-								peaklist->peak_com_index[counter] = e;
-								peaklist->peak_npix[counter] = nat;
-								peaklist->peak_com_x[counter] = com_x;
-								peaklist->peak_com_y[counter] = com_y;
-								peaklist->peak_totalintensity[counter] = totI;
-								peaklist->peak_maxintensity[counter] = maxI;
-								peaklist->peak_sigma[counter] = localSigma;
-								peaklist->peak_snr[counter] = snr;
-								counter++;
-								peaklist->nPeaks = counter;
+								peaklist->peak_com_index[peakCounter] = e;
+								peaklist->peak_npix[peakCounter] = nat;
+								peaklist->peak_com_x[peakCounter] = com_x;
+								peaklist->peak_com_y[peakCounter] = com_y;
+								peaklist->peak_totalintensity[peakCounter] = totI;
+								peaklist->peak_maxintensity[peakCounter] = maxI;
+								peaklist->peak_sigma[peakCounter] = localSigma;
+								peaklist->peak_snr[peakCounter] = snr;
+								peakCounter++;
+								peaklist->nPeaks = peakCounter;
 							}
 							else {
-								counter++;
+								peakCounter++;
 							}
 						}
 					}
@@ -979,15 +991,9 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	free(rthreshold);
 	
 
-	
+	peaklist->nPeaks = peakCounter;
     return(peaklist->nPeaks);
 	/*************************************************/
-
-	
-	
-	
-
-
 
 	
 }

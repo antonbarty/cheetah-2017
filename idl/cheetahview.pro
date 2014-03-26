@@ -161,9 +161,8 @@ function cheetah_localbackground, data, radius
 end
 
 
-function cheetah_findpeaks, data, pState
+function cheetah_peakfinder3, data, pState
 
-	lbg = (*pstate).peaks_localbackground 
 	adc_thresh = (*pstate).peaks_ADC
 	minpix = (*pstate).peaks_minpix
 	maxpix = (*pstate).peaks_maxpix
@@ -181,15 +180,8 @@ function cheetah_findpeaks, data, pState
 	peakcounter = 0
 	
 	s = size(data, /dim)
-
-	;; Subtract local background here
-	;; That this has already been done if (*pstate).display_localbackground eq 1!!!
-	m = 0
-	if (*pstate).display_localbackground ne 1 then begin
-		m = cheetah_localbackground(data, lbg) 
-	endif
 	temp = data
-	temp -= m	
+
 
 	region = label_region(temp gt adc_thresh, /all, /ulong)
 	h = histogram(region, reverse_indices=r)
@@ -265,6 +257,65 @@ function cheetah_findpeaks, data, pState
 
 end
 
+function cheetah_peakfinder8, data, pstate
+
+	adc_thresh = (*pstate).peaks_ADC
+	minpix = (*pstate).peaks_minpix
+	maxpix = (*pstate).peaks_maxpix
+	peaks_minsnr = (*pstate).peaks_minsnr 
+	peaks_minres = (*pstate).peaks_minres
+	peaks_maxres = (*pstate).peaks_maxres
+
+	;; Pixelmap
+	x = (*pstate).pixmap_x/(*pstate).pixmap_dx
+	y = (*pstate).pixmap_y/(*pstate).pixmap_dx
+
+	;; Call external peakfinder8
+	peaks = peakfinder8(data, peaks_minsnr, x=x, y=y, minpix=minpix, maxpix=maxpix, minr=peaks_minres, maxr=peaks_maxres, iter=3, minADC=adc_thresh)
+	
+	;; Transform output format
+	out = transpose([[peaks.fs],[peaks.ss],[peaks.total],[peaks.npix]])
+
+		;out = { $
+		;		x : peakx, $
+		;		y : peaky, $
+		;		fs : peakfs, $
+		;		ss: peakss, $
+		;		total : peaktotal, $
+		;		npix : peakpix $
+		;	}
+
+	return, out
+	
+end
+
+
+
+function cheetah_findpeaks, data, pState
+
+
+	;; Subtract local background if (*pstate).display_localbackground eq 1
+	lbg = (*pstate).peaks_localbackground 
+	m = 0
+	if (*pstate).peaks_localbackground ne 0 then begin
+		m = cheetah_localbackground(data, lbg) 
+	endif
+	temp = data
+	temp -= m	
+
+
+	;; Which algorithm should we use
+	algorithm = (*pstate).peaks_algorithm
+
+	case algorithm of
+		0 : result = cheetah_peakfinder8(temp, pState)
+		1 : result = cheetah_peakfinder3(temp, pState)
+	endcase
+	
+	return, result 
+
+end
+
 
 pro cheetah_displayImage, pState, image
 
@@ -296,6 +347,12 @@ pro cheetah_displayImage, pState, image
 				data -= m
 		endif
 		
+		;; Apply histogram clipping (cap top and bottom fraction)
+		if (*pState).image_histclip ne 0 then begin
+			hist_thresh = (*pState).image_histclip
+			data = histogram_clip(data, hist_thresh, hist_thresh)
+		endif
+
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
@@ -774,7 +831,7 @@ pro cheetah_event, ev
 		;;
 		sState.menu_profiles : begin
 			WSET, sState.slideWin
-			profiles, sState.data
+			profiles, sState.image
 		end
 
 
@@ -827,9 +884,10 @@ pro cheetah_event, ev
 		;;
 		sState.menu_display : begin
 			desc = [ 	'1, base, , column', $
-						'0, float, '+string(sState.image_gamma)+', label_left=Gamma:, width=10, tag=image_gamma', $
-						'0, float, '+string(sState.image_boost)+', label_left=Boost:, width=10, tag=image_boost', $
-						'0, float, '+string(sState.image_max)+', label_left=Max value:, width=10, tag=image_max', $
+						'0, float, '+string(sState.image_gamma)+', label_left=Gamma:, width=20, tag=image_gamma', $
+						'0, float, '+string(sState.image_boost)+', label_left=Boost:, width=20, tag=image_boost', $
+						'0, float, '+string(sState.image_histclip)+', label_left=Histogram clip:, width=20, tag=image_histclip', $
+						'0, float, '+string(sState.image_max)+', label_left=Max value:, width=20, tag=image_max', $
 						'2, text, '+string(sState.h5field)+', label_left=HDF5 field:, width=50, tag=h5field', $
 						'1, base,, row', $
 						'0, button, OK, Quit, Tag=OK', $
@@ -840,6 +898,7 @@ pro cheetah_event, ev
 			if a.OK eq 1 then begin		
 				(*pstate).image_max = a.image_max
 				(*pstate).image_gamma = a.image_gamma
+				(*pstate).image_histclip = a.image_histclip
 				(*pstate).image_boost = a.image_boost
 				(*pstate).h5field = a.h5field
 			endif
@@ -856,6 +915,7 @@ pro cheetah_event, ev
 		sState.menu_peakfinding : begin
 			desc = [ 	'1, base, , column', $
 						'0, float, '+string(sState.peaks_localbackground)+', label_left=LocalBackgroundRadius:, width=10, tag=peaks_localbackground', $
+						'0, droplist, peakfinder 8|peakfinder 3, label_left=Algorithm (hitfinderAlgorithm):,  tag=algorithm', $
 						'0, float, '+string(sState.peaks_ADC)+', label_left=Intensity threshold (hitfinderADC):, width=10, tag=peaks_ADC', $
 						'0, float, '+string(sState.peaks_minpix)+', label_left=Minimum pixels per peak (hitfinderMinPixCount):, width=10, tag=peaks_minpix', $
 						'0, float, '+string(sState.peaks_maxpix)+', label_left=Maximum pixels per peak (hitfinderMaxPixCount):, width=10, tag=peaks_maxpix', $
@@ -870,6 +930,7 @@ pro cheetah_event, ev
 			
 			if a.OK eq 1 then begin		
 				(*pstate).peaks_localbackground = a.peaks_localbackground
+				(*pstate).peaks_algorithm = a.algorithm
 				(*pstate).peaks_ADC = a.peaks_ADC
 				(*pstate).peaks_minpix = a.peaks_minpix
 				(*pstate).peaks_maxpix = a.peaks_maxpix
@@ -933,7 +994,8 @@ pro cheetah_event, ev
 			loadct, 4, /silent		
 			(*pstate).colour_table = 4
 			(*pstate).image_gamma = 0.25
-			(*pstate).image_boost = 2
+			(*pstate).image_boost = 1
+			(*pstate).image_histclip = 0.0001
 			cheetah_displayImage, pState
 		end
 
@@ -942,7 +1004,8 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 10
+			(*pstate).image_boost = 1
+			(*pstate).image_histclip = 0.0001
 			(*pstate).circleHDF5Peaks = 1
 			(*pstate).findPeaks = 0
 			(*pstate).savePeaks = 0
@@ -1172,9 +1235,10 @@ pro cheetahview, geometry=geometry, dir=dir
 				  currentFileNum : 0L, $
 				  h5field : "data/data", $
 				  image_gamma : 1.0, $
-				  image_boost : 10., $
+				  image_boost : 2., $
 				  image_max : 16000., $
 				  image_zoom : 1.0, $
+				  image_histclip : 0.0, $
 				  image_size: size(image,/dim), $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
@@ -1232,10 +1296,11 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_zoom200 : mbanalysis_zoom200, $
 
 				  peaks_localbackground : 2, $
+				  peaks_algorithm : 0, $
 				  peaks_ADC : 300, $
-				  peaks_minpix : 3, $
+				  peaks_minpix : 2, $
 				  peaks_maxpix : 20, $
-				  peaks_minsnr : 0., $
+				  peaks_minsnr : 8., $
 				  peaks_minres : 0, $
 				  peaks_maxres : 1300, $
 

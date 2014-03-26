@@ -35,7 +35,7 @@ pro hitrate, dir, buffer=buffer
 	;p3 = plot(time,hitrate, symbol='D',  linestyle=' ', thick=3, yrange=[0,max(hitrate)], buffer=buffer)
 
 	;; Line
-	hitrate = smooth(hit,binsize,/edge)
+	hitrate = smooth(hit,binsize,/edge_truncate)
 	hitrate *= 100
 	time = findgen(nframes)/(120.*60)
 	p3 = plot(time,hitrate, thick=3, color='blue', yrange=[0,1.1*max(hitrate)], buffer=buffer)

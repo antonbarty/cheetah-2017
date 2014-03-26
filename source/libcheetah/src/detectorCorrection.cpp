@@ -225,10 +225,6 @@ void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long
 	for(long mi=0; mi<nasics_x; mi++){
 		for(long mj=0; mj<nasics_y; mj++){
 			
-			// Only asics in Q0:0-3 and Q2:4-5 are unbonded
-			if( ! ((mi<=1 && mj<=3) || (mi >= 4 && mi<=5 && mj >= 4 && mj<=5)) )
-				continue;
-			
 			
 			// Loop over unbonded pixels within each ASIC
 			background = 0.0;
