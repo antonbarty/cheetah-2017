@@ -23,6 +23,8 @@ pro crawler_autorun_event, ev
 			;crawler_dataset, sState.datasetdb
 			widget_control, sState.text, set_value='Scanning HDF5 directories'
 			crawler_hdf5, sState.hdf5dir, sState.hdf5filter
+			widget_control, sState.text, set_value='Scanning indexing results'
+			crawler_crystfel, '../indexing'
 			widget_control, sState.text, set_value='Merging'
 			crawler_merge
 

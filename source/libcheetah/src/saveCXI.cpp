@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <pthread.h>
 
 #include "saveCXI.h"
 
@@ -181,8 +182,8 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
 
 /* Create a 2D stack. The fastest changing dimension is along the width */
 static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
-  hsize_t dims[3] = {CXI::initialStackSize,height,width};
-  hsize_t maxdims[3] = {H5S_UNLIMITED,height,width};
+  hsize_t dims[3] = {CXI::initialStackSize,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
+  hsize_t maxdims[3] = {H5S_UNLIMITED,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
   if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
@@ -276,9 +277,9 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   hid_t datatype,w;
   int ndims;
   hid_t dataspace;
-  hsize_t dims1[1] = {width};
-  hsize_t dims2[2] = {height,width};
-  hsize_t dims3[3] = {length,height,width};
+  hsize_t dims1[1] = {static_cast<hsize_t>(static_cast<hsize_t>(width))};
+  hsize_t dims2[2] = {static_cast<hsize_t>(width),static_cast<hsize_t>(height)};
+  hsize_t dims3[3] = {static_cast<hsize_t>(width),static_cast<hsize_t>(height),static_cast<hsize_t>(length)};
   datatype = get_datatype(data);
   if(typeid(T) == typeid(char)){
     datatype = H5Tcopy(H5T_C_S1);

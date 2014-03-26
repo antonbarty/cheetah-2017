@@ -26,13 +26,17 @@ LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils
  Graf Graf3d Gpad Tree Rint Postscript Matrix Physics
  MathCore Thread m dl)
  
-LIST(APPEND pdsdata_libs acqdata andordata bld camdata
-  compressdata controldata cspad2x2data cspaddata
-  encoderdata epics evrdata fccddata fexampdata flidata
-  gsc16aidata indexdata ipimbdata lusidata oceanopticsdata
-  opal1kdata orcadata phasicsdata pnccddata princetondata
-  pulnixdata quartzdata timepixdata usdusbdata xampsdata
-  xtcdata psddl_pdsdata)
+LIST(APPEND ana_libs psddl_pdsdata
+  xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
+  ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
+  m dl)
+#LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils acqdata andordata bld camdata compressdata controldata
+#  cspad2x2data cspaddata encoderdata epics evrdata fccddata fexampdata flidata gsc16aidata indexdata
+#  ipimbdata lusidata oceanopticsdata opal1kdata orcadata phasicsdata pnccddata princetondata pulnixdata
+#  quartzdata timepixdata usdusbdata xampsdata xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
+#  ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
+#  m dl)
+>>>>>>> origin/testing
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first

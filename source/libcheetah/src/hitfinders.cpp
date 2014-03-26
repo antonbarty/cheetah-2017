@@ -30,6 +30,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	// Dereference stuff
 	int	    detID = global->hitfinderDetector;
 	int		hit=0;
+	int		powderClass=0;
 	int		nPeaks;
 	
 	/*
@@ -116,9 +117,34 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 	
-
+	// Set the appropriate powder class
+	eventData->powderClass = hit;
 		   
 	return(hit);
+	
+}
+
+
+/*
+ *	Sort into powder classes
+ */
+void  sortPowderClass(cEventData *eventData, cGlobal *global){
+	
+	eventData->powderClass = eventData->hit;
+	
+	/*
+	 *	Pump laser sorting
+	 *		hit = 0 or 1
+	 *		laserOn = 0 or 1
+	 *	then
+	 *		output = hit + 2*laserOn
+	 */
+	if(global->sortPumpLaserOn == 1) {
+		int hit = eventData->hit;
+		int	pumpLaserOn = eventData->pumpLaserOn;
+		
+		eventData->powderClass = hit + 2*pumpLaserOn;
+	}
 	
 }
 

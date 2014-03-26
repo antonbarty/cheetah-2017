@@ -199,6 +199,19 @@ void cPixelDetectorCommon::configure(void) {
     pixelSize = 75e-6;
 		
   }
+  else if(strcmp(detectorName, "sacla_mpCCD") == 0 ) {
+      strcpy(detectorType, "sacla_mpCCD");
+      asic_nx = mpCCD_ASIC_NX;
+      asic_ny = mpCCD_ASIC_NY;
+      asic_nn = mpCCD_ASIC_NX * mpCCD_ASIC_NY;
+      nasics_x = mpCCD_nASICS_X;
+      nasics_y = mpCCD_nASICS_Y;
+      pix_nx = mpCCD_ASIC_NX * mpCCD_nASICS_X;
+      pix_ny = mpCCD_ASIC_NY * mpCCD_nASICS_Y;
+      pix_nn = pix_nx * pix_ny;
+      pixelSize = 50e-6;
+      
+  }
   else {
     printf("Error: unknown detector name %s\n", detectorName);
     printf("cPixelDetectorCommon::configure()\n");

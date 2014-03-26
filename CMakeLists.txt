@@ -22,9 +22,10 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 SET(RPATH_ON_INSTALLED_BINS TRUE CACHE BOOL "Keep RPATH on installed binaries")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH ${RPATH_ON_INSTALLED_BINS})
 
-OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." ON )
-OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." ON )
+OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." OFF )
+OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." OFF )
 OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
+OPTION(BUILD_CHEETAH_SACLA "If ON build cheetah-sacla. Otherwise skip it." OFF )
 
 SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/source/libcheetah/include CACHE PATH "libcheet
 ah include directory")
