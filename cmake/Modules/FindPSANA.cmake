@@ -36,7 +36,6 @@ LIST(APPEND ana_libs psddl_pdsdata
 #  quartzdata timepixdata usdusbdata xampsdata xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
 #  ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
 #  m dl)
->>>>>>> origin/testing
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first

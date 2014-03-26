@@ -210,12 +210,6 @@ void *worker(void *threadarg) {
     sortPowderClass(eventData, global);
 		
   
-  /*
-   *	Identify halo pixels
-   */
-  updateHaloBuffer(eventData,global,hit);
-  calculateHaloPixelMask(global);
-
   DEBUGL2_ONLY {
     DEBUG("Procedures depending on hit tag");
   }
