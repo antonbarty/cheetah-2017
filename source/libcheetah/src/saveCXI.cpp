@@ -273,8 +273,8 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 }
 
 template <class T> 
-static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width=1, int height=0, int length=0){
-  hid_t datatype,w;
+static hid_t createDataset(const char *name, hid_t loc, T *data,int width=1, int height=0, int length=0){
+  hid_t datatype;
   int ndims;
   hid_t dataspace;
   hsize_t dims1[1] = {static_cast<hsize_t>(static_cast<hsize_t>(width))};
@@ -301,21 +301,51 @@ static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width
   }
   if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
   hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  w = H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);  
+  H5Sclose(dataspace);
+  if(typeid(T) == typeid(char)){
+    H5Tclose(datatype);
+  }
+  return dataset;
+}
+
+
+
+template <class T> 
+static void writeDataset(hid_t dataset, T *data,int width=1, int height=0, int length=0){
+  hid_t datatype = get_datatype(data);
+  if(typeid(T) == typeid(char)){
+    datatype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(datatype, width);    
+  }
+  hid_t w = H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);  
   if( w<0 ){
     ERROR("Cannot write to file.\n");
   }
   H5Dclose(dataset);
-  H5Sclose(dataspace);
   if(typeid(T) == typeid(char)){
     H5Tclose(datatype);
   }
 }
 
+template <class T> 
+static void createAndWriteDataset(const char *name, hid_t loc, T *data,int width=1, int height=0, int length=0){
+  hid_t dataset = createDataset(name,loc,data,width,height,length);
+  writeDataset(dataset, data, width, height, length);
+}
+
+
+template <class T> 
+static void openAndWriteDataset(const char *name, hid_t loc, T *data,int width=1, int height=0, int length=0){
+  hid_t dataset = H5Dopen(loc,name,H5P_DEFAULT);
+  writeDataset(dataset, data, width, height, length);
+}
+
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   /* FM: This is probably wrong */
   hid_t datatype = H5Tcopy(H5T_C_S1);
-  H5Tset_size(datatype, maxSize);
+  if(H5Tset_size(datatype, maxSize) < 0){
+    ERROR("Cannot set type size.\n");
+  }
   hsize_t dims[1] = {CXI::initialStackSize};
   hsize_t maxdims[1] = {H5S_UNLIMITED};
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
@@ -454,7 +484,6 @@ entry_1
  
 */
 
-
 static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   /* Creates the initial skeleton for the CXI file.
      We'll rely on HDF5 automatic error reporting. It's usually loud enough.
@@ -462,13 +491,17 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   puts("Creating Skeleton");
   CXI::File * cxi = new CXI::File;
-  hid_t fid = H5Fcreate(filename,H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-  H5Fclose(fid);
-  // Closing off the newly created file to allow sharing to work
-  printf("Reopening #%s#\n", filename);
   hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG);
-  fid = H5Fopen(filename, H5F_ACC_RDWR, fapl_id);
+  if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){
+    ERROR("Cannot set file access properties.\n");
+  }
+#ifdef H5F_ACC_SWMR_WRITE
+  if(H5Pset_libver_bounds(fapl_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+    ERROR("Cannot set file access properties.\n");
+  }
+#endif
+
+  hid_t fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
   if( fid<0 ) {ERROR("Cannot create file.\n");}
   cxi->self = fid;
   cxi->stackCounter = 0;
@@ -650,7 +683,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
   cxi->cheetahVal.unsharedVal.self = H5Gcreate(cxi->cheetahVal.self, "unshared", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-  cxi->cheetahVal.unsharedVal.eventName = createStringStack("eventName", cxi->cheetahVal.unsharedVal.self,1024);
+  /* For some reason the swmr version of hdf5 can't cope with string stacks larger than 255 characters */
+  cxi->cheetahVal.unsharedVal.eventName = createStringStack("eventName", cxi->cheetahVal.unsharedVal.self,255);
   cxi->cheetahVal.unsharedVal.frameNumber = createScalarStack("frameNumber", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
   cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped = createScalarStack("frameNumberIncludingSkipped", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
   cxi->cheetahVal.unsharedVal.threadID = createScalarStack("threadID", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_LONG);
@@ -816,6 +850,210 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
   createAndWriteDataset("hitfinderMinSNR",confVal.self,&global->hitfinderMinSNR);
   createAndWriteDataset("saveCXI",confVal.self,&global->saveCXI);
 
+  DETECTOR_LOOP{
+    POWDER_LOOP{
+      cPixelDetectorCommon * detector = &global->detector[detID];
+      long pix_nx =  detector->pix_nx;
+      long pix_ny =  detector->pix_ny;
+      long imageXxX_nx = detector->imageXxX_nx;
+      long imageXxX_ny = detector->imageXxX_ny;
+      long image_nx = detector->image_nx;
+      long image_ny = detector->image_ny;
+      long radial_nn = detector->radial_nn;
+
+      char buffer[1024];
+      double * dummy = NULL;
+      sprintf(buffer,"detector%li_class%li_mean_raw",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+      sprintf(buffer,"detector%li_class%li_mean_raw_radial",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,radial_nn);
+      sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+
+      sprintf(buffer,"detector%li_class%li_mean_corrected",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+      sprintf(buffer,"detector%li_class%li_mean_corrected_radial",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,radial_nn);
+      sprintf(buffer,"detector%li_class%li_sigma_corrected",detID,powID);
+      createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+      if(global->assemblePowders && global->assemble2DImage) {
+	sprintf(buffer,"detector%li_class%li_mean_assembled",detID,powID);
+	createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,image_nx,image_ny);
+	sprintf(buffer,"detector%li_class%li_sigma_assembled",detID,powID);
+	createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,image_nx,image_ny);
+      }
+      if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+	sprintf(buffer,"detector%li_class%li_mean_downsampled",detID,powID);
+	createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,imageXxX_nx,imageXxX_ny);
+	sprintf(buffer,"detector%li_class%li_sigma_downsampled",detID,powID);
+	createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,imageXxX_nx,imageXxX_ny);
+      }
+    }
+  }
+
+#if defined H5F_ACC_SWMR_READ
+  
+  int nobjs = H5Fget_obj_count( cxi->self, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR);
+  hid_t * obj_id_list = (hid_t *)malloc(sizeof(hid_t)*nobjs);
+  H5Fget_obj_ids(cxi->self,H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR, nobjs, obj_id_list);
+  for(int i = 0; i < nobjs;i++){
+    hid_t id = obj_id_list[i];
+    H5I_type_t type = H5Iget_type(id);
+    if(type == H5I_DATASET){
+      H5Dclose(id);
+    }else if(type == H5I_GROUP){
+      H5Gclose(id);
+    }else if(type == H5I_DATATYPE){
+      H5Tclose(id);
+    }else if(type == H5I_DATASPACE){
+      H5Sclose(id);
+    }else if(type == H5I_ATTR){
+      H5Aclose(id);
+    }    
+  }  
+  free(obj_id_list);
+  if(H5Fstart_swmr_write(cxi->self) < 0){
+    ERROR("Cannot change to SWMR mode.\n");
+  }
+
+  /* Painfully reopen datasets.
+     This part of the code is a bit
+     too horrible to be true.
+   */
+
+  cxi->entry.experimentIdentifier = H5Dopen(cxi->self,"/entry_1/experiment_identifier",H5P_DEFAULT);
+  cxi->entry.instrument.source.energy = H5Dopen(cxi->self,"/entry_1/instrument_1/source_1/energy",H5P_DEFAULT);
+  int cxi_img_id = 0;
+  DETECTOR_LOOP{
+    char detectorPath[1024];
+    sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/distance",detID+1);
+    cxi->entry.instrument.detectors[detID].distance = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+    sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/description",detID+1);
+    cxi->entry.instrument.detectors[detID].description = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+    sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/x_pixel_size",detID+1);
+    cxi->entry.instrument.detectors[detID].xPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+    sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/y_pixel_size",detID+1);
+    cxi->entry.instrument.detectors[detID].yPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+    if(global->saveRaw){
+      sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/data",detID+1);
+      cxi->entry.instrument.detectors[detID].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+      if(global->savePixelmask){
+	sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/mask",detID+1);
+	cxi->entry.instrument.detectors[detID].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+      }
+      sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/thumbnail",detID+1);
+      cxi->entry.instrument.detectors[detID].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+    }
+    if(global->saveAssembled){
+      sprintf(detectorPath,"/entry_1/image_%ld/data",detID+1);
+      cxi->entry.images[cxi_img_id].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+      if(global->savePixelmask){
+	sprintf(detectorPath,"/entry_1/image_%ld/mask",detID+1);
+	cxi->entry.images[cxi_img_id].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+      }
+      sprintf(detectorPath,"/entry_1/image_%ld/data_type",detID+1);
+      cxi->entry.images[cxi_img_id].dataType = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+      sprintf(detectorPath,"/entry_1/image_%ld/data_space",detID+1);
+      cxi->entry.images[cxi_img_id].dataSpace = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+      sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",detID+1);
+      cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+      cxi_img_id++;
+      if(global->detector[detID].downsampling > 1){
+	sprintf(detectorPath,"/entry_1/image_%ld/data",global->nDetectors+detID+1);
+	cxi->entry.images[cxi_img_id].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+	if(global->savePixelmask){
+	  sprintf(detectorPath,"/entry_1/image_%ld/mask",global->nDetectors+detID+1);
+	  cxi->entry.images[cxi_img_id].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+	}
+	sprintf(detectorPath,"/entry_1/image_%ld/data_type",global->nDetectors+detID+1);
+	cxi->entry.images[cxi_img_id].dataType = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+	sprintf(detectorPath,"/entry_1/image_%ld/data_space",global->nDetectors+detID+1);
+	cxi->entry.images[cxi_img_id].dataSpace = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+	sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",global->nDetectors+detID+1);
+	cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      	
+	cxi_img_id++;
+      }
+    }
+  }
+  cxi->lcls.machineTime = H5Dopen(cxi->self,"/LCLS/machineTime",H5P_DEFAULT);
+  cxi->lcls.fiducial = H5Dopen(cxi->self,"/LCLS/fiducial",H5P_DEFAULT);
+  cxi->lcls.ebeamCharge = H5Dopen(cxi->self,"/LCLS/ebeamCharge",H5P_DEFAULT);
+  cxi->lcls.ebeamL3Energy = H5Dopen(cxi->self,"/LCLS/ebeamL3Energy",H5P_DEFAULT);
+  cxi->lcls.ebeamPkCurrBC2 = H5Dopen(cxi->self,"/LCLS/ebeamPkCurrBC2",H5P_DEFAULT);
+  cxi->lcls.ebeamLTUPosX = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosX",H5P_DEFAULT);
+  cxi->lcls.ebeamLTUPosY = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosY",H5P_DEFAULT);
+  cxi->lcls.ebeamLTUAngX = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngX",H5P_DEFAULT);
+  cxi->lcls.ebeamLTUAngY = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngY",H5P_DEFAULT);
+  cxi->lcls.phaseCavityTime1 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime1",H5P_DEFAULT);
+  cxi->lcls.phaseCavityTime2 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime2",H5P_DEFAULT);
+  cxi->lcls.phaseCavityCharge1 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge1",H5P_DEFAULT);
+  cxi->lcls.phaseCavityCharge2 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge2",H5P_DEFAULT);
+  cxi->lcls.photon_energy_eV = H5Dopen(cxi->self,"/LCLS/photon_energy_eV",H5P_DEFAULT);
+  cxi->lcls.photon_wavelength_A = H5Dopen(cxi->self,"/LCLS/photon_wavelength_A",H5P_DEFAULT);
+  cxi->lcls.f_11_ENRC = H5Dopen(cxi->self,"/LCLS/f_11_ENRC",H5P_DEFAULT);
+  cxi->lcls.f_12_ENRC = H5Dopen(cxi->self,"/LCLS/f_12_ENRC",H5P_DEFAULT);
+  cxi->lcls.f_21_ENRC = H5Dopen(cxi->self,"/LCLS/f_21_ENRC",H5P_DEFAULT);
+  cxi->lcls.f_22_ENRC = H5Dopen(cxi->self,"/LCLS/f_22_ENRC",H5P_DEFAULT);
+  cxi->lcls.evr41 = H5Dopen(cxi->self,"/LCLS/evr41",H5P_DEFAULT);
+  cxi->lcls.eventTimeString = H5Dopen(cxi->self,"/LCLS/eventTimeString",H5P_DEFAULT);
+  if(global->TOFPresent){
+    cxi->lcls.tofTime = H5Dopen(cxi->self,"/LCLS/tofTime",H5P_DEFAULT);
+    cxi->lcls.tofVoltage = H5Dopen(cxi->self,"/LCLS/tofVoltage",H5P_DEFAULT);    
+  }
+  DETECTOR_LOOP{
+    char buffer[1024];
+    sprintf(buffer,"/LCLS/detector%li-position",detID+1);    
+    cxi->lcls.detector_positions[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/LCLS/detector%li-EncoderValue",detID+1);    
+    cxi->lcls.detector_EncoderValues[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+  }
+
+  cxi->cheetahVal.unsharedVal.eventName = H5Dopen(cxi->self,"/cheetah/unshared/eventName",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.frameNumber = H5Dopen(cxi->self,"/cheetah/unshared/frameNumber",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped = H5Dopen(cxi->self,"/cheetah/unshared/frameNumberIncludingSkipped",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.threadID = H5Dopen(cxi->self,"/cheetah/unshared/threadID",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.gmd1 = H5Dopen(cxi->self,"/cheetah/unshared/gmd1",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.gmd2 = H5Dopen(cxi->self,"/cheetah/unshared/gmd2",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.energySpectrumExist = H5Dopen(cxi->self,"/cheetah/unshared/energySpectrumExist",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/unshared/nPeaks",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.peakNpix = H5Dopen(cxi->self,"/cheetah/unshared/peakNpix",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.peakTotal = H5Dopen(cxi->self,"/cheetah/unshared/peakTotal",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.peakResolution = H5Dopen(cxi->self,"/cheetah/unshared/peakResolution",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.peakResolutionA = H5Dopen(cxi->self,"/cheetah/unshared/peakResolutionA",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.peakDensity = H5Dopen(cxi->self,"/cheetah/unshared/peakDensity",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.laserEventCodeOn = H5Dopen(cxi->self,"/cheetah/unshared/laserEventCodeOn",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.laserDelay = H5Dopen(cxi->self,"/cheetah/unshared/laserDelay",H5P_DEFAULT);
+  cxi->cheetahVal.unsharedVal.hit = H5Dopen(cxi->self,"/cheetah/unshared/hit",H5P_DEFAULT);
+
+  DETECTOR_LOOP{
+    char buffer[1024];
+    sprintf(buffer,"/cheetah/unshared/detector%li-sum",detID+1);    
+    cxi->cheetahVal.unsharedVal.sums[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+  }
+
+  cxi->cheetahVal.sharedVal.hit = H5Dopen(cxi->self,"/cheetah/shared/hit",H5P_DEFAULT);
+  cxi->cheetahVal.sharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/shared/nPeaks",H5P_DEFAULT);
+
+  DETECTOR_LOOP{
+    char buffer[1024];
+    sprintf(buffer,"/cheetah/shared/detector%ld_lastBgUpdate",detID);    
+    cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/cheetah/shared/detector%ld_nHot",detID);    
+    cxi->cheetahVal.sharedVal.nHot[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/cheetah/shared/detector%ld_lastHotPixUpdate",detID);    
+    cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/cheetah/shared/detector%ld_hotPixCounter",detID);    
+    cxi->cheetahVal.sharedVal.hotPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/cheetah/shared/detector%ld_nHalo",detID);    
+    cxi->cheetahVal.sharedVal.nHalo[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+    sprintf(buffer,"/cheetah/shared/detector%ld_lastHaloPixUpdate",detID);    
+    cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
+    sprintf(buffer,"/cheetah/shared/detector%ld_haloPixCounter",detID);    
+    cxi->cheetahVal.sharedVal.haloPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
+  }
+
+  cxi->cheetahVal.sharedVal.self = H5Gopen(cxi->self,"/cheetah/shared",H5P_DEFAULT);
+#endif
   return cxi;
 }
 
@@ -885,11 +1123,11 @@ void writeAccumulatedCXI(cGlobal * global){
       double * mean_raw_angCnt = (double*) calloc(radial_nn, sizeof(double));
       calculateRadialAverage(mean_raw,mean_raw_radial,mean_raw_angCnt,global,detID);
       sprintf(buffer,"detector%li_class%li_mean_raw",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_raw,pix_nx,pix_ny);
+      openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_raw,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_mean_raw_radial",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,mean_raw_radial,radial_nn);
+      openAndWriteDataset(buffer, sharedVal.self,mean_raw_radial,radial_nn);
       sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_raw,pix_nx,pix_ny);
+      openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_raw,pix_nx,pix_ny);
 
       // corrected
       double * sum_corrected = detector->powderCorrected[powID];
@@ -905,11 +1143,11 @@ void writeAccumulatedCXI(cGlobal * global){
       double * mean_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
       calculateRadialAverage(mean_corrected,mean_corrected_radial,mean_corrected_angCnt,global,detID);
       sprintf(buffer,"detector%li_class%li_mean_corrected",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_corrected,pix_nx,pix_ny);
+      openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_corrected,pix_nx,pix_ny);
       sprintf(buffer,"detector%li_class%li_mean_corrected_radial",detID,powID);
-      createAndWriteDataset(buffer, sharedVal.self,mean_corrected_radial,radial_nn);
+      openAndWriteDataset(buffer, sharedVal.self,mean_corrected_radial,radial_nn);
       sprintf(buffer,"detector%li_class%li_sigma_corrected",detID,powID);
-      createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_corrected,pix_nx,pix_ny);
+      openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_corrected,pix_nx,pix_ny);
 
       // assembled
       double * sum_assembled = detector->powderAssembled[powID];
@@ -923,9 +1161,9 @@ void writeAccumulatedCXI(cGlobal * global){
 	    sqrt( fabs(sum_assembledSq[i] - sum_assembled[i]*sum_assembled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
 	}
 	sprintf(buffer,"detector%li_class%li_mean_assembled",detID,powID);
-	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_assembled,image_nx,image_ny);
+	openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_assembled,image_nx,image_ny);
 	sprintf(buffer,"detector%li_class%li_sigma_assembled",detID,powID);
-	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_assembled,image_nx,image_ny);
+	openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_assembled,image_nx,image_ny);
       }
 
       // downsampled
@@ -940,9 +1178,9 @@ void writeAccumulatedCXI(cGlobal * global){
 	    sqrt( fabs(sum_downsampledSq[i] - sum_downsampled[i]*sum_downsampled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
 	}
 	sprintf(buffer,"detector%li_class%li_mean_downsampled",detID,powID);
-	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_downsampled,imageXxX_nx,imageXxX_ny);
+	openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_downsampled,imageXxX_nx,imageXxX_ny);
 	sprintf(buffer,"detector%li_class%li_sigma_downsampled",detID,powID);
-	createAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_downsampled,imageXxX_nx,imageXxX_ny);
+	openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_downsampled,imageXxX_nx,imageXxX_ny);
       }
 
       free(mean_corrected_radial);
@@ -1012,16 +1250,25 @@ void closeCXIFiles(cGlobal * global){
 }
 
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_lock(&global->swmr_mutex);
+#endif
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
 
   writeScalarToStack(cxi->cheetahVal.sharedVal.hit,global->nCXIEvents,info->hit);
   writeScalarToStack(cxi->cheetahVal.sharedVal.nPeaks,global->nCXIEvents,info->nPeaks);
   global->nCXIEvents += 1;
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 }
 
 
 void writeCXI(cEventData *info, cGlobal *global ){
+#ifdef H5F_ACC_SWMR_WRITE  
+  pthread_mutex_lock(&global->swmr_mutex);
+#endif
   /* Get the existing CXI file or open a new one */
   CXI::File * cxi = getCXIFileByName(global);
 
@@ -1159,6 +1406,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
     writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
     writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);  
   }
+#ifdef H5F_ACC_SWMR_WRITE  
+  H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+  pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 }
 
 
