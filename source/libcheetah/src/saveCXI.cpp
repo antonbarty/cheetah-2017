@@ -11,8 +11,10 @@
 #include <string>
 #include <vector>
 #include <pthread.h>
+#include <math.h>
 
 #include "saveCXI.h"
+
 
 herr_t
 cheetahHDF5ErrorHandler(hid_t,void *)
@@ -87,7 +89,7 @@ static uint getStackSlice(CXI::File * cxi){
 }
 
 static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
-  hsize_t dims[1] = {CXI::initialStackSize};
+  hsize_t dims[1] = {CXI::chunkSize1D/H5Tget_size(dataType)};
   hsize_t maxdims[1] = {H5S_UNLIMITED};
   hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);
@@ -182,7 +184,8 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
 
 /* Create a 2D stack. The fastest changing dimension is along the width */
 static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
-  hsize_t dims[3] = {CXI::initialStackSize,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
+  hsize_t dims[3] = {lrintf(((float)CXI::chunkSize2D)/H5Tget_size(dataType)/width/height),
+			    static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
   hsize_t maxdims[3] = {H5S_UNLIMITED,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
   hid_t dataspace = H5Screate_simple(3, dims, maxdims);
   if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
@@ -346,7 +349,7 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
   if(H5Tset_size(datatype, maxSize) < 0){
     ERROR("Cannot set type size.\n");
   }
-  hsize_t dims[1] = {CXI::initialStackSize};
+  hsize_t dims[1] = {CXI::chunkSize1D/H5Tget_size(datatype)};
   hsize_t maxdims[1] = {H5S_UNLIMITED};
   hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
   hid_t dataspace = H5Screate_simple(1, dims, maxdims);

@@ -167,8 +167,11 @@ typedef struct{
 
 
  const int version = 130;
- const int initialStackSize = 16;
  const int thumbnailScale = 8;
+ // The preferred chunk size for 2D stacks is 16 MBytes
+ const int chunkSize2D = 16777216;
+ // The preferred chunk size for 1D stacks is 1 MByte
+ const int chunkSize1D = 1048576;
 }
 
 
