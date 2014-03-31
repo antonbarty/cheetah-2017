@@ -73,19 +73,15 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
     x1 = x0/downsampling;
     y1 = y0/downsampling;
     i1 = y1*imgXxX_nx + x1;
-    //if(i1>=imgXxX_nn){puts("UAAAH");}
     good_pixel = (float) isNoneOfBitOptionsSet(msk[i0],mask_out_bits);
     imgXxX[i1] += good_pixel*rescale*img[i0];
     tempN[i1] += good_pixel;
-    //if(i0==0){puts("Started");}
   }
-  //puts("done");
   for(i = 0;i<imgXxX_nn;i++){
     if (tempN[i] != 0.){
       imgXxX[i] *= downsampling*downsampling/tempN[i];
     }
   }
-  //puts("Want to free");
   free(tempN);
 }
 

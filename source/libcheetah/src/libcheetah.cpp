@@ -514,12 +514,16 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *	Save some types of information from time to timeperiodic powder patterns
 	 */
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-        saveRunningSums(global);
-		saveHistograms(global);
-        saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-        global->writeStatus("Not finished");
+	  if(global->saveCXI){
+	    writeAccumulatedCXI(global);
+	  } else {
+	    saveRunningSums(global);
+	    saveHistograms(global);
+	    saveRadialStacks(global);
+	    saveSpectrumStacks(global);
+	  }
+	  global->updateLogfile();
+	  global->writeStatus("Not finished");
 	}
 	
 }
