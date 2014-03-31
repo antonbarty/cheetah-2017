@@ -416,6 +416,7 @@ public:
 	**/
 	void setup(void);
 	void updateCalibrated(void);
+	int validateConfiguration(void);
 
 	void writeInitialLog(void);
 	void updateLogfile(void);

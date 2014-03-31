@@ -13,6 +13,7 @@
 //
 //------------------------------------------------------------------------
 
+#include <stdlib.h>
 //-----------------------
 // This Class's Header --
 //-----------------------
@@ -151,7 +152,9 @@ namespace cheetah_ana_pkg {
   {
 		//cout << "*** beginJob ***" << endl;
     time(&startT);
-    cheetahInit(&cheetahGlobal);
+    if (cheetahInit(&cheetahGlobal)){
+      exit(0);
+    }
     if(cheetahGlobal.saveCXI){
       signal(SIGINT, sig_handler);
     }
