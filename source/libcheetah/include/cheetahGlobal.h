@@ -9,6 +9,8 @@
 
 #ifndef CHEETAHGLOBAL_H
 #define CHEETAHGLOBAL_H
+#include <string>
+#include <vector>
 #include "detectorObject.h"
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
@@ -163,6 +165,14 @@ public:
 
 	// Sorting criteria
 	int		sortPumpLaserOn;
+
+	/** @brief Path to the file with list of hits.
+	 * Used by hitfinderAlgorithm=11 as hit criterion.
+	 * The hits have to be in chronological order as they appear in the data stream!
+	 */
+	char     hitlistFile[MAX_FILENAME_LENGTH];
+	/** @brief list of all hits as output string names. */
+	std::vector<std::string>	hitlist;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -424,7 +434,10 @@ public:
 	void writeConfigurationLog(void);
 	void freeMutexes(void);
 
-
+	/**
+	 * @brief Read text file with list of hits.
+	 **/
+	void readHits(char *filename);
 
 private:
 	int parseConfigTag(char*, char*);
