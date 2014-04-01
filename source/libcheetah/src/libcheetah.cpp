@@ -59,26 +59,32 @@ void spawnPython(char* pythonFile)
 /*
  *  libCheetah initialisation function
  */
-void cheetahInit(cGlobal *global) {
+int cheetahInit(cGlobal *global) {
     
 	global->self = global;
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
+	if(global->validateConfiguration()){
+	  ERROR("Validation of given configuration failed");
+	  return 1;
+	}
 
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
-    global->writeStatus("Started");
+	global->writeStatus("Started");
 
 	// Set better error handlers for HDF5
 	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
 	//H5Eset_auto(cheetahHDF5ErrorHandler, NULL);
 
-	printf("Cheetah clean initialisation\n");
 	if (global->pythonFile[0]) {
 	  printf("Initialising embedded Python visualisation now\n");
 	  spawnPython(global->pythonFile);
 	}
+
+	printf("Cheetah clean initialisation\n");
+	return 0;
 }
 
 
@@ -514,12 +520,15 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *	Save some types of information from time to timeperiodic powder patterns
 	 */
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-        saveRunningSums(global);
-		saveHistograms(global);
-        saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-        global->writeStatus("Not finished");
+	  if(global->saveCXI){
+	    writeAccumulatedCXI(global);
+	  } 
+	  saveRunningSums(global);
+	  saveHistograms(global);
+	  saveRadialStacks(global);
+	  saveSpectrumStacks(global);
+	  global->updateLogfile();
+	  global->writeStatus("Not finished");
 	}
 	
 }

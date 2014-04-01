@@ -258,7 +258,6 @@ void saveRunningSums(cGlobal *global, int detID) {
     // Assemble 2D powder patterns using geometry (since we don't sum assembled patterns any more)
     assemble2Dpowder(global);
 
-
     //	Save powder patterns from different classes
     printf("Writing intermediate powder patterns to file\n");
     for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
@@ -658,6 +657,7 @@ void saveGaincal(cGlobal *global, int detID) {
 }
 
 
+/* writePowderData() SEEMS TO BE NOT IN USE, CAN WE DELETE IT? */
 /*
  *	Write a single powder pattern to file
  */
@@ -740,4 +740,4 @@ void writePowderData(char *filename, void *data, int width, int height, void *ra
 	
   H5Fclose(fh);
 }
-
+/* */

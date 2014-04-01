@@ -1072,6 +1072,17 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 
 }
 
+int cGlobal::validateConfiguration(void){
+  int fail = 0;
+  #ifndef H5_HAVE_THREADSAFE
+  if (nThreads > 1){
+    ERROR("Configuration with nThreads=%d is incompatible with your HDF5 installation (no thread safety). Either run in single-threaded mode (nThreads=1) or add thread safety by reconfiguring your HDF5 installation (./configure --enable-threadsafe --with-pthread; make install).",nThreads);
+    fail = 1;
+  }
+  #endif
+  return fail;
+}
+
 
 /*
  *	Write all configuration parameters to log file
