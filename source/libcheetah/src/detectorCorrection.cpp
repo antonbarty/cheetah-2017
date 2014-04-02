@@ -575,7 +575,8 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
       long x_max = nx-1;
       float *data = eventData->detector[detID].corrected_data;
       uint16_t *mask = eventData->detector[detID].pixelmask;
-      uint16_t mask_out_bits = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_SHADOWED || PIXEL_IS_TO_BE_IGNORED || PIXEL_IS_BAD  || PIXEL_IS_MISSING;
+      uint16_t mask_out_bits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD |
+		  PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD  | PIXEL_IS_MISSING;
       for(y=0; y<ny; y++){
 	for(x=x_min;x<=x_max;x=x+2){
 	  i = nx*y+x;
