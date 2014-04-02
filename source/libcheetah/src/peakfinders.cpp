@@ -561,7 +561,7 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 							
 							e = lrint(com_x) + lrint(com_y)*pix_nx;
 							if(e < 0 || e >= pix_nn){
-								printf("Array bounds error: e=%i\n",e);
+								printf("Array bounds error: e=%ld\n",e);
 								continue;
 							}
 
@@ -950,7 +950,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 							
 							e = lrint(com_x) + lrint(com_y)*pix_nx;
 							if(e < 0 || e >= pix_nn){
-								printf("Array bounds error: e=%i\n",e);
+								printf("Array bounds error: e=%ld\n",e);
 								continue;
 							}
 							
