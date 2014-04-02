@@ -24,20 +24,20 @@
  *  Assemble data into a realistic 2d image using raw data and geometry
  */
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
-
-  if(global->assemble2DImage) {
-    DETECTOR_LOOP {
-      long		pix_nn = global->detector[detID].pix_nn;
-      long		image_nx = global->detector[detID].image_nx;
-      long		image_nn = global->detector[detID].image_nn;
-      float		*pix_x = global->detector[detID].pix_x;
-      float		*pix_y = global->detector[detID].pix_y;
-      float		*corrected_data = eventData->detector[detID].corrected_data;
-      int16_t	*image = eventData->detector[detID].image;
-      int       assembleInterpolation = global->assembleInterpolation;
-      assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+    
+    if(global->assemble2DImage) {
+        DETECTOR_LOOP {
+            long		pix_nn = global->detector[detID].pix_nn;
+            long		image_nx = global->detector[detID].image_nx;
+            long		image_nn = global->detector[detID].image_nn;
+            float		*pix_x = global->detector[detID].pix_x;
+            float		*pix_y = global->detector[detID].pix_y;
+            float		*corrected_data = eventData->detector[detID].corrected_data;
+            int16_t	*image = eventData->detector[detID].image;
+            int       assembleInterpolation = global->assembleInterpolation;
+            assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+        }
     }
-  }
 }
 
 
@@ -55,7 +55,7 @@ void assemble2Dpowder(cGlobal *global) {
         float		*pix_y = global->detector[detID].pix_y;
         int         assembleInterpolation = global->assembleInterpolation;
         cPixelDetectorCommon     *detector = &(global->detector[detID]);
-
+        
         // Floating point buffer
         float   *fdata = (float*) calloc(pix_nn,sizeof(float));
         float   *fimage = (float*) calloc(image_nn,sizeof(float));
@@ -65,14 +65,14 @@ void assemble2Dpowder(cGlobal *global) {
         for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
             double  *data = detector->powderCorrected[powderType];
             double  *image = detector->powderAssembled[powderType];
-
+            
             // Assembly is done using float; powder data is double (!!)
             for(long i=0; i<pix_nn; i++)
                 fdata[i] = (float) data[i];
             
             // Assemble image
             assemble2Dimage(fimage, fdata, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
-
+            
             // Assembly is done using float; powder data is double (!!)
             for(long i=0; i<image_nn; i++)
                 image[i] = (double) fimage[i];
@@ -84,15 +84,15 @@ void assemble2Dpowder(cGlobal *global) {
     }
 }
 
-    
- 
+
+
 /*
  *	Interpolate raw (corrected) cspad data into a physical 2D image
  *	input data: float
  *	output data: int16_t
  */
 void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
-
+    
     // Assembly is done using floating point by default
     float	*temp = (float*) calloc(image_nn,sizeof(float));
     assemble2Dimage(temp, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
@@ -109,12 +109,12 @@ void assemble2Dimage(int16_t *image, float *corrected_data, float *pix_x, float 
     for(long i=0;i<image_nn;i++){
         image[i] = (int16_t) lrint(temp[i]);
     }
-
+    
     free(temp);
 }
 
-    
-    
+
+
 void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
     
     if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
@@ -134,7 +134,7 @@ void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *p
             image[image_index]= corrected_data[i];
         }
     }
-
+    
     else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
         // Allocate temporary arrays for pixel interpolation (needs to be floating point)
         float	*data = (float*) calloc(image_nn,sizeof(float));
@@ -143,15 +143,15 @@ void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *p
             data[i] = 0;
             weight[i]= 0;
         }
-	
-	
+        
+        
         // Loop through all pixels and interpolate onto regular grid
         float	x, y;
         float	pixel_value, w;
         long	ix, iy;
         float	fx, fy;
         long	image_index;
-    
+        
         for(long i=0;i<pix_nn;i++){
             // Pixel location with (0,0) at array element (0,0) in bottom left corner
             x = pix_x[i] + image_nx/2.;
@@ -194,8 +194,8 @@ void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *p
                 weight[image_index] += w;
             }
         }
-	
-	
+        
+        
         // Reweight pixel interpolation
         for(long i=0; i<image_nn; i++){
             if(weight[i] < 0.05)
@@ -203,18 +203,18 @@ void assemble2Dimage(float *image, float *corrected_data, float *pix_x, float *p
             else
                 data[i] /= weight[i];
         }
-    
+        
         // Copy to output array
         for(long i=0; i<image_nn; i++){
             image[i] = data[i];
         }
-	
+        
         
         // Free temporary arrays
         free(data);
         free(weight);
     }
- }
+}
 
 
 
@@ -239,7 +239,7 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
     }
 }
 
-    
+
 
 /*
  *	Interpolate binary mask using pre-defined pixel mapping (as loaded from .h5 file)

@@ -28,22 +28,22 @@
  *	Default settings/configuration
  */
 cGlobal::cGlobal(void) {
-
-  // ini file to use
-  strcpy(configFile, "cheetah.ini");
-  strcpy(configOutFile, "cheetah.out");
-
-  // Default experiment info (in case beamline data is missing...)
-  defaultPhotonEnergyeV = 0;
-
-  // Detector info
-  nDetectors = 0;
-  for(long i=0; i<MAX_DETECTORS; i++) {
-    strcpy(detector[i].detectorConfigFile, "No_file_specified");
-    strcpy(detector[i].configGroup,"none");
-    detector[i].detectorID = i;
-  }
-
+    
+    // ini file to use
+    strcpy(configFile, "cheetah.ini");
+    strcpy(configOutFile, "cheetah.out");
+    
+    // Default experiment info (in case beamline data is missing...)
+    defaultPhotonEnergyeV = 0;
+    
+    // Detector info
+    nDetectors = 0;
+    for(long i=0; i<MAX_DETECTORS; i++) {
+        strcpy(detector[i].detectorConfigFile, "No_file_specified");
+        strcpy(detector[i].configGroup,"none");
+        detector[i].detectorID = i;
+    }
+    
     // Statistics
     summedPhotonEnergyeV = 0;
     meanPhotonEnergyeV = 0;
@@ -51,23 +51,23 @@ cGlobal::cGlobal(void) {
     datarateWorkerMemory = 0.95;
     datarateWorkerSkipCounter = 0;
     lastTimingFrame = 0;
-
+    
     // Pv values
     strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
     laserDelay = std::numeric_limits<float>::quiet_NaN();
     laserDelay = 0;
-
+    
     // Misc. PV values
     nEpicsPvFloatValues = 0;
-
+    
     // Start and stop frames
     startAtFrame = 0;
     stopAtFrame = 0;
-
+    
     // Calibrations
     generateDarkcal = 0;
     generateGaincal = 0;
-
+    
     // Hitfinding
     hitfinder = 0;
     hitfinderDetector = 0;
@@ -97,13 +97,13 @@ cGlobal::cGlobal(void) {
 	
 	// Sorting (eg: pump laser on/off)
 	sortPumpLaserOn = 0;
-
+    
     // TOF (Aqiris)
     hitfinderUseTOF = 0;
     hitfinderTOFMinSample = 0;
     hitfinderTOFMaxSample = 1000;
     hitfinderTOFThresh = 100;
-
+    
     // TOF configuration
     TOFPresent = 0;
     TOFchannel = 1;
@@ -116,7 +116,7 @@ cGlobal::cGlobal(void) {
 	useFEEspectrum = 0;
 	FEEspectrumStackSize = 200000;
 	FEEspectrumWidth = 1024;
-
+    
 	
     // CXI downstream energy spectrum default configuration
     espectrum = 0;
@@ -129,7 +129,7 @@ cGlobal::cGlobal(void) {
 	espectrumStackSize = 10000;
     strcpy(espectrumDarkFile, "No_file_specified");
     strcpy(espectrumScaleFile, "No_file_specified");
-
+    
     // Powder pattern generation
     nPowderClasses = 2;
     usePowderThresh = 0;
@@ -137,16 +137,16 @@ cGlobal::cGlobal(void) {
     powderSumHits = 1;
     powderSumBlanks = 0;
     powderSumWithBackgroundSubtraction = 1;
-
+    
     // Radial average stacks
     saveRadialStacks=0;
     radialStackSize=10000;
-
+    
     // Assemble options
     assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
     assemble2DImage = 0;
     assemble2DMask = 0;
-
+    
     // Saving options
     savehits = 0;
     saveAssembled = 1;
@@ -156,38 +156,38 @@ cGlobal::cGlobal(void) {
     saveInterval = 1000;
     savePixelmask = 1;
     saveCXI = 0;
-
+    
     // Peak lists
     savePeakList = 1;
-
+    
     // Verbosity
     debugLevel = 2;
-
+    
     // I/O speed test?
     ioSpeedTest = 0;
-
+    
     // Default to only a few threads
     nThreads = 16;
     useHelperThreads = 0;
     threadPurge = 10000;
-
+    
     // Saving to subdirectories
     subdirFileCount = -1;
     subdirNumber = 0;
     strcpy(subdirName, "");
-
-
+    
+    
     // Log files
     strcpy(logfile, "log.txt");
     strcpy(framefile, "frames.txt");
     strcpy(cleanedfile, "cleaned.txt");
     strcpy(peaksfile, "peaks.txt");
-
+    
     // Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
     fudgeevr41 = 0; // this means no fudge by default
     lasttime = 0;
     laserPumpScheme = 0;
-
+    
     // Do not output 1 HDF5 per image by default
     saveCXI = 0;
     strcpy(cxiFilename, "");
@@ -200,7 +200,7 @@ cGlobal::cGlobal(void) {
  * Setup stuff to do with thread management, settings, etc.
  */
 void cGlobal::setup() {
-
+    
 	/*
 	 *  Init timing
 	 */
@@ -222,7 +222,7 @@ void cGlobal::setup() {
 		detector[i].readWireMask(detector[i].wireMaskFile);
 	}
 	
-
+    
 	/*
 	 * How many types of powder pattern do we need?
 	 */
@@ -241,9 +241,9 @@ void cGlobal::setup() {
 		nPeaksMin[i] = 1000000000;
 		nPeaksMax[i] = 0;
 	}
-
+    
 	
-
+    
 	
 	if (hitfinderDetector >= nDetectors || hitfinderDetector < 0) {
 		printf("Errors: hitfinderDetector > nDetectors\n");
@@ -254,7 +254,7 @@ void cGlobal::setup() {
 		printf("Quitting...\n");
 		exit(1);
 	}
-
+    
 	/*
 	 * Set up thread management
 	 */
@@ -336,7 +336,7 @@ void cGlobal::setup() {
 			detector[i].saveDetectorCorrectedOnly = 1;
 		}
 	}
-
+    
 	// Make sure to save something...
 	if(saveRaw==0 && saveAssembled == 0) {
 		saveAssembled = 1;
@@ -381,7 +381,7 @@ void cGlobal::setup() {
 		detector[i].detectorZ = 0;
 		detector[i].detectorEncoderValue = 0;
 	}
-
+    
 	// Make sure to use SLAC timezone!
 	setenv("TZ","US/Pacific",1);
 	
@@ -391,7 +391,7 @@ void cGlobal::setup() {
 	for(long i=0; i<nDetectors; i++) {
 		detector[i].allocatePowderMemory(self);
 	}
-
+    
 	
 	/*
 	 *	Energy spectrum stuff
@@ -418,7 +418,7 @@ void cGlobal::setup() {
 	}
 	readSpectrumDarkcal(self, espectrumDarkFile);
 	readSpectrumEnergyScale(self, espectrumScaleFile);
-
+    
 	/*
 	 *	Energy spectrum stacks
 	 */
@@ -435,7 +435,7 @@ void cGlobal::setup() {
 		}
 		printf("Spectral stack allocated\n");
 	}
-
+    
 	if (useFEEspectrum) {
 		printf("Allocating FEE spectrum stacks\n");
 		for(long i=0; i<nPowderClasses; i++) {
@@ -443,7 +443,7 @@ void cGlobal::setup() {
 			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
 		}
 	}
-
+    
 	for(long i=0; i<nPowderClasses; i++) {
 		pthread_mutex_init(&espectrumStack_mutex[i], NULL);
 		pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
@@ -467,8 +467,8 @@ void cGlobal::setup() {
 		}
 	}
     pthread_mutex_unlock(&powderfp_mutex);
-
-
+    
+    
 }
 
 void cGlobal::freeMutexes(void) {
@@ -505,7 +505,7 @@ void cGlobal::freeMutexes(void) {
 		}
 		pthread_mutex_unlock(&detector[i].histogram_mutex);
 	}
-
+    
 	for(long i=0; i<nPowderClasses; i++) {
 		pthread_mutex_unlock(&espectrumStack_mutex[i]);
 		pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
@@ -520,26 +520,26 @@ void cGlobal::freeMutexes(void) {
  * Parse command line arguments
  */
 void cGlobal::parseCommandLineArguments(int argc, char **argv) {
-
-  // No arguments specified = ask for help
-  if (argc == 1) {
-    printf("No configuration file spcified\n");
-    printf("\t--> using default settings\n");
-    return;
-  }
-
-  // First argument is always the configuration file
-  parseConfigFile(argv[1]);
-
-  // Other arguments are optional switches but take same syntax prefixed by an '-'
-  if (argc > 2) {
-    for (long i=2; i<argc; i++) {
-      if (argv[i][0] == '-' && i+1 < argc) {
-	parseConfigTag(argv[i]+1, argv[i+1]);
-	i++;
-      }
+    
+    // No arguments specified = ask for help
+    if (argc == 1) {
+        printf("No configuration file spcified\n");
+        printf("\t--> using default settings\n");
+        return;
     }
-  }
+    
+    // First argument is always the configuration file
+    parseConfigFile(argv[1]);
+    
+    // Other arguments are optional switches but take same syntax prefixed by an '-'
+    if (argc > 2) {
+        for (long i=2; i<argc; i++) {
+            if (argv[i][0] == '-' && i+1 < argc) {
+                parseConfigTag(argv[i]+1, argv[i+1]);
+                i++;
+            }
+        }
+    }
 }
 
 
@@ -548,163 +548,163 @@ void cGlobal::parseCommandLineArguments(int argc, char **argv) {
  */
 void cGlobal::parseConfigFile(char* filename) {
 	
-  char  cbuf[cbufsize] = "";
-  char  tag[cbufsize] = "";
-  char  value[cbufsize] = "";
-  char  group[cbufsize] = "";
-  char  groupPrepend[cbufsize] = "";
-  char  ts[cbufsize] = "";
-  char  *cp;
-  FILE  *fp;
-  int cnt,fail;
-  int exitCheetah = 0;
-
-  /*
-   * Open configuration file for reading
-   */
-  printf("Parsing cheetah configuration file: %s\n",filename);
-  printf("\t%s\n",filename);
-
-  fp = fopen(filename,"r");
-  if (fp == NULL) {
-    printf("\tCould not open configuration file \"%s\"\n",filename);
-    printf("\tExiting\n");
-    exit(1);
-  }
-
-  /*
-   * Loop through configuration file until EOF
-   * Ignore lines beginning with a '#' (comments)
-   * Split each line into tag and value at the '=' sign
-   */	
-
-  printf("\t------ Start cheetah configuration keywords ------\n");
-  while (feof(fp) == 0) {
-
-    fail = 0;
-
-    cp = fgets(cbuf, cbufsize, fp);
-    if (cp == NULL)
-      break;
-
-    /* strip whitespace */
-    cnt=0;
-    for (uint i=0; i<cbufsize; i++){
-      if (cbuf[i] == ' ') continue;
-      cbuf[cnt] = cbuf[i];
-      cnt++;
+    char  cbuf[cbufsize] = "";
+    char  tag[cbufsize] = "";
+    char  value[cbufsize] = "";
+    char  group[cbufsize] = "";
+    char  groupPrepend[cbufsize] = "";
+    char  ts[cbufsize] = "";
+    char  *cp;
+    FILE  *fp;
+    int cnt,fail;
+    int exitCheetah = 0;
+    
+    /*
+     * Open configuration file for reading
+     */
+    printf("Parsing cheetah configuration file: %s\n",filename);
+    printf("\t%s\n",filename);
+    
+    fp = fopen(filename,"r");
+    if (fp == NULL) {
+        printf("\tCould not open configuration file \"%s\"\n",filename);
+        printf("\tExiting\n");
+        exit(1);
     }
-
-    /* strip comments */
-    for (uint i=0; i<cbufsize-1; i++){
-      if (cbuf[i] == '#'){
-	cbuf[i] = '\n';
-	cbuf[i+1] = '\0';
-	break;
-      }
-    }
-
-
-    /* skip empty lines */
-    if ( strlen(cbuf) <= 1) continue;
-
-    /* Print our for sanity */
-    printf("\t%s",cbuf);
-
+    
+    /*
+     * Loop through configuration file until EOF
+     * Ignore lines beginning with a '#' (comments)
+     * Split each line into tag and value at the '=' sign
+     */
+    
+    printf("\t------ Start cheetah configuration keywords ------\n");
+    while (feof(fp) == 0) {
+        
+        fail = 0;
+        
+        cp = fgets(cbuf, cbufsize, fp);
+        if (cp == NULL)
+            break;
+        
+        /* strip whitespace */
+        cnt=0;
+        for (uint i=0; i<cbufsize; i++){
+            if (cbuf[i] == ' ') continue;
+            cbuf[cnt] = cbuf[i];
+            cnt++;
+        }
+        
+        /* strip comments */
+        for (uint i=0; i<cbufsize-1; i++){
+            if (cbuf[i] == '#'){
+                cbuf[i] = '\n';
+                cbuf[i+1] = '\0';
+                break;
+            }
+        }
+        
+        
+        /* skip empty lines */
+        if ( strlen(cbuf) <= 1) continue;
+        
+        /* Print our for sanity */
+        printf("\t%s",cbuf);
+        
 		
-    /* check for string prepend */
-    cp = strrchr(cbuf,']');
-    if (cp != NULL){
-      *(cp) = '\0';
-      strncpy(groupPrepend,cbuf+1,cbufsize);
-      groupPrepend[cbufsize-1] = '\0';
-      if (strlen(groupPrepend) != 0) 
-	strcat(groupPrepend,"/");
-      continue;
-    }
-
-    /* prepend string */
-    if (strcmp(groupPrepend, "")) {
-      strncpy(ts,groupPrepend,cbufsize);
-      strcat(ts,cbuf);
-      strncpy(cbuf,ts,cbufsize);
-    }
-	
-    /* get the value */
-    cp = strpbrk(cbuf, "=");
-    if (cp == NULL)
-      continue;
-    *(cp) = '\0';
-    sscanf(cp+1,"%s",value);
+        /* check for string prepend */
+        cp = strrchr(cbuf,']');
+        if (cp != NULL){
+            *(cp) = '\0';
+            strncpy(groupPrepend,cbuf+1,cbufsize);
+            groupPrepend[cbufsize-1] = '\0';
+            if (strlen(groupPrepend) != 0)
+                strcat(groupPrepend,"/");
+            continue;
+        }
+        
+        /* prepend string */
+        if (strcmp(groupPrepend, "")) {
+            strncpy(ts,groupPrepend,cbufsize);
+            strcat(ts,cbuf);
+            strncpy(cbuf,ts,cbufsize);
+        }
+        
+        /* get the value */
+        cp = strpbrk(cbuf, "=");
+        if (cp == NULL)
+            continue;
+        *(cp) = '\0';
+        sscanf(cp+1,"%s",value);
 		
-    /* get the tag and group */
-    cp = strrchr(cbuf,'/');
-    if (cp == NULL){
-      sscanf(cbuf,"%s",tag);
-      sscanf("default","%s",group);
-    } else {
-      *(cp) = '\0';
-      sscanf(cp+1,"%s",tag);
-      sscanf(cbuf,"%s",group);
-    }
-
-    //printf("group=%s, tag=%s, value=%s\n",group,tag,value);
-
-    /* Try to set global configuration */
-    fail = parseConfigTag(tag, value);
+        /* get the tag and group */
+        cp = strrchr(cbuf,'/');
+        if (cp == NULL){
+            sscanf(cbuf,"%s",tag);
+            sscanf("default","%s",group);
+        } else {
+            *(cp) = '\0';
+            sscanf(cp+1,"%s",tag);
+            sscanf(cbuf,"%s",group);
+        }
+        
+        //printf("group=%s, tag=%s, value=%s\n",group,tag,value);
+        
+        /* Try to set global configuration */
+        fail = parseConfigTag(tag, value);
 		
-    /* Not a global keyword?  Then it must be detector-specific. */
-    if (fail != 0){
-
-      int matched=0;
-
-      /* set detector-specific configuration */
-      for (long i=0; i<MAX_DETECTORS; i++){
-
-	/* new group? */
-	if (!strcmp("none",detector[i].configGroup)){
-	  strncpy(detector[i].configGroup,group,cbufsize);
-	  nDetectors++;
-	}
-
-	/* try to match group to detector */
-	if (!strcmp(group,detector[i].configGroup)){
-	  matched = 1;
-	  fail = detector[i].parseConfigTag(tag,value);
-	  break;
-	}
-
-      }
-
-      if (matched == 0){
-	printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
-	exit(0);
-      }
-
+        /* Not a global keyword?  Then it must be detector-specific. */
+        if (fail != 0){
+            
+            int matched=0;
+            
+            /* set detector-specific configuration */
+            for (long i=0; i<MAX_DETECTORS; i++){
+                
+                /* new group? */
+                if (!strcmp("none",detector[i].configGroup)){
+                    strncpy(detector[i].configGroup,group,cbufsize);
+                    nDetectors++;
+                }
+                
+                /* try to match group to detector */
+                if (!strcmp(group,detector[i].configGroup)){
+                    matched = 1;
+                    fail = detector[i].parseConfigTag(tag,value);
+                    break;
+                }
+                
+            }
+            
+            if (matched == 0){
+                printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
+                exit(0);
+            }
+            
+        }
+        
+        if (fail != 0){
+            printf("ERROR: The keyword %s is not recognized.\n",tag);
+            exitCheetah = 1;
+        }
+        
     }
-
-    if (fail != 0){
-      printf("ERROR: The keyword %s is not recognized.\n",tag);
-      exitCheetah = 1;
+    printf("\t------ End cheetah configuration keywords ------\n");
+    
+    
+    if (exitCheetah != 0){
+        printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
+        exit(0);
     }
-
-  }
-  printf("\t------ End cheetah configuration keywords ------\n");
-
-
-  if (exitCheetah != 0){
-    printf("ERROR: Exiting Cheetah due to unknown configuration keywords.\n");
-    exit(0);
-  }
-
-  printf("Configured %d detectors\n",nDetectors);
-  for (long i=0;i<nDetectors;i++){
-    printf("detector %li: %s\n",i,detector[i].configGroup);
-  }
-
-
-  fclose(fp);
-
+    
+    printf("Configured %d detectors\n",nDetectors);
+    for (long i=0;i<nDetectors;i++){
+        printf("detector %li: %s\n",i,detector[i].configGroup);
+    }
+    
+    
+    fclose(fp);
+    
 }
 
 
@@ -712,266 +712,266 @@ void cGlobal::parseConfigFile(char* filename) {
  * Process tags for both configuration file and command line options
  */
 int cGlobal::parseConfigTag(char *tag, char *value) {
-
-  int fail = 0;
-
-  /*
-   * Convert to lowercase
-   */
-  for(uint i=0; i<strlen(tag); i++)
-    tag[i] = tolower(tag[i]);
-
-  /*
-   * Parse known tags
-   */
-  if (!strcmp(tag, "defaultphotonenergyev")) {
-    defaultPhotonEnergyeV = atof(value);
-  }
-  else if (!strcmp(tag, "saveepicspvfloat")) {
-    strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
-    nEpicsPvFloatValues++;
-  }
-  else if (!strcmp(tag, "startatframe")) {
-    startAtFrame = atoi(value);
-  }
-  else if (!strcmp(tag, "stopatframe")) {
-    stopAtFrame = atoi(value);
-  }
-  else if (!strcmp(tag, "nthreads")) {
-    nThreads = atoi(value);
-  }
-  else if (!strcmp(tag, "usehelperthreads")) {
-    useHelperThreads = atoi(value);
-  }
-  else if (!strcmp(tag, "iospeedtest")) {
-    ioSpeedTest = atoi(value);
-  }
-  else if (!strcmp(tag, "threadpurge")) {
-    threadPurge = atoi(value);
-  }
-  else if (!strcmp(tag, "peakmask")) {
-    strcpy(peaksearchFile, value);
-    hitfinderUsePeakmask = 1;
-  }
-  // Processing options
-  else if (!strcmp(tag, "subtractcmmodule")) {
-    printf("The keyword subtractcmModule has been changed. It is\n"
-	   "now known as cmModule.\n"
-	   "Modify your ini file and try again...\n");
-    fail = 1;
-  }
-  else if (!strcmp(tag, "generatedarkcal")) {
-    generateDarkcal = atoi(value);
-  }
-  else if (!strcmp(tag, "generategaincal")) {
-    generateGaincal = atoi(value);
-  }
-  else if (!strcmp(tag, "subtractbg")) {
-    printf("The keyword subtractBg has been changed.  It is\n"
-	   "now known as useDarkcalSubtraction.\n"
-	   "Modify your ini file and try again...\n");
-    fail = 1;
-  }
-  else if (!strcmp(tag, "hitfinder")) {
-    hitfinder = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderdetector")) {
-    hitfinderDetector = atoi(value);
-  }
-  else if (!strcmp(tag, "savehits")) {
-    savehits = atoi(value);
-  }
-  else if (!strcmp(tag, "powdersum")) {
-    printf("The keyword powdersum has been changed.  It is\n"
-	   "now known as powderSumHits and powderSumBlanks.\n"
-	   "Modify your ini file and try again...\n");
-    fail = 1;
-  }
-  else if (!strcmp(tag, "saveraw")) {
-    saveRaw = atoi(value);
-  }
-  else if (!strcmp(tag, "saveassembled")) {
-    saveAssembled = atoi(value);
-    assemble2DImage = 1;
-  }
-  else if (!strcmp(tag, "assembleinterpolation")) {
-    assembleInterpolation = atoi(value);
-  }
-  else if (!strcmp(tag, "savepixelmask")) {
-    savePixelmask = atoi(value);
-  }
-  else if (!strcmp(tag, "h5compress")) {
-	  h5compress = atoi(value);
-  }
-  else if (!strcmp(tag, "hdf5dump")) {
-    hdf5dump = atoi(value);
-  }
-  else if (!strcmp(tag, "saveinterval")) {
-    saveInterval = atoi(value);
-  }
-  // Time-of-flight
-  else if (!strcmp(tag, "tofname")) {
-    strcpy(tofName, value);
-  }
-  else if (!strcmp(tag, "tofchannel")) {
-    TOFchannel = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderusetof")) {
-    hitfinderUseTOF = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindertofminsample")) {
-    hitfinderTOFMinSample = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindertofmaxsample")) {
-    hitfinderTOFMaxSample = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindertofthresh")) {
-    hitfinderTOFThresh = atof(value);
-  }
+    
+    int fail = 0;
+    
+    /*
+     * Convert to lowercase
+     */
+    for(uint i=0; i<strlen(tag); i++)
+        tag[i] = tolower(tag[i]);
+    
+    /*
+     * Parse known tags
+     */
+    if (!strcmp(tag, "defaultphotonenergyev")) {
+        defaultPhotonEnergyeV = atof(value);
+    }
+    else if (!strcmp(tag, "saveepicspvfloat")) {
+        strcpy(&epicsPvFloatAddresses[nEpicsPvFloatValues][0],value);
+        nEpicsPvFloatValues++;
+    }
+    else if (!strcmp(tag, "startatframe")) {
+        startAtFrame = atoi(value);
+    }
+    else if (!strcmp(tag, "stopatframe")) {
+        stopAtFrame = atoi(value);
+    }
+    else if (!strcmp(tag, "nthreads")) {
+        nThreads = atoi(value);
+    }
+    else if (!strcmp(tag, "usehelperthreads")) {
+        useHelperThreads = atoi(value);
+    }
+    else if (!strcmp(tag, "iospeedtest")) {
+        ioSpeedTest = atoi(value);
+    }
+    else if (!strcmp(tag, "threadpurge")) {
+        threadPurge = atoi(value);
+    }
+    else if (!strcmp(tag, "peakmask")) {
+        strcpy(peaksearchFile, value);
+        hitfinderUsePeakmask = 1;
+    }
+    // Processing options
+    else if (!strcmp(tag, "subtractcmmodule")) {
+        printf("The keyword subtractcmModule has been changed. It is\n"
+               "now known as cmModule.\n"
+               "Modify your ini file and try again...\n");
+        fail = 1;
+    }
+    else if (!strcmp(tag, "generatedarkcal")) {
+        generateDarkcal = atoi(value);
+    }
+    else if (!strcmp(tag, "generategaincal")) {
+        generateGaincal = atoi(value);
+    }
+    else if (!strcmp(tag, "subtractbg")) {
+        printf("The keyword subtractBg has been changed.  It is\n"
+               "now known as useDarkcalSubtraction.\n"
+               "Modify your ini file and try again...\n");
+        fail = 1;
+    }
+    else if (!strcmp(tag, "hitfinder")) {
+        hitfinder = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderdetector")) {
+        hitfinderDetector = atoi(value);
+    }
+    else if (!strcmp(tag, "savehits")) {
+        savehits = atoi(value);
+    }
+    else if (!strcmp(tag, "powdersum")) {
+        printf("The keyword powdersum has been changed.  It is\n"
+               "now known as powderSumHits and powderSumBlanks.\n"
+               "Modify your ini file and try again...\n");
+        fail = 1;
+    }
+    else if (!strcmp(tag, "saveraw")) {
+        saveRaw = atoi(value);
+    }
+    else if (!strcmp(tag, "saveassembled")) {
+        saveAssembled = atoi(value);
+        assemble2DImage = 1;
+    }
+    else if (!strcmp(tag, "assembleinterpolation")) {
+        assembleInterpolation = atoi(value);
+    }
+    else if (!strcmp(tag, "savepixelmask")) {
+        savePixelmask = atoi(value);
+    }
+    else if (!strcmp(tag, "h5compress")) {
+        h5compress = atoi(value);
+    }
+    else if (!strcmp(tag, "hdf5dump")) {
+        hdf5dump = atoi(value);
+    }
+    else if (!strcmp(tag, "saveinterval")) {
+        saveInterval = atoi(value);
+    }
+    // Time-of-flight
+    else if (!strcmp(tag, "tofname")) {
+        strcpy(tofName, value);
+    }
+    else if (!strcmp(tag, "tofchannel")) {
+        TOFchannel = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderusetof")) {
+        hitfinderUseTOF = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindertofminsample")) {
+        hitfinderTOFMinSample = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindertofmaxsample")) {
+        hitfinderTOFMaxSample = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindertofthresh")) {
+        hitfinderTOFThresh = atof(value);
+    }
 	
 	// Sorting
-  else if (!strcmp(tag, "sortpumplaseron")) {
-	  sortPumpLaserOn = atoi(value);
-  }
+    else if (!strcmp(tag, "sortpumplaseron")) {
+        sortPumpLaserOn = atoi(value);
+    }
 	
-
-  // Energy spectrum parameters
-  else if (!strcmp(tag, "usefeespectrum")) {
-      useFEEspectrum = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrum")) {
-      espectrum = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrum1d")) {
-      espectrum1D = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrumtiltang")) {
-    espectrumTiltAng = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrumlength")) {
-    espectrumLength = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrumdarksubtract")) {
-    espectrumDarkSubtract = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrumspreadev")) {
-    espectrumSpreadeV = atoi(value);
-  }
-  else if (!strcmp(tag, "espectrumdarkfile")) {
-    strcpy(espectrumDarkFile, value);
-  }
-  else if (!strcmp(tag, "espectrumscalefile")) {
-    strcpy(espectrumScaleFile, value);
-  }
-
-  // Radial average stacks
-  else if (!strcmp(tag, "saveradialstacks")) {
-    saveRadialStacks = atoi(value);
-  }
-  else if (!strcmp(tag, "radialstacksize")) {
-    radialStackSize = atoi(value);
-  }
-  // Power user settings
-  else if (!strcmp(tag, "debuglevel")) {
-    debugLevel = atoi(value);
-  }
-  else if (!strcmp(tag, "powderthresh")) {
-    powderthresh = atof(value);
-    usePowderThresh	= 1;
-  }
-  else if (!strcmp(tag, "powdersumhits")) {
-    powderSumHits = atoi(value);
-  }
-  else if (!strcmp(tag, "powdersumblanks")) {
-    powderSumBlanks = atoi(value);
-  }
-  else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
-      powderSumWithBackgroundSubtraction = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderadc")) {
-    hitfinderADC = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindertit")) {
-    hitfinderTAT = atof(value);
-  }
-  else if (!strcmp(tag, "hitfindercheckgradient")) {
-    hitfinderCheckGradient = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindermingradient")) {
-    hitfinderMinGradient = atof(value);
-  }
-  else if (!strcmp(tag, "hitfindercluster")) {
-    hitfinderCluster = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindernpeaks")) {
-    hitfinderNpeaks = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindernpeaksmax")) {
-    hitfinderNpeaksMax = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderalgorithm")) {
-    hitfinderAlgorithm = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderminpixcount")) {
-    hitfinderMinPixCount = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfindermaxpixcount")) {
-    hitfinderMaxPixCount = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderminpeakseparation")) {
-    hitfinderMinPeakSeparation = atof(value);
-    hitfinderCheckPeakSeparation = 1;
-  }
-  else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
-    hitfinderSubtractLocalBG = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderlocalbgradius")) {
-    hitfinderLocalBGRadius = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
-    hitfinderLocalBGThickness = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderminres")) {
-    hitfinderMinRes = atof(value);
-    //hitfinderLimitRes = 1;
-  }
-  else if (!strcmp(tag, "hitfindermaxres")) {
-    hitfinderMaxRes = atof(value);
-    //hitfinderLimitRes = 1;
-  }
-  else if (!strcmp(tag, "hitfinderresolutionunitpixel")) {
-    hitfinderResolutionUnitPixel = atoi(value);
-  }
-  else if (!strcmp(tag, "hitfinderminsnr")) {
-    hitfinderMinSNR = atof(value);
-  }
-  else if (!strcmp(tag, "hitfinderfastscan")) {
-	  hitfinderFastScan = atof(value);
-  }
-  else if (!strcmp(tag, "selfdarkmemory")) {
-    printf("The keyword selfDarkMemory has been changed.  It is\n"
-	   "now known as bgMemory.\n"
-	   "Modify your ini file and try again...\n");
-    fail = 1;
-  }
-  else if (!strcmp(tag, "fudgeevr41")) {
-    fudgeevr41 = atoi(value);
-  }
-  else if (!strcmp(tag, "laserpumpscheme")) {
-    laserPumpScheme = atoi(value);
-  }
-  else if (!strcmp(tag, "savecxi")) {
-    saveCXI = atoi(value);
-  }
-  // Unknown tags
-  else {
-    //printf("\tUnknown tag: %s = %s\n",tag,value);
-    //printf("Aborting...\n");
-    fail = 1;
-  }
-
-  return fail;
-
+    
+    // Energy spectrum parameters
+    else if (!strcmp(tag, "usefeespectrum")) {
+        useFEEspectrum = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrum")) {
+        espectrum = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrum1d")) {
+        espectrum1D = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumtiltang")) {
+        espectrumTiltAng = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumlength")) {
+        espectrumLength = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumdarksubtract")) {
+        espectrumDarkSubtract = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumspreadev")) {
+        espectrumSpreadeV = atoi(value);
+    }
+    else if (!strcmp(tag, "espectrumdarkfile")) {
+        strcpy(espectrumDarkFile, value);
+    }
+    else if (!strcmp(tag, "espectrumscalefile")) {
+        strcpy(espectrumScaleFile, value);
+    }
+    
+    // Radial average stacks
+    else if (!strcmp(tag, "saveradialstacks")) {
+        saveRadialStacks = atoi(value);
+    }
+    else if (!strcmp(tag, "radialstacksize")) {
+        radialStackSize = atoi(value);
+    }
+    // Power user settings
+    else if (!strcmp(tag, "debuglevel")) {
+        debugLevel = atoi(value);
+    }
+    else if (!strcmp(tag, "powderthresh")) {
+        powderthresh = atof(value);
+        usePowderThresh	= 1;
+    }
+    else if (!strcmp(tag, "powdersumhits")) {
+        powderSumHits = atoi(value);
+    }
+    else if (!strcmp(tag, "powdersumblanks")) {
+        powderSumBlanks = atoi(value);
+    }
+    else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
+        powderSumWithBackgroundSubtraction = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderadc")) {
+        hitfinderADC = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindertit")) {
+        hitfinderTAT = atof(value);
+    }
+    else if (!strcmp(tag, "hitfindercheckgradient")) {
+        hitfinderCheckGradient = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindermingradient")) {
+        hitfinderMinGradient = atof(value);
+    }
+    else if (!strcmp(tag, "hitfindercluster")) {
+        hitfinderCluster = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindernpeaks")) {
+        hitfinderNpeaks = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindernpeaksmax")) {
+        hitfinderNpeaksMax = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderalgorithm")) {
+        hitfinderAlgorithm = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderminpixcount")) {
+        hitfinderMinPixCount = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfindermaxpixcount")) {
+        hitfinderMaxPixCount = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderminpeakseparation")) {
+        hitfinderMinPeakSeparation = atof(value);
+        hitfinderCheckPeakSeparation = 1;
+    }
+    else if (!strcmp(tag, "hitfindersubtractlocalbg")) {
+        hitfinderSubtractLocalBG = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderlocalbgradius")) {
+        hitfinderLocalBGRadius = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderlocalbgthickness")) {
+        hitfinderLocalBGThickness = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderminres")) {
+        hitfinderMinRes = atof(value);
+        //hitfinderLimitRes = 1;
+    }
+    else if (!strcmp(tag, "hitfindermaxres")) {
+        hitfinderMaxRes = atof(value);
+        //hitfinderLimitRes = 1;
+    }
+    else if (!strcmp(tag, "hitfinderresolutionunitpixel")) {
+        hitfinderResolutionUnitPixel = atoi(value);
+    }
+    else if (!strcmp(tag, "hitfinderminsnr")) {
+        hitfinderMinSNR = atof(value);
+    }
+    else if (!strcmp(tag, "hitfinderfastscan")) {
+        hitfinderFastScan = atof(value);
+    }
+    else if (!strcmp(tag, "selfdarkmemory")) {
+        printf("The keyword selfDarkMemory has been changed.  It is\n"
+               "now known as bgMemory.\n"
+               "Modify your ini file and try again...\n");
+        fail = 1;
+    }
+    else if (!strcmp(tag, "fudgeevr41")) {
+        fudgeevr41 = atoi(value);
+    }
+    else if (!strcmp(tag, "laserpumpscheme")) {
+        laserPumpScheme = atoi(value);
+    }
+    else if (!strcmp(tag, "savecxi")) {
+        saveCXI = atoi(value);
+    }
+    // Unknown tags
+    else {
+        //printf("\tUnknown tag: %s = %s\n",tag,value);
+        //printf("Aborting...\n");
+        fail = 1;
+    }
+    
+    return fail;
+    
 }
 
 
@@ -980,126 +980,126 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
  *	(in a format that can be used as a .ini file if needed)
  */
 void cGlobal::writeConfigurationLog(void){
-  FILE *fp;
-
+    FILE *fp;
+    
 	
 	
-  // Logfile name
-  printf("Writing configuration file: %s\n", configOutFile);
-
-  // Open file
-  fp = fopen(configOutFile,"w");
-  if(fp == NULL) {
-    printf("Error: Can not open %s for writing\n",configOutFile);
-    printf("Aborting...");
-    exit(1);
-  }
+    // Logfile name
+    printf("Writing configuration file: %s\n", configOutFile);
+    
+    // Open file
+    fp = fopen(configOutFile,"w");
+    if(fp == NULL) {
+        printf("Error: Can not open %s for writing\n",configOutFile);
+        printf("Aborting...");
+        exit(1);
+    }
 	
-  fprintf(fp, "# Automatic output of all Cheetah configurations settings\n");
-  fprintf(fp, "# (if not set in your .ini, these are the default values used in calculation)\n");
-
-  fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
-  //fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
-  //fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
-  //fprintf(fp, "detectorName=%s\n",detector[0].detectorName);
-  fprintf(fp, "startAtFrame=%ld\n",startAtFrame);
-  fprintf(fp, "stopAtFrame=%ld\n",stopAtFrame);
-  fprintf(fp, "nThreads=%ld\n",nThreads);
-  fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
-  fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
-  fprintf(fp, "threadPurge=%ld\n",threadPurge);
-  //fprintf(fp, "geometry=%s\n",detector[0].geometryFile);
-  //fprintf(fp, "darkcal=%s\n",detector[0].darkcalFile);
-  //fprintf(fp, "gaincal=%s\n",detector[0].gaincalFile);
-  fprintf(fp, "peakmask=%s\n",peaksearchFile);
-  //fprintf(fp, "badPixelMap=%s\n",detector[0].badpixelFile);
-  //fprintf(fp, "subtractcmModule=%d\n",cmModule);
-  //fprintf(fp, "cmModule=%d\n",cmModule);
-  //fprintf(fp, "subtractUnbondedPixels=%d\n",cspadSubtractUnbondedPixels);
-  //fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
-  //fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
-  //fprintf(fp, "invertGain=%d\n",invertGain);
-  fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
-  fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-  fprintf(fp, "hitfinder=%d\n",hitfinder);
-  fprintf(fp, "saveHits=%d\n",savehits);
-  fprintf(fp, "saveRaw=%d\n",saveRaw);
-  fprintf(fp, "saveAssembled=%d\n",saveAssembled);
-  fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
-  //fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
-  //fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
-  fprintf(fp, "hdf5dump=%d\n",hdf5dump);
-  fprintf(fp, "saveInterval=%d\n",saveInterval);
-  fprintf(fp, "savePixelmask=%d\n",savePixelmask);
-  //fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
-  //fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-  //fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
-  //fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-  //fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
-  //fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
-  //fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
-  //fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
-  //fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
-  fprintf(fp, "tofName=%s\n",tofName);
-  fprintf(fp, "tofChannel=%d\n",TOFchannel);
-  fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
-  fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
-  fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-  fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
-  fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
-  fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
-  fprintf(fp, "espectrum=%d\n",espectrum);
-  fprintf(fp, "espectrum1D=%d\n",espectrum1D);
-  fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
-  fprintf(fp, "espectrumLength=%d\n",espectrumLength);
-  fprintf(fp, "espectrumSpreadeV=%d\n",espectrumSpreadeV);
-  fprintf(fp, "espectrumDarkSubtract=%d\n",espectrumDarkSubtract);
-  fprintf(fp, "espectrumDarkFile=%s\n",espectrumDarkFile);
-  fprintf(fp, "espectrumScaleFile=%s\n",espectrumScaleFile);
-  //fprintf(fp, "cmFloor=%f\n",cmFloor);
-  //fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
-  fprintf(fp, "debugLevel=%d\n",debugLevel);
-  //fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
-  //fprintf(fp, "hotpixADC=%d\n",hotpixADC);
-  //fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
-  fprintf(fp, "powderThresh=%f\n",powderthresh);
-  fprintf(fp, "powderSumHits=%d\n",powderSumHits);
-  fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
-  fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-  fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
-  fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
-  fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
-  fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
-  fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
-  fprintf(fp, "hitfinderNPeaksMax=%d\n",hitfinderNpeaksMax);
-  fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
-  fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
-  fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
-  fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
-  fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
-  fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
-  fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
-  //fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
-  fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
-  fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
-  fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
-  fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
-  fprintf(fp, "saveCXI=%d\n",saveCXI);
-  //fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
-  //fprintf(fp, "bgMemory=%li\n",bgMemory);
-  //fprintf(fp, "bgRecalc=%ld\n",bgRecalc);
-  //fprintf(fp, "bgMedian=%f\n",bgMedian);
-  //fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
-  //fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
-  //fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
-  //fprintf(fp, "scaleBackground=%d\n",scaleBackground);
-  //fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
-  //fprintf(fp, "startFrames=%d\n",startFrames);
-
+    fprintf(fp, "# Automatic output of all Cheetah configurations settings\n");
+    fprintf(fp, "# (if not set in your .ini, these are the default values used in calculation)\n");
+    
+    fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
+    //fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
+    //fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
+    //fprintf(fp, "detectorName=%s\n",detector[0].detectorName);
+    fprintf(fp, "startAtFrame=%ld\n",startAtFrame);
+    fprintf(fp, "stopAtFrame=%ld\n",stopAtFrame);
+    fprintf(fp, "nThreads=%ld\n",nThreads);
+    fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
+    fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
+    fprintf(fp, "threadPurge=%ld\n",threadPurge);
+    //fprintf(fp, "geometry=%s\n",detector[0].geometryFile);
+    //fprintf(fp, "darkcal=%s\n",detector[0].darkcalFile);
+    //fprintf(fp, "gaincal=%s\n",detector[0].gaincalFile);
+    fprintf(fp, "peakmask=%s\n",peaksearchFile);
+    //fprintf(fp, "badPixelMap=%s\n",detector[0].badpixelFile);
+    //fprintf(fp, "subtractcmModule=%d\n",cmModule);
+    //fprintf(fp, "cmModule=%d\n",cmModule);
+    //fprintf(fp, "subtractUnbondedPixels=%d\n",cspadSubtractUnbondedPixels);
+    //fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
+    //fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
+    //fprintf(fp, "invertGain=%d\n",invertGain);
+    fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
+    fprintf(fp, "generateGaincal=%d\n",generateGaincal);
+    fprintf(fp, "hitfinder=%d\n",hitfinder);
+    fprintf(fp, "saveHits=%d\n",savehits);
+    fprintf(fp, "saveRaw=%d\n",saveRaw);
+    fprintf(fp, "saveAssembled=%d\n",saveAssembled);
+    fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
+    //fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
+    //fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
+    fprintf(fp, "hdf5dump=%d\n",hdf5dump);
+    fprintf(fp, "saveInterval=%d\n",saveInterval);
+    fprintf(fp, "savePixelmask=%d\n",savePixelmask);
+    //fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
+    //fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+    //fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
+    //fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
+    //fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
+    //fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
+    //fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
+    //fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
+    //fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
+    fprintf(fp, "tofName=%s\n",tofName);
+    fprintf(fp, "tofChannel=%d\n",TOFchannel);
+    fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
+    fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
+    fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
+    fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+    fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
+    fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
+    fprintf(fp, "espectrum=%d\n",espectrum);
+    fprintf(fp, "espectrum1D=%d\n",espectrum1D);
+    fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
+    fprintf(fp, "espectrumLength=%d\n",espectrumLength);
+    fprintf(fp, "espectrumSpreadeV=%d\n",espectrumSpreadeV);
+    fprintf(fp, "espectrumDarkSubtract=%d\n",espectrumDarkSubtract);
+    fprintf(fp, "espectrumDarkFile=%s\n",espectrumDarkFile);
+    fprintf(fp, "espectrumScaleFile=%s\n",espectrumScaleFile);
+    //fprintf(fp, "cmFloor=%f\n",cmFloor);
+    //fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
+    fprintf(fp, "debugLevel=%d\n",debugLevel);
+    //fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
+    //fprintf(fp, "hotpixADC=%d\n",hotpixADC);
+    //fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
+    fprintf(fp, "powderThresh=%f\n",powderthresh);
+    fprintf(fp, "powderSumHits=%d\n",powderSumHits);
+    fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
+    fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+    fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
+    fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
+    fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
+    fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
+    fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
+    fprintf(fp, "hitfinderNPeaksMax=%d\n",hitfinderNpeaksMax);
+    fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
+    fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
+    fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
+    fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
+    fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
+    fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+    fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
+    //fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
+    fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
+    fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
+    fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
+    fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
+    fprintf(fp, "saveCXI=%d\n",saveCXI);
+    //fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
+    //fprintf(fp, "bgMemory=%li\n",bgMemory);
+    //fprintf(fp, "bgRecalc=%ld\n",bgRecalc);
+    //fprintf(fp, "bgMedian=%f\n",bgMedian);
+    //fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
+    //fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
+    //fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
+    //fprintf(fp, "scaleBackground=%d\n",scaleBackground);
+    //fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
+    //fprintf(fp, "startFrames=%d\n",startFrames);
+    
 	
-  // CLose file
-  fclose (fp);
-
+    // CLose file
+    fclose (fp);
+    
 	
 }
 
@@ -1107,109 +1107,109 @@ void cGlobal::writeConfigurationLog(void){
  *	Write initial log file
  */
 void cGlobal::writeInitialLog(void){
-
-  FILE *fp;
-  // Start time
-  char	timestr[1024];
-  time_t	rawtime;
-  tm		*timeinfo;
-  time(&rawtime);
-  timeinfo=localtime(&rawtime);
-  strftime(timestr,80,"%c",timeinfo);
-
-
-  // Logfile name
-  printf("Writing log file: %s\n", logfile);
-
-  fp = fopen(logfile,"w");
-  if(fp == NULL) {
-    printf("Error: Can not open %s for writing\n",logfile);
-    printf("Aborting...");
-    exit(1);
-  }
-
-  fprintf(fp, "start time: %s\n",timestr);
-  fprintf(fp, ">-------- Start of job --------<\n");
-  fclose (fp);
-
-
+    
+    FILE *fp;
+    // Start time
+    char	timestr[1024];
+    time_t	rawtime;
+    tm		*timeinfo;
+    time(&rawtime);
+    timeinfo=localtime(&rawtime);
+    strftime(timestr,80,"%c",timeinfo);
+    
+    
+    // Logfile name
+    printf("Writing log file: %s\n", logfile);
+    
+    fp = fopen(logfile,"w");
+    if(fp == NULL) {
+        printf("Error: Can not open %s for writing\n",logfile);
+        printf("Aborting...");
+        exit(1);
+    }
+    
+    fprintf(fp, "start time: %s\n",timestr);
+    fprintf(fp, ">-------- Start of job --------<\n");
+    fclose (fp);
+    
+    
 	
-  // Open a new frame file at the same time
-  pthread_mutex_lock(&framefp_mutex);
-
-  sprintf(framefile,"frames.txt");
-  framefp = fopen (framefile,"w");
-  if(framefp == NULL) {
-    printf("Error: Can not open %s for writing\n",framefile);
-    printf("Aborting...");
-    exit(1);
-  }
-
-  fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
-
-  sprintf(cleanedfile,"cleaned.txt");
-  cleanedfp = fopen (cleanedfile,"w");
-  if(cleanedfp == NULL) {
-    printf("Error: Can not open %s for writing\n",cleanedfile);
-    printf("Aborting...");
-    exit(1);
-  }
-  fprintf(cleanedfp, "# Filename, frameNumber, nPeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
-  pthread_mutex_unlock(&framefp_mutex);
-
-  pthread_mutex_lock(&peaksfp_mutex);
-  sprintf(peaksfile,"peaks.txt");
-  peaksfp = fopen (peaksfile,"w");
-  if(peaksfp == NULL) {
-    printf("Error: Can not open %s for writing\n",peaksfile);
-    printf("Aborting...");
-    exit(1);
-  }
+    // Open a new frame file at the same time
+    pthread_mutex_lock(&framefp_mutex);
+    
+    sprintf(framefile,"frames.txt");
+    framefp = fopen (framefile,"w");
+    if(framefp == NULL) {
+        printf("Error: Can not open %s for writing\n",framefile);
+        printf("Aborting...");
+        exit(1);
+    }
+    
+    fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
+    
+    sprintf(cleanedfile,"cleaned.txt");
+    cleanedfp = fopen (cleanedfile,"w");
+    if(cleanedfp == NULL) {
+        printf("Error: Can not open %s for writing\n",cleanedfile);
+        printf("Aborting...");
+        exit(1);
+    }
+    fprintf(cleanedfp, "# Filename, frameNumber, nPeaks, nPixels, totalIntensity, peakResolution, peakResolutionA, peakDensity\n");
+    pthread_mutex_unlock(&framefp_mutex);
+    
+    pthread_mutex_lock(&peaksfp_mutex);
+    sprintf(peaksfile,"peaks.txt");
+    peaksfp = fopen (peaksfile,"w");
+    if(peaksfp == NULL) {
+        printf("Error: Can not open %s for writing\n",peaksfile);
+        printf("Aborting...");
+        exit(1);
+    }
 	fprintf(peaksfp, "# frameNumber, eventName, photonEnergyEv, wavelengthA, GMD, peak_index, peak_x_raw, peak_y_raw, peak_r_assembled, peak_q, peak_resA, nPixels, totalIntensity, maxIntensity, sigmaBG, SNR\n");
-  pthread_mutex_unlock(&peaksfp_mutex);
-
+    pthread_mutex_unlock(&peaksfp_mutex);
+    
 }
 
 /*
  * Update log file
  */
 void cGlobal::updateLogfile(void){
-  FILE *fp;
-
-  // Calculate overall hit rate
-  float hitrate;
-  hitrate = 100.*( nhits / (float) nprocessedframes);
-
-  // Calculate recent hit rate
-  float recenthitrate=0;
-  if(nrecentprocessedframes != 0)
-    recenthitrate = 100.*( nrecenthits / (float) nrecentprocessedframes);
-
-
-  // Elapsed processing time
-  double	dtime;
-  int		hrs, mins, secs;
-  time(&tend);
-  dtime = difftime(tend,tstart);
-  hrs = (int) floor(dtime / 3600);
-  mins = (int) floor((dtime-3600*hrs)/60);
-  secs = (int) floor(dtime-3600*hrs-60*mins);
-
-  // Average data rate
-  float	fps;
-  fps = nprocessedframes / dtime;
-
-
-  // Update logfile
-  printf("Writing log file: %s\n", logfile);
-  fp = fopen (logfile,"a");
-  fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
-  fclose (fp);
-
-  nrecenthits = 0;
-  nrecentprocessedframes = 0;
-
-
+    FILE *fp;
+    
+    // Calculate overall hit rate
+    float hitrate;
+    hitrate = 100.*( nhits / (float) nprocessedframes);
+    
+    // Calculate recent hit rate
+    float recenthitrate=0;
+    if(nrecentprocessedframes != 0)
+        recenthitrate = 100.*( nrecenthits / (float) nrecentprocessedframes);
+    
+    
+    // Elapsed processing time
+    double	dtime;
+    int		hrs, mins, secs;
+    time(&tend);
+    dtime = difftime(tend,tstart);
+    hrs = (int) floor(dtime / 3600);
+    mins = (int) floor((dtime-3600*hrs)/60);
+    secs = (int) floor(dtime-3600*hrs-60*mins);
+    
+    // Average data rate
+    float	fps;
+    fps = nprocessedframes / dtime;
+    
+    
+    // Update logfile
+    printf("Writing log file: %s\n", logfile);
+    fp = fopen (logfile,"a");
+    fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
+    fclose (fp);
+    
+    nrecenthits = 0;
+    nrecentprocessedframes = 0;
+    
+    
     // Flush frame file buffers
     fflush(framefp);
     fflush(cleanedfp);
@@ -1218,7 +1218,7 @@ void cGlobal::updateLogfile(void){
         fflush(powderlogfp[i]);
         fflush(FEElogfp[i]);
     }
-
+    
 }
 
 /*
@@ -1233,7 +1233,7 @@ void cGlobal::writeStatus(const char* message) {
 	time(&rawtime);
 	timeinfo=localtime(&rawtime);
 	strftime(timestr,80,"%c",timeinfo);
-
+    
 	// Elapsed processing time
 	double	dtime;
 	int		hrs, mins, secs;
@@ -1242,7 +1242,7 @@ void cGlobal::writeStatus(const char* message) {
 	hrs = (int) floor(dtime / 3600);
 	mins = (int) floor((dtime-3600*hrs)/60);
 	secs = (int) floor(dtime-3600*hrs-60*mins);
-
+    
 	// Now write it to file
     FILE *fp;
     fp = fopen ("status.txt","w");
@@ -1253,7 +1253,7 @@ void cGlobal::writeStatus(const char* message) {
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
 	fprintf(fp, "Number of hits: %li\n",nhits);
     fclose (fp);
-
+    
     
 }
 
@@ -1262,66 +1262,66 @@ void cGlobal::writeStatus(const char* message) {
  *	Write final log file
  */
 void cGlobal::writeFinalLog(void){
-
-  FILE *fp;
-
-  // Logfile name
-  printf("Writing log file: %s\n", logfile);
-  fp = fopen (logfile,"a");
-
-
-  // Calculate hit rate
-  float hitrate;
-  hitrate = 100.*( nhits / (float) nprocessedframes);
-
-
-  // End time
-  char	timestr[1024];
-  time_t	rawtime;
-  tm		*timeinfo;
-  time(&rawtime);
-  timeinfo=localtime(&rawtime);
-  strftime(timestr,80,"%c",timeinfo);
-
-
-  // Elapsed processing time
-  double	dtime;
-  int		hrs, mins, secs;
-  time(&tend);
-  dtime = difftime(tend,tstart);
-  hrs = (int) floor(dtime / 3600);
-  mins = (int) floor((dtime-3600*hrs)/60);
-  secs = (int) floor(dtime-3600*hrs-60*mins);
-
-
-  // Average data rate
-  float	fps, mbs;
-  fps = nprocessedframes / dtime;
-  mbs = fps*detector[0].pix_nn*nDetectors*sizeof(uint16_t);
-  mbs /= (1024.*1024.);
-
-
-  // Save log file
-  fprintf(fp, ">-------- End of job --------<\n");
-  fprintf(fp, "End time: %s\n",timestr);
-  fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
-  fprintf(fp, "Frames processed: %li\n",nprocessedframes);
-  fprintf(fp, "Number of hits: %li\n",nhits);
-  fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
-  fprintf(fp, "nFrames in powder patterns:\n");
-  for(long i=0; i<nPowderClasses; i++) {
-    fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
-  }
-  fprintf(fp, "Number of energy spectra collected: %li\n",nespechits);
-  fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
-  fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
-  fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
-  fprintf(fp, "Photon energy sigma: %5.2f eV\n",photonEnergyeVSigma);
-  fprintf(fp, "Cheetah clean exit\n");
-  fprintf(fp, ">-------- Cheetah exit --------<\n");
-  fclose (fp);
-
-
+    
+    FILE *fp;
+    
+    // Logfile name
+    printf("Writing log file: %s\n", logfile);
+    fp = fopen (logfile,"a");
+    
+    
+    // Calculate hit rate
+    float hitrate;
+    hitrate = 100.*( nhits / (float) nprocessedframes);
+    
+    
+    // End time
+    char	timestr[1024];
+    time_t	rawtime;
+    tm		*timeinfo;
+    time(&rawtime);
+    timeinfo=localtime(&rawtime);
+    strftime(timestr,80,"%c",timeinfo);
+    
+    
+    // Elapsed processing time
+    double	dtime;
+    int		hrs, mins, secs;
+    time(&tend);
+    dtime = difftime(tend,tstart);
+    hrs = (int) floor(dtime / 3600);
+    mins = (int) floor((dtime-3600*hrs)/60);
+    secs = (int) floor(dtime-3600*hrs-60*mins);
+    
+    
+    // Average data rate
+    float	fps, mbs;
+    fps = nprocessedframes / dtime;
+    mbs = fps*detector[0].pix_nn*nDetectors*sizeof(uint16_t);
+    mbs /= (1024.*1024.);
+    
+    
+    // Save log file
+    fprintf(fp, ">-------- End of job --------<\n");
+    fprintf(fp, "End time: %s\n",timestr);
+    fprintf(fp, "Elapsed time: %ihr %imin %isec\n",hrs,mins,secs);
+    fprintf(fp, "Frames processed: %li\n",nprocessedframes);
+    fprintf(fp, "Number of hits: %li\n",nhits);
+    fprintf(fp, "Average hit rate: %2.2f %%\n",hitrate);
+    fprintf(fp, "nFrames in powder patterns:\n");
+    for(long i=0; i<nPowderClasses; i++) {
+        fprintf(fp, "\tclass%ld: %li\n", i, nPowderFrames[i]);
+    }
+    fprintf(fp, "Number of energy spectra collected: %li\n",nespechits);
+    fprintf(fp, "Average frame rate: %2.2f fps\n",fps);
+    fprintf(fp, "Average data rate: %2.2f MB/sec\n",mbs);
+    fprintf(fp, "Average photon energy: %7.2f	eV\n",meanPhotonEnergyeV);
+    fprintf(fp, "Photon energy sigma: %5.2f eV\n",photonEnergyeVSigma);
+    fprintf(fp, "Cheetah clean exit\n");
+    fprintf(fp, ">-------- Cheetah exit --------<\n");
+    fclose (fp);
+    
+    
     // Close frame buffers
     if(framefp != NULL)
         fclose(framefp);
@@ -1336,6 +1336,6 @@ void cGlobal::writeFinalLog(void){
         if(FEElogfp[i] != NULL)
             fclose(FEElogfp[i]);
     }
-
-
+    
+    
 }

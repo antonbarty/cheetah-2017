@@ -33,7 +33,7 @@ cData2d::cData2d(long n){
 
 cData2d::~cData2d(){
 	free(data); data = NULL;
-}	
+}
 
 
 void cData2d::create(long n){
@@ -69,7 +69,7 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		return;
 	}
 	
-	// Open the dataset 
+	// Open the dataset
 	hid_t dataset_id;
 	hid_t dataspace_id;
 	dataset_id = H5Dopen1(file_id, fieldname);
@@ -84,7 +84,7 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		exit(0);
 	}
 	
-
+    
 	// Get dimensions of data set (nx, ny, nn)
 	hsize_t dims[ndims];
 	H5Sget_simple_extent_dims(dataspace_id,dims,NULL);
@@ -98,10 +98,10 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	// Create space for the new data
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
-
+    
 	
 	// Read in data after setting up a temporary buffer of the appropriate variable type
-	// Somehow this works best when split out accordint to different data types 
+	// Somehow this works best when split out accordint to different data types
 	// Fix into general form later
 	hid_t		datatype_id;
 	H5T_class_t dataclass;
@@ -109,7 +109,7 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	datatype_id =  H5Dget_type(dataset_id);
 	dataclass = H5Tget_class(datatype_id);
 	size = H5Tget_size(datatype_id);
-
+    
 	if(dataclass == H5T_FLOAT){
 		if (size == sizeof(float)) {
 			float* buffer = (float *) calloc(nn, sizeof(float));
@@ -129,24 +129,24 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 			printf("2dData::readHDF5: unknown floating point type, size=%i\n",(int) size);
 			return;
 		}
-	} 
+	}
 	else if(dataclass == H5T_INTEGER){
 		if (size == sizeof(char)) {
-			char* buffer = (char*) calloc(nn, sizeof(char)); 
+			char* buffer = (char*) calloc(nn, sizeof(char));
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
 			free(buffer);
 		}
 		else if (size == sizeof(short)) {
-			short* buffer = (short*) calloc(nn, sizeof(short)); 
+			short* buffer = (short*) calloc(nn, sizeof(short));
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
 			free(buffer);
 		}
 		else if (size == sizeof(int)) {
-			int* buffer = (int *) calloc(nn, sizeof(int)); 
+			int* buffer = (int *) calloc(nn, sizeof(int));
 			H5Dread(dataset_id, datatype_id, H5S_ALL,H5S_ALL, H5P_DEFAULT, buffer);
 			for(long i=0; i<nn; i++)
 				data[i] = buffer[i];
@@ -165,14 +165,14 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		}
 	}
 	else {
-		printf("2dData::readHDF5: unknown HDF5 data type\n");	
+		printf("2dData::readHDF5: unknown HDF5 data type\n");
 		return;
 	}
 	
 	
 	// Close and cleanup
 	H5Dclose(dataset_id);
-
+    
 	// Cleanup stale IDs
 	hid_t ids[256];
 	int n_ids = H5Fget_obj_ids(file_id, H5F_OBJ_ALL, 256, ids);
@@ -184,13 +184,13 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		id = ids[i];
 		type = H5Iget_type(id);
 		
-		if ( type == H5I_GROUP ) 
+		if ( type == H5I_GROUP )
 			H5Gclose(id);
-		if ( type == H5I_DATASET ) 
+		if ( type == H5I_DATASET )
 			H5Dclose(id);
-		if ( type == H5I_DATASPACE ) 
+		if ( type == H5I_DATASPACE )
 			H5Sclose(id);
-		//if ( type == H5I_DATATYPE ) 
+		//if ( type == H5I_DATATYPE )
 		//	H5Dclose(id);
 	}
 	
@@ -210,7 +210,7 @@ void cData2d::writeHDF5(char* filename){
 	else if(sizeof(tData2d) == sizeof(double))
 		out_type_id = H5T_NATIVE_DOUBLE;
 	else {
-		printf("2dData::writeHDF5: unsuppoted data type\n");	
+		printf("2dData::writeHDF5: unsuppoted data type\n");
 		exit(1);
 	}
 	
@@ -232,14 +232,14 @@ void cData2d::writeHDF5(char* filename){
 	dataspace_id = H5Screate_simple(ndims, dims, NULL);
 	dataset_id = H5Dcreate1(file_id, "/data/data", out_type_id, dataspace_id, H5P_DEFAULT);
 	if(H5Dwrite(dataset_id,out_type_id , H5S_ALL, H5S_ALL,H5P_DEFAULT, data)< 0){
-		printf("2dData::writeHDF5: Error writing data to file\n");	
+		printf("2dData::writeHDF5: Error writing data to file\n");
 		exit(1);
 	}
 	
 	
 	// Close and exit
 	H5Dclose(dataset_id);
-
+    
 	// Cleanup stale IDs
 	hid_t ids[256];
 	int n_ids = H5Fget_obj_ids(file_id, H5F_OBJ_ALL, 256, ids);
@@ -251,13 +251,13 @@ void cData2d::writeHDF5(char* filename){
 		id = ids[i];
 		type = H5Iget_type(id);
 		
-		if ( type == H5I_GROUP ) 
+		if ( type == H5I_GROUP )
 			H5Gclose(id);
-		if ( type == H5I_DATASET ) 
+		if ( type == H5I_DATASET )
 			H5Dclose(id);
-		if ( type == H5I_DATASPACE ) 
+		if ( type == H5I_DATASPACE )
 			H5Sclose(id);
-		//if ( type == H5I_DATATYPE ) 
+		//if ( type == H5I_DATATYPE )
 		//	H5Dclose(id);
 	}
 	H5Fclose(file_id);

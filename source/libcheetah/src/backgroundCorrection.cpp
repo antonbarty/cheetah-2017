@@ -26,78 +26,78 @@
 
 
 /*
- *	Subtract persistent background 
+ *	Subtract persistent background
  *	(and perform recalculation when required)
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
-
-  DETECTOR_LOOP {
-    if(global->detector[detID].useSubtractPersistentBackground){
+    
+    DETECTOR_LOOP {
+        if(global->detector[detID].useSubtractPersistentBackground){
 			
-      /*
-       *	Subtract persistent background
-       */
-      int	scaleBg = global->detector[detID].scaleBackground;
-      long	pix_nn = global->detector[detID].pix_nn;
-      float	*frameData = eventData->detector[detID].corrected_data;
-      float	*background = global->detector[detID].selfdark;
-
-      subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+            /*
+             *	Subtract persistent background
+             */
+            int	scaleBg = global->detector[detID].scaleBackground;
+            long	pix_nn = global->detector[detID].pix_nn;
+            float	*frameData = eventData->detector[detID].corrected_data;
+            float	*background = global->detector[detID].selfdark;
+            
+            subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
 			
-      /*
-       *	Recalculate background from time to time
-       */
-      int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
-      long	bufferDepth = global->detector[detID].bgMemory;
-      long	bgRecalc = global->detector[detID].bgRecalc;
-      float	medianPoint = global->detector[detID].bgMedian;
-      long	threshold = lrint(bufferDepth*medianPoint);
-      long	bgCounter,lastUpdate;
-      int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
-
-      if(lockThreads){
-	pthread_mutex_lock(&global->bgbuffer_mutex);
-      }
+            /*
+             *	Recalculate background from time to time
+             */
+            int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
+            long	bufferDepth = global->detector[detID].bgMemory;
+            long	bgRecalc = global->detector[detID].bgRecalc;
+            float	medianPoint = global->detector[detID].bgMedian;
+            long	threshold = lrint(bufferDepth*medianPoint);
+            long	bgCounter,lastUpdate;
+            int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
+            
+            if(lockThreads){
+                pthread_mutex_lock(&global->bgbuffer_mutex);
+            }
 			
-      bgCounter = global->detector[detID].bgCounter;
-      lastUpdate = global->detector[detID].last_bg_update;
-      if( bgCounter > bgRecalc+lastUpdate ) {
-	global->detector[detID].last_bg_update = bgCounter;
-	for(long i = 0;i<pix_nn*bufferDepth;i++){
-	  frameBuffer[i] = global->detector[detID].bg_buffer[i];
-	}
-	if(lockThreads){
-	  pthread_mutex_unlock(&global->bgbuffer_mutex);
-	}
-
-	printf("Detector %li: Recalculating persistent background.\n",detID);
-
-	pthread_mutex_lock(&global->selfdark_mutex);
-	calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
-	pthread_mutex_unlock(&global->selfdark_mutex);
-
-	printf("Detector %li: Recalculating persistent background done.\n",detID);      
-
-      } else {
-	if(lockThreads){
-	  pthread_mutex_unlock(&global->bgbuffer_mutex);			
-	}
-      }
-
-
-      free(frameBuffer);			
+            bgCounter = global->detector[detID].bgCounter;
+            lastUpdate = global->detector[detID].last_bg_update;
+            if( bgCounter > bgRecalc+lastUpdate ) {
+                global->detector[detID].last_bg_update = bgCounter;
+                for(long i = 0;i<pix_nn*bufferDepth;i++){
+                    frameBuffer[i] = global->detector[detID].bg_buffer[i];
+                }
+                if(lockThreads){
+                    pthread_mutex_unlock(&global->bgbuffer_mutex);
+                }
+                
+                printf("Detector %li: Recalculating persistent background.\n",detID);
+                
+                pthread_mutex_lock(&global->selfdark_mutex);
+                calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
+                pthread_mutex_unlock(&global->selfdark_mutex);
+                
+                printf("Detector %li: Recalculating persistent background done.\n",detID);
+                
+            } else {
+                if(lockThreads){
+                    pthread_mutex_unlock(&global->bgbuffer_mutex);
+                }
+            }
+            
+            
+            free(frameBuffer);
 			
-      /*
-       *	Remember GMD values  (why is this here?)
-       */
-      float	gmd;
-      pthread_mutex_lock(&global->selfdark_mutex);
-      gmd = (eventData->gmd21+eventData->gmd22)/2;
-      global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-      pthread_mutex_unlock(&global->selfdark_mutex);
-
+            /*
+             *	Remember GMD values  (why is this here?)
+             */
+            float	gmd;
+            pthread_mutex_lock(&global->selfdark_mutex);
+            gmd = (eventData->gmd21+eventData->gmd22)/2;
+            global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
+            pthread_mutex_unlock(&global->selfdark_mutex);
+            
+        }
     }
-  }	
 }
 
 /*
@@ -129,32 +129,32 @@ void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
  */
 void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
-  DETECTOR_LOOP {
-    if (global->detector[detID].useSubtractPersistentBackground && (hit==0 || global->detector[detID].bgIncludeHits)) {
-				
-
-      long	bufferDepth = global->detector[detID].bgMemory;
-      long	pix_nn = global->detector[detID].pix_nn;
-      int16_t	*frameBuffer = global->detector[detID].bg_buffer;
-      int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
-
+    DETECTOR_LOOP {
+        if (global->detector[detID].useSubtractPersistentBackground && (hit==0 || global->detector[detID].bgIncludeHits)) {
+            
+            
+            long	bufferDepth = global->detector[detID].bgMemory;
+            long	pix_nn = global->detector[detID].pix_nn;
+            int16_t	*frameBuffer = global->detector[detID].bg_buffer;
+            int16_t	*data16 = eventData->detector[detID].corrected_data_int16;
+            
 #ifdef __GNUC__
-      long bgCounter = __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
+            long bgCounter = __sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
 #else
-      int lockThreads = global->detector[detID].useBackgroundBufferMutex;
-      if(lockThreads){pthread_mutex_lock(&global->bgbuffer_mutex);}
-      long bgCounter = global->detector[detID].bgCounter;
-      global->detector[detID].bgCounter += 1;
-      if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
+            int lockThreads = global->detector[detID].useBackgroundBufferMutex;
+            if(lockThreads){pthread_mutex_lock(&global->bgbuffer_mutex);}
+            long bgCounter = global->detector[detID].bgCounter;
+            global->detector[detID].bgCounter += 1;
+            if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
-      long frameID = bgCounter%bufferDepth;
-      pthread_mutex_lock(&global->bgbuffer_mutex);
-      for(long i = 0;i<pix_nn;i++){
-	frameBuffer[i+pix_nn*frameID] = data16[i];
-      }
-      pthread_mutex_unlock(&global->bgbuffer_mutex);
-    }		
-  }
+            long frameID = bgCounter%bufferDepth;
+            pthread_mutex_lock(&global->bgbuffer_mutex);
+            for(long i = 0;i<pix_nn;i++){
+                frameBuffer[i+pix_nn*frameID] = data16[i];
+            }
+            pthread_mutex_unlock(&global->bgbuffer_mutex);
+        }
+    }
 }
 
 
@@ -189,11 +189,11 @@ void subtractPersistentBackground(float *data, float *background, int scaleBg, l
 		}
 		factor = top/s1;
 	}
-
+    
 	// Do the weighted subtraction
 	for(long i=0; i<pix_nn; i++) {
-		data[i] -= (factor*background[i]);	
-	}	
+		data[i] -= (factor*background[i]);
+	}
 }
 
 
@@ -201,11 +201,11 @@ void subtractPersistentBackground(float *data, float *background, int scaleBg, l
  *	Calculate persistent background from stack of remembered frames
  */
 void calculatePersistentBackground(float *background, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn) {
-
+    
 	// Buffer for median calculation
 	int16_t	*buffer = (int16_t*) calloc(bufferDepth, sizeof(int16_t));
-		
-	// Loop over all pixels 
+    
+	// Loop over all pixels
 	for(long i=0; i<pix_nn; i++) {
 		
 		// Create a local array for sorting
@@ -319,7 +319,7 @@ void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn
 			}
 		}
 	}
-
+    
 	
 	/*
 	 *	Now do the actual background subtraction
@@ -335,7 +335,7 @@ void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn
 	free(rsigma);
 	free(rcount);
 	free(rthreshold);
-
+    
 }
 
 
@@ -380,7 +380,7 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	
 	float	*asic_buffer = (float*) calloc(asic_nn, sizeof(float));
 	float	*median_buffer = (float*) calloc(nn, sizeof(float));
-	float	*localBg = (float*) calloc(pix_nn, sizeof(float)); 
+	float	*localBg = (float*) calloc(pix_nn, sizeof(float));
 	
 	
 	/*
@@ -391,7 +391,7 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	long		counter;
 	
 	
-	// Loop over ASIC modules 
+	// Loop over ASIC modules
 	for(long mj=0; mj<nasics_y; mj++){
 		for(long mi=0; mi<nasics_x; mi++){
 			
@@ -446,7 +446,7 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 					// Element in data array
 					ee = (j+mj*asic_ny)*pix_nx;
 					ee += i+mi*asic_nx;
-
+                    
 					// No elements -> trap an error
 					if(counter == 0) {
 						printf("Error: Local background counter == 0\n");
@@ -470,8 +470,8 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	 *	Do the background subtraction
 	 */
 	for(long i=0;i<pix_nn;i++) {
-		data[i] -= localBg[i];	
-	}	
+		data[i] -= localBg[i];
+	}
 	
 	
 	// Cleanup
@@ -490,17 +490,17 @@ void checkSaturatedPixels(uint16_t *raw_data, uint16_t *mask, long pix_nn, long 
 	
 	for(long i=0; i<pix_nn; i++) { 
 		if ( raw_data[i] >= pixelSaturationADC)
-		  mask[i] |= PIXEL_IS_SATURATED;
+            mask[i] |= PIXEL_IS_SATURATED;
 		else
-		  mask[i] &= ~PIXEL_IS_SATURATED;
+            mask[i] &= ~PIXEL_IS_SATURATED;
 	}
 }
 
 
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
-
+    
     DETECTOR_LOOP {
-      if (global->detector[detID].maskSaturatedPixels) {
+        if (global->detector[detID].maskSaturatedPixels) {
 			
 			uint16_t	*raw_data = eventData->detector[detID].raw_data;
 			uint16_t	*mask = eventData->detector[detID].pixelmask;

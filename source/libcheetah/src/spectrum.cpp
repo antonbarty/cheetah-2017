@@ -56,11 +56,11 @@ void addFEEspectrumToStack(cEventData *eventData, cGlobal *global, int powderCla
     long	speclength = global->FEEspectrumWidth;
     long    stackCounter = global->FEEspectrumStackCounter[powderClass];
     long    stackSize = global->FEEspectrumStackSize;
-
+    
 	// No FEE data means go home
 	if(!eventData->FEEspec_present)
 		return;
-		
+    
 	
     // Lock
 	pthread_mutex_lock(&global->FEEspectrumStack_mutex[powderClass]);
@@ -77,8 +77,8 @@ void addFEEspectrumToStack(cEventData *eventData, cGlobal *global, int powderCla
 	
 	// Write filename to log file in sync with stack positions (** Important for being able to index the patterns!)
 	fprintf(global->FEElogfp[powderClass], "%li, %li, %s/%s\n", stackCounter, eventData->frameNumber, eventData->eventSubdir, eventData->eventname);
-
-
+    
+    
     // Increment counter
     global->FEEspectrumStackCounter[powderClass] += 1;
 	
@@ -174,7 +174,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
 	float ttilt = tanf(global->espectrumTiltAng*PIE/180);
 	int opalindex;
 	int newind;
-
+    
 	for (long i=0; i<specHeight; i++) {
 		for (long j=0; j<specWidth; j++) {
 			newind = i + (int) ceilf(j*ttilt);        // index of the integrated array, must be integer,!
@@ -199,7 +199,7 @@ void addToSpectrumStack(cEventData *eventData, cGlobal *global, int powderClass)
     long    stackCounter = global->espectrumStackCounter[powderClass];
     long    stackSize = global->espectrumStackSize;
     pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
-
+    
     // Lock
 	pthread_mutex_lock(&mutex);
 	
@@ -234,7 +234,7 @@ void addToSpectrumStack(cEventData *eventData, cGlobal *global, int powderClass)
  *	Wrapper for saving all radial stacks
  */
 void saveEspectrumStacks(cGlobal *global) {
-
+    
     if(!global->espectrum)
         return;
     
@@ -259,16 +259,16 @@ void saveEspectrumStack(cGlobal *global, int powderClass) {
     long    stackSize = global->espectrumStackSize;
     pthread_mutex_t mutex = global->espectrumStack_mutex[powderClass];
 	
-
+    
     if(!global->espectrum)
         return;
-
+    
 	if(global->espectrumStackCounter[powderClass]==0)
 		return;
 	
     // Lock
 	pthread_mutex_lock(&mutex);
-
+    
 	
 	// We re-use stacks, what is this number?
 	long	stackNum = stackCounter / stackSize;
@@ -299,7 +299,7 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 		}
 		pthread_mutex_unlock(&global->espectrumRun_mutex);
 	}
-
+    
 	// Update spectrum hit counter
 	if(eventData->energySpectrumExist && !global->generateDarkcal) {
 		pthread_mutex_lock(&global->nespechits_mutex);
@@ -313,7 +313,7 @@ void integrateRunSpectrum(cEventData *eventData, cGlobal *global) {
 void genSpectrumBackground(cEventData *eventData, cGlobal *global, int specWidth, int specHeight) {
 	// Generate background for spectrum detector
 	int spectrumpix = specWidth*specHeight;
-
+    
 	pthread_mutex_lock(&global->espectrumBuffer_mutex);
 	for (int i=0; i<spectrumpix; i++) {
 		global->espectrumBuffer[i]+=eventData->specImage[i];
@@ -331,7 +331,7 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
     // Simply return if spectrum is not asked for
     if(global->espectrum == 0)
         return;
-
+    
     
 	int     spectrumpix = global->espectrumWidth*global->espectrumLength;
 	double  *espectrumDark = (double*) calloc(spectrumpix, sizeof(double));
@@ -342,7 +342,7 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 	double  pixincrement = (double) evspread/global->espectrumLength;
 	double  beamAveV = global->meanPhotonEnergyeV;
 	double  eVoffset;
-
+    
 	// compute spectrum camera darkcal and save to HDF5
 	if(global->generateDarkcal){
 		pthread_mutex_lock(&global->espectrumRun_mutex);
@@ -350,22 +350,22 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 		for(int i=0; i<spectrumpix; i++) {
 			espectrumDark[i] = global->espectrumBuffer[i]/global->nespechits;
 		}
-
+        
 		sprintf(filename,"r%04u-energySpectrum-darkcal.h5", global->runNumber);
 		printf("Saving energy spectrum darkcal to file: %s\n", filename);
         
 		writeSimpleHDF5(filename, espectrumDark, global->espectrumWidth, global->espectrumLength, H5T_NATIVE_DOUBLE);
-
+        
 		pthread_mutex_unlock(&global->espectrumRun_mutex);
 		pthread_mutex_unlock(&global->nespechits_mutex);
 		free(espectrumDark);
 		return;
 	}
-
+    
 	// find maximum of run integrated spectum array and save both to HDF5
 	pthread_mutex_lock(&global->espectrumRun_mutex);
 	pthread_mutex_lock(&global->nespechits_mutex);
-
+    
 	for (int i=0; i<global->espectrumLength; i++) {
 		if (global->espectrumRun[i] > global->espectrumRun[maxindex]) {
 			maxindex = i;
@@ -375,12 +375,12 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 	for (int i=0; i<global->espectrumLength; i++) {
 		espectrumScale[i]=i*pixincrement + eVoffset;
 	}
-
+    
 	sprintf(filename,"r%04u-integratedEnergySpectrum.h5", global->runNumber);
 	printf("Saving run-integrated energy spectrum: %s\n", filename);
-
+    
 	writeSpectrumInfoHDF5(filename, espectrumScale, global->espectrumRun, global->espectrumLength, H5T_NATIVE_DOUBLE, &maxindex, 1, H5T_NATIVE_INT);
-
+    
 	pthread_mutex_unlock(&global->espectrumRun_mutex);
 	pthread_mutex_unlock(&global->nespechits_mutex);
 	return;
@@ -388,9 +388,9 @@ void saveIntegratedRunSpectrum(cGlobal *global) {
 
 
 void readSpectrumDarkcal(cGlobal *global, char *filename) {
-
+    
 	int spectrumpix = global->espectrumLength*global->espectrumWidth;
-
+    
 	// Do we need a darkcal file?
 	if (global->espectrumDarkSubtract == 0){
 		return;
@@ -411,7 +411,7 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 		printf("\tAborting...\n");
 		exit(1);
 	}
-
+    
 	printf("Reading energy spectrum Darkcal file:\n");
 	printf("\t%s\n",filename);
 	
@@ -493,7 +493,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	datatype_id =  H5Dget_type(dataset_id);
 	dataclass = H5Tget_class(datatype_id);
 	size = H5Tget_size(datatype_id);
-		
+    
 	H5Dread(dataset_id, datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, energyscale);
 	for(int i=0; i<global->espectrumLength; i++) {
 		global->espectrumScale[i] = energyscale[i];

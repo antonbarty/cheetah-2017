@@ -86,8 +86,8 @@ inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBi
 /*
  * Assemble modes (see assemble2Dimage.cpp)
  */
-static const int ASSEMBLE_INTERPOLATION_LINEAR = 0; 
-static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
+static const int ASSEMBLE_INTERPOLATION_LINEAR = 0;
+static const int ASSEMBLE_INTERPOLATION_NEAREST = 1;
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
 
@@ -99,9 +99,9 @@ class cGlobal;
 
 /** @brief Detector configuration common to all events */
 class cPixelDetectorCommon {
-
+    
 public:
-
+    
 	/** @brief ID of grouped configuration keywords */
 	char configGroup[MAX_FILENAME_LENGTH];
 	/** @brief Name of the detector */
@@ -109,14 +109,14 @@ public:
 	/** @brief Type of detector */
 	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
-    	//Pds::DetInfo::Detector detectorPdsDetInfo;
-
+    //Pds::DetInfo::Detector detectorPdsDetInfo;
+    
 	//unsigned         configVsn;
 	//unsigned         quadMask;
 	//unsigned         asicMask;
 	// Only required if one wants to specify front/back detector (pnccds)
 	long detectorID;
-
+    
 	/** @brief Detector configuration file */
 	char  detectorConfigFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing pixelmap (coordinates of pixels) */
@@ -131,48 +131,48 @@ public:
 	char  baddataFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing mask of area behind wires */
 	char  wireMaskFile[MAX_FILENAME_LENGTH];  // File containing mask of area behind wires
-
-
+    
+    
 	// Detector data block size
 	long  pix_nx;
 	long  pix_ny;
 	long  pix_nn;
-
+    
 	// Real space pixel locations
 	float  *pix_x;
 	float  *pix_y;
 	float  *pix_z;
-
+    
 	// Reciprocal space pixel coordinates (inverse A, no factor of 2*pi)
 	float  *pix_kx;
 	float  *pix_ky;
 	float  *pix_kz;
 	float  pixelSize;
-
+    
 	// Assembled image size
 	long  image_nx;
 	long  image_nn;
-
+    
 	// Assembled downsampled image size
 	long  imageXxX_nx;
 	long  imageXxX_nn;
 	long  downsampling;
-
+    
 	// ASIC module size
 	long  asic_nx;
 	long  asic_ny;
 	long  asic_nn;
 	long  nasics_x;
 	long  nasics_y;
-
+    
 	// Radial averages
 	float   radial_max;
 	long    radial_nn;
 	float   *pix_r;
 	float   *pix_kr;
 	float   *pix_res;
-
-
+    
+    
 	// Detector position
 	char    detectorZpvname[MAX_FILENAME_LENGTH];
 	float   defaultCameraLengthMm;
@@ -183,11 +183,11 @@ public:
 	float   detposprev;
 	double  detectorZ;
 	double  detectorEncoderValue;
-
+    
 	// Beam center
 	double  beamCenterPixX;
 	double  beamCenterPixY;
-
+    
 	/*
 	 *  Flags for detector processing options
 	 */
@@ -266,15 +266,15 @@ public:
 	uint16_t	*histogramData;
 	pthread_mutex_t histogram_mutex;
 	//long	histogram_depth;
-
+    
 	
 	
-
+    
 	// Saving options
 	int   saveDetectorCorrectedOnly;
 	int   saveDetectorRaw;
-
-
+    
+    
 	/*
 	 * Arrays for all sorts of stuff
 	 */
@@ -285,12 +285,12 @@ public:
 	float     *selfdark;
 	float     *gaincal;
 	uint16_t  *pixelmask_shared;
-
-
+    
+    
 	/*
 	 * Powder patterns/sums for this detector
 	 */
-//	FILE     *powderlogfp[MAX_POWDER_CLASSES];
+    //	FILE     *powderlogfp[MAX_POWDER_CLASSES];
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderRaw[MAX_POWDER_CLASSES];
@@ -312,7 +312,7 @@ public:
 	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t assembledMax_mutex[MAX_POWDER_CLASSES];
-
+    
 	/*
 	 *  Radial stacks for this detector
 	 */
@@ -320,11 +320,11 @@ public:
 	long	radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
-
-
-
+    
+    
+    
 public:
-
+    
 	cPixelDetectorCommon();
 	void configure(void);
 	void parseConfigFile(char *);
@@ -338,19 +338,19 @@ public:
 	void readBadpixelMask(char *);
 	void readBaddataMask(char *);
 	void readWireMask(char *);
-
-
-//private:
-
+    
+    
+    //private:
+    
 	int parseConfigTag(char*, char*);
-
+    
 };
 
 
 class cPixelDetectorEvent {
-
+    
 public:
-
+    
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;
@@ -366,8 +366,8 @@ public:
 	float     *radialAverage;
 	float     *radialAverageCounter;
     double      detectorZ;
-
-
+    
+    
 };
 
 #endif

@@ -23,33 +23,33 @@
  * Configuration parameters, and things that don't change often.
  */
 class cGlobal {
-
+    
 public:
-
+    
 	/** @brief Default constructor (set default values) */
 	cGlobal();
-
+    
 	/** @brief What's this? */
 	cGlobal     *self;
-
+    
 	/** @brief Path to the global configuration file */
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
 	char     cxiFilename[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
-
+    
 	char     epicsPvFloatAddresses[MAX_EPICS_PVS][MAX_EPICS_PV_NAME_LENGTH];
 	int      nEpicsPvFloatValues;
-
+    
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
-
+    
 	long frameNumber;
-
+    
 	/** @brief Detector settings that don't change from shot to shot. */
 	cPixelDetectorCommon detector[MAX_DETECTORS];
-
+    
 	/** @brief Summed photon energy. */
 	double   summedPhotonEnergyeV;
 	/** @brief Summed squared photon energy. */
@@ -58,18 +58,18 @@ public:
 	double   meanPhotonEnergyeV;
 	/** @brief Standard deviation in photon energy. */
 	double   photonEnergyeVSigma;
-
+    
 	/** @brief Skip all frames prior to this one. */
 	long     startAtFrame;
 	/** @brief Skip all frames after this one. */
 	long     stopAtFrame;
-
+    
 	/** @brief Toggle the creation of a darkcal image. */
 	int      generateDarkcal;
 	/** @brief Toggle the creation of a gaincal image. */
 	int      generateGaincal;
-
-
+    
+    
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
@@ -117,7 +117,7 @@ public:
 	int      hitfinderSubtractLocalBG;
 	/** @brief Inner radius of the local background annulus. */
 	int      hitfinderLocalBGRadius;
-	/** @brief Thickness of the local background annulus. 
+	/** @brief Thickness of the local background annulus.
 	 *
 	 * The outer radius of the annulus is thus hitfinderLocalBGradius +
 	 * hitfinderLocalBGThickness.*/
@@ -147,10 +147,10 @@ public:
 	float    hitfinderMinSNR;
 	
 	int		hitfinderFastScan;
-
+    
 	// Sorting criteria
 	int		sortPumpLaserOn;
-
+    
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */
@@ -181,8 +181,8 @@ public:
 	char     espectrumDarkFile[MAX_FILENAME_LENGTH];
 	/** @brief File name of energy spectrum scale calibration file. */
 	char     espectrumScaleFile[MAX_FILENAME_LENGTH];
-
-
+    
+    
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
@@ -192,28 +192,28 @@ public:
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
-
-
+    
+    
 	/** @brief Interval between saving of powder patterns, etc. */
 	int      saveInterval;
 	/** @brief Toggle the writing of Bragg peak information in hdf5 files. */
 	int      savePeakInfo;
 	/** @brief Toggle the writing of Bragg peak information into a text file. */
 	int      savePeakList;
-
-
+    
+    
 	/** @brief Toggle the writing of radial intensity profile data. */
 	int      saveRadialStacks;
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
-
-
+    
+    
 	/** @brief The Epics process variable for the pump laser delay. */
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
 	/** @brief The pump laser delay. */
 	float    laserDelay;
-
-
+    
+    
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
 	int      savehits;
 	/** @brief Toggle the writing of raw images in hdf5 files. */
@@ -237,11 +237,11 @@ public:
 	int		 h5compress;
     
     bool saveCXI;
-
-
+    
+    
 	/** @brief Toggle the verbosity of Cheetah. */
 	int      debugLevel;
-
+    
 	/** @brief TODO: Explain what goes here. */
 	char     logfile[MAX_FILENAME_LENGTH];
 	/** @brief TODO: Explain what goes here. */
@@ -250,16 +250,16 @@ public:
 	char     cleanedfile[MAX_FILENAME_LENGTH];
 	/** @brief TODO: Explain what goes here. */
 	char     peaksfile[MAX_FILENAME_LENGTH];
-
+    
 	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
-
+    
 	/*
 	 *	Stuff used for managing the program execution
 	 */
 	/** @brief TODO: Where is this used? */
 	unsigned runNumber;
-
+    
 	/*
 	 *	File management
 	 */
@@ -273,7 +273,7 @@ public:
 	long	subdirFileCount;
 	long	subdirNumber;
 	char    subdirName[MAX_FILENAME_LENGTH];
-
+    
 	
 	// Thread management
 	int      useHelperThreads;
@@ -298,12 +298,12 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
-
+    
 	/*
 	 *	Common variables
 	 */
 	float    avgGMD;
-
+    
 	/*
 	 *	Powder patterns/sums
 	 */
@@ -312,8 +312,8 @@ public:
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
 	int		nPeaksMin[MAX_POWDER_CLASSES];
 	int		nPeaksMax[MAX_POWDER_CLASSES];
-
-
+    
+    
     // counters updated with event data
 	long     npowderHits;
 	long     npowderBlanks;
@@ -332,7 +332,7 @@ public:
 	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
 	FILE    *FEElogfp[MAX_POWDER_CLASSES];
-
+    
 	
 	
 	// CXI downstream spectrometer
@@ -344,7 +344,7 @@ public:
 	long	espectrumStackCounter[MAX_POWDER_CLASSES];
 	float   *espectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
-
+    
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -356,18 +356,18 @@ public:
 	double    datarateWorker;
 	double    datarateWorkerMemory;
 	long      datarateWorkerSkipCounter;
-
-
+    
+    
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int      fudgeevr41;
 	int      evr41previous;
 	double   lasttime;
 	int      laserPumpScheme;
-
+    
 public:
 	/**
 	 * @brief Set the default configuration.
-	**/
+     **/
 	void defaultConfiguration(void);
 	/**
 	 * @brief Parse a global configuration file, update things.
@@ -375,28 +375,28 @@ public:
 	 * \usage Should be called only at the beginning of an analysis job.
 	 *
 	 * \param configFilePath The full path to the configuration file.
-	**/
+     **/
 	void parseConfigFile(char * configFilePath);
 	/**
 	 * @brief TODO: does this work now?
-	**/
+     **/
 	void parseCommandLineArguments(int, char**);
 	/**
 	 * @brief What's this for?
-	**/
+     **/
 	void setup(void);
-
+    
 	void writeInitialLog(void);
 	void updateLogfile(void);
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
 	void freeMutexes(void);
-
-
-
+    
+    
+    
 private:
 	int parseConfigTag(char*, char*);
-
+    
 };
 #endif

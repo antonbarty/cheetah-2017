@@ -31,7 +31,7 @@
  *	Worker thread function for processing each cspad data frame
  */
 void *worker(void *threadarg) {
-
+    
     /*
      *	Turn threadarg into a more useful form
      */
@@ -49,7 +49,7 @@ void *worker(void *threadarg) {
     //std::ios_base::openmode mode;
     std::stringstream sstm1;
     std::ofstream outHit;
-
+    
     
     /*
      *  Inside-thread speed test
@@ -59,15 +59,15 @@ void *worker(void *threadarg) {
         goto cleanup;
 	}
     
-
+    
     
     /*
      * Andy's nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only
      * Acqiris data (i.e. temporal profile of the laser diode signal) is available...
-     * Hopefully this never happens again... 
+     * Hopefully this never happens again...
      */
     if ( global->fudgeevr41 == 1 ) {
-        evr41fudge(eventData,global);	
+        evr41fudge(eventData,global);
     }
 	
     /*
@@ -87,23 +87,23 @@ void *worker(void *threadarg) {
     }
     
     
-
+    
     // Init background buffer
     initBackgroundBuffer(eventData, global);
-
+    
     
     
     /*
      * Check for saturated pixels before applying any other corrections
      */
     checkSaturatedPixels(eventData, global);
-
+    
 	
     /*
      *	Subtract darkcal image (static electronic offsets)
      */
     subtractDarkcal(eventData, global);
-
+    
     /*
      *	Subtract common mode offsets (electronic offsets)
      *	cmModule = 1
@@ -111,13 +111,13 @@ void *worker(void *threadarg) {
     cspadModuleSubtract(eventData, global);
     cspadSubtractUnbondedPixels(eventData, global);
     cspadSubtractBehindWires(eventData, global);
-
+    
 	
     /*
      *	Apply gain correction
      */
     applyGainCorrection(eventData, global);
-
+    
 	
     /*
      *	Apply bad pixel map
@@ -134,10 +134,10 @@ void *worker(void *threadarg) {
     pnccdOffsetCorrection(eventData, global);
     pnccdFixWiringError(eventData, global);
 	
-
+    
 	
     /*
-     *	Keep memory of data with only detector artefacts subtracted 
+     *	Keep memory of data with only detector artefacts subtracted
      *	(possibly needed later)
      */
     DETECTOR_LOOP {
@@ -149,7 +149,7 @@ void *worker(void *threadarg) {
         }
     }
     
-
+    
     /*
      *  Inside-thread speed test
      */
@@ -176,26 +176,26 @@ void *worker(void *threadarg) {
 	 *	Subtract persistent photon background
 	 */
 	subtractPersistentBackground(eventData, global);
-
-
+    
+    
 	/*
 	 *	Radial background subtraction
 	 */
     subtractRadialBackground(eventData, global);
-
+    
 	/*
 	 *	Local background subtraction
 	 */
 	subtractLocalBackground(eventData, global);
 	
-			
+    
 localBG:
 	
 	/*
 	 *	Subtract residual common mode offsets (cmModule=2)
 	 */
 	cspadModuleSubtract2(eventData, global);
-
+    
 	
 	/*
 	 *	Apply bad pixels
@@ -209,8 +209,8 @@ localBG:
 	identifyHotPixels(eventData, global);
 	calculateHotPixelMask(global);
 	applyHotPixelMask(eventData,global);
-
-
+    
+    
 	
     
     /*
@@ -226,16 +226,16 @@ localBG:
      *	Skip first set of frames to build up running estimate of background...
      */
     DETECTOR_LOOP {
-		if (eventData->threadNum < global->detector[detID].startFrames || 
+		if (eventData->threadNum < global->detector[detID].startFrames ||
             (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter < global->detector[detID].bgMemory) ||
             (global->detector[detID].useAutoHotpixel && global->detector[detID].hotpixCounter < global->detector[detID].hotpixRecalc) ) {
-                updateBackgroundBuffer(eventData, global, 0);
-                updateHaloBuffer(eventData,global,0);
-                printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
+            updateBackgroundBuffer(eventData, global, 0);
+            updateHaloBuffer(eventData,global,0);
+            printf("r%04u:%li (%3.1fHz): Digesting initial frames\n", global->runNumber, eventData->threadNum,global->datarateWorker);
             goto cleanup;
 		}
     }
-
+    
 	
 	/*
 	 *	Hitfinding
@@ -250,8 +250,8 @@ hitknown:
 	 *	Sort event into different classes (eg: laser on/off)
 	 */
 	sortPowderClass(eventData, global);
-		
-		
+    
+    
 	/*
 	 *	Identify halo pixels
 	 */
@@ -262,7 +262,7 @@ hitknown:
 	/*
 	 *	Update running backround estimate based on non-hits
 	 */
-	updateBackgroundBuffer(eventData, global, hit); 
+	updateBackgroundBuffer(eventData, global, hit);
 	
 	
     
@@ -281,17 +281,17 @@ hitknown:
 	 */
     if(global->powderSumWithBackgroundSubtraction)
         addToPowder(eventData, global);
-
+    
 	
     
-
+    
 	/*
 	 *	Revert to uncorrected data
 	 */
     // Revert to data without photon background subtracted, only detector corrections applied
 	DETECTOR_LOOP {
-		if(global->detector[detID].saveDetectorCorrectedOnly) 
-		  memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		if(global->detector[detID].saveDetectorCorrectedOnly)
+            memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
 	}
 	
 	
@@ -311,8 +311,8 @@ hitknown:
             eventData->detector[detID].corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detID].corrected_data[i]);
         }
     }
-
-
+    
+    
     /*
      *  Inside-thread speed test
      */
@@ -321,13 +321,13 @@ hitknown:
         goto cleanup;
 	}
     
-
+    
     /*
 	 *	Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
 	 */
     if(!global->powderSumWithBackgroundSubtraction)
         addToPowder(eventData, global);
-
+    
     
     /*
      *  Calculate radial average
@@ -335,9 +335,9 @@ hitknown:
      */
     calculateRadialAverage(eventData, global);
     addToRadialAverageStack(eventData, global);
-
+    
 	
-		
+    
     /*
      * calculate the one dimesional beam spectrum from CXI camera
      */
@@ -352,15 +352,15 @@ hitknown:
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #8 (radial average and spectrum)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
-
+    
     
     /*
      *	Maintain a running sum of data (powder patterns)
      *    and strongest non-hit and weakest hit
      */
     addToHistogram(eventData, global);
-
-
+    
+    
     /*
      *  Inside-thread speed test
      */
@@ -368,10 +368,10 @@ hitknown:
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #9 (After histograms)\n", global->runNumber, eventData->frameNumber, global->datarate);
         goto cleanup;
 	}
-
+    
 logfile:
 	updateDatarate(eventData,global);
-
+    
     /*
      *	If this is a hit, write out to our favourite HDF5 format
      *
@@ -402,15 +402,15 @@ logfile:
         printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
     }
     
-
+    
 	/*
-	 *	FEE spectrometer data stack 
+	 *	FEE spectrometer data stack
 	 *	(needs knowledge of subdirectory for file list, which is why it's done here)
 	 */
 	addFEEspectrumToStack(eventData, global, hit);
     
 	
-
+    
     /*
      *	If this is a hit, write out peak info to peak list file
      */
@@ -418,11 +418,11 @@ logfile:
         writePeakFile(eventData, global);
     }
 	
-
+    
 	
     /*
-    *	Write out information on each frame to a log file
-    */
+     *	Write out information on each frame to a log file
+     */
     pthread_mutex_lock(&global->framefp_mutex);
     fprintf(global->framefp, "%s/%s, ", eventData->eventSubdir, eventData->eventname);
     fprintf(global->framefp, "%li, ", eventData->frameNumber);
@@ -444,7 +444,7 @@ logfile:
     fprintf(global->framefp, "%g, ", eventData->laserDelay);
     fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
     pthread_mutex_unlock(&global->framefp_mutex);
-
+    
     // Keep track of what has gone into each image class
 	powderClass = eventData->powderClass;
     if(global->powderlogfp[powderClass] != NULL) {
@@ -476,33 +476,33 @@ logfile:
         goto cleanup;
 	}
     
-
+    
     
 	
-  /*
-   *	Cleanup and exit
-   */
- cleanup:
-  // Decrement thread pool counter by one
-  pthread_mutex_lock(&global->nActiveThreads_mutex);
-  global->nActiveThreads -= 1;
-  pthread_mutex_unlock(&global->nActiveThreads_mutex);
+    /*
+     *	Cleanup and exit
+     */
+cleanup:
+    // Decrement thread pool counter by one
+    pthread_mutex_lock(&global->nActiveThreads_mutex);
+    global->nActiveThreads -= 1;
+    pthread_mutex_unlock(&global->nActiveThreads_mutex);
     
-  // Free memory only if running multi-threaded
-  if(eventData->useThreads == 1) {
-    cheetahDestroyEvent(eventData);
-    pthread_exit(NULL);
-  }
-  else {
-    return(NULL);
-  }
+    // Free memory only if running multi-threaded
+    if(eventData->useThreads == 1) {
+        cheetahDestroyEvent(eventData);
+        pthread_exit(NULL);
+    }
+    else {
+        return(NULL);
+    }
 }
 
 
 /*
  * Nasty little bit of code that aims to toggle the evr41 signal based on the Acqiris
- * signal.  Very simple: scan along the Acqiris trace (starting from the ini keyword 
- * hitfinderTOFMinSample and ending at hitfinderTOFMaxSample) and check that there is 
+ * signal.  Very simple: scan along the Acqiris trace (starting from the ini keyword
+ * hitfinderTOFMinSample and ending at hitfinderTOFMaxSample) and check that there is
  * at least one sample above the threshold set by the hitfinderTOFThresh keyword. Oh,
  * and don't forget to specify the Acqiris channel with:
  * tofChannel=0
@@ -513,8 +513,8 @@ logfile:
  * Agreed - doesn't sound very robust.  As far as I can tell at the moment, only a single
  * sample rises above threshold when the laser trigger is on... maybe bad sampling interval?
  * Or, I could be wrong...
- * 
- * -Rick  
+ *
+ * -Rick
  */
 void evr41fudge(cEventData *t, cGlobal *g){
 	
@@ -522,7 +522,7 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		//printf("Acqiris not present; can't fudge EVR41...\n");
 		return;
 	}
- 
+    
 	//int nCh = g->AcqNumChannels;
 	//int nSamp = g->AcqNumSamples;
 	double * Vtof = t->TOFVoltage;
@@ -536,7 +536,7 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
 	}
 	
-
+    
 	bool acqLaserOn = false;
 	if ( tCounts >= 1 ) {
 		acqLaserOn = true;
@@ -556,29 +556,29 @@ void evr41fudge(cEventData *t, cGlobal *g){
 
 double difftime_timeval(timeval t1, timeval t2)
 {
-  return ((t1.tv_sec - t2.tv_sec) + (t1.tv_usec - t2.tv_usec) / 1000000.0 );
+    return ((t1.tv_sec - t2.tv_sec) + (t1.tv_usec - t2.tv_usec) / 1000000.0 );
 }
 
 void updateDatarate(cEventData *eventData, cGlobal *global){
-
-  timeval timevalNow;
-  double mem = global->datarateWorkerMemory;
-  double dtNew,dtNow;
-  gettimeofday(&timevalNow, NULL);
-  
-  pthread_mutex_lock(&global->datarateWorker_mutex);
-  if (timercmp(&timevalNow,&global->datarateWorkerTimevalLast,!=)){
-    dtNow = difftime_timeval(timevalNow,global->datarateWorkerTimevalLast) / (1+global->datarateWorkerSkipCounter);
-    dtNew = 1/global->datarateWorker * mem + dtNow * (1-mem);
-    global->datarateWorker = 1/dtNew;
-    global->datarateWorkerTimevalLast = timevalNow;
-    global->datarateWorkerSkipCounter = 0;
-  }else{
-    global->datarateWorkerSkipCounter += 1;
-  }
-  pthread_mutex_unlock(&global->datarateWorker_mutex);
-
-  
+    
+    timeval timevalNow;
+    double mem = global->datarateWorkerMemory;
+    double dtNew,dtNow;
+    gettimeofday(&timevalNow, NULL);
+    
+    pthread_mutex_lock(&global->datarateWorker_mutex);
+    if (timercmp(&timevalNow,&global->datarateWorkerTimevalLast,!=)){
+        dtNow = difftime_timeval(timevalNow,global->datarateWorkerTimevalLast) / (1+global->datarateWorkerSkipCounter);
+        dtNew = 1/global->datarateWorker * mem + dtNow * (1-mem);
+        global->datarateWorker = 1/dtNew;
+        global->datarateWorkerTimevalLast = timevalNow;
+        global->datarateWorkerSkipCounter = 0;
+    }else{
+        global->datarateWorkerSkipCounter += 1;
+    }
+    pthread_mutex_unlock(&global->datarateWorker_mutex);
+    
+    
 }
 
 

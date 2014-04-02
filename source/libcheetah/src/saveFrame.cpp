@@ -36,11 +36,11 @@ void nameEvent(cEventData *event, cGlobal *global){
 	 *	Create filename based on date, time and fiducial for this image
 	 */
 	char buffer1[80];
-	char buffer2[80];	
+	char buffer2[80];
 	time_t eventTime = event->seconds;
 	
 	struct tm *timestatic, timelocal;
-	timestatic=localtime_r( &eventTime, &timelocal );	
+	timestatic=localtime_r( &eventTime, &timelocal );
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,event->fiducial);
@@ -53,7 +53,7 @@ void nameEvent(cEventData *event, cGlobal *global){
  *	Update the subdirectory name
  */
 void assignSubdir(cEventData *event, cGlobal *global) {
-
+    
 	long filesPerDirectory = 1000;
 	
 	pthread_mutex_lock(&global->subdir_mutex);
@@ -66,12 +66,12 @@ void assignSubdir(cEventData *event, cGlobal *global) {
 		strcpy(global->subdirName, subdir);
 		global->subdirFileCount = 0;
 	};
-
+    
 	global->subdirFileCount += 1;
 	strcpy(event->eventSubdir, global->subdirName);
 	
 	pthread_mutex_unlock(&global->subdir_mutex);
-
+    
 }
 
 
@@ -88,7 +88,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	char outfile[1024];
 	assignSubdir(info, global);
 	sprintf(outfile, "%s/%s", global->subdirName, info->eventname);
-
+    
 	
 	/*
 	 *	Update text file log
@@ -97,9 +97,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventSubdir, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
-
+    
 	
-	/* 
+	/*
  	 *  HDF5 variables
 	 */
 	hid_t		hdf_fileID;
@@ -113,7 +113,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	int			h5compressnum = 5;
 	//char 		fieldname[100];
 	char        fieldID[1023];
-
+    
 	
 	/*
 	 *	Create the HDF5 file
@@ -256,7 +256,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			}
 		}
 	}
-		
+    
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
@@ -290,14 +290,14 @@ void writeHDF5(cEventData *info, cGlobal *global){
     }
 	
     
-
+    
 	
 	/*
 	 *	Save TOF data (Aqiris)
 	 */
 	if(info->TOFPresent==1) {
-		size[0] = 2;	
-		size[1] = global->AcqNumSamples;	
+		size[0] = 2;
+		size[1] = global->AcqNumSamples;
 		max_size[0] = 2;
 		max_size[1] = global->AcqNumSamples;
 		if (global->h5compress) {
@@ -320,14 +320,14 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
-	}	
+	}
 	
 	/*
 	 *	Save microscope images (Pulnix CCD) as data/pulnixCCD
 	 */
 	if(info->pulnixFail == 0) {
-		size[0] = info->pulnixHeight;	
-		size[1] = info->pulnixWidth;	
+		size[0] = info->pulnixHeight;
+		size[1] = info->pulnixWidth;
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
 			H5Pset_shuffle(h5compression);			// De-interlace bytes
@@ -407,7 +407,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		return;
 	}
 	hdf_error = H5Lcreate_hard(hdf_fileID, "/processing/cheetah", hdf_fileID, "/processing/hitfinder",0,0);
-
+    
 	
 	// HDF5 version does not support extensible data types -> force it to be big instead
 	
@@ -485,13 +485,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		H5Sclose(dataspace_id);
 		
 		
-		// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set 
+		// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set
 		if(global->saveAssembled) {
 			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-assembled", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
 		}
 		else {
 			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
-		}		
+		}
 		
 		free(peak_info);
 	}
@@ -609,7 +609,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	H5Dclose(dataset_id);
 	
 	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_22_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd22 );	
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->gmd22 );
 	H5Dclose(dataset_id);
 	
 	
@@ -619,31 +619,31 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
-
-
+    
+    
 	// Misc EPICS PVs
-	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {	
+	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {
 		sprintf(fieldID, "/LCLS/%s", &global->epicsPvFloatAddresses[i][0]);
 		dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->epicsPvFloatValues[i] );	
+		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &info->epicsPvFloatValues[i] );
 		H5Dclose(dataset_id);
 	}
-
+    
     // Detector motor positions
     DETECTOR_LOOP {
         sprintf(fieldID, "/LCLS/detector%li-Position", detID);
         dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorZ );	
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorZ );
         H5Dclose(dataset_id);
         
         sprintf(fieldID, "/LCLS/detector%li-EncoderValue", detID);
         dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue);	
-
-        //H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue );	
+        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue);
+        
+        //H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detID].detectorEncoderValue );
         H5Dclose(dataset_id);
-    }    
-
+    }
+    
 	
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);
@@ -666,7 +666,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	time_t eventTime = info->seconds;
 	timestr = ctime_r(&eventTime, ctime_buffer);
 	dataspace_id = H5Screate(H5S_SCALAR);
-	datatype = H5Tcopy(H5T_C_S1);  
+	datatype = H5Tcopy(H5T_C_S1);
 	H5Tset_size(datatype,strlen(timestr)+1);
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/eventTimeString", datatype, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, timestr );
@@ -701,7 +701,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	}
 	
 	H5Fclose(hdf_fileID);
-
+    
 }
 
 
@@ -717,23 +717,23 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	// Version 1 of the peak info format
 	// (stream file)
 	/*
-	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", eventData->eventname);
-	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
-	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
-	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
-	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
-	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
-	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
-	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
-	
-	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
-	}
-	pthread_mutex_unlock(&global->peaksfp_mutex);
+     pthread_mutex_lock(&global->peaksfp_mutex);
+     fprintf(global->peaksfp, "%s\n", eventData->eventname);
+     fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+     fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+     fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+     fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+     fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+     fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+     fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+     fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
+     
+     for(long i=0; i<eventData->nPeaks; i++) {
+     fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
+     }
+     pthread_mutex_unlock(&global->peaksfp_mutex);
 	 */
-
+    
 	
 	// Version 2 of the peak info format
 	// (one big CSV file)
@@ -843,7 +843,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	H5Fclose(fh);
 	
-
+    
 }
 
 void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *data1, int length1, int type1, const void *data2, int length2, int type2) {

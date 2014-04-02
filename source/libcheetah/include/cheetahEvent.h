@@ -35,7 +35,7 @@ public:
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
-
+    
 	// Misc. EPICS data
 	float       epicsPvFloatValues[MAX_EPICS_PVS];
 	
@@ -58,7 +58,7 @@ public:
 	// energy spectrum data (2D camera downstream)
 	int             energySpectrumExist;
 	double          *energySpectrum1D;
-
+    
 	// FEE energy spectrum data
 	int				FEEspec_present;
 	uint32_t		*FEEspec_hproj;
@@ -67,7 +67,7 @@ public:
 	long			FEEspec_vproj_size;
 	
 	
-
+    
 	// Hit finding
 	int			hit;
 	int			powderClass;
@@ -95,10 +95,10 @@ public:
 	char		timeString[1024];
 	char		eventname[1024];
 	char		eventSubdir[1024];
-
+    
 	bool		beamOn;
 	unsigned	runNumber;
-
+    
 	double		photonEnergyeV;		// in eV
 	double		wavelengthA;		// in Angstrom
 	

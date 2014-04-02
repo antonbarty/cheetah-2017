@@ -25,7 +25,7 @@
  */
 
 void addToHistogram(cEventData *eventData, cGlobal *global) {
-	   
+    
 	DETECTOR_LOOP {
 		if (global->detector[detID].histogram) {
 			addToHistogram(eventData, global, detID);
@@ -40,7 +40,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	long		pix_nn = global->detector[detID].pix_nn;
 	long		pix_nx = global->detector[detID].pix_nx;
 	long		pix_ny = global->detector[detID].pix_ny;
-
+    
 	long		histMin = global->detector[detID].histogramMin;
 	long		histNbins = global->detector[detID].histogramNbins;
 	long		histBinSize = global->detector[detID].histogramBinSize;
@@ -53,7 +53,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	long		hist_nn = global->detector[detID].histogram_nn;
 	uint64_t	hist_nnn = global->detector[detID].histogram_nnn;
 	uint16_t	*histData = global->detector[detID].histogramData;
-
+    
 	
 	// Figure out which bin should be filled
 	// (done outside of mutex lock)
@@ -108,7 +108,7 @@ void saveHistograms(cGlobal *global) {
 			saveHistogram(global, detID);
 		}
 	}
-
+    
 }
 
 
@@ -134,8 +134,8 @@ void saveHistogram(cGlobal *global, int detID) {
 	float		*darkcal = global->detector[detID].darkcal;
 	
 	long		hist_count;
-
-
+    
+    
     
 	/*
      *  Copy histogram into a buffer so that the rest of the code can keep crunching in the meantime
@@ -154,7 +154,7 @@ void saveHistogram(cGlobal *global, int detID) {
     
     
 	
-
+    
     /*
 	 *	Mess of stuff for writing the HDF5 file
      *  (OK to open HDF5 file outside the mutex lock)
@@ -165,7 +165,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	hsize_t		max_size[3];
 	hsize_t		chunk[3];
 	hid_t		h5compression;
-
+    
     
 	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
 	printf("Writing histogram data to file: %s\n",filename);
@@ -186,14 +186,14 @@ void saveHistogram(cGlobal *global, int detID) {
 		//H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
 		//H5Pset_chunk(h5compression, 2, size);
 		//H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
-
+        
 	}
 	else {
 		h5compression = H5P_DEFAULT;
 	}
-
     
-
+    
+    
     /*
      *  Write histogram data
      */
@@ -201,7 +201,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	size[1] = hist_nfs;
 	size[2] = histNbins;
 	sh = H5Screate_simple(3, size, NULL);
-
+    
 	chunk[0] = 1;
 	chunk[1] = 1;
 	chunk[2] = histNbins;
@@ -210,7 +210,7 @@ void saveHistogram(cGlobal *global, int detID) {
 		H5Pset_shuffle(h5compression);			// De-interlace bytes
 		H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
 	}
-
+    
 	
 	dh = H5Dcreate(gh, "histogram", H5T_NATIVE_UINT16, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	if (dh < 0) ERROR("Could not create dataset.\n");
@@ -219,7 +219,7 @@ void saveHistogram(cGlobal *global, int detID) {
     
     // Create link from /data/histogram to /data/data (the default data locations)
     H5Lcreate_soft( "/data/histogram", fh, "/data/data",0,0);
-
+    
 	
 	/*
 	 *	Perform some statistical analysis
@@ -244,20 +244,20 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	for(long i=0; i<hist_nn; i++) {
 		offset = i*histNbins;
-
+        
 		// Extract a temporary copy of the histogram for this pixel
 		count = 0;
 		for(long j=0; j<histNbins; j++) {
 			hist[j] = (float) histogramBuffer[offset+j];
 			count += hist[j];
 		}
-
+        
 		
 		// Normalise the histogram to total count of 1
 		for(long j=0; j<histNbins; j++)
 			hist[j] /= count;
-
-
+        
+        
 		// Calculate mean and variance
 		count = 0;
 		mean = 0;
@@ -309,7 +309,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	
     
     
-
+    
 	
 	// Write offsets for each pixel (darkcal)
 	size[0] = hist_nss;
@@ -317,38 +317,38 @@ void saveHistogram(cGlobal *global, int detID) {
 	max_size[0] = hist_nss;
 	max_size[1] = hist_nfs;
 	sh = H5Screate_simple(2, size, max_size);
-
+    
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 2, size);
 		H5Pset_shuffle(h5compression);			// De-interlace bytes
 		H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
 	}
-
+    
 	
 	dh = H5Dcreate(gh, "offset", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, darkcal);
 	H5Dclose(dh);
-
-		
+    
+    
 	// Write arrays of statistics for each pixel
 	dh = H5Dcreate(gh, "mean", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, mean_arr);
-
+    
 	dh = H5Dcreate(gh, "variance", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, var_arr);
-
+    
 	dh = H5Dcreate(gh, "reduced-variance", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rVar_arr);
-
+    
 	dh = H5Dcreate(gh, "chi-squared", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, cSq_arr);
-
+    
 	dh = H5Dcreate(gh, "kl-divergence", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, kld_arr);
-
+    
 	dh = H5Dcreate(gh, "n", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, count_arr);
-
+    
 	
 	H5Sclose(sh);
 	
@@ -370,12 +370,12 @@ void saveHistogram(cGlobal *global, int detID) {
 	dh = H5Dcreate(gh, "histogramMin", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histMin );
 	H5Dclose(dh);
-
+    
 	// Histogram maximum
 	dh = H5Dcreate(gh, "histogramNbins", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histNbins );
 	H5Dclose(dh);
-
+    
 	// Step size
 	dh = H5Dcreate(gh, "histogramBinsize", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histBinSize );
@@ -383,7 +383,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	H5Sclose(sh);
 	H5Gclose(gh);
-
+    
 	
 	// Clean up stale HDF5 links
 	int n_ids;
@@ -415,6 +415,6 @@ void saveHistogram(cGlobal *global, int detID) {
 	free(kld_arr);
 	free(count_arr);
 	free(hist);
-
+    
 	
 }

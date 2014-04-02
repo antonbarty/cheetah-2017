@@ -28,18 +28,18 @@
 void subtractDarkcal(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if(global->detector[detID].useDarkcalSubtraction) {
-		  long	pix_nn = global->detector[detID].pix_nn;
+            long	pix_nn = global->detector[detID].pix_nn;
 			float	*data = eventData->detector[detID].corrected_data;
 			float	*darkcal = global->detector[detID].darkcal;
-
+            
 			subtractDarkcal(data, darkcal, pix_nn);
-		}			
+		}
 	}
 }
 
 void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
 	for(long i=0; i<pix_nn; i++) {
-		data[i] -= darkcal[i]; 
+		data[i] -= darkcal[i];
 	}
 }
 
@@ -48,7 +48,7 @@ void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
 /*
  *	Apply gain correction
  *	Assumes the gaincal array is appropriately 'prepared' when loaded so that all we do is a multiplication.
- *	All that checking for division by zero (and inverting when required) needs only be done once, right? 
+ *	All that checking for division by zero (and inverting when required) needs only be done once, right?
  */
 void applyGainCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
@@ -64,7 +64,7 @@ void applyGainCorrection(cEventData *eventData, cGlobal *global) {
 
 void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 	for(long i=0; i<pix_nn; i++) {
-		data[i] *= gaincal[i]; 
+		data[i] *= gaincal[i];
 	}
 }
 
@@ -75,22 +75,22 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
  *	Assumes that all we have to do here is a multiplication.
  */
 
-void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
+void applyBadPixelMask(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
 		if(global->detector[detID].applyBadPixelMask) {
 			long	 pix_nn = global->detector[detID].pix_nn;
 			float	 *data = eventData->detector[detID].corrected_data;
 			uint16_t *mask = eventData->detector[detID].pixelmask;
-
+            
 			applyBadPixelMask(data, mask, pix_nn);
 		}
-	} 
+	}
 }
 
 void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
 	for(long i=0; i<pix_nn; i++) {
-	  data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
+        data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD);
 	}
 }
 
@@ -112,7 +112,7 @@ void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 	
 	DETECTOR_LOOP {
         if(global->detector[detID].cmModule == flag) {
-		
+            
 			// Dereference datector arrays
 			float		threshold = global->detector[detID].cmFloor;
 			float		*data = eventData->detector[detID].corrected_data;
@@ -134,9 +134,9 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 	long		mval;
 	long		counter;
 	float		median;
-					  
+    
 	// Create median buffer
-	float	*buffer; 
+	float	*buffer;
 	buffer = (float*) calloc(asic_nx*asic_ny, sizeof(float));
 	
 	
@@ -155,23 +155,23 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					e += i + mi*asic_nx;
 					if( isBitOptionUnset(mask[e],PIXEL_IS_BAD) ) {
-					  buffer[counter++] = data[e];
-				}
+                        buffer[counter++] = data[e];
+                    }
 				}
 			}
 			
 			
-            // Calculate background using median value 
+            // Calculate background using median value
 			//median = kth_smallest(buffer, global->asic_nx*global->asic_ny, mval);
 			if(counter>0) {
 				mval = lrint(counter*threshold);
-                if(mval < 0) 
+                if(mval < 0)
                     mval = 1;
 				median = kth_smallest(buffer, counter, mval);
 			}
-			else 
+			else
 				median = 0;
-
+            
 			// Subtract median value
 			for(long j=0; j<asic_ny; j++){
 				for(long i=0; i<asic_nx; i++){
@@ -189,13 +189,13 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 
 /*
  *	Subtract offset estimated from unbonded pixels
- *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the 
- *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.  
+ *	In the upstream detector, the unbonded pixels are in Q0:0-3 and Q2:4-5 and are at the
+ *	corners of each asic and at row=col (row<194) or row-194==col (row>194) for col%10=0.
  */
 void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cspadSubtractUnbondedPixels) { 
+        if(global->detector[detID].cspadSubtractUnbondedPixels) {
 			
 			// Dereference datector arrays
 			float		*data = eventData->detector[detID].corrected_data;
@@ -220,7 +220,7 @@ void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<nasics_x; mi++){
 		for(long mj=0; mj<nasics_y; mj++){
-						
+            
 			
 			// Loop over unbonded pixels within each ASIC
 			background = 0.0;
@@ -265,12 +265,12 @@ void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
 			long		asic_ny = global->detector[detID].asic_ny;
 			long		nasics_x = global->detector[detID].nasics_x;
 			long		nasics_y = global->detector[detID].nasics_y;
-
+            
 			cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
-
+            
 		}
 	}
-}		
+}
 
 void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
@@ -280,7 +280,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 	float		median;
 	
 	// Create median buffer
-	float	*buffer; 
+	float	*buffer;
 	buffer = (float*) calloc(asic_ny*asic_nx, sizeof(float));
 	
 	// Loop over modules (8x8 array)
@@ -306,7 +306,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 				mval = lrint(counter*threshold);
 				median = kth_smallest(buffer, counter, mval);
 			}
-			else 
+			else
 				median = 0;
 			
 			
@@ -331,173 +331,172 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
  */
 void identifyHotPixels(cEventData *eventData, cGlobal *global){
 	
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHotpixel) {
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHotpixel) {
 			
-      int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
-      long	pix_nn = global->detector[detID].pix_nn;
-      long	hotpixADC = global->detector[detID].hotpixADC;
-      long	bufferDepth = global->detector[detID].hotpixMemory;
-      long	hotpixCounter = global->detector[detID].hotpixCounter;
-      float	*frameData = eventData->detector[detID].corrected_data;
-      int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
-      
-      /*
-       *	Update global hot pixel buffer
-       */
-
-      int16_t	*buffer = (int16_t *) calloc(pix_nn,sizeof(int16_t));
-      for(long i=0; i<pix_nn; i++){
-	buffer[i] = (fabs(frameData[i])>hotpixADC)?(1):(0);
-      }
-      
-      long frameID = hotpixCounter%bufferDepth;
-
-      if(lockThreads)
-	pthread_mutex_lock(&global->hotpixel_mutex);
-
-      global->detector[detID].hotpixCounter += 1;
-      memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-      eventData->nHot = global->detector[detID].nhot;
-
-      if(lockThreads)
-	pthread_mutex_unlock(&global->hotpixel_mutex);
-      
-      free(buffer);
-
+            int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
+            long	pix_nn = global->detector[detID].pix_nn;
+            long	hotpixADC = global->detector[detID].hotpixADC;
+            long	bufferDepth = global->detector[detID].hotpixMemory;
+            long	hotpixCounter = global->detector[detID].hotpixCounter;
+            float	*frameData = eventData->detector[detID].corrected_data;
+            int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+            
+            /*
+             *	Update global hot pixel buffer
+             */
+            
+            int16_t	*buffer = (int16_t *) calloc(pix_nn,sizeof(int16_t));
+            for(long i=0; i<pix_nn; i++){
+                buffer[i] = (fabs(frameData[i])>hotpixADC)?(1):(0);
+            }
+            
+            long frameID = hotpixCounter%bufferDepth;
+            
+            if(lockThreads)
+                pthread_mutex_lock(&global->hotpixel_mutex);
+            
+            global->detector[detID].hotpixCounter += 1;
+            memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
+            eventData->nHot = global->detector[detID].nhot;
+            
+            if(lockThreads)
+                pthread_mutex_unlock(&global->hotpixel_mutex);
+            
+            free(buffer);
+            
+        }
     }
-  }		
 }
 
 /*
  *	Kill hot pixels
  */
 void applyHotPixelMask(cEventData *eventData, cGlobal *global){
-
-  DETECTOR_LOOP {
-    if (global->detector[detID].useAutoHotpixel && global->detector[detID].applyAutoHotpixel){
-      long	pix_nn = global->detector[detID].pix_nn;
-      float	*frameData = eventData->detector[detID].corrected_data;
-      uint16_t *mask = eventData->detector[detID].pixelmask;
-	
-      for(long i=0; i<pix_nn; i++)
-	frameData[i] *= isBitOptionUnset(mask[i],PIXEL_IS_HOT);
-	
+    
+    DETECTOR_LOOP {
+        if (global->detector[detID].useAutoHotpixel && global->detector[detID].applyAutoHotpixel){
+            long	pix_nn = global->detector[detID].pix_nn;
+            float	*frameData = eventData->detector[detID].corrected_data;
+            uint16_t *mask = eventData->detector[detID].pixelmask;
+            
+            for(long i=0; i<pix_nn; i++)
+                frameData[i] *= isBitOptionUnset(mask[i],PIXEL_IS_HOT);
+            
+        }
     }
-  }    
-}	
+}
 
 
 
 
-/* 
+/*
  *	Recalculate hot pixel masks using frame buffer
  */
 void calculateHotPixelMask(cGlobal *global){
-
-	
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHotpixel) {
-      float	hotpixFrequency = global->detector[detID].hotpixFreq;
-      long	bufferDepth = global->detector[detID].hotpixMemory;
-      long	hotpixCounter = global->detector[detID].hotpixCounter;
-      long	hotpixRecalc = global->detector[detID].hotpixRecalc;
-      long	lastUpdate = global->detector[detID].last_hotpix_update;
+    
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHotpixel) {
+            float	hotpixFrequency = global->detector[detID].hotpixFreq;
+            long	bufferDepth = global->detector[detID].hotpixMemory;
+            long	hotpixCounter = global->detector[detID].hotpixCounter;
+            long	hotpixRecalc = global->detector[detID].hotpixRecalc;
+            long	lastUpdate = global->detector[detID].last_hotpix_update;
 			
 			
-      if( ( (hotpixCounter % hotpixRecalc) == 0 || hotpixCounter == bufferDepth) && hotpixCounter != lastUpdate ) {
+            if( ( (hotpixCounter % hotpixRecalc) == 0 || hotpixCounter == bufferDepth) && hotpixCounter != lastUpdate ) {
 				
-	global->detector[detID].last_hotpix_update = hotpixCounter;
+                global->detector[detID].last_hotpix_update = hotpixCounter;
 				
-	long	nhot;
-	int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
-	long	threshold = lrint(bufferDepth*hotpixFrequency);
-	long	pix_nn = global->detector[detID].pix_nn;
-	uint16_t *mask = global->detector[detID].pixelmask_shared;
-	int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+                long	nhot;
+                int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
+                long	threshold = lrint(bufferDepth*hotpixFrequency);
+                long	pix_nn = global->detector[detID].pix_nn;
+                uint16_t *mask = global->detector[detID].pixelmask_shared;
+                int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
 				
-
-	if(lockThreads)
-	  pthread_mutex_lock(&global->hotpixel_mutex);
-
-	printf("Detector %li: Recalculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);	
-	nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-	printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
-
-	if(lockThreads)
-	  pthread_mutex_unlock(&global->hotpixel_mutex);
-
-	global->detector[detID].nhot = nhot;
-      }
-    }	
-  }
+                
+                if(lockThreads)
+                    pthread_mutex_lock(&global->hotpixel_mutex);
+                
+                printf("Detector %li: Recalculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
+                nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
+                printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
+                
+                if(lockThreads)
+                    pthread_mutex_unlock(&global->hotpixel_mutex);
+                
+                global->detector[detID].nhot = nhot;
+            }
+        }
+    }
 }
 
 
 long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn){
-
-  // Loop over all pixels 
-  long	counter;
-  long	nhot = 0;
-  for(long i=0; i<pix_nn; i++) {
+    
+    // Loop over all pixels
+    long	counter;
+    long	nhot = 0;
+    for(long i=0; i<pix_nn; i++) {
 		
-    counter = 0;
-    for(long j=0; j< bufferDepth; j++) {
-      counter += frameBuffer[j*pix_nn+i]; 
-    }
+        counter = 0;
+        for(long j=0; j< bufferDepth; j++) {
+            counter += frameBuffer[j*pix_nn+i];
+        }
 		
-    // Apply threshold
-    if(counter < threshold) {
-      mask[i] &= ~(PIXEL_IS_HOT);
+        // Apply threshold
+        if(counter < threshold) {
+            mask[i] &= ~(PIXEL_IS_HOT);
+        }
+        else {
+            mask[i] |= PIXEL_IS_HOT;
+            nhot++;
+        }
     }
-    else {
-      mask[i] |= PIXEL_IS_HOT;
-      nhot++;				
-    }		
-  }	
-  return nhot;
+    return nhot;
 }
 
 
 // Read out artifact compensation for pnCCD back detector
 /*
-    Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
-    Correction formula: O_i(x) = M(x) + ( M_i(x) * m_i + c_i ) * x
-    O_i(x): offset that is applied to line x in quadrant i
-    M_i(x): mean value of insensitive pixels (12 pixels closest to the edge) in line x in quadrant i
-    m_a1 = 0.055 1/px ; m_a2 = 0.0050  1/px ; m_b2 = 0.0056 1/px ; m_b1 = 0.0049 1/px
-    c_a1 = 0.0047 adu/px ; c_a2 = 0.0078 adu/px ; c_b2 = 0.0007 adu/px ; c_b1 = 0.0043 adu/px
-    Apply correction only if integrated signal in line is above certain threshold (50000 ADU).
-
-    This is what the detector map looks like:
+ Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
+ Correction formula: O_i(x) = M(x) + ( M_i(x) * m_i + c_i ) * x
+ O_i(x): offset that is applied to line x in quadrant i
+ M_i(x): mean value of insensitive pixels (12 pixels closest to the edge) in line x in quadrant i
+ m_a1 = 0.055 1/px ; m_a2 = 0.0050  1/px ; m_b2 = 0.0056 1/px ; m_b1 = 0.0049 1/px
+ c_a1 = 0.0047 adu/px ; c_a2 = 0.0078 adu/px ; c_b2 = 0.0007 adu/px ; c_b1 = 0.0043 adu/px
+ Apply correction only if integrated signal in line is above certain threshold (50000 ADU).
+ 
+ This is what the detector map looks like:
  
  
-        insensitive pixels at the edge
-             |                 | 
-             v                 v 
-             --------- ---------
+ insensitive pixels at the edge
+ |                 |
+ v                 v
+ --------- ---------
  read out <- |       | |       | -> read-out
-          <- |  q=0  | |  q=1  | ->
-          <- |       | |       | ->
-          <- | - - - |x| - - - | ->
-          <- |       | |       | ->
-          <- |  q=2  | |  q=3  | ->
-          <- |       | |       | ->
-             --------- ---------
-             ^                 ^
-             |                 | 
-        insensitive pixels at the edge
-
-*/
+ <- |  q=0  | |  q=1  | ->
+ <- |       | |       | ->
+ <- | - - - |x| - - - | ->
+ <- |       | |       | ->
+ <- |  q=2  | |  q=3  | ->
+ <- |       | |       | ->
+ --------- ---------
+ ^                 ^
+ |                 |
+ insensitive pixels at the edge
+ 
+ */
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
-
-  DETECTOR_LOOP {
-    if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
-      float	*data = eventData->detector[detID].corrected_data;
-      pnccdOffsetCorrection(data);
+    
+    DETECTOR_LOOP {
+        if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
+            float	*data = eventData->detector[detID].corrected_data;
+            pnccdOffsetCorrection(data);
+        }
     }
-  }
-}		
+}
 
 
 void pnccdOffsetCorrection(float *data) {
@@ -516,7 +515,7 @@ void pnccdOffsetCorrection(float *data) {
     float offset_m[4] = {0.0055,0.0056,0.0050,0.0049};
     float offset_c[4] = {0.0047,0.0007,0.0078,0.0043};
     int read_out_direction[4] = {-1,1,-1,1};
-
+    
     // Loop over quadrants
     for(my=0; my<nasics_y; my++){
         for(mx=0; mx<nasics_x; mx++){
@@ -558,15 +557,15 @@ void pnccdOffsetCorrection(float *data) {
 /*
  * Fix pnccd wiring error
  *
- * For each CCD, there are two CAMEX channels which may require special attention for scientific analysis. 
- * When numbering the 1024 CAMEX channels of a CCD from 1 to 1024, these are channels 513 and 1024. 
- * CAMEX channel 513 is not bonded to a physical detector channel. It herefore does not contain any photon data, 
- * but only CAMEX noise, and should be excluded from scientific analysis. The data of the physical detector channel n 
- * for 512 ≤ n ≤ 1022 is in CAMEX channel n + 1. CAMEX channel 1024 is bonded to both detector channels 1023 and 1024. 
- * This channel therefore contains the summed signal of detector channels 1023 and 1024. Depending on the analysis goal, 
- * this channel may be excluded from further analysis, treated as the sum that it actually is, or may be even split into two 
+ * For each CCD, there are two CAMEX channels which may require special attention for scientific analysis.
+ * When numbering the 1024 CAMEX channels of a CCD from 1 to 1024, these are channels 513 and 1024.
+ * CAMEX channel 513 is not bonded to a physical detector channel. It herefore does not contain any photon data,
+ * but only CAMEX noise, and should be excluded from scientific analysis. The data of the physical detector channel n
+ * for 512 ≤ n ≤ 1022 is in CAMEX channel n + 1. CAMEX channel 1024 is bonded to both detector channels 1023 and 1024.
+ * This channel therefore contains the summed signal of detector channels 1023 and 1024. Depending on the analysis goal,
+ * this channel may be excluded from further analysis, treated as the sum that it actually is, or may be even split into two
  * channels under some assumptions.
- *	
+ *
  *	In IDL and using the 1st version of CASS this becomes:
  *	;; Re-align top right
  *	data[512:1023, 512:1023] = shift(data[512:1023,512:1023], 0, -1)
@@ -576,7 +575,7 @@ void pnccdOffsetCorrection(float *data) {
  *	data[0:511, 0:511] = shift(data[0:511, 0:511], 0, 1)
  *	data[0:511, 0:1] = 0
  *
- *  Everything in cheetah is rotated 90 degrees CW compared to CASS 
+ *  Everything in cheetah is rotated 90 degrees CW compared to CASS
  *  (and this change is reflected in the code below)
  */
 
@@ -597,136 +596,136 @@ void pnccdFixWiringError(float *data) {
     long	i,j;
     long    nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
     
-
-    // Fix top left quadrant 
+    
+    // Fix top left quadrant
     // (shift all pixels right by one and zero first column)
-    for(j=512; j<1023; j++)		
+    for(j=512; j<1023; j++)
         for(i=511; i>0; i--)
-            data[i+j*nx] = data[(i-1)+j*nx];            
-    for(j=512; j<1024; j++) 
+            data[i+j*nx] = data[(i-1)+j*nx];
+    for(j=512; j<1024; j++)
         data[0+j*nx] = 0;
     
-
-    // Fix bottom right quadrant 
+    
+    // Fix bottom right quadrant
     //  (shift all pixels left by one and zero last column)
     for(j=0; j<512; j++)
         for(i=512; i<1024; i++)
-            data[i+j*nx] =  data[(i+1)+j*nx];            
-    for(j=0; j<512; j++) 
+            data[i+j*nx] =  data[(i+1)+j*nx];
+    for(j=0; j<512; j++)
         data[1023+j*nx] = 0;
     
 }
 
 void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit) {
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel && !hit && (eventData->frameNumber > global->detector[detID].bgRecalc)){
-      float	*frameData = eventData->detector[detID].corrected_data;
-      float     *frameBuffer = global->detector[detID].halopix_buffer;
-      long	pix_nn = global->detector[detID].pix_nn;
-      long	bufferDepth = global->detector[detID].halopixRecalc;
-      long	frameID;
-
-      float	*buffer = (float *) malloc(pix_nn*sizeof(float));
-      for(long i=0; i<pix_nn; i++){
-          buffer[i] = fabs(frameData[i]);
-      }
-
-      pthread_mutex_lock(&global->halopixel_mutex);
-
-      frameID = (global->detector[detID].halopixCounter)%bufferDepth;
-      memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
-      global->detector[detID].halopixCounter += 1;
-
-      pthread_mutex_unlock(&global->halopixel_mutex);
-
-      free(buffer);
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHalopixel && !hit && (eventData->frameNumber > global->detector[detID].bgRecalc)){
+            float	*frameData = eventData->detector[detID].corrected_data;
+            float     *frameBuffer = global->detector[detID].halopix_buffer;
+            long	pix_nn = global->detector[detID].pix_nn;
+            long	bufferDepth = global->detector[detID].halopixRecalc;
+            long	frameID;
+            
+            float	*buffer = (float *) malloc(pix_nn*sizeof(float));
+            for(long i=0; i<pix_nn; i++){
+                buffer[i] = fabs(frameData[i]);
+            }
+            
+            pthread_mutex_lock(&global->halopixel_mutex);
+            
+            frameID = (global->detector[detID].halopixCounter)%bufferDepth;
+            memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
+            global->detector[detID].halopixCounter += 1;
+            
+            pthread_mutex_unlock(&global->halopixel_mutex);
+            
+            free(buffer);
+        }
     }
-  }
 }
-     
-/* 
+
+/*
  *	Recalculate halo pixel masks using frame buffer
  */
 void calculateHaloPixelMask(cGlobal *global){
-
+    
 	
-  DETECTOR_LOOP {
-    if(global->detector[detID].useAutoHalopixel) {
-      float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
-      long	bufferDepth = global->detector[detID].halopixMemory;
-      long	halopixRecalc = global->detector[detID].halopixRecalc;
-      long	halopixCounter,lastUpdate;
-      long	nhalo;
-      float	threshold = bufferDepth*halopixMinDeviation;
-      long	pix_nn = global->detector[detID].pix_nn;
-      uint16_t  *mask = global->detector[detID].pixelmask_shared;
-      
-      pthread_mutex_lock(&global->halopixel_mutex);
-
-      halopixCounter = global->detector[detID].halopixCounter;
-      lastUpdate = global->detector[detID].last_halopix_update;
-
-      if( halopixCounter > halopixRecalc+lastUpdate ) {
-
-          global->detector[detID].last_halopix_update = halopixCounter;
+    DETECTOR_LOOP {
+        if(global->detector[detID].useAutoHalopixel) {
+            float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
+            long	bufferDepth = global->detector[detID].halopixMemory;
+            long	halopixRecalc = global->detector[detID].halopixRecalc;
+            long	halopixCounter,lastUpdate;
+            long	nhalo;
+            float	threshold = bufferDepth*halopixMinDeviation;
+            long	pix_nn = global->detector[detID].pix_nn;
+            uint16_t  *mask = global->detector[detID].pixelmask_shared;
+            
+            pthread_mutex_lock(&global->halopixel_mutex);
+            
+            halopixCounter = global->detector[detID].halopixCounter;
+            lastUpdate = global->detector[detID].last_halopix_update;
+            
+            if( halopixCounter > halopixRecalc+lastUpdate ) {
+                
+                global->detector[detID].last_halopix_update = halopixCounter;
 				
-          printf("Detector %li: Recalculating halo pixel mask.\n",detID);
-          nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
-          global->detector[detID].nhalo = nhalo;
-          printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
-
-          pthread_mutex_unlock(&global->halopixel_mutex);
-      }
-      else {
-          pthread_mutex_unlock(&global->halopixel_mutex);
-      }
-    }	
-  }
+                printf("Detector %li: Recalculating halo pixel mask.\n",detID);
+                nhalo = calculateHaloPixelMask(mask,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
+                global->detector[detID].nhalo = nhalo;
+                printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);
+                
+                pthread_mutex_unlock(&global->halopixel_mutex);
+            }
+            else {
+                pthread_mutex_unlock(&global->halopixel_mutex);
+            }
+        }
+    }
 }
 
 
 long calculateHaloPixelMask(uint16_t *mask, float *frameBuffer, float threshold, long bufferDepth, long pix_nn){
-
-  // Loop over all pixels 
-  float sum;
-  long	nhalo = 0;
-
-  bool* buffer = (bool *) calloc(pix_nn,sizeof(bool));
-
-  for(long i=0; i<pix_nn; i++) {
-    sum = 0.;
-    for(long j=0; j< bufferDepth; j++) {
-      sum += frameBuffer[j*pix_nn+i]; 
+    
+    // Loop over all pixels
+    float sum;
+    long	nhalo = 0;
+    
+    bool* buffer = (bool *) calloc(pix_nn,sizeof(bool));
+    
+    for(long i=0; i<pix_nn; i++) {
+        sum = 0.;
+        for(long j=0; j< bufferDepth; j++) {
+            sum += frameBuffer[j*pix_nn+i];
+        }
+        if(sum >= threshold) {
+            buffer[i] = true;
+            nhalo += 1;
+        } else {
+            buffer[i] = false;
+        }
     }
-    if(sum >= threshold) {
-      buffer[i] = true;
-      nhalo += 1;
-    } else {
-      buffer[i] = false;
-    }
-  }
-
-  for(long i=0; i<pix_nn; i++) {
-    if (buffer[i]){
+    
+    for(long i=0; i<pix_nn; i++) {
+        if (buffer[i]){
 #ifdef __GNUC__
-      __sync_fetch_and_or(&(mask[i]),PIXEL_IS_IN_HALO);
+            __sync_fetch_and_or(&(mask[i]),PIXEL_IS_IN_HALO);
 #else
-      // Not threadsafe
-      mask[i] |= PIXEL_IS_IN_HALO; 
+            // Not threadsafe
+            mask[i] |= PIXEL_IS_IN_HALO; 
 #endif
-    } else {
+        } else {
 #ifdef __GNUC__
-      __sync_fetch_and_and(&(mask[i]),~PIXEL_IS_IN_HALO);
+            __sync_fetch_and_and(&(mask[i]),~PIXEL_IS_IN_HALO);
 #else
-      // Not threadsafe
-      mask[i] &= ~PIXEL_IS_IN_HALO; 
+            // Not threadsafe
+            mask[i] &= ~PIXEL_IS_IN_HALO; 
 #endif
+        }
     }
-  }
-
-  return nhalo;
-
+    
+    return nhalo;
+    
 }
 
 
-			
+
