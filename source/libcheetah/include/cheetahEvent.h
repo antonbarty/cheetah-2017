@@ -138,13 +138,13 @@ public:
 #define ERROR(...) cheetahError(__FILE__, __LINE__, __VA_ARGS__)
 
 void static cheetahError(const char *filename, int line, const char *format, ...){
-  va_list ap;
-  va_start(ap,format);
-  fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
-  vfprintf(stderr,format,ap);
-  va_end(ap);
-  puts("");
-  abort();
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
+	vfprintf(stderr,format,ap);
+	va_end(ap);
+	puts("");
+	abort();
 }
 
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)
@@ -153,12 +153,12 @@ void static cheetahError(const char *filename, int line, const char *format, ...
 #define DEBUG(...) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
 
 void static cheetahDebug(const char *filename, int line, const char *format, ...){
-  va_list ap;
-  va_start(ap,format);
-  fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
-  vfprintf(stdout,format,ap);
-  va_end(ap);
-  puts("");
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
+	vfprintf(stdout,format,ap);
+	va_end(ap);
+	puts("");
 }
 
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)

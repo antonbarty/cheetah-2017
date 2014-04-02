@@ -407,7 +407,7 @@ public:
 public:
 	/**
 	 * @brief Set the default configuration.
-	**/
+	 **/
 	void defaultConfiguration(void);
 	/**
 	 * @brief Parse a global configuration file, update things.
@@ -415,15 +415,15 @@ public:
 	 * \usage Should be called only at the beginning of an analysis job.
 	 *
 	 * \param configFilePath The full path to the configuration file.
-	**/
+	 **/
 	void parseConfigFile(char * configFilePath);
 	/**
 	 * @brief TODO: does this work now?
-	**/
+	 **/
 	void parseCommandLineArguments(int, char**);
 	/**
 	 * @brief What's this for?
-	**/
+	 **/
 	void setup(void);
 	void updateCalibrated(void);
 	int validateConfiguration(void);

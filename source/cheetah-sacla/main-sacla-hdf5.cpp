@@ -176,14 +176,14 @@ int main(int argc, const char * argv[])
              *  SACLA: Dump buffer to a trivial HDF5 file (to see whether the file reader is working at all)
              */
             /*
-             char    outfile[1024];
-             hid_t   outfile_id;
-             sprintf(outfile,"/data/scratch/sacla/%s.h5", SACLA_header.event_name[eventID]);
-             printf("Writing to temporary file: %s\n",outfile);
-             outfile_id = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-             H5LTmake_dataset_float(outfile_id, "data", 2, dims, buffer );
-             H5Fclose(outfile_id);
-             */
+			  char    outfile[1024];
+			  hid_t   outfile_id;
+			  sprintf(outfile,"/data/scratch/sacla/%s.h5", SACLA_header.event_name[eventID]);
+			  printf("Writing to temporary file: %s\n",outfile);
+			  outfile_id = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+			  H5LTmake_dataset_float(outfile_id, "data", 2, dims, buffer );
+			  H5Fclose(outfile_id);
+			*/
             
         }
     }
