@@ -56,6 +56,6 @@ int SACLA_HDF5_ReadEventTags(SACLA_h5_info_t*, long);
 int SACLA_HDF5_ReadImageRaw(SACLA_h5_info_t*, long, long, float*, long);
 int SACLA_HDF5_cleanup(SACLA_h5_info_t*);
 
-    
+
 
 #endif /* defined(__cheetah_ab__sacla_hdf5_reader__) */

@@ -861,7 +861,7 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			print, f
-			mask = badpix_from_darkcal(f, /save, /edge)
+			mask = badpix_from_darkcal(f, /save, /edge, /menu)
 		end
 		
 

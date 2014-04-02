@@ -397,7 +397,6 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
  */
 void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 
-	
   DETECTOR_LOOP {
     if(global->detector[detID].useAutoHotpixel) {
       float	hotpixFrequency = global->detector[detID].hotpixFreq;

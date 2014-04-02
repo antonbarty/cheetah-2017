@@ -93,7 +93,7 @@ int SACLA_HDF5_ReadHeader(const char *filename, SACLA_h5_info_t *result) {
 		sprintf(h5field, "%s/run_info/end_tag_number",result->run_string[i]);
 		H5LTread_dataset(file_id, h5field, H5T_NATIVE_INT64, &result->end_tag_number[i]);
     }
-
+    
 	
     // Collect photon energy for each run
 	for(long i=0; i<nruns; i++) {
@@ -302,7 +302,7 @@ int SACLA_HDF5_cleanup(SACLA_h5_info_t *header) {
 	}
 	
 	H5Fclose(header->file_id);
-
+    
     return 1;
 }
 
