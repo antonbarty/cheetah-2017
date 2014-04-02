@@ -104,7 +104,17 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	  hit = hitfinderTOF(global, eventData, detID);
 	  break;
 
+
+	case 12 : // Use list of hits as hitfinding algorithm
+	  nameEvent(eventData, global);
+			// containsEvent returns bool, but is typeCasted to int according to
+			// standard conversion (§4.7/4 from the C++ Standard):
+			// (bool containsEvent()) ? 1 : 0
+			// http://stackoverflow.com/questions/5369770/bool-to-int-conversion
+	  hit = (int) containsEvent((std::string) eventData->eventname, global);
+	  break; 
 			
+
 	default :
 	  printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 	  printf("Stopping in confusion.\n");
@@ -486,4 +496,16 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
     eventData->nPeaks = count;
   }
   return hit;
+}
+
+
+/*
+ *	Check if the list of hits contains the current event
+ */
+bool containsEvent(std::string event, cGlobal *global) {
+	if (global->nhits < global->hitlist.size()) {
+		return (event == global->hitlist[global->nhits]);
+	} else {
+		return false;
+	}
 }
