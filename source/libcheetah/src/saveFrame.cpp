@@ -154,53 +154,53 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	if(global->saveAssembled) {
 		char fieldID[1023];
 		DETECTOR_LOOP {
-		  // data
-		  size[0] = global->detector[detID].image_nx;	// size[0] = height
-		  size[1] = global->detector[detID].image_nx;	// size[1] = width
-		  max_size[0] = global->detector[detID].image_nx;
-		  max_size[1] = global->detector[detID].image_nx;
-		  dataspace_id = H5Screate_simple(2, size, max_size);
-		  sprintf(fieldID, "assembleddata%li", detID);
+			// data
+			size[0] = global->detector[detID].image_nx;	// size[0] = height
+			size[1] = global->detector[detID].image_nx;	// size[1] = width
+			max_size[0] = global->detector[detID].image_nx;
+			max_size[1] = global->detector[detID].image_nx;
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			sprintf(fieldID, "assembleddata%li", detID);
 			if (global->h5compress) {
 				H5Pset_chunk(h5compression, 2, size);
 				H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
-		  if ( dataset_id < 0 ) {
-		    ERROR("%li: Couldn't create dataset\n", info->threadNum);
-		    H5Fclose(hdf_fileID);
-		    return;
-		  }
-		  hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
-		  if ( hdf_error < 0 ) {
-		    ERROR("%li: Couldn't write data\n", info->threadNum);
-		    H5Dclose(dataspace_id);
-		    H5Fclose(hdf_fileID);
-		    return;
-		  }
-		  H5Dclose(dataset_id);
-		  H5Sclose(dataspace_id);
-		  // pixelmask
-		  dataspace_id = H5Screate_simple(2, size, max_size);
-		  if(global->savePixelmask){
-		    sprintf(fieldID, "assembledpixelmask%li", detID);
+			if ( dataset_id < 0 ) {
+				ERROR("%li: Couldn't create dataset\n", info->threadNum);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image);
+			if ( hdf_error < 0 ) {
+				ERROR("%li: Couldn't write data\n", info->threadNum);
+				H5Dclose(dataspace_id);
+				H5Fclose(hdf_fileID);
+				return;
+			}
+			H5Dclose(dataset_id);
+			H5Sclose(dataspace_id);
+			// pixelmask
+			dataspace_id = H5Screate_simple(2, size, max_size);
+			if(global->savePixelmask){
+				sprintf(fieldID, "assembledpixelmask%li", detID);
 				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
-		    if ( dataset_id < 0 ) {
+				if ( dataset_id < 0 ) {
 					ERROR("%li: Couldn't create dataset\n", info->threadNum);
-		      H5Fclose(hdf_fileID);
-		      return;
-		    }
-		    hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image_pixelmask);
-		    if ( hdf_error < 0 ) {
-		      ERROR("%li: Couldn't write data\n", info->threadNum);
-		      H5Dclose(dataspace_id);
-		      H5Fclose(hdf_fileID);
-		      return;
-		    }
-		    H5Dclose(dataset_id);
-		    H5Sclose(dataspace_id);
-		  }
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].image_pixelmask);
+				if ( hdf_error < 0 ) {
+					ERROR("%li: Couldn't write data\n", info->threadNum);
+					H5Dclose(dataspace_id);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
+			}
 
 		}	
 	}
@@ -228,7 +228,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			}
 			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
-			  corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
+				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
 			}
 			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int16);
 			free(corrected_data_int16);
@@ -243,22 +243,22 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			// pixelmask
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			if(global->savePixelmask){
-			  sprintf(fieldID, "pixelmask%li", detID);
+				sprintf(fieldID, "pixelmask%li", detID);
 				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
-			  if ( dataset_id < 0 ) {
-			    ERROR("%li: Couldn't create dataset\n", info->threadNum);
-			    H5Fclose(hdf_fileID);
-			    return;
-			  }
-			  hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].pixelmask);
-			  if ( hdf_error < 0 ) {
-			    ERROR("%li: Couldn't write data\n", info->threadNum);
-			    H5Dclose(dataspace_id);
-			    H5Fclose(hdf_fileID);
-			    return;
-			  }
-			  H5Dclose(dataset_id);
-			  H5Sclose(dataspace_id);
+				if ( dataset_id < 0 ) {
+					ERROR("%li: Couldn't create dataset\n", info->threadNum);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].pixelmask);
+				if ( hdf_error < 0 ) {
+					ERROR("%li: Couldn't write data\n", info->threadNum);
+					H5Dclose(dataspace_id);
+					H5Fclose(hdf_fileID);
+					return;
+				}
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
 			}
 		}
 	}
@@ -723,22 +723,22 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	// Version 1 of the peak info format
 	// (stream file)
 	/*
-	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", eventData->eventname);
-	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
-	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
-	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
-	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
-	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
-	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
-	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
+	  pthread_mutex_lock(&global->peaksfp_mutex);
+	  fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	  fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+	  fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+	  fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+	  fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+	  fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+	  fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+	  fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+	  fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
-	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
-	}
-	pthread_mutex_unlock(&global->peaksfp_mutex);
-	 */
+	  for(long i=0; i<eventData->nPeaks; i++) {
+	  fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
+	  }
+	  pthread_mutex_unlock(&global->peaksfp_mutex);
+	*/
 
 	
 	// Version 2 of the peak info format

@@ -128,23 +128,23 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	 */
 	switch(global->hitfinderAlgorithm) {
 						
-		case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
-			nPeaks = peakfinder3(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
-			break;
+	case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
+		nPeaks = peakfinder3(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
+		break;
 			
-		case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
-			nPeaks = peakfinder6(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius, hitfinderMinPeakSeparation);
-			break;
+	case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
+		nPeaks = peakfinder6(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius, hitfinderMinPeakSeparation);
+		break;
 
-		case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
-			nPeaks = peakfinder8(peaklist, data, mask, pix_r, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
-			break;
+	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
+		nPeaks = peakfinder8(peaklist, data, mask, pix_r, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
+		break;
             
-		default :
-			printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
-			printf("Stopping in confusion.\n");
-			exit(1);
-			break;
+	default :
+		printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
+		printf("Stopping in confusion.\n");
+		exit(1);
+		break;
 	}
 	
 	
@@ -561,7 +561,7 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 							
 							e = lrint(com_x) + lrint(com_y)*pix_nx;
 							if(e < 0 || e >= pix_nn){
-								printf("Array bounds error: e=%i\n",e);
+								printf("Array bounds error: e=%ld\n",e);
 								continue;
 							}
 
@@ -950,7 +950,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 							
 							e = lrint(com_x) + lrint(com_y)*pix_nx;
 							if(e < 0 || e >= pix_nn){
-								printf("Array bounds error: e=%i\n",e);
+								printf("Array bounds error: e=%ld\n",e);
 								continue;
 							}
 							
@@ -1045,8 +1045,8 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 
 	/* Shift in linear indices to eight nearest neighbors */
 	int shift[8] = { +1, -1, +stride, -stride,
-		+stride - 1, +stride + 1,
-		-stride - 1, -stride + 1};
+					 +stride - 1, +stride + 1,
+					 -stride - 1, -stride + 1};
 	
 	
 	/*
@@ -1149,7 +1149,7 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 					for ( p=counter-1; p >= 0; p-- ) {
 						/* Distance to neighbor peak */
 						dist = pow(fs - peaklist->peak_com_x[p],2) +
-						pow(ss - peaklist->peak_com_y[p], 2);
+							pow(ss - peaklist->peak_com_y[p], 2);
 						if ( dist <= minPeakSepSq ) {
 							if ( snr > peaklist->peak_snr[p]) {
 								/* This peak will overtake its neighbor */
@@ -1272,7 +1272,7 @@ int box_snr(float * im, char* mask, int center, int radius, int thickness,
 			bgcount += mask[d]; 
 			bg += im[a] + im[b] + im[c] + im[d];
 			bgsq += im[a]*im[a] + im[b]*im[b] +
-			im[c]*im[c] + im[d]*im[d];
+				im[c]*im[c] + im[d]*im[d];
 		}
 	}
 

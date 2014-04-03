@@ -483,7 +483,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	}
 	hsize_t dims[ndims];
 	H5Sget_simple_extent_dims(dataspace_id,dims,NULL);
-	if (!dims[0]==1 || !dims[1]==global->espectrumLength) {
+	if (dims[0]!=1 || dims[1]!=global->espectrumLength) {
 		printf("the specified file does not have the correct dimensions for energy scale calibration\n");
 		printf("spectra will be output with default (0) energy scale\n");
 		return;

@@ -529,7 +529,7 @@
 // feature depending on tuple with be disabled in this mode).
 #ifndef GTEST_HAS_TR1_TUPLE
 // The user didn't tell us not to do it, so we assume it's OK.
-# define GTEST_HAS_TR1_TUPLE 1
+# define GTEST_HAS_TR1_TUPLE 0
 #endif  // GTEST_HAS_TR1_TUPLE
 
 // Determines whether Google Test's own tr1 tuple implementation
@@ -1558,7 +1558,11 @@ inline bool operator!=(const GTEST_10_TUPLE_(T)& t,
 #   undef _TR1_FUNCTIONAL  // Allows the user to #include
                         // <tr1/functional> if he chooses to.
 #  else
+#  if defined(_LIBCPP_VERSION)
+#   include <tuple>
+#  else
 #   include <tr1/tuple>  // NOLINT
+#  endif
 #  endif  // !GTEST_HAS_RTTI && GTEST_GCC_VER_ < 40302
 
 # else

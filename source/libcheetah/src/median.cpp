@@ -6,21 +6,21 @@
  */
 
 /*---------------------------------------------------------------------------
- Function :   kth_smallest()
- In       :   array of elements, # of elements in the array, rank k
- Out      :   one element
- Job      :   find the kth smallest element in the array
- Notice   :   use the median() macro defined below to get the median. 
+  Function :   kth_smallest()
+  In       :   array of elements, # of elements in the array, rank k
+  Out      :   one element
+  Job      :   find the kth smallest element in the array
+  Notice   :   use the median() macro defined below to get the median.
  
- Reference:
+  Reference:
  
- Author: Wirth, Niklaus 
- Title: Algorithms + data structures = programs 
- Publisher: Englewood Cliffs: Prentice-Hall, 1976 
- Physical description: 366 p. 
- Series: Prentice-Hall Series in Automatic Computation 
+  Author: Wirth, Niklaus
+  Title: Algorithms + data structures = programs
+  Publisher: Englewood Cliffs: Prentice-Hall, 1976
+  Physical description: 366 p.
+  Series: Prentice-Hall Series in Automatic Computation
  
- ---------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------*/
 
 #include <stdint.h>
 #include "median.h"
@@ -33,24 +33,24 @@
 int16_t kth_smallest(int16_t *a, long n, long k) {
 	register long i,j,l,m;
 	register int16_t x;
-	l=0; 
-	m=n-1; 
+	l=0;
+	m=n-1;
 	while (l<m) {
-		x=a[k]; 
-		i=l; 
-		j=m; 
+		x=a[k];
+		i=l;
+		j=m;
 		do {
 			while (a[i]<x) i++ ;
 			while (x<a[j]) j-- ;
 			if (i<=j) {
-				SWAP(a[i],a[j]); 
-				i++; 
+				SWAP(a[i],a[j]);
+				i++;
 				j--;
-			} 
+			}
 		} while (i<=j);
-		if (j<k) l=i; 
+		if (j<k) l=i;
 		if (k<i) m=j ;
-	} 			
+	}
 	return a[k] ;
 }
 #undef SWAP
@@ -60,24 +60,24 @@ int16_t kth_smallest(int16_t *a, long n, long k) {
 float kth_smallest(float *a, long n, long k) {
 	register long i,j,l,m;
 	register float x;
-	l=0; 
-	m=n-1; 
+	l=0;
+	m=n-1;
 	while (l<m) {
-		x=a[k]; 
-		i=l; 
-		j=m; 
+		x=a[k];
+		i=l;
+		j=m;
 		do {
 			while (a[i]<x) i++ ;
 			while (x<a[j]) j-- ;
 			if (i<=j) {
-				SWAP(a[i],a[j]); 
-				i++; 
+				SWAP(a[i],a[j]);
+				i++;
 				j--;
-			} 
+			}
 		} while (i<=j);
-		if (j<k) l=i; 
+		if (j<k) l=i;
 		if (k<i) m=j ;
-	} 			
+	}
 	return a[k] ;
 }
 #undef SWAP

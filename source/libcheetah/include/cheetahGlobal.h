@@ -9,6 +9,8 @@
 
 #ifndef CHEETAHGLOBAL_H
 #define CHEETAHGLOBAL_H
+#include <string>
+#include <vector>
 #include "detectorObject.h"
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
@@ -163,6 +165,14 @@ public:
 
 	// Sorting criteria
 	int		sortPumpLaserOn;
+
+	/** @brief Path to the file with list of hits.
+	 * Used by hitfinderAlgorithm=11 as hit criterion.
+	 * The hits have to be in chronological order as they appear in the data stream!
+	 */
+	char     hitlistFile[MAX_FILENAME_LENGTH];
+	/** @brief list of all hits as output string names. */
+	std::vector<std::string>	hitlist;
 
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
@@ -397,7 +407,7 @@ public:
 public:
 	/**
 	 * @brief Set the default configuration.
-	**/
+	 **/
 	void defaultConfiguration(void);
 	/**
 	 * @brief Parse a global configuration file, update things.
@@ -405,17 +415,18 @@ public:
 	 * \usage Should be called only at the beginning of an analysis job.
 	 *
 	 * \param configFilePath The full path to the configuration file.
-	**/
+	 **/
 	void parseConfigFile(char * configFilePath);
 	/**
 	 * @brief TODO: does this work now?
-	**/
+	 **/
 	void parseCommandLineArguments(int, char**);
 	/**
 	 * @brief What's this for?
-	**/
+	 **/
 	void setup(void);
 	void updateCalibrated(void);
+	int validateConfiguration(void);
 
 	void writeInitialLog(void);
 	void updateLogfile(void);
@@ -424,7 +435,10 @@ public:
 	void writeConfigurationLog(void);
 	void freeMutexes(void);
 
-
+	/**
+	 * @brief Read text file with list of hits.
+	 **/
+	void readHits(char *filename);
 
 private:
 	int parseConfigTag(char*, char*);
