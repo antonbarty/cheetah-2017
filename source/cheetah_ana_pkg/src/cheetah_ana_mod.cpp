@@ -120,7 +120,7 @@ namespace cheetah_ana_pkg {
 
         
 		// Check if we're using psana of the same git commit
-		if(strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
+		if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
 			fprintf(stderr,    "*******************************************************************************************\n");
 			fprintf(stderr,"*** WARNING %s:%d ***\n",__FILE__,__LINE__);
 
