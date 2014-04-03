@@ -6,10 +6,6 @@ file(GLOB sources "${ANA_RELEASE}/psana/app/*.cpp" "src/cheetah-psana.cpp")
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-add_definitions("-DGIT_SHA1=${GIT_SHA1}")
-
 include_directories("include")
 
 # This is here so that psana can find cheetah_ana_pkg
