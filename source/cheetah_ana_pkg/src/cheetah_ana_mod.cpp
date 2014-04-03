@@ -119,8 +119,21 @@ namespace cheetah_ana_pkg {
         printf("if this line is not present, even though a default value has been specified\n");
 
         
-		/* If SIT_DATA is undefined set it to the builtin value */
-		setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
+		// Check if we're using psana of the same git commit
+		if(!strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
+			fprintf(stderr,    "*******************************************************************************************\n");
+			fprintf(stderr,"*** WARNING %s:%d ***\n",__FILE__,__LINE__);
+
+			if(!getenv("PSANA_GIT_SHA")){
+				fprintf(stderr,"***        Using psana from git commit %s         ***\n",getenv("PSANA_GIT_SHA"));
+				fprintf(stderr,"***        and cheetah_ana_mod from git commit %s ***\n",GIT_SHA1);
+			}else{
+				fprintf(stderr,"***         Using a psana version not compiled with cheetah!                            ***\n");
+			}
+			fprintf(stderr,    "*******************************************************************************************\n");
+			sleep(10);
+		}
+		setenv("CHEETAH_ANA_MOD_GIT_SHA",GIT_SHA1,0);
 
 		// get the values from configuration or use defaults
 		m_key = configStr("inputKey", "");
