@@ -7,6 +7,12 @@ ENABLE_TESTING()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+# Provide the sha1 of the current git commit as a #define
+add_definitions("-DGIT_SHA1=\"${GIT_SHA1}\"")
+
+
 SET(ENABLE_RUNPATH FALSE CACHE BOOL "Try to use DT_RUNPATH on binaries. Unlikely to work.")
 MARK_AS_ADVANCED(ENABLE_RUNPATH)
 IF(CMAKE_COMPILER_IS_GNUCC)
