@@ -637,3 +637,22 @@ void cheetahExit(cGlobal *global) {
 }
 
 
+void cheetahDebug(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
+	vfprintf(stdout,format,ap);
+	va_end(ap);
+	puts("");
+}
+
+void cheetahError(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
+	vfprintf(stderr,format,ap);
+	va_end(ap);
+	puts("");
+	abort();
+}
+
