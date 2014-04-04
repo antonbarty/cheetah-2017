@@ -599,7 +599,6 @@ void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			float *data = eventData->detector[detID].corrected_data;
 			uint16_t *mask = eventData->detector[detID].pixelmask;
 			for(y=0; y<ny; y++){
 				for(x=x_min;x<=x_max;x=x+2){

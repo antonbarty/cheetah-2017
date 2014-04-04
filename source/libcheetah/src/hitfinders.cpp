@@ -30,7 +30,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	// Dereference stuff
 	int	    detID = global->hitfinderDetector;
 	int		hit=0;
-	int		powderClass=0;
 	int		nPeaks;
 	
 	/*
@@ -178,12 +177,10 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	}
 
 	long	pix_nx = global->detector[detID].pix_nx;
-	long	pix_ny = global->detector[detID].pix_ny;
-	long		pix_nn = global->detector[detID].pix_nn;
-	long		asic_nx = global->detector[detID].asic_nx;
-	long		asic_ny = global->detector[detID].asic_ny;
+	long	pix_nn = global->detector[detID].pix_nn;
+	long	asic_nx = global->detector[detID].asic_nx;
+	long	asic_ny = global->detector[detID].asic_ny;
 	long	nasics_x = global->detector[detID].nasics_x;
-	long	nasics_y = global->detector[detID].nasics_y;
 	long	radius = global->detector[detID].localBackgroundRadius;
 	float	*pix_r = global->detector[detID].pix_r;
 	float	*data = eventData->detector[detID].corrected_data;
@@ -284,11 +281,10 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
 	int       hit = 0;
 	long      nat = 0;
 	float     tat = 0.;
-	float *hitfinderData;
+	float     *hitfinderData;
 	uint16_t  *mask;
-	uint16_t  mask_out_bits;
 	float     *data;
-	long	    pix_nn;
+	long      pix_nn;
 	float     ADC_threshold = global->hitfinderADC;
 	// Combine pixel options for pixels to be ignored
 	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
@@ -306,7 +302,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
 	if (global->hitfinderDownsampling > 1) {
 		long pix_nn_0 = global->detector[detID].pix_nn;  
 		long pix_nx_0 = global->detector[detID].pix_nx;  
-		long pix_ny_0 = global->detector[detID].pix_ny;  
 		float *data_0 = hitfinderData;
 		uint16_t *mask_0 = eventData->detector[detID].pixelmask;
 		long pix_nx = (long)ceil(pix_nx_0/(double)global->hitfinderDownsampling);
@@ -438,7 +433,6 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 	int hit = 0;
 	//long		pix_nn = global->detector[detID].pix_nn;
-	uint16_t      *mask = eventData->detector[detID].pixelmask;
 	long	nat = 0;
 	long	counter;
 	float	total;
@@ -503,7 +497,7 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
  *	Check if the list of hits contains the current event
  */
 bool containsEvent(std::string event, cGlobal *global) {
-	if (global->nhits < global->hitlist.size()) {
+	if (global->nhits < (long)global->hitlist.size()) {
 		return (event == global->hitlist[global->nhits]);
 	} else {
 		return false;
