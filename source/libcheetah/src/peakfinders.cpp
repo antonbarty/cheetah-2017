@@ -88,12 +88,9 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 
 	
 	long	nPeaks;
-	int		hit;
 	
 	
 	// Geometry
-	long	pix_nx = global->detector[detID].pix_nx;
-	long	pix_ny = global->detector[detID].pix_ny;
 	long	pix_nn = global->detector[detID].pix_nn;
 	long	asic_nx = global->detector[detID].asic_nx;
 	long	asic_ny = global->detector[detID].asic_ny;
@@ -213,9 +210,9 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	
 	
 	/*
-	 *	Now calculate q, A for each peak
+	 *	Now calculate  A for each peak
 	 */
-	float	q,A,r2;
+	float	A,r2;
 	for(long k=0; k<np; k++) {
 		r = eventData->peaklist.peak_com_r_assembled[k];
 		r2 = sqrt(z*z+(dx*dx*r*r));
@@ -355,7 +352,6 @@ int peakfinder3(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 	long	thisy;
 	long	fs, ss;
 	float	com_x, com_y;
-	long	com_xi, com_yi;
 
 	
 	nat = 0;
@@ -642,7 +638,6 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 	long	thisy;
 	long	fs, ss;
 	float	com_x, com_y;
-	long	com_xi, com_yi;
 	float	thisADCthresh;
 	
 	
@@ -1009,7 +1004,6 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 	long	pix_nx = asic_nx*nasics_x;
 	long	pix_ny = asic_ny*nasics_y;
 	long	pix_nn = pix_nx*pix_ny;
-	long	asic_nn = asic_nx*asic_ny;
 	long	hitfinderNpeaksMax = peaklist->nPeaks_max;
 	
 	peaklist->nPeaks = 0;

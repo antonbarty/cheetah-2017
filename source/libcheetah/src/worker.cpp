@@ -335,7 +335,7 @@ hitknown:
 		writeCXIHitstats(eventData, global);
 	}
 
-logfile:
+//logfile:
 	eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
 

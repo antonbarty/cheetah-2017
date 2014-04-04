@@ -54,6 +54,9 @@ void spawnPython(char* pythonFile)
 	pthread_attr_init(&threadAttribute);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+	if(returnStatus){
+		ERROR("Failed to create python thread!");
+	}
 }
 
 /*

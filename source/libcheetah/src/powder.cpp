@@ -55,12 +55,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     long	pix_ny = global->detector[detID].pix_ny;
 
     long	image_nn = global->detector[detID].image_nn;
-    long	image_nx = global->detector[detID].image_nx;
-    long	image_ny = global->detector[detID].image_ny;
 
     long	imageXxX_nn = global->detector[detID].imageXxX_nn;
-    long	imageXxX_nx = global->detector[detID].imageXxX_nx;
-    long	imageXxX_ny = global->detector[detID].imageXxX_ny;
 
     double  *buffer;
 	
@@ -611,7 +607,6 @@ void saveGaincal(cGlobal *global, int detID) {
 	// Dereference common variables
 	cPixelDetectorCommon     *detector = &(global->detector[detID]);
 	long	pix_nn = detector->pix_nn;
-    float   nframes;
 	
 	// Grab a snapshot of the current running sum
 	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
