@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 CFEL. All rights reserved.
 //
 
+#include <Python.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -18,7 +19,6 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <vector>
-#include <Python.h>
 
 #include "cheetah.h"
 
