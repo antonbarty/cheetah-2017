@@ -146,6 +146,7 @@ void cheetahError(const char *filename, int line, const char *format, ...);
 void cheetahDebug(const char *filename, int line, const char *format, ...);
 
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
+#define INFO(...) fprintf(stdout, __VA_ARGS__)
 
 #endif
 
