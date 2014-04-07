@@ -289,8 +289,8 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     long	pix_nn = detector->pix_nn;
     long	image_nn = detector->image_nn;
     double  *bufferAssembled;
-    int16_t *bufferAssembledNPeaksMin;
-    int16_t *bufferAssembledNPeaksMax;
+    int16_t *bufferAssembledNPeaksMin = 0;
+    int16_t *bufferAssembledNPeaksMax = 0;
 	long	nframes = detector->nPowderFrames[powderType];
 
     /*

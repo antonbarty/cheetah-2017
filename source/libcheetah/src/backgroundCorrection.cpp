@@ -390,7 +390,8 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	 *	Determine local background
 	 *	(median over window width either side of current pixel)
 	 */
-	long		e,ee;
+	long		e = 0;
+	long        ee;
 	long		counter;
 	
 	

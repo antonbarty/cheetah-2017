@@ -29,7 +29,7 @@ cheetahHDF5ErrorHandler(hid_t,void *)
 
 template <class T>
 hid_t get_datatype(const T * foo){
-	hid_t datatype;
+	hid_t datatype = 0;
 	if(typeid(T) == typeid(bool) && sizeof(bool) == 1){
 		datatype = H5T_NATIVE_INT8;
 	}else if(typeid(T) == typeid(short)){
