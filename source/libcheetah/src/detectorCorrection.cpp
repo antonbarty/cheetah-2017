@@ -14,6 +14,10 @@
 #include <hdf5.h>
 #include <stdlib.h>
 
+#include <mmintrin.h>
+#include <emmintrin.h>
+
+
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
@@ -93,9 +97,9 @@ void applyBadPixelMask(cEventData *eventData, cGlobal *global){
 }
 
 void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
-	for(long i=0; i<pix_nn; i++) {
-		data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
-	}
+for(long i=0; i<pix_nn; i++) {
+data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
+}
 }
 
 

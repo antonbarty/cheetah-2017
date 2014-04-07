@@ -172,7 +172,10 @@ cGlobal::cGlobal(void) {
 	hdf5dump = 0;
 	saveInterval = 1000;
 	savePixelmask = 1;
+    // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
+	// Flush after every image by default
+	cxiFlushPeriod = 1;
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -210,8 +213,6 @@ cGlobal::cGlobal(void) {
 	lasttime = 0;
 	laserPumpScheme = 0;
 
-    // Do not output 1 HDF5 per image by default
-	saveCXI = 0;
 
 	// Only one thread during calibration
 	useSingleThreadCalibration = 0;
@@ -1056,6 +1057,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
+	} else if (!strcmp(tag, "cxiflushperiod")) {
+		cxiFlushPeriod = atoi(value);
 	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	} else if (!strcmp(tag, "usesinglethreadcalibration")) {

@@ -270,6 +270,13 @@ public:
 	/** @brief Output 1 HDF5 per image by default */
 	bool saveCXI;
 
+	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
+	    Setting it to 0 avoid doing any flushes.
+	    This only applies when compiling against a SWMR capable HDF5 library.
+	    The default is 1.
+	 */
+	int cxiFlushPeriod;
+
 	/** @brief  Only one thread during calibration */
 	int useSingleThreadCalibration;
 
