@@ -249,7 +249,7 @@ namespace cheetah_ana_pkg {
   /// This method is called with event data
   ///	Copy across data into Cheetah structure and process
   ///
-  void cheetah_ana_mod::event(Event& evt, Env& env) {
+  void cheetah_ana_mod::event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env) {
     float random_float = (float)rand()/(float)RAND_MAX;
     frameNumberIncludingSkipped ++;
 	  
