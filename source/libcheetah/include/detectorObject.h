@@ -111,7 +111,7 @@ public:
 	/** @brief Type of detector */
 	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
-    	//Pds::DetInfo::Detector detectorPdsDetInfo;
+	//Pds::DetInfo::Detector detectorPdsDetInfo;
 
 	//unsigned         configVsn;
 	//unsigned         quadMask;
@@ -377,7 +377,7 @@ public:
 class cPixelDetectorEvent {
 
 public:
-  /* FM: Warning. Constructor is not run when class is malloc'ed*/
+	/* FM: Warning. Constructor is not run when class is malloc'ed*/
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;

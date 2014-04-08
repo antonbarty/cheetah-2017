@@ -22,14 +22,15 @@ username = raw_input('Please enter your username on psexport (%s): ' % getpass.g
 if username == "": username = getpass.getuser()
 
 # copy release
-#os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/releases/ && tar czf - '+ana_version+'" | tar xzvf - -C '+output_dir)
+os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/releases/ && tar czf - '+ana_version+'" | tar xzvf - -C '+output_dir)
 
 # copy package pdsdata
 pdsdata_version = os.popen('grep "pdsdata_ver =" '+output_dir+'/'+ana_version+'/pdsdata/SConscript').read()
 pdsdata_version = re.search('\d+\.\d+\.\d+',pdsdata_version).group(0)
-#os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/6.1.4/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
-#os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/'+pdsdata_version+'/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
-#os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/ && tar czf - '+pdsdata_version+'" | tar xzvf - -C '+output_dir+'/../external/pdsdata')
+os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/'+pdsdata_version+'/x86_64-rhel6-gcc44-opt && tar czf - pdsdata" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
+os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/pdsdata/ && tar czf - '+pdsdata_version+'" | tar xzvf - -C '+output_dir+'/../external/pdsdata')
+
+
 #os.system('ssh '+username+'@psexport.slac.stanford.edu "cd /reg/g/psdm/sw/external/root/5.30.06-python2.7/x86_64-rhel6-gcc44-opt/include && tar czf - root" | tar xzvf - -C '+output_dir+'/'+ana_version+'/include')
 
 # Fix broken symlinks

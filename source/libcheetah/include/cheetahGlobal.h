@@ -270,6 +270,13 @@ public:
 	/** @brief Output 1 HDF5 per image by default */
 	bool saveCXI;
 
+	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
+	    Setting it to 0 avoid doing any flushes.
+	    This only applies when compiling against a SWMR capable HDF5 library.
+	    The default is 1.
+	 */
+	int cxiFlushPeriod;
+
 	/** @brief  Only one thread during calibration */
 	int useSingleThreadCalibration;
 
@@ -288,7 +295,9 @@ public:
 
 	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
-
+	
+	/** @brief Time different sections of the code. */
+	bool     profilerDiagnostics;
 	/*
 	 *	Stuff used for managing the program execution
 	 */
@@ -407,7 +416,7 @@ public:
 public:
 	/**
 	 * @brief Set the default configuration.
-	**/
+	 **/
 	void defaultConfiguration(void);
 	/**
 	 * @brief Parse a global configuration file, update things.
@@ -415,15 +424,15 @@ public:
 	 * \usage Should be called only at the beginning of an analysis job.
 	 *
 	 * \param configFilePath The full path to the configuration file.
-	**/
+	 **/
 	void parseConfigFile(char * configFilePath);
 	/**
 	 * @brief TODO: does this work now?
-	**/
+	 **/
 	void parseCommandLineArguments(int, char**);
 	/**
 	 * @brief What's this for?
-	**/
+	 **/
 	void setup(void);
 	void updateCalibrated(void);
 	int validateConfiguration(void);

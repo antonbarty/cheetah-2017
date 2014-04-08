@@ -27,22 +27,22 @@
 
 void addToPowder(cEventData *eventData, cGlobal *global) {
 
-  int hit = eventData->hit;
+	int hit = eventData->hit;
 	int	powderClass = eventData->powderClass;
     
-  DETECTOR_LOOP {
-    if(global->generateDarkcal || global->generateGaincal){
-		addToPowder(eventData, global, 0, detID);
-    }
-	else {
-		if(hit && global->powderSumHits){
+	DETECTOR_LOOP {
+		if(global->generateDarkcal || global->generateGaincal){
+			addToPowder(eventData, global, 0, detID);
+		}
+		else {
+			if(hit && global->powderSumHits){
 				addToPowder(eventData, global, powderClass, detID);
 			}
 			if(!hit && global->powderSumBlanks){
 				addToPowder(eventData, global, powderClass, detID);
+			}
 		}
 	}
-  }
 }
 
 
@@ -55,12 +55,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     long	pix_ny = global->detector[detID].pix_ny;
 
     long	image_nn = global->detector[detID].image_nn;
-    long	image_nx = global->detector[detID].image_nx;
-    long	image_ny = global->detector[detID].image_ny;
 
     long	imageXxX_nn = global->detector[detID].imageXxX_nn;
-    long	imageXxX_nx = global->detector[detID].imageXxX_nx;
-    long	imageXxX_ny = global->detector[detID].imageXxX_ny;
 
     double  *buffer;
 	
@@ -199,42 +195,42 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
    
     // Only assemble data if explicitly specified by configuration
     if(global->assemblePowders) {
-      if(global->assemble2DImage){
-        // Assembled data
-        pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-        if(!global->usePowderThresh) {
-	  for(long i=0; i<image_nn; i++){
-	      global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-	      global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
-	  }
-        }
-        else {
-            for(long i=0; i<image_nn; i++){
-                if(eventData->detector[detID].image[i] > global->powderthresh)
-                    global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
-		    global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
-            }
-        }
-        pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-      }
-      if(global->detector[detID].downsampling > 1){
-	// Downsampled data
-	pthread_mutex_lock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
-	if(!global->usePowderThresh) {
-	  for(long i=0; i<imageXxX_nn; i++){
-	      global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
-	      global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
-	  }
-        }
-        else {
-            for(long i=0; i<imageXxX_nn; i++){
-                if(eventData->detector[detID].image[i] > global->powderthresh)
-                    global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+		if(global->assemble2DImage){
+			// Assembled data
+			pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+			if(!global->usePowderThresh) {
+				for(long i=0; i<image_nn; i++){
+					global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+					global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+				}
+			}
+			else {
+				for(long i=0; i<image_nn; i++){
+					if(eventData->detector[detID].image[i] > global->powderthresh)
+						global->detector[detID].powderAssembled[powderClass][i] += eventData->detector[detID].image[i];
+					global->detector[detID].powderAssembledSquared[powderClass][i] += eventData->detector[detID].image[i]*eventData->detector[detID].image[i];
+				}
+			}
+			pthread_mutex_unlock(&global->detector[detID].powderAssembled_mutex[powderClass]);
+		}
+		if(global->detector[detID].downsampling > 1){
+			// Downsampled data
+			pthread_mutex_lock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+			if(!global->usePowderThresh) {
+				for(long i=0; i<imageXxX_nn; i++){
+					global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
+					global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
+				}
+			}
+			else {
+				for(long i=0; i<imageXxX_nn; i++){
+					if(eventData->detector[detID].image[i] > global->powderthresh)
+						global->detector[detID].powderDownsampled[powderClass][i] += eventData->detector[detID].imageXxX[i];
                     global->detector[detID].powderDownsampledSquared[powderClass][i] += eventData->detector[detID].imageXxX[i]*eventData->detector[detID].imageXxX[i];
-            }
-        }
-        pthread_mutex_unlock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
-      }
+				}
+			}
+			pthread_mutex_unlock(&global->detector[detID].powderDownsampled_mutex[powderClass]);
+		}
     }
     
     
@@ -293,8 +289,8 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     long	pix_nn = detector->pix_nn;
     long	image_nn = detector->image_nn;
     double  *bufferAssembled;
-    int16_t *bufferAssembledNPeaksMin;
-    int16_t *bufferAssembledNPeaksMax;
+    int16_t *bufferAssembledNPeaksMin = 0;
+    int16_t *bufferAssembledNPeaksMax = 0;
 	long	nframes = detector->nPowderFrames[powderType];
 
     /*
@@ -352,7 +348,7 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     pthread_mutex_lock(&detector->powderCorrectedSquared_mutex[powderType]);
     for(long i=0; i<pix_nn; i++){
         bufferCorrectedSigma[i] =
-        sqrt( fabs(bufferCorrectedSquared[i]/nframes - (bufferCorrected[i]/nframes)*(bufferCorrected[i]/nframes)) );
+			sqrt( fabs(bufferCorrectedSquared[i]/nframes - (bufferCorrected[i]/nframes)*(bufferCorrected[i]/nframes)) );
     }
     pthread_mutex_unlock(&detector->powderCorrected_mutex[powderType]);
     pthread_mutex_unlock(&detector->powderCorrectedSquared_mutex[powderType]);
@@ -582,21 +578,21 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
  */
 void saveDarkcal(cGlobal *global, int detID) {
 	
-  // Dereference common variables
-  cPixelDetectorCommon     *detector = &(global->detector[detID]);
-  long	pix_nn = detector->pix_nn;
-  char	filename[1024];
+	// Dereference common variables
+	cPixelDetectorCommon     *detector = &(global->detector[detID]);
+	long	pix_nn = detector->pix_nn;
+	char	filename[1024];
 	
-  printf("Processing darkcal\n");
-  sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
-  float *buffer = (float*) calloc(pix_nn, sizeof(float));
-  pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
-  for(long i=0; i<pix_nn; i++)
-    buffer[i] = detector->powderCorrected[0][i]/detector->nPowderFrames[0];
-  pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
-  printf("Saving darkcal to file: %s\n", filename);
-  writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
-  free(buffer);
+	printf("Processing darkcal\n");
+	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
+	float *buffer = (float*) calloc(pix_nn, sizeof(float));
+	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
+	for(long i=0; i<pix_nn; i++)
+		buffer[i] = detector->powderCorrected[0][i]/detector->nPowderFrames[0];
+	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
+	printf("Saving darkcal to file: %s\n", filename);
+	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
+	free(buffer);
 }
 
 
@@ -611,7 +607,6 @@ void saveGaincal(cGlobal *global, int detID) {
 	// Dereference common variables
 	cPixelDetectorCommon     *detector = &(global->detector[detID]);
 	long	pix_nn = detector->pix_nn;
-    float   nframes;
 	
 	// Grab a snapshot of the current running sum
 	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
@@ -663,81 +658,81 @@ void saveGaincal(cGlobal *global, int detID) {
  */
 void writePowderData(char *filename, void *data, int width, int height, void *radialAverageCorrected, void *radialAverageCorrectedCounter, long radial_nn, long nFrames, int type) 
 {
-  hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-  //herr_t r;
-  hsize_t size[2];
-  hsize_t max_size[2];
+	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
+	//herr_t r;
+	hsize_t size[2];
+	hsize_t max_size[2];
 	
-  fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  if ( fh < 0 ) {
-    ERROR("Couldn't create file: %s\n", filename);
-  }
+	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if ( fh < 0 ) {
+		ERROR("Couldn't create file: %s\n", filename);
+	}
 	
-  gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  if ( gh < 0 ) {
-    ERROR("Couldn't create group\n");
-    H5Fclose(fh);
-  }
+	gh = H5Gcreate(fh, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if ( gh < 0 ) {
+		ERROR("Couldn't create group\n");
+		H5Fclose(fh);
+	}
 	
-  // Write image data
-  size[0] = height;
-  size[1] = width;
-  max_size[0] = height;
-  max_size[1] = width;
-  sh = H5Screate_simple(2, size, NULL);
-  dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	// Write image data
+	size[0] = height;
+	size[1] = width;
+	max_size[0] = height;
+	max_size[1] = width;
+	sh = H5Screate_simple(2, size, NULL);
+	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	
-  H5Sget_simple_extent_dims(sh, size, max_size);
-  H5Dwrite(dh, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-  H5Dclose(dh);
-	
-	
-  // Save radial averages
-  size[0] = radial_nn;
-  sh = H5Screate_simple(1, size, NULL);
-	
-  dh = H5Dcreate(gh, "radialAverageCorrected", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrected);
-  H5Dclose(dh);
-	
-  dh = H5Dcreate(gh, "radialAverageCorrectedCounter", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrectedCounter);
-  H5Dclose(dh);	
-  H5Sclose(sh);
+	H5Sget_simple_extent_dims(sh, size, max_size);
+	H5Dwrite(dh, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+	H5Dclose(dh);
 	
 	
-  // Save frame count
-  size[0] = 1;
-  sh = H5Screate_simple(1, size, NULL );
-  //sh = H5Screate(H5S_SCALAR);
+	// Save radial averages
+	size[0] = radial_nn;
+	sh = H5Screate_simple(1, size, NULL);
 	
-  dh = H5Dcreate(gh, "nframes", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &nFrames );
-  H5Dclose(dh);
-  H5Sclose(sh);
+	dh = H5Dcreate(gh, "radialAverageCorrected", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrected);
+	H5Dclose(dh);
 	
-	
-  // Close group
-  H5Gclose(gh);
-	
-	
-  // Clean up stale HDF5 links
-  int n_ids;
-  hid_t ids[256];
-  n_ids = H5Fget_obj_ids(fh, H5F_OBJ_ALL, 256, ids);
-  for ( int i=0; i<n_ids; i++ ) {
-    hid_t id;
-    H5I_type_t type;
-    id = ids[i];
-    type = H5Iget_type(id);
-    if ( type == H5I_GROUP ) H5Gclose(id);
-    if ( type == H5I_DATASET ) H5Dclose(id);
-    if ( type == H5I_DATATYPE ) H5Tclose(id);
-    if ( type == H5I_DATASPACE ) H5Sclose(id);
-    if ( type == H5I_ATTR ) H5Aclose(id);
-  }
+	dh = H5Dcreate(gh, "radialAverageCorrectedCounter", type, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, radialAverageCorrectedCounter);
+	H5Dclose(dh);	
+	H5Sclose(sh);
 	
 	
-  H5Fclose(fh);
+	// Save frame count
+	size[0] = 1;
+	sh = H5Screate_simple(1, size, NULL );
+	//sh = H5Screate(H5S_SCALAR);
+	
+	dh = H5Dcreate(gh, "nframes", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &nFrames );
+	H5Dclose(dh);
+	H5Sclose(sh);
+	
+	
+	// Close group
+	H5Gclose(gh);
+	
+	
+	// Clean up stale HDF5 links
+	int n_ids;
+	hid_t ids[256];
+	n_ids = H5Fget_obj_ids(fh, H5F_OBJ_ALL, 256, ids);
+	for ( int i=0; i<n_ids; i++ ) {
+		hid_t id;
+		H5I_type_t type;
+		id = ids[i];
+		type = H5Iget_type(id);
+		if ( type == H5I_GROUP ) H5Gclose(id);
+		if ( type == H5I_DATASET ) H5Dclose(id);
+		if ( type == H5I_DATATYPE ) H5Tclose(id);
+		if ( type == H5I_DATASPACE ) H5Sclose(id);
+		if ( type == H5I_ATTR ) H5Aclose(id);
+	}
+	
+	
+	H5Fclose(fh);
 }
 /* */

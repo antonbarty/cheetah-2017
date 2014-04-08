@@ -19,15 +19,15 @@
 #include "detectorObject.h"
 
 void integratePattern(cEventData * eventData,cGlobal * global){
-  DETECTOR_LOOP{
-    long	pix_nn = global->detector[detID].pix_nn;
-    uint16_t	*mask = eventData->detector[detID].pixelmask;
-    float       *data = eventData->detector[detID].corrected_data;
-    uint16_t  combined_pixel_options = PIXEL_IS_IN_HALO | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
+	DETECTOR_LOOP{
+		long	pix_nn = global->detector[detID].pix_nn;
+		uint16_t	*mask = eventData->detector[detID].pixelmask;
+		float       *data = eventData->detector[detID].corrected_data;
+		uint16_t  combined_pixel_options = PIXEL_IS_IN_HALO | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
 
-    eventData->detector[detID].sum = 0.;
-    for(long i=0;i<pix_nn;i++){
-      eventData->detector[detID].sum += data[i] * isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
-    }
-  }
+		eventData->detector[detID].sum = 0.;
+		for(long i=0;i<pix_nn;i++){
+			eventData->detector[detID].sum += data[i] * isNoneOfBitOptionsSet(mask[i], combined_pixel_options);
+		}
+	}
 }

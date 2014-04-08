@@ -25,7 +25,7 @@
 int main(int argc, const char * argv[])
 {
 	
-
+    
 	printf("Simple SACLA HDF5 file parser\n");
 	printf("Anton Barty, 21 January 2014\n");
 	
@@ -35,17 +35,17 @@ int main(int argc, const char * argv[])
 	// Take configuration from command line arguments
 	strcpy(filename,argv[1]);
 	strcpy(cheetahini,argv[2]);
-
+    
 	// Hard code for testing
 	//strcpy(filename,"/data/scratch/sacla/141945_each.h5");
 	//strcpy(cheetahini,"lys.ini");
-
+    
     // Also for testing
     printf("Program name: %s\n",argv[0]);
     printf("Input data file: %s\n", filename);
     printf("Cheetah .ini file: %s\n", cheetahini);
     
-
+    
 	
 	
 	/*
@@ -62,16 +62,16 @@ int main(int argc, const char * argv[])
 	cheetahInit(&cheetahGlobal);
 	
 	
-
+    
     /*
 	 *	Open SACLA HDF5 file
 	 *	Read file header and information
 	 */
     SACLA_h5_info_t SACLA_header;
     SACLA_HDF5_ReadHeader(filename, &SACLA_header);
-
     
-
+    
+    
 	
     /*
      * Create a buffer for holding the detector image data from all 8 panels
@@ -103,7 +103,7 @@ int main(int argc, const char * argv[])
         for(long eventID=0; eventID<SACLA_header.nevents; eventID++) {
             printf("Processing event: %s\n", SACLA_header.event_name[eventID]);
 			frameNumber++;
-
+            
 			
 			/*
 			 *  Cheetah: Calculate time beteeen processing of data frames
@@ -119,7 +119,7 @@ int main(int argc, const char * argv[])
 				time(&cheetahGlobal.tlast);
 				cheetahGlobal.datarate = datarate;
 			}
-
+            
 			
 			/*
 			 *	Cheetah: Create a new eventData structure in which to place all information
@@ -127,7 +127,7 @@ int main(int argc, const char * argv[])
 			cEventData	*eventData;
 			eventData = cheetahNewEvent(&cheetahGlobal);
 			ntriggers++;
-
+            
             
             /*
              *  Cheetah: Populate event structure with meta-data
@@ -140,14 +140,14 @@ int main(int argc, const char * argv[])
             eventData->photonEnergyeV = SACLA_header.photon_energy_in_eV[runID];        // in eV
             eventData->wavelengthA = SACLA_header.photon_wavelength_in_nm[runID];       // in Angstrom
             eventData->pGlobal = &cheetahGlobal;
-
+            
             
 			
 			/*
 			 *	SACLA: Read next image
 			 */
             SACLA_HDF5_ReadImageRaw(&SACLA_header, runID, eventID, buffer, nn_one);
-
+            
             
             
             /*
@@ -159,7 +159,7 @@ int main(int argc, const char * argv[])
             long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
             long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
             eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-
+            
             for(long ii=0; ii<pix_nn; ii++) {
                 eventData->detector[detID].raw_data[ii] = (uint16_t) lrint(buffer[ii]);
             }
@@ -170,33 +170,33 @@ int main(int argc, const char * argv[])
 			 *	Cheetah: Process this event
 			 */
 			cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
-
+            
 			
             /*
              *  SACLA: Dump buffer to a trivial HDF5 file (to see whether the file reader is working at all)
              */
             /*
-            char    outfile[1024];
-            hid_t   outfile_id;
-            sprintf(outfile,"/data/scratch/sacla/%s.h5", SACLA_header.event_name[eventID]);
-            printf("Writing to temporary file: %s\n",outfile);
-            outfile_id = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-            H5LTmake_dataset_float(outfile_id, "data", 2, dims, buffer );
-            H5Fclose(outfile_id);
-             */
+			  char    outfile[1024];
+			  hid_t   outfile_id;
+			  sprintf(outfile,"/data/scratch/sacla/%s.h5", SACLA_header.event_name[eventID]);
+			  printf("Writing to temporary file: %s\n",outfile);
+			  outfile_id = H5Fcreate(outfile,  H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+			  H5LTmake_dataset_float(outfile_id, "data", 2, dims, buffer );
+			  H5Fclose(outfile_id);
+			*/
             
         }
     }
-
     
-
-		
+    
+    
+    
 	
 	
 	// Clean up stale IDs and exit
     SACLA_HDF5_cleanup(&SACLA_header);
-
-
+    
+    
 	
 	/*
 	 *	Cheetah: Cleanly exit by closing all files, releasing memory, etc.
@@ -207,7 +207,7 @@ int main(int argc, const char * argv[])
 	time(&endT);
 	double dif = difftime(endT,startT);
 	std::cout << "time taken: " << dif << " seconds\n";
-
+    
 	
 	// Clean exit
 	std::cout << "Clean exit\n";
