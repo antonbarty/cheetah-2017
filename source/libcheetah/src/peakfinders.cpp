@@ -679,7 +679,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 		if (pix_r[i] < fminr)
 			fminr = pix_r[i];
 	}
-	lmaxr = ceil(fmaxr)+1;
+	lmaxr = (int)ceil(fmaxr)+1;
 	lminr = 0;
 	
 	// Allocate and zero arrays

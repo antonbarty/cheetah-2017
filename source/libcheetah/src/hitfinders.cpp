@@ -450,7 +450,7 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 
 		  
 	if (eventData->TOFPresent==1){
-		const int nback = global->hitfinderTOFWindow;
+		const int nback = (int)global->hitfinderTOFWindow;
 		float olddata[nback];
 		for (int k = 0; k < nback; k++)
 		{
@@ -484,7 +484,7 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 	if (eventData->TOFPresent==1){
 		int count = 0;
 		for (int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			count += floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
+			count += (int)floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;
