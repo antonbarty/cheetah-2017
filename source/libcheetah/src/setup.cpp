@@ -213,6 +213,8 @@ cGlobal::cGlobal(void) {
 	lasttime = 0;
 	laserPumpScheme = 0;
 
+	// By default do not profile code
+	profilerDiagnostics = false;
 
 	// Only one thread during calibration
 	useSingleThreadCalibration = 0;
@@ -805,6 +807,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "iospeedtest")) {
 		ioSpeedTest = atoi(value);
+	}
+	else if (!strcmp(tag, "profilerdiagnostics")) {
+		profilerDiagnostics = atoi(value);
 	}
 	else if (!strcmp(tag, "threadpurge")) {
 		threadPurge = atoi(value);

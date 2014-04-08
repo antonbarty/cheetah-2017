@@ -295,7 +295,9 @@ public:
 
 	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
-
+	
+	/** @brief Time different sections of the code. */
+	bool     profilerDiagnostics;
 	/*
 	 *	Stuff used for managing the program execution
 	 */
