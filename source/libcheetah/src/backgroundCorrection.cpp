@@ -272,7 +272,7 @@ void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn
 		if (pix_r[i] < fminr)
 			fminr = pix_r[i];
 	}
-	lmaxr = ceil(fmaxr)+1;
+	lmaxr = (long)ceil(fmaxr)+1;
 	lminr = 0;
 	
 	// Allocate and zero arrays

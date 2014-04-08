@@ -1044,7 +1044,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderDownsampling = (long) atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderfastscan")) {
-		hitfinderFastScan = atof(value);
+		hitfinderFastScan = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		printf("The keyword selfDarkMemory has been changed.  It is\n"

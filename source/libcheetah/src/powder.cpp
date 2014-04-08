@@ -153,7 +153,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
      */
 	if (eventData->nPeaks > 0) {
 		pthread_mutex_lock(&global->detector[detID].powderAssembled_mutex[powderClass]);
-		long	ci, cx, cy, val, e;
+		long	ci, cx, cy,  e;
+		double  val;
 
 		for(long i=0; i<=eventData->peaklist.nPeaks && i<eventData->peaklist.nPeaks_max; i++) {
 						
