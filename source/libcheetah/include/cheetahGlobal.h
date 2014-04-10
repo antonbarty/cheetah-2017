@@ -241,6 +241,11 @@ public:
 	/** @brief The pump laser delay. */
 	float    laserDelay;
 
+	/** @brief The Epics process variable for the sample translation. */
+	char     samplePosXPV[MAX_FILENAME_LENGTH];
+	char     samplePosYPV[MAX_FILENAME_LENGTH];
+	char     samplePosZPV[MAX_FILENAME_LENGTH];
+
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
 	int      savehits;

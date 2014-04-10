@@ -62,6 +62,9 @@ cGlobal::cGlobal(void) {
 	strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
 	laserDelay = std::numeric_limits<float>::quiet_NaN();
 	laserDelay = 0;
+	samplePosXPV[0] = 0;
+	samplePosYPV[0] = 0;
+	samplePosZPV[0] = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -1073,6 +1076,12 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		strcpy(pythonFile, value);
 	} else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
+	} else if (!strcmp(tag, "sampleposxpv")) {
+		strcpy(samplePosXPV,value);
+	} else if (!strcmp(tag, "sampleposypv")) {
+		strcpy(samplePosYPV,value);
+	} else if (!strcmp(tag, "sampleposzpv")) {
+		strcpy(samplePosZPV,value);
 	}
 	// Unknown tags
 	else {
