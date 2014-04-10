@@ -181,11 +181,10 @@ public:
 	/** @brief Channel of the TOF instrument. */
 	int      TOFchannel;
 	/** @brief What's this? */
-	int      AcqNumChannels;
-	/** @brief What's this? */
 	int      AcqNumSamples;
-	/** @brief What's this? */
-	double   AcqSampleInterval;
+	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
+	std::vector<int> TOFAllchannels;
+
     
 	/** @brief Toggle energy spectrum creation. */
     int      espectrum;
