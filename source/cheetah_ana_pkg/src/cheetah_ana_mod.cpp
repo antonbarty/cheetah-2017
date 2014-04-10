@@ -665,7 +665,36 @@ namespace cheetah_ana_pkg {
 				}  
 			}
 		}
-				
+			
+
+		// Sample Stages positions
+		if(cheetahGlobal.samplePosXPV[0]){
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosXPV);
+			if (pv && pv->numElements() > 0) {
+				eventData->samplePosX = estore.value(cheetahGlobal.samplePosXPV,0);
+				if (verbose) {
+					cout << "samplePosX: " << eventData->samplePosX << endl;
+				}  
+			}
+		}
+		if(cheetahGlobal.samplePosYPV[0]){
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosYPV);
+			if (pv && pv->numElements() > 0) {
+				eventData->samplePosY = estore.value(cheetahGlobal.samplePosYPV,0);
+				if (verbose) {
+					cout << "samplePosY: " << eventData->samplePosY << endl;
+				}  
+			}
+		}
+		if(cheetahGlobal.samplePosZPV[0]){
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosZPV);
+			if (pv && pv->numElements() > 0) {
+				eventData->samplePosZ = estore.value(cheetahGlobal.samplePosZPV,0);
+				if (verbose) {
+					cout << "samplePosZ: " << eventData->samplePosZ << endl;
+				}  
+			}
+		}
 		
         
 		/*

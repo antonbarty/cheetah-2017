@@ -123,6 +123,10 @@ public:
 	bool        laserEventCodeOn;
 	double      laserDelay;
 	
+	double      samplePosX; // in um
+	double      samplePosY; // in um
+	double      samplePosZ; // in um
+
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
 	double		fEbeamLTUPosX;		// in mm
