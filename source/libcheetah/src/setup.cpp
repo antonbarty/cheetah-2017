@@ -22,6 +22,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream> 
+#include <errno.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -1520,6 +1521,9 @@ void cGlobal::splitList(char * values, std::vector<int> & elems) {
     std::stringstream ss(values);
     std::string item;
     while (std::getline(ss, item, delim)) {
-        elems.push_back(atoi(item.c_str()));
+		int elem = strtol(item.c_str(),NULL,10);
+		if(errno != EINVAL){
+			elems.push_back(elem);
+		}
     }
 }
