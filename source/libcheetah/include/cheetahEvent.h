@@ -9,6 +9,7 @@
 
 
 #include <stdarg.h>
+#include <vector>
 #include "peakfinders.h"
 
 
@@ -46,6 +47,12 @@ public:
 	double		*TOFTime;
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
+	// For multiple TOF channels
+	std::vector<double*> TOFAllTime;
+	std::vector<double*> TOFAllVoltage;
+	std::vector<double>  TOFAllTrigTime;
+	
+	
 	
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;

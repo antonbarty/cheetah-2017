@@ -1032,38 +1032,10 @@ namespace cheetah_ana_pkg {
 		if (cheetahGlobal.TOFPresent==1){
 			int chan = cheetahGlobal.TOFchannel;
 			Pds::Src src;
-			shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq);
-			if (acqData) {
-				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
-				const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
-				const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
-				double slope = v.slope();
-				double offset = v.offset();
-				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
-				double sampInterval = h.sampInterval();
-				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
-				int seg = 0;
-				eventData->TOFtrigtime = timestamps[seg].pos();
-				eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-				eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-				double * tempTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-				double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-				double timestamp = timestamps[seg].value();
-				ndarray<const int16_t, 1> raw(waveforms[seg]);
-				for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
-					tempTime[i] = timestamp + i*sampInterval;
-					tempVoltage[i] = raw[i]*slope + offset;
-				}
-				//Memcpy is necessary for thread safety.
-				memcpy(eventData->TOFTime, &tempTime[0], cheetahGlobal.AcqNumSamples*sizeof(double));
-				memcpy(eventData->TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
-				free(tempTime);
-				free(tempVoltage);
-				eventData->TOFPresent = 1;
-			} else {
-				eventData->TOFPresent = 0;
-			}
+			eventData->TOFPresent = readTOF(evt, env, chan,
+											eventData->TOFtrigtime,
+											eventData->TOFTime,
+											eventData->TOFVoltage);
 		}
 		
 
@@ -1188,6 +1160,44 @@ namespace cheetah_ana_pkg {
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
 	}
 	// End of psana event method
+
+
+	int cheetah_ana_mod::readTOF(Event & evt, Env & env, int chan,
+								 double & TOFtrigtime, 
+								 double* & TOFTime, double *& TOFVoltage){
+		shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq);
+		if (acqData) {
+			shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
+			const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
+			const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
+			double slope = v.slope();
+			double offset = v.offset();
+			const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+			double sampInterval = h.sampInterval();
+			const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+			const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+			int seg = 0;
+			TOFtrigtime = timestamps[seg].pos();
+			TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+			TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+			double * tempTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+			double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+			double timestamp = timestamps[seg].value();
+			ndarray<const int16_t, 1> raw(waveforms[seg]);
+			for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
+				tempTime[i] = timestamp + i*sampInterval;
+				tempVoltage[i] = raw[i]*slope + offset;
+			}
+			//Memcpy is necessary for thread safety.
+			memcpy(TOFTime, &tempTime[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+			memcpy(TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+			free(tempTime);
+			free(tempVoltage);
+			return 1;
+		}
+		return 0;
+	}
+								  
 	 
 		
 		
