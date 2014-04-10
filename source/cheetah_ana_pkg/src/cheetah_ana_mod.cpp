@@ -1031,11 +1031,20 @@ namespace cheetah_ana_pkg {
 		//eventData->TOFPresent = 0; // DO NOT READ TOF
 		if (cheetahGlobal.TOFPresent==1){
 			int chan = cheetahGlobal.TOFchannel;
-			Pds::Src src;
 			eventData->TOFPresent = readTOF(evt, env, chan,
 											eventData->TOFtrigtime,
 											eventData->TOFTime,
 											eventData->TOFVoltage);
+			eventData->TOFAllTrigTime.resize(cheetahGlobal.TOFAllChannels.size());
+			eventData->TOFAllTime.resize(cheetahGlobal.TOFAllChannels.size());
+			eventData->TOFAllVoltage.resize(cheetahGlobal.TOFAllChannels.size());
+			for(unsigned int i = 0;i<cheetahGlobal.TOFAllChannels.size();i++){
+				eventData->TOFPresent = readTOF(evt, env, chan,
+												eventData->TOFAllTrigTime[i],
+												eventData->TOFAllTime[i],
+												eventData->TOFAllVoltage[i]);
+				
+			}
 		}
 		
 
