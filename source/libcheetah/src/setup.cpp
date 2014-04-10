@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream> 
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -891,6 +892,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "tofchannel")) {
 		TOFchannel = atoi(value);
 	}
+	else if (!strcmp(tag, "tofallchannels")) {
+		splitList(value,TOFAllChannels);
+	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
 	}
@@ -1509,4 +1513,13 @@ void cGlobal::readHits(char *filename) {
 	}
 	
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
+}
+
+void cGlobal::splitList(char * values, std::vector<int> & elems) {
+	char delim = ',';
+    std::stringstream ss(values);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(atoi(item.c_str()));
+    }
 }

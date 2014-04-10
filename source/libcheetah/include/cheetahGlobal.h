@@ -183,7 +183,7 @@ public:
 	/** @brief What's this? */
 	int      AcqNumSamples;
 	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
-	std::vector<int> TOFAllchannels;
+	std::vector<int> TOFAllChannels;
 
     
 	/** @brief Toggle energy spectrum creation. */
@@ -450,6 +450,7 @@ public:
 
 private:
 	int parseConfigTag(char*, char*);
+	void splitList(char * values, std::vector<int> & elems);
 
 };
 #endif
