@@ -65,6 +65,8 @@ namespace cheetah_ana_pkg {
         /// Method which is called at the beginning of the calibration cycle
         virtual void beginCalibCycle(Event& evt, Env& env);
         
+        void real_event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env);
+        void inner_real_event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env);
         /// Method which is called with event data, this is the only required
         /// method, all other methods are optional
         virtual void event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env);
@@ -83,6 +85,10 @@ namespace cheetah_ana_pkg {
     private:
         
         // Data members
+        int nActiveThreads;
+		pthread_mutex_t  nActiveThreads_mutex;
+		pthread_mutex_t  counting_mutex;
+		pthread_mutex_t  process_mutex;
         std::string m_key;
         Source m_srcCspad0;
         Source m_srcCspad1;
@@ -98,6 +104,17 @@ namespace cheetah_ana_pkg {
         Source m_srcPnccd0;
         Source m_srcPnccd1;
     };
+
+	class AnaModEventData {
+	public:
+		cheetah_ana_mod* module;
+		boost::shared_ptr<Event> evtp;
+		boost::shared_ptr<Env> envp;
+		
+		AnaModEventData(cheetah_ana_mod* module, boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) :
+			module(module), evtp(evtp), envp(envp) {      
+		}
+	};
     
 } // namespace cheetah_ana_pkg
 

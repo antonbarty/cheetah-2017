@@ -61,11 +61,11 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
-	static long frameNumberIncludingSkipped = 0;
-	static long frameNumber = 0;
+	volatile static long frameNumberIncludingSkipped = 0;
+	volatile static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
-	static int laserSwitch = 0;
-	static int prevLaser = 0;
+	volatile static int laserSwitch = 0;
+	volatile static int prevLaser = 0;
 	static time_t startT = 0;
 
 	class CspadDataWrapper {
@@ -111,12 +111,12 @@ namespace cheetah_ana_pkg {
 	{
 		cout << "*** Constructor ***" << endl;
         
-        printf("Note: Support for the FEE spectrometer was added on 24 November 2013.\n");
-        printf("This may require the following line to be added to your psana.conf file:\n");
-        printf("    feeSpectrum = BldInfo(FEE-SPEC0)\n");
-        printf("There have been reports of psana crashing with the error\n");
-        printf("Standard exception caught in runApp(): PSEvt::Exception: Source string cannot be parsed: 'BldInfo(:FEE-SPEC0)' [in function parse at PSEvt/src/Source.cpp:409]\n");
-        printf("if this line is not present, even though a default value has been specified\n");
+		printf("Note: Support for the FEE spectrometer was added on 24 November 2013.\n");
+		printf("This may require the following line to be added to your psana.conf file:\n");
+		printf("    feeSpectrum = BldInfo(FEE-SPEC0)\n");
+		printf("There have been reports of psana crashing with the error\n");
+		printf("Standard exception caught in runApp(): PSEvt::Exception: Source string cannot be parsed: 'BldInfo(:FEE-SPEC0)' [in function parse at PSEvt/src/Source.cpp:409]\n");
+		printf("if this line is not present, even though a default value has been specified\n");
 
         
 		// Check if we're using psana of the same git commit
@@ -150,6 +150,10 @@ namespace cheetah_ana_pkg {
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
+
+		pthread_mutex_init(&nActiveThreads_mutex, NULL);
+		pthread_mutex_init(&counting_mutex, NULL);
+		pthread_mutex_init(&process_mutex, NULL);
 	}
 
 	//--------------
@@ -257,14 +261,26 @@ namespace cheetah_ana_pkg {
 		}
 	}
 
-	///
-	///	Event method
-	/// This method is called with event data
-	///	Copy across data into Cheetah structure and process
-	///
-        void cheetah_ana_mod::event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env) {
-		float random_float = (float)rand()/(float)RAND_MAX;
+	void* cheetahanamodworker(void* threadData) {
+		boost::shared_ptr<AnaModEventData> data((AnaModEventData*) threadData);
+		data->module->real_event(data->evtp, data->envp);
+
+		return 0;
+	}
+
+	void cheetah_ana_mod::real_event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
+		inner_real_event(evtp, envp);
+		inner_real_event(evtp, envp);
+		pthread_mutex_lock(&nActiveThreads_mutex);
+		nActiveThreads -= 1;
+		pthread_mutex_unlock(&nActiveThreads_mutex);		
+	}
+	
+	void cheetah_ana_mod::inner_real_event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
 		frameNumberIncludingSkipped ++;
+		float random_float = (float)rand()/(float)RAND_MAX;
+		Event& evt = *evtp;
+		Env& env = *envp;
 	  
 		if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames && cheetahGlobal.calibrated) {
 			printf("Skipping a frame (%ld)\n",frameNumberIncludingSkipped);
@@ -272,11 +288,12 @@ namespace cheetah_ana_pkg {
 			return;
 		}
 	  
-	  
-
+	 
+		pthread_mutex_lock(&counting_mutex);
 		static uint32_t nevents = 0;
 	  
-		frameNumber++;
+		long frameNumber = ++cheetah_ana_pkg::frameNumber;
+		pthread_mutex_unlock(&counting_mutex);
 
 		/*
 		 *  Calculate time beteeen processing of data frames
@@ -341,8 +358,8 @@ namespace cheetah_ana_pkg {
 		 */
 		int numEvrData = 0;
 		int fiducial = 0;
-        bool    beamOn = 0;
-        bool    laserOn = 0;
+		bool    beamOn = 0;
+		bool    laserOn = 0;
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
 
 		if (data3.get()) {
@@ -369,6 +386,7 @@ namespace cheetah_ana_pkg {
 			//! get laserOn
 			// laserSwitch should be as large as count (50% on and off)
 			laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
+			pthread_mutex_lock(&counting_mutex);
 			if (frameNumber == 1) {
 				// initialize
 				prevLaser = laserOn;
@@ -380,6 +398,7 @@ namespace cheetah_ana_pkg {
 					prevLaser = laserOn;
 				}
 			}
+			pthread_mutex_unlock(&counting_mutex);
 			if (verbose) {
 				cout << "*** laserOn: " << laserOn << "\n"
 					 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
@@ -416,7 +435,7 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
-        // Ebeam v4
+		// Ebeam v4
 		if (ebeam4.get()) {
 			charge = ebeam4->ebeamCharge();
 			L3Energy = ebeam4->ebeamL3Energy();
@@ -426,7 +445,7 @@ namespace cheetah_ana_pkg {
 			LTUAngY = ebeam4->ebeamLTUAngY();
 			PkCurrBC2 = ebeam4->ebeamPkCurrBC2();
 			
-            peakCurrent = ebeam4->ebeamPkCurrBC2();
+			peakCurrent = ebeam4->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam4->ebeamL3Energy();
 			
 			if (verbose) {
@@ -709,10 +728,10 @@ namespace cheetah_ana_pkg {
 		eventData->laserEventCodeOn = laserOn;
 		eventData->pumpLaserOn = laserOn;
 	
-        /*
-         *  FEE photon inline spectrometer
-         *  Psana::Bld::BldDataSpectrometerV0.get()
-         */
+		/*
+		 *  FEE photon inline spectrometer
+		 *  Psana::Bld::BldDataSpectrometerV0.get()
+		 */
 		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0 = evt.get(m_srcFeeSpec);
 		eventData->FEEspec_present=0;
 		if(cheetahGlobal.useFEEspectrum) {
@@ -746,9 +765,9 @@ namespace cheetah_ana_pkg {
 		
  				
 		/*
-         *  Copy primary area detector data into Cheetah event structure
-         *  SLAC libraries are not thread safe: so we must copy the data and not simply pass a pointer
-         */
+		 *  Copy primary area detector data into Cheetah event structure
+		 *  SLAC libraries are not thread safe: so we must copy the data and not simply pass a pointer
+		 */
 
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
       
@@ -968,8 +987,8 @@ namespace cheetah_ana_pkg {
 					}
 				} else {
                     
-                    printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detID].detectorID);
-                    cheetahDestroyEvent(eventData);
+					printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detID].detectorID);
+					cheetahDestroyEvent(eventData);
 					return;
 				}
 			}
@@ -1011,8 +1030,8 @@ namespace cheetah_ana_pkg {
 					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
-                    printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-                    cheetahDestroyEvent(eventData);
+					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					cheetahDestroyEvent(eventData);
 					return;
 				}
 			}
@@ -1026,9 +1045,9 @@ namespace cheetah_ana_pkg {
 		}	// end loop over detectors
 
 		
-		//	Copy TOF (aqiris) channel into Cheetah event for processing
-		//  SLAC libraries are not thread safe: must copy data into event structure for processing
-		//eventData->TOFPresent = 0; // DO NOT READ TOF
+			//	Copy TOF (aqiris) channel into Cheetah event for processing
+			//  SLAC libraries are not thread safe: must copy data into event structure for processing
+			//eventData->TOFPresent = 0; // DO NOT READ TOF
 		if (cheetahGlobal.TOFPresent==1){
 			int chan = cheetahGlobal.TOFchannel;
 			Pds::Src src;
@@ -1185,7 +1204,44 @@ namespace cheetah_ana_pkg {
 
         
 		// Call cheetah in multi-threaded mode (ensures that cheetah cleans up event data when done)
+		pthread_mutex_lock(&process_mutex);
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
+		pthread_mutex_unlock(&process_mutex);
+	}
+
+	///
+	///	Event method
+	/// This method is called with event data
+	///	Copy across data into Cheetah structure and process
+	///
+	void cheetah_ana_mod::event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
+		pthread_t         thread;
+		pthread_attr_t    threadAttribute;
+		int returnStatus;
+		/*
+		 *  Wait until we have a spare thread in the thread pool
+		 */
+		while(nActiveThreads >= 32) {
+			usleep(10000);
+		}
+		
+		// Set detached state
+		pthread_attr_init(&threadAttribute);
+		pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+		
+		// Create a new worker thread for this data frame
+		returnStatus = pthread_create(&thread, &threadAttribute, cheetahanamodworker, (void*) new AnaModEventData(this, evtp, envp));
+		
+		if (returnStatus == 0) { // creation successful
+			// Increment threadpool counter
+			pthread_mutex_lock(&nActiveThreads_mutex);
+			nActiveThreads += 1;
+			pthread_mutex_unlock(&nActiveThreads_mutex);
+		}
+		else{
+			printf("Error: thread creation failed (frame skipped)\n");
+		}
+		pthread_attr_destroy(&threadAttribute);		
 	}
 	// End of psana event method
 	 
