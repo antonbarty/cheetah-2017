@@ -1059,7 +1059,7 @@ namespace cheetah_ana_pkg {
 				double slope = v.slope();
 				double offset = v.offset();
 				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
-				int sampInterval = h.sampInterval();
+				double sampInterval = h.sampInterval();
 				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
 				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
 				int seg = 0;
