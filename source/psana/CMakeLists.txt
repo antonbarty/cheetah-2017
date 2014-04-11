@@ -3,6 +3,8 @@ find_package(PSANA REQUIRED)
 
 file(GLOB sources "${ANA_RELEASE}/psana/app/*.cpp" "src/cheetah-psana.cpp")
 
+
+
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
