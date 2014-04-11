@@ -671,27 +671,27 @@ namespace cheetah_ana_pkg {
 		if(cheetahGlobal.samplePosXPV[0]){
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosXPV);
 			if (pv && pv->numElements() > 0) {
-				eventData->samplePosX = estore.value(cheetahGlobal.samplePosXPV,0);
+				eventData->samplePos[0] = estore.value(cheetahGlobal.samplePosXPV,0);
 				if (verbose) {
-					cout << "samplePosX: " << eventData->samplePosX << endl;
+					cout << "samplePos[0]: " << eventData->samplePos[0] << endl;
 				}  
 			}
 		}
 		if(cheetahGlobal.samplePosYPV[0]){
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosYPV);
 			if (pv && pv->numElements() > 0) {
-				eventData->samplePosY = estore.value(cheetahGlobal.samplePosYPV,0);
+				eventData->samplePos[1] = estore.value(cheetahGlobal.samplePosYPV,0);
 				if (verbose) {
-					cout << "samplePosY: " << eventData->samplePosY << endl;
+					cout << "samplePos[1]: " << eventData->samplePos[1] << endl;
 				}  
 			}
 		}
 		if(cheetahGlobal.samplePosZPV[0]){
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.samplePosZPV);
 			if (pv && pv->numElements() > 0) {
-				eventData->samplePosZ = estore.value(cheetahGlobal.samplePosZPV,0);
+				eventData->samplePos[2] = estore.value(cheetahGlobal.samplePosZPV,0);
 				if (verbose) {
-					cout << "samplePosZ: " << eventData->samplePosZ << endl;
+					cout << "samplePos[2]: " << eventData->samplePos[2] << endl;
 				}  
 			}
 		}

@@ -275,6 +275,100 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 	H5Sclose(dataspace);
 }
 
+
+/* Create a 1D stack. */
+static hid_t create1DStack(const char *name, hid_t loc, int size, hid_t dataType){
+	hsize_t dims[2] = {lrintf(((float)CXI::chunkSize2D)/H5Tget_size(dataType)/size),
+					   static_cast<hsize_t>(size)};
+	hsize_t maxdims[2] = {H5S_UNLIMITED,static_cast<hsize_t>(size)};
+	hid_t dataspace = H5Screate_simple(2, dims, maxdims);
+	if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
+	hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
+	H5Pset_chunk(cparms, 2, dims);
+	//  H5Pset_deflate (cparms, 2);
+	hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+	if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
+	H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*16,1);
+
+	const char * axis = "experiment_identifier:coordinate";
+	hsize_t one = 1;
+	hid_t datatype = H5Tcopy(H5T_C_S1);
+	H5Tset_size(datatype, strlen(axis));
+	hid_t memspace = H5Screate_simple(1,&one,NULL);
+	hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+	H5Awrite(attr,datatype,axis);
+	H5Aclose(attr);
+	attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
+	int zero = 0;
+	H5Awrite(attr,H5T_NATIVE_INT32,&zero);
+	H5Tclose(datatype);
+	H5Aclose(attr);
+	H5Sclose(memspace);
+	H5Sclose(dataspace);
+	H5Pclose(cparms);
+	return dataset;    
+}
+
+template <class T> 
+static void write1DToStack(hid_t dataset, uint stackSlice, T * data){  
+	hid_t hs,w;
+	hsize_t count[2] = {1,1};
+	hsize_t offset[2] = {stackSlice,0};
+	/* stride is irrelevant in this case */
+	hsize_t stride[2] = {1,1};
+	hsize_t block[2];
+	/* dummy */
+	hsize_t mdims[2];
+	/* Use the existing dimensions as block size */
+	hid_t dataspace = H5Dget_space (dataset);
+	if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+	H5Sget_simple_extent_dims(dataspace, block, mdims);
+	/* check if we need to extend the dataset */
+	if(block[0] <= stackSlice){
+		while(block[0] <= stackSlice){
+			block[0] *= 2;
+		}
+		H5Dset_extent (dataset, block);
+		/* get enlarged dataspace */
+		H5Sclose(dataspace);
+		dataspace = H5Dget_space (dataset);
+		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+	}
+	block[0] = 1;
+	hid_t memspace = H5Screate_simple (2, block, NULL);
+	hid_t type = get_datatype(data);
+
+	hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
+	if( hs<0 ) {
+		ERROR("Cannot select hyperslab.\n");
+	}
+	w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
+	if( w<0 ){
+		ERROR("Cannot write to file.\n");
+	}
+	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
+	// Silently ignore failure to write, this attribute is non-essential
+	if(a>=0) {
+		uint oldVal;
+		w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
+		if (w < 0)
+		{
+			ERROR("Failure to read back size attribute");
+		}
+		if (oldVal < stackSlice + 1) {
+			oldVal = stackSlice + 1;
+		}
+		w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
+		if (w < 0)
+		{
+			ERROR("Failure to write size attribute");
+		}
+		H5Aclose(a);
+	}
+	H5Sclose(memspace);
+	H5Sclose(dataspace);
+}
+
 template <class T> 
 static hid_t createDataset(const char *name, hid_t loc, T *data,int width=1, int height=0, int length=0){
 	hid_t datatype;
@@ -604,6 +698,17 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 			cxi->entry.images.push_back(img);
 
+			// If we have sample translation configured, write it out to file
+			if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
+			   global->samplePosZPV[0]){
+				cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+				cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
+			}else{
+				cxi->entry.sample.geometry.translation = 0;
+			}
+			
+
 			if(global->detector[detID].downsampling > 1){
 				// /entry_1/image_j
 				sprintf(imageName,"/entry_1/image_%ld",global->nDetectors+detID+1);
@@ -926,6 +1031,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
 	cxi->entry.experimentIdentifier = H5Dopen(cxi->self,"/entry_1/experiment_identifier",H5P_DEFAULT);
 	cxi->entry.instrument.source.energy = H5Dopen(cxi->self,"/entry_1/instrument_1/source_1/energy",H5P_DEFAULT);
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
+	   global->samplePosZPV[0]){		
+		cxi->entry.sample.geometry.translation = H5Dopen(cxi->self,"/entry_1/sample_1/geometry_1/translation",H5P_DEFAULT);
+	}
 	int cxi_img_id = 0;
 	DETECTOR_LOOP{
 		char detectorPath[1024];
@@ -1287,6 +1396,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	// put it back
 	info->eventname[strlen(info->eventname)] = '.';
   
+	if(cxi->entry.sample.geometry.translation){
+		
+		write1DToStack(cxi->entry.sample.geometry.translation,stackSlice,info->samplePos);
+	}
 	DETECTOR_LOOP {    
 		/* Save assembled image under image groups */
 		writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
