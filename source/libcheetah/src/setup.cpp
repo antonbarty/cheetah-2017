@@ -21,6 +21,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream> 
+#include <errno.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -60,6 +62,9 @@ cGlobal::cGlobal(void) {
 	strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
 	laserDelay = std::numeric_limits<float>::quiet_NaN();
 	laserDelay = 0;
+	samplePosXPV[0] = 0;
+	samplePosYPV[0] = 0;
+	samplePosZPV[0] = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -891,6 +896,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "tofchannel")) {
 		TOFchannel = atoi(value);
 	}
+	else if (!strcmp(tag, "tofallchannels")) {
+		splitList(value,TOFAllChannels);
+	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
 	}
@@ -1068,6 +1076,12 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		strcpy(pythonFile, value);
 	} else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
+	} else if (!strcmp(tag, "sampleposxpv")) {
+		strcpy(samplePosXPV,value);
+	} else if (!strcmp(tag, "sampleposypv")) {
+		strcpy(samplePosYPV,value);
+	} else if (!strcmp(tag, "sampleposzpv")) {
+		strcpy(samplePosZPV,value);
 	}
 	// Unknown tags
 	else {
@@ -1509,4 +1523,16 @@ void cGlobal::readHits(char *filename) {
 	}
 	
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
+}
+
+void cGlobal::splitList(char * values, std::vector<int> & elems) {
+	char delim = ',';
+    std::stringstream ss(values);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+		int elem = strtol(item.c_str(),NULL,10);
+		if(errno != EINVAL){
+			elems.push_back(elem);
+		}
+    }
 }

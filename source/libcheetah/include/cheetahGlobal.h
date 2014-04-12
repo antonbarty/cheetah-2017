@@ -181,11 +181,10 @@ public:
 	/** @brief Channel of the TOF instrument. */
 	int      TOFchannel;
 	/** @brief What's this? */
-	int      AcqNumChannels;
-	/** @brief What's this? */
 	int      AcqNumSamples;
-	/** @brief What's this? */
-	double   AcqSampleInterval;
+	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
+	std::vector<int> TOFAllChannels;
+
     
 	/** @brief Toggle energy spectrum creation. */
     int      espectrum;
@@ -241,6 +240,11 @@ public:
 	char     laserDelayPV[MAX_FILENAME_LENGTH];
 	/** @brief The pump laser delay. */
 	float    laserDelay;
+
+	/** @brief The Epics process variable for the sample translation. */
+	char     samplePosXPV[MAX_FILENAME_LENGTH];
+	char     samplePosYPV[MAX_FILENAME_LENGTH];
+	char     samplePosZPV[MAX_FILENAME_LENGTH];
 
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
@@ -451,6 +455,7 @@ public:
 
 private:
 	int parseConfigTag(char*, char*);
+	void splitList(char * values, std::vector<int> & elems);
 
 };
 #endif

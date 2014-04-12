@@ -83,6 +83,8 @@ namespace cheetah_ana_pkg {
     protected:
         
     private:
+        int readTOF(Event & evt, Env & env, int channel, double & TOFtrigtime, 
+		      double* & TOFTime, double * & TOFVoltage);
         
         // Data members
         int nActiveThreads;

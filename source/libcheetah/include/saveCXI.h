@@ -21,6 +21,16 @@ namespace CXI{
 	const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
 	typedef struct{
+	  hid_t self;
+	  hid_t translation;
+	}Geometry;
+
+	typedef struct{
+	  hid_t self;
+	  Geometry geometry;
+	}Sample;
+
+	typedef struct{
 		hid_t self;
 		hid_t distance;
 		hid_t data;
@@ -152,6 +162,7 @@ namespace CXI{
 		Instrument instrument;
 		hid_t experimentIdentifier;
 		std::vector<Image> images;
+		Sample sample;
 	}Entry;
 
 	typedef struct{
