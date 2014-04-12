@@ -114,6 +114,7 @@ void *worker(void *threadarg) {
 	cspadSubtractUnbondedPixels(eventData, global);
 	cspadSubtractBehindWires(eventData, global);
 
+	
 	// Fix pnCCD errors:
 	// pnCCD offset correction (read out artifacts prominent in lines with high signal)
 	// pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
@@ -138,7 +139,7 @@ void *worker(void *threadarg) {
   
 	// This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
 	// Useful for local background subtraction (which is effective but slow)
-	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6)) {
+	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6 || global->hitfinderAlgorithm==8)) {
 		hit = hitfinderFastScan(eventData, global);
 		if(hit)
 			goto localBGCalculated;
@@ -193,12 +194,12 @@ localBGCalculated:
 
 	if(global->hitfinder){ 
 		hit = hitfinder(eventData, global);
-		if (global->hitfinderInvertHit == 1){
-			if ( hit == 1 ) 
-				hit = 0;
-			else
-				hit = 1;
-		}
+		//if (global->hitfinderInvertHit == 1){
+		//	if ( hit == 1 )
+		//		hit = 0;
+		//	else
+		//		hit = 1;
+		//}
 		eventData->hit = hit;
 	}
 

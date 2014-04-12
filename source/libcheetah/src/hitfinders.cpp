@@ -88,11 +88,12 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
 		break;
+			
 	case 9 :	// Use TOF signal, maximum peak, to find hits
-		hit = hitfinder8(global,eventData,detID);
+		hit = hitfinder9(global,eventData,detID);
 		break;
 	case 10 :	// Use TOF signal, maximum peak, excluding classical htis (this was 8 earlier, but it overlapped with Anton's new hitfinder)
-		hit = hitfinder8(global,eventData,detID);
+		hit = hitfinder9(global,eventData,detID);
 		if (hit)
 	    {
 			int nPeaks = eventData->nPeaks;
@@ -435,7 +436,7 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 	return hit;
 }
 
-int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
+int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
 	int hit = 0;
 	//long		pix_nn = global->detector[detID].pix_nn;
 	uint16_t      *mask = eventData->detector[detID].pixelmask;

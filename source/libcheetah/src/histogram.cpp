@@ -102,6 +102,9 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
  *	Save histograms
  */
 void saveHistograms(cGlobal *global) {
+
+	printf("Writing histogram data \n");
+
 	DETECTOR_LOOP {
 		if (global->detector[detID].histogram) {
 			saveHistogram(global, detID);
@@ -133,6 +136,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	float		*darkcal = global->detector[detID].darkcal;
 	
 	long		hist_count;
+
 
 
     
