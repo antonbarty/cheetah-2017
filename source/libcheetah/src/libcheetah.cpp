@@ -512,18 +512,20 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 
         // Create a new worker thread for this data frame
+		// Lock acquired before creation to avoid race condition where nActiveThreads decremented before incremented
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
-			pthread_mutex_lock(&global->nActiveThreads_mutex);
 			global->nActiveThreads += 1;
 			global->threadCounter += 1;
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		else{
 			printf("Error: thread creation failed (frame skipped)\n");
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
     }
