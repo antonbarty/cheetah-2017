@@ -2,11 +2,13 @@
 find_package(PSANA REQUIRED)
 
 file(GLOB sources "${ANA_RELEASE}/psana/src/*.cpp")
+list(REMOVE_ITEM sources "${ANA_RELEASE}/psana/src/EventLoop.cpp")
+list(APPEND sources "src/EventLoop.cpp")
 # Add source files here
+include_directories("include")
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
 
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
-include_directories("include")
 
 add_library(libpsana SHARED ${sources})
 
