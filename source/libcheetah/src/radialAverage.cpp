@@ -222,7 +222,6 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
     pthread_mutex_lock(&detector->radialStack_mutex[powderClass]);
     
     char	filename[1024];
-    long    frameNum = detector->radialStackCounter[powderClass];
 	long    stackCounter = detector->radialStackCounter[powderClass];
     long    stackSize = detector->radialStackSize;
 	

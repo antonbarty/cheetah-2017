@@ -172,7 +172,10 @@ cGlobal::cGlobal(void) {
 	hdf5dump = 0;
 	saveInterval = 1000;
 	savePixelmask = 1;
+    // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
+	// Flush after every image by default
+	cxiFlushPeriod = 1;
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -210,8 +213,8 @@ cGlobal::cGlobal(void) {
 	lasttime = 0;
 	laserPumpScheme = 0;
 
-    // Do not output 1 HDF5 per image by default
-	saveCXI = 0;
+	// By default do not profile code
+	profilerDiagnostics = false;
 
 	// Only one thread during calibration
 	useSingleThreadCalibration = 0;
@@ -805,6 +808,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "iospeedtest")) {
 		ioSpeedTest = atoi(value);
 	}
+	else if (!strcmp(tag, "profilerdiagnostics")) {
+		profilerDiagnostics = atoi(value);
+	}
 	else if (!strcmp(tag, "threadpurge")) {
 		threadPurge = atoi(value);
 	}
@@ -1038,7 +1044,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderDownsampling = (long) atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderfastscan")) {
-		hitfinderFastScan = atof(value);
+		hitfinderFastScan = atoi(value);
 	}
 	else if (!strcmp(tag, "selfdarkmemory")) {
 		printf("The keyword selfDarkMemory has been changed.  It is\n"
@@ -1056,6 +1062,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
+	} else if (!strcmp(tag, "cxiflushperiod")) {
+		cxiFlushPeriod = atoi(value);
 	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	} else if (!strcmp(tag, "usesinglethreadcalibration")) {

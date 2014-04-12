@@ -29,7 +29,7 @@ cheetahHDF5ErrorHandler(hid_t,void *)
 
 template <class T>
 hid_t get_datatype(const T * foo){
-	hid_t datatype;
+	hid_t datatype = 0;
 	if(typeid(T) == typeid(bool) && sizeof(bool) == 1){
 		datatype = H5T_NATIVE_INT8;
 	}else if(typeid(T) == typeid(short)){
@@ -1410,7 +1410,9 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);  
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
-	H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+	if(global->cxiFlushPeriod && (stackSlice % global->cxiFlushPeriod) == 0){
+		H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+	}
 	pthread_mutex_unlock(&global->swmr_mutex);
 #endif
 }

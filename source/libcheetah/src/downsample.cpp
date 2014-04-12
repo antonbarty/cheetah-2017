@@ -89,7 +89,6 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
 void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
 	long x0,y0;
 	long x1,y1;
-	long imgXxX_ny = imgXxX_nn/imgXxX_nx;
 	long i0,i1;
 
 	for(i1 = 0;i1<imgXxX_nn;i1++){
@@ -109,7 +108,6 @@ void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long
 void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
 	long x0,y0;
 	long x1,y1;
-	long imgXxX_ny = imgXxX_nn/imgXxX_nx;
 	long i0,i1;
 	long *tempN;
 	uint16_t *tempM;

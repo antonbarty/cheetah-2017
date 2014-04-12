@@ -36,9 +36,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global) {
 void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	
 	// Dereference common variables
-	long		pix_nn = global->detector[detID].pix_nn;
 	long		pix_nx = global->detector[detID].pix_nx;
-	long		pix_ny = global->detector[detID].pix_ny;
 
 	long		histMin = global->detector[detID].histogramMin;
 	long		histNbins = global->detector[detID].histogramNbins;
@@ -48,9 +46,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	long		hist_ss_min = global->detector[detID].histogram_ss_min;
 	long		hist_ss_max = global->detector[detID].histogram_ss_max;
 	long		hist_nfs = global->detector[detID].histogram_nfs;
-	long		hist_nss = global->detector[detID].histogram_nss;
 	long		hist_nn = global->detector[detID].histogram_nn;
-	uint64_t	hist_nnn = global->detector[detID].histogram_nnn;
 	uint16_t	*histData = global->detector[detID].histogramData;
 
 	
@@ -117,17 +113,10 @@ void saveHistograms(cGlobal *global) {
 void saveHistogram(cGlobal *global, int detID) {
 	
 	// Dereference common variables
-	long		pix_nn = global->detector[detID].pix_nn;
-	long		pix_nx = global->detector[detID].pix_nx;
-	long		pix_ny = global->detector[detID].pix_ny;
 	
 	long		histMin = global->detector[detID].histogramMin;
 	long		histNbins = global->detector[detID].histogramNbins;
 	long		histBinSize = global->detector[detID].histogramBinSize;
-	long		hist_fs_min = global->detector[detID].histogram_fs_min;
-	long		hist_fs_max = global->detector[detID].histogram_fs_max;
-	long		hist_ss_min = global->detector[detID].histogram_ss_min;
-	long		hist_ss_max = global->detector[detID].histogram_ss_max;
 	long		hist_nfs = global->detector[detID].histogram_nfs;
 	long		hist_nss = global->detector[detID].histogram_nss;
 	long		hist_nn = global->detector[detID].histogram_nn;

@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 CFEL. All rights reserved.
 //
 
+#include <Python.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -18,7 +19,6 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <vector>
-#include <Python.h>
 
 #include "cheetah.h"
 
@@ -54,6 +54,9 @@ void spawnPython(char* pythonFile)
 	pthread_attr_init(&threadAttribute);
 	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 	int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+	if(returnStatus){
+		ERROR("Failed to create python thread!");
+	}
 }
 
 /*
@@ -61,6 +64,22 @@ void spawnPython(char* pythonFile)
  */
 int cheetahInit(cGlobal *global) {
     
+	// Check if we're using psana of the same git commit
+	if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
+		fprintf(stderr,    "*******************************************************************************************\n");
+		fprintf(stderr,"*** WARNING %s:%d ***\n",__FILE__,__LINE__);
+		
+		if(getenv("PSANA_GIT_SHA")){
+			fprintf(stderr,"***        Using psana from git commit %s         ***\n",getenv("PSANA_GIT_SHA"));
+			fprintf(stderr,"***        and cheetah_ana_mod from git commit %s ***\n",GIT_SHA1);
+		}else{
+			fprintf(stderr,"***         Using a psana version not compiled with cheetah!                            ***\n");
+		}
+		fprintf(stderr,    "*******************************************************************************************\n");
+		sleep(10);
+	}
+	setenv("LIBCHEETAH_GIT_SHA",GIT_SHA1,0);
+
 	global->self = global;
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
@@ -620,4 +639,23 @@ void cheetahExit(cGlobal *global) {
     printf("Cheetah clean exit\n");
 }
 
+
+void cheetahDebug(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
+	vfprintf(stdout,format,ap);
+	va_end(ap);
+	puts("");
+}
+
+void cheetahError(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
+	vfprintf(stderr,format,ap);
+	va_end(ap);
+	puts("");
+	abort();
+}
 

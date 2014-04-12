@@ -111,7 +111,6 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	herr_t		hdf_error;
 	hid_t   	gid, gidCheetah;
 	hid_t		h5compression;
-	int			h5compressnum = 5;
 	//char 		fieldname[100]; 
 	char        fieldID[1023];
 
@@ -463,7 +462,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		
 		// Save peak info in Raw layout
-		for(long i=0; i< 4*size[0]; i++) {
+		for(unsigned long i=0; i< 4*size[0]; i++) {
 			peak_info[i] = 0;
 		}
 		for (long i=0; i<nPeaks;i++){

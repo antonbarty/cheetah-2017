@@ -272,7 +272,7 @@ void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn
 		if (pix_r[i] < fminr)
 			fminr = pix_r[i];
 	}
-	lmaxr = ceil(fmaxr)+1;
+	lmaxr = (long)ceil(fmaxr)+1;
 	lminr = 0;
 	
 	// Allocate and zero arrays
@@ -390,7 +390,8 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 	 *	Determine local background
 	 *	(median over window width either side of current pixel)
 	 */
-	long		e,ee;
+	long		e = 0;
+	long        ee;
 	long		counter;
 	
 	
