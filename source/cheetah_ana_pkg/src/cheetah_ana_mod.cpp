@@ -1311,6 +1311,12 @@ namespace cheetah_ana_pkg {
 		double	dtime;
 		float	maxwait = 60.;
 		int p=0, pp=0;
+
+		printf("Ending run. Waiting for %d cheetah ana mod workers to finish.\n", nActiveThreads);
+		while(nActiveThreads >= 0) {
+			usleep(10000);
+		}
+		printf("cheetah ana mod workers stopped successfully.\n");
 		
 		while(cheetahGlobal.nActiveThreads > 0) {
 			p = cheetahGlobal.nActiveThreads;
