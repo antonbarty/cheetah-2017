@@ -107,18 +107,18 @@ public:
 	int      hitfinderUsePeakmask;
 	/** @brief Path to the peak mask file. */
 	char     peaksearchFile[MAX_FILENAME_LENGTH];
-	/** @brief Toggle the useage of the TOF-based hitfinder.
+	/** @brief Toggle the usage of the TOF-based hitfinder.
 	 *
 	 * Isn't this specified by hitfinderAlgorithm? */
 	int      hitfinderUseTOF;
 	/** @brief First sample in the TOF scan to consider. */
-	int      hitfinderTOFMinSample;
+	std::vector<int>      hitfinderTOFMinSample;
 	/** @brief Last sample in the TOF scan to consider. */
-	int      hitfinderTOFMaxSample;
+	std::vector<int>      hitfinderTOFMaxSample;
 	/** @brief Mean voltage of TOF signal for TOF hitfinding */
-	double   hitfinderTOFMeanBackground;
+	std::vector<double>   hitfinderTOFMeanBackground;
 	/** @brief Intensity threshold of TOF for hitfinding. */
-	double   hitfinderTOFThresh;
+	std::vector<double>   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */
 	double   hitfinderTOFWindow;
 	/** @brief Peak count constraint used in some TOF hitfinding. */
@@ -455,7 +455,7 @@ public:
 
 private:
 	int parseConfigTag(char*, char*);
-	void splitList(char * values, std::vector<int> & elems);
+	template<typename T> void splitList(char * values, std::vector<T> & elems);
 
 };
 #endif

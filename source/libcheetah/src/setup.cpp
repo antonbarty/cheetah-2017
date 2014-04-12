@@ -116,10 +116,14 @@ cGlobal::cGlobal(void) {
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
-	hitfinderTOFMinSample = 0;
-	hitfinderTOFMaxSample = 1000;
-	hitfinderTOFMeanBackground = 2;
-	hitfinderTOFThresh = 100;
+	hitfinderTOFMinSample.resize(1);
+	hitfinderTOFMinSample[0] = 0;
+	hitfinderTOFMaxSample.resize(1);
+	hitfinderTOFMaxSample[0] = 1000;
+	hitfinderTOFMeanBackground.resize(1);
+	hitfinderTOFMeanBackground[0] = 2;
+	hitfinderTOFThresh.resize(1);
+	hitfinderTOFThresh[0] = 100;
 	hitfinderTOFMinCount = 1;
 	hitfinderTOFWindow = 3;
 
@@ -903,16 +907,16 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderUseTOF = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfindertofminsample")) {
-		hitfinderTOFMinSample = atoi(value);
+		splitList(value, hitfinderTOFMinSample);
 	}
 	else if (!strcmp(tag, "hitfindertofmaxsample")) {
-		hitfinderTOFMaxSample = atoi(value);
+		splitList(value,hitfinderTOFMaxSample);
 	}
 	else if (!strcmp(tag, "hitfindertofmeanbackground")) {
-		hitfinderTOFMeanBackground = atof(value);
+		splitList(value, hitfinderTOFMeanBackground);
 	}
 	else if (!strcmp(tag, "hitfindertofthresh")) {
-		hitfinderTOFThresh = atof(value);
+		splitList(value, hitfinderTOFThresh);
 	}
 	else if (!strcmp(tag, "hitfindertofmincount")) {
 		hitfinderTOFMinCount = atoi(value);
@@ -1177,10 +1181,10 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "tofName=%s\n",tofName);
 	fprintf(fp, "tofChannel=%d\n",TOFchannel);
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
-	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
-	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-	fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
-	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+	//fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
+	//fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
+	//fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
+	//fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
 	fprintf(fp, "espectrum=%d\n",espectrum);
@@ -1525,14 +1529,16 @@ void cGlobal::readHits(char *filename) {
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
 }
 
-void cGlobal::splitList(char * values, std::vector<int> & elems) {
+template<typename T>
+void cGlobal::splitList(char * values, std::vector<T> & elems) {
 	char delim = ',';
     std::stringstream ss(values);
     std::string item;
     while (std::getline(ss, item, delim)) {
-		int elem = strtol(item.c_str(),NULL,10);
-		if(errno != EINVAL){
-			elems.push_back(elem);
-		}
+		std::stringstream innerss(item);
+		
+		T elem;
+		innerss >> elem;
+		elems.push_back(elem);
     }
 }

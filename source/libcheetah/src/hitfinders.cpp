@@ -410,10 +410,10 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 		  
 	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 		double total_tof = 0.;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
 			total_tof += eventData->TOFVoltage[i];
 		}
-		if (total_tof > global->hitfinderTOFThresh)
+		if (total_tof > global->hitfinderTOFThresh[0])
 			hit = 1;
 	}
 	// Use cspad threshold if TOF is not present 
@@ -457,14 +457,14 @@ int hitfinder8(cGlobal *global,cEventData *eventData,long detID){
 			olddata[k] = NAN;
 		}
 		int count = 0;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
 			olddata[i % nback] = eventData->TOFVoltage[i];
 			double sum = 0;
 			for (int k = 0; k < nback; k++)
 			{
 				sum += olddata[k];
 			}
-			if (sum < global->hitfinderTOFThresh * nback) count++;
+			if (sum < global->hitfinderTOFThresh[0] * nback) count++;
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;
@@ -483,8 +483,10 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 	int hit = 0;
 	if (eventData->TOFPresent==1){
 		int count = 0;
-		for (int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			count += (int)floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
+	    for (int j=0; j<eventData->TOFAllVoltage.size(); j++) {
+			for (int i=global->hitfinderTOFMinSample[j]; i<global->hitfinderTOFMaxSample[j]; i++) {
+				count += (int)floor(fmax((eventData->TOFAllVoltage[j][i] - global->hitfinderTOFMeanBackground[j]) / global->hitfinderTOFThresh[j], 0)) ;
+			}
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;

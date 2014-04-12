@@ -493,10 +493,10 @@ void evr41fudge(cEventData *t, cGlobal *g){
 	double Vtot = 0;
 	double Vmax = 0;
 	int tCounts = 0;
-	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
+	for(i=g->hitfinderTOFMinSample[0]; i<g->hitfinderTOFMaxSample[0]; i++){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
-		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
+		if ( Vtof[i] >= g->hitfinderTOFThresh[0] ) tCounts++;
 	}
 	
 
