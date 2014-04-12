@@ -147,7 +147,8 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(:FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
-		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
+		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
+		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
@@ -1259,11 +1260,14 @@ namespace cheetah_ana_pkg {
 	int cheetah_ana_mod::readTOF(Event & evt, Env & env, int chan,
 								 double & TOFtrigtime, 
 								 double* & TOFTime, double *& TOFVoltage){
-		shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq);
+		// Each acqiris unit has a maxmium of 4 channels
+		int mainChan = chan / 4;
+		int subChan = chan % 4;
+		shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq[mainChan]);
 		if (acqData) {
-			shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
-			const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
-			const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
+			shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq[mainChan]);
+			const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(subChan);
+			const Psana::Acqiris::VertV1& v = acqConfig->vert()[subChan];
 			double slope = v.slope();
 			double offset = v.offset();
 			const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
@@ -1274,19 +1278,12 @@ namespace cheetah_ana_pkg {
 			TOFtrigtime = timestamps[seg].pos();
 			TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 			TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			double * tempTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
 			double timestamp = timestamps[seg].value();
 			ndarray<const int16_t, 1> raw(waveforms[seg]);
 			for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
-				tempTime[i] = timestamp + i*sampInterval;
-				tempVoltage[i] = raw[i]*slope + offset;
+				TOFTime[i] = timestamp + i*sampInterval;
+				TOFVoltage[i] = raw[i]*slope + offset;
 			}
-			//Memcpy is necessary for thread safety.
-			memcpy(TOFTime, &tempTime[0], cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
-			free(tempTime);
-			free(tempVoltage);
 			return 1;
 		}
 		return 0;

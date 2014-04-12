@@ -100,7 +100,7 @@ namespace cheetah_ana_pkg {
         Source m_srcFee;
         Source m_srcFeeSpec;
         Source m_srcCav;
-        Source m_srcAcq;
+        Source m_srcAcq[2];
         Source m_srcCam;
         Source m_srcSpec;
         Source m_srcPnccd0;

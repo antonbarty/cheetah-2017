@@ -923,10 +923,10 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	createAndWriteDataset("tofName",confVal.self,global->tofName);
 	createAndWriteDataset("TOFchannel",confVal.self,&global->TOFchannel);
 	createAndWriteDataset("hitfinderUseTOF",confVal.self,&global->hitfinderUseTOF);
-	createAndWriteDataset("hitfinderTOFMinSample",confVal.self,&global->hitfinderTOFMinSample);
-	createAndWriteDataset("hitfinderTOFMaxSample",confVal.self,&global->hitfinderTOFMaxSample);
-	createAndWriteDataset("hitfinderTOFMeanBackground",confVal.self,&global->hitfinderTOFMeanBackground);
-	createAndWriteDataset("hitfinderTOFThresh",confVal.self,&global->hitfinderTOFThresh);
+	createAndWriteDataset("hitfinderTOFMinSample",confVal.self,&global->hitfinderTOFMinSample[0], global->hitfinderTOFMinSample.size());
+	createAndWriteDataset("hitfinderTOFMaxSample",confVal.self,&global->hitfinderTOFMaxSample[0], global->hitfinderTOFMaxSample.size());
+	createAndWriteDataset("hitfinderTOFMeanBackground",confVal.self,&global->hitfinderTOFMeanBackground[0], global->hitfinderTOFMeanBackground.size());
+	createAndWriteDataset("hitfinderTOFThresh",confVal.self,&global->hitfinderTOFThresh[0], global->hitfinderTOFThresh.size());
 	createAndWriteDataset("saveRadialStacks",confVal.self,&global->saveRadialStacks);
 	createAndWriteDataset("radialStackSize",confVal.self,&global->radialStackSize);
 	createAndWriteDataset("espectrum1D",confVal.self,&global->espectrum1D);
