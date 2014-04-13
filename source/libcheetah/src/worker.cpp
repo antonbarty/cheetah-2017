@@ -204,10 +204,6 @@ localBGCalculated:
 
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 hitknown: 
-    /*
-     *	Sort event into different classes (eg: laser on/off)
-     */
-    sortPowderClass(eventData, global);
 		
   
 	DEBUGL2_ONLY {
@@ -234,6 +230,12 @@ hitknown:
 		updateBackgroundBuffer(eventData, global, hit); 
 		calculatePersistentBackground(eventData,global);  
 	}
+
+	// Now sorting powders only after initial frames
+    /*
+     *	Sort event into different classes (eg: laser on/off)
+     */
+    sortPowderClass(eventData, global);
     
 	// Inside-thread speed test
 	if(global->ioSpeedTest==6) {

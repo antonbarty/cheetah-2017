@@ -263,6 +263,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 	*tat = 0.0;
 
 	for(long i=0;i<pix_nn;i++){
+        // TEMP LC97 CHANGE REMOVE MASK CHECK TODO TODO FIX
 		if((true || isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
 			*tat += data[i];
 			*nat += 1;
@@ -321,7 +322,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
 	eventData->peakTotal = tat;
 	eventData->peakNpix = nat;
 	eventData->nPeaks = nat;
-	printf("<%f %ld %ld>\n", tat, nat, nat);
 
 	if(global->hitfinderDownsampling > 1){
 		free(data);
