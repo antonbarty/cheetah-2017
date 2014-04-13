@@ -271,7 +271,6 @@ namespace cheetah_ana_pkg {
 
 	void cheetah_ana_mod::real_event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
 		inner_real_event(evtp, envp);
-		inner_real_event(evtp, envp);
 		pthread_mutex_lock(&nActiveThreads_mutex);
 		nActiveThreads -= 1;
 		pthread_mutex_unlock(&nActiveThreads_mutex);		

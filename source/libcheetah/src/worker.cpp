@@ -191,7 +191,8 @@ localBGCalculated:
 		DEBUG("Hit finding");
 	}
 
-	if(global->hitfinder){ 
+	if(global->hitfinder && (global->hitfinderForInitials ||
+							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
 		hit = hitfinder(eventData, global);
 		if (global->hitfinderInvertHit == 1){
 			if ( hit == 1 ) 
@@ -204,7 +205,12 @@ localBGCalculated:
 
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 hitknown: 
-		
+	// Slightly wrong that all initial frames are blanks
+	// when hitfinderForInitials is 0
+    /*
+     *	Sort event into different classes (eg: laser on/off)
+     */
+    sortPowderClass(eventData, global);		
   
 	DEBUGL2_ONLY {
 		DEBUG("Procedures depending on hit tag");
@@ -230,12 +236,6 @@ hitknown:
 		updateBackgroundBuffer(eventData, global, hit); 
 		calculatePersistentBackground(eventData,global);  
 	}
-
-	// Now sorting powders only after initial frames
-    /*
-     *	Sort event into different classes (eg: laser on/off)
-     */
-    sortPowderClass(eventData, global);
     
 	// Inside-thread speed test
 	if(global->ioSpeedTest==6) {

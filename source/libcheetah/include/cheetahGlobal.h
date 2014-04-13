@@ -81,6 +81,8 @@ public:
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
 	/** @brief Invert thit status (i.e. save "misses" if desired) */
 	int      hitfinderInvertHit;
+	/** @brief Perform hit finding for initial frames */
+	int      hitfinderForInitials;
 	int      hitfinderDetector;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
