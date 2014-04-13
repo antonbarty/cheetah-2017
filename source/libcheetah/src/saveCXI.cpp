@@ -629,6 +629,16 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	// /entry_1/instrument_1/experiment_identifier -> /entry_1/experiment_identifier
 	H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
+	// If we have sample translation configured, write it out to file
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
+	   global->samplePosZPV[0]){
+		cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+		cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
+	}else{
+		cxi->entry.sample.geometry.translation = 0;
+	}
+
 	DETECTOR_LOOP{
 		char detectorPath[1024];
 		char dataName[1024];
@@ -697,16 +707,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			// /entry_1/image_i/experiment_identifier
 			H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 			cxi->entry.images.push_back(img);
-
-			// If we have sample translation configured, write it out to file
-			if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
-			   global->samplePosZPV[0]){
-				cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
-				cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
-			}else{
-				cxi->entry.sample.geometry.translation = 0;
-			}
 			
 
 			if(global->detector[detID].downsampling > 1){
