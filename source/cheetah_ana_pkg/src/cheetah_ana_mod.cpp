@@ -963,37 +963,6 @@ namespace cheetah_ana_pkg {
 					return;
 				}
 			}
-			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
-				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
-
-				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
-				singleQuad = evt.get(m_srcCspad2x2, m_key);
-				if (singleQuad.get()) {
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					const ndarray<const int16_t, 3>& data = singleQuad->data();
-					int partsize = asic_nx * asic_ny * 2;
-					for (unsigned s = 0; s < 2; s++) {
-						for (int y = 0; y < asic_ny; y++) {
-							for (int x = 0; x < asic_nx * 2; x++) {
-								eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
-							}
-						}
-					}
-			   
-				} else {
-					printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-					/* NOTE: There might be a need to destroy event here as shown below */
-					/*
-					  printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-					  cheetahDestroyEvent(eventData);
-					*/
-					return;
-				}
-			}
-
-			
 			/*
 			 *	CsPad 2x2
 			 */
