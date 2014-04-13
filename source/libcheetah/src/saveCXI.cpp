@@ -668,6 +668,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		}
 		cxi->entry.instrument.detectors.push_back(d);
 
+		cxi->entry.sample.geometry.translation = 0;
 		/* Assembled images */
 		if(global->saveAssembled){
 			// /entry_1/image_i
@@ -704,8 +705,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
 				cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
-			}else{
-				cxi->entry.sample.geometry.translation = 0;
 			}
 			
 
