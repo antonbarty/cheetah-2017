@@ -130,7 +130,7 @@ cGlobal::cGlobal(void) {
 
 	// TOF configuration
 	TOFPresent = 0;
-	TOFchannel = 0;
+	TOFchannel = -1;
 	strcpy(tofName, "CxiSc1");
 	// Has to be looked up automatically
 	AcqNumSamples = 12288;
@@ -1103,6 +1103,43 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		fail = 1;
 	}
 
+	if(TOFPresent){
+		if(TOFchannel < 0){
+			if(TOFAllChannels.size()){
+				// If TOFPresent is enabled but TOF channel was not set
+				// set the TOFchannel to the first TOFAllChannel
+
+				TOFchannel = TOFAllChannels[0];
+			}else{
+				// If TOFPresent is enabled but TOF channel was not set
+				// set the TOFchannel to 0
+				TOFchannel = 0;
+			}
+		}
+		// Make sure that TOFchannel is present in TOFAllChannels
+		bool found = false;
+		for(unsigned int i = 0;i<TOFAllChannels.size();i++){
+			if(TOFchannel == TOFAllChannels[i]){
+				found = true;
+				break;
+			}
+		}
+		if(!found){
+			//All the TOF channel to the AllChannels
+			TOFAllChannels.push_back(TOFchannel);
+		}
+
+	}
+	// Each acqiris unit has a maximum of 4 channels
+	for(unsigned int i = 0;i<TOFAllChannels.size();i++){
+		unsigned int card = TOFAllChannels[i]/4;
+		while(TOFChannelsPerCard.size() <= card){
+			TOFChannelsPerCard.push_back(0);
+		}
+		TOFChannelsPerCard[card]++;		
+	}
+
+	   
 	return fail;
 
 }

@@ -264,11 +264,15 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->specImage);
 	}
 	//TOF stuff.
+	// Filipe: No need to delete. It's now just a pointer
+	// to a vector in the TOFAll* vectors
+	/*
 	if(eventData->TOFPresent==1){
 		free(eventData->TOFTime);
 		free(eventData->TOFVoltage); 
 	}
-    
+    */
+
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);

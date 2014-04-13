@@ -186,6 +186,7 @@ public:
 	int      AcqNumSamples;
 	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
 	std::vector<int> TOFAllChannels;
+	std::vector<int> TOFChannelsPerCard;
 
     
 	/** @brief Toggle energy spectrum creation. */

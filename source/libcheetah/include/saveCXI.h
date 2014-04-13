@@ -34,6 +34,7 @@ namespace CXI{
 		hid_t self;
 		hid_t distance;
 		hid_t data;
+		hid_t tofTime;
 		hid_t mask;
 		hid_t mask_shared;
 		hid_t thumbnail;

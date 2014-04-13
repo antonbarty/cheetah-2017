@@ -26,7 +26,7 @@
 //------------------------------------
 // Collaborating Class Declarations --
 //------------------------------------
-
+class cEventData;
 //		---------------------
 // 		-- Class Interface --
 //		---------------------
@@ -83,9 +83,9 @@ namespace cheetah_ana_pkg {
     protected:
         
     private:
-        int readTOF(Event & evt, Env & env, int channel, double & TOFtrigtime, 
-		      double* & TOFTime, double * & TOFVoltage);
-        
+	int readTOF(Event & evt, Env & env,
+		    cEventData* eventData);
+
         // Data members
         int nActiveThreads;
 		pthread_mutex_t  nActiveThreads_mutex;

@@ -1047,21 +1047,7 @@ namespace cheetah_ana_pkg {
 			//  SLAC libraries are not thread safe: must copy data into event structure for processing
 			//eventData->TOFPresent = 0; // DO NOT READ TOF
 		if (cheetahGlobal.TOFPresent==1){
-			int chan = cheetahGlobal.TOFchannel;
-			eventData->TOFPresent = readTOF(evt, env, chan,
-											eventData->TOFtrigtime,
-											eventData->TOFTime,
-											eventData->TOFVoltage);
-			eventData->TOFAllTrigTime.resize(cheetahGlobal.TOFAllChannels.size());
-			eventData->TOFAllTime.resize(cheetahGlobal.TOFAllChannels.size());
-			eventData->TOFAllVoltage.resize(cheetahGlobal.TOFAllChannels.size());
-			for(unsigned int i = 0;i<cheetahGlobal.TOFAllChannels.size();i++){
-				eventData->TOFPresent = readTOF(evt, env, chan,
-												eventData->TOFAllTrigTime[i],
-												eventData->TOFAllTime[i],
-												eventData->TOFAllVoltage[i]);
-				
-			}
+			eventData->TOFPresent = readTOF(evt, env, eventData);
 		}
 		
 
@@ -1200,7 +1186,7 @@ namespace cheetah_ana_pkg {
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */
-		while(nActiveThreads >= 32) {
+		while(nActiveThreads >= 1) {
 			usleep(10000);
 		}
 		
@@ -1225,36 +1211,50 @@ namespace cheetah_ana_pkg {
 	// End of psana event method
 
 
-	int cheetah_ana_mod::readTOF(Event & evt, Env & env, int chan,
-								 double & TOFtrigtime, 
-								 double* & TOFTime, double *& TOFVoltage){
-		// Each acqiris unit has a maxmium of 4 channels
-		int mainChan = chan / 4;
-		int subChan = chan % 4;
-		shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq[mainChan]);
-		if (acqData) {
-			shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq[mainChan]);
-			const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(subChan);
-			const Psana::Acqiris::VertV1& v = acqConfig->vert()[subChan];
-			double slope = v.slope();
-			double offset = v.offset();
-			const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
-			double sampInterval = h.sampInterval();
-			const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-			const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
-			int seg = 0;
-			TOFtrigtime = timestamps[seg].pos();
-			TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			double timestamp = timestamps[seg].value();
-			ndarray<const int16_t, 1> raw(waveforms[seg]);
-			for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
-				TOFTime[i] = timestamp + i*sampInterval;
-				TOFVoltage[i] = raw[i]*slope + offset;
-			}
-			return 1;
+	int cheetah_ana_mod::readTOF(Event & evt, Env & env,
+								 cEventData* eventData){
+		int foundTOF = 0;
+        //allocate necessary storage
+		for(unsigned int i = 0; i < cheetahGlobal.TOFChannelsPerCard.size();i++){
+			eventData->TOFAllVoltage.push_back(std::vector<double>(cheetahGlobal.AcqNumSamples*sizeof(double)*cheetahGlobal.TOFChannelsPerCard[i]));		
+			eventData->TOFAllTime.push_back(std::vector<double>(cheetahGlobal.AcqNumSamples*sizeof(double)*cheetahGlobal.TOFChannelsPerCard[i]));		
+			eventData->TOFAllTrigTime.push_back(std::vector<double>());		
 		}
-		return 0;
+		
+		for(unsigned int i = 0;i<cheetahGlobal.TOFAllChannels.size();i++){
+
+			// Each acqiris unit has a maxmium of 4 channels
+			int card = cheetahGlobal.TOFAllChannels[i] / 4;
+			int chan = cheetahGlobal.TOFAllChannels[i] % 4;
+			shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq[card]);
+			if (acqData) {
+				foundTOF = 1;
+				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq[card]);
+				const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
+				const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
+				double slope = v.slope();
+				double offset = v.offset();
+				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+				double sampInterval = h.sampInterval();
+				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+				int seg = 0;
+				eventData->TOFAllTrigTime[card].push_back(timestamps[seg].pos());
+				double timestamp = timestamps[seg].value();
+				ndarray<const int16_t, 1> raw(waveforms[seg]);
+				if(cheetahGlobal.TOFchannel == cheetahGlobal.TOFAllChannels[i]){
+					eventData->TOFTime = &*(eventData->TOFAllTime[card].end());
+					eventData->TOFVoltage = &*(eventData->TOFAllVoltage[card].end());
+				}
+				for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
+					eventData->TOFAllTime[card].push_back(timestamp + i*sampInterval);
+					eventData->TOFAllVoltage[card].push_back(raw[i]*slope + offset);
+				}
+
+			}
+
+		}
+		return foundTOF;
 	}
 								  
 	 

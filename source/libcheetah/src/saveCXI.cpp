@@ -644,6 +644,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	}
 
 
+
 	DETECTOR_LOOP{
 		char detectorPath[1024];
 		char dataName[1024];
@@ -653,6 +654,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld",detID+1);
 		CXI::Detector d;
 		d.self = H5Gcreate(cxi->entry.instrument.self, detectorPath, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
 		// /entry_1/data_i -> /entry_1/instrument_1/detector_i
 		sprintf(dataName,"data_%ld",detID+1);
 		H5Lcreate_soft(detectorPath,cxi->entry.self,dataName,H5P_DEFAULT,H5P_DEFAULT);
@@ -751,6 +753,23 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			free(image_pixelmask_shared);
 
       
+		}
+	}
+
+	if(global->TOFPresent){
+		int tofDetectorIndex = 1;
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			if(global->TOFChannelsPerCard[i] > 0){
+				CXI::Detector d;
+				char detectorPath[1024];
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d",tofDetectorIndex+global->nDetectors);
+				d.self = H5Gcreate(cxi->self, detectorPath, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				d.data = create2DStack("data", d.self, global->AcqNumSamples,global->TOFChannelsPerCard[i], H5T_NATIVE_DOUBLE);
+				d.tofTime = create2DStack("tofTime", d.self, global->AcqNumSamples,global->TOFChannelsPerCard[i], H5T_NATIVE_DOUBLE);
+				createAndWriteDataset("description",d.self,"iTOF detector connected to Acqiris unit",MAX_FILENAME_LENGTH);
+				cxi->entry.instrument.detectors.push_back(d);
+				tofDetectorIndex++;
+			}
 		}
 	}
 
@@ -1116,7 +1135,20 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		if(global->TOFPresent){
 			cxi->lcls.tofTime = H5Dopen(cxi->self,"/LCLS/tofTime",H5P_DEFAULT);
 			cxi->lcls.tofVoltage = H5Dopen(cxi->self,"/LCLS/tofVoltage",H5P_DEFAULT);    
+
+			int tofDetectorIndex = 1;
+			for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+				if(global->TOFChannelsPerCard[i] > 0){
+					char detectorPath[1024];
+					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);
+					cxi->entry.instrument.detectors[tofDetectorIndex+global->nDetectors].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
+					cxi->entry.instrument.detectors[tofDetectorIndex+global->nDetectors].tofTime = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+					tofDetectorIndex++;
+				}
+			}
 		}
+
 		DETECTOR_LOOP{
 			char buffer[1024];
 			sprintf(buffer,"/LCLS/detector%li-position",detID+1);    
@@ -1514,6 +1546,20 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	if(info->TOFPresent){
 		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
 		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
+		
+		int tofDetectorIndex = 1;
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			if(global->TOFChannelsPerCard[i] > 0){
+				char detectorPath[1024];
+				int detID = tofDetectorIndex+global->nDetectors;
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);
+				write2DToStack(cxi->entry.instrument.detectors[detID-1].data, stackSlice, &*info->TOFAllVoltage[i].begin());
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
+				write2DToStack(cxi->entry.instrument.detectors[detID-1].tofTime, stackSlice, &*info->TOFAllTime[i].begin());
+
+				tofDetectorIndex++;
+			}
+		}
 	}
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
 	writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
