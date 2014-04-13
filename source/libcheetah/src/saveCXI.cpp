@@ -638,6 +638,14 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	}else{
 		cxi->entry.sample.geometry.translation = 0;
 	}
+	// If we have sample translation configured, write it out to file
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
+	   global->samplePosZPV[0]){
+		cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
+		cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
+	}
+
 
 	DETECTOR_LOOP{
 		char detectorPath[1024];
@@ -678,6 +686,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		}
 		cxi->entry.instrument.detectors.push_back(d);
 
+		cxi->entry.sample.geometry.translation = 0;
 		/* Assembled images */
 		if(global->saveAssembled){
 			// /entry_1/image_i
@@ -707,7 +716,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			// /entry_1/image_i/experiment_identifier
 			H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 			cxi->entry.images.push_back(img);
-			
 
 			if(global->detector[detID].downsampling > 1){
 				// /entry_1/image_j
