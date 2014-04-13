@@ -13,7 +13,7 @@ include_directories("include")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${CMAKE_BINARY_DIR}/source/cheetah_ana_pkg,-rpath,${CMAKE_BINARY_DIR}/source/libpsana") 
 ADD_EXECUTABLE(psana ${sources})
 
-TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} libpsana )
+TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} libpsana libXtcInput)
 
 
 INSTALL(TARGETS psana

@@ -24,7 +24,7 @@ LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils
  ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
  ExpNameDb psddl_psana Core Cint RIO Net Hist
  Graf Graf3d Gpad Tree Rint Postscript Matrix Physics
- MathCore Thread m dl)
+ MathCore Thread m dl RdbMySQL)
  
 LIST(APPEND ana_libs psddl_pdsdata
   xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
