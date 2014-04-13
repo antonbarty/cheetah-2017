@@ -592,11 +592,15 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){
 		ERROR("Cannot set file access properties.\n");
 	}
+	if(global->cxiSWMR){
 #ifdef H5F_ACC_SWMR_WRITE
-	if(H5Pset_libver_bounds(fapl_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
-		ERROR("Cannot set file access properties.\n");
-	}
+		if(H5Pset_libver_bounds(fapl_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+			ERROR("Cannot set file access properties.\n");
+		}
+#else
+		ERROR("Cannot write in SWMR mode, HDF5 library does not support it.\n");
 #endif
+	}
 
 	hid_t fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
 	if( fid<0 ) {ERROR("Cannot create file.\n");}
@@ -637,13 +641,6 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
 	}else{
 		cxi->entry.sample.geometry.translation = 0;
-	}
-	// If we have sample translation configured, write it out to file
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
-	   global->samplePosZPV[0]){
-		cxi->entry.sample.self = H5Gcreate(cxi->entry.self, "sample_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); 
-		cxi->entry.sample.geometry.self = H5Gcreate(cxi->entry.sample.self, "geometry_1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		cxi->entry.sample.geometry.translation = create1DStack("translation", cxi->entry.sample.geometry.self, 3, H5T_NATIVE_FLOAT);				
 	}
 
 
@@ -1008,171 +1005,172 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	}
 
 #if defined H5F_ACC_SWMR_READ
-  
-	int nobjs = H5Fget_obj_count( cxi->self, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR);
-	hid_t * obj_id_list = (hid_t *)malloc(sizeof(hid_t)*nobjs);
-	H5Fget_obj_ids(cxi->self,H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR, nobjs, obj_id_list);
-	for(int i = 0; i < nobjs;i++){
-		hid_t id = obj_id_list[i];
-		H5I_type_t type = H5Iget_type(id);
-		if(type == H5I_DATASET){
-			H5Dclose(id);
-		}else if(type == H5I_GROUP){
-			H5Gclose(id);
-		}else if(type == H5I_DATATYPE){
-			H5Tclose(id);
-		}else if(type == H5I_DATASPACE){
-			H5Sclose(id);
-		}else if(type == H5I_ATTR){
-			H5Aclose(id);
-		}    
-	}  
-	free(obj_id_list);
-	if(H5Fstart_swmr_write(cxi->self) < 0){
-		ERROR("Cannot change to SWMR mode.\n");
-	}
-
-	/* Painfully reopen datasets.
-	   This part of the code is a bit
-	   too horrible to be true.
-	*/
-
-	cxi->entry.experimentIdentifier = H5Dopen(cxi->self,"/entry_1/experiment_identifier",H5P_DEFAULT);
-	cxi->entry.instrument.source.energy = H5Dopen(cxi->self,"/entry_1/instrument_1/source_1/energy",H5P_DEFAULT);
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
-	   global->samplePosZPV[0]){		
-		cxi->entry.sample.geometry.translation = H5Dopen(cxi->self,"/entry_1/sample_1/geometry_1/translation",H5P_DEFAULT);
-	}
-	int cxi_img_id = 0;
-	DETECTOR_LOOP{
-		char detectorPath[1024];
-		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/distance",detID+1);
-		cxi->entry.instrument.detectors[detID].distance = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/description",detID+1);
-		cxi->entry.instrument.detectors[detID].description = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/x_pixel_size",detID+1);
-		cxi->entry.instrument.detectors[detID].xPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/y_pixel_size",detID+1);
-		cxi->entry.instrument.detectors[detID].yPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-		if(global->saveRaw){
-			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/data",detID+1);
-			cxi->entry.instrument.detectors[detID].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-			if(global->savePixelmask){
-				sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/mask",detID+1);
-				cxi->entry.instrument.detectors[detID].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
-			}
-			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/thumbnail",detID+1);
-			cxi->entry.instrument.detectors[detID].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+	if(global->cxiSWMR){  
+		int nobjs = H5Fget_obj_count( cxi->self, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR);
+		hid_t * obj_id_list = (hid_t *)malloc(sizeof(hid_t)*nobjs);
+		H5Fget_obj_ids(cxi->self,H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR, nobjs, obj_id_list);
+		for(int i = 0; i < nobjs;i++){
+			hid_t id = obj_id_list[i];
+			H5I_type_t type = H5Iget_type(id);
+			if(type == H5I_DATASET){
+				H5Dclose(id);
+			}else if(type == H5I_GROUP){
+				H5Gclose(id);
+			}else if(type == H5I_DATATYPE){
+				H5Tclose(id);
+			}else if(type == H5I_DATASPACE){
+				H5Sclose(id);
+			}else if(type == H5I_ATTR){
+				H5Aclose(id);
+			}    
+		}  
+		free(obj_id_list);
+		if(H5Fstart_swmr_write(cxi->self) < 0){
+			ERROR("Cannot change to SWMR mode.\n");
 		}
-		if(global->saveAssembled){
-			sprintf(detectorPath,"/entry_1/image_%ld/data",detID+1);
-			cxi->entry.images[cxi_img_id].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-			if(global->savePixelmask){
-				sprintf(detectorPath,"/entry_1/image_%ld/mask",detID+1);
-				cxi->entry.images[cxi_img_id].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+
+		/* Painfully reopen datasets.
+		   This part of the code is a bit
+		   too horrible to be true.
+		*/
+
+		cxi->entry.experimentIdentifier = H5Dopen(cxi->self,"/entry_1/experiment_identifier",H5P_DEFAULT);
+		cxi->entry.instrument.source.energy = H5Dopen(cxi->self,"/entry_1/instrument_1/source_1/energy",H5P_DEFAULT);
+		if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
+		   global->samplePosZPV[0]){		
+			cxi->entry.sample.geometry.translation = H5Dopen(cxi->self,"/entry_1/sample_1/geometry_1/translation",H5P_DEFAULT);
+		}
+		int cxi_img_id = 0;
+		DETECTOR_LOOP{
+			char detectorPath[1024];
+			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/distance",detID+1);
+			cxi->entry.instrument.detectors[detID].distance = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/description",detID+1);
+			cxi->entry.instrument.detectors[detID].description = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/x_pixel_size",detID+1);
+			cxi->entry.instrument.detectors[detID].xPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+			sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/y_pixel_size",detID+1);
+			cxi->entry.instrument.detectors[detID].yPixelSize = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+			if(global->saveRaw){
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/data",detID+1);
+				cxi->entry.instrument.detectors[detID].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+				if(global->savePixelmask){
+					sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/mask",detID+1);
+					cxi->entry.instrument.detectors[detID].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+				}
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld/thumbnail",detID+1);
+				cxi->entry.instrument.detectors[detID].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
 			}
-			sprintf(detectorPath,"/entry_1/image_%ld/data_type",detID+1);
-			cxi->entry.images[cxi_img_id].dataType = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-			sprintf(detectorPath,"/entry_1/image_%ld/data_space",detID+1);
-			cxi->entry.images[cxi_img_id].dataSpace = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-			sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",detID+1);
-			cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-			cxi_img_id++;
-			if(global->detector[detID].downsampling > 1){
-				sprintf(detectorPath,"/entry_1/image_%ld/data",global->nDetectors+detID+1);
+			if(global->saveAssembled){
+				sprintf(detectorPath,"/entry_1/image_%ld/data",detID+1);
 				cxi->entry.images[cxi_img_id].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
 				if(global->savePixelmask){
-					sprintf(detectorPath,"/entry_1/image_%ld/mask",global->nDetectors+detID+1);
+					sprintf(detectorPath,"/entry_1/image_%ld/mask",detID+1);
 					cxi->entry.images[cxi_img_id].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
 				}
-				sprintf(detectorPath,"/entry_1/image_%ld/data_type",global->nDetectors+detID+1);
+				sprintf(detectorPath,"/entry_1/image_%ld/data_type",detID+1);
 				cxi->entry.images[cxi_img_id].dataType = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-				sprintf(detectorPath,"/entry_1/image_%ld/data_space",global->nDetectors+detID+1);
+				sprintf(detectorPath,"/entry_1/image_%ld/data_space",detID+1);
 				cxi->entry.images[cxi_img_id].dataSpace = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
-				sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",global->nDetectors+detID+1);
-				cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      	
+				sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",detID+1);
+				cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
 				cxi_img_id++;
+				if(global->detector[detID].downsampling > 1){
+					sprintf(detectorPath,"/entry_1/image_%ld/data",global->nDetectors+detID+1);
+					cxi->entry.images[cxi_img_id].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+					if(global->savePixelmask){
+						sprintf(detectorPath,"/entry_1/image_%ld/mask",global->nDetectors+detID+1);
+						cxi->entry.images[cxi_img_id].mask = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+					}
+					sprintf(detectorPath,"/entry_1/image_%ld/data_type",global->nDetectors+detID+1);
+					cxi->entry.images[cxi_img_id].dataType = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+					sprintf(detectorPath,"/entry_1/image_%ld/data_space",global->nDetectors+detID+1);
+					cxi->entry.images[cxi_img_id].dataSpace = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      
+					sprintf(detectorPath,"/entry_1/image_%ld/thumbnail",global->nDetectors+detID+1);
+					cxi->entry.images[cxi_img_id].thumbnail = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);      	
+					cxi_img_id++;
+				}
 			}
 		}
-	}
-	cxi->lcls.machineTime = H5Dopen(cxi->self,"/LCLS/machineTime",H5P_DEFAULT);
-	cxi->lcls.fiducial = H5Dopen(cxi->self,"/LCLS/fiducial",H5P_DEFAULT);
-	cxi->lcls.ebeamCharge = H5Dopen(cxi->self,"/LCLS/ebeamCharge",H5P_DEFAULT);
-	cxi->lcls.ebeamL3Energy = H5Dopen(cxi->self,"/LCLS/ebeamL3Energy",H5P_DEFAULT);
-	cxi->lcls.ebeamPkCurrBC2 = H5Dopen(cxi->self,"/LCLS/ebeamPkCurrBC2",H5P_DEFAULT);
-	cxi->lcls.ebeamLTUPosX = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosX",H5P_DEFAULT);
-	cxi->lcls.ebeamLTUPosY = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosY",H5P_DEFAULT);
-	cxi->lcls.ebeamLTUAngX = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngX",H5P_DEFAULT);
-	cxi->lcls.ebeamLTUAngY = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngY",H5P_DEFAULT);
-	cxi->lcls.phaseCavityTime1 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime1",H5P_DEFAULT);
-	cxi->lcls.phaseCavityTime2 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime2",H5P_DEFAULT);
-	cxi->lcls.phaseCavityCharge1 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge1",H5P_DEFAULT);
-	cxi->lcls.phaseCavityCharge2 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge2",H5P_DEFAULT);
-	cxi->lcls.photon_energy_eV = H5Dopen(cxi->self,"/LCLS/photon_energy_eV",H5P_DEFAULT);
-	cxi->lcls.photon_wavelength_A = H5Dopen(cxi->self,"/LCLS/photon_wavelength_A",H5P_DEFAULT);
-	cxi->lcls.f_11_ENRC = H5Dopen(cxi->self,"/LCLS/f_11_ENRC",H5P_DEFAULT);
-	cxi->lcls.f_12_ENRC = H5Dopen(cxi->self,"/LCLS/f_12_ENRC",H5P_DEFAULT);
-	cxi->lcls.f_21_ENRC = H5Dopen(cxi->self,"/LCLS/f_21_ENRC",H5P_DEFAULT);
-	cxi->lcls.f_22_ENRC = H5Dopen(cxi->self,"/LCLS/f_22_ENRC",H5P_DEFAULT);
-	cxi->lcls.evr41 = H5Dopen(cxi->self,"/LCLS/evr41",H5P_DEFAULT);
-	cxi->lcls.eventTimeString = H5Dopen(cxi->self,"/LCLS/eventTimeString",H5P_DEFAULT);
-	if(global->TOFPresent){
-		cxi->lcls.tofTime = H5Dopen(cxi->self,"/LCLS/tofTime",H5P_DEFAULT);
-		cxi->lcls.tofVoltage = H5Dopen(cxi->self,"/LCLS/tofVoltage",H5P_DEFAULT);    
-	}
-	DETECTOR_LOOP{
-		char buffer[1024];
-		sprintf(buffer,"/LCLS/detector%li-position",detID+1);    
-		cxi->lcls.detector_positions[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/LCLS/detector%li-EncoderValue",detID+1);    
-		cxi->lcls.detector_EncoderValues[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-	}
+		cxi->lcls.machineTime = H5Dopen(cxi->self,"/LCLS/machineTime",H5P_DEFAULT);
+		cxi->lcls.fiducial = H5Dopen(cxi->self,"/LCLS/fiducial",H5P_DEFAULT);
+		cxi->lcls.ebeamCharge = H5Dopen(cxi->self,"/LCLS/ebeamCharge",H5P_DEFAULT);
+		cxi->lcls.ebeamL3Energy = H5Dopen(cxi->self,"/LCLS/ebeamL3Energy",H5P_DEFAULT);
+		cxi->lcls.ebeamPkCurrBC2 = H5Dopen(cxi->self,"/LCLS/ebeamPkCurrBC2",H5P_DEFAULT);
+		cxi->lcls.ebeamLTUPosX = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosX",H5P_DEFAULT);
+		cxi->lcls.ebeamLTUPosY = H5Dopen(cxi->self,"/LCLS/ebeamLTUPosY",H5P_DEFAULT);
+		cxi->lcls.ebeamLTUAngX = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngX",H5P_DEFAULT);
+		cxi->lcls.ebeamLTUAngY = H5Dopen(cxi->self,"/LCLS/ebeamLTUAngY",H5P_DEFAULT);
+		cxi->lcls.phaseCavityTime1 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime1",H5P_DEFAULT);
+		cxi->lcls.phaseCavityTime2 = H5Dopen(cxi->self,"/LCLS/phaseCavityTime2",H5P_DEFAULT);
+		cxi->lcls.phaseCavityCharge1 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge1",H5P_DEFAULT);
+		cxi->lcls.phaseCavityCharge2 = H5Dopen(cxi->self,"/LCLS/phaseCavityCharge2",H5P_DEFAULT);
+		cxi->lcls.photon_energy_eV = H5Dopen(cxi->self,"/LCLS/photon_energy_eV",H5P_DEFAULT);
+		cxi->lcls.photon_wavelength_A = H5Dopen(cxi->self,"/LCLS/photon_wavelength_A",H5P_DEFAULT);
+		cxi->lcls.f_11_ENRC = H5Dopen(cxi->self,"/LCLS/f_11_ENRC",H5P_DEFAULT);
+		cxi->lcls.f_12_ENRC = H5Dopen(cxi->self,"/LCLS/f_12_ENRC",H5P_DEFAULT);
+		cxi->lcls.f_21_ENRC = H5Dopen(cxi->self,"/LCLS/f_21_ENRC",H5P_DEFAULT);
+		cxi->lcls.f_22_ENRC = H5Dopen(cxi->self,"/LCLS/f_22_ENRC",H5P_DEFAULT);
+		cxi->lcls.evr41 = H5Dopen(cxi->self,"/LCLS/evr41",H5P_DEFAULT);
+		cxi->lcls.eventTimeString = H5Dopen(cxi->self,"/LCLS/eventTimeString",H5P_DEFAULT);
+		if(global->TOFPresent){
+			cxi->lcls.tofTime = H5Dopen(cxi->self,"/LCLS/tofTime",H5P_DEFAULT);
+			cxi->lcls.tofVoltage = H5Dopen(cxi->self,"/LCLS/tofVoltage",H5P_DEFAULT);    
+		}
+		DETECTOR_LOOP{
+			char buffer[1024];
+			sprintf(buffer,"/LCLS/detector%li-position",detID+1);    
+			cxi->lcls.detector_positions[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/LCLS/detector%li-EncoderValue",detID+1);    
+			cxi->lcls.detector_EncoderValues[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+		}
 
-	cxi->cheetahVal.unsharedVal.eventName = H5Dopen(cxi->self,"/cheetah/unshared/eventName",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.frameNumber = H5Dopen(cxi->self,"/cheetah/unshared/frameNumber",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped = H5Dopen(cxi->self,"/cheetah/unshared/frameNumberIncludingSkipped",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.threadID = H5Dopen(cxi->self,"/cheetah/unshared/threadID",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.gmd1 = H5Dopen(cxi->self,"/cheetah/unshared/gmd1",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.gmd2 = H5Dopen(cxi->self,"/cheetah/unshared/gmd2",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.energySpectrumExist = H5Dopen(cxi->self,"/cheetah/unshared/energySpectrumExist",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/unshared/nPeaks",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.peakNpix = H5Dopen(cxi->self,"/cheetah/unshared/peakNpix",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.peakTotal = H5Dopen(cxi->self,"/cheetah/unshared/peakTotal",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.peakResolution = H5Dopen(cxi->self,"/cheetah/unshared/peakResolution",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.peakResolutionA = H5Dopen(cxi->self,"/cheetah/unshared/peakResolutionA",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.peakDensity = H5Dopen(cxi->self,"/cheetah/unshared/peakDensity",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.laserEventCodeOn = H5Dopen(cxi->self,"/cheetah/unshared/laserEventCodeOn",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.laserDelay = H5Dopen(cxi->self,"/cheetah/unshared/laserDelay",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.hit = H5Dopen(cxi->self,"/cheetah/unshared/hit",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.eventName = H5Dopen(cxi->self,"/cheetah/unshared/eventName",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.frameNumber = H5Dopen(cxi->self,"/cheetah/unshared/frameNumber",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped = H5Dopen(cxi->self,"/cheetah/unshared/frameNumberIncludingSkipped",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.threadID = H5Dopen(cxi->self,"/cheetah/unshared/threadID",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.gmd1 = H5Dopen(cxi->self,"/cheetah/unshared/gmd1",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.gmd2 = H5Dopen(cxi->self,"/cheetah/unshared/gmd2",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.energySpectrumExist = H5Dopen(cxi->self,"/cheetah/unshared/energySpectrumExist",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/unshared/nPeaks",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.peakNpix = H5Dopen(cxi->self,"/cheetah/unshared/peakNpix",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.peakTotal = H5Dopen(cxi->self,"/cheetah/unshared/peakTotal",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.peakResolution = H5Dopen(cxi->self,"/cheetah/unshared/peakResolution",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.peakResolutionA = H5Dopen(cxi->self,"/cheetah/unshared/peakResolutionA",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.peakDensity = H5Dopen(cxi->self,"/cheetah/unshared/peakDensity",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.laserEventCodeOn = H5Dopen(cxi->self,"/cheetah/unshared/laserEventCodeOn",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.laserDelay = H5Dopen(cxi->self,"/cheetah/unshared/laserDelay",H5P_DEFAULT);
+		cxi->cheetahVal.unsharedVal.hit = H5Dopen(cxi->self,"/cheetah/unshared/hit",H5P_DEFAULT);
 
-	DETECTOR_LOOP{
-		char buffer[1024];
-		sprintf(buffer,"/cheetah/unshared/detector%li-sum",detID+1);    
-		cxi->cheetahVal.unsharedVal.sums[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+		DETECTOR_LOOP{
+			char buffer[1024];
+			sprintf(buffer,"/cheetah/unshared/detector%li-sum",detID+1);    
+			cxi->cheetahVal.unsharedVal.sums[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+		}
+
+		cxi->cheetahVal.sharedVal.hit = H5Dopen(cxi->self,"/cheetah/shared/hit",H5P_DEFAULT);
+		cxi->cheetahVal.sharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/shared/nPeaks",H5P_DEFAULT);
+
+		DETECTOR_LOOP{
+			char buffer[1024];
+			sprintf(buffer,"/cheetah/shared/detector%ld_lastBgUpdate",detID);    
+			cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/cheetah/shared/detector%ld_nHot",detID);    
+			cxi->cheetahVal.sharedVal.nHot[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/cheetah/shared/detector%ld_lastHotPixUpdate",detID);    
+			cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/cheetah/shared/detector%ld_hotPixCounter",detID);    
+			cxi->cheetahVal.sharedVal.hotPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/cheetah/shared/detector%ld_nHalo",detID);    
+			cxi->cheetahVal.sharedVal.nHalo[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
+			sprintf(buffer,"/cheetah/shared/detector%ld_lastHaloPixUpdate",detID);    
+			cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
+			sprintf(buffer,"/cheetah/shared/detector%ld_haloPixCounter",detID);    
+			cxi->cheetahVal.sharedVal.haloPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
+		}
+
+		cxi->cheetahVal.sharedVal.self = H5Gopen(cxi->self,"/cheetah/shared",H5P_DEFAULT);
 	}
-
-	cxi->cheetahVal.sharedVal.hit = H5Dopen(cxi->self,"/cheetah/shared/hit",H5P_DEFAULT);
-	cxi->cheetahVal.sharedVal.nPeaks = H5Dopen(cxi->self,"/cheetah/shared/nPeaks",H5P_DEFAULT);
-
-	DETECTOR_LOOP{
-		char buffer[1024];
-		sprintf(buffer,"/cheetah/shared/detector%ld_lastBgUpdate",detID);    
-		cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/cheetah/shared/detector%ld_nHot",detID);    
-		cxi->cheetahVal.sharedVal.nHot[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/cheetah/shared/detector%ld_lastHotPixUpdate",detID);    
-		cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/cheetah/shared/detector%ld_hotPixCounter",detID);    
-		cxi->cheetahVal.sharedVal.hotPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/cheetah/shared/detector%ld_nHalo",detID);    
-		cxi->cheetahVal.sharedVal.nHalo[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT);
-		sprintf(buffer,"/cheetah/shared/detector%ld_lastHaloPixUpdate",detID);    
-		cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
-		sprintf(buffer,"/cheetah/shared/detector%ld_haloPixCounter",detID);    
-		cxi->cheetahVal.sharedVal.haloPixCounter[detID] = H5Dopen(cxi->self,buffer,H5P_DEFAULT); 
-	}
-
-	cxi->cheetahVal.sharedVal.self = H5Gopen(cxi->self,"/cheetah/shared",H5P_DEFAULT);
 #endif
 	return cxi;
 }
@@ -1199,7 +1197,9 @@ static CXI::File * getCXIFileByName(cGlobal *global){
 
 void writeAccumulatedCXI(cGlobal * global){
 #ifdef H5F_ACC_SWMR_WRITE  
-	pthread_mutex_lock(&global->swmr_mutex);
+	if(global->cxiSWMR){
+		pthread_mutex_lock(&global->swmr_mutex);
+	}
 #endif
 	CXI::File * cxi = getCXIFileByName(global);
 	CXI::SharedValues sharedVal = cxi->cheetahVal.sharedVal;
@@ -1327,7 +1327,9 @@ void writeAccumulatedCXI(cGlobal * global){
 		}      
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
-	pthread_mutex_unlock(&global->swmr_mutex);
+	if(global->cxiSWMR){
+		pthread_mutex_unlock(&global->swmr_mutex);
+	}
 #endif
 }
 
@@ -1377,7 +1379,9 @@ void closeCXIFiles(cGlobal * global){
 
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
 #ifdef H5F_ACC_SWMR_WRITE  
-	pthread_mutex_lock(&global->swmr_mutex);
+	if(global->cxiSWMR){
+		pthread_mutex_lock(&global->swmr_mutex);
+	}
 #endif
 	/* Get the existing CXI file or open a new one */
 	CXI::File * cxi = getCXIFileByName(global);
@@ -1386,7 +1390,9 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 	writeScalarToStack(cxi->cheetahVal.sharedVal.nPeaks,global->nCXIEvents,info->nPeaks);
 	global->nCXIEvents += 1;
 #ifdef H5F_ACC_SWMR_WRITE  
-	pthread_mutex_unlock(&global->swmr_mutex);
+	if(global->cxiSWMR){
+		pthread_mutex_unlock(&global->swmr_mutex);
+	}
 #endif
 }
 
@@ -1394,13 +1400,15 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 void writeCXI(cEventData *info, cGlobal *global ){
 #ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;
-	pthread_mutex_lock(&global->nActiveThreads_mutex);
-	if (global->nActiveThreads) {
-		global->nActiveThreads--;
-		didDecreaseActive = true;
+	if(global->cxiSWMR){
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
+		if (global->nActiveThreads) {
+			global->nActiveThreads--;
+			didDecreaseActive = true;
+		}
+		pthread_mutex_unlock(&global->nActiveThreads_mutex);
+		pthread_mutex_lock(&global->swmr_mutex);
 	}
-	pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	pthread_mutex_lock(&global->swmr_mutex);
 #endif
 	/* Get the existing CXI file or open a new one */
 	CXI::File * cxi = getCXIFileByName(global);
@@ -1544,16 +1552,18 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);  
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
-	if(global->cxiFlushPeriod && (stackSlice % global->cxiFlushPeriod) == 0){
-		H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+	if(global->cxiSWMR){
+		if(global->cxiFlushPeriod && (stackSlice % global->cxiFlushPeriod) == 0){
+			H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+		}
+		
+		if (didDecreaseActive) {
+			pthread_mutex_lock(&global->nActiveThreads_mutex);
+			global->nActiveThreads++;
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
+		}
+		pthread_mutex_unlock(&global->swmr_mutex);
 	}
-
-	if (didDecreaseActive) {
-		pthread_mutex_lock(&global->nActiveThreads_mutex);
-		global->nActiveThreads++;
-		pthread_mutex_unlock(&global->nActiveThreads_mutex);
-	}
-	pthread_mutex_unlock(&global->swmr_mutex);
 #endif
 }
 

@@ -186,6 +186,8 @@ cGlobal::cGlobal(void) {
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
+	// Do not use SWMR mode by default
+	cxiSWMR = 0;
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -1081,6 +1083,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		saveCXI = atoi(value);
 	} else if (!strcmp(tag, "cxiflushperiod")) {
 		cxiFlushPeriod = atoi(value);
+	} else if (!strcmp(tag, "cxiswmr")) {
+		cxiSWMR = atoi(value);
 	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	} else if (!strcmp(tag, "usesinglethreadcalibration")) {
