@@ -191,12 +191,12 @@ void saveHistogram(cGlobal *global, int detID) {
 	sh = H5Screate_simple(3, size, NULL);
 
 	chunk[0] = 1;
-	chunk[1] = 1;
+	chunk[1] = hist_nfs;
 	chunk[2] = histNbins;
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 3, chunk);
 		H5Pset_shuffle(h5compression);			// De-interlace bytes
-		H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
+		H5Pset_deflate(h5compression, 2);		// Compression levels are 0 (none) to 9 (max)
 	}
 
 	
@@ -309,7 +309,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 2, size);
 		H5Pset_shuffle(h5compression);			// De-interlace bytes
-		H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
+		H5Pset_deflate(h5compression, 2);		// Compression levels are 0 (none) to 9 (max)
 	}
 
 	
