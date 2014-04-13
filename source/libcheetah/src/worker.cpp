@@ -356,9 +356,9 @@ hitknown:
 		// one CXI or many H5?
 		if(global->saveCXI){
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->nPeaks);
-			pthread_mutex_lock(&global->saveCXI_mutex);
+		    //pthread_mutex_lock(&global->saveCXI_mutex);
 			writeCXI(eventData, global);
-			pthread_mutex_unlock(&global->saveCXI_mutex);
+			//pthread_mutex_unlock(&global->saveCXI_mutex);
 		} else {
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);

@@ -330,6 +330,7 @@ public:
 	long     threadCounter;
 	long     threadPurge;
 	pthread_t  *threadID;
+	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
 	pthread_mutex_t  hotpixel_mutex;
 	pthread_mutex_t  halopixel_mutex;

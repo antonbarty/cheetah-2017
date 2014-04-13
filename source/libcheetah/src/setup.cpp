@@ -307,6 +307,7 @@ void cGlobal::setup() {
 	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
+	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&halopixel_mutex, NULL);

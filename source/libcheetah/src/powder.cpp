@@ -382,6 +382,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     /*
      *	Mess of stuff for writing the compound HDF5 file
      */
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_lock(&global->swmr_mutex);
+#endif
     hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
     //herr_t r;
     hsize_t		size[2];
@@ -544,7 +547,9 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
         if ( type == H5I_ATTR ) H5Aclose(id);
     }
     H5Fclose(fh);
-    
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_unlock(&global->swmr_mutex);
+#endif    
 	
     
     /*
@@ -592,7 +597,13 @@ void saveDarkcal(cGlobal *global, int detID) {
 		buffer[i] = detector->powderCorrected[0][i]/detector->nPowderFrames[0];
 	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
 	printf("Saving darkcal to file: %s\n", filename);
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_lock(&global->swmr_mutex);
+#endif
 	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 	free(buffer);
 }
 
@@ -648,7 +659,13 @@ void saveGaincal(cGlobal *global, int detID) {
 	char	filename[1024];
 	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
 	printf("Saving gaincal to file: %s\n", filename);
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_lock(&global->swmr_mutex);
+#endif
 	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 	free(buffer);
 }
 

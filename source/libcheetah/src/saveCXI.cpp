@@ -1190,6 +1190,9 @@ static CXI::File * getCXIFileByName(cGlobal *global){
 }
 
 void writeAccumulatedCXI(cGlobal * global){
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_lock(&global->swmr_mutex);
+#endif
 	CXI::File * cxi = getCXIFileByName(global);
 	CXI::SharedValues sharedVal = cxi->cheetahVal.sharedVal;
 
@@ -1315,6 +1318,9 @@ void writeAccumulatedCXI(cGlobal * global){
 			}
 		}      
 	}
+#ifdef H5F_ACC_SWMR_WRITE  
+	pthread_mutex_unlock(&global->swmr_mutex);
+#endif
 }
 
 static void  closeCXI(CXI::File * cxi){
@@ -1378,7 +1384,14 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 
 
 void writeCXI(cEventData *info, cGlobal *global ){
-#ifdef H5F_ACC_SWMR_WRITE  
+#ifdef H5F_ACC_SWMR_WRITE
+	bool didDecreaseActive = false;
+	pthread_mutex_lock(&global->nActiveThreads_mutex);
+	if (global->nActiveThreads) {
+		global->nActiveThreads--;
+		didDecreaseActive = true;
+	}
+	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	pthread_mutex_lock(&global->swmr_mutex);
 #endif
 	/* Get the existing CXI file or open a new one */
@@ -1525,6 +1538,12 @@ void writeCXI(cEventData *info, cGlobal *global ){
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiFlushPeriod && (stackSlice % global->cxiFlushPeriod) == 0){
 		H5Fflush(cxi->self,H5F_SCOPE_LOCAL);
+	}
+
+	if (didDecreaseActive) {
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
+		global->nActiveThreads++;
+		pthread_mutex_unlock(&global->nActiveThreads_mutex);
 	}
 	pthread_mutex_unlock(&global->swmr_mutex);
 #endif

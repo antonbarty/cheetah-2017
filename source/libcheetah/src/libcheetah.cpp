@@ -417,7 +417,7 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  *  libCheetah event processing function (multithreaded)
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
-
+	pthread_mutex_lock(&global->process_mutex);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
@@ -474,6 +474,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
     if(eventData->useThreads == 1) {
+		pthread_mutex_unlock(&global->process_mutex);
         pthread_t		thread;
         pthread_attr_t	threadAttribute;
         int				returnStatus;
@@ -528,6 +529,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
+		pthread_mutex_lock(&global->process_mutex);
     }
 	
     /*
@@ -551,7 +553,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		global->updateLogfile();
 		global->writeStatus("Not finished");
 	}
-	
+	pthread_mutex_unlock(&global->process_mutex);
 }
 
 

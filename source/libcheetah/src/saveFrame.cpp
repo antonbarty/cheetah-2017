@@ -780,7 +780,6 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	hsize_t max_size[2];
 	hid_t		h5compression;
 	
-	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if ( fh < 0 ) {
 		ERROR("Couldn't create file: %s\n", filename);
@@ -847,7 +846,6 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	
 	
 	H5Fclose(fh);
-	
 
 }
 
