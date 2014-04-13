@@ -273,6 +273,8 @@ public:
     
 	/** @brief Output 1 HDF5 per image by default */
 	bool saveCXI;
+	/** @brief Save CXIs in SWMR mode. This makes them incompatible with older HDF5 versions */
+	bool cxiSWMR;
 
 	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
 	    Setting it to 0 avoid doing any flushes.
