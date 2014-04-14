@@ -766,7 +766,13 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				d.self = H5Gcreate(cxi->self, detectorPath, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				d.data = create2DStack("data", d.self, global->AcqNumSamples,global->TOFChannelsPerCard[i].size(), H5T_NATIVE_DOUBLE);
 				d.tofTime = create2DStack("tofTime", d.self, global->AcqNumSamples,global->TOFChannelsPerCard[i].size(), H5T_NATIVE_DOUBLE);
-				createAndWriteDataset("description",d.self,"iTOF detector connected to Acqiris unit",MAX_FILENAME_LENGTH);
+				char buffer[1024];
+				sprintf(buffer,"iTOF detector connected to Acqiris unit %d, channel(s) %d",i,global->TOFChannelsPerCard[i][0]%4);
+				for(unsigned int j = 1;j<global->TOFChannelsPerCard[i].size();j++){
+					sprintf(buffer+strlen(buffer),", %d",global->TOFChannelsPerCard[i][j]%4);
+				}
+				
+				createAndWriteDataset("description",d.self,buffer,MAX_FILENAME_LENGTH);
 				cxi->entry.instrument.detectors.push_back(d);
 				tofDetectorIndex++;
 			}
