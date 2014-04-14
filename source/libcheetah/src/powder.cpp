@@ -329,10 +329,12 @@ void savePowderPattern(cGlobal *global, int detID, int powderType) {
     calculateRadialAverage(bufferCorrected, radialAverageCorrected, radialAverageCorrectedCounter, global, detID);
 
     // Assembled image for viewing
-    bufferAssembled = (double*) calloc(image_nn, sizeof(double));
-    pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
-    memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
-    pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
+    if(global->assemble2DImage) {
+		bufferAssembled = (double*) calloc(image_nn, sizeof(double));
+		pthread_mutex_lock(&detector->powderAssembled_mutex[powderType]);
+		memcpy(bufferAssembled, detector->powderAssembled[powderType], image_nn*sizeof(double));
+		pthread_mutex_unlock(&detector->powderAssembled_mutex[powderType]);
+	}
     
     // Data squared (for calculation of variance)
     double *bufferCorrectedSquared = (double*) calloc(pix_nn, sizeof(double));
