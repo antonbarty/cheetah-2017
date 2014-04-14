@@ -109,15 +109,7 @@ namespace cheetah_ana_pkg {
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 		: Module(name)
 	{
-		cout << "*** Constructor ***" << endl;
-        
-		printf("Note: Support for the FEE spectrometer was added on 24 November 2013.\n");
-		printf("This may require the following line to be added to your psana.conf file:\n");
-		printf("    feeSpectrum = BldInfo(FEE-SPEC0)\n");
-		printf("There have been reports of psana crashing with the error\n");
-		printf("Standard exception caught in runApp(): PSEvt::Exception: Source string cannot be parsed: 'BldInfo(:FEE-SPEC0)' [in function parse at PSEvt/src/Source.cpp:409]\n");
-		printf("if this line is not present, even though a default value has been specified\n");
-
+//		cout << "*** Constructor ***" << endl;
         
 		// Check if we're using psana of the same git commit
 		if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
@@ -145,7 +137,7 @@ namespace cheetah_ana_pkg {
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
 		m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
 		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
-		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(:FEE-SPEC0)");
+		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
 		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
