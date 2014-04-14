@@ -1544,8 +1544,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
 	writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
 	if(info->TOFPresent){
-		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
-		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
+		if(info->TOFVoltage){
+			write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
+			write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
+		}
 		
 		int tofDetectorIndex = 1;
 		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){

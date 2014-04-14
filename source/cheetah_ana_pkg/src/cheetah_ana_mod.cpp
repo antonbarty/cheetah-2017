@@ -1221,6 +1221,7 @@ namespace cheetah_ana_pkg {
 			eventData->TOFAllTrigTime.push_back(std::vector<double>());		
 		}
 		
+		int tofChannelOffset = -1;
 		for(unsigned int i = 0;i<cheetahGlobal.TOFAllChannels.size();i++){
 
 			// Each acqiris unit has a maxmium of 4 channels
@@ -1243,8 +1244,7 @@ namespace cheetah_ana_pkg {
 				double timestamp = timestamps[seg].value();
 				ndarray<const int16_t, 1> raw(waveforms[seg]);
 				if(cheetahGlobal.TOFchannel == cheetahGlobal.TOFAllChannels[i]){
-					eventData->TOFTime = &*(eventData->TOFAllTime[card].end());
-					eventData->TOFVoltage = &*(eventData->TOFAllVoltage[card].end());
+					tofChannelOffset = eventData->TOFAllTime[card].size();
 				}
 				for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
 					eventData->TOFAllTime[card].push_back(timestamp + i*sampInterval);
@@ -1254,6 +1254,14 @@ namespace cheetah_ana_pkg {
 			}
 
 		}
+		if(tofChannelOffset){
+			eventData->TOFTime = &(eventData->TOFAllTime[cheetahGlobal.TOFchannel/4][tofChannelOffset]);
+			eventData->TOFVoltage = &(eventData->TOFAllVoltage[cheetahGlobal.TOFchannel/4][tofChannelOffset]);			
+		}else{
+			eventData->TOFTime = NULL;
+			eventData->TOFVoltage = NULL;
+		}
+
 		return foundTOF;
 	}
 								  
