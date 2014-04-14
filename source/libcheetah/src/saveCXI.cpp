@@ -1140,10 +1140,11 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
 				if(global->TOFChannelsPerCard[i] > 0){
 					char detectorPath[1024];
+					int detID = tofDetectorIndex+global->nDetectors;
 					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);
-					cxi->entry.instrument.detectors[tofDetectorIndex+global->nDetectors].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+					cxi->entry.instrument.detectors[detID-1].data = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
 					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
-					cxi->entry.instrument.detectors[tofDetectorIndex+global->nDetectors].tofTime = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
+					cxi->entry.instrument.detectors[detID-1].tofTime = H5Dopen(cxi->self,detectorPath,H5P_DEFAULT);
 					tofDetectorIndex++;
 				}
 			}
