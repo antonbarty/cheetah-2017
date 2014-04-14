@@ -135,10 +135,10 @@ namespace cheetah_ana_pkg {
 		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
 		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
 		m_srcEvr = configStr("evrSource","DetInfo(:Evr)");
-		m_srcBeam = configStr("beamSource","BldInfo(:EBeam)");
-		m_srcFee = configStr("feeSource","BldInfo(:FEEGasDetEnergy)");
+		m_srcBeam = configStr("beamSource","BldInfo(EBeam)");
+		m_srcFee = configStr("feeSource","BldInfo(FEEGasDetEnergy)");
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(FEE-SPEC0)");
-		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
+		m_srcCav = configStr("cavitySource","BldInfo(PhaseCavity)");
 		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
 		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
