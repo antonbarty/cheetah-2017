@@ -152,6 +152,7 @@ namespace cheetah_ana_pkg {
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
+		nActiveThreads = 0;
 		pthread_mutex_init(&nActiveThreads_mutex, NULL);
 		pthread_mutex_init(&counting_mutex, NULL);
 		pthread_mutex_init(&process_mutex, NULL);
