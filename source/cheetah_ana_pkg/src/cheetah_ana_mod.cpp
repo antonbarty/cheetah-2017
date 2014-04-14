@@ -1214,14 +1214,11 @@ namespace cheetah_ana_pkg {
 	int cheetah_ana_mod::readTOF(Event & evt, Env & env,
 								 cEventData* eventData){
 		int foundTOF = 0;
-        //allocate necessary storage
-		for(unsigned int i = 0; i < cheetahGlobal.TOFChannelsPerCard.size();i++){
-			eventData->TOFAllVoltage.push_back(std::vector<double>(cheetahGlobal.AcqNumSamples*sizeof(double)*cheetahGlobal.TOFChannelsPerCard[i]));		
-			eventData->TOFAllTime.push_back(std::vector<double>(cheetahGlobal.AcqNumSamples*sizeof(double)*cheetahGlobal.TOFChannelsPerCard[i]));		
-			eventData->TOFAllTrigTime.push_back(std::vector<double>());		
-		}
+		// Up to 2 cards with 4 channels each
+		eventData->TOFAllVoltage = (double*)calloc(cheetahGlobal.AcqNumSamples*4*2,sizeof(double));
+		eventData->TOFAllTime = (double *) calloc(cheetahGlobal.AcqNumSamples*4*2,sizeof(double));
+		eventData->TOFAllTrigTime = (double *) calloc(4*2,sizeof(double));
 		
-		int tofChannelOffset = -1;
 		for(unsigned int i = 0;i<cheetahGlobal.TOFAllChannels.size();i++){
 
 			// Each acqiris unit has a maxmium of 4 channels
@@ -1240,27 +1237,21 @@ namespace cheetah_ana_pkg {
 				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
 				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
 				int seg = 0;
-				eventData->TOFAllTrigTime[card].push_back(timestamps[seg].pos());
+				eventData->TOFAllTrigTime[card*4+chan] = timestamps[seg].pos();
+
 				double timestamp = timestamps[seg].value();
 				ndarray<const int16_t, 1> raw(waveforms[seg]);
-				if(cheetahGlobal.TOFchannel == cheetahGlobal.TOFAllChannels[i]){
-					tofChannelOffset = eventData->TOFAllTime[card].size();
-				}
+				int chan_offset = (card*4+chan)*cheetahGlobal.AcqNumSamples;
 				for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
-					eventData->TOFAllTime[card].push_back(timestamp + i*sampInterval);
-					eventData->TOFAllVoltage[card].push_back(raw[i]*slope + offset);
+					eventData->TOFAllTime[chan_offset+i] = (timestamp + i*sampInterval);
+					eventData->TOFAllVoltage[chan_offset+i] = (raw[i]*slope + offset);
 				}
 
 			}
 
 		}
-		if(tofChannelOffset){
-			eventData->TOFTime = &(eventData->TOFAllTime[cheetahGlobal.TOFchannel/4][tofChannelOffset]);
-			eventData->TOFVoltage = &(eventData->TOFAllVoltage[cheetahGlobal.TOFchannel/4][tofChannelOffset]);			
-		}else{
-			eventData->TOFTime = NULL;
-			eventData->TOFVoltage = NULL;
-		}
+		eventData->TOFTime = &(eventData->TOFAllTime[cheetahGlobal.TOFchannel*cheetahGlobal.AcqNumSamples]);
+		eventData->TOFVoltage = &(eventData->TOFAllVoltage[cheetahGlobal.TOFchannel*cheetahGlobal.AcqNumSamples]);
 
 		return foundTOF;
 	}

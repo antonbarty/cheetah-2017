@@ -1537,25 +1537,20 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
 	writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
 	if(info->TOFPresent){
-		if(info->TOFVoltage){
-			write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
-			write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
-		}
+		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
+		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
 		
 		int tofDetectorIndex = 1;
-		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
-			if(global->TOFChannelsPerCard[i] > 0){
-				if(info->TOFAllVoltage[i].size() > 0){
-					char detectorPath[1024];
-					int detID = tofDetectorIndex+global->nDetectors;
-					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);				
-					write2DToStack(cxi->entry.instrument.detectors[detID-1].data, stackSlice, &*info->TOFAllVoltage[i].begin());
-					sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
-					write2DToStack(cxi->entry.instrument.detectors[detID-1].tofTime, stackSlice, &*info->TOFAllTime[i].begin());
-				}
-				tofDetectorIndex++;
+		for(unsigned int i = 0;i<global->TOFAllChannels.size();i++){
+			int chan = global->TOFAllChannels[i];
+			char detectorPath[1024];
+			int detID = tofDetectorIndex+global->nDetectors;
+			sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);				
+			write2DToStack(cxi->entry.instrument.detectors[detID-1].data, stackSlice, &info->TOFAllVoltage[chan*global->AcqNumSamples]);
+				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
+				write2DToStack(cxi->entry.instrument.detectors[detID-1].tofTime, stackSlice, &info->TOFAllTime[chan*global->AcqNumSamples]);
 			}
-		}
+			tofDetectorIndex++;
 	}
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
 	writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);

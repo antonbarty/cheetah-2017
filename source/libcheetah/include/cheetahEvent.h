@@ -48,9 +48,9 @@ public:
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
 	// For multiple TOF channels
-	std::vector<std::vector<double> > TOFAllTime;
-	std::vector<std::vector<double> > TOFAllVoltage;
-	std::vector<std::vector<double> >  TOFAllTrigTime;
+	double *  TOFAllTime;
+	double *  TOFAllVoltage;
+	double *  TOFAllTrigTime;
 	
 	
 	

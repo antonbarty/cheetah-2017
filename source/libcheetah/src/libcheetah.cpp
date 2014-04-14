@@ -265,9 +265,9 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	}
 	//TOF stuff.
 	// Explictly call the vector destructor as we're using free and not delete
-	eventData->TOFAllTime.~vector();
-	eventData->TOFAllVoltage.~vector();
-	eventData->TOFAllTrigTime.~vector();
+	free(eventData->TOFAllTime);
+	free(eventData->TOFAllVoltage);
+	free(eventData->TOFAllTrigTime);
 
 
 	if(eventData->FEEspec_present == 1) {
