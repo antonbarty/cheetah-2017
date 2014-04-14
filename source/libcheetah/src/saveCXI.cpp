@@ -1307,9 +1307,10 @@ void writeAccumulatedCXI(cGlobal * global){
 			// assembled
 			double * sum_assembled = detector->powderAssembled[powID];
 			double * sum_assembledSq = detector->powderAssembledSquared[powID];
-			double * mean_assembled = (double*) calloc(image_nn, sizeof(double));
-			double * sigma_assembled = (double*) calloc(image_nn, sizeof(double));
 			if(global->assemblePowders && global->assemble2DImage) {
+				double * mean_assembled = (double*) calloc(image_nn, sizeof(double));
+				double * sigma_assembled = (double*) calloc(image_nn, sizeof(double));
+
 				for(long i = 0; i<image_nn; i++){
 					mean_assembled[i] = sum_assembled[i]/(1.*detector->nPowderFrames[powID]);
 					sigma_assembled[i] =
@@ -1347,10 +1348,6 @@ void writeAccumulatedCXI(cGlobal * global){
 			free(sigma_raw);
 			free(sigma_corrected);
 			if(global->assemblePowders){
-				if(global->assemble2DImage) {
-					free(mean_assembled);
-					free(sigma_assembled);
-				}
 				if(global->detector[detID].downsampling > 1){
 					free(mean_downsampled);
 					free(sigma_downsampled);
