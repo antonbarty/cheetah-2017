@@ -1325,9 +1325,10 @@ void writeAccumulatedCXI(cGlobal * global){
 			// downsampled
 			double * sum_downsampled = detector->powderDownsampled[powID];
 			double * sum_downsampledSq = detector->powderDownsampledSquared[powID];
-			double * mean_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
-			double * sigma_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
 			if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+				double * mean_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
+				double * sigma_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
+
 				for(long i = 0; i<imageXxX_nn; i++){
 					mean_downsampled[i] = sum_downsampled[i]/(1.*detector->nPowderFrames[powID]);
 					sigma_downsampled[i] =
@@ -1347,12 +1348,6 @@ void writeAccumulatedCXI(cGlobal * global){
 			free(mean_corrected);
 			free(sigma_raw);
 			free(sigma_corrected);
-			if(global->assemblePowders){
-				if(global->detector[detID].downsampling > 1){
-					free(mean_downsampled);
-					free(sigma_downsampled);
-				}
-			}
 		}      
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
