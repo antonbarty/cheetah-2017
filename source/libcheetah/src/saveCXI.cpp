@@ -1545,11 +1545,8 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			if(global->TOFChannelsPerCard[card].size() == 0){
 				continue;
 			}
-			char detectorPath[1024];
 			int detID = card+global->nDetectors;
-			sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);				
 			write2DToStack(cxi->entry.instrument.detectors[detID].data, stackSlice, info->TOFAllVoltage[card]);
-			sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
 			write2DToStack(cxi->entry.instrument.detectors[detID].tofTime, stackSlice, info->TOFAllTime[card]);
 			tofDetectorIndex++;
 		}
