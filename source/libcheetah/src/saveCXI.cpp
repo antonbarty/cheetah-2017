@@ -1545,12 +1545,10 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			int chan = global->TOFAllChannels[i];
 			char detectorPath[1024];
 			int detID = tofDetectorIndex+global->nDetectors;
-			sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/data",tofDetectorIndex+global->nDetectors);				
 			write2DToStack(cxi->entry.instrument.detectors[detID-1].data, stackSlice, &info->TOFAllVoltage[chan*global->AcqNumSamples]);
-				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d/tofTime",tofDetectorIndex+global->nDetectors);
-				write2DToStack(cxi->entry.instrument.detectors[detID-1].tofTime, stackSlice, &info->TOFAllTime[chan*global->AcqNumSamples]);
-			}
-			tofDetectorIndex++;
+			write2DToStack(cxi->entry.instrument.detectors[detID-1].tofTime, stackSlice, &info->TOFAllTime[chan*global->AcqNumSamples]);
+		}
+		tofDetectorIndex++;
 	}
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
 	writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
