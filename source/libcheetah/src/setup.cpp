@@ -807,7 +807,16 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 		TOFChannelsPerCard[card].push_back(TOFAllChannels[i]);
 	}
-
+	printf("Configured %d TOF detectors:\n",(int)TOFAllChannels.size());
+	for(unsigned int card = 0;card<TOFChannelsPerCard.size();card++){
+		if(TOFChannelsPerCard[card].size()){
+			printf("\tAquiris card %d, channel(s) %d",card,TOFChannelsPerCard[card][0]%4);
+			for(unsigned int i = 1;i< TOFChannelsPerCard[card].size();i++){
+				printf(", %d",TOFChannelsPerCard[card][i]%4);
+			}
+			printf("\n");			
+		}
+	}
 	   
 
 
