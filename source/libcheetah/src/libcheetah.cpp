@@ -265,6 +265,11 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	}
 	//TOF stuff.
 	// Explictly call the vector destructor as we're using free and not delete
+	for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+		free(eventData->TOFAllTime[i]);
+		free(eventData->TOFAllVoltage[i]);
+		free(eventData->TOFAllTrigTime[i]);
+	}
 	free(eventData->TOFAllTime);
 	free(eventData->TOFAllVoltage);
 	free(eventData->TOFAllTrigTime);
