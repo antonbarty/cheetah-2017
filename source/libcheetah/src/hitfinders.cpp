@@ -488,7 +488,8 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 			for (unsigned int k=0; k<global->TOFChannelsPerCard[card].size(); k++) {
 				int chan_offset = k*global->AcqNumSamples;
 				for (int i=global->hitfinderTOFMinSample[tofIndex]; i<global->hitfinderTOFMaxSample[tofIndex]; i++) {
-					count += (int)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
+//					count += (bool)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
+					count += (eventData->TOFAllVoltage[card][chan_offset+i] < global->hitfinderTOFThresh[tofIndex]);
 				}
 				tofIndex++;
 			}
