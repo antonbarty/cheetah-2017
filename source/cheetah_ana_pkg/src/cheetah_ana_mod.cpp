@@ -422,6 +422,7 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
@@ -429,7 +430,29 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
 		// Ebeam v4
-		if (ebeam4.get()) {
+		if (ebeam5.get()) {
+			charge = ebeam5->ebeamCharge();
+			L3Energy = ebeam5->ebeamL3Energy();
+			LTUPosX = ebeam5->ebeamLTUPosX();
+			LTUPosY = ebeam5->ebeamLTUPosY();
+			LTUAngX = ebeam5->ebeamLTUAngX();
+			LTUAngY = ebeam5->ebeamLTUAngY();
+			PkCurrBC2 = ebeam5->ebeamPkCurrBC2();
+			
+			peakCurrent = ebeam5->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam5->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge5=" << charge << "\n"
+					 << "* fEbeamL3Energy5=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX5=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY5=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX5=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY5=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC25=" << PkCurrBC2 << endl;
+			}
+		}
+		else if (ebeam4.get()) {
 			charge = ebeam4->ebeamCharge();
 			L3Energy = ebeam4->ebeamL3Energy();
 			LTUPosX = ebeam4->ebeamLTUPosX();
