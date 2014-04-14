@@ -48,9 +48,9 @@ public:
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
 	// For multiple TOF channels
-	double *  TOFAllTime;
-	double *  TOFAllVoltage;
-	double *  TOFAllTrigTime;
+	double **  TOFAllTime;
+	double **  TOFAllVoltage;
+	double **  TOFAllTrigTime;
 	
 	
 	
