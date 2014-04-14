@@ -1186,7 +1186,7 @@ namespace cheetah_ana_pkg {
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */
-		while(nActiveThreads >= 1) {
+		while(nActiveThreads >= 32) {
 			usleep(10000);
 		}
 		
