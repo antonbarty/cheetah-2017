@@ -9,6 +9,8 @@
 
 #ifndef CHEETAHGLOBAL_H
 #define CHEETAHGLOBAL_H
+#include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 #include "detectorObject.h"
@@ -335,6 +337,7 @@ public:
 	long     threadCounter;
 	long     threadPurge;
 	pthread_t  *threadID;
+	pthread_mutex_t  hitclass_mutex;
 	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
 	pthread_mutex_t  hotpixel_mutex;
@@ -369,6 +372,8 @@ public:
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
+
+	std::map<std::pair<int, int>, int> hitClasses[3];
 
 
     // counters updated with event data
@@ -447,6 +452,7 @@ public:
 	void updateCalibrated(void);
 	int validateConfiguration(void);
 
+	void writeHitClasses(FILE* to);
 	void writeInitialLog(void);
 	void updateLogfile(void);
     void writeStatus(const char *);

@@ -310,6 +310,7 @@ void cGlobal::setup() {
 	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
+	pthread_mutex_init(&hitclass_mutex, NULL);
 	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
@@ -540,6 +541,8 @@ void cGlobal::setup() {
 }
 
 void cGlobal::freeMutexes(void) {
+	pthread_mutex_unlock(&hitclass_mutex);
+	pthread_mutex_unlock(&process_mutex);
 	pthread_mutex_unlock(&nActiveThreads_mutex);
 	pthread_mutex_unlock(&hotpixel_mutex);
 	pthread_mutex_unlock(&halopixel_mutex);
@@ -1369,6 +1372,29 @@ void cGlobal::writeInitialLog(void){
 
 }
 
+void cGlobal::writeHitClasses(FILE* to) {
+	fprintf(to, "Hitclasses:\n");
+	for (int coord = 0; coord < 3; coord++) {
+		int lastFirst = 1 << 30;
+		int lastVal = 0;
+		for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
+			fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
+			if (i->first.second)
+			{
+				if (lastFirst != i->first.first) {
+					lastVal = 0;
+				}
+				double sum = lastVal + i->second;
+				fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
+			} else {
+				lastFirst = i->first.first;
+				lastVal = i->second;
+			}
+		}
+	}
+	fprintf(to, "\n\n");
+}
+
 /*
  * Update log file
  */
@@ -1402,6 +1428,8 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
 
@@ -1483,7 +1511,8 @@ void cGlobal::writeFinalLog(void){
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 
-
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	// Calculate hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);

@@ -201,6 +201,14 @@ localBGCalculated:
 				hit = 1;
 		}
 		eventData->hit = hit;
+
+		pthread_mutex_lock(&global->hitclass_mutex);
+		for (int coord = 0; coord < 3; coord++) {
+			if (eventData->nPeaks < 100) continue;
+			global->hitClasses[coord][std::make_pair(eventData->samplePos[coord] * 1000, hit)]++;
+		}
+		pthread_mutex_unlock(&global->hitclass_mutex);
+		sortPowderClass(eventData, global);		
 	}
 
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
@@ -210,7 +218,6 @@ hitknown:
     /*
      *	Sort event into different classes (eg: laser on/off)
      */
-    sortPowderClass(eventData, global);		
   
 	DEBUGL2_ONLY {
 		DEBUG("Procedures depending on hit tag");
