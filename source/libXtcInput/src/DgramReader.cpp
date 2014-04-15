@@ -248,8 +248,13 @@ try {
     if (not numbers.empty()) {
       // use default table name if none was given
       if (m_liveDbConn.empty()) m_liveDbConn = "Server=psdb.slac.stanford.edu;Database=regdb;Uid=regdb_reader";
-      fileIter = boost::make_shared<RunFileIterLive>(numbers.begin(), numbers.end(), expId, stream, 
+	  if(streams.size() > 1){
+		  fileIter = boost::make_shared<RunFileIterLive>(numbers.begin(), numbers.end(), expId, streams, 
           m_liveTimeout, m_liveDbConn, m_liveTable, liveDir);
+	  }else{
+		  fileIter = boost::make_shared<RunFileIterLive>(numbers.begin(), numbers.end(), expId, stream, 
+          m_liveTimeout, m_liveDbConn, m_liveTable, liveDir);
+	  }
     }
   }
 

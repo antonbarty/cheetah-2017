@@ -3,7 +3,11 @@ find_package(PSANA REQUIRED)
 
 file(GLOB sources "${ANA_RELEASE}/XtcInput/src/*.cpp")
 list(REMOVE_ITEM sources "${ANA_RELEASE}/XtcInput/src/DgramReader.cpp")
+list(REMOVE_ITEM sources "${ANA_RELEASE}/XtcInput/src/StreamFileIterLive.cpp")
+list(REMOVE_ITEM sources "${ANA_RELEASE}/XtcInput/src/RunFileIterLive.cpp")
 list(APPEND sources "src/DgramReader.cpp")
+list(APPEND sources "src/StreamFileIterLive.cpp")
+list(APPEND sources "src/RunFileIterLive.cpp")
 # Add source files here
 include_directories("include")
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
