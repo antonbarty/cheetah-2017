@@ -177,7 +177,7 @@ end
 ;;
 ;;	Display a single HDF5 file (eg: virtual powder)
 ;;
-pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry
+pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry, hist=hist
 	
 	if filename eq '' then begin
 		print,'File does not exist'
@@ -191,15 +191,17 @@ pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry
 	
 	print,'Displaying: ', filename
 	data = read_h5(filename, field=field)
-	nnz = n_elements(where(data ne 0))
-	data = data > 0
-	frac = 0.02*(nnz/n_elements(data))
-	img = histogram_clip(data, frac)
+	
+	if keyword_set(hist) then begin
+		data = data > 0
+		data = histogram_clip(data, 0.002)	
+	endif 
+	
 	if keyword_set(gamma) then $
-		img = img ^ gamma
+		data = data ^ gamma
 
 	loadct, 4
-	scrolldisplay, img, title=file_basename(filename), geometry=geometry
+	scrolldisplay, data, title=file_basename(filename), geometry=geometry
 
 end
 
@@ -766,7 +768,7 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist
 		end
 
 		sState.mbfile_unlock : begin
@@ -819,23 +821,23 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_powderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_peakpowder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_peakpowderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_bsub : begin
 			dir = crawler_whichRun(pstate, /path)

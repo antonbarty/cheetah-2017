@@ -175,7 +175,7 @@ void cPixelDetectorCommon::configure(void) {
 		pix_ny = CSPAD_ASIC_NY*CSPAD_nASICS_Y;
 		pix_nn = pix_nx * pix_ny;
 		pixelSize = 110e-6;
-	} else if(strcmp(detectorName, "CxiSc2") == 0) {
+	} else if(strcmp(detectorName, "CxiSc2") == 0 || strcmp(detectorName, "CxiDg2") == 0) {
 		strcpy(detectorType, "cspad2x2");
 		asic_nx = CSPAD_ASIC_NX;
 		asic_ny = CSPAD_ASIC_NY;

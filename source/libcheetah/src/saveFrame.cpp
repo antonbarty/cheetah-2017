@@ -162,7 +162,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			sprintf(fieldID, "assembleddata%li", detID);
 			if (global->h5compress) {
 				H5Pset_chunk(h5compression, 2, size);
-				H5Pset_shuffle(h5compression);			// De-interlace bytes
+				//H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
@@ -214,7 +214,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			if (global->h5compress) {
 				H5Pset_chunk(h5compression, 2, size);
-				H5Pset_shuffle(h5compression);			// De-interlace bytes
+				//H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			// rawdata
@@ -307,7 +307,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		max_size[1] = global->AcqNumSamples;
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		double tempData[2][global->AcqNumSamples];
@@ -335,7 +335,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		size[1] = info->pulnixWidth;	
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		dataspace_id = H5Screate_simple(2, size, size);
@@ -353,7 +353,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		size[1] = info->specWidth;
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		dataspace_id = H5Screate_simple(2, size, size);
@@ -803,7 +803,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	max_size[1] = width;
 	sh = H5Screate_simple(2, size, max_size);
 	H5Pset_chunk(h5compression, 2, size);
-	H5Pset_shuffle(h5compression);			// De-interlace bytes
+	//H5Pset_shuffle(h5compression);			// De-interlace bytes
 	H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
 	
 	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);

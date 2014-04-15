@@ -97,12 +97,12 @@ cGlobal::cGlobal(void) {
 	hitfinderLocalBGRadius = 4;
     hitfinderLocalBGThickness = 4;
 	//hitfinderLimitRes = 1;
-	hitfinderMinRes = 1.e10;
-	hitfinderMaxRes = 0.;
+	hitfinderMinRes = 0;
+	hitfinderMaxRes = 1e6;
 	hitfinderResolutionUnitPixel = 1;
 	hitfinderMinSNR = 40;
 	hitfinderIgnoreHaloPixels = 0;
-	hitfinderDownsampling = 1;
+	hitfinderDownsampling = 0;
 	hitfinderOnDetectorCorrectedData = 0;
 	hitfinderFastScan = 0;
 
