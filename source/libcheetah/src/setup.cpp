@@ -1591,6 +1591,7 @@ void cGlobal::splitList(char * values, std::vector<T> & elems) {
 	char delim = ',';
     std::stringstream ss(values);
     std::string item;
+	elems.clear();
     while (std::getline(ss, item, delim)) {
 		std::stringstream innerss(item);
 		

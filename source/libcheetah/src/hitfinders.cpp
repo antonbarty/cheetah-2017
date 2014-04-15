@@ -263,8 +263,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 	*tat = 0.0;
 
 	for(long i=0;i<pix_nn;i++){
-        // TEMP LC97 CHANGE REMOVE MASK CHECK TODO TODO FIX
-		if((true || isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
+		if((isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
 			*tat += data[i];
 			*nat += 1;
 		}
@@ -489,7 +488,8 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 			for (unsigned int k=0; k<global->TOFChannelsPerCard[card].size(); k++) {
 				int chan_offset = k*global->AcqNumSamples;
 				for (int i=global->hitfinderTOFMinSample[tofIndex]; i<global->hitfinderTOFMaxSample[tofIndex]; i++) {
-					count += (int)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
+//					count += (bool)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
+					count += (eventData->TOFAllVoltage[card][chan_offset+i] < global->hitfinderTOFThresh[tofIndex]);
 				}
 				tofIndex++;
 			}

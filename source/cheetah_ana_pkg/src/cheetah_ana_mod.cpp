@@ -1270,7 +1270,7 @@ namespace cheetah_ana_pkg {
 					ndarray<const int16_t, 1> raw(waveforms[seg]);
 					for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
 						eventData->TOFAllTime[card][index*nsamples+i] = (timestamp + i*sampInterval);
-						eventData->TOFAllVoltage[card][index*nsamples+i] = (raw[i]*slope + offset);
+						eventData->TOFAllVoltage[card][index*nsamples+i] = (raw[i]*slope - offset);
 					}
 
 				}
