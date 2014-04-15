@@ -11,7 +11,7 @@ add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
 add_library(libPSShmemInput SHARED ${sources})
 
-target_link_libraries(libPSShmemInput ${PSANA_LIBRARIES})
+target_link_libraries(libPSShmemInput libXtcInput ${PSANA_LIBRARIES})
 SET_TARGET_PROPERTIES(libPSShmemInput PROPERTIES OUTPUT_NAME PSShmemInput)
 
 set_target_properties(

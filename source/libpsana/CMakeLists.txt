@@ -12,7 +12,7 @@ add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
 add_library(libpsana SHARED ${sources})
 
-target_link_libraries(libpsana ${PSANA_LIBRARIES})
+target_link_libraries(libpsana libXtcInput libPSShmemInput ${PSANA_LIBRARIES})
 SET_TARGET_PROPERTIES(libpsana PROPERTIES OUTPUT_NAME psana)
 
 set_target_properties(
