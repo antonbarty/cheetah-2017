@@ -20,24 +20,7 @@ if(rhel5)
   set(ANA_ARCH "x86_64-rhel5-gcc41-opt" CACHE STRING "ana architecture to be used")
 endif(rhel5)
 
-LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils  
- ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
- ExpNameDb psddl_psana Core Cint RIO Net Hist
- Graf Graf3d Gpad Tree Rint Postscript Matrix Physics
- MathCore Thread m dl RdbMySQL)
-
-LIST(APPEND ana_libs PSXtcInput appdata) 
-
-LIST(APPEND ana_libs psddl_pdsdata
-  xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
-  ExpNameDb psddl_psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread IData
-  m dl)
-#LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils acqdata andordata bld camdata compressdata controldata
-#  cspad2x2data cspaddata encoderdata epics evrdata fccddata fexampdata flidata gsc16aidata indexdata
-#  ipimbdata lusidata oceanopticsdata opal1kdata orcadata phasicsdata pnccddata princetondata pulnixdata
-#  quartzdata timepixdata usdusbdata xampsdata xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
-#  ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
-#  m dl)
+LIST(APPEND ana_libs AppUtils Cint ConfigSvc Core ErrSvc ExpNameDb Gpad Graf Graf3d Hist IData MathCore Matrix MsgLogger Net PSEnv PSEvt PSHist PSTime PSXtcInput Physics Postscript RIO RdbMySQL Rint RootHistoManager Thread Tree appdata dl m psddl_pdsdata psddl_psana rt xtcdata)
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first
