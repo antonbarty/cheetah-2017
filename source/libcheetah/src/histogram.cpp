@@ -68,7 +68,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 			
 			value = eventData->detector[detID].corrected_data[i_hist];
 			binf = (value-histMin)/histBinSize;
-			bin = (long) floor(binf);
+			bin = (long) lrint(binf);
 			
 			if(bin < 0) bin = 0;
 			if(bin >= histNbins) bin=histNbins-1;
@@ -98,6 +98,9 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
  *	Save histograms
  */
 void saveHistograms(cGlobal *global) {
+
+	printf("Writing histogram data \n");
+
 	DETECTOR_LOOP {
 		if (global->detector[detID].histogram) {
 			saveHistogram(global, detID);
@@ -122,6 +125,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	float		*darkcal = global->detector[detID].darkcal;
 	
 	long		hist_count;
+
 
 
     
@@ -195,8 +199,8 @@ void saveHistogram(cGlobal *global, int detID) {
 	chunk[2] = histNbins;
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 3, chunk);
-		H5Pset_shuffle(h5compression);			// De-interlace bytes
-		H5Pset_deflate(h5compression, 2);		// Compression levels are 0 (none) to 9 (max)
+		//H5Pset_shuffle(h5compression);			// De-interlace bytes
+		H5Pset_deflate(h5compression, 1);		// Compression levels are 0 (none) to 9 (max)
 	}
 
 	
@@ -308,8 +312,8 @@ void saveHistogram(cGlobal *global, int detID) {
 
 	if (global->h5compress) {
 		H5Pset_chunk(h5compression, 2, size);
-		H5Pset_shuffle(h5compression);			// De-interlace bytes
-		H5Pset_deflate(h5compression, 2);		// Compression levels are 0 (none) to 9 (max)
+		//H5Pset_shuffle(h5compression);			// De-interlace bytes
+		H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
 	}
 
 	

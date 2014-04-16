@@ -394,6 +394,7 @@ pro cheetah_displayImage, pState, image
 
 
 		;; Resize image depending on zoom factor
+
 		z = (*pstate).image_zoom 
 		if z ne 1.0 then begin
 			sz = size(image,/dim)
@@ -402,12 +403,26 @@ pro cheetah_displayImage, pState, image
 		(*pstate).image_size = size(image,/dim)
 		
 		
+		;; If the image is much smaller than the draw region, put it in the center of the image space
+		g = widget_info((*pState).scroll, /geometry)
+		s = size(image, /dim)
+		;;help, g
+		if( (g.draw_xsize - s[0] ) gt 100  and  (g.draw_ysize - s[1] ) gt 100) then begin
+			tv_img = fltarr(g.draw_xsize, g.draw_ysize)
+			tv_img[(g.draw_xsize - s[0])/2, (g.draw_ysize - s[1])/2] = image
+		endif $
+		else begin
+			tv_img = image
+		endelse
+
+
+		
 		;; Display image
 		(*pState).data = data
 		widget_control, (*pState).base, base_set_title=title
 		WSET, (*pState).slideWin
 		loadct, (*pstate).colour_table, /silent
-		tvscl, image
+		tvscl, tv_img
 
 		;; Resolution rings
 		if (*pState).resolutionRings1 eq 1 or (*pState).resolutionRings2 eq 1 then begin
@@ -826,6 +841,25 @@ pro cheetah_event, ev
 			cheetah_displayImage, pState
 		end
 		
+		
+		;;
+		;;	Front or back detectors
+		;;
+		sState.menu_datadata : begin
+			(*pstate).h5field = 'data/data'
+			cheetah_displayImage, pState
+		end
+		sState.menu_detector0 : begin
+			(*pstate).h5field = 'data/rawdata0'
+			cheetah_displayImage, pState
+		end
+		sState.menu_detector1 : begin
+			(*pstate).h5field = 'data/rawdata1'
+			cheetah_displayImage, pState
+		end
+
+
+
 		;;
 		;;	Profiles
 		;;
@@ -1186,11 +1220,14 @@ pro cheetahview, geometry=geometry, dir=dir
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
 	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer, wl = d sin(theta))', /checked)
 	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer, wl = 2d sin(theta))', /checked)
-	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
+	mbanalysis_datadata = widget_button(mbview, value='data/data', sensitive=1, /separator)
+	mbanalysis_detector0 = widget_button(mbview, value='data/rawdata0', sensitive=1)
+	mbanalysis_detector1 = widget_button(mbview, value='data/rawdata1', sensitive=1)
 	mbanalysis_zoom50 = widget_button(mbview, value='Zoom 50%', sensitive=1, /separator)
 	mbanalysis_zoom100 = widget_button(mbview, value='Zoom 100%', sensitive=1)
 	mbanalysis_zoom150 = widget_button(mbview, value='Zoom 150%', sensitive=1)
 	mbanalysis_zoom200 = widget_button(mbview, value='Zoom 200%', sensitive=1)
+	mbanalysis_localzoom = widget_button(mbview, value='Cursor zoom in new window')
 	widget_control, mbanalysis_resolution1, set_button=0
 	widget_control, mbanalysis_resolution2, set_button=0
 
@@ -1294,6 +1331,9 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_zoom100 : mbanalysis_zoom100, $
 				  menu_zoom150 : mbanalysis_zoom150, $
 				  menu_zoom200 : mbanalysis_zoom200, $
+				  menu_datadata : mbanalysis_datadata, $
+				  menu_detector0 : mbanalysis_detector0, $
+				  menu_detector1 : mbanalysis_detector1, $
 
 				  peaks_localbackground : 2, $
 				  peaks_algorithm : 0, $

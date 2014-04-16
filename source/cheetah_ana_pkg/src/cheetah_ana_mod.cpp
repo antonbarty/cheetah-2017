@@ -429,7 +429,7 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
-		// Ebeam v4
+        // Ebeam v5
 		if (ebeam5.get()) {
 			charge = ebeam5->ebeamCharge();
 			L3Energy = ebeam5->ebeamL3Energy();
@@ -452,6 +452,7 @@ namespace cheetah_ana_pkg {
 					 << "* fEbeamPkCurrBC25=" << PkCurrBC2 << endl;
 			}
 		}
+        // Ebeam v4
 		else if (ebeam4.get()) {
 			charge = ebeam4->ebeamCharge();
 			L3Energy = ebeam4->ebeamL3Energy();
