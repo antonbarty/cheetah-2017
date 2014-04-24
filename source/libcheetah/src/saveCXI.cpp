@@ -88,6 +88,17 @@ static uint getStackSlice(CXI::File * cxi){
 #endif
 }
 
+static hid_t writeNumEvents(hid_t dataset, int stackSlice){
+	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
+	hid_t w = -1;
+	if(a>=0) {
+		w = H5Awrite (a, H5T_NATIVE_INT32, &stackSlice);
+		H5Aclose(a);
+	}
+	return w;
+}
+
+
 static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
 	hsize_t dims[1] = {CXI::chunkSize1D/H5Tget_size(dataType)};
 	hsize_t maxdims[1] = {H5S_UNLIMITED};
@@ -157,26 +168,7 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
 		abort();
 	}
 
-	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
-	// Silently ignore failure to write, this attribute is non-essential
-	if(a>=0) {
-		uint oldVal;
-		w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to read back size attribute");
-		}
-		if (oldVal < stackSlice + 1) {
-			oldVal = stackSlice + 1;
-		}
-		w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to write size attribute");
-		}
-		H5Aclose(a);
-	}
-
+	writeNumEvents(dataset,stackSlice);
 	H5Sclose(memspace);
 	H5Sclose(dataspace);
 }
@@ -215,6 +207,7 @@ static hid_t create2DStack(const char *name, hid_t loc, int width, int height, h
 	return dataset;    
 }
 
+
 template <class T> 
 static void write2DToStack(hid_t dataset, uint stackSlice, T * data){  
 	hid_t hs,w;
@@ -252,25 +245,7 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 	if( w<0 ){
 		ERROR("Cannot write to file.\n");
 	}
-	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
-	// Silently ignore failure to write, this attribute is non-essential
-	if(a>=0) {
-		uint oldVal;
-		w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to read back size attribute");
-		}
-		if (oldVal < stackSlice + 1) {
-			oldVal = stackSlice + 1;
-		}
-		w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to write size attribute");
-		}
-		H5Aclose(a);
-	}
+	writeNumEvents(dataset,stackSlice);
 	H5Sclose(memspace);
 	H5Sclose(dataspace);
 }
@@ -346,25 +321,7 @@ static void write1DToStack(hid_t dataset, uint stackSlice, T * data){
 	if( w<0 ){
 		ERROR("Cannot write to file.\n");
 	}
-	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
-	// Silently ignore failure to write, this attribute is non-essential
-	if(a>=0) {
-		uint oldVal;
-		w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to read back size attribute");
-		}
-		if (oldVal < stackSlice + 1) {
-			oldVal = stackSlice + 1;
-		}
-		w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to write size attribute");
-		}
-		H5Aclose(a);
-	}
+	writeNumEvents(dataset,stackSlice);
 	H5Sclose(memspace);
 	H5Sclose(dataspace);
 }
@@ -515,25 +472,7 @@ static void writeStringToStack(hid_t dataset, uint stackSlice, const char * valu
 	}
 	H5Tclose(type);
 
-	hid_t a = H5Aopen(dataset, CXI::ATTR_NAME_NUM_EVENTS, H5P_DEFAULT);
-	// Silently ignore failure to write, this attribute is non-essential
-	if(a>=0) {
-		uint oldVal;
-		w = H5Aread(a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to read back size attribute");
-		}
-		if (oldVal < stackSlice + 1) {
-			oldVal = stackSlice + 1;
-		}
-		w = H5Awrite (a, H5T_NATIVE_INT32, &oldVal);
-		if (w < 0)
-		{
-			ERROR("Failure to write size attribute");
-		}
-		H5Aclose(a);
-	}
+	writeNumEvents(dataset,stackSlice);
 	H5Sclose(memspace);
 	H5Sclose(dataspace);
 }
@@ -1377,10 +1316,8 @@ static void  closeCXI(CXI::File * cxi){
 		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
 		H5Sget_simple_extent_dims(dataspace, block, mdims);
 		if(mdims[0] == H5S_UNLIMITED){
-			attr_id = H5Aopen_name(ids[i],CXI::ATTR_NAME_NUM_EVENTS);
-			H5Aread(attr_id,H5T_NATIVE_INT32,&size); 
-			H5Aclose(attr_id);
-			block[0] = size;
+			writeNumEvents(ids[i], cxi->stackCounter);
+			block[0] = cxi->stackCounter;
 			H5Dset_extent(ids[i], block);
 		}
 	}
