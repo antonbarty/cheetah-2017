@@ -86,6 +86,10 @@ namespace cheetah_ana_pkg {
 	int readTOF(Event & evt, Env & env,
 		    cEventData* eventData);
 
+	void waitForAllWorkers();
+	void waitForCheetahWorkers();
+	void waitForAnaModWorkers();
+
         // Data members
         int nActiveThreads;
 		pthread_mutex_t  nActiveThreads_mutex;

@@ -1290,31 +1290,23 @@ namespace cheetah_ana_pkg {
 	{
 	}
 
-	/// Method which is called at the end of the run
-	void cheetah_ana_mod::endRun(Event& evt, Env& env)
-	{
-		
-		/*
-		 *	Wait for all worker threads to finish
-		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
-		 */
+	void cheetah_ana_mod::waitForAllWorkers(){
+		waitForCheetahWorkers();
+		waitForAnaModWorkers();
+	}
+
+	void cheetah_ana_mod::waitForCheetahWorkers(){
 		time_t	tstart, tnow;
 		time(&tstart);
 		double	dtime;
 		float	maxwait = 60.;
 		int p=0, pp=0;
 
-		printf("Ending run. Waiting for %d cheetah ana mod workers to finish.\n", nActiveThreads);
-		while(nActiveThreads > 0) {
-			usleep(10000);
-		}
-		printf("cheetah ana mod workers stopped successfully.\n");
-		
 		while(cheetahGlobal.nActiveThreads > 0) {
 			p = cheetahGlobal.nActiveThreads;
 			if ( pp != p){
 				pp = p;
-				printf("Ending run. Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+				printf("Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
 			}
 			time(&tnow);
 			dtime = difftime(tnow, tstart);
@@ -1326,6 +1318,27 @@ namespace cheetah_ana_pkg {
 			}
 			usleep(100000);
 		}
+		
+	}
+
+	void cheetah_ana_mod::waitForAnaModWorkers(){
+		printf("Waiting for %d cheetah ana mod workers to finish.\n", nActiveThreads);
+		while(nActiveThreads > 0) {
+			usleep(10000);
+		}
+		printf("cheetah ana mod workers stopped successfully.\n");
+	}
+
+	/// Method which is called at the end of the run
+	void cheetah_ana_mod::endRun(Event& evt, Env& env)
+	{
+		
+		/*
+		 *	Wait for all worker threads to finish
+		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+		 */
+		printf("Ending run. ");
+		waitForAllWorkers();		
 		
 		if(cheetahGlobal.saveCXI) {
 			printf("Writing accumulated CXIDB file\n");
@@ -1339,6 +1352,8 @@ namespace cheetah_ana_pkg {
 	///	Clean up all variables associated with libCheetah
 	void cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
+		printf("Ending job. ");
+		waitForAnaModWorkers();		
 		cheetahExit(&cheetahGlobal);
 	  
 		time_t endT;
