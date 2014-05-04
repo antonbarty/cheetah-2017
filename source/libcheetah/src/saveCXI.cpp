@@ -1483,12 +1483,12 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
 		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
 		
-		int tofDetectorIndex = 1;
+		int tofDetectorIndex = 0;
 		for(unsigned int card = 0;card<global->TOFChannelsPerCard.size();card++){
 			if(global->TOFChannelsPerCard[card].size() == 0){
 				continue;
 			}
-			int detID = card+global->nDetectors;
+			int detID = tofDetectorIndex+global->nDetectors;
 			write2DToStack(cxi->entry.instrument.detectors[detID].data, stackSlice, info->TOFAllVoltage[card]);
 			write2DToStack(cxi->entry.instrument.detectors[detID].tofTime, stackSlice, info->TOFAllTime[card]);
 			tofDetectorIndex++;
