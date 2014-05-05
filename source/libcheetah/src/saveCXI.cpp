@@ -166,58 +166,8 @@ static hid_t createStack(const char *name, hid_t loc, hid_t dataType, int width 
 	return dataset;    
 }
 
-static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
-	return createStack(name, loc, dataType);
-}
-
 template <class T> 
-static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
-	hid_t hs,w;
-	hsize_t count[1] = {1};
-	hsize_t offset[1] = {stackSlice};
-	hsize_t stride[1] = {1};
-	hsize_t block[1] = {1};
-	/* dummy */
-	hsize_t mdims[1];
- 
-	hid_t dataspace = H5Dget_space (dataset);
-	if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	H5Sget_simple_extent_dims(dataspace, block, mdims);
-	/* check if we need to extend the dataset */
-	if(block[0] <= stackSlice){
-		while(block[0] <= stackSlice){
-			block[0] *= 2;
-		}
-		H5Dset_extent(dataset, block);
-		/* get enlarged dataspace */
-		H5Sclose(dataspace);
-		dataspace = H5Dget_space (dataset);
-		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	}
-	block[0] = 1;
-	hid_t memspace = H5Screate_simple (1, block, NULL);
-	hid_t type = get_datatype(&value);
-
-	hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-	if( hs<0 ) {ERROR("Cannot select hyperslab.\n");}
-	w = H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, &value) < 0;
-	if( w<0 ){
-		ERROR("Cannot write to file.\n");
-		abort();
-	}
-
-	writeNumEvents(dataset,stackSlice);
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
-}
-
-/* Create a 2D stack. The fastest changing dimension is along the width */
-static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
-	return createStack(name, loc, dataType, width,  height);
-}
-
-template <class T> 
-static void write2DToStack(hid_t dataset, uint stackSlice, T * data){  
+static void writeToStack(hid_t dataset, uint stackSlice, T * data){  
 	hid_t hs,w;
 	hsize_t count[3] = {1,1,1};
 	hsize_t offset[3] = {stackSlice,0,0};
@@ -229,6 +179,8 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 	/* Use the existing dimensions as block size */
 	hid_t dataspace = H5Dget_space (dataset);
 	if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+	int ndims = H5Sget_simple_extent_ndims(dataspace);
+	H5Sget_simple_extent_dims(dataspace, block, mdims);
 	H5Sget_simple_extent_dims(dataspace, block, mdims);
 	/* check if we need to extend the dataset */
 	if(block[0] <= stackSlice){
@@ -242,9 +194,11 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
 	}
 	block[0] = 1;
-	hid_t memspace = H5Screate_simple (3, block, NULL);
+	hid_t memspace = H5Screate_simple (ndims, block, NULL);
 	hid_t type = get_datatype(data);
-
+	if(type == H5T_NATIVE_CHAR){
+		type = H5Dget_type(dataset);
+	}
 	hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
 	if( hs<0 ) {
 		ERROR("Cannot select hyperslab.\n");
@@ -258,6 +212,24 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 	H5Sclose(dataspace);
 }
 
+static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
+	return createStack(name, loc, dataType);
+}
+
+template <class T> 
+static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
+	writeToStack(dataset, stackSlice, &value);
+}
+
+/* Create a 2D stack. The fastest changing dimension is along the width */
+static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
+	return createStack(name, loc, dataType, width,  height);
+}
+
+template <class T> 
+static void write2DToStack(hid_t dataset, uint stackSlice, T * data){  
+	writeToStack(dataset, stackSlice,  data);
+}
 
 static hid_t create1DStack(const char *name, hid_t loc, int size, hid_t dataType){
 	return createStack(name, loc, dataType, size);
@@ -265,44 +237,7 @@ static hid_t create1DStack(const char *name, hid_t loc, int size, hid_t dataType
 
 template <class T> 
 static void write1DToStack(hid_t dataset, uint stackSlice, T * data){  
-	hid_t hs,w;
-	hsize_t count[2] = {1,1};
-	hsize_t offset[2] = {stackSlice,0};
-	/* stride is irrelevant in this case */
-	hsize_t stride[2] = {1,1};
-	hsize_t block[2];
-	/* dummy */
-	hsize_t mdims[2];
-	/* Use the existing dimensions as block size */
-	hid_t dataspace = H5Dget_space (dataset);
-	if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	H5Sget_simple_extent_dims(dataspace, block, mdims);
-	/* check if we need to extend the dataset */
-	if(block[0] <= stackSlice){
-		while(block[0] <= stackSlice){
-			block[0] *= 2;
-		}
-		H5Dset_extent (dataset, block);
-		/* get enlarged dataspace */
-		H5Sclose(dataspace);
-		dataspace = H5Dget_space (dataset);
-		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	}
-	block[0] = 1;
-	hid_t memspace = H5Screate_simple (2, block, NULL);
-	hid_t type = get_datatype(data);
-
-	hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-	if( hs<0 ) {
-		ERROR("Cannot select hyperslab.\n");
-	}
-	w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
-	if( w<0 ){
-		ERROR("Cannot write to file.\n");
-	}
-	writeNumEvents(dataset,stackSlice);
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
+	writeToStack(dataset, stackSlice, data);
 }
 
 template <class T> 
@@ -383,47 +318,7 @@ static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
 
 
 static void writeStringToStack(hid_t dataset, uint stackSlice, const char * value){
-	hid_t sh,w;
-	hsize_t count[1] = {1};
-	hsize_t offset[1] = {stackSlice};
-	hsize_t stride[1] = {1};
-	hsize_t block[1] = {1};
-	/* dummy */
-	hsize_t mdims[1];
-
-  
-	hid_t dataspace = H5Dget_space (dataset);
-	if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	H5Sget_simple_extent_dims(dataspace, block, mdims);
-	/* check if we need to extend the dataset */
-	if(block[0] <= stackSlice){
-		while(block[0] <= stackSlice){
-			block[0] *= 2;
-		}
-		H5Dset_extent(dataset, block);
-		/* get enlarged dataspace */
-		H5Sclose(dataspace);
-		dataspace = H5Dget_space (dataset);
-		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
-	}
-	block[0] = 1;
-	hid_t memspace = H5Screate_simple (1, block, NULL);
-
-	hid_t type = H5Tcopy(H5T_C_S1);
-	H5Tset_size(type, strlen(value));
-
-	sh = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-	if( sh<0 ) {ERROR("Cannot select hyperslab.\n");}
-	w = H5Dwrite(dataset, type, memspace, dataspace, H5P_DEFAULT, value);
-	if( w<0 ){
-		ERROR("Cannot write to file.\n");
-		abort();
-	}
-	H5Tclose(type);
-
-	writeNumEvents(dataset,stackSlice);
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
+	writeToStack(dataset, stackSlice, value);
 }
 
 /*
