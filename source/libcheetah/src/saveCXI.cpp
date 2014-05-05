@@ -98,38 +98,76 @@ static hid_t writeNumEvents(hid_t dataset, int stackSlice){
 	return w;
 }
 
+static hid_t createStack(const char *name, hid_t loc, hid_t dataType, int width = 0, int height = 0){
+	if(height > 0 && width <= 0){
+		ERROR("Must specify positive width to have positive height.\n");
+	}
 
-static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
-	hsize_t dims[1] = {CXI::chunkSize1D/H5Tget_size(dataType)};
-	hsize_t maxdims[1] = {H5S_UNLIMITED};
-	hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
-	hid_t dataspace = H5Screate_simple(1, dims, maxdims);
+	int ndims = 1;
+	if(width > 0){
+		ndims++;
+	}
+	if(height > 0){
+		ndims++;
+	}
+	float chunkSize = CXI::chunkSize1D;
+	if(ndims == 3){
+		chunkSize = CXI::chunkSize2D;
+	}
+	if(height == 0){
+		height = 1;
+	}
+	if(width == 0){
+		width = 1;
+	}
+
+	hsize_t dims[3] = {lrintf((chunkSize)/H5Tget_size(dataType)/width/height),
+					   static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
+
+	hsize_t maxdims[3] = {H5S_UNLIMITED,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
+	hid_t dataspace = H5Screate_simple(ndims, dims, maxdims);
 	if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
-	/* Modify dataset creation properties, i.e. enable chunking  */
-	H5Pset_chunk(cparms, 1, dims);
+	hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
+	H5Pset_chunk(cparms, ndims, dims);
 	//  H5Pset_deflate (cparms, 2);
 	hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
 	if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
+	if(ndims == 3){
+		H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
+	}
 
-	const char * axis = "experiment_identifier";
+	const char * axis_1d = "experiment_identifier";
+	const char * axis_2d = "experiment_identifier:coordinate";
+	const char * axis_3d = "experiment_identifier:y:x";
+	const char * axis;
+	if(ndims == 1){
+		axis = axis_1d;
+	}else if(ndims == 2){
+		axis = axis_2d;
+	}else if(ndims == 3){
+		axis = axis_3d;
+	}
+	
 	hsize_t one = 1;
 	hid_t datatype = H5Tcopy(H5T_C_S1);
 	H5Tset_size(datatype, strlen(axis));
 	hid_t memspace = H5Screate_simple(1,&one,NULL);
 	hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
 	H5Awrite(attr,datatype,axis);
-	H5Tclose(datatype);
 	H5Aclose(attr);
-
 	attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
 	int zero = 0;
 	H5Awrite(attr,H5T_NATIVE_INT32,&zero);
+	H5Tclose(datatype);
 	H5Aclose(attr);
-
 	H5Sclose(memspace);
 	H5Sclose(dataspace);
 	H5Pclose(cparms);
-	return dataset;
+	return dataset;    
+}
+
+static hid_t createScalarStack(const char * name, hid_t loc, hid_t dataType){
+	return createStack(name, loc, dataType);
 }
 
 template <class T> 
@@ -173,40 +211,10 @@ static void writeScalarToStack(hid_t dataset, uint stackSlice, T value){
 	H5Sclose(dataspace);
 }
 
-
 /* Create a 2D stack. The fastest changing dimension is along the width */
 static hid_t create2DStack(const char *name, hid_t loc, int width, int height, hid_t dataType){
-	hsize_t dims[3] = {lrintf(((float)CXI::chunkSize2D)/H5Tget_size(dataType)/width/height),
-					   static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
-	hsize_t maxdims[3] = {H5S_UNLIMITED,static_cast<hsize_t>(height),static_cast<hsize_t>(width)};
-	hid_t dataspace = H5Screate_simple(3, dims, maxdims);
-	if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
-	hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
-	H5Pset_chunk(cparms, 3, dims);
-	//  H5Pset_deflate (cparms, 2);
-	hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
-	if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
-	H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
-
-	const char * axis = "experiment_identifier:y:x";
-	hsize_t one = 1;
-	hid_t datatype = H5Tcopy(H5T_C_S1);
-	H5Tset_size(datatype, strlen(axis));
-	hid_t memspace = H5Screate_simple(1,&one,NULL);
-	hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
-	H5Awrite(attr,datatype,axis);
-	H5Aclose(attr);
-	attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
-	int zero = 0;
-	H5Awrite(attr,H5T_NATIVE_INT32,&zero);
-	H5Tclose(datatype);
-	H5Aclose(attr);
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
-	H5Pclose(cparms);
-	return dataset;    
+	return createStack(name, loc, dataType, width,  height);
 }
-
 
 template <class T> 
 static void write2DToStack(hid_t dataset, uint stackSlice, T * data){  
@@ -251,37 +259,8 @@ static void write2DToStack(hid_t dataset, uint stackSlice, T * data){
 }
 
 
-/* Create a 1D stack. */
 static hid_t create1DStack(const char *name, hid_t loc, int size, hid_t dataType){
-	hsize_t dims[2] = {lrintf(((float)CXI::chunkSize2D)/H5Tget_size(dataType)/size),
-					   static_cast<hsize_t>(size)};
-	hsize_t maxdims[2] = {H5S_UNLIMITED,static_cast<hsize_t>(size)};
-	hid_t dataspace = H5Screate_simple(2, dims, maxdims);
-	if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
-	hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
-	H5Pset_chunk(cparms, 2, dims);
-	//  H5Pset_deflate (cparms, 2);
-	hid_t dataset = H5Dcreate(loc, name, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
-	if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
-	H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*16,1);
-
-	const char * axis = "experiment_identifier:coordinate";
-	hsize_t one = 1;
-	hid_t datatype = H5Tcopy(H5T_C_S1);
-	H5Tset_size(datatype, strlen(axis));
-	hid_t memspace = H5Screate_simple(1,&one,NULL);
-	hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
-	H5Awrite(attr,datatype,axis);
-	H5Aclose(attr);
-	attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
-	int zero = 0;
-	H5Awrite(attr,H5T_NATIVE_INT32,&zero);
-	H5Tclose(datatype);
-	H5Aclose(attr);
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
-	H5Pclose(cparms);
-	return dataset;    
+	return createStack(name, loc, dataType, size);
 }
 
 template <class T> 
@@ -395,43 +374,13 @@ static void openAndWriteDataset(const char *name, hid_t loc, T *data,int width=1
 }
 
 static hid_t createStringStack(const char * name, hid_t loc, int maxSize = 128){
-	/* FM: This is probably wrong */
 	hid_t datatype = H5Tcopy(H5T_C_S1);
 	if(H5Tset_size(datatype, maxSize) < 0){
 		ERROR("Cannot set type size.\n");
 	}
-	hsize_t dims[1] = {CXI::chunkSize1D/H5Tget_size(datatype)};
-	hsize_t maxdims[1] = {H5S_UNLIMITED};
-	hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
-	hid_t dataspace = H5Screate_simple(1, dims, maxdims);
-	H5Pset_chunk (cparms, 1, dims);
-	//  H5Pset_deflate(cparms, 2);
-	hid_t dataset = H5Dcreate(loc, name, datatype, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
-	if( dataset<0 ){
-		ERROR("Cannot create dataset.\n");
-	}
-	H5Tclose(datatype);
-	const char * axis = "experiment_identifier";
-	hsize_t one = 1;
-	datatype = H5Tcopy(H5T_C_S1);
-	H5Tset_size(datatype, strlen(axis));
-	hid_t memspace = H5Screate_simple(1,&one,NULL);
-	hid_t attr = H5Acreate(dataset,"axes",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
-  
-	H5Awrite(attr,datatype,axis);
-	H5Aclose(attr);
-
-	attr = H5Acreate(dataset,CXI::ATTR_NAME_NUM_EVENTS,H5T_NATIVE_INT32,memspace,H5P_DEFAULT,H5P_DEFAULT);
-	int zero = 0;
-	H5Awrite(attr,H5T_NATIVE_INT32,&zero);
-	H5Tclose(datatype);
-	H5Aclose(attr);
-
-	H5Sclose(memspace);
-	H5Sclose(dataspace);
-	H5Pclose(cparms);
-	return dataset;    
+	return createStack(name, loc, datatype);
 }
+
 
 static void writeStringToStack(hid_t dataset, uint stackSlice, const char * value){
 	hid_t sh,w;
