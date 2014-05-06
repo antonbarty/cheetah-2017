@@ -22,8 +22,11 @@ namespace CXI{
 
 	class Node{
 	public:
+		enum Type{Dataset, Group, Link};
+
 		Node(const char * filename, bool swmr){
 			parent = NULL;
+			type = Group;
 			name = std::string("/");
 			hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
 			if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){
@@ -44,10 +47,11 @@ namespace CXI{
 			stackSlice = 0;
 		}
 		
-		Node(std::string s, hid_t oid, Node * p){
+		Node(std::string s, hid_t oid, Node * p, Type t){
 			name = s;
 			parent = p;
 			id = oid;
+			type = t;
 		}
 		Node *  operator [](char * s){
 			if(children.find(s) != children.end()){
@@ -59,11 +63,17 @@ namespace CXI{
 			return id;
 		}
 		/*
-		  The base name of the group should be used.
+		  The base name of the class should be used.
 		  For example "entry" if you want to create "entry_N"
 		*/
 		Node * addClass(const char * s);
 		Node * createGroup(const char * s);
+		Node * createLink(const char * s, std::string target);
+		/*
+		  The base name of the class should be used.
+		  For example "entry" if you want to create "entry_N"
+		*/
+		Node * addClassLink(const char * s, std::string target);
 		/* 
 		   To create a stack pass length = H5S_UNLIMITED
 		   To create a string dataset pass dataType = H5T_NATIVE_CHAR and width as maximum string size.
@@ -74,17 +84,22 @@ namespace CXI{
 		}
 		template<class T>
 			void write(T * data, int stackSlice = -1);
+		
+		void closeAll();
+		void openAll();
+		std::string path();
+		std::string name;
 	private:
-		Node * addNode(const char * s, hid_t oid);
+		Node * addNode(const char * s, hid_t oid, Type t);
 		void addStackAttributes(hid_t dataset, int ndims);
 		hid_t writeNumEvents(hid_t dataset, int stackSlice);
 		std::string nextKey(const char * s);
-
+		typedef std::map<std::string, Node *>::iterator Iter;
 		std::map<std::string,Node *> children;
-		std::string name;
 		Node * parent;
 		hid_t id;
 		int stackSlice;
+		Type type;
 	};
 
 	typedef struct{

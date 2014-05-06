@@ -7,7 +7,7 @@
  *  Copyright 2012 Biophysics & TDB @ Uppsala University. All rights reserved.
  *
  */
-
+										
 #include <string>
 #include <vector>
 #include <pthread.h>
@@ -101,7 +101,7 @@ namespace CXI{
 		if(length == H5S_UNLIMITED){
 			addStackAttributes(dataset,ndims);
 		}
-		return addNode(s,dataset);    
+		return addNode(s, dataset, Dataset);    
 	}
 
 	template <class T> 
@@ -170,12 +170,56 @@ namespace CXI{
 		if(gid < 0){
 			return NULL;
 		}
-		return addNode(s,gid);
+		return addNode(s,gid, Group);
+	}
+	Node * Node::addClassLink(const char * s, std::string target){
+		std::string key = nextKey(s);
+		return createLink(key.c_str(), target);
+	}
+
+	Node * Node::createLink(const char * s, std::string target){
+		hid_t lid = H5Lcreate_soft(target.c_str(),hid(),s,H5P_DEFAULT,H5P_DEFAULT);
+		if(lid < 0){
+			return NULL;
+		}
+		return addNode(s, lid, Link);
 	}
 
 
-	Node * Node::addNode(const char * s, hid_t oid){
-		Node * n = new Node(s, oid, this);
+	void Node::closeAll(){
+		// close all non-root open objects
+		if(parent && hid() >= 0 && type != Link){
+			H5Oclose(hid());
+			id = -1;
+		}
+		for(Iter it = children.begin(); it != children.end(); it++) {
+			it->second->closeAll();
+		}
+	}
+
+	void Node::openAll(){
+		if(parent && parent->hid() < 0){
+			ERROR("Parent not open");
+		}
+		// open all non-root closed objects
+		if(hid() < 0 && parent && type != Link){
+			id = H5Oopen(parent->hid(),name.c_str(),H5P_DEFAULT);
+		}
+		for(Iter it = children.begin(); it != children.end(); it++) {
+			it->second->openAll();
+		}
+	}
+
+	std::string Node::path(){
+		if(parent){
+			return parent->path()+std::string("/")+name;
+		}else{
+			return name;
+		}
+	}
+
+	Node * Node::addNode(const char * s, hid_t oid, Type t){
+		Node * n = new Node(s, oid, this, t);
 		children[s] = n;
 		return n;
 	}
@@ -642,6 +686,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	source->createStack("energy",H5T_NATIVE_DOUBLE);
 
 	// /entry_1/instrument_1/experiment_identifier -> /entry_1/experiment_identifier
+	instrument->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 	H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
 	// If we have sample translation configured, write it out to file
@@ -672,6 +717,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
 		// /entry_1/data_i -> /entry_1/instrument_1/detector_i
 		sprintf(dataName,"data_%ld",detID+1);
+		entry->addClassLink("data",detector->path().c_str());
 		H5Lcreate_soft(detectorPath,cxi->entry.self,dataName,H5P_DEFAULT,H5P_DEFAULT);
 
 		d.distance = createScalarStack("distance", d.self,H5T_NATIVE_DOUBLE);
@@ -713,6 +759,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 			d.thumbnail = create2DStack("thumbnail", d.self, global->detector[detID].pix_nx/CXI::thumbnailScale, global->detector[detID].pix_ny/CXI::thumbnailScale, H5T_STD_I16LE);
 			// /entry_1/instrument_1/detector_i/experiment_identifier -> /entry_1/experiment_identifier
+			detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 			H5Lcreate_soft("/entry_1/experiment_identifier",d.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 		}
 		cxi->entry.instrument.detectors.push_back(d);
@@ -741,8 +788,11 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			image->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(image_pixelmask_shared);
 			createAndWriteDataset("mask_shared", img.self, image_pixelmask_shared, global->detector[detID].image_nx, global->detector[detID].image_ny);
 			// /entry_1/image_i/detector_1
+
+			image->addClassLink("detector",detector->path());
 			H5Lcreate_soft(detectorPath,img.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
 			// /entry_1/image_i/source_1
+			image->addClassLink("source",source->path());
 			H5Lcreate_soft("/entry_1/instrument_1/source_1",img.self,"source_1",H5P_DEFAULT,H5P_DEFAULT);
 			// /entry_1/image_i/data_type
 			image->createStack("data_type",H5T_NATIVE_CHAR,128);
@@ -755,6 +805,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			image->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
 			img.thumbnail = create2DStack("thumbnail", img.self, global->detector[detID].image_nx/CXI::thumbnailScale, global->detector[detID].image_nx/CXI::thumbnailScale, H5T_NATIVE_FLOAT);
 			// /entry_1/image_i/experiment_identifier
+			image->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 			H5Lcreate_soft("/entry_1/experiment_identifier",img.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 			cxi->entry.images.push_back(img);
 
@@ -785,8 +836,11 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				image->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(imageXxX_pixelmask_shared);
 				createAndWriteDataset("mask_shared", imgXxX.self, imageXxX_pixelmask_shared, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny);
 				// /entry_1/image_j/detector_1
+
+				image->addClassLink("detector",detector->path());
 				H5Lcreate_soft(detectorPath,imgXxX.self,"detector_1",H5P_DEFAULT,H5P_DEFAULT);
 				// /entry_1/image_j/source_1
+				image->addClassLink("source",source->path());
 				H5Lcreate_soft("/entry_1/instrument_1/source_1",imgXxX.self,"source_1",H5P_DEFAULT,H5P_DEFAULT);
 				// /entry_1/image_j/data_type
 				image->createStack("data_type",H5T_NATIVE_CHAR,128);
@@ -798,6 +852,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				image->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
 				imgXxX.thumbnail = create2DStack("thumbnail", imgXxX.self, global->detector[detID].imageXxX_nx/CXI::thumbnailScale, global->detector[detID].imageXxX_ny/CXI::thumbnailScale, H5T_NATIVE_FLOAT);
 				// /entry_1/image_j/experiment_identifier
+				image->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 				H5Lcreate_soft("/entry_1/experiment_identifier",imgXxX.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 				cxi->entry.images.push_back(imgXxX);
 				free(imageXxX_pixelmask_shared);
@@ -884,7 +939,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		lcls->createStack("tofVoltage",H5T_NATIVE_DOUBLE,1, global->AcqNumSamples);
 		cxi->lcls.tofVoltage = create2DStack("tofVoltage", cxi->lcls.self, 1, global->AcqNumSamples, H5T_NATIVE_DOUBLE);
 	}
+	lcls->createLink("eventTime","eventTimeString");
 	H5Lcreate_soft("/LCLS/eventTimeString", cxi->self, "/LCLS/eventTime",H5P_DEFAULT,H5P_DEFAULT);
+	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
 	H5Lcreate_soft("/entry_1/experiment_identifier",cxi->lcls.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
 	DETECTOR_LOOP{
@@ -1148,6 +1205,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		}
 	}
 
+	
 #if defined H5F_ACC_SWMR_READ
 	if(global->cxiSWMR){  
 		int nobjs = H5Fget_obj_count( cxi->self, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR);
@@ -1169,9 +1227,15 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			}    
 		}  
 		free(obj_id_list);
+		root->closeAll();
 		if(H5Fstart_swmr_write(cxi->self) < 0){
 			ERROR("Cannot change to SWMR mode.\n");
 		}
+		if(H5Fstart_swmr_write(root->hid()) < 0){
+			ERROR("Cannot change to SWMR mode.\n");			
+		}
+		root->openAll();
+
 
 		/* Painfully reopen datasets.
 		   This part of the code is a bit
