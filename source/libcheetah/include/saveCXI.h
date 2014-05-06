@@ -20,6 +20,73 @@
 namespace CXI{
 	const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
+	class Node{
+	public:
+		Node(const char * filename, bool swmr){
+			parent = NULL;
+			name = std::string("/");
+			hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
+			if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){
+				ERROR("Cannot set file access properties.\n");
+			}
+			if(swmr){
+#ifdef H5F_ACC_SWMR_WRITE
+				if(H5Pset_libver_bounds(fapl_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
+					ERROR("Cannot set file access properties.\n");
+				}
+#else
+				ERROR("Cannot write in SWMR mode, HDF5 library does not support it.\n");
+#endif
+			}
+
+			id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
+			if( id<0 ) {ERROR("Cannot create file.\n");}
+			stackSlice = 0;
+		}
+		
+		Node(std::string s, hid_t oid, Node * p){
+			name = s;
+			parent = p;
+			id = oid;
+		}
+		Node *  operator [](char * s){
+			if(children.find(s) != children.end()){
+				return children.find(s)->second;
+			}
+			return 0;
+		}
+		hid_t hid(){
+			return id;
+		}
+		/*
+		  The base name of the group should be used.
+		  For example "entry" if you want to create "entry_N"
+		*/
+		Node * addClass(const char * s);
+		Node * createGroup(const char * s);
+		/* 
+		   To create a stack pass length = H5S_UNLIMITED
+		   To create a string dataset pass dataType = H5T_NATIVE_CHAR and width as maximum string size.
+		 */
+		Node * createDataset(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, int chunkSize = 0);
+		Node * createStack(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = H5S_UNLIMITED, int chunkSize = 0){
+			return createDataset(s,dataType,width,height,length,chunkSize);
+		}
+		template<class T>
+			void write(T * data, int stackSlice = -1);
+	private:
+		Node * addNode(const char * s, hid_t oid);
+		void addStackAttributes(hid_t dataset, int ndims);
+		hid_t writeNumEvents(hid_t dataset, int stackSlice);
+		std::string nextKey(const char * s);
+
+		std::map<std::string,Node *> children;
+		std::string name;
+		Node * parent;
+		hid_t id;
+		int stackSlice;
+	};
+
 	typedef struct{
 	  hid_t self;
 	  hid_t translation;
