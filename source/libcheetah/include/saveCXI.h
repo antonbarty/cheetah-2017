@@ -53,11 +53,13 @@ namespace CXI{
 			id = oid;
 			type = t;
 		}
-		Node *  operator [](char * s){
+		Node & operator [](std::string s){
 			if(children.find(s) != children.end()){
-				return children.find(s)->second;
+				return *children.find(s)->second;
+			}else{
+				ERROR("Could not find child");
+				return *this;
 			}
-			return 0;
 		}
 		hid_t hid(){
 			return id;
@@ -68,6 +70,7 @@ namespace CXI{
 		*/
 		Node * addClass(const char * s);
 		Node * createGroup(const char * s);
+		Node * createGroup(const char * prefix, int n);
 		Node * createLink(const char * s, std::string target);
 		/*
 		  The base name of the class should be used.
@@ -88,6 +91,9 @@ namespace CXI{
 		void closeAll();
 		void openAll();
 		std::string path();
+		Node & child(std::string prefix, int n);
+		void trimAll(int stackSize);
+
 		std::string name;
 	private:
 		Node * addNode(const char * s, hid_t oid, Type t);
@@ -257,6 +263,7 @@ namespace CXI{
 		/*  This counter defines where in the file each image is stored.
 		 *  It is atomically incremented by each thread */
 		uint stackCounter;
+		Node * root;
 	}File;
 
 

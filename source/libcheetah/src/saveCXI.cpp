@@ -125,7 +125,6 @@ namespace CXI{
 		if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
 		int ndims = H5Sget_simple_extent_ndims(dataspace);
 		H5Sget_simple_extent_dims(dataspace, block, mdims);
-		H5Sget_simple_extent_dims(dataspace, block, mdims);
 		/* check if we need to extend the dataset */
 		if((int)block[0] <= stackSlice){
 			while((int)block[0] <= stackSlice){
@@ -172,6 +171,17 @@ namespace CXI{
 		}
 		return addNode(s,gid, Group);
 	}
+
+	Node * Node::createGroup(const char * prefix, int n){
+		char buffer[1024];
+		sprintf(buffer,"%s_%d",prefix,n);
+		hid_t gid = H5Gcreate(hid(),buffer, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if(gid < 0){
+			return NULL;
+		}
+		return addNode(buffer,gid, Group);
+	}
+
 	Node * Node::addClassLink(const char * s, std::string target){
 		std::string key = nextKey(s);
 		return createLink(key.c_str(), target);
@@ -217,6 +227,32 @@ namespace CXI{
 			return name;
 		}
 	}
+
+	Node & Node::child(std::string prefix, int n){
+		char buffer[1024];
+		sprintf(buffer,"%s_%d",prefix.c_str(),n);
+		return (*this)[buffer];
+	}
+
+	void Node::trimAll(int stackSize){
+		if(hid() >= 0 && type == Dataset){
+			hsize_t block[3];
+			hsize_t mdims[3];
+			hid_t dataspace = H5Dget_space(hid());
+			if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+			H5Sget_simple_extent_dims(dataspace, block, mdims);
+			if(mdims[0] == H5S_UNLIMITED){
+				writeNumEvents(hid(), stackSize);
+				block[0] = stackSize;
+				H5Dset_extent(hid(), block);
+			}
+		}
+
+		for(Iter it = children.begin(); it != children.end(); it++) {
+			it->second->trimAll(stackSize);
+		}
+	}
+
 
 	Node * Node::addNode(const char * s, hid_t oid, Type t){
 		Node * n = new Node(s, oid, this, t);
@@ -633,8 +669,9 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
 	puts("Creating Skeleton");
 //	CXI::Node * root = new CXI::Node(filename,global->cxiSWMR);
-	CXI::Node * root = new CXI::Node("foo.cxi",global->cxiSWMR);
+	CXI::Node * root = new Node("foo.cxi",global->cxiSWMR);
 	CXI::File * cxi = new CXI::File;
+	cxi->root = root;
 	hid_t fapl_id = H5Pcreate(H5P_FILE_ACCESS);
 	if(fapl_id < 0 || H5Pset_fclose_degree(fapl_id, H5F_CLOSE_STRONG) < 0){
 		ERROR("Cannot set file access properties.\n");
@@ -686,7 +723,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	source->createStack("energy",H5T_NATIVE_DOUBLE);
 
 	// /entry_1/instrument_1/experiment_identifier -> /entry_1/experiment_identifier
-	instrument->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+	source->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 	H5Lcreate_soft("/entry_1/experiment_identifier",cxi->entry.instrument.source.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
 	// If we have sample translation configured, write it out to file
@@ -708,7 +745,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		char dataName[1024];
 		char imageName[1024];
 
-		Node * detector = instrument->addClass("detector");
+		Node * detector = instrument->createGroup("detector",detID+1);
 		
 		// /entry_1/instrument_1/detector_i
 		sprintf(detectorPath,"/entry_1/instrument_1/detector_%ld",detID+1);
@@ -773,7 +810,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			int image_nx = global->detector[detID].image_nx;
 			int image_ny = global->detector[detID].image_ny;
 			img.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			Node * image = entry->addClass("image");
+			Node * image = entry->createGroup("image",detID+1);
 			// /entry_1/image_i/data
 			image->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
 			img.data = create2DStack("data", img.self, global->detector[detID].image_nx, global->detector[detID].image_ny, H5T_NATIVE_FLOAT);
@@ -817,7 +854,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				int image_ny = global->detector[detID].imageXxX_ny;
 
 				imgXxX.self = H5Gcreate(cxi->entry.self, imageName, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				image = entry->addClass("image");
+				image = entry->createGroup("image",global->nDetectors+detID+1);
 				// /entry_1/image_j/data
 				image->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
 				imgXxX.data = create2DStack("data", imgXxX.self, global->detector[detID].imageXxX_nx, global->detector[detID].imageXxX_ny, H5T_NATIVE_FLOAT);
@@ -871,7 +908,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 				char detectorPath[1024];
 				sprintf(detectorPath,"/entry_1/instrument_1/detector_%d",tofDetectorIndex+global->nDetectors);
 				d.self = H5Gcreate(cxi->self, detectorPath, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				Node * detector = instrument->addClass("detector");
+				Node * detector = instrument->createGroup("detector",tofDetectorIndex+global->nDetectors);
 				detector->createStack("data",H5T_NATIVE_DOUBLE,global->AcqNumSamples,global->TOFChannelsPerCard[i].size());
 				d.data = create2DStack("data", d.self, global->AcqNumSamples,global->TOFChannelsPerCard[i].size(), H5T_NATIVE_DOUBLE);
 				detector->createStack("tofTime", H5T_NATIVE_DOUBLE, global->AcqNumSamples,global->TOFChannelsPerCard[i].size());
@@ -929,7 +966,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	cxi->lcls.f_21_ENRC = createScalarStack("f_21_ENRC", cxi->lcls.self,H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
 	cxi->lcls.f_22_ENRC = createScalarStack("f_22_ENRC", cxi->lcls.self,H5T_NATIVE_DOUBLE);
-	lcls->createStack("evr4",H5T_NATIVE_DOUBLE);
+	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
 	cxi->lcls.evr41 = createScalarStack("evr41", cxi->lcls.self,H5T_NATIVE_INT);
 	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,128);
 	cxi->lcls.eventTimeString = createStringStack("eventTimeString", cxi->lcls.self);
@@ -945,7 +982,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	H5Lcreate_soft("/entry_1/experiment_identifier",cxi->lcls.self,"experiment_identifier",H5P_DEFAULT,H5P_DEFAULT);
 
 	DETECTOR_LOOP{
-		Node * detector = lcls->addClass("detector");
+		Node * detector = lcls->createGroup("detector",detID+1);
 		char buffer[1024];
 		sprintf(buffer,"detector%li-position", detID +1);
 		detector->createStack("position",H5T_NATIVE_DOUBLE);
@@ -996,7 +1033,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	unshared->createStack("hit",H5T_NATIVE_INT);
 	cxi->cheetahVal.unsharedVal.hit = createScalarStack("hit", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
 	DETECTOR_LOOP{
-		Node * detector = lcls->addClass("detector");
+		Node * detector = unshared->createGroup("detector",detID+1);
 		detector->createStack("sum",H5T_NATIVE_FLOAT);
 		char buffer[1024];
 		sprintf(buffer,"detector%li-sum", detID +1);
@@ -1032,18 +1069,26 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 
 	DETECTOR_LOOP{
 		char buffer[1024];
+		Node * detector = shared->createGroup("detector",detID+1);
 		sprintf(buffer,"detector%ld_lastBgUpdate",detID);
+		detector->createStack("lastBgUpdate",H5T_NATIVE_LONG);
 		cxi->cheetahVal.sharedVal.lastBgUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_nHot",detID);
+		detector->createStack("nHot",H5T_NATIVE_LONG);
 		cxi->cheetahVal.sharedVal.nHot[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+		detector->createStack("lastHotPixUpdate",H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_lastHotPixUpdate",detID);
 		cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+		detector->createStack("hotPixCounter",H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_hotPixCounter",detID);
 		cxi->cheetahVal.sharedVal.hotPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+		detector->createStack("nHalo",H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_nHalo",detID);
 		cxi->cheetahVal.sharedVal.nHalo[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+		detector->createStack("lastHaloPixUpdate",H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_lastHaloPixUpdate",detID);
 		cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
+		detector->createStack("haloPixCounter",H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_haloPixCounter",detID);
 		cxi->cheetahVal.sharedVal.haloPixCounter[detID] = createScalarStack(buffer, cxi->cheetahVal.sharedVal.self,H5T_NATIVE_LONG);
 		sprintf(buffer,"detector%ld_detectorName",detID);
@@ -1106,6 +1151,57 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		createAndWriteDataset(buffer,confVal.self,&global->detector[detID].scaleBackground);
 		//sprintf(buffer,"detector%ld_X",detID);
 		//createAndWriteDataset(buffer,confVal.self,&global->detector[detID].X);
+
+		POWDER_LOOP{
+			Node * cl = detector->createGroup("class",powID+1);
+			cPixelDetectorCommon * detector = &global->detector[detID];
+			long pix_nx =  detector->pix_nx;
+			long pix_ny =  detector->pix_ny;
+			long imageXxX_nx = detector->imageXxX_nx;
+			long imageXxX_ny = detector->imageXxX_ny;
+			long image_nx = detector->image_nx;
+			long image_ny = detector->image_ny;
+			long radial_nn = detector->radial_nn;
+
+			char buffer[1024];
+			double * dummy = NULL;
+			sprintf(buffer,"detector%li_class%li_mean_raw",detID,powID);
+			cl->createDataset("mean_raw",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+			sprintf(buffer,"detector%li_class%li_mean_raw_radial",detID,powID);
+
+			cl->createDataset("mean_raw_radial",H5T_NATIVE_DOUBLE,radial_nn);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,radial_nn);
+			sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
+			cl->createDataset("sigma_raw",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+
+			sprintf(buffer,"detector%li_class%li_mean_corrected",detID,powID);
+			cl->createDataset("mean_corrected",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+			sprintf(buffer,"detector%li_class%li_mean_corrected_radial",detID,powID);
+			cl->createDataset("mean_corrected_radial",H5T_NATIVE_DOUBLE,radial_nn);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,radial_nn);
+			sprintf(buffer,"detector%li_class%li_sigma_corrected",detID,powID);
+			cl->createDataset("sigma_corrected",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+			createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,pix_nx,pix_ny);
+			if(global->assemblePowders && global->assemble2DImage) {
+				sprintf(buffer,"detector%li_class%li_mean_assembled",detID,powID);
+				cl->createDataset("mean_assembled",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+				createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,image_nx,image_ny);
+				sprintf(buffer,"detector%li_class%li_sigma_assembled",detID,powID);
+				cl->createDataset("sigma_assembled",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+				createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,image_nx,image_ny);
+			}
+			if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+				sprintf(buffer,"detector%li_class%li_mean_downsampled",detID,powID);
+				cl->createDataset("mean_downsampled",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+				createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,imageXxX_nx,imageXxX_ny);
+				sprintf(buffer,"detector%li_class%li_sigma_downsampled",detID,powID);
+				cl->createDataset("sigma_downsampled",H5T_NATIVE_DOUBLE,pix_nx,pix_ny);
+				createDataset(buffer, cxi->cheetahVal.sharedVal.self,dummy,imageXxX_nx,imageXxX_ny);
+			}
+		}
 	}
 
 	createAndWriteDataset("defaultPhotonEnergyeV",confVal.self,&global->defaultPhotonEnergyeV);
@@ -1163,7 +1259,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	createAndWriteDataset("hitfinderResolutionUnitPixel",confVal.self,&global->hitfinderResolutionUnitPixel);
 	createAndWriteDataset("hitfinderMinSNR",confVal.self,&global->hitfinderMinSNR);
 	createAndWriteDataset("saveCXI",confVal.self,&global->saveCXI);
-
+/*
 	DETECTOR_LOOP{
 		POWDER_LOOP{
 			cPixelDetectorCommon * detector = &global->detector[detID];
@@ -1204,7 +1300,7 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 			}
 		}
 	}
-
+*/
 	
 #if defined H5F_ACC_SWMR_READ
 	if(global->cxiSWMR){  
@@ -1418,6 +1514,7 @@ static CXI::File * getCXIFileByName(cGlobal *global){
 }
 
 void writeAccumulatedCXI(cGlobal * global){
+	using CXI::Node;
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->swmr_mutex);
@@ -1433,7 +1530,10 @@ void writeAccumulatedCXI(cGlobal * global){
 	long	imageXxX_nn,imageXxX_nx,imageXxX_ny;
 
 	DETECTOR_LOOP{
+		Node & det_node = (*cxi->root)["cheetah"]["shared"].child("detector",detID+1);
 		POWDER_LOOP{
+			Node & cl = det_node.child("class",powID+1);
+
 			detector = &global->detector[detID];
 			radial_nn = detector->radial_nn;
 			pix_nn =  detector->pix_nn;
@@ -1468,10 +1568,13 @@ void writeAccumulatedCXI(cGlobal * global){
 			double * mean_raw_angCnt = (double*) calloc(radial_nn, sizeof(double));
 			calculateRadialAverage(mean_raw,mean_raw_radial,mean_raw_angCnt,global,detID);
 			sprintf(buffer,"detector%li_class%li_mean_raw",detID,powID);
+			cl["mean_raw"].write(mean_raw);
 			openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_raw,pix_nx,pix_ny);
 			sprintf(buffer,"detector%li_class%li_mean_raw_radial",detID,powID);
+			cl["mean_raw_radial"].write(mean_raw_radial);
 			openAndWriteDataset(buffer, sharedVal.self,mean_raw_radial,radial_nn);
 			sprintf(buffer,"detector%li_class%li_sigma_raw",detID,powID);
+			cl["sigma_raw"].write(sigma_raw);
 			openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_raw,pix_nx,pix_ny);
 
 			// corrected
@@ -1488,10 +1591,13 @@ void writeAccumulatedCXI(cGlobal * global){
 			double * mean_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
 			calculateRadialAverage(mean_corrected,mean_corrected_radial,mean_corrected_angCnt,global,detID);
 			sprintf(buffer,"detector%li_class%li_mean_corrected",detID,powID);
+			cl["mean_corrected"].write(mean_corrected);
 			openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_corrected,pix_nx,pix_ny);
 			sprintf(buffer,"detector%li_class%li_mean_corrected_radial",detID,powID);
+			cl["mean_corrected_radial"].write(mean_corrected);
 			openAndWriteDataset(buffer, sharedVal.self,mean_corrected_radial,radial_nn);
 			sprintf(buffer,"detector%li_class%li_sigma_corrected",detID,powID);
+			cl["sigma_corrected"].write(mean_corrected);
 			openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_corrected,pix_nx,pix_ny);
 
 			// assembled
@@ -1507,8 +1613,10 @@ void writeAccumulatedCXI(cGlobal * global){
 						sqrt( fabs(sum_assembledSq[i] - sum_assembled[i]*sum_assembled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
 				}
 				sprintf(buffer,"detector%li_class%li_mean_assembled",detID,powID);
+				cl["mean_assembled"].write(mean_assembled);
 				openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_assembled,image_nx,image_ny);
 				sprintf(buffer,"detector%li_class%li_sigma_assembled",detID,powID);
+				cl["sigma_assembled"].write(sigma_assembled);
 				openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_assembled,image_nx,image_ny);
 			}
 
@@ -1525,8 +1633,10 @@ void writeAccumulatedCXI(cGlobal * global){
 						sqrt( fabs(sum_downsampledSq[i] - sum_downsampled[i]*sum_downsampled[i]/(1.*detector->nPowderFrames[powID])) / (1.*detector->nPowderFrames[powID]) );
 				}
 				sprintf(buffer,"detector%li_class%li_mean_downsampled",detID,powID);
+				cl["mean_downsampled"].write(mean_downsampled);
 				openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,mean_downsampled,imageXxX_nx,imageXxX_ny);
 				sprintf(buffer,"detector%li_class%li_sigma_downsampled",detID,powID);
+				cl["sigma_downsampled"].write(sigma_downsampled);
 				openAndWriteDataset(buffer, cxi->cheetahVal.sharedVal.self,sigma_downsampled,imageXxX_nx,imageXxX_ny);
 			}
 
@@ -1563,6 +1673,7 @@ static void  closeCXI(CXI::File * cxi){
 			H5Dset_extent(ids[i], block);
 		}
 	}
+	cxi->root->trimAll(cxi->stackCounter);
 	H5Fflush(cxi->self, H5F_SCOPE_GLOBAL);
 	H5Fclose(cxi->self);
 	delete cxi;
@@ -1608,6 +1719,7 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 
 
 void writeCXI(cEventData *info, cGlobal *global ){
+	using CXI::Node;
 #ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;
 	if(global->cxiSWMR){
@@ -1622,6 +1734,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 #endif
 	/* Get the existing CXI file or open a new one */
 	CXI::File * cxi = getCXIFileByName(global);
+	Node & root = *cxi->root;
 
 	uint stackSlice = getStackSlice(cxi);
 	info->stackSlice = stackSlice;
@@ -1629,20 +1742,29 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	global->nCXIHits += 1;
 	double en = info->photonEnergyeV * 1.60217646e-19;
 	writeScalarToStack(cxi->entry.instrument.source.energy,stackSlice,en);
+	root["entry_1"]["instrument_1"]["source_1"]["energy"].write(&en,stackSlice);
 	// remove the '.h5' from eventname
 	info->eventname[strlen(info->eventname) - 3] = 0;
+	root["entry_1"]["experiment_identifier"].write(info->eventname,stackSlice);
 	writeStringToStack(cxi->entry.experimentIdentifier,stackSlice,info->eventname);
 	// put it back
 	info->eventname[strlen(info->eventname)] = '.';
   
 	if(cxi->entry.sample.geometry.translation){
-		
+		root["entry_1"]["sample_1"]["geometry_1"]["translation"].write(info->samplePos,stackSlice);
 		write1DToStack(cxi->entry.sample.geometry.translation,stackSlice,info->samplePos);
 	}
 	DETECTOR_LOOP {    
 		/* Save assembled image under image groups */
+		char detector_N[1024];
+		sprintf(detector_N,"detector_%ld",detID+1);
+		Node & detector = root["entry_1"]["instrument_1"][detector_N];
+		double tmp = global->detector[detID].detectorZ/1000.0;
+		detector["distance"].write(&tmp,stackSlice);
 		writeScalarToStack(cxi->entry.instrument.detectors[detID].distance,stackSlice,global->detector[detID].detectorZ/1000.0);
+		detector["x_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
 		writeScalarToStack(cxi->entry.instrument.detectors[detID].xPixelSize,stackSlice,global->detector[detID].pixelSize);
+		detector["y_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
 		writeScalarToStack(cxi->entry.instrument.detectors[detID].yPixelSize,stackSlice,global->detector[detID].pixelSize);
 
 		long imgID = detID;
@@ -1651,32 +1773,51 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		}
 		char buffer[1024];
 		sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
+		detector["description"].write(buffer,stackSlice);
 		writeStringToStack(cxi->entry.instrument.detectors[detID].description,stackSlice,buffer);
 		if(global->saveAssembled){
+			char image_N[1024];
+			sprintf(image_N,"image_%ld",imgID+1);
+			Node & image = root["entry_1"][image_N];
+
 			if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
+			image["data"].write(info->detector[detID].image,stackSlice);
 			write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].image);
 			if(global->savePixelmask){
 				if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
+				image["mask"].write(info->detector[detID].image_pixelmask,stackSlice);
 				write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].image_pixelmask);
 			}
 			float * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_ny,CXI::thumbnailScale);
 			if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
+			image["thumbnail"].write(thumbnail, stackSlice);
 			write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
+			image["data_type"].write("intensities", stackSlice);
 			writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
+			image["data_space"].write("diffraction", stackSlice);
 			writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
 			delete [] thumbnail;      
 			if (global->detector[detID].downsampling > 1){
 				imgID = detID * 2 + 1;
+				char image_N[1024];
+				sprintf(image_N,"image_%ld",imgID+1);
+				Node & image = root["entry_1"][image_N];
+
 				if (cxi->entry.images[imgID].data<0) {ERROR("No valid dataset.");}
+				image["data"].write(info->detector[detID].imageXxX,stackSlice);
 				write2DToStack(cxi->entry.images[imgID].data,stackSlice,info->detector[detID].imageXxX);
 				if(global->savePixelmask){
 					if (cxi->entry.images[imgID].mask<0) {ERROR("No valid dataset.");}
+					image["mask"].write(info->detector[detID].imageXxX_pixelmask,stackSlice);
 					write2DToStack(cxi->entry.images[imgID].mask,stackSlice,info->detector[detID].imageXxX_pixelmask);
 				}
 				float * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,global->detector[detID].imageXxX_ny,CXI::thumbnailScale);
 				if (cxi->entry.images[imgID].thumbnail<0){ERROR("No valid dataset.");}
+				image["thumbnail"].write(thumbnail, stackSlice);
 				write2DToStack(cxi->entry.images[imgID].thumbnail,stackSlice,thumbnail);
 				writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
+				writeStringToStack(cxi->entry.images[imgID].dataType,stackSlice,"intensities");
+				image["data_space"].write("diffraction", stackSlice);
 				writeStringToStack(cxi->entry.images[imgID].dataSpace,stackSlice,"diffraction");
 				delete [] thumbnail;
 			}
@@ -1687,42 +1828,67 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
 				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
 			}
+			detector["data"].write(corrected_data_int16,stackSlice);
 			write2DToStack(cxi->entry.instrument.detectors[detID].data,stackSlice,corrected_data_int16);
 			if(global->savePixelmask){
+				detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
 				write2DToStack(cxi->entry.instrument.detectors[detID].mask,stackSlice,info->detector[detID].pixelmask);
 			}
 			int16_t * thumbnail = generateThumbnail(corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+			detector["thumbnail"].write(thumbnail, stackSlice);
 			write2DToStack(cxi->entry.instrument.detectors[detID].thumbnail,stackSlice,thumbnail);
 			delete [] thumbnail;
 			free(corrected_data_int16);
 		}
 	}
 	/*Write LCLS informations*/
+	Node & lcls = root["LCLS"];
 	DETECTOR_LOOP{
 		writeScalarToStack(cxi->lcls.detector_positions[detID],stackSlice,global->detector[detID].detectorZ);
 		writeScalarToStack(cxi->lcls.detector_EncoderValues[detID],stackSlice,detID);
 	}
+	lcls["machineTime"].write(&info->seconds,stackSlice);
 	writeScalarToStack(cxi->lcls.machineTime,stackSlice,info->seconds);
+	lcls["fiducial"].write(&info->fiducial,stackSlice);
 	writeScalarToStack(cxi->lcls.fiducial,stackSlice,info->fiducial);
+	lcls["ebeamCharge"].write(&info->fEbeamCharge,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamCharge,stackSlice,info->fEbeamCharge);
+	lcls["ebeamL3Energy"].write(&info->fEbeamL3Energy,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamL3Energy,stackSlice,info->fEbeamL3Energy);
+	lcls["ebeamLTUAngX"].write(&info->fEbeamLTUAngX,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamLTUAngX,stackSlice,info->fEbeamLTUAngX);
+	lcls["ebeamLTUAngY"].write(&info->fEbeamLTUAngY,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamLTUAngY,stackSlice,info->fEbeamLTUAngY);
+	lcls["ebeamLTUPosX"].write(&info->fEbeamLTUPosX,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamLTUPosX,stackSlice,info->fEbeamLTUPosX);
+	lcls["ebeamLTUPosY"].write(&info->fEbeamLTUPosY,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamLTUPosY,stackSlice,info->fEbeamLTUPosY);
+	lcls["ebeamPkCurrBC2"].write(&info->fEbeamPkCurrBC2,stackSlice);
 	writeScalarToStack(cxi->lcls.ebeamPkCurrBC2,stackSlice,info->fEbeamPkCurrBC2);
+	lcls["phaseCavityTime1"].write(&info->phaseCavityTime1,stackSlice);
 	writeScalarToStack(cxi->lcls.phaseCavityTime1,stackSlice,info->phaseCavityTime1);
+	lcls["phaseCavityTime2"].write(&info->phaseCavityTime2,stackSlice);
 	writeScalarToStack(cxi->lcls.phaseCavityTime2,stackSlice,info->phaseCavityTime2);
+	lcls["phaseCavityCharge1"].write(&info->phaseCavityCharge1,stackSlice);
 	writeScalarToStack(cxi->lcls.phaseCavityCharge1,stackSlice,info->phaseCavityCharge1);
+	lcls["phaseCavityCharge2"].write(&info->phaseCavityCharge2,stackSlice);
 	writeScalarToStack(cxi->lcls.phaseCavityCharge2,stackSlice,info->phaseCavityCharge2);
+	lcls["photon_energy_eV"].write(&info->photonEnergyeV,stackSlice);
 	writeScalarToStack(cxi->lcls.photon_energy_eV,stackSlice,info->photonEnergyeV);
+	lcls["photon_wavelength_A"].write(&info->wavelengthA,stackSlice);
 	writeScalarToStack(cxi->lcls.photon_wavelength_A,stackSlice,info->wavelengthA);
+	lcls["f_11_ENRC"].write(&info->gmd11,stackSlice);
 	writeScalarToStack(cxi->lcls.f_11_ENRC,stackSlice,info->gmd11);
+	lcls["f_12_ENRC"].write(&info->gmd12,stackSlice);
 	writeScalarToStack(cxi->lcls.f_12_ENRC,stackSlice,info->gmd12);
+	lcls["f_21_ENRC"].write(&info->gmd12,stackSlice);
 	writeScalarToStack(cxi->lcls.f_21_ENRC,stackSlice,info->gmd21);
+	lcls["f_22_ENRC"].write(&info->gmd22,stackSlice);
 	writeScalarToStack(cxi->lcls.f_22_ENRC,stackSlice,info->gmd22);
 	if(info->TOFPresent){
+		lcls["tofVoltage"].write(info->TOFVoltage,stackSlice);
 		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
+		lcls["tofTime"].write(info->TOFTime,stackSlice);
 		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
 		
 		int tofDetectorIndex = 0;
@@ -1731,46 +1897,82 @@ void writeCXI(cEventData *info, cGlobal *global ){
 				continue;
 			}
 			int detID = tofDetectorIndex+global->nDetectors;
+			char detector_N[1024];
+			sprintf(detector_N,"detector_%d",detID+1);
+			Node & detector = root["entry_1"]["instrument_1"][detector_N];
+
+			detector["data"].write(info->TOFAllVoltage[card],stackSlice);
 			write2DToStack(cxi->entry.instrument.detectors[detID].data, stackSlice, info->TOFAllVoltage[card]);
+			detector["tofTime"].write(info->TOFAllTime[card],stackSlice);
 			write2DToStack(cxi->entry.instrument.detectors[detID].tofTime, stackSlice, info->TOFAllTime[card]);
 			tofDetectorIndex++;
 		}
 	}
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	lcls["evr41"].write(&LaserOnVal,stackSlice);
 	writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
 	char timestr[26];
 	time_t eventTime = info->seconds;
 	ctime_r(&eventTime,timestr);
+	lcls["eventTimeString"].write(timestr,stackSlice);
 	writeStringToStack(cxi->lcls.eventTimeString,stackSlice,timestr);
 
+	lcls["eventTimeString"].write(timestr,stackSlice);
+	Node & unshared = root["cheetah"]["unshared"];
+	unshared["eventName"].write(info->eventname,stackSlice);
 	writeStringToStack(cxi->cheetahVal.unsharedVal.eventName,stackSlice,info->eventname);
+	unshared["frameNumber"].write(&info->frameNumber,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumber,stackSlice,info->frameNumber);  
+	unshared["frameNumberIncludingSkipped"].write(&info->frameNumberIncludingSkipped,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.frameNumberIncludingSkipped,stackSlice,info->frameNumberIncludingSkipped);  
+	unshared["threadID"].write(&info->threadNum,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.threadID,stackSlice,info->threadNum);  
+	unshared["gmd1"].write(&info->gmd1,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd1,stackSlice,info->gmd1);  
+	unshared["gmd2"].write(&info->gmd2,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.gmd2,stackSlice,info->gmd2);  
+	unshared["energySpectrumExist"].write(&info->energySpectrumExist,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.energySpectrumExist,stackSlice,info->energySpectrumExist);  
+	unshared["nPeaks"].write(&info->nPeaks,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.nPeaks,stackSlice,info->nPeaks);  
+	unshared["peakNpix"].write(&info->peakNpix,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakNpix,stackSlice,info->peakNpix);  
 
+	unshared["peakTotal"].write(&info->peakTotal,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakTotal,stackSlice,info->peakTotal);  
+	unshared["peakResolution"].write(&info->peakResolution,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
+	unshared["peakResolutionA"].write(&info->peakResolutionA,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
+	unshared["peakDensity"].write(&info->peakDensity,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakDensity,stackSlice,info->peakDensity);  
+	unshared["laserEventCodeOn"].write(&info->laserEventCodeOn,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.laserEventCodeOn,stackSlice,info->laserEventCodeOn);  
+	unshared["laserDelay"].write(&info->laserDelay,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
+	unshared["hit"].write(&info->hit,stackSlice);
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
   
-    
 	DETECTOR_LOOP{
+		Node & detector = root["cheetah"]["shared"].child("detector",detID+1);
+		detector["lastBgUpdate"].write(&global->detector[detID].bgLastUpdate,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.lastBgUpdate[detID],stackSlice,global->detector[detID].bgLastUpdate);  
+		detector["nHot"].write(&global->detector[detID].nhot,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.nHot[detID],stackSlice,global->detector[detID].nhot);  
+		detector["lastHotPixUpdate"].write(&global->detector[detID].hotpixLastUpdate,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.lastHotPixUpdate[detID],stackSlice,global->detector[detID].hotpixLastUpdate);  
+		detector["hotPixCounter"].write(&global->detector[detID].hotpixCounter,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.hotPixCounter[detID],stackSlice,global->detector[detID].hotpixCounter);  
+		detector["nHalo"].write(&global->detector[detID].nhalo,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.nHalo[detID],stackSlice,global->detector[detID].nhalo);  
+		detector["lastHaloPixUpdate"].write(&global->detector[detID].halopixLastUpdate,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.lastHaloPixUpdate[detID],stackSlice,global->detector[detID].halopixLastUpdate);  
+		detector["haloPixCounter"].write(&global->detector[detID].halopixCounter,stackSlice);
 		writeScalarToStack(cxi->cheetahVal.sharedVal.haloPixCounter[detID],stackSlice,global->detector[detID].halopixCounter);  
-		writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);  
+
+		Node & detector2 = root["cheetah"]["unshared"].child("detector",detID+1);
+		detector2["sum"].write(&info->detector[detID].sum,stackSlice);
+		writeScalarToStack(cxi->cheetahVal.unsharedVal.sums[detID],stackSlice,info->detector[detID].sum);   
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){
