@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include "detectorObject.h"
+#include <processRateMonitor.h>
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
@@ -432,6 +433,8 @@ public:
 	double   lasttime;
 	int      laserPumpScheme;
 
+	ProcessRateMonitor processRateMonitor;
+	// 
 public:
 	/**
 	 * @brief Set the default configuration.
@@ -472,6 +475,7 @@ public:
 private:
 	int parseConfigTag(char*, char*);
 	template<typename T> void splitList(char * values, std::vector<T> & elems);
-
+	
 };
+
 #endif

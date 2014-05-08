@@ -1188,6 +1188,8 @@ namespace cheetah_ana_pkg {
 		// Call cheetah in multi-threaded mode (ensures that cheetah cleans up event data when done)
 //		pthread_mutex_lock(&process_mutex);
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
+
+		cheetahGlobal.processRateMonitor.frameFinished();
 //		pthread_mutex_unlock(&process_mutex);
 	}
 
