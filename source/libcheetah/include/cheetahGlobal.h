@@ -336,6 +336,10 @@ public:
 	long     nActiveThreads;
 	long     threadCounter;
 	long     threadPurge;
+
+	// Number of threads in cheetah_ana_mod
+	int      anaModThreads;
+
 	pthread_t  *threadID;
 	pthread_mutex_t  hitclass_mutex;
 	pthread_mutex_t  process_mutex;

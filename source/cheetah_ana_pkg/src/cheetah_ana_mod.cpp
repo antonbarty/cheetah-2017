@@ -1203,7 +1203,7 @@ namespace cheetah_ana_pkg {
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */
-		while(nActiveThreads >= 32) {
+		while(nActiveThreads >= cheetahGlobal.anaModThreads) {
 			usleep(10000);
 		}
 		

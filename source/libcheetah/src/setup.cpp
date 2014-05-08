@@ -207,6 +207,8 @@ cGlobal::cGlobal(void) {
 	useHelperThreads = 0;
 	// depreciated?
 	threadPurge = 10000;
+
+	anaModThreads = 32;
 	
 	// Saving to subdirectories
 	subdirFileCount = -1;
@@ -865,6 +867,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
+	}
+	else if (!strcmp(tag, "anamodthreads")) {
+		anaModThreads = atoi(value);
 	}
 	else if (!strcmp(tag, "usehelperthreads")) {
 		useHelperThreads = atoi(value);
