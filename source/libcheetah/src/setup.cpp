@@ -178,6 +178,7 @@ cGlobal::cGlobal(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
+    saveRawInt16 = 1;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -932,6 +933,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
+    else if (!strcmp(tag, "saverawint16")) {
+		saveRawInt16 = atoi(value);
+	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
 		assemble2DImage = saveAssembled;
@@ -1227,6 +1231,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
+    fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);

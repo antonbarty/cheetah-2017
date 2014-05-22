@@ -272,7 +272,7 @@ public:
 	int		histogram;
 	long	histogramMin;
 	long	histogramNbins;
-	long	histogramBinSize;
+	float   histogramBinSize;
 	long	histogram_fs_min;
 	long	histogram_fs_max;
 	long	histogram_ss_min;

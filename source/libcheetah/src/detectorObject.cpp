@@ -452,7 +452,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		histogramNbins = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrambinsize")) {
-		histogramBinSize = atoi(value);
+		histogramBinSize = atof(value);
 	}
 	else if (!strcmp(tag, "histogram_fs_min")) {
 		histogram_fs_min = atoi(value);
@@ -1179,8 +1179,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 		exit(1);
 	}
 	
-	
-	// Read darkcal data from file
+	// Read wire mask from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1193,7 +1192,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	} 
 	
 	
-	// Copy into darkcal array
+	// Copy into pixel mask
 	for(long i=0;i<pix_nn;i++){
 		if((int) temp2d.data[i]==0){
 			pixelmask_shared[i] |= PIXEL_IS_SHADOWED;
