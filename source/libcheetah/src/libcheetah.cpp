@@ -205,9 +205,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;	
-	long NpeaksMax = global->hitfinderPeakBufferSize;
-	eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
+	//global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;
+	long NpeaksMax = global->hitfinderNpeaksMax;
+	//eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
 	
 	allocatePeakList(&(eventData->peaklist), NpeaksMax);
 	
@@ -252,7 +252,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	}
 	
 	freePeakList(eventData->peaklist);
-	free(eventData->good_peaks);
+	//free(eventData->good_peaks);
 	
 	
 	// Pulnix external camera

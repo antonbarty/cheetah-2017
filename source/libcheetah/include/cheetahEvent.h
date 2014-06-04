@@ -87,7 +87,7 @@ public:
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
-	int			*good_peaks;           // Good peaks, after post peak-finding criteria	
+	//int			*good_peaks;           // Good peaks, after post peak-finding criteria
 	
 	
 	// Beamline data, etc

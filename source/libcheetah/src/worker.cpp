@@ -314,8 +314,7 @@ hitknown:
 		goto cleanup;
 	}
 
-	// Maintain a running sum of data (powder patterns)
-	//  and strongest non-hit and weakest hit
+	// Histogram
 	addToHistogram(eventData, global);
 
 	// Inside-thread speed test
@@ -351,6 +350,14 @@ hitknown:
 		assemble2Dmask(eventData, global);
 		// Downsample assembled image
 		downsample(eventData,global);
+	}
+	
+	// Update central hit counter
+	if(hit) {
+		pthread_mutex_lock(&global->nhits_mutex);
+		global->nhits++;
+		global->nrecenthits++;
+		pthread_mutex_unlock(&global->nhits_mutex);
 	}
 
 	if(eventData->writeFlag){

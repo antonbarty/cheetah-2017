@@ -23,7 +23,7 @@
  *		4 - Use TOF
  *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
- *              7 - Laser on event code (usually EVR41)
+ *      7 - Laser on event code (usually EVR41)
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
@@ -123,13 +123,6 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			
 	}
 	
-	// Update central hit counter
-	if(hit) {
-		pthread_mutex_lock(&global->nhits_mutex);
-		global->nhits++;
-		global->nrecenthits++;
-		pthread_mutex_unlock(&global->nhits_mutex);
-	}
 	
 	// Set the appropriate powder class
 	eventData->powderClass = hit;
@@ -156,6 +149,7 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	if(global->sortPumpLaserOn == 1) {
 		int hit = eventData->hit;
 		int	pumpLaserOn = eventData->pumpLaserOn;
+		int	nPowderClasses = global->nPowderClasses;
 		
 		eventData->powderClass = hit + 2*pumpLaserOn;
 	}

@@ -798,7 +798,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 									thisADCthresh = rthreshold[thisr];
 
 									// Above threshold?
-									if(temp[e] > thisADCthresh && peakpixel[e] == 0){
+									if(temp[e] > thisADCthresh && peakpixel[e] == 0 && mask[e] != 0){
 										//if(nat < 0 || nat >= global->pix_nn) {
 										//	printf("Array bounds error: nat=%i\n",nat);
 										//	break
@@ -866,7 +866,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 								
 								// Within outer ring check
 								fbgr = sqrt( bi*bi + bj*bj );
-								if( fbgr <= ringWidth/2 )
+								if( fbgr <= ringWidth/2 || fbgr > ringWidth)				// || fbgr > hitfinderLocalBGRadius)
 									continue;
 								
 								// Position of this point in data stream
@@ -878,31 +878,32 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 								thisADCthresh = rthreshold[thisr];
 								
 								// If above ADC threshold, this could be part of another peak
-								if (temp[e] > thisADCthresh)
-									continue;
+								//if (temp[e] > thisADCthresh)
+								//	continue;
 								
 								// Keep track of value and value-squared for offset and sigma calculation
-								// If pixel is less than ADC threshold, this pixel is a part of the background and not part of a peak
-								if(temp[e] < thisADCthresh && peakpixel[e] == 0) {
+								if(peakpixel[e] == 0 && mask[e] != 0) {
 									np_sigma++;
 									sum += temp[e];
 									sumsquared += (temp[e]*temp[e]);
 								}
-								np_counted += 1;
-
-								// Remember maximum intensity in background region
-								if( fbgr > ringWidth/2 ) {
+                                
+								// Keep track of maximum value in the background region
+								if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
 									if(temp[e] > fBackgroundMax) {
 										fBackgroundMax = temp[e];
 									}
 								}
+								np_counted += 1;
+
 							}
 						}
 						
+                        
 						// Calculate =standard deviation
-						if (np_sigma == 0)
-							continue;
-						if (np_sigma < 0.5*np_counted)
+						//if (np_sigma == 0)
+						//	continue;
+						if (np_sigma < 3)
 							continue;
 						
 						if (np_sigma != 0) {
@@ -911,27 +912,21 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						}
 						else {
 							localOffset = 0;
-							localSigma = 0;
+							localSigma = 0.01;
 						}
 						snr = (float) (maxI-localOffset)/localSigma;
 						
 						
-						// Signal to noise criterion (turn off check by setting hitfinderMinSNR = 0)
-						if(hitfinderMinSNR > 0) {
-							//if( (maxI-localOffset) < (localSigma*hitfinderMinSNR) ){
-							if( snr < hitfinderMinSNR ){
-                                continue;
-							}
-                        }
+						// Signal to noise criterion
+						if( snr < (hitfinderMinSNR - nat) )
+						  continue;
 						
 						// Is the maximum intensity in the peak enough above intensity in background region to be a peak and not noise?
 						// The more pixels there are in the peak, the more relaxed we are about this criterion
-						if(hitfinderMinSNR > 0) {
-							fBackgroundThresh = hitfinderMinSNR - nat + hitfinderMinPixCount;
-							if(fBackgroundThresh < 2) fBackgroundThresh = 2;
-							if( (maxI-localOffset) < (fBackgroundThresh*(fBackgroundMax-localOffset)))
-								continue;
-						}
+	 					fBackgroundThresh = hitfinderMinSNR - nat;
+						if(fBackgroundThresh < 2) fBackgroundThresh = 2;
+						if( (maxI-localOffset) < (fBackgroundThresh*(fBackgroundMax-localOffset)))
+							continue;
 						
                         // This is a peak? If so, add info to peak list
 						if(nat>=hitfinderMinPixCount && nat<=hitfinderMaxPixCount ) {

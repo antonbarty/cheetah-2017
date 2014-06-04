@@ -441,7 +441,7 @@ namespace cheetah_ana_pkg {
 			}
 		}
         // Ebeam v4
-		if (ebeam4.get()) {
+		else if (ebeam4.get()) {
 			charge = ebeam4->ebeamCharge();
 			L3Energy = ebeam4->ebeamL3Energy();
 			LTUPosX = ebeam4->ebeamLTUPosX();
