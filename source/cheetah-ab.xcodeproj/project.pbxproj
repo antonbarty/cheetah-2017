@@ -124,6 +124,7 @@
 				4D93D94B174F9F98004A0BB4 /* cheetah_ana_pkg */,
 				4DA51BD1189ABA3D00C97F32 /* cheetah-sacla */,
 				4D93D919174F9F80004A0BB4 /* libcheetah */,
+				4D93D91D174F9F80004A0BB4 /* include */,
 			);
 			sourceTree = "<group>";
 		};
@@ -132,7 +133,6 @@
 			children = (
 				4D93D91A174F9F80004A0BB4 /* CMakeLists.txt */,
 				4D93D91B174F9F80004A0BB4 /* examples */,
-				4D93D91D174F9F80004A0BB4 /* include */,
 				4D93D928174F9F80004A0BB4 /* src */,
 			);
 			path = libcheetah;
@@ -160,7 +160,8 @@
 				4D93D926174F9F80004A0BB4 /* peakfinders.h */,
 				4D93D927174F9F80004A0BB4 /* saveCXI.h */,
 			);
-			path = include;
+			name = include;
+			path = libcheetah/include;
 			sourceTree = "<group>";
 		};
 		4D93D928174F9F80004A0BB4 /* src */ = {

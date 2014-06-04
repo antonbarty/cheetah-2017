@@ -427,7 +427,6 @@ void readSpectrumDarkcal(cGlobal *global, char *filename) {
 
 void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	
-	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	char        groupname[1024];
 	char        fieldname[1024];
 	hid_t       file_id;
@@ -484,7 +483,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	}
 	hsize_t dims[ndims];
 	H5Sget_simple_extent_dims(dataspace_id,dims,NULL);
-	if (!dims[0]==1 || !dims[1]==global->espectrumLength) {
+	if (dims[0]!=1 || dims[1]!=(hsize_t)global->espectrumLength) {
 		printf("the specified file does not have the correct dimensions for energy scale calibration\n");
 		printf("spectra will be output with default (0) energy scale\n");
 		return;
@@ -494,6 +493,7 @@ void readSpectrumEnergyScale(cGlobal *global, char *filename) {
 	dataclass = H5Tget_class(datatype_id);
 	size = H5Tget_size(datatype_id);
 		
+	double*     energyscale = (double *) calloc(global->espectrumLength, sizeof(double));
 	H5Dread(dataset_id, datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, energyscale);
 	for(int i=0; i<global->espectrumLength; i++) {
 		global->espectrumScale[i] = energyscale[i];

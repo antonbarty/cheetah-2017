@@ -22,7 +22,7 @@ public:
 	float		peakTotal;				// Total integrated intensity in peaks
 	int			memoryAllocated;
 	long		nPeaks_max;
-
+    
 	float		*peak_maxintensity;		// Maximum intensity in peak
 	float		*peak_totalintensity;	// Integrated intensity in peak
 	float		*peak_sigma;			// Signal-to-noise ratio of peak

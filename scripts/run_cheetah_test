@@ -1,0 +1,37 @@
+#!/bin/bash
+if [ $# -ne 2 ];
+then
+    echo "USAGE: run_cheetah_test rXXXX n"
+    echo "The following enviromnmental variables need to be defined: XTCDIR, CONFDIR and H5DIR"
+else
+    cd $H5DIR
+    eval RUN=$1
+    eval NUMBER_OF_FRAMES=$2
+    echo "Processing $NUMBER_OF_FRAMES of run $RUN"
+    eval RUNDIR="test_$RUN_"$(date -d "today" +"%Y%m%d_%H%M")
+    eval RUNLINK="test_$RUN" 
+    echo "Creating directory: "$RUNDIR
+    mkdir $RUNDIR
+    if [ -f $CONFDIR/cheetah_$RUN.ini ];
+    then
+	cp $CONFDIR/cheetah_$RUN.ini $RUNDIR/cheetah.ini
+    else
+	cp $CONFDIR/cheetah.ini $RUNDIR/
+    fi
+    if [ -f $CONFDIR/psana_$RUN.cfg ];
+    then
+	cp $CONFDIR/psana_$RUN.cfg $RUNDIR/psana.cfg
+    else
+	cp $CONFDIR/psana.cfg $RUNDIR/
+    fi
+    echo "#!/bin/bash\n" > $RUNDIR/process.sh
+    echo "psana -n $NUMBER_OF_FRAMES -c psana.cfg  $XTCDIR/*$RUN*.xtc" > $RUNDIR/process.sh
+    chmod u+x $RUNDIR/process.sh
+    cd $RUNDIR
+    ./process.sh
+    cd ..
+    echo "Setting link from $RUN to directory $RUNDIR"
+    rm $RUNLINK
+    ln -s $RUNDIR $RUNLINK
+    echo "Exit from processing run $RUN"
+fi

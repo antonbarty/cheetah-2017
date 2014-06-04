@@ -1,0 +1,8 @@
+{
+   StringPythonStuff
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   ...
+   fun:_ZNK5TList10FindObjectEPK7TObject
+}

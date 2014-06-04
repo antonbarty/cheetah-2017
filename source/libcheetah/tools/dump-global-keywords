@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# dump all the global configuration keywords in setup.cpp
+
+sed -n '/ \* Process tags/,/^}/p' ../src/setup.cpp | grep strcmp | awk -F '"' '{print $2}' | sort

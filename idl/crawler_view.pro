@@ -40,7 +40,7 @@ pro crawler_pickdir
 			endif
 			
 			if a.Cancel eq 1 then begin
-				return
+				exit
 			endif
 		endif $
 		
@@ -83,12 +83,12 @@ pro crawler_config, pState
 	configFile = 'crawler.config'
 	ifile = '.cheetah-crawler'
 
-	;; If there is a .cheetah-crawler file here, go into the 'pick experiment' dialog (which changes the cwd)	
+	;; If there is a .cheetah-crawler file here, go straight into the 'pick experiment' dialog (which changes the cwd)	
 	if file_test(ifile) eq 1 then begin
 		crawler_pickdir
 	endif $
 	
-	;; If there is no config file here, but there is a .cheetah-crawler in the home directory, pick the experiment
+	;; If there is no config file here, but there is a .cheetah-crawler in the home directory, launch the 'pick experiment' dialog
 	else if file_test(configFile) eq 0 AND file_test('~/'+ifile) eq 1 then begin
 		crawler_pickdir
 	endif $
@@ -113,10 +113,10 @@ pro crawler_config, pState
 		endif 
 	endif  $
 	
-	;; Else select the directory (sort of redundant as selection is called from the pickdir function)
+	;; Else throw an error
 	else begin
-		;;crawler_pickdir
-		crawler_configMenu, pState
+		message, 'There does not seem to be any crawler.config file in this location'
+		exit
 	endelse
 	
 	;; Set heading
@@ -177,7 +177,7 @@ end
 ;;
 ;;	Display a single HDF5 file (eg: virtual powder)
 ;;
-pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry
+pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry, hist=hist
 	
 	if filename eq '' then begin
 		print,'File does not exist'
@@ -191,15 +191,17 @@ pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry
 	
 	print,'Displaying: ', filename
 	data = read_h5(filename, field=field)
-	nnz = n_elements(where(data ne 0))
-	data = data > 0
-	frac = 0.02*(nnz/n_elements(data))
-	img = histogram_clip(data, frac)
+	
+	if keyword_set(hist) then begin
+		data = data > 0
+		data = histogram_clip(data, 0.002)	
+	endif 
+	
 	if keyword_set(gamma) then $
-		img = img ^ gamma
+		data = data ^ gamma
 
 	loadct, 4
-	scrolldisplay, img, title=file_basename(filename), geometry=geometry
+	scrolldisplay, data, title=file_basename(filename), geometry=geometry
 
 end
 
@@ -766,7 +768,7 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist
 		end
 
 		sState.mbfile_unlock : begin
@@ -819,23 +821,23 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_powderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_peakpowder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_peakpowderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
 		end
 		sState.mbview_bsub : begin
 			dir = crawler_whichRun(pstate, /path)
@@ -861,7 +863,7 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			print, f
-			mask = badpix_from_darkcal(f, /save, /edge)
+			mask = badpix_from_darkcal(f, /save, /edge, /menu)
 		end
 		
 

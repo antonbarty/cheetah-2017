@@ -13,6 +13,7 @@
 //
 //------------------------------------------------------------------------
 
+#include <stdlib.h>
 //-----------------------
 // This Class's Header --
 //-----------------------
@@ -60,27 +61,33 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
+	static long frameNumberIncludingSkipped = 0;
 	static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
 	static int laserSwitch = 0;
 	static int prevLaser = 0;
 	static time_t startT = 0;
 
+	class CspadDataWrapper {
+    
+	};
+
 
 	void sig_handler(int signo)
 	{
-	  if (signo == SIGINT){
-	    // Wait for threads to finish
-	    while(cheetahGlobal.nActiveThreads > 0) {
-	      printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
-	      usleep(100000);
-	    }
-	    printf("Attempting to close CXIs cleanly\n");
-	    closeCXIFiles(&cheetahGlobal);
-	    signal(SIGINT,SIG_DFL);
-	    kill(getpid(),SIGINT);
+		if (signo == SIGINT){
+			// Wait for threads to finish
+			while(cheetahGlobal.nActiveThreads > 0) {
+				printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
+				usleep(100000);
+			}
+			printf("Attempting to close CXIs cleanly\n");
+			writeAccumulatedCXI(&cheetahGlobal);
+			closeCXIFiles(&cheetahGlobal);
+			signal(SIGINT,SIG_DFL);
+			kill(getpid(),SIGINT);
 	    
-	  }
+		}
 	}
 
 
@@ -100,7 +107,7 @@ namespace cheetah_ana_pkg {
 	// Constructors --
 	//----------------
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
-	  : Module(name)
+		: Module(name)
 	{
 		cout << "*** Constructor ***" << endl;
         
@@ -112,8 +119,21 @@ namespace cheetah_ana_pkg {
         printf("if this line is not present, even though a default value has been specified\n");
 
         
-		/* If SIT_DATA is undefined set it to the builtin value */
-		setenv("SIT_DATA",CHEETAH_SIT_DATA,0);
+		// Check if we're using psana of the same git commit
+		if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
+			fprintf(stderr,    "*******************************************************************************************\n");
+			fprintf(stderr,"*** WARNING %s:%d ***\n",__FILE__,__LINE__);
+
+			if(getenv("PSANA_GIT_SHA")){
+				fprintf(stderr,"***        Using psana from git commit %s         ***\n",getenv("PSANA_GIT_SHA"));
+				fprintf(stderr,"***        and cheetah_ana_mod from git commit %s ***\n",GIT_SHA1);
+			}else{
+				fprintf(stderr,"***         Using a psana version not compiled with cheetah!                            ***\n");
+			}
+			fprintf(stderr,    "*******************************************************************************************\n");
+			sleep(10);
+		}
+		setenv("CHEETAH_ANA_MOD_GIT_SHA",GIT_SHA1,0);
 
 		// get the values from configuration or use defaults
 		m_key = configStr("inputKey", "");
@@ -128,7 +148,7 @@ namespace cheetah_ana_pkg {
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(:FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(:PhaseCavity)");
 		m_srcAcq = configStr("acqirisSource","DetInfo(:Acqiris)");
-        m_srcSpec = configStr("spectrumSource","DetInfo()");
+		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 	}
 
@@ -143,11 +163,13 @@ namespace cheetah_ana_pkg {
 	/// Method which is called once at the beginning of the job
 	void cheetah_ana_mod::beginJob(Event& evt, Env& env)
 	{
-		cout << "*** beginJob ***" << endl;
+		//cout << "*** beginJob ***" << endl;
 		time(&startT);
-		cheetahInit(&cheetahGlobal);
+		if (cheetahInit(&cheetahGlobal)){
+			exit(0);
+		}
 		if(cheetahGlobal.saveCXI){
-		  signal(SIGINT, sig_handler);
+			signal(SIGINT, sig_handler);
 		}
 
 	}
@@ -157,8 +179,8 @@ namespace cheetah_ana_pkg {
 	///	Pass new run information to Cheetah
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
-	cout << "Experiment = " << env.experiment() << endl;
-	cout << "*** beginRun ***" << endl;
+		cout << "Experiment = " << env.experiment() << endl;
+		//cout << "*** beginRun ***" << endl;
 		int runNumber = 0;
 		PSTime::Time evtTime;
 		boost::shared_ptr<PSEvt::EventId> eventId = evt.get();
@@ -241,13 +263,24 @@ namespace cheetah_ana_pkg {
 	///	Copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(Event& evt, Env& env) {
-	  static uint32_t nevents = 0;
+		float random_float = (float)rand()/(float)RAND_MAX;
+		frameNumberIncludingSkipped ++;
+	  
+		if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames && cheetahGlobal.calibrated) {
+			printf("Skipping a frame (%ld)\n",frameNumberIncludingSkipped);
+			skip();
+			return;
+		}
+	  
+	  
+
+		static uint32_t nevents = 0;
 	  
 		frameNumber++;
 
 		/*
-         *  Calculate time beteeen processing of data frames
-         */
+		 *  Calculate time beteeen processing of data frames
+		 */
 		time_t	tnow;
 		double	dtime, datarate;
 		time(&tnow);
@@ -267,13 +300,13 @@ namespace cheetah_ana_pkg {
 		 *  This is the fastest we can ever hope to run.
 		 */
 		if(cheetahGlobal.ioSpeedTest==1) {
-		  printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1 (psana event rate)\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
-		  return;
+			printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1 (psana event rate)\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
+			return;
 		}
 
-
 		
-        //	Create a new eventData structure in which to place all information
+		
+		//	Create a new eventData structure in which to place all information
 		cEventData	*eventData;
 		eventData = cheetahNewEvent(&cheetahGlobal);
 		nevents++;
@@ -281,9 +314,9 @@ namespace cheetah_ana_pkg {
 		
 		
 		/*
-         *  Get RunNumber & EventTime
-         *  PSEvt::EventId.get()
-         */
+		 *  Get RunNumber & EventTime
+		 *  PSEvt::EventId.get()
+		 */
 		int runNumber = 0;
 		time_t sec = 0;
 		time_t nsec = 0;
@@ -292,7 +325,7 @@ namespace cheetah_ana_pkg {
 
 		if (eventId.get()) {
 			runNumber = eventId->run();
-            evtTime = eventId->time();
+			evtTime = eventId->time();
 			sec = evtTime.sec();
 			nsec = evtTime.nsec();
 			if (verbose) {
@@ -303,11 +336,11 @@ namespace cheetah_ana_pkg {
 
         
 		/* 
-         *  Get number of EvrData & fiducials & beam on state & EVR41 laser on
-         *  Psana::EvrData::DataV3.get()
-         */
-		int     numEvrData = 0;
-		int     fiducial = 0;
+		 *  Get number of EvrData & fiducials & beam on state & EVR41 laser on
+		 *  Psana::EvrData::DataV3.get()
+		 */
+		int numEvrData = 0;
+		int fiducial = 0;
         bool    beamOn = 0;
         bool    laserOn = 0;
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
@@ -315,42 +348,42 @@ namespace cheetah_ana_pkg {
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
-            // Timestamps
+			// Timestamps
 			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();
-			if (verbose) {
+			if (verbose) { 
 				cout << "*** fiducial: ";
 				for (int i=0; i<numEvrData; i++) {
 					fiducial = array[i].timestampHigh(); // array[0],array[1]
 					cout << fiducial << " ";
 				}
 				cout << endl;
-            }
+			}
             
-            // Beam on
-            beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
-            if (verbose) {
-                cout << "***** beamOn: " << beamOn << endl;
-            }
+			// Beam on
+			beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
+			if (verbose) {
+				cout << "***** beamOn: " << beamOn << endl;
+			}
 
-            //! get laserOn
-            // laserSwitch should be as large as count (50% on and off)
-            laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
-            if (frameNumber == 1) {
-                // initialize
-                prevLaser = laserOn;
-                laserSwitch = 1;
-            }
-            else {
-                if (prevLaser != laserOn) {
-                    laserSwitch++;
-                    prevLaser = laserOn;
-                }
-            }
-            if (verbose) {
-                cout << "*** laserOn: " << laserOn << "\n"
-                << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
-            }
+			//! get laserOn
+			// laserSwitch should be as large as count (50% on and off)
+			laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
+			if (frameNumber == 1) {
+				// initialize
+				prevLaser = laserOn;
+				laserSwitch = 1;
+			}
+			else {
+				if (prevLaser != laserOn) {
+					laserSwitch++;
+					prevLaser = laserOn;
+				}
+			}
+			if (verbose) {
+				cout << "*** laserOn: " << laserOn << "\n"
+					 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
+			}
             
 		}
 		else {
@@ -360,13 +393,13 @@ namespace cheetah_ana_pkg {
 
         
         
-        /*
-         *  Get Electron beam data
-         *  Psana::Bld::BldDataEBeamV3.get()
-         *
-         *  Note: We have to account for multiple versions of the ebeam configuration (!!!)
-         *  Try the newest versions first, assuming we are more likely to be looking at recent data
-         */
+		/*
+		 *  Get Electron beam data
+		 *  Psana::Bld::BldDataEBeamV3.get()
+		 *
+		 *  Note: We have to account for multiple versions of the ebeam configuration (!!!)
+		 *  Try the newest versions first, assuming we are more likely to be looking at recent data
+		 */
 		float charge=0;
 		float L3Energy=0;
 		float LTUPosX=0; 
@@ -374,17 +407,41 @@ namespace cheetah_ana_pkg {
 		float LTUAngX=0; 
 		float LTUAngY=0; 
 		float PkCurrBC2=0;
-        double peakCurrent = 0;
+		double peakCurrent = 0;
 		double DL2energyGeV = 0;
-	
+		
+		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV2> ebeam2 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
+        // Ebeam v5
+		if (ebeam5.get()) {
+			charge = ebeam5->ebeamCharge();
+			L3Energy = ebeam5->ebeamL3Energy();
+			LTUPosX = ebeam5->ebeamLTUPosX();
+			LTUPosY = ebeam5->ebeamLTUPosY();
+			LTUAngX = ebeam5->ebeamLTUAngX();
+			LTUAngY = ebeam5->ebeamLTUAngY();
+			PkCurrBC2 = ebeam5->ebeamPkCurrBC2();
+			
+            peakCurrent = ebeam5->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam5->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge4=" << charge << "\n"
+				<< "* fEbeamL3Energy4=" << L3Energy << "\n"
+				<< "* fEbeamLTUPosX4=" << LTUPosX << "\n"
+				<< "* fEbeamLTUPosY4=" << LTUPosY << "\n"
+				<< "* fEbeamLTUAngX4=" << LTUAngX << "\n"
+				<< "* fEbeamLTUAngY4=" << LTUAngY << "\n"
+				<< "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
+			}
+		}
         // Ebeam v4
-		if (ebeam4.get()) {
+		else if (ebeam4.get()) {
 			charge = ebeam4->ebeamCharge();
 			L3Energy = ebeam4->ebeamL3Energy();
 			LTUPosX = ebeam4->ebeamLTUPosX();
@@ -398,15 +455,15 @@ namespace cheetah_ana_pkg {
 			
 			if (verbose) {
 				cout << "* fEbeamCharge4=" << charge << "\n"
-                << "* fEbeamL3Energy4=" << L3Energy << "\n"
-                << "* fEbeamLTUPosX4=" << LTUPosX << "\n"
-                << "* fEbeamLTUPosY4=" << LTUPosY << "\n"
-                << "* fEbeamLTUAngX4=" << LTUAngX << "\n"
-                << "* fEbeamLTUAngY4=" << LTUAngY << "\n"
-                << "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
+					 << "* fEbeamL3Energy4=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX4=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY4=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX4=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY4=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
 			}
 		}
-        // Ebeam v3
+		// Ebeam v3
 		else if (ebeam3.get()) {
 			charge = ebeam3->ebeamCharge();
 			L3Energy = ebeam3->ebeamL3Energy();
@@ -416,17 +473,17 @@ namespace cheetah_ana_pkg {
 			LTUAngY = ebeam3->ebeamLTUAngY();
 			PkCurrBC2 = ebeam3->ebeamPkCurrBC2();
 
-            peakCurrent = ebeam3->ebeamPkCurrBC2();
+			peakCurrent = ebeam3->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam3->ebeamL3Energy();
 
 			if (verbose) {
 				cout << "* fEbeamCharge3=" << charge << "\n"
-                << "* fEbeamL3Energy3=" << L3Energy << "\n"
-                << "* fEbeamLTUPosX3=" << LTUPosX << "\n"
-                << "* fEbeamLTUPosY3=" << LTUPosY << "\n"
-                << "* fEbeamLTUAngX3=" << LTUAngX << "\n"
-                << "* fEbeamLTUAngY3=" << LTUAngY << "\n"
-                << "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
+					 << "* fEbeamL3Energy3=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX3=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY3=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX3=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY3=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC23=" << PkCurrBC2 << endl;
 			}
 		}
 		// Ebeam v2
@@ -439,17 +496,17 @@ namespace cheetah_ana_pkg {
 			LTUAngY = ebeam2->ebeamLTUAngY();
 			PkCurrBC2 = ebeam2->ebeamPkCurrBC2();
 
-            peakCurrent = ebeam2->ebeamPkCurrBC2();
+			peakCurrent = ebeam2->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam2->ebeamL3Energy();
             
 			if (verbose) {
 				cout << "* fEbeamCharge2=" << charge << "\n"
-                << "* fEbeamL3Energy2=" << L3Energy << "\n"
-                << "* fEbeamLTUPosX2=" << LTUPosX << "\n"
-                << "* fEbeamLTUPosY2=" << LTUPosY << "\n"
-                << "* fEbeamLTUAngX2=" << LTUAngX << "\n"
-                << "* fEbeamLTUAngY2=" << LTUAngY << "\n"
-                << "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
+					 << "* fEbeamL3Energy2=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX2=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY2=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX2=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY2=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC22=" << PkCurrBC2 << endl;
 			}
 		}
 		// Ebeam v1
@@ -462,17 +519,17 @@ namespace cheetah_ana_pkg {
 			LTUAngY = ebeam1->ebeamLTUAngY();
 			PkCurrBC2 = ebeam1->ebeamPkCurrBC2();
             
-            peakCurrent = ebeam1->ebeamPkCurrBC2();
+			peakCurrent = ebeam1->ebeamPkCurrBC2();
 			DL2energyGeV = 0.001*ebeam1->ebeamL3Energy();
 
 			if (verbose) {
-                cout << "* fEbeamCharge1=" << charge << "\n"
-					<< "* fEbeamL3Energy1=" << L3Energy << "\n"
-					<< "* fEbeamLTUPosX1=" << LTUPosX << "\n"
-					<< "* fEbeamLTUPosY1=" << LTUPosY << "\n"
-					<< "* fEbeamLTUAngX1=" << LTUAngX << "\n"
-					<< "* fEbeamLTUAngY1=" << LTUAngY << "\n"
-					<< "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
+				cout << "* fEbeamCharge1=" << charge << "\n"
+					 << "* fEbeamL3Energy1=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX1=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY1=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX1=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY1=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC21=" << PkCurrBC2 << endl;
 			}
 		}
 		// Ebeam v0
@@ -484,32 +541,32 @@ namespace cheetah_ana_pkg {
 			LTUAngX = ebeam0->ebeamLTUAngX();
 			LTUAngY = ebeam0->ebeamLTUAngY();
 
-            cout << "***** WARNING *****" << endl;
+			cout << "***** WARNING *****" << endl;
 			cout << "EBeamV0 does not record peak current" << endl;
 			cout << "Setting peak current to 0" << endl;
 			peakCurrent = 0;
 			DL2energyGeV = 0.001*ebeam0->ebeamL3Energy();
 
 			if (verbose) {
-                cout << "* fEbeamCharge0=" << charge << "\n"
-                << "* fEbeamL3Energy0=" << L3Energy << "\n"
-                << "* fEbeamLTUPosX0=" << LTUPosX << "\n"
-                << "* fEbeamLTUPosY0=" << LTUPosY << "\n"
-                << "* fEbeamLTUAngX0=" << LTUAngX << "\n"
-                << "* fEbeamLTUAngY0=" << LTUAngY << endl;
+				cout << "* fEbeamCharge0=" << charge << "\n"
+					 << "* fEbeamL3Energy0=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX0=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY0=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX0=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY0=" << LTUAngY << endl;
 			}
 		}
 		else {
 			printf("Event %li: Warning: Psana::Bld::BldDataEBeam failed\n", frameNumber);
 		}
 
-        
 		
-        /*
-         *  Calculate photon energy and wavelength
-         *  Calculate the resonant photon energy (ie: photon wavelength)
-         *  including wakeloss prior to undulators
-         */
+
+		/*
+		 *  Calculate photon energy and wavelength
+		 *  Calculate the resonant photon energy (ie: photon wavelength)
+		 *  including wakeloss prior to undulators
+		 */
 		double photonEnergyeV=0;
 		double wavelengthA=0;
 
@@ -532,10 +589,10 @@ namespace cheetah_ana_pkg {
 	  
 		
         
-        /*
-         *  Gas detector values (in FEE)
-         *  Psana::Bld::BldDataFEEGasDetEnergy.get()
-         */
+		/*
+		 *  Gas detector values (in FEE)
+		 *  Psana::Bld::BldDataFEEGasDetEnergy.get()
+		 */
 		double gmd1=0, gmd2=0;
 		double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
 
@@ -550,17 +607,17 @@ namespace cheetah_ana_pkg {
 			if (verbose) {
 				cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
 			}
-		}
+		} 
 		else {
 			printf("Event %li: Warning: Psana::Bld::BldDataFEEGasDetEnergy failed\n", frameNumber);
 		}
 
 
 		
-        /*
-         *  Phase cavity data (timing)
-         *  Psana::Bld::BldDataPhaseCavity.get()
-         */
+		/*
+		 *  Phase cavity data (timing)
+		 *  Psana::Bld::BldDataPhaseCavity.get()
+		 */
 		float fitTime1=0;
 		float fitTime2=0;
 		float charge1=0;
@@ -568,34 +625,36 @@ namespace cheetah_ana_pkg {
 
 		shared_ptr<Psana::Bld::BldDataPhaseCavity> cav = evt.get(m_srcCav);
 		if (cav.get()) {
-            fitTime1 = cav->fitTime1();
-            fitTime2 = cav->fitTime2();
-            charge1 = cav->charge1();
-            charge2 = cav->charge2();
-            if (verbose) {
-                cout << "* fitTime1=" << fitTime1 << "\n"
-                         << "* fitTime2=" << fitTime2 << "\n"
-                         << "* charge1=" << charge1 << "\n"
-                         << "* charge2=" << charge2 << endl;
-            }
+			fitTime1 = cav->fitTime1();
+			fitTime2 = cav->fitTime2();
+			charge1 = cav->charge1();
+			charge2 = cav->charge2();
+			if (verbose) {
+				cout << "* fitTime1=" << fitTime1 << "\n"
+					 << "* fitTime2=" << fitTime2 << "\n"
+					 << "* charge1=" << charge1 << "\n"
+					 << "* charge2=" << charge2 << endl;
+			}
 		}
 		//else {
 		//	printf("Event %li: Warning: Psana::Bld::BldDataPhaseCavity failed\n", frameNumber);
 		//}
 
 
-        
-        
-        
-        /*
-         *  Get EPICS data 
-         *  (slow data for stuff like motors)
-         */
+
+
+	
+		/*
+		 *  Get EPICS data 
+		 *  (slow data for stuff like motors)
+		 */
 		const EpicsStore& estore = env.epicsStore();
 		std::vector<std::string> pvNames = estore.pvNames();
-        
+
 		// Detector position
-		float detectorPosition[MAX_DETECTORS];
+		// Don't forget to initialize them
+		std::vector<float> detectorPosition(MAX_DETECTORS,0);
+
 		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
 			if (pv && pv->numElements() > 0) {
@@ -607,17 +666,17 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
-        // get laserDelay only for Neutze TiSa delay
+		// get laserDelay only for Neutze TiSa delay
 		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.laserDelayPV);
 			if (pv && pv->numElements() > 0) {
-					const float& value = estore.value(cheetahGlobal.laserDelayPV,0);
-					if (verbose) {
-						cout << "laserDelay[" << detID << "]: " << value << endl;
-			}
+				const float& value = estore.value(cheetahGlobal.laserDelayPV,0);
+				if (verbose) {
+					cout << "laserDelay[" << detID << "]: " << value << endl;
+				}  
 			}
 		}
-
+        
 		// Other EPICS PV float values
 		for(long i=0; i < cheetahGlobal.nEpicsPvFloatValues; i++) {
 			char * thisPv = & cheetahGlobal.epicsPvFloatAddresses[i][0];
@@ -627,18 +686,19 @@ namespace cheetah_ana_pkg {
 				eventData->epicsPvFloatValues[i] = value;
 				if (verbose) {
 					cout << thisPv << " : " << value << endl;
-				}
+				}  
 			}
 		}
-
-
+				
+		
         
 		/*
-         *  Copy data into worker thread structure if we got this far.
+		 *  Copy data into worker thread structure if we got this far.
 		 *  SLAC libraries are NOT thread safe: any event info may get overwritten by the next event() call
 		 *  Copy all image data into event structure for processing
-         */
+		 */
 		eventData->frameNumber = frameNumber;
+		eventData->frameNumberIncludingSkipped = frameNumberIncludingSkipped;
 		eventData->seconds = sec;
 		eventData->nanoSeconds = nsec;
 		eventData->fiducial = fiducial;
@@ -665,16 +725,15 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityTime1 = fitTime1;
 		eventData->phaseCavityTime2 = fitTime2;
 		eventData->phaseCavityCharge1 = charge1;
-		eventData->phaseCavityCharge1 = charge2;
+		eventData->phaseCavityCharge1 = charge2;	
 		eventData->pGlobal = &cheetahGlobal;
-        
 		/*
 		 *	Make sure to record the visible pump laser on/off state
 		 */
 		eventData->laserEventCodeOn = laserOn;
 		eventData->pumpLaserOn = laserOn;
-		
-		/*
+	
+        /*
          *  FEE photon inline spectrometer
          *  Psana::Bld::BldDataSpectrometerV0.get()
          */
@@ -714,60 +773,61 @@ namespace cheetah_ana_pkg {
          *  Copy primary area detector data into Cheetah event structure
          *  SLAC libraries are not thread safe: so we must copy the data and not simply pass a pointer
          */
+
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
-			
+      
 			/*
-             *  cspad
-             */
+			 *  cspad
+			 */
 			if(strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
-            
+				
 				// Pull out front or back detector depending on detID=0 or 1
 				shared_ptr<Psana::CsPad::DataV1> data1;
 				shared_ptr<Psana::CsPad::DataV2> data2;
 				if (cheetahGlobal.detector[detID].detectorID == 0) {
 					data1 = evt.get(m_srcCspad0, m_key);
 					data2 = evt.get(m_srcCspad0, m_key);
-				}
+				} 
 				else if (cheetahGlobal.detector[detID].detectorID == 1) {
 					data1 = evt.get(m_srcCspad1, m_key);
 					data2 = evt.get(m_srcCspad1, m_key);
 				}
-           
+				
 
 				// V2 of the cspad structure
-				 if (data2.get()) {
-                    if (verbose) {
-                        cout << "CsPad::DataV2:";
-                        int nQuads = data2->quads_shape()[0];
-                        for (int q = 0; q < nQuads; ++ q) {
-                            const Psana::CsPad::ElementV2& el = data2->quads(q);
-                            cout << "\n  Element #" << q;
-                            cout << "\n    virtual_channel = " << el.virtual_channel();
-                            cout << "\n    lane = " << el.lane();
-                            cout << "\n    tid = " << el.tid();
-                            cout << "\n    acq_count = " << el.acq_count();
-                            cout << "\n    op_code = " << el.op_code();
-                            cout << "\n    quad = " << el.quad();
-                            cout << "\n    seq_count = " << el.seq_count();
-                            cout << "\n    ticks = " << el.ticks();
-                            cout << "\n    fiducials = " << el.fiducials();
-                            cout << "\n    frame_type = " << el.frame_type();
-                        }
-                        cout << endl;
-                    }
+				if (data2.get()) {
+					if (verbose) {
+						cout << "CsPad::DataV2:";
+						int nQuads = data2->quads_shape()[0];
+						for (int q = 0; q < nQuads; ++ q) {
+							const Psana::CsPad::ElementV2& el = data2->quads(q);
+							cout << "\n  Element #" << q;
+							cout << "\n    virtual_channel = " << el.virtual_channel();
+							cout << "\n    lane = " << el.lane();
+							cout << "\n    tid = " << el.tid();
+							cout << "\n    acq_count = " << el.acq_count();
+							cout << "\n    op_code = " << el.op_code();
+							cout << "\n    quad = " << el.quad();
+							cout << "\n    seq_count = " << el.seq_count();
+							cout << "\n    ticks = " << el.ticks();
+							cout << "\n    fiducials = " << el.fiducials();
+							cout << "\n    frame_type = " << el.frame_type();
+						}
+						cout << endl;
+					}
 
                     
-                    uint16_t *quad_data[4];
-                    long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-                    long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-                    long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+					uint16_t *quad_data[4];
+					long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+					long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+					long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
                         
                         
 					// Allocate memory for detector data and set to zero
 					int nQuads = data2->quads_shape()[0];
 					for(int quadrant=0; quadrant<4; quadrant++)
 						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-                    
+					
 					// loop over elements (quadrants)
 					for (int q = 0; q < nQuads; ++ q) {
 						const Psana::CsPad::ElementV2& el = data2->quads(q); 
@@ -782,10 +842,10 @@ namespace cheetah_ana_pkg {
 								memcpy(&quad_data[quadrant][s*2*asic_nx*asic_ny],&data[s][0][0],2*asic_nx*asic_ny*sizeof(uint16_t));
 							}
 						}
-					}
-                        
+					}        
+					
 					// Assemble data from all four quadrants into one large array (rawdata layout)
-                    // Memcpy is necessary for thread safety.
+					// Memcpy is necessary for thread safety.
 					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					for(int quadrant=0; quadrant<4; quadrant++) {
 						long	i,j,ii;
@@ -797,10 +857,10 @@ namespace cheetah_ana_pkg {
 						}
 					}
 					// quadrant data no longer needed
-                    for(int quadrant=0; quadrant<4; quadrant++) {
+					for(int quadrant=0; quadrant<4; quadrant++) {
 						free(quad_data[quadrant]);
-                    }
-                }
+					}
+				}
 
 				// V1 of the cspad data structure (less likely these days, but we came across it once already)
 				else if (data1.get()) {
@@ -833,7 +893,7 @@ namespace cheetah_ana_pkg {
 					
 					// Allocate memory for detector data and set to zero
 					int nQuads = data1->quads_shape()[0];
-					for(int quadrant=0; quadrant<4; quadrant++)
+					for(int quadrant=0; quadrant<4; quadrant++) 
 						quad_data[quadrant] = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					
 					// loop over elements (quadrants)
@@ -872,12 +932,42 @@ namespace cheetah_ana_pkg {
 
 				// Neither V1 nor V2
 				else {
-                    printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-                    cheetahDestroyEvent(eventData);
+					printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					cheetahDestroyEvent(eventData);
 					return;
 				}
-            }
-			
+			}
+			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
+				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
+				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
+				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+
+				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
+				singleQuad = evt.get(m_srcCspad2x2, m_key);
+				if (singleQuad.get()) {
+					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
+					const ndarray<const int16_t, 3>& data = singleQuad->data();
+					int partsize = asic_nx * asic_ny * 2;
+					for (unsigned s = 0; s < 2; s++) {
+						for (int y = 0; y < asic_ny; y++) {
+							for (int x = 0; x < asic_nx * 2; x++) {
+								eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+							}
+						}
+					}
+			   
+				} else {
+					printf("%li: cspad 2x2 frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					/* NOTE: There might be a need to destroy event here as shown below */
+					/*
+					  printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					  cheetahDestroyEvent(eventData);
+					*/
+					return;
+				}
+			}
+
 			
 			/*
 			 *	CsPad 2x2
@@ -910,7 +1000,7 @@ namespace cheetah_ana_pkg {
        
 			/*
 			 *
-			 *	The data format used for pnccd data has changed in recent releases.
+			 *	The data format used for pnccd data has changed in recent releases. 
 			 *	To get the full image data for pnccd you need to use Psana::PNCCD::FullFrameV1 type now instead of Psana::PNCCD:: FrameV1 
 			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psddl_psana/type.Psana.PNCCD.FullFrameV1.html
 			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:
@@ -958,76 +1048,52 @@ namespace cheetah_ana_pkg {
 			}
 
 		}	// end loop over detectors
-                        
-                        
-        /*
-         *  Copy Aqiris data for processing
-         *  SLAC libraries are not thread safe: must copy data into event structure for processing
-         */
-		eventData->TOFPresent = cheetahGlobal.TOFPresent ;
-        eventData->TOFPresent = 0; // DO NOT READ TOF
-		if (cheetahGlobal.TOFPresent==1){
-            
-            shared_ptr<Psana::Acqiris::DataDescV1> acq = evt.get(m_srcAcq);
-            if (verbose) {
-                if (acq.get()) {
-                    // find matching config object
-                    shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
-                    // loop over channels
-                    int nchan = acq->data_shape()[0];
-                    cout << "nchan: " << nchan << endl;
-                    for (int chan = 0; chan < nchan; ++ chan) {
-                        const Psana::Acqiris::DataDescV1Elem& elem = acq->data(chan);
-                        const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
-                        double slope = v.slope();
-                        double offset = v.offset();
-                        cout << "slope, offset: " << v.slope() << " , " << v.offset() << endl;
-                        const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
-                        double sampInterval = h.sampInterval();
-                        cout << "sampInterval: " << sampInterval << endl;
-                        cout << "Acqiris::DataDescV1: channel=" << chan
-                        << "\n  nbrSegments=" << elem.nbrSegments()
-                        << "\n  nbrSamplesInSeg=" << elem.nbrSamplesInSeg()
-                        << "\n  indexFirstPoint=" << elem.indexFirstPoint();
-                        const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-                        const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
-                        // loop over segments
-                        for (unsigned seg = 0; seg<elem.nbrSegments(); ++seg) {
-                            unsigned size = std::min(elem.nbrSamplesInSeg(), 32U);
-                            cout << "\n  size: " << size << endl;
-                            cout << "\n  Segment #" << seg
-                            << "\n    timestamp=" << timestamps[seg].pos()
-                            << "\n    data=[";
-                            for (unsigned i = 0; i < size; ++ i) {
-                                // -offset in myanao getAcqValue
-                                cout << (waveforms[seg][i]*slope + offset) << ", ";
-                            }
-                            cout << "...]";
-                        }
-                        cout << endl;
-                    }
-                }
-            }
 
-			// Cheetah can only handle one channel. Must inc. to 4
-			cout << "cheetahGlobal.TOFPresent" << endl;
-			double tempTOFTime;
-			double tempTOFVoltage;
-			double tempTrigTime = 0;
-			
-			//Memcpy is necessary for thread safety.
-			eventData->TOFtrigtime = tempTrigTime;
-			eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFTime, &tempTOFTime, cheetahGlobal.AcqNumSamples*sizeof(double));
-			memcpy(eventData->TOFVoltage, &tempTOFVoltage, cheetahGlobal.AcqNumSamples*sizeof(double));
+		
+		//	Copy TOF (aqiris) channel into Cheetah event for processing
+		//  SLAC libraries are not thread safe: must copy data into event structure for processing
+		//eventData->TOFPresent = 0; // DO NOT READ TOF
+		if (cheetahGlobal.TOFPresent==1){
+			int chan = cheetahGlobal.TOFchannel;
+			Pds::Src src;
+			shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq);
+			if (acqData) {
+				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq);
+				const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
+				const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
+				double slope = v.slope();
+				double offset = v.offset();
+				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+				double sampInterval = h.sampInterval();
+				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+				int seg = 0;
+				eventData->TOFtrigtime = timestamps[seg].pos();
+				eventData->TOFTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+				eventData->TOFVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+				double * tempTime = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+				double * tempVoltage = (double*) malloc(cheetahGlobal.AcqNumSamples*sizeof(double));
+				double timestamp = timestamps[seg].value();
+				ndarray<const int16_t, 1> raw(waveforms[seg]);
+				for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
+					tempTime[i] = timestamp + i*sampInterval;
+					tempVoltage[i] = raw[i]*slope + offset;
+				}
+				//Memcpy is necessary for thread safety.
+				memcpy(eventData->TOFTime, &tempTime[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+				memcpy(eventData->TOFVoltage, &tempVoltage[0], cheetahGlobal.AcqNumSamples*sizeof(double));
+				free(tempTime);
+				free(tempVoltage);
+				eventData->TOFPresent = 1;
+			} else {
+				eventData->TOFPresent = 0;
+			}
 		}
 		
-        
 
 		
 		/*
-         *  Copy Pulnix camera into Cheetah event for processing
+		 *  Copy Pulnix camera into Cheetah event for processing
 		 *  Pulnix 120Hz CCD camera on CXI Questar micrscope
 		 *  (where the actual camera is CxiSc1 not XppSb3PimCvd)
 		 *  The choice of CxiEndstation is for a particular camera.
@@ -1038,103 +1104,103 @@ namespace cheetah_ana_pkg {
 		 *      CxiKb1
 		 *      CxiSc1
 		 *  SLAC libraries are not thread safe: must copy data into event structure for processing
-         */
+		 */
 		eventData->pulnixFail = 1;
 		int usePulnix = 0;		// Ignore Pulnix camera
-        if(usePulnix) {
-            shared_ptr<Psana::Camera::FrameV1> frmData = evt.get(m_srcCam);
-            if (frmData.get()) {
-                if (verbose) {
-                    cout << "Camera::FrameV1: width=" << frmData->width()
-                    << " height=" << frmData->height()
-                    << " depth=" << frmData->depth()
-                    << " offset=" << frmData->offset() ;
+		if(usePulnix) {
+			shared_ptr<Psana::Camera::FrameV1> frmData = evt.get(m_srcCam);
+			if (frmData.get()) {
+				if (verbose) {
+					cout << "Camera::FrameV1: width=" << frmData->width()
+						 << " height=" << frmData->height()
+						 << " depth=" << frmData->depth()
+						 << " offset=" << frmData->offset() ;
                     
-                    const ndarray<const uint8_t, 2>& data8 = frmData->data8();
-                    if (not data8.empty()) {
-                        cout << " data8=[" << int(data8[0][0])
-                        << ", " << int(data8[0][1])
-                        << ", " << int(data8[0][2]) << ", ...]";
-                    }
+					const ndarray<const uint8_t, 2>& data8 = frmData->data8();
+					if (not data8.empty()) {
+						cout << " data8=[" << int(data8[0][0])
+							 << ", " << int(data8[0][1])
+							 << ", " << int(data8[0][2]) << ", ...]";
+					}
                     
-                    const ndarray<const uint16_t, 2>& data16 = frmData->data16();
-                    if (not data16.empty()) {
-                        cout << " data16=[" << int(data16[0][0])
-                        << ", " << int(data16[0][1])
-                        << ", " << int(data16[0][2]) << ", ...]";
-                    }  
-                    cout << endl;
-                }
-                eventData->pulnixFail = 0;
-                eventData->pulnixWidth = frmData->width();
-                eventData->pulnixHeight = frmData->height();
+					const ndarray<const uint16_t, 2>& data16 = frmData->data16();
+					if (not data16.empty()) {
+						cout << " data16=[" << int(data16[0][0])
+							 << ", " << int(data16[0][1])
+							 << ", " << int(data16[0][2]) << ", ...]";
+					}  
+					cout << endl;
+				}
+				eventData->pulnixFail = 0;
+				eventData->pulnixWidth = frmData->width();
+				eventData->pulnixHeight = frmData->height();
 
-                const ndarray<const uint8_t, 2>& data8 = frmData->data8();
-                if (not data8.empty()) {
-                    cout << "Pulnix(uint8_t) will not be passed to Cheetah. Complain to Chuck if you need this!" << endl;
-                    //eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
-                    //memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
-                }
+				const ndarray<const uint8_t, 2>& data8 = frmData->data8();
+				if (not data8.empty()) {
+					cout << "Pulnix(uint8_t) will not be passed to Cheetah. Complain to Chuck if you need this!" << endl;
+					//eventData->pulnixImage = (uint8_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint8_t));
+					//memcpy(eventData->pulnixImage, &data8[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint8_t));
+				}
 
-                const ndarray<const uint16_t, 2>& data16 = frmData->data16();
-                if (not data16.empty()) {
-                    eventData->pulnixImage = (uint16_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint16_t));
-                    memcpy(eventData->pulnixImage, &data16[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint16_t));
-                }  
-            }
-        }
+				const ndarray<const uint16_t, 2>& data16 = frmData->data16();
+				if (not data16.empty()) {
+					eventData->pulnixImage = (uint16_t*) calloc(eventData->pulnixWidth*eventData->pulnixHeight, sizeof(uint16_t));
+					memcpy(eventData->pulnixImage, &data16[0][0], (long)eventData->pulnixWidth*(long)eventData->pulnixHeight*sizeof(uint16_t));
+				}  
+			}
+		}
 
         
-        /*
-         *  Copy energy spectrum camera into Cheetah for processing
-         *  Currently an Opal2k camera (or Opal1k)
+		/*
+		 *  Copy energy spectrum camera into Cheetah for processing
+		 *  Currently an Opal2k camera (or Opal1k)
 		 *  current spectrum camera is at CxiEndstation.0:Opal2000.1
 		 *  SLAC libraries are not thread safe: must copy data into event structure
-         *  Only retrieve camera info if we want to look at the spectrum
-         */
+		 *  Only retrieve camera info if we want to look at the spectrum
+		 */
 		eventData->specFail = 1;
-        if (cheetahGlobal.espectrum) {
-            shared_ptr<Psana::Camera::FrameV1> specData = evt.get(m_srcSpec);
+		if (cheetahGlobal.espectrum) {
+			shared_ptr<Psana::Camera::FrameV1> specData = evt.get(m_srcSpec);
 
-            if (specData.get()) {
-                if (verbose) {
-                    cout << "Camera::FrameV1: width=" << specData->width()
-                    << " height=" << specData->height()
-                    << " depth=" << specData->depth()
-                    << " offset=" << specData->offset() ;
+			if (specData.get()) {
+				if (verbose) {
+					cout << "Camera::FrameV1: width=" << specData->width()
+						 << " height=" << specData->height()
+						 << " depth=" << specData->depth()
+						 << " offset=" << specData->offset() ;
                     
-                    const ndarray<const uint8_t, 2>& data8 = specData->data8();
-                    if (not data8.empty()) {
-                        cout << " data8=[" << int(data8[0][0])
-                        << ", " << int(data8[0][1])
-                        << ", " << int(data8[0][2]) << ", ...]";
-                    }
+					const ndarray<const uint8_t, 2>& data8 = specData->data8();
+					if (not data8.empty()) {
+						cout << " data8=[" << int(data8[0][0])
+							 << ", " << int(data8[0][1])
+							 << ", " << int(data8[0][2]) << ", ...]";
+					}
                     
-                    const ndarray<const uint16_t, 2>& data16 = specData->data16();
-                    if (not data16.empty()) {
-                        cout << " data16=[" << int(data16[0][0])
-                        << ", " << int(data16[0][1])
-                        << ", " << int(data16[0][2]) << ", ...]";
-                    }
-                    cout << endl;
-                }
+					const ndarray<const uint16_t, 2>& data16 = specData->data16();
+					if (not data16.empty()) {
+						cout << " data16=[" << int(data16[0][0])
+							 << ", " << int(data16[0][1])
+							 << ", " << int(data16[0][2]) << ", ...]";
+					}
+					cout << endl;
+				}
 
-                eventData->specFail = 0;
-                eventData->specWidth = specData->width();
-                eventData->specHeight = specData->height();
-                
-                const ndarray<const uint8_t, 2>& data8 = specData->data8();
-                if (not data8.empty()) {
-                    cout << "Opal2k(uint8_t) will not be passed to Cheetah. Complain if you need this!" << endl;
-                }
-                
-                const ndarray<const uint16_t, 2>& data16 = specData->data16();
-                if (not data16.empty()) {
-                    eventData->specImage = (uint16_t*) calloc(eventData->specWidth*eventData->specHeight, sizeof(uint16_t));
-                    memcpy(eventData->specImage, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
-                }  
-            }
-        }
+				eventData->specFail = 0;
+				eventData->specWidth = specData->width();
+				eventData->specHeight = specData->height();
+            
+				const ndarray<const uint8_t, 2>& data8 = specData->data8();
+				if (not data8.empty()) {
+					cout << "Opal2k(uint8_t) will not be passed to Cheetah. Complain if you need this!" << endl;
+				}
+            
+				const ndarray<const uint16_t, 2>& data16 = specData->data16();
+				if (not data16.empty()) {
+					eventData->specImage = (uint16_t*) calloc(eventData->specWidth*eventData->specHeight, sizeof(uint16_t));
+					memcpy(eventData->specImage, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
+				}  
+			}
+		}
 		
 		// Update detector positions
 		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
@@ -1145,8 +1211,8 @@ namespace cheetah_ana_pkg {
 		// Call cheetah in multi-threaded mode (ensures that cheetah cleans up event data when done)
 		cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
 	}
-    // End of psana event method
-                        
+	// End of psana event method
+	 
 		
 		
 	/// Method which is called at the end of the calibration cycle
@@ -1156,7 +1222,7 @@ namespace cheetah_ana_pkg {
 	}
 
 	/// Method which is called at the end of the run
-void cheetah_ana_mod::endRun(Event& evt, Env& env)
+	void cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
 		
 		/*
@@ -1196,15 +1262,18 @@ void cheetah_ana_mod::endRun(Event& evt, Env& env)
 
 	/// Method which is called once at the end of the job
 	///	Clean up all variables associated with libCheetah
-void cheetah_ana_mod::endJob(Event& evt, Env& env)
+	void cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
-	  cheetahExit(&cheetahGlobal);
+		cheetahExit(&cheetahGlobal);
 	  
-	  time_t endT;
-	  time(&endT);
-	  double dif = difftime(endT,startT);
-	  cout << "time taken: " << dif << " seconds" << endl;
-	  exit(1);
+		time_t endT;
+		time(&endT);
+		double dif = difftime(endT,startT);
+		cout << "time taken: " << dif << " seconds" << endl;
+		// We shouldn't exit, and specially not with a value of 1
+		//	  exit(1);
+		// Just retuning allows the proper destructors to be called
+		return;
 	}
 
 } // namespace cheetah_ana_pkg

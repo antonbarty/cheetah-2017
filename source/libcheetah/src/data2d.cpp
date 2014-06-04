@@ -81,7 +81,7 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	ndims = H5Sget_simple_extent_ndims(dataspace_id);
 	if(ndims != 2) {
 		printf("2dData::readHDF5: Not 2D data set, ndims=%i\n",ndims);
-		exit(0);
+		exit(1);
 	}
 	
 

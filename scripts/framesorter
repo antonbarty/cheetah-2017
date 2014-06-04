@@ -11,7 +11,7 @@ DOCDIR="$( cd "$( dirname "$0" )" && pwd )"/doc
 WRITEHEADER="YES"
 
 # check optional inputs
-while getopts "r:t:s:p:c:f:RhPHE" OPTION; do
+while getopts "r:t:s:p:c:f:RhPHEF" OPTION; do
 	case $OPTION in
 	r)
 		if [ $OPTARG -eq $OPTARG 2> /dev/null ]; then
@@ -32,6 +32,7 @@ while getopts "r:t:s:p:c:f:RhPHE" OPTION; do
 		USECONDITIONS="YES";;
 	H) WRITEHEADER="";;
 	E) CHECKEXISTS="YES";;
+	F) PRINTFIELDS="YES";;
 	?) UERROR "Unrecognized flag: $OPTION";;
 	esac
 done
@@ -58,6 +59,7 @@ A brief summary of the options:
    -c xxx   Set conditions on values within columns
    -H       Don't print the header
    -E       Check that files exist
+	-F       Just print the fields contained in the header
 
 Best to explain by example.  Say you just ran cheetah, which has written some
 interesting stuff into the file /some/path/frames.txt.  In the simplest case, 
@@ -134,6 +136,11 @@ HEADER=$(echo $HEADER | sed 's/eventData->//g')
 HEADER=$(echo $HEADER | sed 's/# //')
 awk '{if (NR!=1) {print}}' $FRAMESFILE > $TMPDIR/framesorter.list
 FRAMESFILE=$TMPDIR/framesorter.list
+
+if [ "$PRINTFIELDS" = "YES" ]; then
+	for i in $HEADER; do echo $(echo $i | sed 's/,//g' ); done
+	exit
+fi
 
 # narrow down the list by provided conditions
 if [ "$USECONDITIONS" = "YES" ]; then

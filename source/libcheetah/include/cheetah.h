@@ -15,7 +15,7 @@
 #include "cheetahmodules.h"
 
 
-void cheetahInit(cGlobal *);
+int cheetahInit(cGlobal *);
 void cheetahNewRun(cGlobal *);
 cEventData* cheetahNewEvent(cGlobal	*global);
 void cheetahProcessEvent(cGlobal *, cEventData *);

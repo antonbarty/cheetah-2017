@@ -30,8 +30,10 @@ public:
 	int			busy;
 	long		threadNum;
 	long        frameNumber;
+	long        frameNumberIncludingSkipped;
 	long        frameNum;
-	uint		stackSlice;
+	uint stackSlice;
+	bool writeFlag;
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
@@ -85,8 +87,8 @@ public:
 	float		peakDensity;			// Density of peaks within this 80% figure
 	float		peakNpix;				// Number of pixels in peaks
 	float		peakTotal;				// Total integrated intensity in peaks
-	int         *good_peaks;           // Good peaks, after post peak-finding criteria
-    
+	//int			*good_peaks;           // Good peaks, after post peak-finding criteria
+	
 	
 	// Beamline data, etc
 	int			seconds;
@@ -94,6 +96,7 @@ public:
 	unsigned	fiducial;
 	char		timeString[1024];
 	char		eventname[1024];
+	char		eventStamp[1024];
 	char		eventSubdir[1024];
 
 	bool		beamOn;
@@ -132,25 +135,18 @@ public:
 	
 } ;
 
-
 #define ERROR(...) cheetahError(__FILE__, __LINE__, __VA_ARGS__)
-
-void static cheetahError(const char *filename, int line, const char *format, ...){
-	va_list ap;
-	va_start(ap,format);
-	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
-	vfprintf(stderr,format,ap);
-	va_end(ap);
-	puts("");
-	abort();
-}
-
-
-#define STATUS(...) fprintf(stderr, __VA_ARGS__)
 
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
+#define DEBUG(...) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
+
+void cheetahError(const char *filename, int line, const char *format, ...);
+void cheetahDebug(const char *filename, int line, const char *format, ...);
+
+#define STATUS(...) fprintf(stderr, __VA_ARGS__)
+#define INFO(...) fprintf(stdout, __VA_ARGS__)
 
 #endif
 

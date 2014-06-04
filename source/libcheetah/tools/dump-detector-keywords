@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# dump all the global configuration keywords in setup.cpp
+
+sed -n '/ \*\tProcess tags/,/^}/p' ../src/detectorObject.cpp | grep strcmp | awk -F '"' '{print $2}' | sort

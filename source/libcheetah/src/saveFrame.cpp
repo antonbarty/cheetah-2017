@@ -44,6 +44,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 	strftime(buffer1,80,"%Y_%b%d",&timelocal);
 	strftime(buffer2,80,"%H%M%S",&timelocal);
 	sprintf(event->eventname,"LCLS_%s_r%04u_%s_%x.h5",buffer1,global->runNumber,buffer2,event->fiducial);
+	sprintf(event->eventStamp,"LCLS_%s_r%04u_%s_%x",buffer1,global->runNumber,buffer2,event->fiducial);
 	sprintf(event->eventSubdir, ".");
 }
 
@@ -97,7 +98,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, info->eventSubdir, info->eventname, info->frameNumber, info->nPeaks, info->peakNpix, info->peakTotal, info->peakResolution, info->peakResolutionA, info->peakDensity);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	
-
+	
 	
 	/* 
  	 *  HDF5 variables
@@ -110,8 +111,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	herr_t		hdf_error;
 	hid_t   	gid, gidCheetah;
 	hid_t		h5compression;
-	int			h5compressnum = 5;
-	//char 		fieldname[100];
+	//char 		fieldname[100]; 
 	char        fieldID[1023];
 
 	
@@ -162,7 +162,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			sprintf(fieldID, "assembleddata%li", detID);
 			if (global->h5compress) {
 				H5Pset_chunk(h5compression, 2, size);
-				H5Pset_shuffle(h5compression);			// De-interlace bytes
+				//H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
@@ -200,8 +200,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Dclose(dataset_id);
 				H5Sclose(dataspace_id);
 			}
-			
-		}
+
+		}	
 	}
 	// Save raw data (and pixelmask)
 	if(global->saveRaw) {
@@ -214,7 +214,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 			dataspace_id = H5Screate_simple(2, size, max_size);
 			if (global->h5compress) {
 				H5Pset_chunk(h5compression, 2, size);
-				H5Pset_shuffle(h5compression);			// De-interlace bytes
+				//H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			// rawdata
@@ -225,7 +225,12 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, info->detector[detID].corrected_data_int16);
+			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+			for(long i=0;i<global->detector[detID].pix_nn;i++){
+				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int16);
+			free(corrected_data_int16);
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", info->threadNum);
 				H5Dclose(dataspace_id);
@@ -257,7 +262,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		}
 	}
 		
-	// Create symbolic link from /data/data to whatever is deemed the 'main' data set
+	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
 	if(global->saveAssembled) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/assembleddata",0,0);
@@ -302,7 +307,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		max_size[1] = global->AcqNumSamples;
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		double tempData[2][global->AcqNumSamples];
@@ -330,7 +335,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		size[1] = info->pulnixWidth;	
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		dataspace_id = H5Screate_simple(2, size, size);
@@ -348,7 +353,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		size[1] = info->specWidth;
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
-			H5Pset_shuffle(h5compression);			// De-interlace bytes
+			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
 		dataspace_id = H5Screate_simple(2, size, size);
@@ -412,9 +417,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	// HDF5 version does not support extensible data types -> force it to be big instead
 	
 	long	nPeaks = info->peaklist.nPeaks;
-	if(global->savePeakInfo && global->hitfinder && nPeaks > 0 ) {
-		hsize_t	maxNpeaks = 500;
-		maxNpeaks = nPeaks;
+	long	nPeaksMax = info->peaklist.nPeaks_max;
+	if( nPeaks > 0 && global->savePeakInfo && global->hitfinder ) {
+		//hsize_t	maxNpeaks = nPeaks;
 		//size[0] = info->nPeaks;		// size[0] = height
 		size[0] = nPeaks;			// size[0] = height
 		size[1] = 4;					// size[1] = width
@@ -422,8 +427,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		//max_size[0] = info->peaklist.nPeaks_max;
 		max_size[0] = nPeaks;
 		max_size[1] = 4;
-		double *peak_info = (double *) calloc(4*size[0], sizeof(double));
-		long	nPeaksMax = info->peaklist.nPeaks_max;
+		double *peak_info = (double *) calloc(4*nPeaks, sizeof(double));
 		
 		// Set all unused peaks to 0
 		for(uint i=0; i< 4*size[0]; i++) {
@@ -457,10 +461,10 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		
 		
 		// Save peak info in Raw layout
-		for(long i=0; i< 4*size[0]; i++) {
+		for(unsigned long i=0; i< 4*size[0]; i++) {
 			peak_info[i] = 0;
 		}
-		for (long i=0; i<nPeaks;i++){
+		for (long i=0; i<nPeaks && i<nPeaksMax;i++){
 			peak_info[i*4+0] = info->peaklist.peak_com_x[i];
 			peak_info[i*4+1] = info->peaklist.peak_com_y[i];
 			peak_info[i*4+2] = info->peaklist.peak_totalintensity[i];
@@ -700,7 +704,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 		if ( type == H5I_ATTR ) H5Aclose(id);
 	}
 	
-	H5Fclose(hdf_fileID);
+	H5Fclose(hdf_fileID); 
 
 }
 
@@ -717,22 +721,22 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	// Version 1 of the peak info format
 	// (stream file)
 	/*
-	pthread_mutex_lock(&global->peaksfp_mutex);
-	fprintf(global->peaksfp, "%s\n", eventData->eventname);
-	fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
-	fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
-	fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
-	fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
-	fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
-	fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
-	fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
-	fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
+	  pthread_mutex_lock(&global->peaksfp_mutex);
+	  fprintf(global->peaksfp, "%s\n", eventData->eventname);
+	  fprintf(global->peaksfp, "photonEnergy_eV=%f\n", eventData->photonEnergyeV);
+	  fprintf(global->peaksfp, "wavelength_A=%f\n", eventData->wavelengthA);
+	  fprintf(global->peaksfp, "pulseEnergy_mJ=%f\n", (float)(eventData->gmd21+eventData->gmd21)/2);
+	  fprintf(global->peaksfp, "npeaks=%i\n", eventData->nPeaks);
+	  fprintf(global->peaksfp, "peakResolution=%g\n", eventData->peakResolution);
+	  fprintf(global->peaksfp, "peakDensity=%g\n", eventData->peakDensity);
+	  fprintf(global->peaksfp, "peakNpix=%g\n", eventData->peakNpix);
+	  fprintf(global->peaksfp, "peakTotal=%g\n", eventData->peakTotal);
 	
-	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
-	}
-	pthread_mutex_unlock(&global->peaksfp_mutex);
-	 */
+	  for(long i=0; i<eventData->nPeaks; i++) {
+	  fprintf(global->peaksfp, "%f, %f, %f, %f, %g, %g, %g\n", eventData->peaklist.peak_com_x_assembled[i], eventData->peaklist.peak_com_y_assembled[i], eventData->peaklist.peak_com_x[i], eventData->peaklist.peak_com_y[i], eventData->peaklist.peak_npix[i], eventData->peaklist.peak_totalintensity[i],eventData->peaklist.peak_maxintensity[i]);
+	  }
+	  pthread_mutex_unlock(&global->peaksfp_mutex);
+	*/
 
 	
 	// Version 2 of the peak info format
@@ -770,9 +774,9 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
  */
 void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
-	herr_t		r;
-	hsize_t		size[2];
-	hsize_t		max_size[2];
+	herr_t r;
+	hsize_t size[2];
+	hsize_t max_size[2];
 	hid_t		h5compression;
 	
 	
@@ -798,7 +802,7 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	max_size[1] = width;
 	sh = H5Screate_simple(2, size, max_size);
 	H5Pset_chunk(h5compression, 2, size);
-	H5Pset_shuffle(h5compression);			// De-interlace bytes
+	//H5Pset_shuffle(h5compression);			// De-interlace bytes
 	H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
 	
 	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);

@@ -20,7 +20,12 @@ if(rhel5)
   set(ANA_ARCH "x86_64-rhel5-gcc41-opt" CACHE STRING "ana architecture to be used")
 endif(rhel5)
 
-
+LIST(APPEND ana_libs ErrSvc PSTime rt PSEvt AppUtils  
+ ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
+ ExpNameDb psddl_psana psana Core Cint RIO Net Hist
+ Graf Graf3d Gpad Tree Rint Postscript Matrix Physics
+ MathCore Thread m dl)
+ 
 LIST(APPEND ana_libs psddl_pdsdata
   xtcdata ConfigSvc MsgLogger PSEnv RootHistoManager PSHist
   ExpNameDb psddl_psana psana Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread
@@ -40,6 +45,19 @@ foreach(ana_lib IN LISTS ana_libs)
 	message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
 #	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
 	LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
+endforeach(ana_lib)
+
+foreach(ana_lib IN LISTS pdsdata_libs)
+	# Clear variable first
+	SET(ANA_${ana_lib}_LIBRARY "ANA_${ana_lib}_LIBRARY-NOTFOUND" CACHE INTERNAL "Internal" FORCE)
+	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/)
+	SET(ANA_${ana_lib}_LIBRARY ${ANA_${ana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
+#	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
+	# Only add the libraries we do find
+	if(NOT ${ANA_${ana_lib}_LIBRARY} STREQUAL "ANA_${ana_lib}_LIBRARY-NOTFOUND" )	
+		message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
+		LIST(APPEND PSANA_LIBRARIES ${ANA_${ana_lib}_LIBRARY})
+	endif()
 endforeach(ana_lib)
 
 #clear var

@@ -70,8 +70,10 @@ static const uint16_t PIXEL_IS_IN_PEAKMASK = 32;            // bit 5
 static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
-static const uint16_t PIXEL_IS_MISSING = 512;               // bit 9
+static const uint16_t PIXEL_IS_MISSING = 512;                // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
+static const uint16_t PIXEL_IS_ARTIFACT_CORRECTED = 2048;    // bit 11
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO | PIXEL_IS_ARTIFACT_CORRECTED;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -109,7 +111,7 @@ public:
 	/** @brief Type of detector */
 	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
-    	//Pds::DetInfo::Detector detectorPdsDetInfo;
+	//Pds::DetInfo::Detector detectorPdsDetInfo;
 
 	//unsigned         configVsn;
 	//unsigned         quadMask;
@@ -118,7 +120,7 @@ public:
 	long detectorID;
 
 	/** @brief Detector configuration file */
-	char  detectorConfigFile[MAX_FILENAME_LENGTH];
+	//char  detectorConfigFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing pixelmap (coordinates of pixels) */
 	char  geometryFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing dark calibration */
@@ -151,12 +153,19 @@ public:
 
 	// Assembled image size
 	long  image_nx;
+	long  image_ny;
 	long  image_nn;
 
 	// Assembled downsampled image size
 	long  imageXxX_nx;
+	long  imageXxX_ny;
 	long  imageXxX_nn;
+	/** @brief Downsampling factor (1: no downsampling) */
 	long  downsampling;
+	/** @brief Rescale intensities after downsamping but before saving to image (avoid clamping to maximum value of 16-bit int) (1.: no rescaling) */
+	float downsamplingRescale;
+	/** @brief If set to 1 (default) pixel values are summed up no matter what the mask value is set to */
+	long  downsamplingConservative;
 
 	// ASIC module size
 	long  asic_nx;
@@ -206,6 +215,8 @@ public:
 	// Saturated pixels
 	int    maskSaturatedPixels;
 	long   pixelSaturationADC;
+	// Mask pnccd saturated pixels (thresholds hardcoded, for every quadrant different)
+	int    maskPnccdSaturatedPixels;
 	// Local background subtraction
 	int    useLocalBackgroundSubtraction;
 	int    useRadialBackgroundSubtraction;
@@ -219,7 +230,8 @@ public:
 	long   bgMemory;
 	long   bgRecalc;
 	long   bgCounter;
-	long   last_bg_update;
+	int   bgCalibrated;
+	long   bgLastUpdate;
 	int    bgIncludeHits;
 	int    bgNoBeamReset;
 	int    bgFiducialGlitchReset;
@@ -230,8 +242,9 @@ public:
 	int    hotpixRecalc;
 	float  hotpixFreq;
 	long   hotpixCounter;
+	int   hotpixCalibrated;
 	long   nhot;
-	long   last_hotpix_update;
+	long   hotpixLastUpdate;
 	// Apply persistently hot pixels
 	int    applyAutoHotpixel;
 	// Identify persistently illuminated pixels (Halo)
@@ -240,14 +253,21 @@ public:
 	long   halopixRecalc;
 	long   halopixMemory;
 	long   halopixCounter;
+	int   halopixCalibrated;
+	int    halopixIncludeHits;
 	long   nhalo;
-	long   last_halopix_update;
+	long   halopixLastUpdate;
 	// Start frames for calibration before output
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
 	int    usePnccdOffsetCorrection;
-	
-	
+	// correction for wiring error (can be fixed also with an adequate geometry)
+	int    usePnccdFixWiringError;
+	// correction for intensity drop in every 2nd line, interpolation of all affected lines
+	int    usePnccdLineInterpolation;
+	// declare pixel bad if they are located in bad lines
+	int    usePnccdLineMasking;
+
 	// Histogram stack
 	int		histogram;
 	long	histogramMin;
@@ -285,7 +305,9 @@ public:
 	float     *selfdark;
 	float     *gaincal;
 	uint16_t  *pixelmask_shared;
-
+	pthread_mutex_t* halopix_mutexes;
+	uint16_t  *pixelmask_shared_max;
+	uint16_t  *pixelmask_shared_min;
 
 	/*
 	 * Powder patterns/sums for this detector
@@ -298,8 +320,11 @@ public:
 	double   *powderCorrected[MAX_POWDER_CLASSES];
 	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
 	double   *powderAssembled[MAX_POWDER_CLASSES];
+	double   *powderAssembledSquared[MAX_POWDER_CLASSES];
+	double   *powderDownsampled[MAX_POWDER_CLASSES];
+	double   *powderDownsampledSquared[MAX_POWDER_CLASSES];
 	double   *powderPeaks[MAX_POWDER_CLASSES];
-	float	*correctedMin[MAX_POWDER_CLASSES];
+	float   *correctedMin[MAX_POWDER_CLASSES];
 	float   *assembledMin[MAX_POWDER_CLASSES];
 	float   *correctedMax[MAX_POWDER_CLASSES];
 	float   *assembledMax[MAX_POWDER_CLASSES];
@@ -308,6 +333,9 @@ public:
 	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderAssembledSquared_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderDownsampled_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderDownsampledSquared_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];
@@ -316,11 +344,10 @@ public:
 	/*
 	 *  Radial stacks for this detector
 	 */
-	long	radialStackSize;
-	long	radialStackCounter[MAX_POWDER_CLASSES];
+	long            radialStackSize;
+	long   radialStackCounter[MAX_POWDER_CLASSES];
 	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
-
 
 
 public:
@@ -350,22 +377,23 @@ public:
 class cPixelDetectorEvent {
 
 public:
-
+	/* FM: Warning. Constructor is not run when class is malloc'ed*/
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;
+	int       pedSubtracted;
 	uint16_t  *raw_data;
 	float     *detector_corrected_data;
 	float     *corrected_data;
-	int16_t   *corrected_data_int16;
 	uint16_t  *pixelmask;
-	int16_t   *image;
+	float     *image;
 	uint16_t  *image_pixelmask;
-	int16_t   *imageXxX;
+	float     *imageXxX;
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
-    double      detectorZ;
+	double    detectorZ;
+	float sum;
 
 
 };

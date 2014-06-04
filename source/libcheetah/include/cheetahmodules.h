@@ -16,10 +16,8 @@ void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
+void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
-void calculateHaloPixelMask(cGlobal*);
-void updateHaloBuffer(cEventData*, cGlobal*,int);
-
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
 void applyBadPixelMask(float*, uint16_t*, long);
@@ -27,27 +25,32 @@ void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
-long calculateHaloPixelMask(uint16_t*, float*, float, long, long);
-
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
 void pnccdFixWiringError(float*);
+void pnccdLineInterpolation(cEventData*, cGlobal*);
+void pnccdLineMasking(cEventData*, cGlobal*);
+
 
 
 // backgroundCorrection.cpp
 void subtractLocalBackground(cEventData*, cGlobal*);
 void subtractRadialBackground(cEventData*, cGlobal*);
 void checkSaturatedPixels(cEventData*, cGlobal*);
+void checkPnccdSaturatedPixels(cEventData*, cGlobal*);
 void subtractPersistentBackground(cEventData*, cGlobal*);
 void updateBackgroundBuffer(cEventData*, cGlobal*, int);
+void calculatePersistentBackground(cEventData*, cGlobal*);
 void initBackgroundBuffer(cEventData*, cGlobal*);
-
 void subtractLocalBackground(float*, long, long, long, long, long);
 void subtractRadialBackground(float*, float*, char*, long, float);
 void checkSaturatedPixels(uint16_t*, uint16_t*, long, long);
 void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
+void updateHaloBuffer(cEventData*, cGlobal*,int);
+void calculateHaloPixelMask(cEventData*,cGlobal*);
+long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
 
 
 // saveFrame.cpp
@@ -60,9 +63,10 @@ void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, cons
 
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
+void writeCXIHitstats(cEventData *info, cGlobal *global);
 void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
-herr_t cheetahHDF5ErrorHandler(hid_t, void *unused);
+herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
 
 
 // assemble2DImage.cpp
@@ -72,9 +76,14 @@ void assemble2Dmask(cEventData*, cGlobal*);
 void assemble2Dimage(float*, float*, float*, float*, long, long, long, int);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
-void downsample(cEventData*, cGlobal*);
-void downsampleImage(int16_t*, int16_t*, long, long, long, long);
-void downsampleMask(uint16_t*, uint16_t*, long, long, long, long);
+
+// downsample.cpp
+void downsample(cEventData *eventData, cGlobal *global);
+void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale,long downsampling);
+void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale,long downsampling);
+void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
+void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale, uint16_t *msk,long downsampling);
+void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
 
 
 // hitfinders.cpp
@@ -145,6 +154,9 @@ int16_t kth_smallest(int16_t*, long, long);
 // fudge...
 void evr41fudge(cEventData*, cGlobal*);
 
+// integratePattern.cpp
+void integratePattern(cEventData * eventData,cGlobal * global);
+
 // datarate timing
 void updateDatarate(cEventData*, cGlobal*);
-
+void updateAvgGMD(cEventData *eventData, cGlobal *global);
