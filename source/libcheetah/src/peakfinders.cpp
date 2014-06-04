@@ -926,12 +926,12 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						
 						// Signal to noise criterion
 						// The more pixels there are in the peak, the more relaxed we are about this criterion
-						if( snr < (hitfinderMinSNR - nat) )
+						if( snr < (hitfinderMinSNR - nat + hitfinderMinPixCount) )
 						  continue;
 						
 						// Is the maximum intensity in the peak enough above intensity in background region to be a peak and not noise?
 						// The more pixels there are in the peak, the more relaxed we are about this criterion
-	 					fBackgroundThresh = hitfinderMinSNR - nat + hitfinderMinPixCount;
+	 					fBackgroundThresh = hitfinderMinSNR - nat;
 						if(fBackgroundThresh < 2) fBackgroundThresh = 2;
 						if( (maxI-localOffset) < (fBackgroundThresh*(fBackgroundMax-localOffset)))
 							continue;
