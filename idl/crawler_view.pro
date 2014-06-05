@@ -859,11 +859,18 @@ pro crawler_event, ev
 			runs = crawler_whichRun(pstate, /path, /multiple)
 			waxsview, runs
 		end
+
 		sState.mbview_badpix : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			print, f
 			mask = badpix_from_darkcal(f, /save, /edge, /menu)
+		end
+		sState.mbview_satcheck : begin
+			dir = crawler_whichRun(pstate, /path)
+			file = file_search(dir,'peaks.txt')
+			;;print, file
+			saturation_check, file
 		end
 		
 
@@ -950,6 +957,7 @@ pro crawler_view
 
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
+	mbview_satcheck = widget_button(mbtool, value='Saturation check')
 
 
 	mbfile = widget_button(bar, value='View')
@@ -1047,8 +1055,10 @@ pro crawler_view
 			mbview_powderdark : mbview_powderdark, $
 			mbview_peakpowder : mbview_peakpowder, $
 			mbview_peakpowderdark : mbview_peakpowderdark, $
+			
 			mbview_badpix : mbview_badpix, $
-
+			mbview_satcheck : mbview_satcheck, $
+			
 			mbview_waxs : mbview_waxs, $
 			
 			mbview_bsub : mbview_bsub, $
