@@ -13,7 +13,7 @@ function peakfinder8, data, snr, r=r, x=x, y=y, minpix=minpix, maxpix=maxpix, mi
 	if NOT KEYWORD_SET(maxpix) then maxpix = 200
 	if NOT KEYWORD_SET(iter) then iter = 5
 	if NOT KEYWORD_SET(minADC) then minADC = -1.e9
-	maxpeaks = 1000
+	maxpeaks = 10000
 
 
 	;;

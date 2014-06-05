@@ -172,7 +172,7 @@ function cheetah_peakfinder3, data, pState
 
 
 	;; Array for peak information
-	maxpeaks = 5000
+	maxpeaks = 10000
 	peakx = fltarr(maxpeaks)
 	peaky = fltarr(maxpeaks)
 	peaktotal = fltarr(maxpeaks)
