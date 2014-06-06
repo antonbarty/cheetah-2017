@@ -41,5 +41,18 @@ print, file
 
 	
 
+	;; 2D histogram
+	h = hist_2d(r,i, bin1=max(r)/100, bin2=max(i)/100)
+	img = alog10(h > 1)
+	
+	q = image(img, rgb_table=4)
+	c = colorbar(target=q, orientation=1, position=[0.93,0.1,0.96,0.9], range=[min(img),max(img)], title='Log10(count)')
+
+
+	t = contour(img, n_levels=50, /fill, rgb_table=4)
+	c = colorbar(target=t, orientation=1, position=[0.93,0.1,0.96,0.9], range=[min(img),max(img)], title='Log10(count)')
+	
+
+
 
 end
