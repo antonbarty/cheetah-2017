@@ -908,8 +908,8 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						// Calculate =standard deviation
 						//if (np_sigma == 0)
 						//	continue;
-						//if (np_sigma < 3)
-						//	continue;
+						if (np_sigma < 3)
+							continue;
 						
 						if (np_sigma != 0) {
 							localOffset = sum/np_sigma;
@@ -929,12 +929,12 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						
 						// Is the maximum intensity in the peak enough above intensity in background region to be a peak and not noise?
 						// The more pixels there are in the peak, the more relaxed we are about this criterion
-	 					fBackgroundThresh = hitfinderMinSNR - nat;
-						if(fBackgroundThresh > 4) fBackgroundThresh = 4;
+	 					//fBackgroundThresh = hitfinderMinSNR - nat;
+						//if(fBackgroundThresh > 4) fBackgroundThresh = 4;
                         fBackgroundThresh = 2;
                         fBackgroundThresh *= (backgroundMaxI-localOffset);
-						//if( maxI < fBackgroundThresh)
-						//	continue;
+						if( maxI < fBackgroundThresh)
+							continue;
 						
 
                         // This is a peak? If so, add info to peak list
