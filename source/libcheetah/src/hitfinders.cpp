@@ -143,15 +143,28 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	 *	Pump laser sorting
 	 *		hit = 0 or 1
 	 *		laserOn = 0 or 1
+	 *		laser2On = 0 or 1
 	 *	then
-	 *		output = hit + 2*laserOn
+	 *		output = hit + 2*laserOn + 4*laser2On
+	 *
+		class	hit	laser	laser2
+		0 	0	0	0
+		1	1	0	0
+		2	0	2	0
+		3	1	2	0
+		4	0	0	4
+		5	1	0	4
+		6	0	2	4
+		7	1	2	4
+ 
 	 */
 	if(global->sortPumpLaserOn == 1) {
 		int hit = eventData->hit;
 		int	pumpLaserOn = eventData->pumpLaserOn;
+		int	pumpLaser2On = eventData->pumpLaser2On;
 		int	nPowderClasses = global->nPowderClasses;
 		
-		eventData->powderClass = hit + 2*pumpLaserOn;
+		eventData->powderClass = hit + 2*pumpLaserOn + 4*pumpLaser2On;
 	}
 	
 }

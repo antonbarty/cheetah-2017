@@ -76,6 +76,8 @@ void *worker(void *threadarg) {
 	// Nasty fudge for evr41 (i.e. "optical pump laser is on") signal when only 
 	// Acqiris data (i.e. temporal profile of the laser diode signal) is available...
 	// Hopefully this never happens again... 
+	// Alas. Here we are, 3 years later with 2 evr's and 3 acqiris channels...
+	
 	if ( global->fudgeevr41 == 1 ) {
 		evr41fudge(eventData,global);	
 	}
@@ -412,7 +414,10 @@ hitknown:
 	fprintf(global->framefp, "%g, ", eventData->peakDensity);
 	fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
 	fprintf(global->framefp, "%g, ", eventData->laserDelay);
-    fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
+	fprintf(global->framefp, "%d, ", eventData->pumpLaserOn);
+	fprintf(global->framefp, "%d, ", eventData->pumpLaser2On);
+	fprintf(global->framefp, "%d\n, ", eventData->laser2EventCodeOn);
+
 	pthread_mutex_unlock(&global->framefp_mutex);
 
 	// Keep track of what has gone into each image class
@@ -435,7 +440,9 @@ hitknown:
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakDensity);
         fprintf(global->powderlogfp[powderClass], "%d, ", eventData->laserEventCodeOn);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->laserDelay);
-        fprintf(global->powderlogfp[powderClass], "%d\n", eventData->pumpLaserOn);
+        fprintf(global->powderlogfp[powderClass], "%d", eventData->pumpLaserOn);
+        fprintf(global->powderlogfp[powderClass], "%d", eventData->pumpLaser2On);
+        fprintf(global->powderlogfp[powderClass], "%d\n, ", eventData->laser2EventCodeOn);
 		pthread_mutex_unlock(&global->powderfp_mutex);
 	}
   

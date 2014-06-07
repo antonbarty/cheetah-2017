@@ -114,6 +114,8 @@ public:
     
 	int         pumpLaserOn;
 	bool        laserEventCodeOn;
+	int         pumpLaser2On;
+	bool        laser2EventCodeOn;
 	double      laserDelay;
 	
 	double		fEbeamCharge;		// in nC

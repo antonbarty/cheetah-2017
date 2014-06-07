@@ -44,7 +44,9 @@
 
 // LCLS event codes
 #define beamCode 140
-#define laserCode 41
+//#define laserCode 41   // We used this for a single trigger evr41
+#define laserCode 183    // UWM laser
+#define laser2Code 184    // APS laser evr184.
 #define verbose 0
 
 //-----------------------------------------------------------------------
@@ -65,7 +67,9 @@ namespace cheetah_ana_pkg {
 	static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
 	static int laserSwitch = 0;
+	static int laser2Switch = 0;
 	static int prevLaser = 0;
+	static int prev2Laser = 0;
 	static time_t startT = 0;
 
 	class CspadDataWrapper {
@@ -343,6 +347,7 @@ namespace cheetah_ana_pkg {
 		int fiducial = 0;
         bool    beamOn = 0;
         bool    laserOn = 0;
+	bool 	laser2On = 0;
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
 
 		if (data3.get()) {
@@ -384,7 +389,30 @@ namespace cheetah_ana_pkg {
 				cout << "*** laserOn: " << laserOn << "\n"
 					 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
 			}
+
+			//! get laser2On
+			// laser2Switch should be as large as count (50% on and off)
+			laser2On = eventCodePresent(data3->fifoEvents(), laser2Code);
+			if (frameNumber == 1) {
+				// initialize
+				prev2Laser = laser2On;
+				laser2Switch = 1;
+			}
+			else {
+				if (prev2Laser != laser2On) {
+					laser2Switch++;
+					prev2Laser = laser2On;
+				}
+			}
+			if (verbose) {
+				cout << "*** laser2On: " << laser2On << "\n"
+					 << "laser2Switch/frameNumber: " << laser2Switch << "/" << frameNumber << endl;
+			}
             
+
+
+
+
 		}
 		else {
 			printf("Event %li: Warning: Psana::EvrData::DataV3 failed\n", frameNumber);
@@ -706,6 +734,7 @@ namespace cheetah_ana_pkg {
 		eventData->beamOn = beamOn;
 		eventData->nPeaks = 0;
 		eventData->laserEventCodeOn = 0;
+		eventData->laser2EventCodeOn = 0;
 		eventData->laserDelay = 0;
 		eventData->gmd1 = gmd1;
 		eventData->gmd2 = gmd2;
@@ -732,6 +761,8 @@ namespace cheetah_ana_pkg {
 		 */
 		eventData->laserEventCodeOn = laserOn;
 		eventData->pumpLaserOn = laserOn;
+		eventData->laser2EventCodeOn = laser2On;
+		eventData->pumpLaser2On = laser2On;
 	
         /*
          *  FEE photon inline spectrometer

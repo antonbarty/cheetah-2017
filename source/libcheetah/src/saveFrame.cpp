@@ -617,11 +617,28 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	H5Dclose(dataset_id);
 	
 	
-	// LaserOn event code
+/*	// LaserOn event code
 	int LaserOnVal = (info->laserEventCodeOn)?1:0;
 	//printf("LaserOnVal %d \n", LaserOnVal);
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
+	H5Dclose(dataset_id);
+
+*/  // original : evr41. Below: using two pump lasers.
+
+
+	// LaserOn event code
+	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	//printf("LaserOnVal %d \n", LaserOnVal);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr183", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
+	H5Dclose(dataset_id);
+
+	// Laser2On event code
+	int Laser2OnVal = (info->laser2EventCodeOn)?1:0;
+	//printf("Laser2OnVal %d \n", Laser2OnVal);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/ev184", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Laser2OnVal);
 	H5Dclose(dataset_id);
 
 

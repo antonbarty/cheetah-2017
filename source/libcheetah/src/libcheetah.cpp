@@ -128,7 +128,11 @@ void cheetahNewRun(cGlobal *global) {
             if(global->powderlogfp[i] != NULL)
                 fclose(global->powderlogfp[i]);
 			global->powderlogfp[i] = fopen(filename, "w");
-			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, \
+					eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, \
+					eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, \
+					eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, \
+					eventData->laserEventCodeOn, eventData->laserDelay, eventData->laser2EventCodeOn\n");
 
 			if(global->useFEEspectrum) {
 				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
@@ -164,6 +168,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->hit = 0;
 	eventData->powderClass = 0;
 	eventData->pumpLaserOn = 0;
+	eventData->pumpLaser2On = 0;
 	eventData->peakResolution=0.;
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
