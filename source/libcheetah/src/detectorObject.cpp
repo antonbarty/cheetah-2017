@@ -736,9 +736,9 @@ bounds:
 	}
 
 	xmax = (long) (xmax + 0.5);
-	xmin = (long) (xmin + 0.5);
+	xmin = (long) (xmin - 0.5);
 	ymax = (long) (ymax + 0.5);
-	ymin = (long) (ymin + 0.5);
+	ymin = (long) (ymin - 0.5);
 	printf("\tImage bounds:\n");
 	printf("\tx range %.0f to %.0f\n",xmin,xmax);
 	printf("\ty range %.0f to %.0f\n",ymin,ymax);
