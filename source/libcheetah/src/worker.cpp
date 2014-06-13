@@ -413,10 +413,10 @@ hitknown:
 	fprintf(global->framefp, "%g, ", eventData->peakResolution);
 	fprintf(global->framefp, "%g, ", eventData->peakDensity);
 	fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
-	fprintf(global->framefp, "%g, ", eventData->laserDelay);
 	fprintf(global->framefp, "%d, ", eventData->pumpLaserOn);
+	fprintf(global->framefp, "%d, ", eventData->laser2EventCodeOn);
 	fprintf(global->framefp, "%d, ", eventData->pumpLaser2On);
-	fprintf(global->framefp, "%d\n, ", eventData->laser2EventCodeOn);
+	fprintf(global->framefp, "%g\n", eventData->laserDelay);
 
 	pthread_mutex_unlock(&global->framefp_mutex);
 
@@ -439,10 +439,10 @@ hitknown:
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakResolution);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakDensity);
         fprintf(global->powderlogfp[powderClass], "%d, ", eventData->laserEventCodeOn);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->laserDelay);
-        fprintf(global->powderlogfp[powderClass], "%d", eventData->pumpLaserOn);
-        fprintf(global->powderlogfp[powderClass], "%d", eventData->pumpLaser2On);
-        fprintf(global->powderlogfp[powderClass], "%d\n, ", eventData->laser2EventCodeOn);
+        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->pumpLaserOn);
+        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->laser2EventCodeOn);
+        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->pumpLaser2On);
+        fprintf(global->powderlogfp[powderClass], "%g\n", eventData->laserDelay);
 		pthread_mutex_unlock(&global->powderfp_mutex);
 	}
   

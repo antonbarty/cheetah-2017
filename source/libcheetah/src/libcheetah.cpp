@@ -132,7 +132,7 @@ void cheetahNewRun(cGlobal *global) {
 					eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, \
 					eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, \
 					eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, \
-					eventData->laserEventCodeOn, eventData->laserDelay, eventData->laser2EventCodeOn\n");
+					eventData->laserEventCodeOn, eventData->laser2EventCodeOn, eventData->laserDelay\n");
 
 			if(global->useFEEspectrum) {
 				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);

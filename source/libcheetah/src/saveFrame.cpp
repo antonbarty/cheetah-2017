@@ -298,7 +298,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 
 	
 	/*
-	 *	Save TOF data (Aqiris)
+	 *	Save TOF data (Acqiris)
 	 */
 	if(info->TOFPresent==1) {
 		size[0] = 2;	
@@ -761,12 +761,17 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	pthread_mutex_lock(&global->peaksfp_mutex);
 	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
+		fprintf(global->peaksfp, "%li, %s, %f, %f, %f,        
+// what is pumplaser on  = int? 
+
+%li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
 				eventData->frameNumber,
 				eventData->eventname,
 				eventData->photonEnergyeV,
 				eventData->wavelengthA,
 				(float)(eventData->gmd21+eventData->gmd21)/2,
+				eventData->pumpLaserOn,
+				eventData->pumpLaser2On,
 				eventData->peaklist.peak_com_index[i],
 				eventData->peaklist.peak_com_x[i],
 				eventData->peaklist.peak_com_y[i],
@@ -777,7 +782,8 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 				eventData->peaklist.peak_totalintensity[i],
 				eventData->peaklist.peak_maxintensity[i],
 				eventData->peaklist.peak_sigma[i],
-				eventData->peaklist.peak_snr[i]  );
+				eventData->peaklist.peak_snr[i] );
+				
 	}
 	pthread_mutex_unlock(&global->peaksfp_mutex);
 	
