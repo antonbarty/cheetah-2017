@@ -225,12 +225,21 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+// 16vs32start
+/*			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
 				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
 			}
 			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int16);
 			free(corrected_data_int16);
+*/ 
+			int32_t* corrected_data_int32 = (int32_t*) calloc(global->detector[detID].pix_nn,sizeof(int32_t));
+			for(long i=0;i<global->detector[detID].pix_nn;i++){
+				corrected_data_int32[i] = (int32_t) lrint(info->detector[detID].corrected_data[i]);
+			}
+			hdf_error = H5Dwrite(dataset_id, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int32);
+			free(corrected_data_int32);
+// 16vs32end
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", info->threadNum);
 				H5Dclose(dataspace_id);
@@ -624,7 +633,7 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
 
-*/  // original : evr41. Below: using two pump lasers.
+*/  // original : evr41. Below: using two pump lasers. LaserOn and Laser2On
 
 
 	// LaserOn event code
@@ -761,10 +770,7 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 	
 	pthread_mutex_lock(&global->peaksfp_mutex);
 	for(long i=0; i<eventData->nPeaks; i++) {
-		fprintf(global->peaksfp, "%li, %s, %f, %f, %f,        
-// what is pumplaser on  = int? 
-
-%li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
+		fprintf(global->peaksfp, "%li, %s, %f, %f, %f, %d, %d, %li, %f, %f, %f, %f, %f, %li, %f, %f, %f, %f\n",
 				eventData->frameNumber,
 				eventData->eventname,
 				eventData->photonEnergyeV,
