@@ -218,21 +218,28 @@ void writeHDF5(cEventData *info, cGlobal *global){
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
 			// rawdata
-			sprintf(fieldID, "rawdata%li", detID);
-			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+			sprintf(fieldID, "nadiarawdata%li", detID);
+// 16vs32start
+/*			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 			if ( dataset_id < 0 ) {
 				ERROR("%li: Couldn't create dataset\n", info->threadNum);
 				H5Fclose(hdf_fileID);
 				return;
 			}
-// 16vs32start
-/*			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
+
+			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
 				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
 			}
 			hdf_error = H5Dwrite(dataset_id, H5T_STD_I16LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, corrected_data_int16);
 			free(corrected_data_int16);
 */ 
+			dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I32LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+			if ( dataset_id < 0 ) {
+				ERROR("%li: Couldn't create dataset\n", info->threadNum);
+				H5Fclose(hdf_fileID);
+				return;
+			}
 			int32_t* corrected_data_int32 = (int32_t*) calloc(global->detector[detID].pix_nn,sizeof(int32_t));
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
 				corrected_data_int32[i] = (int32_t) lrint(info->detector[detID].corrected_data[i]);

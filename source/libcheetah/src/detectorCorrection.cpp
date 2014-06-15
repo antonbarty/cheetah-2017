@@ -77,6 +77,35 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 }
 
 
+/*    Apply gain map - CSPAD has two gain settings for each pixel
+ *    Gain map is loaded as a pixel map
+ *    If saving final data as int32, multiple low gain region by 7.2
+ *    First use: Marius Schimdt beamtime LD6214. 9 keV. 
+ *    For now I save all data as int32 but intend to make it an option,
+ *    so you'll have the option to save as int16 which means divide all 
+ *    high gain regions by 7.2
+ */
+
+void applyGainmapCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if(global->detector[detID].useGainmap) {
+			long	pix_nn = global->detector[detID].pix_nn;
+			float	*data = eventData->detector[detID].corrected_data;
+			float	*gaincal = global->detector[detID].gainmap;
+			
+			applyGainmapCorrection(data, gaincal, pix_nn);
+		}
+	}
+}
+
+void applyGainmapCorrection(float *data, float *gainmap, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] *= gainmap[i]*7.2 ; 
+	}
+}
+
+
+
 
 /*
  *	Apply bad pixel mask

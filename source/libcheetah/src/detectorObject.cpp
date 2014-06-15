@@ -44,6 +44,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	strcpy(darkcalFile, "No_file_specified");
 	strcpy(wireMaskFile, "No_file_specified");
 	strcpy(gaincalFile, "No_file_specified");
+	strcpy(gainmapFile, "No_file_specified");
     
 	// Default ASIC layout (cspad)
 	asic_nx = CSPAD_ASIC_NX;
@@ -91,7 +92,14 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Gain calibration correction
 	useGaincal = 0;
 	invertGain = 0;
-	
+
+	// Gain map correction (1 = high, 0 = low) - need to confirm this..
+	useGainmap = 0;
+	useint32 = 1; 
+	// originally final data was saved as int16. Applying gain map 
+	// scaling inner circle (low gain to avoid saturation) by 7.2 would lead to
+	// overflows, so all data from those runs will be saved as int32.
+
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
 	bgMemory = 50;
@@ -258,6 +266,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "gaincal")) {
 		strcpy(gaincalFile, value);
 		useGaincal = 1;
+	}
+	else if (!strcmp(tag, "gainmap")) {
+		strcpy(gainmapFile, value);
+		useGainmap = 1;
+		useint32 = 1;
 	}
 	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask"))) {
 		strcpy(badpixelFile, value);
@@ -589,6 +602,7 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 	free(darkcal);
 	free(selfdark);
 	free(gaincal);
+	free(gainmap);
 	free(bg_buffer);
 	free(hotpix_buffer);
 	free(halopix_buffer);
@@ -973,6 +987,82 @@ void cPixelDetectorCommon::readGaincal(char *filename){
 			else 
 				gaincal[i] = 0;
 		}
+	}
+	
+}
+
+
+/*
+ *	Read in gainmap file - for using two gain settings on the CSPAD
+ */
+void cPixelDetectorCommon::readGainmap(char *filename){
+	
+
+	// Create memory space and set default gain to 0 everywhere
+	gainmap = (float*) calloc(pix_nn, sizeof(float));
+	for(long i=0;i<pix_nn;i++)
+		gainmap[i] = 0;
+
+	// Do we even need a gainmap file?
+	if ( useGainmap == 0 ){
+		return;
+	}
+
+	// Check if a gain map file has been specified
+	if ( strcmp(filename,"") == 0 ){
+		printf("Gain map file path was not specified.\n");
+		printf("Aborting...\n");
+		exit(1);
+	}	
+
+	printf("Reading detector gain map:\n");
+	printf("\t%s\n",filename);
+
+		
+	// Check whether gain map file exists!
+	FILE* fp = fopen(filename, "r");
+	if (fp) 	// file exists
+		fclose(fp);
+	else {		// file doesn't exist
+		printf("\tGain map file does not exist: %s\n",filename);
+		printf("\tAborting...\n");
+		exit(1);
+	}
+	
+	
+
+	// I'm confused about these two lines:
+	// Read darkcal data from file
+	cData2d		temp2d;
+	temp2d.readHDF5(filename);
+	
+
+	// Correct geometry?
+	if(temp2d.nx != pix_nx || temp2d.ny != pix_ny) {
+		printf("\tGeometry mismatch: %lix%li != %lix%li\n",temp2d.nx, temp2d.ny, pix_nx, pix_ny);
+		printf("\tAborting...\n");
+		exit(1);
+	} 
+	
+	
+	// Copy into gainmap array
+	for(long i=0;i<pix_nn;i++)
+		gainmap[i] = (float) temp2d.data[i];
+
+
+	// Invert the gain so we have an array that all we need to do is simple multiplication
+	// Pixels with zero gain become dead pixels
+	if(useint32) {
+		for(long i=0;i<pix_nn;i++) {
+			if(gaincal[i] = 1)
+				gaincal[i] = 7.2*gaincal[i] ;
+		}
+	else
+		for(long i=0;i<pix_nn;i++) {
+			if(gaincal[i] = 0)
+				gaincal[i] = gaincal[i]/7.2 ;
+		}
+
 	}
 	
 }
