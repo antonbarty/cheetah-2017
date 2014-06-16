@@ -21,7 +21,7 @@ void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
-void applyGainmapCorrection(float*, float*, long);
+void applyGainmapCorrection(float*, float*, long, cGlobal*);
 void applyBadPixelMask(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);

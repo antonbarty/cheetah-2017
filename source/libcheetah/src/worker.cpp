@@ -129,6 +129,9 @@ void *worker(void *threadarg) {
 	
 	// Apply gain correction
 	applyGainCorrection(eventData, global);
+
+	// Apply gain map correction
+	applyGainmapCorrection(eventData, global);
 	
 	// Apply bad pixel map
 	applyBadPixelMask(eventData, global);

@@ -95,7 +95,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Gain map correction (1 = high, 0 = low) - need to confirm this..
 	useGainmap = 0;
-	useint32 = 0; 
+//	useint32 = 0; 
 	// originally final data was saved as int16. Applying gain map 
 	// scaling low q pixels (which were set to low gain to avoid saturation) 
 	// by 7.2 would lead to
@@ -271,7 +271,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "gainmap")) {
 		strcpy(gainmapFile, value);
 		useGainmap = 1;
-		useint32 = 1;
+//		useint32 = 1;
 	}
 	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask"))) {
 		strcpy(badpixelFile, value);

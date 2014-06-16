@@ -74,6 +74,8 @@ public:
 	int      generateDarkcal;
 	/** @brief Toggle the creation of a gaincal image. */
 	int      generateGaincal;
+	/** @brief Toggle the saving of corrected frames as I32LE or I16LE. */
+	int      useint32;
 
 
 	/** @brief Toggle the usage of a hitfinder. */

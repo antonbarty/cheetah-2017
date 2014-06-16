@@ -172,6 +172,7 @@ cGlobal::cGlobal(void) {
 	hdf5dump = 0;
 	saveInterval = 1000;
 	savePixelmask = 1;
+	useint32 = 0;
         // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
 	// Flush after every image by default
@@ -832,6 +833,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		generateDarkcal = atoi(value);
 	}
 	else if (!strcmp(tag, "generategaincal")) {
+		generateGaincal = atoi(value);
+	}
+	else if (!strcmp(tag, "useint32")) {
 		generateGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
