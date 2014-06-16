@@ -586,6 +586,7 @@ void saveDarkcal(cGlobal *global, int detID) {
 	
 	printf("Processing darkcal\n");
 	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
+
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
 	for(long i=0; i<pix_nn; i++)

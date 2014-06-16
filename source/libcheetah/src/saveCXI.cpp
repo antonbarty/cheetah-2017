@@ -743,6 +743,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		createAndWriteDataset(buffer,confVal.self,global->detector[detID].darkcalFile,MAX_FILENAME_LENGTH);
 		sprintf(buffer,"detector%ld_gaincalFile",detID);
 		createAndWriteDataset(buffer,confVal.self,global->detector[detID].gaincalFile,MAX_FILENAME_LENGTH);
+		sprintf(buffer,"detector%ld_gainmapFile",detID);
+		createAndWriteDataset(buffer,confVal.self,global->detector[detID].gainmapFile,MAX_FILENAME_LENGTH);
 		sprintf(buffer,"detector%ld_badpixelFile",detID);
 		createAndWriteDataset(buffer,confVal.self,global->detector[detID].badpixelFile,MAX_FILENAME_LENGTH);
 		sprintf(buffer,"detector%ld_wireMaskFile",detID);
@@ -757,6 +759,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		createAndWriteDataset(buffer,confVal.self,&global->detector[detID].cspadSubtractBehindWires);
 		sprintf(buffer,"detector%ld_invertGain",detID);
 		createAndWriteDataset(buffer,confVal.self,&global->detector[detID].invertGain);
+//		sprintf(buffer,"detector%ld_useint32",detID);
+//		createAndWriteDataset(buffer,confVal.self,&global->detector[detID].useint32);
 		sprintf(buffer,"detector%ld_saveDetectorCorrectedOnly",detID);
 		createAndWriteDataset(buffer,confVal.self,&global->detector[detID].saveDetectorCorrectedOnly);
 		sprintf(buffer,"detector%ld_saveDetectorRaw",detID);
@@ -796,6 +800,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 		//sprintf(buffer,"detector%ld_X",detID);
 		//createAndWriteDataset(buffer,confVal.self,&global->detector[detID].X);
 	}
+
+	// Is useint32 supposed to be included in the following? Or is it supposed to be in the set above? -NZ
 
 	createAndWriteDataset("defaultPhotonEnergyeV",confVal.self,&global->defaultPhotonEnergyeV);
 	createAndWriteDataset("startAtFrame",confVal.self,&global->startAtFrame);

@@ -127,6 +127,8 @@ public:
 	char  darkcalFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing gain calibration */
 	char  gaincalFile[MAX_FILENAME_LENGTH];
+	/** @brief File containing gain map: 0 = low gain, 1 = high gain */
+	char  gainmapFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing bad pixel mask */
 	char  badpixelFile[MAX_FILENAME_LENGTH];
 	/** @brief What is this? */
@@ -212,6 +214,9 @@ public:
 	// Gain calibration
 	int    useGaincal;
 	int    invertGain;
+	// Gain map scaling 
+	int    useGainmap;
+	int    useint32;
 	// Saturated pixels
 	int    maskSaturatedPixels;
 	long   pixelSaturationADC;
@@ -304,6 +309,7 @@ public:
 	float     *darkcal;
 	float     *selfdark;
 	float     *gaincal;
+	float     *gainmap;
 	uint16_t  *pixelmask_shared;
 	pthread_mutex_t* halopix_mutexes;
 	uint16_t  *pixelmask_shared_max;
@@ -361,6 +367,7 @@ public:
 	void updateKspace(cGlobal*, float);
 	void readDarkcal(char *);
 	void readGaincal(char *);
+	void readGainmap(char *);
 	void readPeakmask(cGlobal*, char *);
 	void readBadpixelMask(char *);
 	void readBaddataMask(char *);

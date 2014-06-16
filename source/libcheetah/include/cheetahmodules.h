@@ -8,6 +8,7 @@ void *worker(void *);
 // detectorCorrection.cpp
 void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
+void applyGainmapCorrection(cEventData*, cGlobal*);
 void applyBadPixelMask(cEventData*, cGlobal*);
 void cspadModuleSubtract(cEventData*, cGlobal*);
 void cspadModuleSubtract2(cEventData*, cGlobal*);
@@ -20,6 +21,7 @@ void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
+void applyGainmapCorrection(float*, float*, long);
 void applyBadPixelMask(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);

@@ -75,7 +75,7 @@ cGlobal::cGlobal(void) {
 
 	// Hitfinding
 	hitfinder = 0;
-    hitfinderInvertHit = 0;
+	hitfinderInvertHit = 0;
 	hitfinderDetector = 0;
 	hitfinderADC = 100;
 	hitfinderTAT = 1e3;
@@ -95,7 +95,7 @@ cGlobal::cGlobal(void) {
 	hitfinderMinPeakSeparation = 0;
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
-    hitfinderLocalBGThickness = 4;
+	hitfinderLocalBGThickness = 4;
 	//hitfinderLimitRes = 1;
 	hitfinderMinRes = 0;
 	hitfinderMaxRes = 1e6;
@@ -134,9 +134,9 @@ cGlobal::cGlobal(void) {
 	FEEspectrumWidth = 1024;
 
 	
-    // CXI downstream energy spectrum default configuration
-    espectrum = 0;
-    espectrum1D = 0;
+        // CXI downstream energy spectrum default configuration
+	espectrum = 0;
+	espectrum1D = 0;
 	espectrumTiltAng = 0;
 	espectrumLength = 1080;
 	espectrumWidth = 900;
@@ -161,8 +161,8 @@ cGlobal::cGlobal(void) {
 
 	// Assemble options
 	assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
-    assemble2DImage = 0;
-    assemble2DMask = 0;
+	assemble2DImage = 0;
+	assemble2DMask = 0;
 
 	// Saving options
 	savehits = 0;
@@ -172,7 +172,7 @@ cGlobal::cGlobal(void) {
 	hdf5dump = 0;
 	saveInterval = 1000;
 	savePixelmask = 1;
-    // Do not output 1 HDF5 per image by default
+        // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
@@ -245,6 +245,7 @@ void cGlobal::setup() {
 		detector[i].readDetectorGeometry(detector[i].geometryFile);
 		detector[i].readDarkcal(detector[i].darkcalFile);
 		detector[i].readGaincal(detector[i].gaincalFile);
+		detector[i].readGainmap(detector[i].gainmapFile);
 		detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
 		detector[i].pixelmask_shared_max = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
 		detector[i].pixelmask_shared_min = (uint16_t*) malloc(detector[i].pix_nn*sizeof(uint16_t));
@@ -1139,6 +1140,7 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
 	//fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
 	//fprintf(fp, "invertGain=%d\n",invertGain);
+	fprintf(fp, "useint32=%d\n",useint32);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);

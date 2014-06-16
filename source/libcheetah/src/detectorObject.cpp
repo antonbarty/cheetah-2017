@@ -95,9 +95,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Gain map correction (1 = high, 0 = low) - need to confirm this..
 	useGainmap = 0;
-	useint32 = 1; 
+	useint32 = 0; 
 	// originally final data was saved as int16. Applying gain map 
-	// scaling inner circle (low gain to avoid saturation) by 7.2 would lead to
+	// scaling low q pixels (which were set to low gain to avoid saturation) 
+	// by 7.2 would lead to
 	// overflows, so all data from those runs will be saved as int32.
 
 	// Subtraction of running background (persistent photon background) 
@@ -960,7 +961,7 @@ void cPixelDetectorCommon::readGaincal(char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read gaincal data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1029,10 +1030,8 @@ void cPixelDetectorCommon::readGainmap(char *filename){
 		exit(1);
 	}
 	
-	
 
-	// I'm confused about these two lines:
-	// Read darkcal data from file
+	// Read gainmap data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1049,22 +1048,6 @@ void cPixelDetectorCommon::readGainmap(char *filename){
 	for(long i=0;i<pix_nn;i++)
 		gainmap[i] = (float) temp2d.data[i];
 
-
-	// Invert the gain so we have an array that all we need to do is simple multiplication
-	// Pixels with zero gain become dead pixels
-	if(useint32) {
-		for(long i=0;i<pix_nn;i++) {
-			if(gaincal[i] = 1)
-				gaincal[i] = 7.2*gaincal[i] ;
-		}
-	else
-		for(long i=0;i<pix_nn;i++) {
-			if(gaincal[i] = 0)
-				gaincal[i] = gaincal[i]/7.2 ;
-		}
-
-	}
-	
 }
 
 
@@ -1099,7 +1082,7 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read peakmask data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1154,7 +1137,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read bad pixel mask data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1185,12 +1168,12 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 void cPixelDetectorCommon::readBaddataMask(char *filename){
 	
 		
-	// Do we need a bad pixel map?
+	// Do we need a bad data map?
 	if ( useBadDataMask == 0 ){
 		return;
 	}
     
-	// Check if a bad pixel mask file has been specified
+	// Check if a bad data mask file has been specified
 	if ( strcmp(filename,"") == 0 ){
 		printf("Bad data mask file path was not specified.\n");
 		printf("Aborting...\n");
@@ -1211,7 +1194,7 @@ void cPixelDetectorCommon::readBaddataMask(char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read bad data mask data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1270,7 +1253,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read wire data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	

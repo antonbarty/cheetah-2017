@@ -91,17 +91,29 @@ void applyGainmapCorrection(cEventData *eventData, cGlobal *global) {
 		if(global->detector[detID].useGainmap) {
 			long	pix_nn = global->detector[detID].pix_nn;
 			float	*data = eventData->detector[detID].corrected_data;
-			float	*gaincal = global->detector[detID].gainmap;
+			float	*gainmap = global->detector[detID].gainmap;
 			
-			applyGainmapCorrection(data, gaincal, pix_nn);
+			applyGainmapCorrection(data, gainmap, pix_nn);
 		}
 	}
 }
 
 void applyGainmapCorrection(float *data, float *gainmap, long pix_nn) {
-	for(long i=0; i<pix_nn; i++) {
-		data[i] *= gainmap[i]*7.2 ; 
-	}
+        // If using int32, multiply low gain pixel values by scaling factor (7.2 at 9 keV - June 2014)
+        // If using int16, divide high gain pixel (gainmap = 1) values by scaling factor.
+        if(useint32) {
+                for(long i=0;i<pix_nn;i++) {
+                        if(gainmap[i] = 0)
+                                data[i] *= 7.2 ;
+                }
+        else
+            	for(long i=0;i<pix_nn;i++) {
+                        if(gainmap[i] = 1)
+                                data[i] /=  7.2 ;
+                }
+
+        }
+
 }
 
 
