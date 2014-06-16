@@ -354,6 +354,7 @@ void cGlobal::setup() {
 			detector[i].cspadSubtractUnbondedPixels = 0;
 			detector[i].useDarkcalSubtraction = 0;
 			detector[i].useGaincal=0;
+			detector[i].useGainmap=0;
 			detector[i].useAutoHotpixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
@@ -386,8 +387,9 @@ void cGlobal::setup() {
 			detector[i].useDarkcalSubtraction = 1;
 			detector[i].useAutoHotpixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
-            detector[i].useLocalBackgroundSubtraction = 0;
+			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].useGaincal=0;
+			detector[i].useGainmap=0;
 			detector[i].startFrames = 0;
 			detector[i].saveDetectorRaw = 1;
 			detector[i].saveDetectorCorrectedOnly = 1;
@@ -836,7 +838,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		generateGaincal = atoi(value);
 	}
 	else if (!strcmp(tag, "useint32")) {
-		generateGaincal = atoi(value);
+		useint32 = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		printf("The keyword subtractBg has been changed.  It is\n"

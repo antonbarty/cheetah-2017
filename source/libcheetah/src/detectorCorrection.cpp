@@ -101,13 +101,14 @@ void applyGainmapCorrection(cEventData *eventData, cGlobal *global) {
 void applyGainmapCorrection(float *data, float *gainmap, long pix_nn, cGlobal *global) {
         // If using int32, multiply low gain pixel values by scaling factor (7.2 at 9 keV - June 2014)
         // If using int16, divide high gain pixel (gainmap = 1) values by scaling factor.
-        if(global->useint32) {
+        if(global->useint32 == 1) {
+		printf("use int 32 = %i \n", global->useint32);
                 for(long i=0;i<pix_nn;i++) {
                         if(gainmap[i] == 0)
                                 data[i] *= 7.2 ;
                 }
 	}
-        else {
+        else if (global->useint32 == 0) {
             	for(long i=0;i<pix_nn;i++) {
                         if(gainmap[i] == 1)
                                 data[i] /=  7.2 ;

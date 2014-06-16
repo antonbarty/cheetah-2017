@@ -74,7 +74,7 @@ public:
 	int      generateDarkcal;
 	/** @brief Toggle the creation of a gaincal image. */
 	int      generateGaincal;
-	/** @brief Toggle the saving of corrected frames as I32LE or I16LE. */
+	/** @brief Toggle the saving of corrected frames as I32LE or I16LE. */ //check this - I32LA ? or U32 ? 
 	int      useint32;
 
 
