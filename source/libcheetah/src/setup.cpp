@@ -1278,12 +1278,7 @@ void cGlobal::writeInitialLog(void){
 	}
 
 //	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
-	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, \
-eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, \
-eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, \
-eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, \
-eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn, \
-eventData->pumpLaser2On, eventData->laser2EventCodeOn\n");
+	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn, eventData->pumpLaser2On, eventData->laser2EventCodeOn\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
