@@ -117,6 +117,8 @@ public:
 	int         pumpLaser2On;
 	bool        laser2EventCodeOn;
 	double      laserDelay;
+	double	    gainmapscale;
+
 	
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV

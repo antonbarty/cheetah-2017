@@ -216,7 +216,6 @@ public:
 	int    invertGain;
 	// Gain map scaling 
 	int    useGainmap;
-//	int    useint32; 
 	// Saturated pixels
 	int    maskSaturatedPixels;
 	long   pixelSaturationADC;

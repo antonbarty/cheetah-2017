@@ -76,7 +76,8 @@ public:
 	int      generateGaincal;
 	/** @brief Toggle the saving of corrected frames as I32LE or I16LE. */ //check this - I32LA ? or U32 ? 
 	int      useint32;
-
+	/** @brief Specify scaling factor of where gain = 0 in binary gain map. */
+	double      gainmapscale;
 
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;

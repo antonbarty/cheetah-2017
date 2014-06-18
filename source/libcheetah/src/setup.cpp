@@ -173,6 +173,7 @@ cGlobal::cGlobal(void) {
 	saveInterval = 1000;
 	savePixelmask = 1;
 	useint32 = 0;
+	gainmapscale = 6.375;
         // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
 	// Flush after every image by default
@@ -840,6 +841,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "useint32")) {
 		useint32 = atoi(value);
 	}
+	else if (!strcmp(tag, "gainmapscale")) {
+		gainmapscale = atof(value);
+	}
 	else if (!strcmp(tag, "subtractbg")) {
 		printf("The keyword subtractBg has been changed.  It is\n"
 			   "now known as useDarkcalSubtraction.\n"
@@ -1147,6 +1151,7 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
 	//fprintf(fp, "invertGain=%d\n",invertGain);
 	fprintf(fp, "useint32=%d\n",useint32);
+	fprintf(fp, "gainmapscale=%g\n",gainmapscale);
 	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
 	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
 	fprintf(fp, "hitfinder=%d\n",hitfinder);

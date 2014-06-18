@@ -105,13 +105,17 @@ void applyGainmapCorrection(float *data, float *gainmap, long pix_nn, cGlobal *g
 		printf("use int 32 = %i \n", global->useint32);
                 for(long i=0;i<pix_nn;i++) {
                         if(gainmap[i] == 0)
-                                data[i] *= 6.87526 ;
+//                                data[i] *= 6.87526 ;
+                                data[i] *= global->gainmapscale ;
+//6.375 ;
                 }
 	}
         else if (global->useint32 == 0) {
             	for(long i=0;i<pix_nn;i++) {
                         if(gainmap[i] == 1)
-                                data[i] /= 6.87526 ;
+//                                data[i] *= 1.0 ;
+				  data[i] /= global->gainmapscale ;
+//6.87526 ;
                 }
 
         }

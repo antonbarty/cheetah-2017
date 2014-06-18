@@ -662,6 +662,13 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	H5Dclose(dataset_id);
 
 
+	// Gainmap scale 
+	double gainmapscale = (info->gainmapscale);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/gainmapscale", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &gainmapscale);
+	H5Dclose(dataset_id);
+
+
 	// Misc EPICS PVs
 	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {	
 		sprintf(fieldID, "/LCLS/%s", &global->epicsPvFloatAddresses[i][0]);
