@@ -176,6 +176,7 @@ cGlobal::cGlobal(void) {
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
+	strcpy(dataSaveFormat, "INT16");
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -404,6 +405,9 @@ void cGlobal::setup() {
 		( hitfinderAlgorithm == 8 ))
 		savePeakInfo = 1; 
 
+    
+    
+    
 	/*
 	 * Other stuff
 	 */
@@ -1062,11 +1066,17 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
-	} else if (!strcmp(tag, "cxiflushperiod")) {
+	}
+	else if (!strcmp(tag, "datasaveformat")) {
+		strcpy(dataSaveFormat, value);
+	}
+    else if (!strcmp(tag, "cxiflushperiod")) {
 		cxiFlushPeriod = atoi(value);
-	} else if (!strcmp(tag, "pythonfile")) {
+	}
+    else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
-	} else if (!strcmp(tag, "usesinglethreadcalibration")) {
+	}
+    else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
 	}
 	// Unknown tags
@@ -1090,6 +1100,17 @@ int cGlobal::validateConfiguration(void){
 		fail = 1;
 	}
 #endif
+    
+    /* Do we know this data format */
+    if (strcmp(dataSaveFormat, "INT16") && strcmp(dataSaveFormat, "float") && strcmp(dataSaveFormat, "INT32")) {
+        printf("Error: Unknown data format type specified:");
+        printf("dataSaveFormat = %s", dataSaveFormat);
+        fail = 1;
+    };
+    
+    
+
+    
 	return fail;
 }
 

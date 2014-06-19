@@ -964,7 +964,9 @@ void cPixelDetectorCommon::readGaincal(char *filename){
 		gaincal[i] = (float) temp2d.data[i];
 
 
-	// Invert the gain so we have an array that all we need to do is simple multiplication
+	// By default the gaincal should be the number we want to multiply by.
+    // Offer the option to invert the gain if what is supplied is inverted
+    //  so we have an array that all we need to do is simple multiplication
 	// Pixels with zero gain become dead pixels
 	if(invertGain) {
 		for(long i=0;i<pix_nn;i++) {
