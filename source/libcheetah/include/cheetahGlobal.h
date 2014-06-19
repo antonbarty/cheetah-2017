@@ -268,7 +268,8 @@ public:
 	int		 h5compress;
     
 	/** @brief Output 1 HDF5 per image by default */
-	bool saveCXI;
+	bool    saveCXI;
+    char    dataSaveFormat[MAX_FILENAME_LENGTH];
 
 	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
 	    Setting it to 0 avoid doing any flushes.

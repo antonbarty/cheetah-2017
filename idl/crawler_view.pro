@@ -873,7 +873,11 @@ pro crawler_event, ev
 			saturation_check, file
 		end
 		
-
+		sState.mbview_gainmap : begin
+			cd, current=dir
+			dir = file_dirname(dir)+'/calib'
+			make_cspad_gain_map, sState.geometry, 0, 300, 6.87526, /menu, outdir=dir
+		end
 
 
 		sState.mbfile_autorefresh : begin
@@ -958,6 +962,8 @@ pro crawler_view
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')
+	mbview_gainmap = widget_button(mbtool, value='Create CSPAD gain map')
+
 
 
 	mbfile = widget_button(bar, value='View')
@@ -1058,6 +1064,8 @@ pro crawler_view
 			
 			mbview_badpix : mbview_badpix, $
 			mbview_satcheck : mbview_satcheck, $
+			mbview_gainmap : mbview_gainmap, $
+
 			
 			mbview_waxs : mbview_waxs, $
 			
