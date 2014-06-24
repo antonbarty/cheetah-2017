@@ -4,33 +4,8 @@
 .style_1 {
     padding: 0px;
 }
-.style_SkipStroke_2 {
-    background: transparent;
-    opacity: 1.00;
-}
 .style_2 {
     padding: 0px;
-}
-.style_External_145_43 {
-    bottom: 0px;
-    position: absolute;
-    width: 145px;
-}
-.style_SkipStroke {
-    background: transparent;
-    opacity: 1.00;
-}
-.style_SkipStroke_1 {
-    background: transparent;
-    opacity: 1.00;
-}
-.style_SkipStroke_3 {
-    background: transparent;
-    opacity: 1.00;
-}
-.style_SkipStroke_4 {
-    background: transparent;
-    opacity: 1.00;
 }
 .paragraph_style {
     color: rgb(81, 81, 81);
@@ -54,21 +29,21 @@
     text-indent: 0px;
     text-transform: none;
 }
-.style_External_515_43 {
+.style_External_656_84 {
     bottom: 0px;
-    position: absolute;
-    width: 515px;
+    position: relative;
+    width: 656px;
 }
 .paragraph_style_1 {
     color: rgb(81, 81, 81);
-    font-family: 'HelveticaNeue', 'Helvetica Neue', 'Arial', sans-serif;
+    font-family: 'HelveticaNeue-Bold', 'Helvetica Neue', 'Arial', sans-serif;
     font-size: 12px;
     font-stretch: normal;
     font-style: normal;
     font-variant: normal;
-    font-weight: 400;
+    font-weight: 700;
     letter-spacing: 0;
-    line-height: 17px;
+    line-height: 18px;
     margin-bottom: 0px;
     margin-left: 0px;
     margin-right: 0px;
@@ -80,6 +55,49 @@
     text-decoration: none;
     text-indent: 0px;
     text-transform: none;
+}
+.style_SkipStroke_2 {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_SkipStroke {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_External_145_43 {
+    bottom: 0px;
+    position: absolute;
+    width: 145px;
+}
+.style_SkipStroke_1 {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_SkipStroke_3 {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_External_656_100 {
+    bottom: 0px;
+    position: relative;
+    width: 656px;
+}
+.style_SkipStroke_4 {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_SkipStroke_5 {
+    background: transparent;
+    opacity: 1.00;
+}
+.style_SkipStroke_6 {
+    background: rgb(214, 214, 214);
+    opacity: 1.00;
+}
+.style_External_515_43 {
+    bottom: 0px;
+    position: absolute;
+    width: 515px;
 }
 .style_External_656_44 {
     bottom: 0px;
@@ -174,6 +192,21 @@
     text-indent: 0px;
     text-transform: none;
 }
+.Normal_External_515_43 {
+    bottom: 0px;
+    position: absolute;
+    width: 515px;
+}
+.Normal_External_656_100 {
+    bottom: 0px;
+    position: absolute;
+    width: 656px;
+}
+.Normal_External_656_44 {
+    bottom: 0px;
+    position: absolute;
+    width: 656px;
+}
 .Normal {
     padding: 0px;
 }
@@ -182,12 +215,7 @@
     position: absolute;
     width: 400px;
 }
-.Normal_External_515_43 {
-    bottom: 0px;
-    position: absolute;
-    width: 515px;
-}
-.Normal_External_656_44 {
+.Normal_External_656_84 {
     bottom: 0px;
     position: absolute;
     width: 656px;
@@ -230,11 +258,11 @@
     background: transparent;
     opacity: 1.00;
 }
-.graphic_textbox_layout_style_default_External_145_43 {
-    position: relative;
-}
 .graphic_textbox_layout_style_default {
     padding: 4px;
+}
+.graphic_textbox_layout_style_default_External_145_43 {
+    position: relative;
 }
 .graphic_textbox_layout_style_default_External_538_137 {
     position: relative;
@@ -251,22 +279,40 @@ a:visited {
     color: rgb(66, 66, 66);
     text-decoration: none;
 }
+a.class1 {
+    color: rgb(0, 150, 255);
+}
+a.class1:visited {
+    color: rgb(148, 23, 81);
+}
+a.class1:hover {
+    color: rgb(224, 133, 102);
+    text-decoration: underline;
+}
+a.class2 {
+    color: rgb(0, 150, 255);
+}
+a.class2:visited {
+    color: rgb(148, 23, 81);
+}
+a.class2:hover {
+    color: rgb(224, 133, 102);
+    text-decoration: underline;
+}
+a.class3 {
+    color: rgb(0, 150, 255);
+}
+a.class3:visited {
+    color: rgb(148, 23, 81);
+}
+a.class3:hover {
+    color: rgb(224, 133, 102);
+    text-decoration: underline;
+}
 a:hover {
     color: rgb(224, 133, 102);
     text-decoration: underline;
 }
-ol  { 
-      padding:0;
-      margin:0;
-      text-indent:0;
-      list-style-type:none ;
-      list-style-image:none
-    }
-.Bullet { 
-          text-decoration:none ;
-          text-transform:none ;
-          border: none;          
-        }
 .bumper {
     font-size: 1px;
     line-height: 1px;

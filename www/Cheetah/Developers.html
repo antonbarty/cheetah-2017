@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="Generator" content="iWeb 3.0.4" />
-    <meta name="iWeb-Build" content="local-build-20131023" />
+    <meta name="iWeb-Build" content="local-build-20140624" />
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
     <meta name="viewport" content="width=700" />
     <title>Developers</title>
@@ -138,15 +138,14 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id7" style="height: 120px; left: 19px; position: absolute; top: 28px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_662_120" style="padding: 0px; ">
+          <div id="id7" style="height: 106px; left: 19px; position: absolute; top: 28px; width: 662px; z-index: 1; " class="style_SkipStroke_2 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_662_106" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">Cheetah is open-source (GPL v3) and can be downloaded here:<br /></p>
-                <p class="Free_Form">    <a title="Developers_files/cheetah-2013.3.tar.gz" href="Developers_files/cheetah-2013.3.tar.gz">cheetah-2013.3.tar.gz</a><br /></p>
+                <p style="padding-top: 0pt; " class="Free_Form">Cheetah is open-source and has been released under the <a title="http://www.gnu.org/licenses/gpl-3.0.en.html" href="http://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPL v3</a> license.<br /></p>
                 <p class="Free_Form"><br /></p>
-                <p class="Free_Form">Cheetah is also available from Github for those interested in using version control:<br /></p>
+                <p class="Free_Form">The latest releases and updates Cheetah are best downloaded from the Github repository:<br /></p>
                 <p class="Free_Form"><a onclick="window.open(this.href); return false;" title="https://github.com/antonbarty/cheetah" href="https://github.com/antonbarty/cheetah" onkeypress="window.open(this.href); return false;" class="class2">    https://github.com/antonbarty/cheetah/</a><br /></p>
-                <p class="Free_Form">Please follow the download instructions on github:<br /></p>
+                <p class="Free_Form">Please follow the download instructions on that page:<br /></p>
                 <p class="Free_Form">    &gt; git clone git://github.com/antonbarty/cheetah.git<br /></p>
                 <p style="padding-bottom: 0pt; " class="Free_Form">(assuming you have a version of git already installed) </p>
               </div>
@@ -261,7 +260,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form"><span style="line-height: 44px; " class="style">Programming with libCheetah<br /></span></p>
                 <p class="Free_Form"><br /></p>
-                <div class="paragraph Free_Form" style="padding-bottom: 0pt; "><div id="id35" style="height: 120px; position: relative; width: 654px; " class="style_SkipStroke_2 shape-with-text inline-block"><div class="text-content graphic_textbox_layout_style_default_External_654_120" style="padding: 0px; "><div class="graphic_textbox_layout_style_default"><p style="padding-top: 0pt; " class="Free_Form">Cheetah is not omniscient - it is necessary to tell Cheetah about the location and format of data files, detector calibration, and what analysis to perform.  Meanwhile, the need to use third-party frameworks for reading data files in XTC format complicates the setup procedure as Cheetah has work within workflow constraints and computing environments imposed by others.   <br /></p><p class="Free_Form"><br /></p><p style="padding-bottom: 0pt; " class="Free_Form">The easiest way to hide all of this mess is to use scripts to coordinate the data analysis workflow.  Several such scripts can be found in the examples folder.   This page will guide you through the key steps in setting up these scripts for an experiment.</p></div></div></div></div>
+                <div class="paragraph Free_Form" style="padding-bottom: 0pt; "><div id="id35" style="height: 120px; position: relative; width: 654px; " class="style_SkipStroke_2 shape-with-text inline-block"><div class="text-content graphic_textbox_layout_style_default_External_654_120" style="padding: 0px; "><div class="graphic_textbox_layout_style_default"><p style="padding-top: 0pt; " class="Free_Form">Cheetah is modular and implemented as a callable library of routines.  There is one function which reads custom data formats and passes data on to Cheetah for processing.  To implement Cheetah on a data file format that is currently not supported, take a look at the SACLA file reader (as it is much easier to understand than the psana-dependent code required to run at SLAC).<br /></p><p class="Free_Form"> <br /></p><p style="padding-bottom: 0pt; " class="Free_Form">If only certain functionality is required, the underlying routines within Cheetah are, as far as practical, implemented at the lowest level as normal C routines.  This makes it comparatively easy to extract individual routines for use elsewhere, should this be useful in any way. </p></div></div></div></div>
               </div>
               <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
             </div>
