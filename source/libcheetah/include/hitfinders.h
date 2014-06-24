@@ -9,6 +9,7 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detID);
 int hitfinder4(cGlobal *global, cEventData *eventData, long detID);
 int hitfinder9(cGlobal *global, cEventData *eventData, long detID);
 int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID);
+int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detID);
 bool containsEvent(std::string event, cGlobal *global);
 
 #endif

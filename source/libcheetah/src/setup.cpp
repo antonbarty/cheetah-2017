@@ -125,7 +125,8 @@ cGlobal::cGlobal(void) {
 	hitfinderTOFMeanBackground[0] = 2;
 	hitfinderTOFThresh.resize(1);
 	hitfinderTOFThresh[0] = 100;
-	hitfinderTOFMinCount = 1;
+	hitfinderTOFMinCount = 0;
+    hitfinderTOFMaxCount = 1000;
 	hitfinderTOFWindow = 3;
 
 	// TOF configuration
@@ -988,6 +989,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertofmincount")) {
 		hitfinderTOFMinCount = atoi(value);
 	}
+    else if (!strcmp(tag, "hitfindertofmaxcount")) {
+		hitfinderTOFMaxCount = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfindertofwindow")) {
 		hitfinderTOFWindow = atoi(value);
 	}
@@ -1062,7 +1066,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		assemblePowders = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
-		hitfinderADC = atoi(value);
+		hitfinderADC = atof(value);
 	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
@@ -1275,7 +1279,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "assemblePowders=%d\n",assemblePowders);
-	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+	fprintf(fp, "hitfinderADC=%f\n",hitfinderADC);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);

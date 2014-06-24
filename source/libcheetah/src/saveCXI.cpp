@@ -613,6 +613,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	unshared->createStack("gmd2",H5T_NATIVE_DOUBLE);
 	unshared->createStack("energySpectrumExist",H5T_NATIVE_INT);
 	unshared->createStack("nPeaks",H5T_NATIVE_INT);
+    unshared->createStack("nProtons",H5T_NATIVE_INT);
 	unshared->createStack("peakNpix",H5T_NATIVE_FLOAT);
 	unshared->createStack("peakTotal",H5T_NATIVE_FLOAT);
 	unshared->createStack("peakResolution",H5T_NATIVE_FLOAT);
@@ -1040,6 +1041,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	unshared["gmd2"].write(&info->gmd2,stackSlice);
 	unshared["energySpectrumExist"].write(&info->energySpectrumExist,stackSlice);
 	unshared["nPeaks"].write(&info->nPeaks,stackSlice);
+    unshared["nProtons"].write(&info->nProtons,stackSlice);
 	unshared["peakNpix"].write(&info->peakNpix,stackSlice);
 
 	unshared["peakTotal"].write(&info->peakTotal,stackSlice);

@@ -367,19 +367,19 @@ hitknown:
 		if(global->saveCXI){
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
 				   eventData->threadNum, global->processRateMonitor.getRate(), 
-				   100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, 
+				   100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, 
 				   global->cxiFilename, eventData->nPeaks);
 		    //pthread_mutex_lock(&global->saveCXI_mutex);
 			writeCXI(eventData, global);
 			//pthread_mutex_unlock(&global->saveCXI_mutex);
 		} else {
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
 	}
 	// This frame is not going to be saved, but print anyway
 	else {
-		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
+		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->nPeaks);
 	}
 
 	// FEE spectrometer data stack 
@@ -458,6 +458,29 @@ cleanup:
 		DEBUG("Clean up and exit");
 
 	}
+
+    pthread_mutex_unlock(&global->saveinterval_mutex);
+    /*
+     *  Update counters
+     */
+    global->nprocessedframes += 1;
+	global->nrecentprocessedframes += 1;
+    
+	/*
+	 *	Save some types of information from time to timeperiodic powder patterns
+	 */
+	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
+		if(global->saveCXI){
+			writeAccumulatedCXI(global);
+		} 
+		saveRunningSums(global);
+		saveHistograms(global);
+		saveRadialStacks(global);
+		saveSpectrumStacks(global);
+		global->updateLogfile();
+		global->writeStatus("Not finished");
+	}
+	pthread_mutex_unlock(&global->saveinterval_mutex);
 
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);

@@ -546,31 +546,8 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
-		pthread_mutex_lock(&global->process_mutex);
+//		pthread_mutex_lock(&global->process_mutex);
     }
-	
-    /*
-     *  Update counters
-     */
-    global->nprocessedframes += 1;
-	global->nrecentprocessedframes += 1;
-    
-	
-	/*
-	 *	Save some types of information from time to timeperiodic powder patterns
-	 */
-	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-		if(global->saveCXI){
-			writeAccumulatedCXI(global);
-		} 
-		saveRunningSums(global);
-		saveHistograms(global);
-		saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-		global->writeStatus("Not finished");
-	}
-	pthread_mutex_unlock(&global->process_mutex);
 }
 
 
@@ -604,8 +581,8 @@ void cheetahExit(cGlobal *global) {
     }
     
     // Calculate mean photon energy
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nhitsandblanks;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nhitsandblanks - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
     printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
     printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
     
@@ -628,12 +605,12 @@ void cheetahExit(cGlobal *global) {
 	
     // Hitrate?
     if (global->nPowderClasses){
-		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
-		printf("Blanks: %li (%2.2f%%) ",global->nprocessedframes-global->nhits, 100.*( (global->nprocessedframes-global->nhits)/ (float) global->nprocessedframes));
+		printf("Blanks: %li (%2.2f%%) ",global->nhitsandblanks-global->nhits, 100.*( (global->nhitsandblanks-global->nhits)/ (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
     } else {
-		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
     printf("%li files processed\n",global->nprocessedframes);
 

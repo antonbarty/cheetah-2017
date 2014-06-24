@@ -82,6 +82,9 @@ public:
 	int			powderClass;
 	
 	
+    // Tof hitfinding
+    int            nProtons;
+    
 	// Peak list
 	tPeakList	peaklist;
 	

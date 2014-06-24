@@ -90,7 +90,7 @@ public:
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
-	int      hitfinderADC;
+	float      hitfinderADC;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -126,8 +126,10 @@ public:
 	std::vector<double>   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */
 	double   hitfinderTOFWindow;
-	/** @brief Peak count constraint used in some TOF hitfinding. */
+	/** @brief Peak min count constraint used in some TOF hitfinding. */
 	double   hitfinderTOFMinCount;
+    /** @brief Peak max count constraint used in some TOF hitfinding. */
+	double   hitfinderTOFMaxCount;
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
@@ -362,6 +364,7 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
+    pthread_mutex_t  saveinterval_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
 	pthread_mutex_t  swmr_mutex;
@@ -387,6 +390,7 @@ public:
 	long     npowderHits;
 	long     npowderBlanks;
 	long     nprocessedframes;
+    long     nhitsandblanks;
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;

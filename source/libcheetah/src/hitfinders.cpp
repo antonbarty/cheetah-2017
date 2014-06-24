@@ -114,7 +114,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		hit = (int) containsEvent((std::string) eventData->eventname, global);
 		break; 
 			
-
+    case 13 : // Combine hitfinderTOF and hitfinder 1 (using both protons and photons)
+        hit = hitfinderProtonsandPhotons(global, eventData, detID);
+        break;
+        
 	default :
 		printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 		printf("Stopping in confusion.\n");
@@ -124,12 +127,13 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	}
 	
 	// Update central hit counter
+    pthread_mutex_lock(&global->nhits_mutex);
+    global->nhitsandblanks++;
 	if(hit) {
-		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;
 		global->nrecenthits++;
-		pthread_mutex_unlock(&global->nhits_mutex);
 	}
+    pthread_mutex_unlock(&global->nhits_mutex);
 	
 	// Set the appropriate powder class
 	eventData->powderClass = hit;
@@ -495,10 +499,22 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 				tofIndex++;
 			}
 		}
-		hit = (count >= global->hitfinderTOFMinCount);
-		eventData->nPeaks = count;
+		hit = (count >= global->hitfinderTOFMinCount) & (count < global->hitfinderTOFMaxCount);
+		eventData->nProtons = count;
 	}
 	return hit;
+}
+
+/* A combined hitfinder using both protons (hitfinderTOF) and photons (hitfinder1) */
+
+int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detID){
+    int hit = 0;
+    int hit_tof = 0;
+    int hit_photons = 0;
+    hit_photons = hitfinder1(global, eventData, detID);
+    hit_tofprin = hitfinderTOF(global, eventData, detID);
+    hit = hit_tof & hit_photons;
+    return hit;
 }
 
 
