@@ -39,6 +39,12 @@ static const unsigned  PNCCD_ASIC_NY = 512;	// ASIC ny = extent of one ASIC in y
 static const unsigned  PNCCD_nASICS_X = 2;		// 2 ASICs across in raw data stream
 static const unsigned  PNCCD_nASICS_Y = 2;		// 2 ASICs down in raw data stresm
 
+//	SACLA mpCCD	//
+static const unsigned  mpCCD_ASIC_NX = 512;     // ASIC nx = extent of one ASIC in x
+static const unsigned  mpCCD_ASIC_NY = 1024;	// ASIC ny = extent of one ASIC in y
+static const unsigned  mpCCD_nASICS_X = 1;		// 2 ASICs across in raw data stream
+static const unsigned  mpCCD_nASICS_Y = 8;		// 2 ASICs down in raw data stresm
+
 
 static const unsigned int cbufsize = 1024;
 
@@ -67,7 +73,7 @@ static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;                // bit 9
 static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
 static const uint16_t PIXEL_IS_ARTIFACT_CORRECTED = 2048;    // bit 11
-static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID || PIXEL_IS_SATURATED || PIXEL_IS_HOT || PIXEL_IS_DEAD || PIXEL_IS_SHADOWED || PIXEL_IS_IN_PEAKMASK || PIXEL_IS_TO_BE_IGNORED || PIXEL_IS_BAD || PIXEL_IS_OUT_OF_RESOLUTION_LIMITS || PIXEL_IS_MISSING || PIXEL_IS_IN_HALO || PIXEL_IS_ARTIFACT_CORRECTED;   // all bits
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO | PIXEL_IS_ARTIFACT_CORRECTED;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -105,7 +111,7 @@ public:
 	/** @brief Type of detector */
 	char     detectorType[MAX_FILENAME_LENGTH];
 	//Pds::DetInfo::Device detectorType;
-    	//Pds::DetInfo::Detector detectorPdsDetInfo;
+	//Pds::DetInfo::Detector detectorPdsDetInfo;
 
 	//unsigned         configVsn;
 	//unsigned         quadMask;
@@ -266,7 +272,7 @@ public:
 	int		histogram;
 	long	histogramMin;
 	long	histogramNbins;
-	long	histogramBinSize;
+	float   histogramBinSize;
 	long	histogram_fs_min;
 	long	histogram_fs_max;
 	long	histogram_ss_min;
@@ -371,7 +377,7 @@ public:
 class cPixelDetectorEvent {
 
 public:
-  /* FM: Warning. Constructor is not run when class is malloc'ed*/
+	/* FM: Warning. Constructor is not run when class is malloc'ed*/
 	cPixelDetectorEvent();
 	
 	int       cspad_fail;

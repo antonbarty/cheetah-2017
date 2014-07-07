@@ -6,6 +6,7 @@
 //  Copyright (c) 2012 CFEL. All rights reserved.
 //
 
+#include <Python.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -18,7 +19,6 @@
 #include <fenv.h>
 #include <unistd.h>
 #include <vector>
-#include <Python.h>
 
 #include "cheetah.h"
 
@@ -28,57 +28,82 @@
 
 void* pythonWorker(void* threadarg)
 {
-  char* pythonFile = (char*) threadarg;
-  FILE* fileHandle = fopen(pythonFile, "r");
-  if (!fileHandle)
+	char* pythonFile = (char*) threadarg;
+	FILE* fileHandle = fopen(pythonFile, "r");
+	if (!fileHandle)
     {
-      fprintf(stderr, "Unable to open Python script %s, error code %d, continuing without Python visualizer.", pythonFile, errno);
+		fprintf(stderr, "Unable to open Python script %s, error code %d, continuing without Python visualizer.", pythonFile, errno);
     }
-  // Note: no call to Py_SetProgramName for now
-  //char buffer [50];
-  //sprintf (buffer, "/reg/neh/home/hantke/software/bin/python");
-  //Py_SetProgramName(buffer);
-  Py_Initialize();
-  //  PyThreadState* ourThread = Py_NewInterpreter();
-  PyRun_SimpleFile(fileHandle, pythonFile);
-  //  Py_EndInterpreter(ourThread);
-  //  Py_Finalize();
+	// Note: no call to Py_SetProgramName for now
+	//char buffer [50];
+	//sprintf (buffer, "/reg/neh/home/hantke/software/bin/python");
+	//Py_SetProgramName(buffer);
+	Py_Initialize();
+	//  PyThreadState* ourThread = Py_NewInterpreter();
+	PyRun_SimpleFile(fileHandle, pythonFile);
+	//  Py_EndInterpreter(ourThread);
+	//  Py_Finalize();
 
-  return 0;
+	return 0;
 }
 
 void spawnPython(char* pythonFile)
 {
-  pthread_t         thread;
-  pthread_attr_t    threadAttribute;
-  pthread_attr_init(&threadAttribute);
-  pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-  int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+	pthread_t         thread;
+	pthread_attr_t    threadAttribute;
+	pthread_attr_init(&threadAttribute);
+	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+	int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+	if(returnStatus){
+		ERROR("Failed to create python thread!");
+	}
 }
 
 /*
  *  libCheetah initialisation function
  */
-void cheetahInit(cGlobal *global) {
+int cheetahInit(cGlobal *global) {
     
+	// Check if we're using psana of the same git commit
+	if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
+		fprintf(stderr,    "*******************************************************************************************\n");
+		fprintf(stderr,"*** WARNING %s:%d ***\n",__FILE__,__LINE__);
+		
+		if(getenv("PSANA_GIT_SHA")){
+			fprintf(stderr,"***        Using psana from git commit %s         ***\n",getenv("PSANA_GIT_SHA"));
+			fprintf(stderr,"***        and cheetah_ana_mod from git commit %s ***\n",GIT_SHA1);
+		}else{
+			fprintf(stderr,"***         Using a psana version not compiled with cheetah!                            ***\n");
+		}
+		fprintf(stderr,    "*******************************************************************************************\n");
+		sleep(10);
+	}
+	setenv("LIBCHEETAH_GIT_SHA",GIT_SHA1,0);
+
 	global->self = global;
 	//global->defaultConfiguration();
 	global->parseConfigFile(global->configFile);
+	if(global->validateConfiguration()){
+		ERROR("Validation of given configuration failed");
+		return 1;
+	}
 
 	global->setup();
 	global->writeInitialLog();
 	global->writeConfigurationLog();
-    global->writeStatus("Started");
+	global->writeStatus("Started");
 
 	// Set better error handlers for HDF5
 	H5Eset_auto(H5E_DEFAULT, cheetahHDF5ErrorHandler, NULL);
 	//H5Eset_auto(cheetahHDF5ErrorHandler, NULL);
 
-	printf("Cheetah clean initialisation\n");
 	if (global->pythonFile[0]) {
-	  printf("Initialising embedded Python visualisation now\n");
-	  spawnPython(global->pythonFile);
+		printf("Initialising embedded Python visualisation now\n");
+		spawnPython(global->pythonFile);
 	}
+
+	printf("Cheetah clean initialisation\n");
+	return 0;
 }
 
 
@@ -86,32 +111,34 @@ void cheetahInit(cGlobal *global) {
  *  libCheetah function for start of a new run
  */
 void cheetahNewRun(cGlobal *global) {
-  // Wait for all workers to finish
-  while(global->nActiveThreads > 0) {
-    printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-    usleep(100000);
-  }
+	// Wait for all workers to finish
+	while(global->nActiveThreads > 0) {
+		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+		usleep(100000);
+	}
     
-  // Reset the powder log files
+	// Reset the powder log files
     pthread_mutex_lock(&global->powderfp_mutex);
 
-  if(global->runNumber > 0) {
-    for(long i=0; i<global->nPowderClasses; i++) {
+	if(global->runNumber > 0) {
+		for(long i=0; i<global->nPowderClasses; i++) {
             char	filename[1024];
 
-      sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
+			sprintf(filename,"r%04u-class%ld-log.txt",global->runNumber,i);
             if(global->powderlogfp[i] != NULL)
                 fclose(global->powderlogfp[i]);
-      global->powderlogfp[i] = fopen(filename, "w");
-      fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+			global->powderlogfp[i] = fopen(filename, "w");
+			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
 
-            sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
-			if(global->FEElogfp[i] != NULL)
-                fclose(global->FEElogfp[i]);
-            global->FEElogfp[i] = fopen(filename, "w");
-            fprintf(global->FEElogfp[i], "Stack element, eventData->frameNumber, eventData->eventname\n");
+			if(global->useFEEspectrum) {
+				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
+				if(global->FEElogfp[i] != NULL)
+					fclose(global->FEElogfp[i]);
+				global->FEElogfp[i] = fopen(filename, "w");
+				fprintf(global->FEElogfp[i], "Stack element, eventData->frameNumber, eventData->eventname\n");
+			}
+		}
     }
-  }
     pthread_mutex_unlock(&global->powderfp_mutex);
 }
 
@@ -123,7 +150,7 @@ void cheetahNewRun(cGlobal *global) {
  */
 cEventData* cheetahNewEvent(cGlobal	*global) {
 
-        /*
+	/*
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
@@ -135,7 +162,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 */
 	eventData->useThreads = 0;
 	eventData->hit = 0;
-	eventData->samplePumped = 0;
+	eventData->powderClass = 0;
+	eventData->pumpLaserOn = 0;
 	eventData->peakResolution=0.;
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
@@ -215,8 +243,8 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detID].image_pixelmask);
 		
 		//if(global->detector[detID].downsampling > 1){
-		  free(eventData->detector[detID].imageXxX);
-		  free(eventData->detector[detID].imageXxX_pixelmask);
+		free(eventData->detector[detID].imageXxX);
+		free(eventData->detector[detID].imageXxX_pixelmask);
 		//}
 
 		free(eventData->detector[detID].radialAverage);
@@ -236,11 +264,27 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->specImage);
 	}
 	//TOF stuff.
-	if(eventData->TOFPresent==1){
-		free(eventData->TOFTime);
-		free(eventData->TOFVoltage); 
+	// Explictly call the vector destructor as we're using free and not delete
+	if(eventData->TOFAllTime){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllTime[i]);
+		}
+		free(eventData->TOFAllTime);
 	}
-    
+	if(eventData->TOFAllVoltage){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllVoltage[i]);
+		}
+		free(eventData->TOFAllVoltage);	
+	}
+	if(eventData->TOFAllTrigTime){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllTrigTime[i]);
+		}
+		free(eventData->TOFAllTrigTime);
+	}
+
+
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);
@@ -287,7 +331,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 
 		if ( !isnan(detposnew) ) {
 
-				// New detector position = 0 could be an error
+			// New detector position = 0 could be an error
             if ( detposnew == 0 ) {
                 detposnew = global->detector[detID].detposprev;
                 printf("WARNING: detector position is zero, which could be an error\n"
@@ -295,24 +339,24 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
             }
 			
             //	Apply offsets
-				//	When encoder reads -500mm, detector is at its closest possible
-				//	position to the specimen, and is 79mm from the centre of the 
-				//	8" flange where the injector is mounted.  
-				//	The injector itself is about 4mm further away from the detector than this. 
+			//	When encoder reads -500mm, detector is at its closest possible
+			//	position to the specimen, and is 79mm from the centre of the 
+			//	8" flange where the injector is mounted.  
+			//	The injector itself is about 4mm further away from the detector than this. 
             global->detector[detID].detposprev = detposnew;
             global->detector[detID].detectorEncoderValue = detposnew;
             global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
 
             //	Round to the nearest two decimal places 
-				//	(10 micron, much less than a pixel size) 
+			//	(10 micron, much less than a pixel size) 
             global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;
             update_camera_length = 1;
         }	 
         
-			//	What to do if there is no camera length information?  
-			//	Keep skipping frames until this info is found?  
-			//	For now, set a (non-zero) default camera length.
-			if ( global->detector[detID].detectorZ == 0 ) {
+		//	What to do if there is no camera length information?  
+		//	Keep skipping frames until this info is found?  
+		//	For now, set a (non-zero) default camera length.
+		if ( global->detector[detID].detectorZ == 0 ) {
 
             if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
@@ -389,7 +433,7 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  *  libCheetah event processing function (multithreaded)
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
-
+	pthread_mutex_lock(&global->process_mutex);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
@@ -410,10 +454,10 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		}
 	}
 
-  /*
-   *	Remember to update global variables 
-   */
-  cheetahUpdateGlobal(global, eventData);
+	/*
+	 *	Remember to update global variables 
+	 */
+	cheetahUpdateGlobal(global, eventData);
     
     /*
      *  I/O speed test
@@ -423,6 +467,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
         cheetahDestroyEvent(eventData);
+		pthread_mutex_unlock(&global->process_mutex);
 		return;
 	}
 	
@@ -446,79 +491,63 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
     if(eventData->useThreads == 1) {
+		pthread_mutex_unlock(&global->process_mutex);
         pthread_t		thread;
         pthread_attr_t	threadAttribute;
         int				returnStatus;
         
-	time_t	tstart, tnow;
-	time(&tstart);
-	double	dtime;
-	float	maxwait = 60.;
-	double  dnextmsg = 1;
+		time_t	tstart, tnow;
+		time(&tstart);
+		double	dtime;
+		float	maxwait = 60.;
+		double  dnextmsg = 1;
         
         /*
          *  Wait until we have a spare thread in the thread pool
          *  If nothing happens for 2 minutes, assume we have some sort of thread lockup and keep going anyway
          */
         while(global->nActiveThreads >= global->nThreads || (global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)) {
-	  usleep(10000);
-	  if (!(global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)){
-	      time(&tnow);
-	      dtime = difftime(tnow, tstart);
-	      if(dtime > dnextmsg) {
-		printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
-		dnextmsg += 1;
-	      }
-	      if(dtime > maxwait) {
-                printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
-		printf("\tGiving up and resetting the thread counter\n");
-		global->freeMutexes();
-		global->nActiveThreads = 0;
-		break;
-	      }
-	    }
-	}
+			usleep(10000);
+			if (!(global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)){
+				time(&tnow);
+				dtime = difftime(tnow, tstart);
+				if(dtime > dnextmsg) {
+					printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
+					dnextmsg += 1;
+				}
+				if(dtime > maxwait) {
+					printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
+					printf("\tGiving up and resetting the thread counter\n");
+					global->freeMutexes();
+					global->nActiveThreads = 0;
+					break;
+				}
+			}
+		}
         
         // Set detached state
         pthread_attr_init(&threadAttribute);
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 
         // Create a new worker thread for this data frame
+		// Lock acquired before creation to avoid race condition where nActiveThreads decremented before incremented
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
-	if (returnStatus == 0) { // creation successful
-	  // Increment threadpool counter
-	  pthread_mutex_lock(&global->nActiveThreads_mutex);
-	  global->nActiveThreads += 1;
-	  global->threadCounter += 1;
-	  pthread_mutex_unlock(&global->nActiveThreads_mutex);
+		if (returnStatus == 0) { // creation successful
+			// Increment threadpool counter
+			global->nActiveThreads += 1;
+			global->threadCounter += 1;
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		else{
-	  printf("Error: thread creation failed (frame skipped)\n");
+			printf("Error: thread creation failed (frame skipped)\n");
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
+//		pthread_mutex_lock(&global->process_mutex);
     }
-	
-    /*
-     *  Update counters
-     */
-    global->nprocessedframes += 1;
-	global->nrecentprocessedframes += 1;
-    
-	
-	/*
-	 *	Save some types of information from time to timeperiodic powder patterns
-	 */
-	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-        saveRunningSums(global);
-		saveHistograms(global);
-        saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-        global->writeStatus("Not finished");
-	}
-	
 }
 
 
@@ -539,21 +568,21 @@ void cheetahExit(cGlobal *global) {
     float	maxwait = 10*60.;
 
     while(global->nActiveThreads > 0) {
-      printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-      usleep(100000);
-      time(&tnow);
-      dtime = difftime(tnow, tstart);
-      if(dtime > maxwait) {
-        printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
-        printf("\tGiving up and exiting anyway\n");
-		global->freeMutexes();
-        break;
-      }
+		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+		usleep(100000);
+		time(&tnow);
+		dtime = difftime(tnow, tstart);
+		if(dtime > maxwait) {
+			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
+			printf("\tGiving up and exiting anyway\n");
+			global->freeMutexes();
+			break;
+		}
     }
     
     // Calculate mean photon energy
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nhitsandblanks;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nhitsandblanks - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
     printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
     printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
     
@@ -567,7 +596,7 @@ void cheetahExit(cGlobal *global) {
 
     // Close all CXI files
 	if(global->saveCXI)
-    closeCXIFiles(global);
+		closeCXIFiles(global);
 
 	
     // Save integrated run spectrum
@@ -576,12 +605,12 @@ void cheetahExit(cGlobal *global) {
 	
     // Hitrate?
     if (global->nPowderClasses){
-      printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
-      printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
-      printf("Blanks: %li (%2.2f%%) ",global->nprocessedframes-global->nhits, 100.*( (global->nprocessedframes-global->nhits)/ (float) global->nprocessedframes));
-      printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
+		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
+		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
+		printf("Blanks: %li (%2.2f%%) ",global->nhitsandblanks-global->nhits, 100.*( (global->nhitsandblanks-global->nhits)/ (float) global->nhitsandblanks));
+		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
     } else {
-      printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
     printf("%li files processed\n",global->nprocessedframes);
 
@@ -589,7 +618,7 @@ void cheetahExit(cGlobal *global) {
     
     // Cleanup
     for(long i=0; i<global->nDetectors; i++) {
-      global->detector[i].freePowderMemory(global);
+		global->detector[i].freePowderMemory(global);
     }
     pthread_mutex_destroy(&global->nActiveThreads_mutex);
     pthread_mutex_destroy(&global->selfdark_mutex);
@@ -608,4 +637,23 @@ void cheetahExit(cGlobal *global) {
     printf("Cheetah clean exit\n");
 }
 
+
+void cheetahDebug(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
+	vfprintf(stdout,format,ap);
+	va_end(ap);
+	puts("");
+}
+
+void cheetahError(const char *filename, int line, const char *format, ...){
+	va_list ap;
+	va_start(ap,format);
+	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
+	vfprintf(stderr,format,ap);
+	va_end(ap);
+	puts("");
+	abort();
+}
 

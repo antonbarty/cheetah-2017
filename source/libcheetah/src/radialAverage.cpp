@@ -36,7 +36,7 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
         float   *radial_average = eventData->detector[detID].radialAverage;
         float   *radial_average_counter = eventData->detector[detID].radialAverageCounter;
         long	radial_nn = global->detector[detID].radial_nn;
-
+        
         // Mask for where to calculate average
         int     *mask = (int *) calloc(pix_nn, sizeof(int));
         for(long i=0; i<pix_nn; i++){
@@ -46,11 +46,11 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
         calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
         
         // Remember to free the mask
-        free(mask); 
+        free(mask);
     }
-   
-}
     
+}
+
 
 void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
     
@@ -88,7 +88,7 @@ void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radia
 }
 
 
-void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detID){	
+void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detID){
 	
 	long	radial_nn = global->detector[detID].radial_nn;
 	long	pix_nn = global->detector[detID].pix_nn;
@@ -103,18 +103,18 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
 	// Radial average
 	long	rbin;
 	for(long i=0; i<pix_nn; i++){
-
-	// Don't count bad pixels in radial average
-	  if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
+        
+        // Don't count bad pixels in radial average
+        if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
             continue;
         
-	  rbin = lrint(global->detector[detID].pix_r[i]);
+        rbin = lrint(global->detector[detID].pix_r[i]);
 		
-	  // Array bounds check (paranoia)
-	  if(rbin < 0) rbin = 0;
-	  
-	  radialAverage[rbin] += data[i];
-	  radialAverageCounter[rbin] += 1;
+        // Array bounds check (paranoia)
+        if(rbin < 0) rbin = 0;
+        
+        radialAverage[rbin] += data[i];
+        radialAverageCounter[rbin] += 1;
 	}
 	
 	// Divide by number of actual pixels in ring to get the average
@@ -133,63 +133,63 @@ void calculateRadialAverage(double *data, double *radialAverage, double *radialA
  *	Add radial average to stack
  */
 void addToRadialAverageStack(cEventData *eventData, cGlobal *global){
-
+    
     // If not keeping stacks, simply return now
-    if(!global->saveRadialStacks) 
+    if(!global->saveRadialStacks)
         return;
     
     // Sorting parameter
-    int powderClass = eventData->hit;
-
+    int powderClass = eventData->powderClass;
+    
     // Loop over all detectors
     DETECTOR_LOOP {
-      addToRadialAverageStack(eventData, global, powderClass, detID);
+        addToRadialAverageStack(eventData, global, powderClass, detID);
     }
-
+    
 }
 
 
 void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderClass, int detID){
- 
+    
     cPixelDetectorCommon     *detector = &global->detector[detID];
-
+    
     float   *stack = detector->radialAverageStack[powderClass];
     float   *radialAverage = eventData->detector[detID].radialAverage;
     long	radial_nn = detector->radial_nn;
     long    stackCounter = detector->radialStackCounter[powderClass];
     long    stackSize = detector->radialStackSize;
-
+    
     pthread_mutex_t mutex = detector->radialStack_mutex[powderClass];
     pthread_mutex_lock(&mutex);
-
-     
+    
+    
     // Data offsets
     long stackoffset = stackCounter % stackSize;
     long dataoffset = stackoffset*radial_nn;
     
-
+    
     // Copy data and increment counter
     for(long i=0; i<radial_nn; i++) {
         stack[dataoffset+i] = (float) radialAverage[i];
     }
-
+    
     // Increment counter
     detector->radialStackCounter[powderClass] += 1;
-     
-     
+    
+    
     // Save data once stack is full
     if((stackCounter % stackSize) == 0) {
         
         printf("Saving radial stack: %i %i\n", powderClass, detID);
         saveRadialAverageStack(global, powderClass, detID);
         
-        for(long j=0; j<radial_nn*global->radialStackSize; j++) 
+        for(long j=0; j<radial_nn*global->radialStackSize; j++)
             detector->radialAverageStack[powderClass][j] = 0;
     }
-     
-    pthread_mutex_unlock(&mutex);			
- 
- }
+    
+    pthread_mutex_unlock(&mutex);
+    
+}
 
 
 
@@ -201,7 +201,7 @@ void saveRadialStacks(cGlobal *global) {
         return;
     
     printf("Saving radial average stacks\n");
-
+    
     DETECTOR_LOOP {
         for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
             saveRadialAverageStack(global, powderType, detID);
@@ -216,13 +216,12 @@ void saveRadialStacks(cGlobal *global) {
  *  Save radial average stack
  */
 void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
-
+    
     cPixelDetectorCommon     *detector = &global->detector[detID];
-
+    
     pthread_mutex_lock(&detector->radialStack_mutex[powderClass]);
-
+    
     char	filename[1024];
-    long    frameNum = detector->radialStackCounter[powderClass];
 	long    stackCounter = detector->radialStackCounter[powderClass];
     long    stackSize = detector->radialStackSize;
 	
@@ -239,15 +238,15 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detID) {
     sprintf(filename,"r%04u-radialstack-detector%d-class%i-stack%li.h5", global->runNumber, detID, powderClass, stackNum);
     //sprintf(filename,"r%04u-radialstack-detector%d-class%i-%06ld.h5", global->runNumber, detID, powderClass, frameNum);
     printf("Saving radial stack: %s\n", filename);
-
-
+    
+    
     writeSimpleHDF5(filename, detector->radialAverageStack[powderClass], detector->radial_nn, nRows, H5T_NATIVE_FLOAT);
     for(long i=0; i<global->nPowderClasses; i++) {
         fflush(global->powderlogfp[i]);
     }
-
+    
     pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);
-
+    
 }
 
 

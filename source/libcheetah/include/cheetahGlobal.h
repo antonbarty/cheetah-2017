@@ -9,7 +9,12 @@
 
 #ifndef CHEETAHGLOBAL_H
 #define CHEETAHGLOBAL_H
+#include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
 #include "detectorObject.h"
+#include <processRateMonitor.h>
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
@@ -79,11 +84,13 @@ public:
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
 	/** @brief Invert thit status (i.e. save "misses" if desired) */
 	int      hitfinderInvertHit;
+	/** @brief Perform hit finding for initial frames */
+	int      hitfinderForInitials;
 	int      hitfinderDetector;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
-	int      hitfinderADC;
+	float      hitfinderADC;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -105,20 +112,24 @@ public:
 	int      hitfinderUsePeakmask;
 	/** @brief Path to the peak mask file. */
 	char     peaksearchFile[MAX_FILENAME_LENGTH];
-	/** @brief Toggle the useage of the TOF-based hitfinder.
+	/** @brief Toggle the usage of the TOF-based hitfinder.
 	 *
 	 * Isn't this specified by hitfinderAlgorithm? */
 	int      hitfinderUseTOF;
 	/** @brief First sample in the TOF scan to consider. */
-	int      hitfinderTOFMinSample;
+	std::vector<int>      hitfinderTOFMinSample;
 	/** @brief Last sample in the TOF scan to consider. */
-	int      hitfinderTOFMaxSample;
+	std::vector<int>      hitfinderTOFMaxSample;
+	/** @brief Mean voltage of TOF signal for TOF hitfinding */
+	std::vector<double>   hitfinderTOFMeanBackground;
 	/** @brief Intensity threshold of TOF for hitfinding. */
-	double   hitfinderTOFThresh;
+	std::vector<double>   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */
 	double   hitfinderTOFWindow;
-	/** @brief Peak count constraint used in some TOF hitfinding. */
+	/** @brief Peak min count constraint used in some TOF hitfinding. */
 	double   hitfinderTOFMinCount;
+    /** @brief Peak max count constraint used in some TOF hitfinding. */
+	double   hitfinderTOFMaxCount;
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
@@ -159,6 +170,17 @@ public:
 
 	int		hitfinderFastScan;
 
+	// Sorting criteria
+	int		sortPumpLaserOn;
+
+	/** @brief Path to the file with list of hits.
+	 * Used by hitfinderAlgorithm=11 as hit criterion.
+	 * The hits have to be in chronological order as they appear in the data stream!
+	 */
+	char     hitlistFile[MAX_FILENAME_LENGTH];
+	/** @brief list of all hits as output string names. */
+	std::vector<std::string>	hitlist;
+
 	/** @brief Name of the time-of-flight instrument? */
 	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */
@@ -166,11 +188,11 @@ public:
 	/** @brief Channel of the TOF instrument. */
 	int      TOFchannel;
 	/** @brief What's this? */
-	int      AcqNumChannels;
-	/** @brief What's this? */
 	int      AcqNumSamples;
-	/** @brief What's this? */
-	double   AcqSampleInterval;
+	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
+	std::vector<int> TOFAllChannels;
+	std::vector<std::vector<int> > TOFChannelsPerCard;
+
     
 	/** @brief Toggle energy spectrum creation. */
     int      espectrum;
@@ -227,11 +249,18 @@ public:
 	/** @brief The pump laser delay. */
 	float    laserDelay;
 
+	/** @brief The Epics process variable for the sample translation. */
+	char     samplePosXPV[MAX_FILENAME_LENGTH];
+	char     samplePosYPV[MAX_FILENAME_LENGTH];
+	char     samplePosZPV[MAX_FILENAME_LENGTH];
+
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
 	int      savehits;
 	/** @brief Toggle the writing of raw images in hdf5 files. */
 	int      saveRaw;
+    /** @brief Toggle the converting to int16 before writing of raw images in hdf5 files. */
+	int      saveRawInt16;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
 	int      assemble2DMask;
@@ -254,6 +283,15 @@ public:
     
 	/** @brief Output 1 HDF5 per image by default */
 	bool saveCXI;
+	/** @brief Save CXIs in SWMR mode. This makes them incompatible with older HDF5 versions */
+	bool cxiSWMR;
+
+	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
+	    Setting it to 0 avoid doing any flushes.
+	    This only applies when compiling against a SWMR capable HDF5 library.
+	    The default is 1.
+	 */
+	int cxiFlushPeriod;
 
 	/** @brief  Only one thread during calibration */
 	int useSingleThreadCalibration;
@@ -273,7 +311,9 @@ public:
 
 	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
-
+	
+	/** @brief Time different sections of the code. */
+	bool     profilerDiagnostics;
 	/*
 	 *	Stuff used for managing the program execution
 	 */
@@ -301,7 +341,13 @@ public:
 	long     nActiveThreads;
 	long     threadCounter;
 	long     threadPurge;
+
+	// Number of threads in cheetah_ana_mod
+	int      anaModThreads;
+
 	pthread_t  *threadID;
+	pthread_mutex_t  hitclass_mutex;
+	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
 	pthread_mutex_t  hotpixel_mutex;
 	pthread_mutex_t  halopixel_mutex;
@@ -318,8 +364,10 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
+    pthread_mutex_t  saveinterval_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
+	pthread_mutex_t  swmr_mutex;
 
 	/*
 	 *	Common variables
@@ -335,11 +383,14 @@ public:
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
 
+	std::map<std::pair<int, int>, int> hitClasses[3];
+
 
     // counters updated with event data
 	long     npowderHits;
 	long     npowderBlanks;
 	long     nprocessedframes;
+    long     nhitsandblanks;
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;
@@ -388,10 +439,12 @@ public:
 	double   lasttime;
 	int      laserPumpScheme;
 
+	ProcessRateMonitor processRateMonitor;
+	// 
 public:
 	/**
 	 * @brief Set the default configuration.
-	**/
+	 **/
 	void defaultConfiguration(void);
 	/**
 	 * @brief Parse a global configuration file, update things.
@@ -399,18 +452,20 @@ public:
 	 * \usage Should be called only at the beginning of an analysis job.
 	 *
 	 * \param configFilePath The full path to the configuration file.
-	**/
+	 **/
 	void parseConfigFile(char * configFilePath);
 	/**
 	 * @brief TODO: does this work now?
-	**/
+	 **/
 	void parseCommandLineArguments(int, char**);
 	/**
 	 * @brief What's this for?
-	**/
+	 **/
 	void setup(void);
 	void updateCalibrated(void);
+	int validateConfiguration(void);
 
+	void writeHitClasses(FILE* to);
 	void writeInitialLog(void);
 	void updateLogfile(void);
     void writeStatus(const char *);
@@ -418,10 +473,15 @@ public:
 	void writeConfigurationLog(void);
 	void freeMutexes(void);
 
-
+	/**
+	 * @brief Read text file with list of hits.
+	 **/
+	void readHits(char *filename);
 
 private:
 	int parseConfigTag(char*, char*);
-
+	template<typename T> void splitList(char * values, std::vector<T> & elems);
+	
 };
+
 #endif

@@ -9,6 +9,7 @@
 
 
 #include <stdarg.h>
+#include <vector>
 #include "peakfinders.h"
 
 
@@ -46,6 +47,12 @@ public:
 	double		*TOFTime;
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
+	// For multiple TOF channels
+	double **  TOFAllTime;
+	double **  TOFAllVoltage;
+	double **  TOFAllTrigTime;
+	
+	
 	
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;
@@ -72,8 +79,12 @@ public:
 
 	// Hit finding
 	int			hit;
+	int			powderClass;
 	
 	
+    // Tof hitfinding
+    int            nProtons;
+    
 	// Peak list
 	tPeakList	peaklist;
 	
@@ -111,10 +122,13 @@ public:
 	double		gmd21;
 	double		gmd22;
     
+	int         pumpLaserOn;
 	bool        laserEventCodeOn;
 	double      laserDelay;
-	int         samplePumped;
 	
+	// Position of the sample stage
+	double      samplePos[3]; // in um
+
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
 	double		fEbeamLTUPosX;		// in mm
@@ -136,31 +150,16 @@ public:
 
 #define ERROR(...) cheetahError(__FILE__, __LINE__, __VA_ARGS__)
 
-void static cheetahError(const char *filename, int line, const char *format, ...){
-  va_list ap;
-  va_start(ap,format);
-  fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
-  vfprintf(stderr,format,ap);
-  va_end(ap);
-  puts("");
-  abort();
-}
-
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
 #define DEBUG(...) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
 
-void static cheetahDebug(const char *filename, int line, const char *format, ...){
-  va_list ap;
-  va_start(ap,format);
-  fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
-  vfprintf(stdout,format,ap);
-  va_end(ap);
-  puts("");
-}
+void cheetahError(const char *filename, int line, const char *format, ...);
+void cheetahDebug(const char *filename, int line, const char *format, ...);
 
 #define STATUS(...) fprintf(stderr, __VA_ARGS__)
+#define INFO(...) fprintf(stdout, __VA_ARGS__)
 
 #endif
 
