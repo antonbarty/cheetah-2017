@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # pngmap_to_h5map.py
 # =============================================================================
 # Generates h5 map from s/w png image. Black values are interpreted as 0, white values as 1.
