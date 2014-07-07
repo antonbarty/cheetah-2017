@@ -512,7 +512,7 @@ int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detI
     int hit_tof = 0;
     int hit_photons = 0;
     hit_photons = hitfinder1(global, eventData, detID);
-    hit_tofprin = hitfinderTOF(global, eventData, detID);
+    hit_tof = hitfinderTOF(global, eventData, detID);
     hit = hit_tof & hit_photons;
     return hit;
 }
