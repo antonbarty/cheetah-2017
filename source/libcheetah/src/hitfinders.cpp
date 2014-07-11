@@ -78,8 +78,8 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		break;
             
 	case 7 : 	// Return laser on event code
-		hit = eventData->laserEventCodeOn;
-		eventData->nPeaks = eventData->laserEventCodeOn;
+		hit = eventData->pumpLaserCode;
+		eventData->nPeaks = eventData->pumpLaserCode;
 		break;
 	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
 		nPeaks = peakfinder(global,eventData, detID);
@@ -139,19 +139,35 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	
 	eventData->powderClass = eventData->hit;
 	
+    
 	/*
-	 *	Pump laser sorting
+     *  Pump laser logic
+     *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+     *
+     *  Typically:
 	 *		hit = 0 or 1
-	 *		laserOn = 0 or 1
-	 *	then
-	 *		output = hit + 2*laserOn
+	 *		pumpLaserOn = 0 or 1
+     *      pumpLaserCode = 0,1,2... depending on the schema
+     *
 	 */
 	if(global->sortPumpLaserOn == 1) {
 		int hit = eventData->hit;
 		int	pumpLaserOn = eventData->pumpLaserOn;
-		int	nPowderClasses = global->nPowderClasses;
+		int	pumpLaserCode = eventData->pumpLaserCode;
 		
-		eventData->powderClass = hit + 2*pumpLaserOn;
+        if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
+            eventData->powderClass = hit + 2*pumpLaserOn;
+        }
+        else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {
+            if(hit == 0){
+                eventData->powderClass = 0;
+            }
+            else {
+                eventData->powderClass = 1+pumpLaserCode;
+                
+            }
+        }
+
 	}
 	
 }

@@ -661,9 +661,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	
 	// LaserOn event code
-	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	int LaserOnVal = (info->pumpLaserOn)?1:0;
 	//printf("LaserOnVal %d \n", LaserOnVal);
-	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/pumpLaserOn", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
 

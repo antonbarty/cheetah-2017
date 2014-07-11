@@ -28,7 +28,7 @@ pro crawler_autorun_event, ev
 			widget_control, sState.text, set_value='Merging'
 			crawler_merge
 
-			spawn,'cat crawler.txt'
+			;;spawn,'cat crawler.txt'
 			widget_control, sState.text, set_value='Waiting for next scan event'
 			widget_control, sState.mbrun,  timer=60
 			widget_control, sState.mbrun, sensitive=1

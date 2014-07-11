@@ -135,8 +135,8 @@ int main(int argc, const char * argv[])
             eventData->frameNumber = frameNumber;
             eventData->runNumber = runNumber;
             eventData->nPeaks = 0;
-            eventData->laserEventCodeOn = 0;
-            eventData->laserDelay = 0;
+            eventData->pumpLaserCode = 0;
+            eventData->pumpLaserDelay = 0;
             eventData->photonEnergyeV = SACLA_header.photon_energy_in_eV[runID];        // in eV
             eventData->wavelengthA = SACLA_header.photon_wavelength_in_nm[runID];       // in Angstrom
             eventData->pGlobal = &cheetahGlobal;

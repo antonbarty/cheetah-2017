@@ -700,8 +700,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	cxi->cheetahVal.unsharedVal.peakResolution = createScalarStack("peakResolution", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_FLOAT);  
 	cxi->cheetahVal.unsharedVal.peakResolutionA = createScalarStack("peakResolutionA", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_FLOAT);  
 	cxi->cheetahVal.unsharedVal.peakDensity = createScalarStack("peakDensity", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_FLOAT);  
-	cxi->cheetahVal.unsharedVal.laserEventCodeOn = createScalarStack("laserEventCodeOn", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
-	cxi->cheetahVal.unsharedVal.laserDelay = createScalarStack("laserDelay", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
+	cxi->cheetahVal.unsharedVal.pumpLaserCode = createScalarStack("pumpLaserCode", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
+	cxi->cheetahVal.unsharedVal.pumpLaserDelay = createScalarStack("pumpLaserDelay", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_DOUBLE);
 	cxi->cheetahVal.unsharedVal.hit = createScalarStack("hit", cxi->cheetahVal.unsharedVal.self,H5T_NATIVE_INT);
 	DETECTOR_LOOP{
 		char buffer[1024];
@@ -1024,8 +1024,8 @@ static CXI::File * createCXISkeleton(const char * filename,cGlobal *global){
 	cxi->cheetahVal.unsharedVal.peakResolution = H5Dopen(cxi->self,"/cheetah/unshared/peakResolution",H5P_DEFAULT);
 	cxi->cheetahVal.unsharedVal.peakResolutionA = H5Dopen(cxi->self,"/cheetah/unshared/peakResolutionA",H5P_DEFAULT);
 	cxi->cheetahVal.unsharedVal.peakDensity = H5Dopen(cxi->self,"/cheetah/unshared/peakDensity",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.laserEventCodeOn = H5Dopen(cxi->self,"/cheetah/unshared/laserEventCodeOn",H5P_DEFAULT);
-	cxi->cheetahVal.unsharedVal.laserDelay = H5Dopen(cxi->self,"/cheetah/unshared/laserDelay",H5P_DEFAULT);
+	cxi->cheetahVal.unsharedVal.pumpLaserCode = H5Dopen(cxi->self,"/cheetah/unshared/pumpLaserCode",H5P_DEFAULT);
+	cxi->cheetahVal.unsharedVal.pumpLaserDelay = H5Dopen(cxi->self,"/cheetah/unshared/pumpLaserDelay",H5P_DEFAULT);
 	cxi->cheetahVal.unsharedVal.hit = H5Dopen(cxi->self,"/cheetah/unshared/hit",H5P_DEFAULT);
 
 	DETECTOR_LOOP{
@@ -1373,7 +1373,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		write2DToStack(cxi->lcls.tofVoltage, stackSlice, info->TOFVoltage);
 		write2DToStack(cxi->lcls.tofTime, stackSlice, info->TOFTime);
 	}
-	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	int LaserOnVal = (info->pumpLaserCode)?1:0;
 	writeScalarToStack(cxi->lcls.evr41,stackSlice,LaserOnVal);
 	char timestr[26];
 	time_t eventTime = info->seconds;
@@ -1394,8 +1394,8 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolution,stackSlice,info->peakResolution);  
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakResolutionA,stackSlice,info->peakResolutionA);  
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.peakDensity,stackSlice,info->peakDensity);  
-	writeScalarToStack(cxi->cheetahVal.unsharedVal.laserEventCodeOn,stackSlice,info->laserEventCodeOn);  
-	writeScalarToStack(cxi->cheetahVal.unsharedVal.laserDelay,stackSlice,info->laserDelay);  
+	writeScalarToStack(cxi->cheetahVal.unsharedVal.pumpLaserCode,stackSlice,info->pumpLaserCode);  
+	writeScalarToStack(cxi->cheetahVal.unsharedVal.pumpLaserDelay,stackSlice,info->pumpLaserDelay);  
 	writeScalarToStack(cxi->cheetahVal.unsharedVal.hit,stackSlice,info->hit);
   
     
