@@ -686,13 +686,14 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		}
 	}
 
-	
+
 #if defined H5F_ACC_SWMR_READ
 	if(global->cxiSWMR){  
 		root->closeAll();
 		if(H5Fstart_swmr_write(root->hid()) < 0){
 			ERROR("Cannot change to SWMR mode.\n");			
 		}
+		puts("Changed to SWMR mode.");
 		root->openAll();
 	}
 #endif

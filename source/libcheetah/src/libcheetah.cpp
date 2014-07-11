@@ -500,7 +500,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		time(&tstart);
 		double	dtime;
 		float	maxwait = 60.;
-		double  dnextmsg = 1;
+		double  dnextmsg = 20;
         
         /*
          *  Wait until we have a spare thread in the thread pool
