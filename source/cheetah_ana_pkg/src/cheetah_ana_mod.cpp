@@ -340,7 +340,7 @@ namespace cheetah_ana_pkg {
 		int numEvrData = 0;
 		int fiducial = 0;
         bool    beamOn = 0;
-        bool    pumpLaserOn = 0;
+        int     pumpLaserOn = 0;
         int     pumpLaserCode = 0;
         
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
@@ -390,9 +390,15 @@ namespace cheetah_ana_pkg {
                 
                 pumpLaserOn = evr183;
                 if(evr183) pumpLaserCode = 1;
-                else if(evr184) pumpLaserCode = 2;
-                else if(evr186) pumpLaserCode = 3;
-                else if(evr187) pumpLaserCode = 4;
+                if(evr184) pumpLaserCode = 2;
+                if(evr186) pumpLaserCode = 3;
+                //if(evr187) pumpLaserCode = 4;
+                if(!evr183 && !evr184 && !evr186) pumpLaserCode = 4;
+            
+                //FILE *fp;
+                //fp = fopen("evrcodes.txt","a");
+                //fprintf(fp, "%i, %i, %i, %i, %i\n", fiducial, evr183, evr184, evr186, evr187);
+                //fclose(fp);
             }
             
             
@@ -632,17 +638,23 @@ namespace cheetah_ana_pkg {
 		double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
 
 		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergy> fee = evt.get(m_srcFee);
-		if (fee.get()) {
+		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergyV1> feeV1 = evt.get(m_srcFee);
+		if (feeV1.get()) {
+			gmd11 = feeV1->f_11_ENRC();
+			gmd12 = feeV1->f_12_ENRC();
+			gmd21 = feeV1->f_21_ENRC();
+			gmd22 = feeV1->f_22_ENRC();
+			gmd1 = (gmd11+gmd12)/2;
+			gmd2 = (gmd21+gmd22)/2;
+		}
+		else if (fee.get()) {
 			gmd11 = fee->f_11_ENRC();
 			gmd12 = fee->f_12_ENRC();
 			gmd21 = fee->f_21_ENRC();
 			gmd22 = fee->f_22_ENRC();
 			gmd1 = (gmd11+gmd12)/2;
 			gmd2 = (gmd21+gmd22)/2;
-			if (verbose) {
-				cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
-			}
-		} 
+		}
 		else {
 			printf("Event %li: Warning: Psana::Bld::BldDataFEEGasDetEnergy failed\n", frameNumber);
 		}
