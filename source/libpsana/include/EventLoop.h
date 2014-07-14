@@ -27,6 +27,8 @@
 // Collaborating Class Headers --
 //-------------------------------
 #include "psana/Module.h"
+#include "psana/Index.h"
+#include "psana/InputModule.h"
 #include "PSEnv/Env.h"
 #include "PSEvt/Event.h"
 
@@ -118,6 +120,8 @@ public:
    */
   void putback(const value_type& value) { m_values.push_front(value); }
 
+  Index& index();
+
 protected:
 
 private:
@@ -142,6 +146,9 @@ private:
   std::vector<boost::shared_ptr<Module> > m_modules;
   ModuleMethod m_eventMethods[NumEventTypes];
   std::deque<value_type> m_values;
+
+  // for indexing only
+  const boost::shared_ptr<InputModule> m_inputModule;
 };
 
 } // namespace psana
