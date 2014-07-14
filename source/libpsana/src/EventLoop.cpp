@@ -213,4 +213,9 @@ EventLoop::callModuleMethod(ModuleMethod method, boost::shared_ptr<PSEvt::Event>
   return stat;
 }
 
+Index& EventLoop::index()
+{
+  return  m_inputModule->index();
+}
+
 } // namespace psana
