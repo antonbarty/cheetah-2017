@@ -1232,7 +1232,7 @@ namespace cheetah_ana_pkg {
 		time_t	tstart, tnow;
 		time(&tstart);
 		double	dtime;
-		float	maxwait = 60.;
+		float	maxwait = 10 * 60.;
 		int p=0, pp=0;
 		
 		while(cheetahGlobal.nActiveThreads > 0) {
