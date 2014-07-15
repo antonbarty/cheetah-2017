@@ -1340,6 +1340,7 @@ namespace cheetah_ana_pkg {
 		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
 		 */
 		printf("Ending run. ");
+		waitForAnaModWorkers();		
 		waitForAllWorkers();		
 		
 		if(cheetahGlobal.saveCXI) {
