@@ -548,6 +548,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	}
 
 	if(global->TOFPresent){
+		printf("TOF present, writing CXI stuff\n");
 		int tofDetectorIndex = 1;
 		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
 			if(global->TOFChannelsPerCard[i].size() > 0){
