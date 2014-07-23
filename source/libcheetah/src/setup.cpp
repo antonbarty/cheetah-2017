@@ -806,9 +806,11 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 
 	}
-	// Each acqiris unit has a maximum of 4 channels
+	// Each acqiris unit has a maximum of n channels
+	// Sometimes the units are thunked
+	const int MAX_TOF_CHANNELS = 20; // Normally 4
 	for(unsigned int i = 0;i<TOFAllChannels.size();i++){
-		unsigned int card = TOFAllChannels[i]/4;
+		unsigned int card = TOFAllChannels[i]/MAX_TOF_CHANNELS;
 		while(TOFChannelsPerCard.size() <= card){
 			TOFChannelsPerCard.push_back(std::vector<int>());
 		}
@@ -817,7 +819,7 @@ void cGlobal::parseConfigFile(char* filename) {
 	printf("Configured %d TOF detectors:\n",(int)TOFAllChannels.size());
 	for(unsigned int card = 0;card<TOFChannelsPerCard.size();card++){
 		if(TOFChannelsPerCard[card].size()){
-			printf("\tAquiris card %d, channel(s) %d",card,TOFChannelsPerCard[card][0]%4);
+			printf("\tAquiris card %d, channel(s) %d",card,TOFChannelsPerCard[card][0]%MAX_TOF_CHANNELS);
 			for(unsigned int i = 1;i< TOFChannelsPerCard[card].size();i++){
 				printf(", %d",TOFChannelsPerCard[card][i]%4);
 			}
