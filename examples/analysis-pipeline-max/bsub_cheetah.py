@@ -4,12 +4,12 @@ import os,sys
 import time,datetime
 import socket
 import numpy as np
-import gdata.spreadsheet.service
+
 import getpass
 
 print "Gmail password [maxhantke@gmail.com]:"
 email = "maxhantke@gmail.com"
-password = "RNApol3#"#getpass.getpass()
+password = getpass.getpass()
 
 spreadsheet_key = '1hAWODbWaFRUnmIoTO1LhxS8tEcyrwzJu_sN2jlkEmc0'
 worksheet_id = 'obafa2y'
@@ -18,85 +18,6 @@ run_col = 0
 run_type_col = 1
 
 dry_run = False
-
-
-class Run:
-    def __init__(self,run_name,run_dir):
-        self.run_name = run
-        self.run_number = int(run[1:])
-        self.run_dir = run_dir
-
-
-class GoogleTable:
-    def __init__(self,email,password,spreadsheet_key,worksheet_key):
-        self.email = email
-        self.password = password
-        self.speadsheet_key = spreadsheet_key
-        self.worksheet_key = worksheet_key
-        self.spr_client = gdata.spreadsheet.service.SpreadsheetsService()
-        self.spr_client.email = email
-        self.spr_client.password = password
-        self.spr_client.source = 'AMO-LC69'
-        self.spr_client.ProgrammaticLogin()
-    def write_table(self):
-        self.write_row(0,["Run","Type","Status","#Frames","#Hits","Hit rate [%]"])
-        rs = runs_info.keys()
-        rs.sort()
-        for i,r in zip(range(len(rs)),rs):
-            d = runs_info[rs[i]]
-            self.write_row(i+1,[rs[i],d["type"],d["status"],d.get("#frames",""),d.get("#hits",""),d.get("hrate","")])
-    def write_row(self,row,values): 
-        for col,value in zip(range(len(values)),values):
-            entry = self.spr_client.UpdateCell(row=row+1, col=col+1, inputValue=value,
-                                               key=spreadsheet_key, wksht_id=worksheet_id)
-    def read_row(self,row):
-        cells = []
-        col = 0
-        while True:
-            c = self.read_cell(row,col)
-            if c != None:
-                cells.append(c)
-                col += 1
-            else:
-                break
-        return cells
-    def read_col(col):
-        cells = []
-        row = 0
-        while True:
-            c = self.read_cell(row,col)
-            if c != None:
-                cells.append(c)
-                row += 1
-            else:
-                break
-        return cells
-    def read_cell(row,col):
-        s = self.spr_client.GetCellsFeed(key=spreadsheet_key, wksht_id=worksheet_id,cell="R%iC%i" % (row+1,col+1)).content.text
-        return s
-
-class TerminalTable:
-    def __init__(self):
-        self.shape = get_terminal_shape()
-        self.title = ["# Cheetah queue status",("-"*self.shape[1]),"Run\ttype\tstatus\t#frames\t#hits\thrate",("-"*self.shape[1])]
-        self.put_message("Initializing...")
-    def put_message(self,message):
-        self.message = [("-"*self.shape[1]),message]
-    def put_content(self,content):
-        
-        
-    def print_table_terminal():
-        rs = runs_types.keys()
-        rs.sort()
-        for i in range(term_shape[0]-5):
-            if i <= (len(rs)-1):
-                d = runs_info.get(rs[i],{})
-	    #print runs_info,rs[i]
-                print rs[i] + "\t" + runs_types[rs[i]] + "\t" + d.get("status","-") + "\t" + d.get("#frames","-") + "\t" + d.get("#hits","-") + "\t" + d.get("hrate","-")
-            else:
-                print "-\t-\t-\t-\t-\t-" 
-        print ("-"*term_shape[1])
-        
 
 
 
