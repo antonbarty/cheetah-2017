@@ -410,8 +410,8 @@ hitknown:
 	fprintf(global->framefp, "%g, ", eventData->peakTotal);
 	fprintf(global->framefp, "%g, ", eventData->peakResolution);
 	fprintf(global->framefp, "%g, ", eventData->peakDensity);
-	fprintf(global->framefp, "%d, ", eventData->laserEventCodeOn);
-	fprintf(global->framefp, "%g, ", eventData->laserDelay);
+	fprintf(global->framefp, "%d, ", eventData->pumpLaserCode);
+	fprintf(global->framefp, "%g, ", eventData->pumpLaserDelay);
     fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
 	pthread_mutex_unlock(&global->framefp_mutex);
 
@@ -433,8 +433,8 @@ hitknown:
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakTotal);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakResolution);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakDensity);
-        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->laserEventCodeOn);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->laserDelay);
+        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->pumpLaserCode);
+        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->pumpLaserDelay);
         fprintf(global->powderlogfp[powderClass], "%d\n", eventData->pumpLaserOn);
 		pthread_mutex_unlock(&global->powderfp_mutex);
 	}
@@ -513,14 +513,14 @@ void evr41fudge(cEventData *t, cGlobal *g){
 		acqLaserOn = true;
 	}
 	//if ( acqLaserOn ) printf("acqLaserOn = true\n"); else printf("acqLaserOn = false\n");
-	//if ( t->laserEventCodeOn ) printf("laserEventCodeOn = true\n"); else printf("laserEventCodeOn = false\n");
-	if ( acqLaserOn != t->laserEventCodeOn ) {
+	//if ( t->pumpLaserCode ) printf("pumpLaserCode = true\n"); else printf("pumpLaserCode = false\n");
+	if ( acqLaserOn != t->pumpLaserCode ) {
 		if ( acqLaserOn ) {
 			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 1 )\n");
 		} else {
 			printf("MESSAGE: Acqiris and evr41 disagree.  We trust acqiris (set evr41 = 0 )\n");
 		}
-		t->laserEventCodeOn = acqLaserOn;
+		t->pumpLaserCode = acqLaserOn;
 	}
 }
 

@@ -47,9 +47,12 @@ pro crawler_merge
 	fcrystfel = file_test('crystfel.txt')
 	if fcrystfel ne 0 then begin
 		cf = read_csv('crystfel.txt', header=head)
-		cfrun = cf.field1
-		cfstatus = cf.field2
-		cfindexed = cf.field3
+		if cf.field1[0] ne '# Run' then begin
+			cfrun = cf.field1
+			cfstatus = cf.field2
+			cfindexed = cf.field3
+		endif $
+		else fcrystfel = 0
 	endif	
 	
 	;; Populate the output table

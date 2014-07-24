@@ -127,6 +127,9 @@
 .Normal {
     padding: 0px;
 }
+.Normal_External_649_34 {
+    position: relative;
+}
 .Normal_External_515_43 {
     position: relative;
 }
@@ -173,7 +176,13 @@
 .graphic_textbox_layout_style_default_External_651_288 {
     position: relative;
 }
+.graphic_textbox_layout_style_default_External_651_134 {
+    position: relative;
+}
 .graphic_textbox_layout_style_default_External_651_484 {
+    position: relative;
+}
+.graphic_textbox_layout_style_default_External_651_344 {
     position: relative;
 }
 .graphic_textbox_layout_style_default_External_651_64 {
@@ -182,6 +191,28 @@
 .graphic_textbox_style_default_SkipStroke {
     background: transparent;
     opacity: 1.00;
+}
+a {
+    color: rgb(183, 97, 78);
+    text-decoration: none;
+}
+a:visited {
+    color: rgb(66, 66, 66);
+    text-decoration: none;
+}
+a.class1 {
+    color: rgb(0, 150, 255);
+}
+a.class1:visited {
+    color: rgb(148, 23, 81);
+}
+a.class1:hover {
+    color: rgb(224, 133, 102);
+    text-decoration: underline;
+}
+a:hover {
+    color: rgb(224, 133, 102);
+    text-decoration: underline;
 }
 .bumper {
     font-size: 1px;

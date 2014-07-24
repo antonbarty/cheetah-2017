@@ -57,9 +57,9 @@ cGlobal::cGlobal(void) {
 	lastTimingFrame = 0;
 
 	// Pv values
-	strcpy(laserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
-	laserDelay = std::numeric_limits<float>::quiet_NaN();
-	laserDelay = 0;
+	strcpy(pumpLaserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
+	pumpLaserDelay = std::numeric_limits<float>::quiet_NaN();
+	pumpLaserDelay = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -108,6 +108,8 @@ cGlobal::cGlobal(void) {
 
 	// Sorting (eg: pump laser on/off)
 	sortPumpLaserOn = 0;
+    strcpy(pumpLaserScheme,"evr41");
+    
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
@@ -212,7 +214,6 @@ cGlobal::cGlobal(void) {
 	// Fudge EVR41 (modify EVR41 according to the Acqiris trace)...
 	fudgeevr41 = 0; // this means no fudge by default
 	lasttime = 0;
-	laserPumpScheme = 0;
 
 	// By default do not profile code
 	profilerDiagnostics = false;
@@ -274,8 +275,25 @@ void cGlobal::setup() {
 	if(generateDarkcal || generateGaincal)
 		nPowderClasses=1;
 
-	if(sortPumpLaserOn)
-		nPowderClasses *= 2;
+    /*
+     *  Pump laser logic
+     *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+     */
+	if(sortPumpLaserOn) {
+        if(strcmp(pumpLaserScheme, "evr41") == 0) {
+            nPowderClasses *= 2;
+        }
+        else if(strcmp(pumpLaserScheme, "LD57") == 0) {
+            nPowderClasses = 6;
+        }
+        else {
+            printf("Error: Unknown pump laser scheme\n");
+            printf("pumpLaserScheme = %s\n", pumpLaserScheme);
+            printf("Known schemes are: evr41, LD57\n");
+            exit(1);
+        }
+    }
+    
 	
 	for(int i = 0; i<nPowderClasses; i++){
 		nPeaksMin[i] = 1000000000;
@@ -928,6 +946,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "sortpumplaseron")) {
 		sortPumpLaserOn = atoi(value);
 	}
+    else if (!strcmp(tag, "pumplaserscheme")) {
+		strcpy(pumpLaserScheme, value);
+	}
+
 	
 
 	// Energy spectrum parameters
@@ -1060,9 +1082,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
-	// depreciated?
-	else if (!strcmp(tag, "laserpumpscheme")) {
-		laserPumpScheme = atoi(value);
+	else if (!strcmp(tag, "pumplaserscheme")) {
+		strcpy(pumpLaserScheme, value); 
 	}
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
@@ -1290,7 +1311,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay, eventData->pumpLaserOn\n");
+	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay, eventData->pumpLaserOn\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");

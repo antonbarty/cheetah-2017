@@ -108,8 +108,8 @@ namespace CXI{
 		hid_t peakResolution;
 		hid_t peakResolutionA;
 		hid_t peakDensity;
-		hid_t laserEventCodeOn;
-		hid_t laserDelay;
+		hid_t pumpLaserCode;
+		hid_t pumpLaserDelay;
 		hid_t hit;
 		std::vector<hid_t> sums;
 	}UnsharedValues;

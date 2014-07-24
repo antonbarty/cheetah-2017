@@ -113,8 +113,8 @@ public:
 	double		gmd22;
     
 	int         pumpLaserOn;
-	bool        laserEventCodeOn;
-	double      laserDelay;
+	int         pumpLaserCode;
+	double      pumpLaserDelay;
 	
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV

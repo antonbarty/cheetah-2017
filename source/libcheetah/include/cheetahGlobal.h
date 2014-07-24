@@ -165,6 +165,7 @@ public:
 
 	// Sorting criteria
 	int		sortPumpLaserOn;
+    char    pumpLaserScheme[MAX_FILENAME_LENGTH];
 
 	/** @brief Path to the file with list of hits.
 	 * Used by hitfinderAlgorithm=11 as hit criterion.
@@ -238,9 +239,9 @@ public:
 	int       calibrated;
 
 	/** @brief The Epics process variable for the pump laser delay. */
-	char     laserDelayPV[MAX_FILENAME_LENGTH];
+	char     pumpLaserDelayPV[MAX_FILENAME_LENGTH];
 	/** @brief The pump laser delay. */
-	float    laserDelay;
+	float    pumpLaserDelay;
 
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
@@ -412,7 +413,6 @@ public:
 	int      fudgeevr41;
 	int      evr41previous;
 	double   lasttime;
-	int      laserPumpScheme;
 
 public:
 	/**

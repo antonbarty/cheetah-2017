@@ -44,7 +44,6 @@
 
 // LCLS event codes
 #define beamCode 140
-#define laserCode 41
 #define verbose 0
 
 //-----------------------------------------------------------------------
@@ -64,8 +63,6 @@ namespace cheetah_ana_pkg {
 	static long frameNumberIncludingSkipped = 0;
 	static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
-	static int laserSwitch = 0;
-	static int prevLaser = 0;
 	static time_t startT = 0;
 
 	class CspadDataWrapper {
@@ -336,15 +333,17 @@ namespace cheetah_ana_pkg {
 
         
 		/* 
-		 *  Get number of EvrData & fiducials & beam on state & EVR41 laser on
+		 *  Get number event recorder data
+         *  eg: fiducials & beam on state & EVR41 laser on
 		 *  Psana::EvrData::DataV3.get()
 		 */
 		int numEvrData = 0;
 		int fiducial = 0;
         bool    beamOn = 0;
-        bool    laserOn = 0;
+        int     pumpLaserOn = 0;
+        int     pumpLaserCode = 0;
+        
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
-
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
@@ -366,24 +365,42 @@ namespace cheetah_ana_pkg {
 				cout << "***** beamOn: " << beamOn << endl;
 			}
 
-			//! get laserOn
-			// laserSwitch should be as large as count (50% on and off)
-			laserOn = eventCodePresent(data3->fifoEvents(), laserCode);
-			if (frameNumber == 1) {
-				// initialize
-				prevLaser = laserOn;
-				laserSwitch = 1;
-			}
-			else {
-				if (prevLaser != laserOn) {
-					laserSwitch++;
-					prevLaser = laserOn;
-				}
-			}
-			if (verbose) {
-				cout << "*** laserOn: " << laserOn << "\n"
-					 << "laserSwitch/frameNumber: " << laserSwitch << "/" << frameNumber << endl;
-			}
+            
+            /*
+             *  Pump laser logic 
+             *  (usually based on the EVR codes in some way)
+             *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+             */
+            if(strcmp(cheetahGlobal.pumpLaserScheme, "evr41") == 0) {
+                int evr41 = eventCodePresent(data3->fifoEvents(), 41);
+                pumpLaserOn = evr41;
+                pumpLaserCode = evr41;
+            }
+            // Schertler, June 2014, LD57
+            else if(strcmp(cheetahGlobal.pumpLaserScheme, "LD57") == 0) {
+                //  Step  DeltaBeam  EventCode  Device
+                //  0     0          183        30 Hz Laser
+                //  1     1          184        30 Hz Laser +1 shot
+                //  2     1          186        30 Hz Laser +2 shots
+                //  3     1          187        30 Hz Laser +3 shots
+                int evr183 = eventCodePresent(data3->fifoEvents(), 183);
+                int evr184 = eventCodePresent(data3->fifoEvents(), 184);
+                int evr186 = eventCodePresent(data3->fifoEvents(), 186);
+                int evr187 = eventCodePresent(data3->fifoEvents(), 187);
+                
+                pumpLaserOn = evr183;
+                if(evr183) pumpLaserCode = 1;
+                if(evr184) pumpLaserCode = 2;
+                if(evr186) pumpLaserCode = 3;
+                //if(evr187) pumpLaserCode = 4;
+                if(!evr183 && !evr184 && !evr186) pumpLaserCode = 4;
+            
+                //FILE *fp;
+                //fp = fopen("evrcodes.txt","a");
+                //fprintf(fp, "%i, %i, %i, %i, %i\n", fiducial, evr183, evr184, evr186, evr187);
+                //fclose(fp);
+            }
+            
             
 		}
 		else {
@@ -410,6 +427,7 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
@@ -418,7 +436,30 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
         // Ebeam v5
-		if (ebeam5.get()) {
+		if (ebeam6.get()) {
+			charge = ebeam6->ebeamCharge();
+			L3Energy = ebeam6->ebeamL3Energy();
+			LTUPosX = ebeam6->ebeamLTUPosX();
+			LTUPosY = ebeam6->ebeamLTUPosY();
+			LTUAngX = ebeam6->ebeamLTUAngX();
+			LTUAngY = ebeam6->ebeamLTUAngY();
+			PkCurrBC2 = ebeam6->ebeamPkCurrBC2();
+			
+            peakCurrent = ebeam6->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam6->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge4=" << charge << "\n"
+				<< "* fEbeamL3Energy4=" << L3Energy << "\n"
+				<< "* fEbeamLTUPosX4=" << LTUPosX << "\n"
+				<< "* fEbeamLTUPosY4=" << LTUPosY << "\n"
+				<< "* fEbeamLTUAngX4=" << LTUAngX << "\n"
+				<< "* fEbeamLTUAngY4=" << LTUAngY << "\n"
+				<< "* fEbeamPkCurrBC24=" << PkCurrBC2 << endl;
+			}
+		}
+        // Ebeam v5
+		else if (ebeam5.get()) {
 			charge = ebeam5->ebeamCharge();
 			L3Energy = ebeam5->ebeamL3Energy();
 			LTUPosX = ebeam5->ebeamLTUPosX();
@@ -597,17 +638,23 @@ namespace cheetah_ana_pkg {
 		double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
 
 		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergy> fee = evt.get(m_srcFee);
-		if (fee.get()) {
+		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergyV1> feeV1 = evt.get(m_srcFee);
+		if (feeV1.get()) {
+			gmd11 = feeV1->f_11_ENRC();
+			gmd12 = feeV1->f_12_ENRC();
+			gmd21 = feeV1->f_21_ENRC();
+			gmd22 = feeV1->f_22_ENRC();
+			gmd1 = (gmd11+gmd12)/2;
+			gmd2 = (gmd21+gmd22)/2;
+		}
+		else if (fee.get()) {
 			gmd11 = fee->f_11_ENRC();
 			gmd12 = fee->f_12_ENRC();
 			gmd21 = fee->f_21_ENRC();
 			gmd22 = fee->f_22_ENRC();
 			gmd1 = (gmd11+gmd12)/2;
 			gmd2 = (gmd21+gmd22)/2;
-			if (verbose) {
-				cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
-			}
-		} 
+		}
 		else {
 			printf("Event %li: Warning: Psana::Bld::BldDataFEEGasDetEnergy failed\n", frameNumber);
 		}
@@ -666,13 +713,13 @@ namespace cheetah_ana_pkg {
 			}
 		}
 
-		// get laserDelay only for Neutze TiSa delay
+		// get pumpLaserDelay only for Neutze TiSa delay
 		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
-			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.laserDelayPV);
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.pumpLaserDelayPV);
 			if (pv && pv->numElements() > 0) {
-				const float& value = estore.value(cheetahGlobal.laserDelayPV,0);
+				const float& value = estore.value(cheetahGlobal.pumpLaserDelayPV,0);
 				if (verbose) {
-					cout << "laserDelay[" << detID << "]: " << value << endl;
+					cout << "pumpLaserDelay[" << detID << "]: " << value << endl;
 				}  
 			}
 		}
@@ -705,8 +752,7 @@ namespace cheetah_ana_pkg {
 		eventData->runNumber = runNumber;
 		eventData->beamOn = beamOn;
 		eventData->nPeaks = 0;
-		eventData->laserEventCodeOn = 0;
-		eventData->laserDelay = 0;
+		eventData->pumpLaserDelay = 0;
 		eventData->gmd1 = gmd1;
 		eventData->gmd2 = gmd2;
 		eventData->gmd11 = gmd11;
@@ -727,11 +773,13 @@ namespace cheetah_ana_pkg {
 		eventData->phaseCavityCharge1 = charge1;
 		eventData->phaseCavityCharge1 = charge2;	
 		eventData->pGlobal = &cheetahGlobal;
+        
 		/*
-		 *	Make sure to record the visible pump laser on/off state
+		 *	Record the visible pump laser on/off state 
+         *  (Used for pump/probe and time resolved experiments)
 		 */
-		eventData->laserEventCodeOn = laserOn;
-		eventData->pumpLaserOn = laserOn;
+		eventData->pumpLaserOn = pumpLaserOn;
+		eventData->pumpLaserCode = pumpLaserCode;
 	
         /*
          *  FEE photon inline spectrometer

@@ -238,6 +238,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
                     H5Fclose(hdf_fileID);
                     return;
                 }
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
             }
             if(!strcmp(global->dataSaveFormat,"INT32") ) {
                 int32_t* corrected_data_int32 = (int32_t*) calloc(global->detector[detID].pix_nn,sizeof(int32_t));
@@ -258,6 +260,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
                     H5Fclose(hdf_fileID);
                     return;
                 }
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
             }
             else if (!strcmp(global->dataSaveFormat,"float")) {
                 float* corrected_data_float = (float*) calloc(global->detector[detID].pix_nn,sizeof(float));
@@ -278,9 +282,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
                     H5Fclose(hdf_fileID);
                     return;
                 }
+				H5Dclose(dataset_id);
+				H5Sclose(dataspace_id);
             }
-			H5Dclose(dataset_id);
-			H5Sclose(dataspace_id);
 
 			// pixelmask
 			dataspace_id = H5Screate_simple(2, size, max_size);
@@ -661,9 +665,9 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	
 	
 	// LaserOn event code
-	int LaserOnVal = (info->laserEventCodeOn)?1:0;
+	int LaserOnVal = (info->pumpLaserOn)?1:0;
 	//printf("LaserOnVal %d \n", LaserOnVal);
-	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/evr41", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/pumpLaserOn", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
 

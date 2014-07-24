@@ -128,7 +128,7 @@ void cheetahNewRun(cGlobal *global) {
             if(global->powderlogfp[i] != NULL)
                 fclose(global->powderlogfp[i]);
 			global->powderlogfp[i] = fopen(filename, "w");
-			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->laserEventCodeOn, eventData->laserDelay\n");
+			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay\n");
 
 			if(global->useFEEspectrum) {
 				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
@@ -388,8 +388,8 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
     /*
      *  Remember laser delay
      */
-    if(eventData->laserDelay != 0) {
-        global->laserDelay = eventData->laserDelay;
+    if(eventData->pumpLaserDelay != 0) {
+        global->pumpLaserDelay = eventData->pumpLaserDelay;
     }
     
     
