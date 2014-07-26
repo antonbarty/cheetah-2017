@@ -930,15 +930,11 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		detector["x_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
 		detector["y_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
 
-		long imgID = detID;
-		if (global->detector[detID].downsampling > 1){
-			imgID = detID * 2;
-		}
 		char buffer[1024];
 		sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
 		detector["description"].write(buffer,stackSlice);
 		if(global->saveAssembled){
-			Node & image = root["entry_1"].child("image",imgID+1);
+			Node & image = root["entry_1"].child("image",detID+1);
 
 			image["data"].write(info->detector[detID].image,stackSlice);
 			if(global->savePixelmask){
@@ -950,8 +946,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			image["data_space"].write("diffraction", stackSlice);
 			delete [] thumbnail;      
 			if (global->detector[detID].downsampling > 1){
-				imgID = detID * 2 + 1;
-				Node & image = root["entry_1"].child("image",imgID+1);
+				Node & image = root["entry_1"].child("image",global->nDetectors+detID+1);
 
 				image["data"].write(info->detector[detID].imageXxX,stackSlice);
 				if(global->savePixelmask){
