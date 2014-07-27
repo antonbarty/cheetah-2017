@@ -422,6 +422,7 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV3> ebeam3 = evt.get(m_srcBeam);
@@ -429,8 +430,33 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV1> ebeam1 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
+		double photonEnergyeV=-1;
+        // Ebeam v6
+		if (ebeam6.get()) {
+			charge = ebeam6->ebeamCharge();
+			L3Energy = ebeam6->ebeamL3Energy();
+			LTUPosX = ebeam6->ebeamLTUPosX();
+			LTUPosY = ebeam6->ebeamLTUPosY();
+			LTUAngX = ebeam6->ebeamLTUAngX();
+			LTUAngY = ebeam6->ebeamLTUAngY();
+			PkCurrBC2 = ebeam6->ebeamPkCurrBC2();
+			photonEnergyeV = ebeam6->ebeamPhotonEnergy();
+			
+			peakCurrent = ebeam6->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam6->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge6=" << charge << "\n"
+					 << "* fEbeamL3Energy6=" << L3Energy << "\n"
+					 << "* fEbeamLTUPosX6=" << LTUPosX << "\n"
+					 << "* fEbeamLTUPosY6=" << LTUPosY << "\n"
+					 << "* fEbeamLTUAngX6=" << LTUAngX << "\n"
+					 << "* fEbeamLTUAngY6=" << LTUAngY << "\n"
+					 << "* fEbeamPkCurrBC26=" << PkCurrBC2 << endl;
+			}
+		}
         // Ebeam v5
-		if (ebeam5.get()) {
+		else if (ebeam5.get()) {
 			charge = ebeam5->ebeamCharge();
 			L3Energy = ebeam5->ebeamL3Energy();
 			LTUPosX = ebeam5->ebeamLTUPosX();
@@ -579,20 +605,22 @@ namespace cheetah_ana_pkg {
 		 *  Calculate the resonant photon energy (ie: photon wavelength)
 		 *  including wakeloss prior to undulators
 		 */
-		double photonEnergyeV=0;
 		double wavelengthA=0;
 
-		double LTUwakeLoss = 0.0016293*peakCurrent;
-		// Spontaneous radiation loss per segment
-		double SRlossPerSegment = 0.63*DL2energyGeV;
-		// wakeloss in an undulator segment
-		double wakeLossPerSegment = 0.0003*peakCurrent;
-		// energy loss per segment
-		double energyLossPerSegment = SRlossPerSegment + wakeLossPerSegment;
-		// energy in first active undulator segment [GeV]
-		double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss - 0.0005*energyLossPerSegment;
-		// Calculate the resonant photon energy of the first active segment
-		photonEnergyeV = 44.42*energyProfile*energyProfile;
+		/* Only need to calculate if we didn't read it already */
+		if(photonEnergyeV == -1){
+			double LTUwakeLoss = 0.0016293*peakCurrent;
+			// Spontaneous radiation loss per segment
+			double SRlossPerSegment = 0.63*DL2energyGeV;
+			// wakeloss in an undulator segment
+			double wakeLossPerSegment = 0.0003*peakCurrent;
+			// energy loss per segment
+			double energyLossPerSegment = SRlossPerSegment + wakeLossPerSegment;
+			// energy in first active undulator segment [GeV]
+			double energyProfile = DL2energyGeV - 0.001*LTUwakeLoss - 0.0005*energyLossPerSegment;
+			// Calculate the resonant photon energy of the first active segment
+			photonEnergyeV = 44.42*energyProfile*energyProfile;
+		}
 		// Calculate wavelength in Angstrom
 		wavelengthA = 12398.42/photonEnergyeV;
 		if (verbose) {
@@ -608,8 +636,19 @@ namespace cheetah_ana_pkg {
 		double gmd1=0, gmd2=0;
 		double gmd11=0, gmd12=0, gmd21=0, gmd22=0;
 
+		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergyV1> fee2 = evt.get(m_srcFee);
 		shared_ptr<Psana::Bld::BldDataFEEGasDetEnergy> fee = evt.get(m_srcFee);
-		if (fee.get()) {
+		if (fee2.get()) {
+			gmd11 = fee2->f_11_ENRC();
+			gmd12 = fee2->f_12_ENRC();
+			gmd21 = fee2->f_21_ENRC();
+			gmd22 = fee2->f_22_ENRC();
+			gmd1 = (gmd11+gmd12)/2;
+			gmd2 = (gmd21+gmd22)/2;
+			if (verbose) {
+				cout << "*** gmd1 , gmd2: " << gmd1 << " , " << gmd2 << endl;  
+			}
+		}else if (fee.get()) {
 			gmd11 = fee->f_11_ENRC();
 			gmd12 = fee->f_12_ENRC();
 			gmd21 = fee->f_21_ENRC();
