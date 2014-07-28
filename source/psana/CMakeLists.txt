@@ -3,16 +3,17 @@ find_package(PSANA REQUIRED)
 
 file(GLOB sources "${ANA_RELEASE}/psana/app/*.cpp" "src/cheetah-psana.cpp")
 
+
+
 INCLUDE_DIRECTORIES(${PSANA_INCLUDES})
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
-
 include_directories("include")
 
 # This is here so that psana can find cheetah_ana_pkg
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${CMAKE_BINARY_DIR}/source/cheetah_ana_pkg") 
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${CMAKE_BINARY_DIR}/source/cheetah_ana_pkg,-rpath,${CMAKE_BINARY_DIR}/source/libpsana") 
 ADD_EXECUTABLE(psana ${sources})
 
-TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES})
+TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} libpsana libXtcInput)
 
 
 INSTALL(TARGETS psana

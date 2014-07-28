@@ -40,7 +40,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 
 	long		histMin = global->detector[detID].histogramMin;
 	long		histNbins = global->detector[detID].histogramNbins;
-	long		histBinSize = global->detector[detID].histogramBinSize;
+	float       histBinSize = global->detector[detID].histogramBinSize;
 	long		hist_fs_min = global->detector[detID].histogram_fs_min;
 	long		hist_fs_max = global->detector[detID].histogram_fs_max;
 	long		hist_ss_min = global->detector[detID].histogram_ss_min;
@@ -116,7 +116,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	
 	long		histMin = global->detector[detID].histogramMin;
 	long		histNbins = global->detector[detID].histogramNbins;
-	long		histBinSize = global->detector[detID].histogramBinSize;
+	float		histBinSize = global->detector[detID].histogramBinSize;
 	long		hist_nfs = global->detector[detID].histogram_nfs;
 	long		hist_nss = global->detector[detID].histogram_nss;
 	long		hist_nn = global->detector[detID].histogram_nn;
@@ -369,8 +369,8 @@ void saveHistogram(cGlobal *global, int detID) {
 	H5Dclose(dh);
 
 	// Step size
-	dh = H5Dcreate(gh, "histogramBinsize", H5T_NATIVE_LONG, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	H5Dwrite(dh, H5T_NATIVE_LONG, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histBinSize );
+	dh = H5Dcreate(gh, "histogramBinsize", H5T_NATIVE_FLOAT, sh, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(dh, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &histBinSize );
 	H5Dclose(dh);
 	
 	H5Sclose(sh);

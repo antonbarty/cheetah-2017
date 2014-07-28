@@ -21,6 +21,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream> 
+#include <errno.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -60,6 +62,9 @@ cGlobal::cGlobal(void) {
 	strcpy(pumpLaserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
 	pumpLaserDelay = std::numeric_limits<float>::quiet_NaN();
 	pumpLaserDelay = 0;
+	samplePosXPV[0] = 0;
+	samplePosYPV[0] = 0;
+	samplePosZPV[0] = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -75,6 +80,7 @@ cGlobal::cGlobal(void) {
 
 	// Hitfinding
 	hitfinder = 0;
+	hitfinderForInitials = 1;
     hitfinderInvertHit = 0;
 	hitfinderDetector = 0;
 	hitfinderADC = 100;
@@ -113,16 +119,21 @@ cGlobal::cGlobal(void) {
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
-	hitfinderTOFMinSample = 0;
-	hitfinderTOFMaxSample = 1000;
-	hitfinderTOFMeanBackground = 2;
-	hitfinderTOFThresh = 100;
-	hitfinderTOFMinCount = 1;
+	hitfinderTOFMinSample.resize(1);
+	hitfinderTOFMinSample[0] = 0;
+	hitfinderTOFMaxSample.resize(1);
+	hitfinderTOFMaxSample[0] = 1000;
+	hitfinderTOFMeanBackground.resize(1);
+	hitfinderTOFMeanBackground[0] = 2;
+	hitfinderTOFThresh.resize(1);
+	hitfinderTOFThresh[0] = 100;
+	hitfinderTOFMinCount = 0;
+    hitfinderTOFMaxCount = 1000;
 	hitfinderTOFWindow = 3;
 
 	// TOF configuration
 	TOFPresent = 0;
-	TOFchannel = 0;
+	TOFchannel = -1;
 	strcpy(tofName, "CxiSc1");
 	// Has to be looked up automatically
 	AcqNumSamples = 12288;
@@ -170,6 +181,7 @@ cGlobal::cGlobal(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
+    saveRawInt16 = 1;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -178,7 +190,11 @@ cGlobal::cGlobal(void) {
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
+
 	strcpy(dataSaveFormat, "INT16");
+
+	// Do not use SWMR mode by default
+	cxiSWMR = 0;
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -198,6 +214,8 @@ cGlobal::cGlobal(void) {
 	useHelperThreads = 0;
 	// depreciated?
 	threadPurge = 10000;
+
+	anaModThreads = 32;
 	
 	// Saving to subdirectories
 	subdirFileCount = -1;
@@ -317,6 +335,8 @@ void cGlobal::setup() {
 	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
+	pthread_mutex_init(&hitclass_mutex, NULL);
+	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&halopixel_mutex, NULL);
@@ -549,6 +569,8 @@ void cGlobal::setup() {
 }
 
 void cGlobal::freeMutexes(void) {
+	pthread_mutex_unlock(&hitclass_mutex);
+	pthread_mutex_unlock(&process_mutex);
 	pthread_mutex_unlock(&nActiveThreads_mutex);
 	pthread_mutex_unlock(&hotpixel_mutex);
 	pthread_mutex_unlock(&halopixel_mutex);
@@ -781,6 +803,56 @@ void cGlobal::parseConfigFile(char* filename) {
 	}
 
 
+	if(TOFPresent){
+		if(TOFchannel < 0){
+			if(TOFAllChannels.size()){
+				// If TOFPresent is enabled but TOF channel was not set
+				// set the TOFchannel to the first TOFAllChannel
+
+				TOFchannel = TOFAllChannels[0];
+			}else{
+				// If TOFPresent is enabled but TOF channel was not set
+				// set the TOFchannel to 0
+				TOFchannel = 0;
+			}
+		}
+		// Make sure that TOFchannel is present in TOFAllChannels
+		bool found = false;
+		for(unsigned int i = 0;i<TOFAllChannels.size();i++){
+			if(TOFchannel == TOFAllChannels[i]){
+				found = true;
+				break;
+			}
+		}
+		if(!found){
+			//All the TOF channel to the AllChannels
+			TOFAllChannels.push_back(TOFchannel);
+		}
+
+	}
+	// Each acqiris unit has a maximum of n channels
+	// Sometimes the units are thunked
+	const int MAX_TOF_CHANNELS = 20; // Normally 4
+	for(unsigned int i = 0;i<TOFAllChannels.size();i++){
+		unsigned int card = TOFAllChannels[i]/MAX_TOF_CHANNELS;
+		while(TOFChannelsPerCard.size() <= card){
+			TOFChannelsPerCard.push_back(std::vector<int>());
+		}
+		TOFChannelsPerCard[card].push_back(TOFAllChannels[i]);
+	}
+	printf("Configured %d TOF detectors:\n",(int)TOFAllChannels.size());
+	for(unsigned int card = 0;card<TOFChannelsPerCard.size();card++){
+		if(TOFChannelsPerCard[card].size()){
+			printf("\tAquiris card %d, channel(s) %d",card,TOFChannelsPerCard[card][0]%MAX_TOF_CHANNELS);
+			for(unsigned int i = 1;i< TOFChannelsPerCard[card].size();i++){
+				printf(", %d",TOFChannelsPerCard[card][i]%4);
+			}
+			printf("\n");			
+		}
+	}
+	   
+
+
 	fclose(fp);
 
 }
@@ -824,6 +896,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
+	else if (!strcmp(tag, "anamodthreads")) {
+		anaModThreads = atoi(value);
+	}
 	else if (!strcmp(tag, "usehelperthreads")) {
 		useHelperThreads = atoi(value);
 	}
@@ -864,6 +939,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderforinitials")) {
+		hitfinderForInitials = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderinverthit")) {
 		hitfinderInvertHit = atoi(value);
 	}
@@ -881,6 +959,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
+	}
+    else if (!strcmp(tag, "saverawint16")) {
+		saveRawInt16 = atoi(value);
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
@@ -913,23 +994,29 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "tofchannel")) {
 		TOFchannel = atoi(value);
 	}
+	else if (!strcmp(tag, "tofallchannels")) {
+		splitList(value,TOFAllChannels);
+	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfindertofminsample")) {
-		hitfinderTOFMinSample = atoi(value);
+		splitList(value, hitfinderTOFMinSample);
 	}
 	else if (!strcmp(tag, "hitfindertofmaxsample")) {
-		hitfinderTOFMaxSample = atoi(value);
+		splitList(value,hitfinderTOFMaxSample);
 	}
 	else if (!strcmp(tag, "hitfindertofmeanbackground")) {
-		hitfinderTOFMeanBackground = atof(value);
+		splitList(value, hitfinderTOFMeanBackground);
 	}
 	else if (!strcmp(tag, "hitfindertofthresh")) {
-		hitfinderTOFThresh = atof(value);
+		splitList(value, hitfinderTOFThresh);
 	}
 	else if (!strcmp(tag, "hitfindertofmincount")) {
 		hitfinderTOFMinCount = atoi(value);
+	}
+    else if (!strcmp(tag, "hitfindertofmaxcount")) {
+		hitfinderTOFMaxCount = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfindertofwindow")) {
 		hitfinderTOFWindow = atoi(value);
@@ -1009,7 +1096,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		assemblePowders = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
-		hitfinderADC = atoi(value);
+		hitfinderADC = atof(value);
 	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
@@ -1093,12 +1180,19 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
     else if (!strcmp(tag, "cxiflushperiod")) {
 		cxiFlushPeriod = atoi(value);
-	}
-    else if (!strcmp(tag, "pythonfile")) {
+	} else if (!strcmp(tag, "cxiswmr")) {
+		cxiSWMR = atoi(value);
+	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	}
     else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
+	} else if (!strcmp(tag, "sampleposxpv")) {
+		strcpy(samplePosXPV,value);
+	} else if (!strcmp(tag, "sampleposypv")) {
+		strcpy(samplePosYPV,value);
+	} else if (!strcmp(tag, "sampleposzpv")) {
+		strcpy(samplePosZPV,value);
 	}
 	// Unknown tags
 	else {
@@ -1186,6 +1280,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
+    fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
@@ -1205,10 +1300,10 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "tofName=%s\n",tofName);
 	fprintf(fp, "tofChannel=%d\n",TOFchannel);
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
-	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
-	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-	fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
-	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+	//fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
+	//fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
+	//fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
+	//fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
 	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
 	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
 	fprintf(fp, "espectrum=%d\n",espectrum);
@@ -1229,7 +1324,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
 	fprintf(fp, "assemblePowders=%d\n",assemblePowders);
-	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+	fprintf(fp, "hitfinderADC=%f\n",hitfinderADC);
 	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
 	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
 	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
@@ -1336,6 +1431,29 @@ void cGlobal::writeInitialLog(void){
 
 }
 
+void cGlobal::writeHitClasses(FILE* to) {
+	fprintf(to, "Hitclasses:\n");
+	for (int coord = 0; coord < 3; coord++) {
+		int lastFirst = 1 << 30;
+		int lastVal = 0;
+		for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
+			fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
+			if (i->first.second)
+			{
+				if (lastFirst != i->first.first) {
+					lastVal = 0;
+				}
+				double sum = lastVal + i->second;
+				fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
+			} else {
+				lastFirst = i->first.first;
+				lastVal = i->second;
+			}
+		}
+	}
+	fprintf(to, "\n\n");
+}
+
 /*
  * Update log file
  */
@@ -1369,6 +1487,8 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
 
@@ -1450,7 +1570,8 @@ void cGlobal::writeFinalLog(void){
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 
-
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	// Calculate hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);
@@ -1551,4 +1672,19 @@ void cGlobal::readHits(char *filename) {
 	}
 	
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
+}
+
+template<typename T>
+void cGlobal::splitList(char * values, std::vector<T> & elems) {
+	char delim = ',';
+    std::stringstream ss(values);
+    std::string item;
+	elems.clear();
+    while (std::getline(ss, item, delim)) {
+		std::stringstream innerss(item);
+		
+		T elem;
+		innerss >> elem;
+		elems.push_back(elem);
+    }
 }

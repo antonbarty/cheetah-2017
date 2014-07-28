@@ -222,8 +222,8 @@ void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
-	double		counter;
-	double		background;
+	float		counter;
+	float		background;
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<nasics_x; mi++){
@@ -302,7 +302,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 				for(long i=0; i<asic_nx; i++){
 					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					p += i + mi*asic_nx;
-					if( isBitOptionUnset(mask[i],PIXEL_IS_SHADOWED) ){
+					if( isBitOptionSet(mask[p],PIXEL_IS_SHADOWED) ){
 						buffer[counter] = data[p];
 						counter++;
 					}

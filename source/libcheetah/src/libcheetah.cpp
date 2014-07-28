@@ -264,11 +264,27 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->specImage);
 	}
 	//TOF stuff.
-	if(eventData->TOFPresent==1){
-		free(eventData->TOFTime);
-		free(eventData->TOFVoltage); 
+	// Explictly call the vector destructor as we're using free and not delete
+	if(eventData->TOFAllTime){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllTime[i]);
+		}
+		free(eventData->TOFAllTime);
 	}
-    
+	if(eventData->TOFAllVoltage){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllVoltage[i]);
+		}
+		free(eventData->TOFAllVoltage);	
+	}
+	if(eventData->TOFAllTrigTime){
+		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
+			free(eventData->TOFAllTrigTime[i]);
+		}
+		free(eventData->TOFAllTrigTime);
+	}
+
+
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);
@@ -417,7 +433,7 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  *  libCheetah event processing function (multithreaded)
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
-
+	pthread_mutex_lock(&global->process_mutex);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
@@ -451,6 +467,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
         cheetahDestroyEvent(eventData);
+		pthread_mutex_unlock(&global->process_mutex);
 		return;
 	}
 	
@@ -474,6 +491,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
     if(eventData->useThreads == 1) {
+		pthread_mutex_unlock(&global->process_mutex);
         pthread_t		thread;
         pthread_attr_t	threadAttribute;
         int				returnStatus;
@@ -482,7 +500,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		time(&tstart);
 		double	dtime;
 		float	maxwait = 60.;
-		double  dnextmsg = 1;
+		double  dnextmsg = 20;
         
         /*
          *  Wait until we have a spare thread in the thread pool
@@ -512,44 +530,24 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 
         // Create a new worker thread for this data frame
+		// Lock acquired before creation to avoid race condition where nActiveThreads decremented before incremented
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
-			pthread_mutex_lock(&global->nActiveThreads_mutex);
 			global->nActiveThreads += 1;
 			global->threadCounter += 1;
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		else{
 			printf("Error: thread creation failed (frame skipped)\n");
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
+//		pthread_mutex_lock(&global->process_mutex);
     }
-	
-    /*
-     *  Update counters
-     */
-    global->nprocessedframes += 1;
-	global->nrecentprocessedframes += 1;
-    
-	
-	/*
-	 *	Save some types of information from time to timeperiodic powder patterns
-	 */
-	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-		if(global->saveCXI){
-			writeAccumulatedCXI(global);
-		} 
-		saveRunningSums(global);
-		saveHistograms(global);
-		saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-		global->writeStatus("Not finished");
-	}
-	
 }
 
 
@@ -583,8 +581,8 @@ void cheetahExit(cGlobal *global) {
     }
     
     // Calculate mean photon energy
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nhitsandblanks;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nhitsandblanks - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
     printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
     printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
     
@@ -607,12 +605,12 @@ void cheetahExit(cGlobal *global) {
 	
     // Hitrate?
     if (global->nPowderClasses){
-		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
-		printf("Blanks: %li (%2.2f%%) ",global->nprocessedframes-global->nhits, 100.*( (global->nprocessedframes-global->nhits)/ (float) global->nprocessedframes));
+		printf("Blanks: %li (%2.2f%%) ",global->nhitsandblanks-global->nhits, 100.*( (global->nhitsandblanks-global->nhits)/ (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
     } else {
-		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
     printf("%li files processed\n",global->nprocessedframes);
 

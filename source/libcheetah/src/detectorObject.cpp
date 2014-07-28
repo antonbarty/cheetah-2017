@@ -452,7 +452,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		histogramNbins = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrambinsize")) {
-		histogramBinSize = atoi(value);
+		histogramBinSize = atof(value);
 	}
 	else if (!strcmp(tag, "histogram_fs_min")) {
 		histogram_fs_min = atoi(value);
@@ -649,9 +649,9 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 		detector_z.create(pix_nx,pix_ny);
 		for (long i=0;i<pix_ny;i++){
 			for(long j=0;j<pix_nx;j++){
-				detector_x.data[i+j*pix_ny] = j-pix_nx/2.;
-				detector_y.data[i+j*pix_ny] = i-pix_ny/2.;
-				detector_z.data[i+j*pix_ny] = 0.;
+				detector_x.data[j+i*pix_nx] = j-pix_nx/2.;
+				detector_y.data[j+i*pix_nx] = i-pix_ny/2.;
+				detector_z.data[j+i*pix_nx] = 0.;
 			}
 		}
 	}
@@ -736,9 +736,9 @@ bounds:
 	}
 
 	xmax = (long) (xmax + 0.5);
-	xmin = (long) (xmin + 0.5);
+	xmin = (long) (xmin - 0.5);
 	ymax = (long) (ymax + 0.5);
-	ymin = (long) (ymin + 0.5);
+	ymin = (long) (ymin - 0.5);
 	printf("\tImage bounds:\n");
 	printf("\tx range %.0f to %.0f\n",xmin,xmax);
 	printf("\ty range %.0f to %.0f\n",ymin,ymax);
@@ -1181,8 +1181,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 		exit(1);
 	}
 	
-	
-	// Read darkcal data from file
+	// Read wire mask from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1195,7 +1194,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	} 
 	
 	
-	// Copy into darkcal array
+	// Copy into pixel mask
 	for(long i=0;i<pix_nn;i++){
 		if((int) temp2d.data[i]==0){
 			pixelmask_shared[i] |= PIXEL_IS_SHADOWED;

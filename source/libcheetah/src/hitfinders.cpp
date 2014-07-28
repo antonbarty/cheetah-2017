@@ -114,7 +114,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		hit = (int) containsEvent((std::string) eventData->eventname, global);
 		break; 
 			
-
+    case 13 : // Combine hitfinderTOF and hitfinder 1 (using both protons and photons)
+        hit = hitfinderProtonsandPhotons(global, eventData, detID);
+        break;
+        
 	default :
 		printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 		printf("Stopping in confusion.\n");
@@ -123,6 +126,14 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			
 	}
 	
+	// Update central hit counter
+    pthread_mutex_lock(&global->nhits_mutex);
+    global->nhitsandblanks++;
+	if(hit) {
+		global->nhits++;
+		global->nrecenthits++;
+	}
+    pthread_mutex_unlock(&global->nhits_mutex);
 	
 	// Set the appropriate powder class
 	eventData->powderClass = hit;
@@ -274,7 +285,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 	*tat = 0.0;
 
 	for(long i=0;i<pix_nn;i++){
-		if(isNoneOfBitOptionsSet(mask[i],pixel_options) && (data[i] > ADC_threshold)){
+		if((isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
 			*tat += data[i];
 			*nat += 1;
 		}
@@ -421,10 +432,10 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 		  
 	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 		double total_tof = 0.;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
 			total_tof += eventData->TOFVoltage[i];
 		}
-		if (total_tof > global->hitfinderTOFThresh)
+		if (total_tof > global->hitfinderTOFThresh[0])
 			hit = 1;
 	}
 	// Use cspad threshold if TOF is not present 
@@ -468,14 +479,14 @@ int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
 			olddata[k] = NAN;
 		}
 		int count = 0;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
+		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
 			olddata[i % nback] = eventData->TOFVoltage[i];
 			double sum = 0;
 			for (int k = 0; k < nback; k++)
 			{
 				sum += olddata[k];
 			}
-			if (sum < global->hitfinderTOFThresh * nback) count++;
+			if (sum < global->hitfinderTOFThresh[0] * nback) count++;
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;
@@ -494,13 +505,33 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 	int hit = 0;
 	if (eventData->TOFPresent==1){
 		int count = 0;
-		for (int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			count += (int)floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
+		int tofIndex = 0;
+	    for (unsigned int card=0; card<global->TOFChannelsPerCard.size(); card++) {
+			for (unsigned int k=0; k<global->TOFChannelsPerCard[card].size(); k++) {
+				int chan_offset = k*global->AcqNumSamples;
+				for (int i=global->hitfinderTOFMinSample[tofIndex]; i<global->hitfinderTOFMaxSample[tofIndex]; i++) {
+//					count += (bool)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
+					count += (eventData->TOFAllVoltage[card][chan_offset+i] < global->hitfinderTOFThresh[tofIndex]);
+				}
+				tofIndex++;
+			}
 		}
-		hit = (count >= global->hitfinderTOFMinCount);
-		eventData->nPeaks = count;
+		hit = (count >= global->hitfinderTOFMinCount) & (count < global->hitfinderTOFMaxCount);
+		eventData->nProtons = count;
 	}
 	return hit;
+}
+
+/* A combined hitfinder using both protons (hitfinderTOF) and photons (hitfinder1) */
+
+int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detID){
+    int hit = 0;
+    int hit_tof = 0;
+    int hit_photons = 0;
+    hit_photons = hitfinder1(global, eventData, detID);
+    hit_tof = hitfinderTOF(global, eventData, detID);
+    hit = hit_tof & hit_photons;
+    return hit;
 }
 
 

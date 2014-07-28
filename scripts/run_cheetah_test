@@ -8,7 +8,7 @@ else
     eval RUN=$1
     eval NUMBER_OF_FRAMES=$2
     echo "Processing $NUMBER_OF_FRAMES of run $RUN"
-    eval RUNDIR="test_$RUN_"$(date -d "today" +"%Y%m%d_%H%M")
+    eval RUNDIR="test_"$RUN"_"$(date -d "today" +"%Y%m%d_%H%M")
     eval RUNLINK="test_$RUN" 
     echo "Creating directory: "$RUNDIR
     mkdir $RUNDIR

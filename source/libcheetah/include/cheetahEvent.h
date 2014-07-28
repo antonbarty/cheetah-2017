@@ -9,6 +9,7 @@
 
 
 #include <stdarg.h>
+#include <vector>
 #include "peakfinders.h"
 
 
@@ -46,6 +47,12 @@ public:
 	double		*TOFTime;
 	double		*TOFVoltage;
 	double		TOFtrigtime ;
+	// For multiple TOF channels
+	double **  TOFAllTime;
+	double **  TOFAllVoltage;
+	double **  TOFAllTrigTime;
+	
+	
 	
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;
@@ -75,6 +82,9 @@ public:
 	int			powderClass;
 	
 	
+    // Tof hitfinding
+    int            nProtons;
+    
 	// Peak list
 	tPeakList	peaklist;
 	
@@ -116,6 +126,9 @@ public:
 	int         pumpLaserCode;
 	double      pumpLaserDelay;
 	
+	// Position of the sample stage
+	double      samplePos[3]; // in um
+
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
 	double		fEbeamLTUPosX;		// in mm

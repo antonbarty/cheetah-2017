@@ -192,7 +192,8 @@ localBGCalculated:
 		DEBUG("Hit finding");
 	}
 
-	if(global->hitfinder){ 
+	if(global->hitfinder && (global->hitfinderForInitials ||
+							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
 		hit = hitfinder(eventData, global);
 		//if (global->hitfinderInvertHit == 1){
 		//	if ( hit == 1 )
@@ -201,15 +202,23 @@ localBGCalculated:
 		//		hit = 1;
 		//}
 		eventData->hit = hit;
+
+		pthread_mutex_lock(&global->hitclass_mutex);
+		for (int coord = 0; coord < 3; coord++) {
+			if (eventData->nPeaks < 100) continue;
+			global->hitClasses[coord][std::make_pair(eventData->samplePos[coord] * 1000, hit)]++;
+		}
+		pthread_mutex_unlock(&global->hitclass_mutex);
+		sortPowderClass(eventData, global);		
 	}
 
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 hitknown: 
+	// Slightly wrong that all initial frames are blanks
+	// when hitfinderForInitials is 0
     /*
      *	Sort event into different classes (eg: laser on/off)
      */
-    sortPowderClass(eventData, global);
-		
   
 	DEBUGL2_ONLY {
 		DEBUG("Procedures depending on hit tag");
@@ -363,18 +372,21 @@ hitknown:
 	if(eventData->writeFlag){
 		// one CXI or many H5?
 		if(global->saveCXI){
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->nPeaks);
-			pthread_mutex_lock(&global->saveCXI_mutex);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
+				   eventData->threadNum, global->processRateMonitor.getRate(), 
+				   100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, 
+				   global->cxiFilename, eventData->nPeaks);
+		    //pthread_mutex_lock(&global->saveCXI_mutex);
 			writeCXI(eventData, global);
-			pthread_mutex_unlock(&global->saveCXI_mutex);
+			//pthread_mutex_unlock(&global->saveCXI_mutex);
 		} else {
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
 	}
 	// This frame is not going to be saved, but print anyway
 	else {
-		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
+		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->nPeaks);
 	}
 
 	// FEE spectrometer data stack 
@@ -454,6 +466,29 @@ cleanup:
 
 	}
 
+    pthread_mutex_unlock(&global->saveinterval_mutex);
+    /*
+     *  Update counters
+     */
+    global->nprocessedframes += 1;
+	global->nrecentprocessedframes += 1;
+    
+	/*
+	 *	Save some types of information from time to timeperiodic powder patterns
+	 */
+	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
+		if(global->saveCXI){
+			writeAccumulatedCXI(global);
+		} 
+		saveRunningSums(global);
+		saveHistograms(global);
+		saveRadialStacks(global);
+		saveSpectrumStacks(global);
+		global->updateLogfile();
+		global->writeStatus("Not finished");
+	}
+	pthread_mutex_unlock(&global->saveinterval_mutex);
+
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -501,10 +536,10 @@ void evr41fudge(cEventData *t, cGlobal *g){
 	double Vtot = 0;
 	double Vmax = 0;
 	int tCounts = 0;
-	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
+	for(i=g->hitfinderTOFMinSample[0]; i<g->hitfinderTOFMaxSample[0]; i++){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
-		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
+		if ( Vtof[i] >= g->hitfinderTOFThresh[0] ) tCounts++;
 	}
 	
 
