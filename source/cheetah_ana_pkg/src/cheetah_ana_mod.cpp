@@ -63,11 +63,6 @@ namespace cheetah_ana_pkg {
 	volatile static long frameNumberIncludingSkipped = 0;
 	volatile static long frameNumber = 0;
 	static cGlobal cheetahGlobal;
-<<<<<<< HEAD
-=======
-	volatile static int laserSwitch = 0;
-	volatile static int prevLaser = 0;
->>>>>>> developer
 	static time_t startT = 0;
 
 	class CspadDataWrapper {
