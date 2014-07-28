@@ -494,7 +494,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		if(global->saveAssembled){
 			int image_nx = global->detector[detID].image_nx;
 			int image_ny = global->detector[detID].image_ny;
-			Node * image = entry->createGroup("image",detID+1);
+			int i_image = detID+1;
+			printf("N = %d\n",(i_image));
+			Node * image = entry->createGroup("image",i_image);
 			// /entry_1/image_i/
 			image->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
 			if(global->savePixelmask){
@@ -517,7 +519,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			if(global->detector[detID].downsampling > 1){
 				int image_nx = global->detector[detID].imageXxX_nx;
 				int image_ny = global->detector[detID].imageXxX_ny;
-				image = entry->createGroup("image",global->nDetectors+detID+1);
+				int i_image = global->nDetectors+detID+1;
+				printf("NXX = %d\n",i_image);
+				image = entry->createGroup("image",i_image);
 				// /entry_1/image_j/
 
 				image->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
