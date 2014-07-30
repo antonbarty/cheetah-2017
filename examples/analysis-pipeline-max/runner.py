@@ -6,7 +6,7 @@ import numpy as np
 import run,terminal,google
 import getpass
 
-def main(configfilename):
+def main(configfilename,hostname,location):
     C = configobj.ConfigObj(configfilename)
     Cl = C["locations"]
     E = {}
@@ -66,10 +66,4 @@ def main(configfilename):
             ttab.note("Writing to google spreadsheet...")
             gtab.write(runs)
 
-    #mill = ["-","\\","|","/"]
-    #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
-    
         time.sleep(0.1)
-    #except:
-    #    print "ERROR OCCURED - RESTARTING IN A FEW SECONDS..."
-    #    time.sleep(5)
