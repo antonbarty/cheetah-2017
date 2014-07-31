@@ -65,6 +65,7 @@ cGlobal::cGlobal(void) {
 	samplePosXPV[0] = 0;
 	samplePosYPV[0] = 0;
 	samplePosZPV[0] = 0;
+	sampleVoltage[0] = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -1187,13 +1188,20 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
     else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
-	} else if (!strcmp(tag, "sampleposxpv")) {
+	} 
+	else if (!strcmp(tag, "sampleposxpv")) {
 		strcpy(samplePosXPV,value);
-	} else if (!strcmp(tag, "sampleposypv")) {
+	} 
+	else if (!strcmp(tag, "sampleposypv")) {
 		strcpy(samplePosYPV,value);
-	} else if (!strcmp(tag, "sampleposzpv")) {
+	} 
+	else if (!strcmp(tag, "sampleposzpv")) {
 		strcpy(samplePosZPV,value);
 	}
+ 	else if (!strcmp(tag, "samplevoltage")) {
+		strcpy(sampleVoltage,value);
+	}
+	
 	// Unknown tags
 	else {
 		//printf("\tUnknown tag: %s = %s\n",tag,value);

@@ -452,11 +452,13 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	source->createStack("energy",H5T_NATIVE_DOUBLE);
 	source->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 
-	// If we have sample translation configured, write it out to file
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0]){
-		entry->addClass("sample")->addClass("geometry")->createDataset("translation",H5T_NATIVE_FLOAT,3,0,H5S_UNLIMITED);
+	// If we have sample translation or electrojet voltage configured, write it out to file
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0] || global->sampleVoltage[0]){
+		Node * sample = entry->addClass("sample");
+		sample->addClass("geometry")->createDataset("translation",H5T_NATIVE_FLOAT,3,0,H5S_UNLIMITED);
+		sample->addClass("injection")->createStack("voltage",H5T_NATIVE_FLOAT);
 	}
-
+	
 	DETECTOR_LOOP{
 		Node * detector = instrument->createGroup("detector",detID+1);
 		
@@ -922,10 +924,11 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	// put it back
 	info->eventname[strlen(info->eventname)] = '.';
   
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
-	   global->samplePosZPV[0]){
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0] || global->sampleVoltage[0]){
 		root["entry_1"]["sample_1"]["geometry_1"]["translation"].write(info->samplePos,stackSlice);
+		root["entry_1"]["sample_1"]["injection_1"]["voltage"].write(info->sampleVoltage,stackSlice);
 	}
+
 	DETECTOR_LOOP {    
 		/* Save assembled image under image groups */
 		Node & detector = root["entry_1"]["instrument_1"].child("detector",detID+1);

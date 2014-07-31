@@ -129,6 +129,9 @@ public:
 	// Position of the sample stage
 	double      samplePos[3]; // in um
 
+	// Electrojet voltage
+	double      sampleVoltage[1]; // in Volt
+
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
 	double		fEbeamLTUPosX;		// in mm
