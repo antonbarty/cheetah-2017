@@ -179,7 +179,7 @@ namespace CXI{
 		int ndims = H5Sget_simple_extent_ndims(dataspace);
 		H5Sget_simple_extent_dims(dataspace, block, mdims);
 		/* check if we need to extend the dataset */
-		if((int)block[0] <= stackSlice){
+		if(ndims > 0 && (int)block[0] <= stackSlice){
 			while((int)block[0] <= stackSlice){
 				block[0] *= 2;
 			}
