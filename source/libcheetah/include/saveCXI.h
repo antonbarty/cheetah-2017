@@ -62,6 +62,7 @@ namespace CXI{
 		}
 		hid_t hid(){
 			return id;
+			
 		}
 		/*
 		  The base name of the class should be used.
@@ -80,9 +81,9 @@ namespace CXI{
 		   To create a stack pass length = H5S_UNLIMITED
 		   To create a string dataset pass dataType = H5T_NATIVE_CHAR and width as maximum string size.
 		 */
-		Node * createDataset(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL);
-		Node * createStack(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = H5S_UNLIMITED, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL){
-			return createDataset(s,dataType,width,height,length,chunkSize,heightChunkSize,userAxis);
+		Node * createDataset(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, hsize_t stackSize = 0, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL);
+		Node * createStack(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, hsize_t stackSize = H5S_UNLIMITED, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL){
+			return createDataset(s,dataType,width,height,length,stackSize,chunkSize,heightChunkSize,userAxis);
 		}
 		template<class T>
 			void write(T * data, int stackSlice = -1, int sliceSize = 0);

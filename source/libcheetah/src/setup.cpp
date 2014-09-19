@@ -182,6 +182,7 @@ cGlobal::cGlobal(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
+	saveRawModules=0;
     saveRawInt16 = 1;
 	h5compress = 5;
 	hdf5dump = 0;
@@ -961,6 +962,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
+	else if (!strcmp(tag, "saverawmodules")) {
+		saveRawModules = atoi(value);
+	}
     else if (!strcmp(tag, "saverawint16")) {
 		saveRawInt16 = atoi(value);
 	}
@@ -1288,6 +1292,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
+	fprintf(fp, "saveRawModules=%d\n",saveRawModules);
     fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);

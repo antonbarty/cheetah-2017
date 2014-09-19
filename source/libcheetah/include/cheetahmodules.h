@@ -77,6 +77,10 @@ void assemble2Dimage(float*, float*, float*, float*, long, long, long, int);
 void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
+// modularDetector.cpp
+void assembleModulesRawData(uint16_t*, uint16_t*, long, long, long, long, long);
+void assembleModulesCorrectedData(float*, float*, long, long, long, long, long);
+
 // downsample.cpp
 void downsample(cEventData *eventData, cGlobal *global);
 void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, float rescale,long downsampling);
