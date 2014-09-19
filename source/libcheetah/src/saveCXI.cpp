@@ -165,13 +165,13 @@ namespace CXI{
 		}
 
 		hid_t hs,w;
-		hsize_t count[3] = {1,1,1};
-		hsize_t offset[3] = {stackSlice,0,0};
+		hsize_t count[4] = {1,1,1,1};
+		hsize_t offset[4] = {stackSlice,0,0,0};
 		/* stride is irrelevant in this case */
-		hsize_t stride[3] = {1,1,1};
-		hsize_t block[3];
+		hsize_t stride[4] = {1,1,1,1};
+		hsize_t block[4];
 		/* dummy */
-		hsize_t mdims[3];
+		hsize_t mdims[4];
 		hid_t dataset = hid();
 		/* Use the existing dimensions as block size */
 		hid_t dataspace = H5Dget_space(dataset);
@@ -216,9 +216,11 @@ namespace CXI{
 		if(type == H5T_NATIVE_CHAR){
 			type = H5Dget_type(dataset);
 		}
-		hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-		if( hs<0 ) {
-			ERROR("Cannot select hyperslab.\n");
+		if (sliced){
+			hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
+			if( hs<0 ) {
+				ERROR("Cannot select hyperslab.\n");
+			}
 		}
 		w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
 		if( w<0 ){
@@ -352,6 +354,7 @@ namespace CXI{
 		const char * axis_1d = "experiment_identifier";
 		const char * axis_2d = "experiment_identifier:coordinate";
 		const char * axis_3d = "experiment_identifier:y:x";
+		const char * axis_4d = "experiment_identifier:module_identifier:y:x";
 		const char * axis;
 		if(userAxis != NULL){
 			axis = userAxis;
@@ -361,7 +364,9 @@ namespace CXI{
 			axis = axis_2d;
 		}else if(ndims == 3){
 			axis = axis_3d;
-		}
+		}else if(ndims == 4){
+			axis = axis_4d;
+	    }
 		
 		hsize_t one = 1;
 		hid_t datatype = H5Tcopy(H5T_C_S1);
