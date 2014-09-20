@@ -553,43 +553,49 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		/* Raw images */
 		if(global->saveRaw){
 			// /entry_1/instrument_1/detector_i/
-			int pix_nx = global->detector[detID].pix_nx;
-			int pix_ny = global->detector[detID].pix_ny;
 
-            detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
-            
-			if(global->savePixelmask){
-				detector->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
+			if (global->saveModular){
+
+				int asic_nx = global->detector[detID].asic_nx;
+				int asic_ny = global->detector[detID].asic_ny;
+				int asic_nn = asic_nx * asic_ny;
+				int nasics_x = global->detector[detID].nasics_x;
+				int nasics_y = global->detector[detID].nasics_y;
+				int nasics = nasics_x * nasics_y;
+
+				detector->createStack("data",H5T_NATIVE_FLOAT, asic_nx, asic_ny, nasics);
+
+				if(global->savePixelmask){
+					detector->createStack("mask",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics);
+				}
+
+				uint16_t* maskModular = (uint16_t *) calloc(asic_nn*nasics_x*nasics_y, sizeof(uint16_t));
+				stackModulesMask(global->detector[detID].pixelmask_shared, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				stackModulesMask(global->detector[detID].pixelmask_shared_max, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				stackModulesMask(global->detector[detID].pixelmask_shared_min, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				free(maskModular);
+
+			}else {
+				int pix_nx = global->detector[detID].pix_nx;
+				int pix_ny = global->detector[detID].pix_ny;
+
+				detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
+				if(global->savePixelmask){
+					detector->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
+				}
+				detector->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared);
+				detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_max);
+				detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_min);
+				detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 			}
-
-			detector->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared);
-			detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_max);
-			detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_min);
-			detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
-
 			detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 		}
-
-		/* Raw images (modular detector) - see Example 3.6 (Figure 6) in CXI file format 1.40 */
-		if (global->saveRawModules){
-			
-			int asic_nx = global->detector[detID].asic_nx;
-			int asic_ny = global->detector[detID].asic_ny;
-			int nasics_x = global->detector[detID].nasics_x;
-			int nasics_y = global->detector[detID].nasics_y;
-			int nasics = nasics_x * nasics_y;
-
-			detector->createStack("data",H5T_STD_I16LE, asic_nx, asic_ny, nasics);
-		
-			//detector->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared);
-			//detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_max);
-			//detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_min);
-			//detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
-			detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
-
-		}	
-
-
 
 		/* Assembled images */
 		if(global->saveAssembled){
@@ -1092,27 +1098,36 @@ v			didDecreaseActive = true;
 			}
 		}
 		if(global->saveRaw){
-			detector["data"].write(info->detector[detID].corrected_data,stackSlice);
-            
-			if(global->savePixelmask){
-				detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
-			}
-			float * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
-			detector["thumbnail"].write(thumbnail, stackSlice);
-			delete [] thumbnail;
-		}
-
-		if (global->saveRawModules){
-
-			int asic_nx = global->detector[detID].asic_nx;
-			int asic_ny = global->detector[detID].asic_ny;
-			int asics_nn = global->detector[detID].asic_nn;
-			int nasics_x = global->detector[detID].nasics_x;
-			int nasics_y = global->detector[detID].nasics_y;
 			
-			uint16_t* raw_module = (uint16_t*) calloc(asics_nn*nasics_x*nasics_y, sizeof(uint16_t));
-			stackModulesMask(info->detector[detID].raw_data, raw_module, asic_nx, asic_ny, nasics_x, nasics_y);
-			detector["data"].write(raw_module, stackSlice);
+			if (global->saveModular){
+				int asic_nx = global->detector[detID].asic_nx;
+				int asic_ny = global->detector[detID].asic_ny;
+				int asics_nn = global->detector[detID].asic_nn;
+				int nasics_x = global->detector[detID].nasics_x;
+				int nasics_y = global->detector[detID].nasics_y;
+			
+				float* dataModular = (float *) calloc(asics_nn*nasics_x*nasics_y, sizeof(float));
+				stackModulesData(info->detector[detID].corrected_data, dataModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector["data"].write(dataModular, stackSlice);
+				free(dataModular);
+
+				if(global->savePixelmask){
+					uint16_t* maskModular = (uint16_t *) calloc(asics_nn*nasics_x*nasics_y, sizeof(uint16_t));
+					stackModulesMask(info->detector[detID].pixelmask, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+					detector["mask"].write(maskModular,stackSlice);
+					free(maskModular);
+				}
+
+			}else {
+				detector["data"].write(info->detector[detID].corrected_data,stackSlice);	
+				if(global->savePixelmask){
+					detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
+				}
+				float * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+				detector["thumbnail"].write(thumbnail, stackSlice);
+				delete [] thumbnail;
+			}
+			
 		}
 
 	}

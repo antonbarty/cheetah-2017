@@ -263,7 +263,7 @@ public:
 	/** @brief Toggle the writing of raw images in hdf5 files. */
 	int      saveRaw;
 	/** @brief Toggle the writing of raw modules in hdf5 files. */
-	int      saveRawModules;
+	int      saveModular;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
 	int      assemble2DMask;
