@@ -78,8 +78,8 @@ void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
 void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
 // modularDetector.cpp
-void assembleModulesRawData(uint16_t*, uint16_t*, long, long, long, long, long);
-void assembleModulesCorrectedData(float*, float*, long, long, long, long, long);
+void stackModulesMask(uint16_t*, uint16_t*, int, int, int, int);
+void stackModulesData(float*, float*, int, int, int, int);
 
 // downsample.cpp
 void downsample(cEventData *eventData, cGlobal *global);

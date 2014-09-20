@@ -1,5 +1,5 @@
-/*
 
+/*
  *  saveCXI.cpp
  *  cheetah
  *
@@ -1122,12 +1122,9 @@ v			didDecreaseActive = true;
 			int asics_nn = global->detector[detID].asic_nn;
 			int nasics_x = global->detector[detID].nasics_x;
 			int nasics_y = global->detector[detID].nasics_y;
-			int nasics = nasics_x * nasics_y;
-
-			uint16_t* raw_module = (uint16_t*) calloc(asics_nn*nasics, sizeof(uint16_t));
-			for (int a=0; a<nasics; a++){
-				assembleModulesRawData(info->detector[detID].raw_data, &raw_module[asics_nn*a], a, asic_nx, asic_ny, nasics_x, nasics_y);
-			}
+			
+			uint16_t* raw_module = (uint16_t*) calloc(asics_nn*nasics_x*nasics_y, sizeof(uint16_t));
+			stackModulesMask(info->detector[detID].raw_data, raw_module, asic_nx, asic_ny, nasics_x, nasics_y);
 			detector["data"].write(raw_module, stackSlice);
 		}
 
