@@ -1097,10 +1097,9 @@ v			didDecreaseActive = true;
 			if(global->savePixelmask){
 				detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
 			}
-			int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+			float * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
 			detector["thumbnail"].write(thumbnail, stackSlice);
 			delete [] thumbnail;
-			free(corrected_data_int16);
 		}
 
 		if (global->saveRawModules){
