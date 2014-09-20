@@ -556,12 +556,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			int pix_nx = global->detector[detID].pix_nx;
 			int pix_ny = global->detector[detID].pix_ny;
 
-            if (global->saveRawInt16){
-			    detector->createStack("data",H5T_STD_I16LE,pix_nx, pix_ny);
-            }
-            else {
-                detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
-            }
+            detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
+            
 			if(global->savePixelmask){
 				detector->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
 			}
@@ -1096,20 +1092,12 @@ v			didDecreaseActive = true;
 			}
 		}
 		if(global->saveRaw){
-			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
-			}
-            if (global->saveRawInt16){
-    			detector["data"].write(corrected_data_int16,stackSlice);
-            }
-            else { 
-                detector["data"].write(info->detector[detID].corrected_data,stackSlice);
-            }
+			detector["data"].write(info->detector[detID].corrected_data,stackSlice);
+            
 			if(global->savePixelmask){
 				detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
 			}
-			int16_t * thumbnail = generateThumbnail(corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+			int16_t * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
 			detector["thumbnail"].write(thumbnail, stackSlice);
 			delete [] thumbnail;
 			free(corrected_data_int16);
