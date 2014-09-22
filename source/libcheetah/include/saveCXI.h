@@ -115,7 +115,7 @@ namespace CXI{
 
 	};
 
-	const int version = 130;
+	const int version = 140;
 	const int thumbnailScale = 8;
 	// The preferred chunk size for 2D stacks is 16 MBytes
 	const int chunkSize2D = 16777216;
@@ -124,6 +124,8 @@ namespace CXI{
 	// chunk sizes for peak list, assumes most images have less
 	// than 4096/sizeof(float) = 1024 peaks
 	const int peaksChunkSize[2] = {4194304, 4096};	
+	// The preferred size of charracter (data_type, experimental_identifier,...)
+	const int stringSize = 128;
 }
 
 
