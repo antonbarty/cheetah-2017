@@ -66,7 +66,7 @@ class Run:
         if self.conf["general"]["job_manager"] == "lsf":
             s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
         elif self.conf["general"]["job_manager"] == "slurm":
-            s = ""
+            s = "sbatch %s" % self.processexec
         os.system(s)
         self.started = True
     def start_swmr(self):
@@ -75,10 +75,10 @@ class Run:
         if not self.prepared:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
-        self.processdir_swmr = self.conf["h5dir_swmr"]+"/"+self.run_name+"_"+self.st
-	self.psanaexec_swmr = self.conf["psanaexec_swmr"]
+        self.processdir_swmr = self.locations["h5dir_swmr"]+"/"+self.run_name+"_"+self.st
+	self.psanaexec_swmr = self.locations["psanaexec_swmr"]
         self.processexec_swmr = self.processdir_swmr+"/process.sh"
-        self.processout_swmr = self.processdir_swmr+"/bsub.out"
+        self.processout_swmr = self.processdir_swmr+"/process.out"
         os.system("cp -r %s %s/" % (self.processdir,self.processdir_swmr))
         self.cheetah_ini_swmr = self.processdir_swmr+"/cheetah.ini"
         with open(self.cheetah_ini_swmr,"r") as f:
@@ -91,25 +91,25 @@ class Run:
                 ls_n.append(l)
         with open(self.cheetah_ini_swmr,"w") as f:
             f.writelines(ls_n)
-        self._write_processexec(self.processdir_swmr,self.psanaexec_swmr,self.processexec_swmr)
+        self._write_processexec(self.processout_swmr,self.processdir_swmr,self.psanaexec_swmr,self.processexec_swmr)
         s = "bsub -q psnehq -J C%sS -o %s %s" % (self.run_name,self.processout_swmr,self.processexec_swmr)
         os.system(s)
         self.started_swmr = True
     def clear(self):
         os.system("bkill -J C%s" % self.run_name)
         os.system("bkill -J C%sS" % self.run_name)
-        os.system("rm -r %s/*%s*" % (self.conf["h5dir"],self.run_name))
-        os.system("rm -r %s/*%s*" % (self.conf["h5dir_swmr"],self.run_name))
+        os.system("rm -r %s/*%s*" % (self.locations["h5dir"],self.run_name))
+        os.system("rm -r %s/*%s*" % (self.locations["h5dir_swmr"],self.run_name))
         self.init2()
     def _load_type(self):
         self.type = self.google_table.get_run_type(self.run_name)
     def _load_xtcs(self):
-        self.xtcs =  [(self.conf["xtcdir"]+"/"+l) for l in os.listdir(self.conf["xtcdir"]) if self.run_name in l]
+        self.xtcs =  [(self.locations["xtcdir"]+"/"+l) for l in os.listdir(self.locations["xtcdir"]) if self.run_name in l]
     def _load_processdir(self):
         if self.type == None:
             self.processdir = None
         else:
-            rootdir = {"dark":self.conf["h5dir_dark"],"data":self.conf["h5dir"]}[self.type]
+            rootdir = {"dark":self.locations["h5dir_dark"],"data":self.locations["h5dir"]}[self.type]
             dirs = [(rootdir+"/"+l) for l in os.listdir(rootdir) if self.run_name in l and len(l) > 5]
             if dirs == []:
                 self.processdir = None
@@ -163,7 +163,7 @@ class Run:
                     elif "Average hit rate:" in line:
                         self.attrs["HRate"] = line.split(" ")[-2][:-1]
     def _get_prior_darkcal(self):
-        dcals = [(self.conf["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-darkcal.h5" % l[:5])) for l in os.listdir(self.conf["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
+        dcals = [(self.locations["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-darkcal.h5" % l[:5])) for l in os.listdir(self.locations["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
         if dcals == []:
             return None
         dcals.sort()
@@ -171,23 +171,23 @@ class Run:
     def _init_processdir(self):
         self.st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d_%H%M%S')
         if self.type == "data":
-            self.processdir = self.conf["h5dir"] + "/" + self.run_name + "_" + self.st
+            self.processdir = self.locations["h5dir"] + "/" + self.run_name + "_" + self.st
         elif self.type == "dark":
-            self.processdir = self.conf["h5dir_dark"] + "/" + self.run_name + "_" + self.st
-	self.psanaexec = self.conf["psanaexec"]
+            self.processdir = self.locations["h5dir_dark"] + "/" + self.run_name + "_" + self.st
+	self.psanaexec = self.locations["psanaexec"]
         self.processexec = self.processdir + "/" + "process.sh"
-        self.processout = self.processdir + "/" + "bsub.out"
+        self.processout = self.processdir + "/" + "process.out"
         self.cheetah_ini = self.processdir + "/" + "cheetah.ini"
         self.psana_cfg = self.processdir + "/" + "psana.cfg"
         os.system("mkdir %s" % self.processdir)
         self._init_process_config()
-        self._write_processexec(self.processdir,self.psanaexec,self.processexec)
+        self._write_processexec(self.processout,self.processdir,self.psanaexec,self.processexec)
     def _init_process_config(self):
         # select source files for configurations
         if self.type == "data":
-            cdir = self.conf["confdir"]
+            cdir = self.locations["confdir"]
         elif self.type == "dark":
-            cdir = self.conf["confdir_dark"]
+            cdir = self.locations["confdir_dark"]
         c = {}
         for f,prefix,suffix in zip([self.cheetah_ini,self.psana_cfg],["cheetah","psana"],["ini","cfg"]): 
             c_template_run = cdir+"/"+("%s_template_%s.%s" % (prefix,self.run_name,suffix))
@@ -224,10 +224,15 @@ class Run:
         #if self.conf["swmr"]
         # write psana.cfg
         os.system("cp %s %s" % (c["psana"],self.psana_cfg))        
-    def _write_processexec(self,processdir,psanaexec,processexec):
+    def _write_processexec(self,processout,processdir,psanaexec,processexec):
         txt = ["#!/bin/bash\n"]
+        if self.conf["general"]["job_manager"] == "slurm":
+            txt += "#SBATCH --job-name=C%s\n" % self.run_name
+            txt += "#SBATCH -N1\n"
+            txt += "#SBATCH -n8\n"
+            txt += "#SBATCH --output=%s\n" % processout
         txt += ["cd %s\n" % processdir]
-        txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.conf["xtcdir"],self.run_name)]
+        txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.locations["xtcdir"],self.run_name)]
         txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
         txt += ["cd ..\n"]
         s = processdir.split("/")[-1]

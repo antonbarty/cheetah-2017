@@ -10,7 +10,7 @@ if not ("pslogin" in hostname or "login" == hostname):
 
 # Read configuration
 if len(sys.argv) < 2:
-    sys.exit("Usage: bsub_cheetah.py bsub_cheetah.cfg")
+    sys.exit("Usage: cheetah_manager.py cheetah_manager.cfg")
 
 debug = False
 if len(sys.argv) >= 3:
