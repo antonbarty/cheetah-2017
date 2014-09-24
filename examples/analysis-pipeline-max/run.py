@@ -72,6 +72,7 @@ class Run:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
         self.processdir_swmr = self.conf["h5dir_swmr"]+"/"+self.run_name+"_"+self.st
+	self.psanaexec_swmr = self.conf["psanaexec_swmr"]
         self.processexec_swmr = self.processdir_swmr+"/process.sh"
         self.processout_swmr = self.processdir_swmr+"/bsub.out"
         os.system("cp -r %s %s/" % (self.processdir,self.processdir_swmr))
@@ -86,7 +87,7 @@ class Run:
                 ls_n.append(l)
         with open(self.cheetah_ini_swmr,"w") as f:
             f.writelines(ls_n)
-        self._write_processexec_swmr()
+        self._write_processexec(self.processdir_swmr,self.psanaexec_swmr,self.processexec_swmr)
         s = "bsub -q psnehq -J C%sS -o %s %s" % (self.run_name,self.processout_swmr,self.processexec_swmr)
         os.system(s)
         self.started_swmr = True
@@ -169,13 +170,14 @@ class Run:
             self.processdir = self.conf["h5dir"] + "/" + self.run_name + "_" + self.st
         elif self.type == "dark":
             self.processdir = self.conf["h5dir_dark"] + "/" + self.run_name + "_" + self.st
+	self.psanaexec = self.conf["psanaexec"]
         self.processexec = self.processdir + "/" + "process.sh"
         self.processout = self.processdir + "/" + "bsub.out"
         self.cheetah_ini = self.processdir + "/" + "cheetah.ini"
         self.psana_cfg = self.processdir + "/" + "psana.cfg"
         os.system("mkdir %s" % self.processdir)
         self._init_process_config()
-        self._write_processexec()
+        self._write_processexec(self.processdir,self.psanaexec,self.processexec)
     def _init_process_config(self):
         # select source files for configurations
         if self.type == "data":
@@ -218,32 +220,16 @@ class Run:
         #if self.conf["swmr"]
         # write psana.cfg
         os.system("cp %s %s" % (c["psana"],self.psana_cfg))        
-    def _write_processexec(self):
+    def _write_processexec(self,processdir,psanaexec,processexec):
         txt = ["#!/bin/bash\n"]
-        txt += ["source %s\n" % self.conf["environment"]]
-        txt += ["cd %s\n" % self.processdir]
-        txt += ["psana -c psana.cfg %s/*%s*.xtc\n" % (self.conf["xtcdir"],self.run_name)]
+        txt += ["cd %s\n" % processdir]
+        txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.conf["xtcdir"],self.run_name)]
         txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
         txt += ["cd ..\n"]
-        s = self.processdir.split("/")[-1]
+        s = processdir.split("/")[-1]
         txt += ["ln -s -f %s %s\n" % (s,self.run_name)]
         txt += ["chmod -R a+xr %s\n" % s]
         txt += ["chmod a+xr %s\n" % (self.run_name)]
-        with open(self.processexec,"w") as f:
+        with open(processexec,"w") as f:
             f.writelines(txt)
-        os.system("chmod u+x %s" % self.processexec)
-    def _write_processexec_swmr(self):
-        txt = ["#!/bin/bash\n"]
-        txt += ["source %s\n" % self.conf["environment"]]
-        txt += ["cd %s\n" % self.processdir_swmr]
-        txt += ["psana -c psana.cfg %s/*%s*.xtc\n" % (self.conf["xtcdir"],self.run_name)]
-        txt += ["cd ..\n"]
-        s = self.processdir.split("/")[-1]
-        txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
-        txt += ["ln -s -f %s %s\n" % (s,self.run_name)]
-        txt += ["chmod -R a+xr %s\n" % s]
-        txt += ["chmod a+xr %s\n" % (self.run_name)]
-        with open(self.processexec_swmr,"w") as f:
-            f.writelines(txt)
-        os.system("chmod u+x %s" % self.processexec)
-
+        os.system("chmod u+x %s" % processexec)
