@@ -80,12 +80,12 @@ namespace CXI{
 		   To create a stack pass length = H5S_UNLIMITED
 		   To create a string dataset pass dataType = H5T_NATIVE_CHAR and width as maximum string size.
 		 */
-		Node * createDataset(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, int chunkSize = 0);
-		Node * createStack(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = H5S_UNLIMITED, int chunkSize = 0){
-			return createDataset(s,dataType,width,height,length,chunkSize);
+		Node * createDataset(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = 0, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL);
+		Node * createStack(const char * s, hid_t dataType, hsize_t width = 0, hsize_t height = 0, hsize_t length = H5S_UNLIMITED, int chunkSize = 0, int heightChunkSize = 0, const char * userAxis = NULL){
+			return createDataset(s,dataType,width,height,length,chunkSize,heightChunkSize,userAxis);
 		}
 		template<class T>
-			void write(T * data, int stackSlice = -1);
+			void write(T * data, int stackSlice = -1, int sliceSize = 0);
 		
 		void closeAll();
 		void openAll();
@@ -97,7 +97,7 @@ namespace CXI{
 		std::string name;
 	private:
 		Node * addNode(const char * s, hid_t oid, Type t);
-		void addStackAttributes(hid_t dataset, int ndims);
+		void addStackAttributes(hid_t dataset, int ndims, const char * userAxis);
 		hid_t writeNumEvents(hid_t dataset, int stackSlice);
 		std::string nextKey(const char * s);
 		template <class T>
@@ -120,6 +120,9 @@ namespace CXI{
 	const int chunkSize2D = 16777216;
 	// The preferred chunk size for 1D stacks is 1 MByte
 	const int chunkSize1D = 1048576;
+	// chunk sizes for peak list, assumes most images have less
+	// than 4096/sizeof(float) = 1024 peaks
+	const int peaksChunkSize[2] = {4194304, 4096};	
 }
 
 

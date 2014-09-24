@@ -780,6 +780,17 @@ namespace cheetah_ana_pkg {
 				}  
 			}
 		}
+
+		// Sample voltage
+		if(cheetahGlobal.sampleVoltage[0]){
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.sampleVoltage);
+			if (pv && pv->numElements() > 0) {
+				eventData->sampleVoltage[0] = estore.value(cheetahGlobal.sampleVoltage,0);
+				if (verbose) {
+					cout << "sampleVoltage: " << eventData->sampleVoltage[0] << endl;
+				}  
+			}
+		}
 		
         
 		/*

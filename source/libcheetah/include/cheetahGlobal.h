@@ -255,6 +255,8 @@ public:
 	char     samplePosYPV[MAX_FILENAME_LENGTH];
 	char     samplePosZPV[MAX_FILENAME_LENGTH];
 
+	/** @brief The Epics process variable for the electrojet voltage */
+	char     sampleVoltage[MAX_FILENAME_LENGTH];
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
 	int      savehits;

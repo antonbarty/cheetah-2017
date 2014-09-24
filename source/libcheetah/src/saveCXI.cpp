@@ -18,7 +18,7 @@
 
 namespace CXI{
 	Node * Node::createDataset(const char * s, hid_t dataType, hsize_t width, hsize_t height,
-							   hsize_t length, int chunkSize){
+							   hsize_t length, int chunkSize, int heightChunkSize, const char * userAxis){
 		hid_t loc = hid();
 
 		if(dataType == H5T_NATIVE_CHAR){
@@ -65,8 +65,16 @@ namespace CXI{
 			width = 1;
 		}
 
-		hsize_t dims[3] = {lrintf(((float)chunkSize)/H5Tget_size(dataType)/width/height),
-						   height,width};
+		hsize_t dims[3] = {0, height, width};
+
+
+		if(heightChunkSize == 0){
+			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/width/height);
+		}else{
+			dims[0] = chunkSize/heightChunkSize;
+			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/width);
+		}
+
 		if(!chunkSize){
 			if(length == 0){
 				length = 1;
@@ -96,18 +104,23 @@ namespace CXI{
 		}
 
 		if(length == H5S_UNLIMITED){
-			addStackAttributes(dataset,ndims);
+			addStackAttributes(dataset,ndims,userAxis);
 		}
 		return addNode(s, dataset, Dataset);    
 	}
 
 	template <class T> 
-	void Node::write(T * data, int stackSlice){  
+	void Node::write(T * data, int stackSlice, int sliceSize){  
 		bool sliced = true;
+		bool variableSlice = false;
 		if(stackSlice == -1){
 			stackSlice = 0;
 			sliced = false;
 		}
+		if(sliceSize > 0){
+			variableSlice = true;
+		}
+
 		hid_t hs,w;
 		hsize_t count[3] = {1,1,1};
 		hsize_t offset[3] = {stackSlice,0,0};
@@ -136,6 +149,25 @@ namespace CXI{
 		if(sliced){
 			block[0] = 1;
 		}
+
+		/* check if we need to extend the dataset in the second dimension */
+		if(variableSlice && (int)block[1] <= sliceSize){
+			int tmp_block = block[0];
+			H5Sget_simple_extent_dims(dataspace, block, mdims);
+			while((int)block[1] <= sliceSize){
+				block[1] *= 2;
+			}
+			H5Dset_extent (dataset, block);
+			block[0] = tmp_block;
+			/* get enlarged dataspace */
+			H5Sclose(dataspace);
+			dataspace = H5Dget_space (dataset);
+			if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+		}
+		if(variableSlice){
+			block[1] = sliceSize;
+		}
+
 		hid_t memspace = H5Screate_simple (ndims, block, NULL);
 		hid_t type = get_datatype(data);
 		if(type == H5T_NATIVE_CHAR){
@@ -273,12 +305,14 @@ namespace CXI{
 		return std::string(buffer);
 	}
 
-	void Node::addStackAttributes(hid_t dataset, int ndims){
+	void Node::addStackAttributes(hid_t dataset, int ndims, const char * userAxis){
 		const char * axis_1d = "experiment_identifier";
 		const char * axis_2d = "experiment_identifier:coordinate";
 		const char * axis_3d = "experiment_identifier:y:x";
 		const char * axis;
-		if(ndims == 1){
+		if(userAxis != NULL){
+			axis = userAxis;
+		}else if(ndims == 1){
 			axis = axis_1d;
 		}else if(ndims == 2){
 			axis = axis_2d;
@@ -452,11 +486,13 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	source->createStack("energy",H5T_NATIVE_DOUBLE);
 	source->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 
-	// If we have sample translation configured, write it out to file
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0]){
-		entry->addClass("sample")->addClass("geometry")->createDataset("translation",H5T_NATIVE_FLOAT,3,0,H5S_UNLIMITED);
+	// If we have sample translation or electrojet voltage configured, write it out to file
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0] || global->sampleVoltage[0]){
+		Node * sample = entry->addClass("sample");
+		sample->addClass("geometry")->createDataset("translation",H5T_NATIVE_FLOAT,3,0,H5S_UNLIMITED);
+		sample->addClass("injection")->createStack("voltage",H5T_NATIVE_FLOAT);
 	}
-
+	
 	DETECTOR_LOOP{
 		Node * detector = instrument->createGroup("detector",detID+1);
 		
@@ -567,6 +603,32 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				tofDetectorIndex++;
 			}
 		}
+	}
+
+	int resultIndex = 1;
+	if(global->savePeakInfo && global->hitfinder){
+		Node * result = entry->createGroup("result",resultIndex);
+
+		result->createStack("nPeaks", H5T_NATIVE_INT);
+
+		result->createStack("peakXPosAssembled", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakYPosAssembled",H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+
+		result->createStack("peakXPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakYPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		
+		result->createStack("peakIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+
+
+		result->createLink("data", "peakIntensity");
+		resultIndex++;
 	}
 
 	Node * lcls = root->createGroup("LCLS");	
@@ -922,10 +984,11 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	// put it back
 	info->eventname[strlen(info->eventname)] = '.';
   
-	if(global->samplePosXPV[0] || global->samplePosYPV[0] || 
-	   global->samplePosZPV[0]){
+	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0] || global->sampleVoltage[0]){
 		root["entry_1"]["sample_1"]["geometry_1"]["translation"].write(info->samplePos,stackSlice);
+		root["entry_1"]["sample_1"]["injection_1"]["voltage"].write(info->sampleVoltage,stackSlice);
 	}
+
 	DETECTOR_LOOP {    
 		/* Save assembled image under image groups */
 		Node & detector = root["entry_1"]["instrument_1"].child("detector",detID+1);
@@ -983,6 +1046,23 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			free(corrected_data_int16);
 		}
 	}
+	int resultIndex = 1;
+	if(global->savePeakInfo && global->hitfinder) {
+		long nPeaks = info->peaklist.nPeaks;
+		
+		Node & result = root["entry_1"].child("result",resultIndex);
+
+		result["peakXPosAssembled"].write(info->peaklist.peak_com_x_assembled, stackSlice, nPeaks);
+		result["peakYPosAssembled"].write(info->peaklist.peak_com_y_assembled, stackSlice, nPeaks);
+
+		result["peakXPosRaw"].write(info->peaklist.peak_com_x, stackSlice, nPeaks);
+		result["peakYPosRaw"].write(info->peaklist.peak_com_y, stackSlice, nPeaks);
+
+		result["peakIntensity"].write(info->peaklist.peak_totalintensity, stackSlice, nPeaks);
+		result["peakNPixels"].write(info->peaklist.peak_npix, stackSlice, nPeaks);
+		result["nPeaks"].write(&nPeaks, stackSlice);
+	}
+
 	/*Write LCLS informations*/
 	Node & lcls = root["LCLS"];
 	DETECTOR_LOOP{

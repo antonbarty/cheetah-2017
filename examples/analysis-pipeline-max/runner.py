@@ -1,26 +1,12 @@
-#!/usr/bin/env python
+import configobj
 import os,sys
+import time,datetime
 import socket
-import runner
+import numpy as np
+import run,terminal,google
+import getpass
 
-fqdn = socket.getfqdn()
-
-# Are we on a suitable host machine?
-if not ((("psexport" in fqdn or "pslogin" in fqdn) and "slac" in fqdn) or ("login" in fqdn and "davinci" in fqdn)):
-    sys.exit("ERROR: Cannot submit jobs from this host. You are logged in to %s but you need to be logged in to pslogin.slac.stanford.edu, psexport.slac.stanford.edu or davinci.icm.uu.se to submit jobs to a queue." % (fqdn))
-
-# Check configuration
-if len(sys.argv) < 2:
-    sys.exit("Usage: busb_cheetah.py bsub_cheetah.cfg [DEBUG]")
-
-# Are we running in debugging mode?
-debug = False
-if len(sys.argv) >= 3:
-    if sys.argv[2] == "DEBUG":
-        debug = True
-
-def main():
-    configfilename = sys.argv[1]
+def main(configfilename,hostname,location):
     C = configobj.ConfigObj(configfilename)
     Cl = C["locations"]
     E = {}
@@ -47,10 +33,7 @@ def main():
     while True:
         gtab.update_table_dict()
         valid_runs = set(gtab.get_valid_runs())
-        if counter == 0:
-            runs_to_update = valid_runs
-        else:
-            runs_to_update = set(gtab.get_runs_to_update())
+        runs_to_update = set(gtab.get_runs_to_update())
         runs_to_add = valid_runs - set(runs.keys())
 
         ns = list(runs_to_add)
@@ -83,20 +66,4 @@ def main():
             ttab.note("Writing to google spreadsheet...")
             gtab.write(runs)
 
-        counter += 1
-    #mill = ["-","\\","|","/"]
-    #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
-    
         time.sleep(0.1)
-    #except:
-    #    print "ERROR OCCURED - RESTARTING IN A FEW SECONDS..."
-    #    time.sleep(5)
-
-if debug:
-    runner.run(configfilename)
-else:
-    while True:
-        try:
-            runner.run(configfilename)
-        except:
-            print "WARNING: run() crashed, restarting..."
