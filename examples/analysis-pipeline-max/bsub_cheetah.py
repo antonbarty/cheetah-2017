@@ -51,7 +51,10 @@ def main():
     while True:
         gtab.update_table_dict()
         valid_runs = set(gtab.get_valid_runs())
-        runs_to_update = set(gtab.get_runs_to_update())
+        if counter == 0:
+            runs_to_update = valid_runs
+        else:
+            runs_to_update = set(gtab.get_runs_to_update())
         runs_to_add = valid_runs - set(runs.keys())
 
         ns = list(runs_to_add)
@@ -84,6 +87,7 @@ def main():
             ttab.note("Writing to google spreadsheet...")
             gtab.write(runs)
 
+        counter += 1
     #mill = ["-","\\","|","/"]
     #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
     

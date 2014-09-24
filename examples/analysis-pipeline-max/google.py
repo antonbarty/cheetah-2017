@@ -109,7 +109,6 @@ class GoogleTable:
         D = self.tabDict
         run_names_old = D["Run"]
         rows = [title]
-        #for i,r in zip(range(len(ks)),ks):
         for i,r in zip(range(len(run_names_old)),run_names_old):
             if r in ks:
                 d = runs[r].attrs
@@ -117,19 +116,12 @@ class GoogleTable:
             else:
                 vs = [r,D["Type"][i],D["Cmd"][i],D["Status"][i],D["#Frames"][i],D["#Hits"][i],D["HRate"][i]]
             rows.append(vs)
-        #self.write_row_table(i,vs)
         # Select a range
         s = "A1:%s%i" % (chr(len(title) - 1 + ord('a')).upper(),len(rows))
         cell_list = self.wks.range(s)
-        print len(cell_list),len(rows),len(title)
-        #sys.exit()
-        print rows
         for i,c in zip(range(len(cell_list)),cell_list):
             icol = i % len(title)
-            irow = i / len(rows)
-            #print i
-            #print icol,irow
-            #print len(rows),len(rows[irow])
+            irow = i / len(title)
             c.value = rows[irow][icol]
         self.wks.update_cells(cell_list)
     # READING

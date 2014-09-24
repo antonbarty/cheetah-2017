@@ -33,12 +33,12 @@ class Run:
         self._load_logfile()
         self._load_status()
         self._refresh_attrs()
-        if self.google_table.get_cmd(self.run_name) != "auto":
+        self.cmd = self.google_table.get_run_cmd(self.run_name)
+        if self.cmd != "auto":
             self.cmd = self.google_table.pop_run_cmd(self.run_name)
         if self.cmd == "clear":
             self.clear()
             self.cmd = "auto"           
-        #print self.cmd,self.status
     def init_process(self):
         ready = False
         if self.type == "data": 
@@ -62,7 +62,7 @@ class Run:
         if not self.prepared:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
-        s = "bsub -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
+        s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
         os.system(s)
         self.started = True
     def start_swmr(self):

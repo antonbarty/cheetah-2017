@@ -37,10 +37,13 @@ class TerminalTable:
         s_content = ""
         names = self.runs.keys()
         names.sort()
-        for i in range(self.shape[1]-8-self.Nlines_jobs-(self.Nlines_jobs>0)):
+        length = self.shape[1]-8-self.Nlines_jobs-(self.Nlines_jobs>0)
+        print length
+        print len(names)
+        for i in range(length):
             if i <= (len(names)-1):
-                R = self.runs[names[i]]
-                s_content += names[i] + "\t"
+                R = self.runs[names[-i-1]]
+                s_content += names[-i-1] + "\t"
                 for c in self.col_names[1:]:
                     s_content += R.attrs.get(c,"-") + "\t"
                 s_content = s_content[:-1] + "\n"
