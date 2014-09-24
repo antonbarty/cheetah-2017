@@ -3,10 +3,11 @@ import time,datetime
 
 
 class Run:
-    def __init__(self,run_name,google_table,conf):
+    def __init__(self,run_name,google_table,locations,conf):
         self.run_name = run_name
         self.run_nr = int(run_name[1:])
         self.google_table = google_table
+        self.locations = locations
         self.conf = conf
         self.init2()
     def init2(self):
@@ -62,7 +63,10 @@ class Run:
         if not self.prepared:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
-        s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
+        if self.conf["general"]["job_manager"] == "lsf":
+            s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
+        elif self.conf["general"]["job_manager"] == "slurm":
+            s = ""
         os.system(s)
         self.started = True
     def start_swmr(self):
