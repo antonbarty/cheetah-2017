@@ -100,6 +100,7 @@ class Run:
         os.system("bkill -J C%sS" % self.run_name)
         os.system("rm -r %s/*%s*" % (self.locations["h5dir"],self.run_name))
         os.system("rm -r %s/*%s*" % (self.locations["h5dir_swmr"],self.run_name))
+        os.system("rm -r %s/*%s*" % (self.locations["h5dir_dark"],self.run_name))
         self.init2()
     def _load_type(self):
         self.type = self.google_table.get_run_type(self.run_name)

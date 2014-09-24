@@ -2,11 +2,12 @@
 import os,sys
 import socket
 import getpass
+import loop
 
 # Are we on the right host machine?
 hostname = socket.gethostname()
-if not ("pslogin" in hostname or "login" == hostname):
-    sys.exit("ERROR: Cannot submit jobs from this host. You are logged in to %s but you need to be logged in to pslogin or davinci (login node) to simultaneously submit jobs to the queue and communicate with the google spreadsheet." % hostname)
+if not ("psexport" in hostname or "login" == hostname):
+    sys.exit("ERROR: Cannot submit jobs from this host. You are logged in to %s but you need to be logged in to psexport or davinci (login node) to simultaneously submit jobs to the queue and communicate with the google spreadsheet." % hostname)
 
 # Read configuration
 if len(sys.argv) < 2:
@@ -19,7 +20,7 @@ if len(sys.argv) >= 3:
 
 configfilename = sys.argv[1]
 
-print "Gmail password [%s]:" % email
+print "Gmail login"
 password = getpass.getpass()
 
 if debug:
