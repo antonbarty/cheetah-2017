@@ -1328,6 +1328,10 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
 	//fprintf(fp, "hotpixADC=%d\n",hotpixADC);
 	//fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
+    fprintf(fp, "usePolarizationCorrection=%d\n",detector[i].usePolarizationCorrection);
+    fprintf(fp, "horizontalFractionOfPolarization=%d\n",detector[i].horizontalFractionOfPolarization);
+    fprintf(fp, "useSolidAngleCorrection=%d\n",detector[i].useSolidAngleCorrection);
+    fprintf(fp, "solidAngleAlgorithm=%d\n",detector[i].solidAngleAlgorithm);
 	fprintf(fp, "powderThresh=%f\n",powderthresh);
 	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
 	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
