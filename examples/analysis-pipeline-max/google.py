@@ -16,97 +16,21 @@ class GoogleTable:
         self.sh = self.gc.open(spreadsheet_name)
         self.wks = self.sh.worksheet(os.path.expandvars(worksheet_name))
         self.write_row(0,title)
-    # CONVENIENCE
-    def get_run_type(self,run_name):
-        if self.tabDict == None:
-            return None
-        runs = self.tabDict["Run"]
-        types = self.tabDict["Type"]
-        return types[runs.index(run_name)]
-    def get_run_cmd(self,run_name):
-        if self.tabDict == None:
-            return None
-        runs = self.tabDict["Run"]
-        cmds = self.tabDict["Cmd"]
-        return cmds[runs.index(run_name)]
-    def get_valid_runs(self):
-        if self.tabDict == None:
-            return None
-        runs = self.tabDict["Run"]
-        stats = self.tabDict["Type"]
-        vr = []
-        for i,t in zip(range(len(types)),types):
-            if t in ["dark","data"]:
-                vr.append(runs[i])
-        return vr
-    def get_runs_to_update(self):
-        if self.tabDict == None:
-            return None
-        runs = self.tabDict["Run"]
-        cmds = self.tabDict["Cmd"]
-        vr = []
-        for i,c in zip(range(len(cmds)),cmds):
-            if c != "auto":
-                vr.append(runs[i])
-        return vr
-    def pop_run_cmd(self,run_name):
-        g_run_names = self.read_col_table(run_col)
-        if run_name not in g_run_names:
-            return None
-        else:
-            s = self.read_cell_table(g_run_names.index(run_name),run_cmd_col)
-            #print s
-            if s == "":
-                return None
-            else:
-                self.write_cell_table(g_run_names.index(run_name),run_cmd_col,"auto")
-                return s
-    def clear_run(self,run_name,run_type):
-        g_run_names = self.read_col_table(run_col)
-        if run_name not in g_run_names:
-            return None
-        else:
-            self.write_row_table(g_run_names.index(run_name),[run_name,run_type,"auto"]+[""]*4)
-    def get_valid_runs(self):
-        g_run_names = self.read_col_table(run_col)
-        g_run_types = self.read_col_table(run_type_col)
-        g_run_names = g_run_names[:min([len(g_run_types),len(g_run_names)])]
-        g_run_types = g_run_types[:min([len(g_run_types),len(g_run_names)])]
-        return [r for i,r in enumerate(g_run_names) if g_run_types[i] in ["dark","data"]]    
-    # WRITING
-    def write_cell(self,row,col,value):
-        t0 = time.time()
-        if value != None:
-            self.wks.update_cell(row+1,col+1,value)
-    def write_cell_table(self,row,col,value):
-        self.write_cell(row+1,col,value)
-    def write_row(self,row,values):
-        if len(values) == 1:
-            write_cell(row,0,values[0])
-        else:
-            s = "%s%i:%s%i" % (chr(0 + ord('a')).upper(),row+1,chr(len(values) - 1 + ord('a')).upper(),row+1)
-            #print s
-            cell_list = self.wks.range(s)
-            for v,c in zip(values,cell_list):
-                c.value = v
-            self.wks.update_cells(cell_list)
-    def write_row_table(self,row,values):
-        self.write_row(row+1,values)
-    def write_col(self,col,values): 
-        if len(values) == 1:
-            write_cell(0,col,values[0])
-        else:
-            s = "%s%i:%s%i" % (chr(col + ord('a')).upper(),1,chr(col + ord('a')).upper(),len(values))
-            cell_list = self.wks.range(s)
-            for v,c in zip(values,cell_list):
-                c.value = v
-            self.wks.update_cells(cell_list)
-    def write_col_table(self,col,values):
-        self.write_col(col,values)
+        self.tabDict = None
+        self.tabDict_copy = None
+        self.tabDict_modified_by_script = False
+        self.tabDict_modified_by_user = False
     # WRITING
     def write(self,runs):
         ks = runs.keys()
         D = self.tabDict
+        # check and reapply if a cmd was changed by user
+        Dusr = self._read()
+        for t,c in self.tabDict_copy.items():
+            cusr = Dusr[t]
+            for i in range(len(c)):
+                if c[i] != cusr[i]:
+                    D[t][i] = cusr[i]
         run_names_old = D["Run"]
         rows = [title]
         for i,r in zip(range(len(run_names_old)),run_names_old):
@@ -124,42 +48,55 @@ class GoogleTable:
             irow = i / len(title)
             c.value = rows[irow][icol]
         self.wks.update_cells(cell_list)
+        self.tabDict_modified = False
+    def write_cell(self,row,col,value):
+        t0 = time.time()
+        if value != None:
+            self.wks.update_cell(row+1,col+1,value)
+    def write_row(self,row,values):
+        if len(values) == 1:
+            write_cell(row,0,values[0])
+        else:
+            s = "%s%i:%s%i" % (chr(0 + ord('a')).upper(),row+1,chr(len(values) - 1 + ord('a')).upper(),row+1)
+            #print s
+            cell_list = self.wks.range(s)
+            for v,c in zip(values,cell_list):
+                c.value = v
+            self.wks.update_cells(cell_list)
     # READING
-    def update_table_dict(self):
+    def _read(self):
         tab0 = self.wks.get_all_values()
-        self.tabDict = {}
         titles = tab0[0]
+        tabDict = {}
         for t in titles:
-            self.tabDict[t] = []
+            tabDict[t] = []
         for c in tab0[1:]:
             for i,t in zip(range(len(titles)),titles):
-                self.tabDict[t].append(c[i])
-    def read_row(self,row):
-        r = self.wks.row_values(row+1)
-        #print r
-        return r
-    def read_row_table(self,row):
-        return self.read_row(row)
-    def read_col(self,col):
-        c = self.wks.col_values(col+1)
-        #print c
-        return c 
-    def read_cols(self,col_min,col_max):
-        cs = []
-        for col in range(col_min,col_max+1,1):
-            cs.append(self.wks.col_values(col+1))
-        return cs
-    def read_col_table(self,col):
-        return self.read_col(col)[1:]
-    def read_cols_table(self,col_min,col_max):
-        cs = self.read_cols(col_min,col_max)
-        for i in range(len(cs)):
-            cs[i] = cs[i][1:]
-        return cs
-    def read_cell(self,row,col):
-        t0 = time.time()
-        c = self.wks.cell(row+1,col+1).value
-        #print "reading cell dt=%f" % (time.time()-t0)
-        return c
-    def read_cell_table(self,row,col):
-        return self.read_cell(row+1,col)
+                tabDict[t].append(c[i])
+        return tabDict
+    def read(self):
+        self.tabDict = self._read()
+        self.tabDict_copy = dict(self.tabDict)
+    # CONVENIENCE
+    def get_run_type(self,run_name):
+        if self.tabDict == None:
+            return None
+        runs = self.tabDict["Run"]
+        types = self.tabDict["Type"]
+        return types[runs.index(run_name)]
+    def pop_run_cmd(self,run_name):
+        if self.tabDict == None:
+            return None
+        runs = self.tabDict["Run"]
+        cmds = self.tabDict["Cmd"]
+        if cmds[runs.index(run_name)] == "clear":
+            self.tabDict["Cmd"][runs.index(run_name)] = "auto"
+            self.tabDict_modified = True
+            return "clear"
+        else:
+            return cmds[runs.index(run_name)]
+    def get_valid_runs(self):
+        runs = self.tabDict["Run"]
+        types = self.tabDict["Type"]
+        cmds = self.tabDict["Cmd"]
+        return [r for i,r,c in zip(range(len(runs)),runs,cmds) if (types[i] in ["dark","data"] and runs[i] != "" and cmds[i] != "")]    

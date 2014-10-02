@@ -11,8 +11,7 @@ include_directories("include")
 
 ADD_EXECUTABLE(psana ${sources})
 
-TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} libpsana)
-
+TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} libpsana cheetah_ana_pkg)
 
 INSTALL(TARGETS psana
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

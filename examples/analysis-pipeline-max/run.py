@@ -13,6 +13,7 @@ class Run:
     def init2(self):
         self.attrs = {}
         self.type = None
+        self.cmd = None
         self.xtcs = []
         self.logfile = None
         self.status = None
@@ -28,18 +29,19 @@ class Run:
         self._load_logfile()
         self._load_status()
     def update(self): 
-        self._load_type()
-        self._load_xtcs()
-        self._load_processdir()
-        self._load_logfile()
-        self._load_status()
-        self._refresh_attrs()
-        self.cmd = self.google_table.get_run_cmd(self.run_name)
-        if self.cmd != "auto":
-            self.cmd = self.google_table.pop_run_cmd(self.run_name)
+        self.cmd = self.google_table.pop_run_cmd(self.run_name)
         if self.cmd == "clear":
             self.clear()
             self.cmd = "auto"           
+        self._load_type()
+        if self.xtcs == []:
+            self._load_xtcs()
+        if self.processdir == None:
+            self._load_processdir()
+        if not self.logfile_present:
+            self._load_logfile()
+        self._load_status()
+        self._refresh_attrs()
     def init_process(self):
         ready = False
         if self.type == "data": 
@@ -50,7 +52,7 @@ class Run:
             else:
                 self.darkcal = None
                 ready = True
-            self.cmd = "auto"
+            #self.cmd = "auto"
         elif self.type == "dark":
             ready = True
         if ready:
@@ -63,9 +65,9 @@ class Run:
         if not self.prepared:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
-        if self.conf["general"]["job_manager"] == "lsf":
+        if os.path.expandvars(self.conf["general"]["job_manager"]) == "lsf":
             s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
-        elif self.conf["general"]["job_manager"] == "slurm":
+        elif os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
             s = "sbatch %s" % self.processexec
         os.system(s)
         self.started = True
@@ -92,12 +94,19 @@ class Run:
         with open(self.cheetah_ini_swmr,"w") as f:
             f.writelines(ls_n)
         self._write_processexec(self.processout_swmr,self.processdir_swmr,self.psanaexec_swmr,self.processexec_swmr)
-        s = "bsub -q psnehq -J C%sS -o %s %s" % (self.run_name,self.processout_swmr,self.processexec_swmr)
+        if os.path.expandvars(self.conf["general"]["job_manager"]) == "lsf":
+            s = "bsub -n 6 -q psnehq -J C%sS -o %s %s" % (self.run_name,self.processout_swmr,self.processexec_swmr)
+        elif os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
+            s = "sbatch %s" % self.processexec_swmr
         os.system(s)
         self.started_swmr = True
     def clear(self):
-        os.system("bkill -J C%s" % self.run_name)
-        os.system("bkill -J C%sS" % self.run_name)
+        if os.path.expandvars(self.conf["general"]["job_manager"]) == "lsf":
+            os.system("bkill -J C%s" % self.run_name)
+            os.system("bkill -J C%sS" % self.run_name)
+        elif os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
+            os.system("scancel --name=C%s" % self.run_name)
+            os.system("scancel --name=C%sS" % self.run_name)
         os.system("rm -r %s/*%s*" % (self.locations["h5dir"],self.run_name))
         os.system("rm -r %s/*%s*" % (self.locations["h5dir_swmr"],self.run_name))
         os.system("rm -r %s/*%s*" % (self.locations["h5dir_dark"],self.run_name))
@@ -140,10 +149,14 @@ class Run:
             else:
                 self.status = "new"
         elif not self.logfile_present:
-            self.status = "started"
+            if self.started:
+                self.status = "started"
+            else:
+                self.status = "ready"
         else:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
+
                 if ">-------- End of job --------<\n" in loglines:
                     self.status = "ended"
                 else:
@@ -153,6 +166,7 @@ class Run:
         # ["Run","Type","Status","#Frames","#Hits","HRate"]
         self.attrs["Type"] = self.type
         self.attrs["Status"] = self.status
+        self.attrs["Cmd"] = self.cmd
         if self.logfile != None and self.logfile_present:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
@@ -227,7 +241,7 @@ class Run:
         os.system("cp %s %s" % (c["psana"],self.psana_cfg))        
     def _write_processexec(self,processout,processdir,psanaexec,processexec):
         txt = ["#!/bin/bash\n"]
-        if self.conf["general"]["job_manager"] == "slurm":
+        if os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
             txt += "#SBATCH --job-name=C%s\n" % self.run_name
             txt += "#SBATCH -N1\n"
             txt += "#SBATCH -n8\n"
