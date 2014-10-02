@@ -474,20 +474,23 @@ void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 			float	*data = eventData->detector[detID].corrected_data;
             float   *pix_x = global->detector[detID].pix_x;
             float   *pix_y = global->detector[detID].pix_y;
-            float   *pix_dist = global->detector[detID].pix_dist;
+            float   *pix_z = global->detector[detID].pix_z;
 			long	pix_nn = global->detector[detID].pix_nn;
             float   pixelSize = global->detector[detID].pixelSize;
+            double  detectorZ = global->detector[detID].detectorZ;
+            float   cameraLengthScale = global->detector[detID].cameraLengthScale;
             double  horizontalFraction = global->detector[detID].horizontalFractionOfPolarization;
             
-			applyPolarizationCorrection(data, pix_x, pix_y, pix_dist, pixelSize, horizontalFraction, pix_nn);
+			applyPolarizationCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, horizontalFraction, pix_nn);
 		}
 	}
 }
 
 
-void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float *pix_dist, float pixelSize, double horizontalFraction, long pix_nn) {
-	for(long i=0; i<pix_nn; i++) {
-		data[i] /= horizontalFraction*(1 - pix_x[i]*pix_x[i]*pixelSize*pixelSize/(pix_dist[i]*pix_dist[i])) + (1 - horizontalFraction)*(1 - pix_y[i]*pix_y[i]*pixelSize*pixelSize/(pix_dist[i]*pix_dist[i]));
+void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double horizontalFraction, long pix_nn) {
+	for (long i=0; i<pix_nn; i++) {
+        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + (pix_z[i]*pixelSize + detectorZ*detectorZScale)(pix_z[i]*pixelSize + *detectorZ*detectorZScale));
+		data[i] /= horizontalFraction*(1 - pix_x[i]*pix_x[i]*pixelSize*pixelSize/(pix_dist*pix_dist)) + (1 - horizontalFraction)*(1 - pix_y[i]*pix_y[i]*pixelSize*pixelSize/(pix_dist*pix_dist));
 	}
 }
 
@@ -505,6 +508,8 @@ void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detID].useSolidAngleCorrection) {
             float	*data = eventData->detector[detID].corrected_data;
+            float   *pix_x = global->detector[detID].pix_x;
+            float   *pix_y = global->detector[detID].pix_y;
             float   *pix_z = global->detector[detID].pix_z;
             long	pix_nn = global->detector[detID].pix_nn;
             float   pixelSize = global->detector[detID].pixelSize;
@@ -513,13 +518,8 @@ void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
             double  solidAngleConst = global->detector[detID].solidAngleConst;
             
             if (global->detector[detID].solidAngleAlgorithm == 1) {
-                float   *pix_dist = global->detector[detID].pix_dist;
-                
-                applyAzimuthallySymmetricSolidAngleCorrection(data, pix_z, pix_dist, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
-            } else {
-                float   *pix_x = global->detector[detID].pix_x;
-                float   *pix_y = global->detector[detID].pix_y;
-                
+                applyAzimuthallySymmetricSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
+            } else {                
                 applyRigorousSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
             }
         }
@@ -527,12 +527,13 @@ void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
 }
 
 
-void applyAzimuthallySymmetricSolidAngleCorrection(float *data, float *pix_z, float *pix_dist, float pixelSize, double detectorZ, float detectorZScale, double solidAngleConst, long pix_nn) {
+void applyAzimuthallySymmetricSolidAngleCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double solidAngleConst, long pix_nn) {
     
     // Azimuthally symmetrical (cos(theta)^3) correction
     for (int i = 0; i < pix_nn; i++) {
         double z = pix_z[i]*pixelSize + detectorZ*detectorZScale;
-        data[i] /= (z*pixelSize*pixelSize)/(pix_dist[i]*pix_dist[i]*pix_dist[i])/solidAngleConst; // remove constant term to only get theta/phi dependent part of solid angle correction for 2D pattern
+        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + z*z);
+        data[i] /= (z*pixelSize*pixelSize)/(pix_dist*pix_dist*pix_dist)/solidAngleConst; // remove constant term to only get theta/phi dependent part of solid angle correction for 2D pattern
     }
 }
 

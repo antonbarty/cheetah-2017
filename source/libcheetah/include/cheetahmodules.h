@@ -23,8 +23,8 @@ void applyHotPixelMask(cEventData*, cGlobal*);
 
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
-void applyPolarizationCorrection(float*, float*, float*, float*, float, double, long);
-void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float, double, float, double, long);
+void applyPolarizationCorrection(float*, float*, float*, float*, float, double, float, double, long);
+void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyBadPixelMask(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
