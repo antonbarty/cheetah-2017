@@ -489,7 +489,7 @@ void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 
 void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double horizontalFraction, long pix_nn) {
 	for (long i=0; i<pix_nn; i++) {
-        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + (pix_z[i]*pixelSize + detectorZ*detectorZScale)(pix_z[i]*pixelSize + *detectorZ*detectorZScale));
+        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + (pix_z[i]*pixelSize + detectorZ*detectorZScale)(pix_z[i]*pixelSize + detectorZ*detectorZScale));
 		data[i] /= horizontalFraction*(1 - pix_x[i]*pix_x[i]*pixelSize*pixelSize/(pix_dist*pix_dist)) + (1 - horizontalFraction)*(1 - pix_y[i]*pix_y[i]*pixelSize*pixelSize/(pix_dist*pix_dist));
 	}
 }
