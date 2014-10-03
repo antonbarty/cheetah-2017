@@ -136,8 +136,6 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(FEEGasDetEnergy)");
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(PhaseCavity)");
- //		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
-//		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
@@ -170,7 +168,8 @@ namespace cheetah_ana_pkg {
 		/* We need to know the names of the TOF detector source
 		   from the cheetah config file, that's why we're doing this here */
 		for(int i = 0;i<cheetahGlobal.nTOFDetectors;i++){
-			m_srcAcq.push_back((Source)configStr(cheetahGlobal.tofDetector[i].sourceName, "DetInfo(:Acqiris.0)"));
+			m_srcAcq.push_back((Source)configStr(cheetahGlobal.tofDetector[i].sourceName, 
+												 cheetahGlobal.tofDetector[i].sourceIdentifier));
 		}
 	}
 
