@@ -1268,7 +1268,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "hitfinder=%d\n",hitfinder);
     fprintf(fp, "hitfinderDetector=%d\n",hitfinderDetector);
     fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
-    fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
+    fprintf(fp, "hitfinderADC=%f\n",hitfinderADC);
     fprintf(fp, "hitfinderTAT=%f\n",hitfinderTAT);
 	//fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
     fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
@@ -1311,10 +1311,10 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "tofName=%s\n",tofName);
     fprintf(fp, "tofChannel=%d\n",TOFchannel);
     fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
-    fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
-    fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-    fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
-    fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
+    fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample[0]);
+    fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample[0]);
+    fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground[0]);
+    fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh[0]);
     fprintf(fp, "espectrum=%d\n",espectrum);
     fprintf(fp, "espectrum1D=%d\n",espectrum1D);
     fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
@@ -1354,7 +1354,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "gaincal=%s\n",detector[i].gaincalFile);
         fprintf(fp, "invertGain=%d\n",detector[i].invertGain);
         fprintf(fp, "usePolarizationCorrection=%d\n",detector[i].usePolarizationCorrection);
-        fprintf(fp, "horizontalFractionOfPolarization=%d\n",detector[i].horizontalFractionOfPolarization);
+        fprintf(fp, "horizontalFractionOfPolarization=%f\n",detector[i].horizontalFractionOfPolarization);
         fprintf(fp, "useSolidAngleCorrection=%d\n",detector[i].useSolidAngleCorrection);
         fprintf(fp, "solidAngleAlgorithm=%d\n",detector[i].solidAngleAlgorithm);
         fprintf(fp, "useSubtractPersistentBackground=%d\n",detector[i].useSubtractPersistentBackground);
@@ -1383,7 +1383,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "histogram=%d\n",detector[i].histogram);
         fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
         fprintf(fp, "histogramNbins=%ld\n",detector[i].histogramNbins);
-        fprintf(fp, "histogramBinSize=%ld\n",detector[i].histogramBinSize);
+        fprintf(fp, "histogramBinSize=%f\n",detector[i].histogramBinSize);
         fprintf(fp, "histogram_fs_min=%ld\n",detector[i].histogram_fs_min);
         fprintf(fp, "histogram_fs_max=%ld\n",detector[i].histogram_fs_max);
         fprintf(fp, "histogram_ss_min=%ld\n",detector[i].histogram_ss_min);
