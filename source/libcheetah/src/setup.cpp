@@ -182,7 +182,6 @@ cGlobal::cGlobal(void) {
 	savehits = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
-    saveRawInt16 = 1;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -191,6 +190,8 @@ cGlobal::cGlobal(void) {
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
+	// Save data in modular stack (see CXI version 1.4)
+	saveModular=0;
 
 	strcpy(dataSaveFormat, "INT16");
 
@@ -961,8 +962,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "saveraw")) {
 		saveRaw = atoi(value);
 	}
-    else if (!strcmp(tag, "saverawint16")) {
-		saveRawInt16 = atoi(value);
+	else if (!strcmp(tag, "savemodular")) {
+		saveModular = atoi(value);
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
@@ -1288,7 +1289,7 @@ void cGlobal::writeConfigurationLog(void){
 	fprintf(fp, "hitfinder=%d\n",hitfinder);
 	fprintf(fp, "saveHits=%d\n",savehits);
 	fprintf(fp, "saveRaw=%d\n",saveRaw);
-    fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
+	fprintf(fp, "saveModular=%d\n",saveModular);
 	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
 	fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
 	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);

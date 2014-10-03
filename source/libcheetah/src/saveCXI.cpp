@@ -1,9 +1,9 @@
-/*
 
+/*
  *  saveCXI.cpp
  *  cheetah
  *
- *  Created by Jing Liu on 05/11/12.
+ *  Create by Jing Liu on 05/11/12.
  *  Copyright 2012 Biophysics & TDB @ Uppsala University. All rights reserved.
  *
  */
@@ -18,7 +18,7 @@
 
 namespace CXI{
 	Node * Node::createDataset(const char * s, hid_t dataType, hsize_t width, hsize_t height,
-							   hsize_t length, int chunkSize, int heightChunkSize, const char * userAxis){
+							   hsize_t length, hsize_t stackSize, int chunkSize, int heightChunkSize, const char * userAxis){
 		hid_t loc = hid();
 
 		if(dataType == H5T_NATIVE_CHAR){
@@ -31,32 +31,33 @@ namespace CXI{
 		}
 
 		// right shift the dimensions
-		if(height == 0){
-			height = width;
-			width = 0;
+		hsize_t * dimsP[4] = {&width, &height, &length, &stackSize};
+		for (int i=2; i>=0; i--){
+			for (int j=i+1; j<4; j++){
+				if(*dimsP[j]==0){
+					*dimsP[j]=*dimsP[j-1];
+					*dimsP[j-1]=0;
+				}
+			}
 		}
-		if(length == 0){
-			length = height;
-			height = 0;
-
+		int ndims = 0;
+		for (int i=0; i<4; i++){
+			if (*dimsP[i]>0){
+				ndims++;
+			}
 		}
-		if(height == 0){
-			height = width;
-			width = 0;
-		}
-
-		int ndims = 1;		
-		if(width > 0){
-			ndims++;
-		}
-		if(height > 0){
-			ndims++;
-		}
-		if(length == H5S_UNLIMITED && chunkSize <= 0){
+		
+		if(stackSize == H5S_UNLIMITED && chunkSize <= 0){
 			chunkSize = CXI::chunkSize1D;
 			if(ndims == 3){
 				chunkSize = CXI::chunkSize2D;
+			} else if(ndims == 4){
+				chunkSize = CXI::chunkSize2D;
 			}
+		}
+
+		if(length == 0){
+			length = 1;
 		}
 		if(height == 0){
 			height = 1;
@@ -65,28 +66,28 @@ namespace CXI{
 			width = 1;
 		}
 
-		hsize_t dims[3] = {0, height, width};
+		hsize_t dims[4] = {0, length, height, width};
 
 
 		if(heightChunkSize == 0){
-			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/width/height);
+			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/height/length);
 		}else{
 			dims[0] = chunkSize/heightChunkSize;
-			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/width);
+			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/height);
 		}
 
 		if(!chunkSize){
-			if(length == 0){
-				length = 1;
+			if(stackSize == 0){
+				stackSize = 1;
 			}
-			dims[0] = length;
+			dims[0] = stackSize;
 		}else{
 			if(dims[0] == 0){
 				// Make sure the chunk is not 0
 				dims[0] = 1;
 			}
 		}
-		hsize_t maxdims[3] = {length,height,width};
+		hsize_t maxdims[4] = {stackSize,length,height,width};
 		hid_t dataspace = H5Screate_simple(ndims, dims, maxdims);
 		if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
 		hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
@@ -99,11 +100,11 @@ namespace CXI{
 		H5Sclose(dataspace);
 		H5Pclose(cparms);		
 
-		if(ndims == 3 && chunkSize){
+		if((ndims == 3 || ndims == 4) && chunkSize){
 			H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
 		}
 
-		if(length == H5S_UNLIMITED){
+		if(stackSize == H5S_UNLIMITED){
 			addStackAttributes(dataset,ndims,userAxis);
 		}
 		return addNode(s, dataset, Dataset);    
@@ -122,13 +123,13 @@ namespace CXI{
 		}
 
 		hid_t hs,w;
-		hsize_t count[3] = {1,1,1};
-		hsize_t offset[3] = {stackSlice,0,0};
+		hsize_t count[4] = {1,1,1,1};
+		hsize_t offset[4] = {stackSlice,0,0,0};
 		/* stride is irrelevant in this case */
-		hsize_t stride[3] = {1,1,1};
-		hsize_t block[3];
+		hsize_t stride[4] = {1,1,1,1};
+		hsize_t block[4];
 		/* dummy */
-		hsize_t mdims[3];
+		hsize_t mdims[4];
 		hid_t dataset = hid();
 		/* Use the existing dimensions as block size */
 		hid_t dataspace = H5Dget_space(dataset);
@@ -136,7 +137,7 @@ namespace CXI{
 		int ndims = H5Sget_simple_extent_ndims(dataspace);
 		H5Sget_simple_extent_dims(dataspace, block, mdims);
 		/* check if we need to extend the dataset */
-		if((int)block[0] <= stackSlice){
+		if(ndims > 0 && (int)block[0] <= stackSlice){
 			while((int)block[0] <= stackSlice){
 				block[0] *= 2;
 			}
@@ -173,9 +174,11 @@ namespace CXI{
 		if(type == H5T_NATIVE_CHAR){
 			type = H5Dget_type(dataset);
 		}
-		hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
-		if( hs<0 ) {
-			ERROR("Cannot select hyperslab.\n");
+		if (sliced){
+			hs = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,stride, count, block);
+			if( hs<0 ) {
+				ERROR("Cannot select hyperslab.\n");
+			}
 		}
 		w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
 		if( w<0 ){
@@ -309,6 +312,7 @@ namespace CXI{
 		const char * axis_1d = "experiment_identifier";
 		const char * axis_2d = "experiment_identifier:coordinate";
 		const char * axis_3d = "experiment_identifier:y:x";
+		const char * axis_4d = "experiment_identifier:module_identifier:y:x";
 		const char * axis;
 		if(userAxis != NULL){
 			axis = userAxis;
@@ -318,7 +322,9 @@ namespace CXI{
 			axis = axis_2d;
 		}else if(ndims == 3){
 			axis = axis_3d;
-		}
+		}else if(ndims == 4){
+			axis = axis_4d;
+	    }
 		
 		hsize_t one = 1;
 		hid_t datatype = H5Tcopy(H5T_C_S1);
@@ -478,7 +484,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
 
 	Node * entry = root->addClass("entry");
-	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,128);
+	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,CXI::stringSize);
 
 	Node * instrument = entry->addClass("instrument");
 	Node * source = instrument->addClass("source");
@@ -498,31 +504,57 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		
 		entry->addClassLink("data",detector->path().c_str());
 		detector->createStack("distance",H5T_NATIVE_DOUBLE);
-		detector->createStack("description",H5T_NATIVE_CHAR,128);
+		detector->createStack("description",H5T_NATIVE_CHAR,CXI::stringSize);
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
     
 		/* Raw images */
 		if(global->saveRaw){
 			// /entry_1/instrument_1/detector_i/
-			int pix_nx = global->detector[detID].pix_nx;
-			int pix_ny = global->detector[detID].pix_ny;
 
-            if (global->saveRawInt16){
-			    detector->createStack("data",H5T_STD_I16LE,pix_nx, pix_ny);
-            }
-            else {
-                detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
-            }
-			if(global->savePixelmask){
-				detector->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
+			if (global->saveModular){
+
+				int asic_nx = global->detector[detID].asic_nx;
+				int asic_ny = global->detector[detID].asic_ny;
+				int asic_nn = asic_nx * asic_ny;
+				int nasics_x = global->detector[detID].nasics_x;
+				int nasics_y = global->detector[detID].nasics_y;
+				int nasics = nasics_x * nasics_y;
+
+				detector->createStack("data",H5T_NATIVE_FLOAT, asic_nx, asic_ny, nasics);
+				detector->createStack("corner_positions",H5T_NATIVE_FLOAT, 3, nasics, H5S_UNLIMITED, 0, 0, 0, "experiment_identifier:module_identifier:coordinate");
+				detector->createStack("basis_vectors", H5T_NATIVE_FLOAT, 3, 2, nasics, H5S_UNLIMITED, 0, 0, "experiment_identifier:module_identifier:dimension:coordinate");
+				detector->createStack("module_identifier", H5T_NATIVE_CHAR, CXI::stringSize, nasics, 0, H5S_UNLIMITED, 0,0,"experiment_identifier:module_identifier");
+
+				if(global->savePixelmask){
+					detector->createStack("mask",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics);
+				}
+
+				uint16_t* maskModular = (uint16_t *) calloc(asic_nn*nasics_x*nasics_y, sizeof(uint16_t));
+				stackModulesMask(global->detector[detID].pixelmask_shared, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				stackModulesMask(global->detector[detID].pixelmask_shared_max, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				stackModulesMask(global->detector[detID].pixelmask_shared_min, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
+
+				free(maskModular);
+
+			}else {
+				int pix_nx = global->detector[detID].pix_nx;
+				int pix_ny = global->detector[detID].pix_ny;
+
+				detector->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
+				if(global->savePixelmask){
+					detector->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
+				}
+				detector->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared);
+				detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_max);
+				detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_min);
+				detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 			}
-
-			detector->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared);
-			detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_max);
-			detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(global->detector[detID].pixelmask_shared_min);
-			detector->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
-
 			detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 		}
 
@@ -547,8 +579,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 			image->addClassLink("detector",detector->path());
 			image->addClassLink("source",source->path());
-			image->createStack("data_type",H5T_NATIVE_CHAR,128);
-			image->createStack("data_space",H5T_NATIVE_CHAR,128);
+			image->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
+			image->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
 			image->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
 			image->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 
@@ -577,8 +609,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				image->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(imageXxX_pixelmask_shared);
 				image->addClassLink("detector",detector->path());
 				image->addClassLink("source",source->path());
-				image->createStack("data_type",H5T_NATIVE_CHAR,128);
-				image->createStack("data_space",H5T_NATIVE_CHAR,128);
+				image->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
+				image->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
 				image->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
 				image->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 				free(imageXxX_pixelmask_shared);
@@ -611,19 +643,19 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 		result->createStack("nPeaks", H5T_NATIVE_INT);
 
-		result->createStack("peakXPosAssembled", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakXPosAssembled", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
-		result->createStack("peakYPosAssembled",H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakYPosAssembled",H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 
-		result->createStack("peakXPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakXPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
-		result->createStack("peakYPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakYPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		
-		result->createStack("peakIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
-		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,
+		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 
 
@@ -652,7 +684,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("f_21_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
-	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,128);
+	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,CXI::stringSize);
 	if(global->TOFPresent){
 		lcls->createStack("tofTime",H5T_NATIVE_DOUBLE,1, global->AcqNumSamples);
 		lcls->createStack("tofVoltage",H5T_NATIVE_DOUBLE,1, global->AcqNumSamples);
@@ -962,7 +994,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 		pthread_mutex_lock(&global->nActiveThreads_mutex);
 		if (global->nActiveThreads) {
 			global->nActiveThreads--;
-			didDecreaseActive = true;
+v			didDecreaseActive = true;
 		}
 		pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		pthread_mutex_lock(&global->swmr_mutex);
@@ -1027,24 +1059,54 @@ void writeCXI(cEventData *info, cGlobal *global ){
 			}
 		}
 		if(global->saveRaw){
-			int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detID].pix_nn,sizeof(int16_t));
-			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				corrected_data_int16[i] = (int16_t) lrint(info->detector[detID].corrected_data[i]);
+			
+			if (global->saveModular){
+				int asic_nx = global->detector[detID].asic_nx;
+				int asic_ny = global->detector[detID].asic_ny;
+				int asics_nn = global->detector[detID].asic_nn;
+				int nasics_x = global->detector[detID].nasics_x;
+				int nasics_y = global->detector[detID].nasics_y;
+				int nasics = nasics_x*nasics_y;
+
+				float * dataModular = (float *) calloc(asics_nn*nasics, sizeof(float));
+				stackModulesData(info->detector[detID].corrected_data, dataModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				detector["data"].write(dataModular, stackSlice);
+				free(dataModular);
+
+				float * cornerPos = (float *) calloc(nasics*3, sizeof(float));
+				cornerPositions(cornerPos, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_z, global->detector[detID].pixelSize, asic_nx, asic_ny, nasics_x, nasics);
+				detector["corner_positions"].write(cornerPos, stackSlice);
+				free(cornerPos);
+
+				float * basisVec = (float *) calloc(nasics*2*3, sizeof(float));
+				basisVectors(basisVec, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_z, asic_nx, asic_ny, nasics_x, nasics);
+				detector["basis_vectors"].write(basisVec, stackSlice);
+				free(basisVec);
+					
+				char * moduleId = (char *) calloc(nasics*CXI::stringSize, sizeof(char));							   
+				moduleIdentifier(moduleId, nasics_x*nasics_y, CXI::stringSize);
+				detector["module_identifier"].write(moduleId, stackSlice);
+				free(moduleId);
+
+				if(global->savePixelmask){
+					uint16_t* maskModular = (uint16_t *) calloc(asics_nn*nasics_x*nasics_y, sizeof(uint16_t));
+					stackModulesMask(info->detector[detID].pixelmask, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+					detector["mask"].write(maskModular,stackSlice);
+					free(maskModular);
+				}
+
+			}else {
+				detector["data"].write(info->detector[detID].corrected_data,stackSlice);	
+				if(global->savePixelmask){
+					detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
+				}
+				float * thumbnail = generateThumbnail(info->detector[detID].corrected_data,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
+				detector["thumbnail"].write(thumbnail, stackSlice);
+				delete [] thumbnail;
 			}
-            if (global->saveRawInt16){
-    			detector["data"].write(corrected_data_int16,stackSlice);
-            }
-            else { 
-                detector["data"].write(info->detector[detID].corrected_data,stackSlice);
-            }
-			if(global->savePixelmask){
-				detector["mask"].write(info->detector[detID].pixelmask,stackSlice);
-			}
-			int16_t * thumbnail = generateThumbnail(corrected_data_int16,global->detector[detID].pix_nx,global->detector[detID].pix_ny,CXI::thumbnailScale);
-			detector["thumbnail"].write(thumbnail, stackSlice);
-			delete [] thumbnail;
-			free(corrected_data_int16);
+			
 		}
+
 	}
 	int resultIndex = 1;
 	if(global->savePeakInfo && global->hitfinder) {
