@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include "detectorObject.h"
+#include "tofDetector.h"
 #include <processRateMonitor.h>
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
@@ -52,10 +53,16 @@ public:
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
 
+	/** @brief Number of TOF detectors present. */
+	int      nTOFDetectors;
+
 	long frameNumber;
 
 	/** @brief Detector settings that don't change from shot to shot. */
 	cPixelDetectorCommon detector[MAX_DETECTORS];
+
+	/** @brief TOF Detector settings that don't change from shot to shot. */
+	cTOFDetectorCommon tofDetector[MAX_TOF_DETECTORS];
 
 	/** @brief Summed photon energy. */
 	double   summedPhotonEnergyeV;
@@ -116,14 +123,6 @@ public:
 	 *
 	 * Isn't this specified by hitfinderAlgorithm? */
 	int      hitfinderUseTOF;
-	/** @brief First sample in the TOF scan to consider. */
-	std::vector<int>      hitfinderTOFMinSample;
-	/** @brief Last sample in the TOF scan to consider. */
-	std::vector<int>      hitfinderTOFMaxSample;
-	/** @brief Mean voltage of TOF signal for TOF hitfinding */
-	std::vector<double>   hitfinderTOFMeanBackground;
-	/** @brief Intensity threshold of TOF for hitfinding. */
-	std::vector<double>   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */
 	double   hitfinderTOFWindow;
 	/** @brief Peak min count constraint used in some TOF hitfinding. */
@@ -182,18 +181,8 @@ public:
 	/** @brief list of all hits as output string names. */
 	std::vector<std::string>	hitlist;
 
-	/** @brief Name of the time-of-flight instrument? */
-	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */
 	int      TOFPresent;
-	/** @brief Channel of the TOF instrument. */
-	int      TOFchannel;
-	/** @brief What's this? */
-	int      AcqNumSamples;
-	/** @brief All TOF Channels. We keep the previous TOFchannel for backwards compatibility. */
-	std::vector<int> TOFAllChannels;
-	std::vector<std::vector<int> > TOFChannelsPerCard;
-
     
 	/** @brief Toggle energy spectrum creation. */
     int      espectrum;

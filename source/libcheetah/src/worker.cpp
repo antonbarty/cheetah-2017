@@ -531,15 +531,15 @@ void evr41fudge(cEventData *t, cGlobal *g){
  
 	//int nCh = g->AcqNumChannels;
 	//int nSamp = g->AcqNumSamples;
-	double * Vtof = t->TOFVoltage;
+	double * Vtof = &(t->tofDetector[0].voltage[0]);
 	int i;
 	double Vtot = 0;
 	double Vmax = 0;
 	int tCounts = 0;
-	for(i=g->hitfinderTOFMinSample[0]; i<g->hitfinderTOFMaxSample[0]; i++){
+	for(i=g->tofDetector[0].hitfinderMinSample; i<g->tofDetector[0].hitfinderMaxSample; i++){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
-		if ( Vtof[i] >= g->hitfinderTOFThresh[0] ) tCounts++;
+		if ( Vtof[i] >= g->tofDetector[0].hitfinderThreshold ) tCounts++;
 	}
 	
 

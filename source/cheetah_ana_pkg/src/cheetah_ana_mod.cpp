@@ -136,8 +136,8 @@ namespace cheetah_ana_pkg {
 		m_srcFee = configStr("feeSource","BldInfo(FEEGasDetEnergy)");
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(FEE-SPEC0)");
 		m_srcCav = configStr("cavitySource","BldInfo(PhaseCavity)");
-		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
-		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
+ //		m_srcAcq[0] = configStr("acqirisSource","DetInfo(:Acqiris.0)");
+//		m_srcAcq[1] = configStr("acqirisSource","DetInfo(:Acqiris.1)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
@@ -167,6 +167,11 @@ namespace cheetah_ana_pkg {
 			signal(SIGINT, sig_handler);
 		}
 
+		/* We need to know the names of the TOF detector source
+		   from the cheetah config file, that's why we're doing this here */
+		for(int i = 0;i<cheetahGlobal.nTOFDetectors;i++){
+			m_srcAcq.push_back((Source)configStr(cheetahGlobal.tofDetector[i].sourceName, "DetInfo(:Acqiris.0)"));
+		}
 	}
 
 	
@@ -1124,10 +1129,7 @@ namespace cheetah_ana_pkg {
 			//	Copy TOF (aqiris) channel into Cheetah event for processing
 			//  SLAC libraries are not thread safe: must copy data into event structure for processing
 			//eventData->TOFPresent = 0; // DO NOT READ TOF
-		if (cheetahGlobal.TOFPresent==1){
-			eventData->TOFPresent = readTOF(evt, env, eventData);
-		}
-		
+		eventData->TOFPresent = readTOF(evt, env, eventData);
 
 		
 		/*
@@ -1293,55 +1295,39 @@ namespace cheetah_ana_pkg {
 
 	int cheetah_ana_mod::readTOF(Event & evt, Env & env,
 								 cEventData* eventData){
-		int foundTOF = 0;
-		int nsamples = cheetahGlobal.AcqNumSamples;
-		std::vector<std::vector<int> > & chPerCard = cheetahGlobal.TOFChannelsPerCard;
-		eventData->TOFAllVoltage = (double **)calloc(chPerCard.size(),sizeof(double *));
-		eventData->TOFAllTime = (double **)calloc(chPerCard.size(),sizeof(double *));
-		eventData->TOFAllTrigTime = (double **)calloc(chPerCard.size(),sizeof(double *));
-
-		for(unsigned int i = 0;i<chPerCard.size();i++){
-			eventData->TOFAllVoltage[i] = (double *)calloc(nsamples*chPerCard[i].size(),sizeof(double));
-			eventData->TOFAllTime[i] = (double *)calloc(nsamples*chPerCard[i].size(),sizeof(double));
-			eventData->TOFAllTrigTime[i] = (double *)calloc(chPerCard[i].size(),sizeof(double));
-		}
-		
-		for(unsigned int card = 0;card<chPerCard.size();card++){
-			for(unsigned int index = 0;index<chPerCard[card].size();index++){
-				// Each acqiris unit has a maxmium of 4 channels
-				if(cheetahGlobal.TOFchannel == chPerCard[card][index]){
-					eventData->TOFTime = &(eventData->TOFAllTime[card][index*nsamples]);
-					eventData->TOFVoltage = &(eventData->TOFAllVoltage[card][index*nsamples]);
+		int tofPresent = 0;
+		for(int i = 0;i<cheetahGlobal.nTOFDetectors;i++){
+			cTOFDetectorEvent & tofEvent = eventData->tofDetector[i];
+			cTOFDetectorCommon & tofDetector = cheetahGlobal.tofDetector[i];
+			shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq[i]);
+			if (acqData) {
+				int channel = tofDetector.channel;
+				shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq[i]);
+				const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(channel);
+				const Psana::Acqiris::VertV1& v = acqConfig->vert()[channel];
+				double slope = v.slope();
+				tofEvent.slope = slope;
+				double offset = v.offset();
+				tofEvent.offset = offset;
+				const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
+				double sampInterval = h.sampInterval();
+				tofEvent.sampInterval = sampInterval;
+				const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
+				const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
+				int seg = 0;
+				tofEvent.trigTime = timestamps[seg].pos();
+				double timestamp = timestamps[seg].value();
+				tofEvent.timeStamp = timestamp;
+				ndarray<const int16_t, 1> raw(waveforms[seg]);
+				for (int i = 0; i < tofDetector.numSamples; ++ i) {
+					tofEvent.time.push_back(timestamp + i*sampInterval);
+					tofEvent.voltage.push_back(raw[i]*slope - offset);
 				}
-
-				int chan = chPerCard[card][index]%4;
-				shared_ptr<Psana::Acqiris::DataDescV1> acqData = evt.get(m_srcAcq[card]);
-				if (acqData) {
-					foundTOF = 1;
-					shared_ptr<Psana::Acqiris::ConfigV1> acqConfig = env.configStore().get(m_srcAcq[card]);
-					const Psana::Acqiris::DataDescV1Elem& elem = acqData->data(chan);
-					const Psana::Acqiris::VertV1& v = acqConfig->vert()[chan];
-					double slope = v.slope();
-					double offset = v.offset();
-					const Psana::Acqiris::HorizV1& h = acqConfig->horiz();
-					double sampInterval = h.sampInterval();
-					const ndarray<const Psana::Acqiris::TimestampV1, 1>& timestamps = elem.timestamp();
-					const ndarray<const int16_t, 2>& waveforms = elem.waveforms();
-					int seg = 0;
-					eventData->TOFAllTrigTime[card][index] = timestamps[seg].pos();
-					
-					double timestamp = timestamps[seg].value();
-					ndarray<const int16_t, 1> raw(waveforms[seg]);
-					for (int i = 0; i < cheetahGlobal.AcqNumSamples; ++ i) {
-						eventData->TOFAllTime[card][index*nsamples+i] = (timestamp + i*sampInterval);
-						eventData->TOFAllVoltage[card][index*nsamples+i] = (raw[i]*slope - offset);
-					}
-
-				}
+				tofPresent = 1;
+				
 			}
-
 		}
-		return foundTOF;
+		return tofPresent;
 	}
 								  
 	 

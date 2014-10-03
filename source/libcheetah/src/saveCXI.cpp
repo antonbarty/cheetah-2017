@@ -588,20 +588,14 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	}
 
 	if(global->TOFPresent){
-		int tofDetectorIndex = 1;
-		for(unsigned int i = 0;i<global->TOFChannelsPerCard.size();i++){
-			if(global->TOFChannelsPerCard[i].size() > 0){
-				Node * detector = instrument->createGroup("detector",tofDetectorIndex+global->nDetectors);
-				detector->createStack("data",H5T_NATIVE_DOUBLE,global->AcqNumSamples,global->TOFChannelsPerCard[i].size());
-				detector->createStack("tofTime", H5T_NATIVE_DOUBLE, global->AcqNumSamples,global->TOFChannelsPerCard[i].size());
-				char buffer[1024];
-				sprintf(buffer,"iTOF detector connected to Acqiris unit %d, channel(s) %d",i,global->TOFChannelsPerCard[i][0]%4);
-				for(unsigned int j = 1;j<global->TOFChannelsPerCard[i].size();j++){
-					sprintf(buffer+strlen(buffer),", %d",global->TOFChannelsPerCard[i][j]%4);
-				}
-				detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
-				tofDetectorIndex++;
-			}
+		for(int i = 0;i<global->nTOFDetectors;i++){
+			Node * detector = instrument->createGroup("detector",1+i+global->nDetectors);
+			detector->createStack("data",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
+			detector->createStack("tofTime",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
+			char buffer[1024];
+			sprintf(buffer,"TOF detector with source %s and channel %d\n%s",global->tofDetector[i].sourceName,
+					global->tofDetector[i].channel, global->tofDetector[i].description);
+			detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
 		}
 	}
 
@@ -653,10 +647,6 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
 	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,128);
-	if(global->TOFPresent){
-		lcls->createStack("tofTime",H5T_NATIVE_DOUBLE,1, global->AcqNumSamples);
-		lcls->createStack("tofVoltage",H5T_NATIVE_DOUBLE,1, global->AcqNumSamples);
-	}
 	lcls->createLink("eventTime","eventTimeString");
 	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
 
@@ -1089,20 +1079,11 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	lcls["f_21_ENRC"].write(&info->gmd12,stackSlice);
 	lcls["f_22_ENRC"].write(&info->gmd22,stackSlice);
 	if(info->TOFPresent){
-		lcls["tofVoltage"].write(info->TOFVoltage,stackSlice);
-		lcls["tofTime"].write(info->TOFTime,stackSlice);
-		
-		int tofDetectorIndex = 0;
-		for(unsigned int card = 0;card<global->TOFChannelsPerCard.size();card++){
-			if(global->TOFChannelsPerCard[card].size() == 0){
-				continue;
-			}
-			int detID = tofDetectorIndex+global->nDetectors;
+		for(int i = 0; i<global->nTOFDetectors;i++){
+			int detID = i+global->nDetectors;
 			Node & detector = root["entry_1"]["instrument_1"].child("detector",detID+1);
-
-			detector["data"].write(info->TOFAllVoltage[card],stackSlice);
-			detector["tofTime"].write(info->TOFAllTime[card],stackSlice);
-			tofDetectorIndex++;
+			detector["data"].write(&(info->tofDetector[i].voltage[0]),stackSlice);
+			detector["tofTime"].write(&(info->tofDetector[i].time[0]),stackSlice);
 		}
 	}
 	int LaserOnVal = (info->pumpLaserCode)?1:0;

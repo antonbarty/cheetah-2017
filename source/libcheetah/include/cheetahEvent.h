@@ -42,17 +42,9 @@ public:
 	// Misc. EPICS data
 	float       epicsPvFloatValues[MAX_EPICS_PVS];
 	
-	// Aqiris data
+	// TOF Detector data
+	cTOFDetectorEvent		tofDetector[MAX_TOF_DETECTORS];
 	int			TOFPresent;
-	double		*TOFTime;
-	double		*TOFVoltage;
-	double		TOFtrigtime ;
-	// For multiple TOF channels
-	double **  TOFAllTime;
-	double **  TOFAllVoltage;
-	double **  TOFAllTrigTime;
-	
-	
 	
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;

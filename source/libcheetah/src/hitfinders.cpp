@@ -432,11 +432,13 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 		  
 	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 		double total_tof = 0.;
-		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
-			total_tof += eventData->TOFVoltage[i];
+		for(int i=global->tofDetector[0].hitfinderMinSample; i<global->tofDetector[0].hitfinderMaxSample; i++){			
+			// We'll only look at the first TOF detector
+			total_tof += eventData->tofDetector[0].voltage[i];
 		}
-		if (total_tof > global->hitfinderTOFThresh[0])
+		if (total_tof > global->tofDetector[0].hitfinderThreshold){
 			hit = 1;
+		}
 	}
 	// Use cspad threshold if TOF is not present 
 	else {
@@ -479,14 +481,15 @@ int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
 			olddata[k] = NAN;
 		}
 		int count = 0;
-		for(int i=global->hitfinderTOFMinSample[0]; i<global->hitfinderTOFMaxSample[0]; i++){
-			olddata[i % nback] = eventData->TOFVoltage[i];
+		for(int i=global->tofDetector[0].hitfinderMinSample; i < global->tofDetector[0].hitfinderMaxSample; i++){
+			// We'll only look at the first TOF detector
+			olddata[i % nback] = eventData->tofDetector[0].voltage[i];
 			double sum = 0;
 			for (int k = 0; k < nback; k++)
 			{
 				sum += olddata[k];
 			}
-			if (sum < global->hitfinderTOFThresh[0] * nback) count++;
+			if (sum < global->tofDetector[0].hitfinderThreshold * nback) count++;
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;
@@ -505,15 +508,9 @@ int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
 	int hit = 0;
 	if (eventData->TOFPresent==1){
 		int count = 0;
-		int tofIndex = 0;
-	    for (unsigned int card=0; card<global->TOFChannelsPerCard.size(); card++) {
-			for (unsigned int k=0; k<global->TOFChannelsPerCard[card].size(); k++) {
-				int chan_offset = k*global->AcqNumSamples;
-				for (int i=global->hitfinderTOFMinSample[tofIndex]; i<global->hitfinderTOFMaxSample[tofIndex]; i++) {
-//					count += (bool)floor(fmax((eventData->TOFAllVoltage[card][chan_offset+i] - global->hitfinderTOFMeanBackground[tofIndex]) / global->hitfinderTOFThresh[tofIndex], 0)) ;
-					count += (eventData->TOFAllVoltage[card][chan_offset+i] < global->hitfinderTOFThresh[tofIndex]);
-				}
-				tofIndex++;
+		for(int i = 0;i<global->nTOFDetectors;i++){
+			for (int j = global->tofDetector[i].hitfinderMinSample; j<global->tofDetector[i].hitfinderMaxSample; j++) {
+				count += (eventData->tofDetector[i].voltage[j] < global->tofDetector[i].hitfinderThreshold);
 			}
 		}
 		hit = (count >= global->hitfinderTOFMinCount) & (count < global->hitfinderTOFMaxCount);

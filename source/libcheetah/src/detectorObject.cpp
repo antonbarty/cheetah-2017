@@ -243,6 +243,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(detectorName, value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
+		if(strcasecmp(value,"tof") == 0){
+            fprintf(stderr,"Error: detectortype = tof found, but was not first line in [group]\n");
+            fprintf(stderr,"If you want to specify a TOF detector make sure the detectortype is the first line of the [group]\n");
+			fprintf(stderr,"Quitting...\n");
+			exit(1);
+		}
 		strcpy(detectorType, value);
 	}
 	else if (!strcmp(tag, "detectorid")) {

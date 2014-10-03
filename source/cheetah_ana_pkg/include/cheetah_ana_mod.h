@@ -13,6 +13,7 @@
 //-----------------
 // C/C++ Headers --
 //-----------------
+#include <vector>
 
 //----------------------
 // Base Class Headers --
@@ -83,34 +84,34 @@ namespace cheetah_ana_pkg {
     protected:
         
     private:
-	int readTOF(Event & evt, Env & env,
-		    cEventData* eventData);
+		int readTOF(Event & evt, Env & env,
+					cEventData* eventData);
 
-	void waitForAllWorkers();
-	void waitForCheetahWorkers();
-	void waitForAnaModWorkers();
-
-        // Data members
-        int nActiveThreads;
+		void waitForAllWorkers();
+		void waitForCheetahWorkers();
+		void waitForAnaModWorkers();
+		
+		// Data members
+		int nActiveThreads;
 		pthread_mutex_t  nActiveThreads_mutex;
 		pthread_mutex_t  counting_mutex;
 		pthread_mutex_t  process_mutex;
-        std::string m_key;
-        Source m_srcCspad0;
-        Source m_srcCspad1;
-        Source m_srcCspad2x2;
-        Source m_srcEvr;
-        Source m_srcBeam;
-        Source m_srcFee;
-        Source m_srcFeeSpec;
-        Source m_srcCav;
-        Source m_srcAcq[2];
-        Source m_srcCam;
-        Source m_srcSpec;
-        Source m_srcPnccd0;
-        Source m_srcPnccd1;
+		std::string m_key;
+		Source m_srcCspad0;
+		Source m_srcCspad1;
+		Source m_srcCspad2x2;
+		Source m_srcEvr;
+		Source m_srcBeam;
+		Source m_srcFee;
+		Source m_srcFeeSpec;
+		Source m_srcCav;
+		std::vector<Source> m_srcAcq;
+		Source m_srcCam;
+		Source m_srcSpec;
+		Source m_srcPnccd0;
+		Source m_srcPnccd1;
     };
-
+	
 	class AnaModEventData {
 	public:
 		cheetah_ana_mod* module;

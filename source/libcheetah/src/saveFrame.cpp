@@ -348,18 +348,19 @@ void writeHDF5(cEventData *info, cGlobal *global){
 	 *	Save TOF data (Aqiris)
 	 */
 	if(info->TOFPresent==1) {
+		int numSamples = global->tofDetector[0].numSamples;
 		size[0] = 2;	
-		size[1] = global->AcqNumSamples;	
+		size[1] = numSamples;
 		max_size[0] = 2;
-		max_size[1] = global->AcqNumSamples;
+		max_size[1] = size[1];
 		if (global->h5compress) {
 			H5Pset_chunk(h5compression, 2, size);
 			//H5Pset_shuffle(h5compression);			// De-interlace bytes
 			H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 		}
-		double tempData[2][global->AcqNumSamples];
-		memcpy(&tempData[0][0], info->TOFTime, global->AcqNumSamples);
-		memcpy(&tempData[1][0], info->TOFVoltage, global->AcqNumSamples);
+		double tempData[2][numSamples];
+		memcpy(&tempData[0][0], &(info->tofDetector[0].time[0]), numSamples);
+		memcpy(&tempData[1][0], &(info->tofDetector[0].voltage[0]), numSamples);
 		
 		dataspace_id = H5Screate_simple(2, size, max_size);
 		dataset_id = H5Dcreate(gid, "tof", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);

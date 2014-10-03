@@ -29,6 +29,7 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
+#include "tofDetector.h"
 
 /*
  *	Default settings/configuration
@@ -120,27 +121,12 @@ cGlobal::cGlobal(void) {
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
-	hitfinderTOFMinSample.resize(1);
-	hitfinderTOFMinSample[0] = 0;
-	hitfinderTOFMaxSample.resize(1);
-	hitfinderTOFMaxSample[0] = 1000;
-	hitfinderTOFMeanBackground.resize(1);
-	hitfinderTOFMeanBackground[0] = 2;
-	hitfinderTOFThresh.resize(1);
-	hitfinderTOFThresh[0] = 100;
 	hitfinderTOFMinCount = 0;
     hitfinderTOFMaxCount = 1000;
 	hitfinderTOFWindow = 3;
 
 	// TOF configuration
 	TOFPresent = 0;
-	TOFchannel = -1;
-	strcpy(tofName, "CxiSc1");
-	// Has to be looked up automatically
-	AcqNumSamples = 12288;
-	//tofType = Pds::DetInfo::Acqiris;
-	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
-
 	
 	// FEE spectrum
 	useFEEspectrum = 0;
@@ -755,20 +741,14 @@ void cGlobal::parseConfigFile(char* filename) {
 		fail = parseConfigTag(tag, value);
 		
 		/* Not a global keyword?  Then it must be detector-specific. */
-		if (fail != 0){
+		if (fail != 0 && strcmp(group,"default") != 0){
 
 			int matched=0;
 
-			/* set detector-specific configuration */
-			for (long i=0; i<MAX_DETECTORS; i++){
+			/* First check if group is an existing  detector */
 
-				/* new group? */
-				if (!strcmp("none",detector[i].configGroup)){
-					strncpy(detector[i].configGroup,group,cbufsize);
-					nDetectors++;
-				}
-
-				/* try to match group to detector */
+			/* Check if it's an existing pixel detector */
+			for (long i=0; i<nDetectors && !matched; i++){
 				if (!strcmp(group,detector[i].configGroup)){
 					matched = 1;
 					fail = detector[i].parseConfigTag(tag,value);
@@ -776,7 +756,38 @@ void cGlobal::parseConfigFile(char* filename) {
 				}
 
 			}
+			/* Check if it's an existing TOF detector */
+			for (long i=0; i<nTOFDetectors && !matched; i++){
+				if (strcmp(group,tofDetector[i].configGroup) == 0){
+					matched = 1;
+					fail = tofDetector[i].parseConfigTag(tag,value);
+					break;
+				}
+	
+			}
 
+			/* If it didn't match try to create a new group */
+
+			/* Check if it's a new TOF detector */
+			/* Only consider a new TOF detector if the group starts with "detectortype = tof" */
+			if(!matched && strcasecmp(tag,"detectortype") == 0 && 
+			   strcasecmp(value,"tof") == 0 &&
+			   nTOFDetectors < MAX_TOF_DETECTORS){
+				/* new TOF detector*/
+				strncpy(tofDetector[nTOFDetectors].configGroup,group,cbufsize);
+				matched = 1;
+				fail = tofDetector[nTOFDetectors].parseConfigTag(tag,value);
+				nTOFDetectors++;
+			}
+
+			if(!matched && nDetectors < MAX_DETECTORS){
+				/* new pixel Detector */
+				strncpy(detector[nDetectors].configGroup,group,cbufsize);
+				matched = 1;
+				fail = detector[nDetectors].parseConfigTag(tag,value);
+				nDetectors++;
+			}
+				
 			if (matched == 0){
 				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
 				exit(1);
@@ -802,60 +813,12 @@ void cGlobal::parseConfigFile(char* filename) {
 	for (long i=0;i<nDetectors;i++){
 		printf("detector %li: %s\n",i,detector[i].configGroup);
 	}
-
-
-	if(TOFPresent){
-		if(TOFchannel < 0){
-			if(TOFAllChannels.size()){
-				// If TOFPresent is enabled but TOF channel was not set
-				// set the TOFchannel to the first TOFAllChannel
-
-				TOFchannel = TOFAllChannels[0];
-			}else{
-				// If TOFPresent is enabled but TOF channel was not set
-				// set the TOFchannel to 0
-				TOFchannel = 0;
-			}
-		}
-		// Make sure that TOFchannel is present in TOFAllChannels
-		bool found = false;
-		for(unsigned int i = 0;i<TOFAllChannels.size();i++){
-			if(TOFchannel == TOFAllChannels[i]){
-				found = true;
-				break;
-			}
-		}
-		if(!found){
-			//All the TOF channel to the AllChannels
-			TOFAllChannels.push_back(TOFchannel);
-		}
-
+	printf("Configured %d TOF detectors\n",nTOFDetectors);
+	for (long i=0;i<nTOFDetectors;i++){
+		TOFPresent = 1;
+		printf("TOF detector %li: %s\n",i,tofDetector[i].configGroup);
 	}
-	// Each acqiris unit has a maximum of n channels
-	// Sometimes the units are thunked
-	const int MAX_TOF_CHANNELS = 20; // Normally 4
-	for(unsigned int i = 0;i<TOFAllChannels.size();i++){
-		unsigned int card = TOFAllChannels[i]/MAX_TOF_CHANNELS;
-		while(TOFChannelsPerCard.size() <= card){
-			TOFChannelsPerCard.push_back(std::vector<int>());
-		}
-		TOFChannelsPerCard[card].push_back(TOFAllChannels[i]);
-	}
-	printf("Configured %d TOF detectors:\n",(int)TOFAllChannels.size());
-	for(unsigned int card = 0;card<TOFChannelsPerCard.size();card++){
-		if(TOFChannelsPerCard[card].size()){
-			printf("\tAquiris card %d, channel(s) %d",card,TOFChannelsPerCard[card][0]%MAX_TOF_CHANNELS);
-			for(unsigned int i = 1;i< TOFChannelsPerCard[card].size();i++){
-				printf(", %d",TOFChannelsPerCard[card][i]%4);
-			}
-			printf("\n");			
-		}
-	}
-	   
-
-
 	fclose(fp);
-
 }
 
 
@@ -985,33 +948,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		saveInterval = atoi(value);
 	}
 	// Time-of-flight
-	else if (!strcmp(tag, "tofpresent")) {
-		TOFPresent = atoi(value);
-	}
-	// depreciated?
-    else if (!strcmp(tag, "tofname")) {
-		strcpy(tofName, value);
-	}
-	else if (!strcmp(tag, "tofchannel")) {
-		TOFchannel = atoi(value);
-	}
-	else if (!strcmp(tag, "tofallchannels")) {
-		splitList(value,TOFAllChannels);
-	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
-	}
-	else if (!strcmp(tag, "hitfindertofminsample")) {
-		splitList(value, hitfinderTOFMinSample);
-	}
-	else if (!strcmp(tag, "hitfindertofmaxsample")) {
-		splitList(value,hitfinderTOFMaxSample);
-	}
-	else if (!strcmp(tag, "hitfindertofmeanbackground")) {
-		splitList(value, hitfinderTOFMeanBackground);
-	}
-	else if (!strcmp(tag, "hitfindertofthresh")) {
-		splitList(value, hitfinderTOFThresh);
 	}
 	else if (!strcmp(tag, "hitfindertofmincount")) {
 		hitfinderTOFMinCount = atoi(value);
@@ -1305,8 +1243,6 @@ void cGlobal::writeConfigurationLog(void){
 	//fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
 	//fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
 	//fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
-	fprintf(fp, "tofName=%s\n",tofName);
-	fprintf(fp, "tofChannel=%d\n",TOFchannel);
 	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
 	//fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
 	//fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
