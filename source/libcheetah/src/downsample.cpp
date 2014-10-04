@@ -57,13 +57,13 @@ void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long 
 }
 
 
-// sub-pixels that have any of the mask_out_bits set are disregarded. New super-pixels are rescaled accordingly. Super-pixels with all sub-pixels masked out are set to 0
+// Pixels in the downsampled image are masked out only if all pixels that contribute have each at least one bit of the mask_out_bits set.
 void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk, long downsampling){
 	long x0,y0;
 	long x1,y1;
 	long i0,i1,i;
 	uint16_t mask_out_bits = PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
-	bool good_pixel;
+	float good_pixel; // 0.0 if pixel has at least one of mask_out_bits set; otherwise 1.0
 	float *tempN;
 	tempN = (float *) calloc(imgXxX_nn,sizeof(float));
 
@@ -77,8 +77,9 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
 		imgXxX[i1] += good_pixel*img[i0];
 		tempN[i1] += good_pixel;
 	}
+	// Rescaling of downsampled pixels that consist of at least one "bad" pixel
 	for(i = 0;i<imgXxX_nn;i++){
-		if (tempN[i] != 0.){
+		if (tempN[i] != 0.){ // No rescaling of masked out downsampled pixels
 			imgXxX[i] *= downsampling*downsampling/tempN[i];
 		}
 	}
