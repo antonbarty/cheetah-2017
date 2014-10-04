@@ -331,7 +331,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
 		pix_nn = pix_nx*pix_ny;
 		data = (float *) calloc(pix_nn,sizeof(float));
 		mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
-		downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.,mask_0,global->hitfinderDownsampling);
+		downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,mask_0,global->hitfinderDownsampling);
 		downsampleMaskNonConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx,global->hitfinderDownsampling);    
 	} else {
 		pix_nn = global->detector[detID].pix_nn;  

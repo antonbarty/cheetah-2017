@@ -152,7 +152,6 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Downsampling factor (1: no downsampling)
 	downsampling = 1;
-	downsamplingRescale = 1.;
 	downsamplingConservative = 1;
 }
 
@@ -284,9 +283,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "downsampling")) {
 		downsampling = atoi(value);
-	}
-	else if (!strcmp(tag, "downsamplingrescale")) {
-		downsamplingRescale = atof(value);
 	}
 	else if (!strcmp(tag, "downsamplingconservative")) {
 		downsamplingConservative = atoi(value);
