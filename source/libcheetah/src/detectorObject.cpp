@@ -284,6 +284,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "downsampling")) {
 		downsampling = atoi(value);
 	}
+	else if (!strcmp(tag, "downsamplingrescale")) {
+		printf("The keyword downsamplingRescale is depreciated. The option is no longer supported.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;		
+	}
 	else if (!strcmp(tag, "downsamplingconservative")) {
 		downsamplingConservative = atoi(value);
 	}
