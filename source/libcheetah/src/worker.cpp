@@ -362,12 +362,13 @@ hitknown:
 	}
 	
 	// Update central hit counter
+	pthread_mutex_lock(&global->nhits_mutex);	
+    global->nhitsandblanks++;
 	if(hit) {
-		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;
 		global->nrecenthits++;
-		pthread_mutex_unlock(&global->nhits_mutex);
 	}
+	pthread_mutex_unlock(&global->nhits_mutex);
 
 	if(eventData->writeFlag){
 		// one CXI or many H5?
