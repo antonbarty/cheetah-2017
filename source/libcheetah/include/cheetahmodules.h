@@ -8,6 +8,8 @@ void *worker(void *);
 // detectorCorrection.cpp
 void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
+void applyPolarizationCorrection(cEventData*, cGlobal*);
+void applySolidAngleCorrection(cEventData*, cGlobal*);
 void applyBadPixelMask(cEventData*, cGlobal*);
 void cspadModuleSubtract(cEventData*, cGlobal*);
 void cspadModuleSubtract2(cEventData*, cGlobal*);
@@ -18,13 +20,18 @@ void calculateHotPixelMask(cGlobal*);
 void identifyHotPixels(cEventData*, cGlobal*);
 void calculateHotPixelMask(cEventData*, cGlobal*);
 void applyHotPixelMask(cEventData*, cGlobal*);
+
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
+void applyPolarizationCorrection(float*, float*, float*, float*, float, double, float, double, long);
+void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
+void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyBadPixelMask(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
+
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);

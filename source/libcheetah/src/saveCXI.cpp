@@ -686,6 +686,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		Node * detector = lcls->createGroup("detector",detID+1);
 		detector->createStack("position",H5T_NATIVE_DOUBLE);
 		detector->createStack("EncoderValue",H5T_NATIVE_DOUBLE);
+		detector->createStack("SolidAngleConst",H5T_NATIVE_DOUBLE);
 	}
 
 	// Save cheetah variables  
@@ -1120,6 +1121,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	DETECTOR_LOOP{
 		lcls.child("detector",detID+1)["position"].write(&global->detector[detID].detectorZ,stackSlice);
 		lcls.child("detector",detID+1)["EncoderValue"].write(&global->detector[detID].detectorEncoderValue,stackSlice);
+		lcls.child("detector",detID+1)["SolidAngleConst"].write(&global->detector[detID].solidAngleConst,stackSlice);
 	}
 	lcls["machineTime"].write(&info->seconds,stackSlice);
 	lcls["fiducial"].write(&info->fiducial,stackSlice);
