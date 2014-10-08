@@ -87,11 +87,19 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	cmFloor = 0.1;
 	cspadSubtractUnbondedPixels = 0;
 	cspadSubtractBehindWires = 0;
-
+    
 	// Gain calibration correction
 	useGaincal = 0;
 	invertGain = 0;
 	
+	// Polarization correction
+	usePolarizationCorrection = 0;
+    horizontalFractionOfPolarization = 1.0;
+    
+	// Solid angle correction
+	useSolidAngleCorrection = 0;
+	solidAngleAlgorithm = 1;
+    
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
 	bgMemory = 50;
@@ -403,6 +411,18 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);
 	}
+    else if (!strcmp(tag, "usepolarizationcorrection")) {
+        usePolarizationCorrection = atoi(value);
+    }
+    else if (!strcmp(tag, "horizontalfractionofpolarization")) {
+        horizontalFractionOfPolarization = atof(value);
+    }
+    else if (!strcmp(tag, "usesolidanglecorrection")) {
+        useSolidAngleCorrection = atoi(value);
+    }
+    else if (!strcmp(tag, "solidanglealgorithm")) {
+        solidAngleAlgorithm = atoi(value);
+    }
 	else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) ) {
 		cspadSubtractUnbondedPixels = atoi(value);
 	}
@@ -802,7 +822,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 	maxres = 0.;
 	minres_pix = 0;
 	maxres_pix = 1000000;
-
+    
 	printf("Recalculating K-space coordinates\n");
 
 	for (long i=0; i<pix_nn; i++ ) {
@@ -857,8 +877,10 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 	} else {
 		printf("Defined resolution limits for hitfinders: %.2f - %.2f A\n",global->hitfinderMinRes,global->hitfinderMaxRes);
 	}
-
-
+    
+	// also update constant term of solid angle when detector has moved
+	solidAngleConst = pixelSize*pixelSize/(detectorZ*cameraLengthScale*detectorZ*cameraLengthScale);
+    
 }
 
 

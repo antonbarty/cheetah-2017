@@ -128,6 +128,12 @@ void *worker(void *threadarg) {
 	// Apply gain correction
 	applyGainCorrection(eventData, global);
 	
+    // Apply polarization correction
+	applyPolarizationCorrection(eventData, global);
+    
+    // Apply solid angle correction
+	applySolidAngleCorrection(eventData, global);
+	
 	// Apply bad pixel map
 	applyBadPixelMask(eventData, global);
  
