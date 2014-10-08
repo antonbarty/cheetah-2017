@@ -19,6 +19,7 @@ cData2d::cData2d(){
 	ny = 0;
 	nn = 0;
 	data = NULL;
+	char detector_name[] = "";
 }
 
 
@@ -28,6 +29,7 @@ cData2d::cData2d(long n){
 	nn = n*n;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
+	char detector_name[] = "";
 }
 
 
@@ -42,6 +44,7 @@ void cData2d::create(long n){
 	nn = n*n;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
+	char detector_name[] = "";
 }
 
 void cData2d::create(long nnx, long nny){
@@ -50,6 +53,7 @@ void cData2d::create(long nnx, long nny){
 	nn = nx*ny;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
+	char detector_name[] = "";
 }
 
 
@@ -61,6 +65,8 @@ void cData2d::readHDF5(char* filename){
 
 void cData2d::readHDF5(char* filename, char* fieldname){
 	
+	herr_t ret;
+
 	// Open the file
 	hid_t file_id;
 	file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
@@ -169,7 +175,19 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		return;
 	}
 	
-	
+	// Read attributes
+	attr = H5Aopen_name(dataset,"detector_name");
+	hid_t attr_dtype = H5Tcopy(H5T_C_S1);
+	ret  = H5Aread(attr,datatype,string_out);
+	if (ret < 0){
+		// Attribute could not be read
+		strcpy(detector_name,"");
+	} else {
+		// Attribute was read successfully
+		strcpy(detector_name,string_out);
+	}
+	ret =  H5Aclose(attr);
+		
 	// Close and cleanup
 	H5Dclose(dataset_id);
 

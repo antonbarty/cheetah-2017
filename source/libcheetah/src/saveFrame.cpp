@@ -816,11 +816,14 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 }
 
 
+void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
+	writeSimpleHDF5(filename, data, width, height, type, attr, NULL);
+}
 
 /*
- *	Write test data to a simple HDF5 file
+ *	Write data to a simple HDF5 file
  */
-void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
+void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type, const char *detector_name)  {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
 	hsize_t size[2];
@@ -868,6 +871,19 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 		H5Fclose(fh);
 	}
 	
+	/* Write attributes */
+	if (detector_name != NULL){
+		hsize_t one = 1;
+		hid_t datatype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(datatype, strlen(axis));
+		hid_t memspace = H5Screate_simple(1,&one,NULL);
+		hid_t attr = H5Acreate(dh,"detector_name",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+		H5Awrite(attr,datatype,detector_name);
+		H5Aclose(attr);
+		H5Tclose(datatype);
+		H5Sclose(memspace);
+	}
+
 	H5Gclose(gh);
 	H5Dclose(dh);
 	

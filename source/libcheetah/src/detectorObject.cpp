@@ -908,6 +908,19 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 		exit(1);
 	} 
 	
+	// Correct detector_name?
+	if (detector_name == NULL) {
+		printf("\tThe attribute detector_name is missing in the darkcal file. Cannot verify whether the darkcal file was generated for the chosen detector.\n");
+	}else{
+		if (strcmp(tem2d.detector_name,detector_name) == 0){
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) match.\n",tem2d.detector_name,detector_name);
+		}else{
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) do not match.\n",tem2d.detector_name,detector_name);
+			printf("\tAborting...\n");
+			exit(1);
+		}
+	}
+
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
 		darkcal[i] = temp2d.data[i];

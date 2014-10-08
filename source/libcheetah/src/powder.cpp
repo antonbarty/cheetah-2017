@@ -590,9 +590,11 @@ void saveDarkcal(cGlobal *global, int detID) {
 	cPixelDetectorCommon     *detector = &(global->detector[detID]);
 	long	pix_nn = detector->pix_nn;
 	char	filename[1024];
+	const char * detector_name;
+	sprintf(detector_name,"%s-%i",detector->detector_name,detector->detectorID);
 	
 	printf("Processing darkcal\n");
-	sprintf(filename,"r%04u-%s-darkcal.h5",global->runNumber, detector->detectorName);
+	sprintf(filename,"r%04u-%s-%i-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
 	for(long i=0; i<pix_nn; i++)
@@ -602,7 +604,7 @@ void saveDarkcal(cGlobal *global, int detID) {
 #ifdef H5F_ACC_SWMR_WRITE  
 	pthread_mutex_lock(&global->swmr_mutex);
 #endif
-	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);	
+	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT,detector_name);	
 #ifdef H5F_ACC_SWMR_WRITE  
 	pthread_mutex_unlock(&global->swmr_mutex);
 #endif

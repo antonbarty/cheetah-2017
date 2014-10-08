@@ -26,7 +26,7 @@ public:
 public:
 	long		nx,ny,nn;
 	tData2d		*data;
-	
+	char        detector_name[1024];
 	
 private:
 	

@@ -887,7 +887,7 @@ namespace cheetah_ana_pkg {
 			 */
 			if(strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
 				
-				// Pull out front or back detector depending on detID=0 or 1
+				// Pull out front or back detector depending on detectorID=0 or 1
 				shared_ptr<Psana::CsPad::DataV1> data1;
 				shared_ptr<Psana::CsPad::DataV2> data2;
 				if (cheetahGlobal.detector[detID].detectorID == 0) {
