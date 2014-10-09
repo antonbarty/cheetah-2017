@@ -178,25 +178,27 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_NAME);
 	
 	if (attr_exists > 0){
+		// Attribute exists, read attribute
 		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_NAME);
 		attr_dtype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(attr_dtype, 1024);
 		H5Aread(attr,attr_dtype,detectorName);
 		H5Aclose(attr);
 		H5Tclose(attr_dtype);
 	} else {
-		// Attribute could not be read
+		// Attribute does not exist, set detectorName to default value
 		strcpy(detectorName,"");
 	}
 
 	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_ID);
 	
 	if (attr_exists > 0){
+		// Attribute exists, read attribute
 		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_ID);
 		H5Aread(attr,H5T_NATIVE_INT64,&detectorID);
 		H5Aclose(attr);
-		H5Tclose(attr_dtype);
 	} else {
-		// Attribute could not be read
+		// Attribute does not exist, set detectorID to default value
 		detectorID = -1;
 	}
 

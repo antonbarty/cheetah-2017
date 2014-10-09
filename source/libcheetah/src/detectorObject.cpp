@@ -932,7 +932,7 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 	
 	// Correct detector name?
 	if (strcmp(temp2d.detectorName,"") == 0) {
-		printf("\tThe attribute detectorName could not be read from the darkcal file. Cannot verify whether the darkcal file was generated for the selected detector type.\n");
+		printf("\tWARNING: The attribute detectorName could not be read from the darkcal file. Cannot verify whether the darkcal file was generated from the detector of the specified detector type.\n");
 	}else{
 		if (strcmp(temp2d.detectorName,detectorName) == 0){
 			printf("\tDetector names from darkcal (%s) and the associated detector (%s) match.\n",temp2d.detectorName,detectorName);
@@ -945,7 +945,7 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 
 	// Correct detector ID?
 	if (temp2d.detectorID == -1) {
-		printf("\tThe attribute detectorID could not be read from the darkcal file. Cannot verify whether the darkcal file was generated for the selected detector ID.\n");
+		printf("\tWARNING: The attribute detectorID could not be read from the darkcal file. Cannot verify whether the darkcal file was generated from the detector of the specified detector ID.\n");
 	}else{
 		if (temp2d.detectorID == detectorID){
 			printf("\tDetector IDs from darkcal (%li) and the associated detector (%li) match.\n",temp2d.detectorID,detectorID);
