@@ -7,6 +7,8 @@
  */
 
 #include "data2d.h"
+const char* const ATTR_NAME_DETECTOR_NAME = "detectorName";
+const char* const ATTR_NAME_DETECTOR_ID = "detectorID";
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -19,7 +21,6 @@ cData2d::cData2d(){
 	ny = 0;
 	nn = 0;
 	data = NULL;
-	char detector_name[] = "";
 }
 
 
@@ -29,7 +30,6 @@ cData2d::cData2d(long n){
 	nn = n*n;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
-	char detector_name[] = "";
 }
 
 
@@ -44,7 +44,6 @@ void cData2d::create(long n){
 	nn = n*n;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
-	char detector_name[] = "";
 }
 
 void cData2d::create(long nnx, long nny){
@@ -53,7 +52,6 @@ void cData2d::create(long nnx, long nny){
 	nn = nx*ny;
 	free(data); data = NULL;
 	data = (tData2d *) calloc(nn, sizeof(tData2d));
-	char detector_name[] = "";
 }
 
 
@@ -64,8 +62,6 @@ void cData2d::readHDF5(char* filename){
 }
 
 void cData2d::readHDF5(char* filename, char* fieldname){
-	
-	herr_t ret;
 
 	// Open the file
 	hid_t file_id;
@@ -176,18 +172,34 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 	}
 	
 	// Read attributes
-	attr = H5Aopen_name(dataset,"detector_name");
-	hid_t attr_dtype = H5Tcopy(H5T_C_S1);
-	ret  = H5Aread(attr,datatype,string_out);
-	if (ret < 0){
-		// Attribute could not be read
-		strcpy(detector_name,"");
+	hid_t attr,attr_dtype;
+	htri_t attr_exists;
+
+	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_NAME);
+	
+	if (attr_exists > 0){
+		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_NAME);
+		attr_dtype = H5Tcopy(H5T_C_S1);
+		H5Aread(attr,attr_dtype,detectorName);
+		H5Aclose(attr);
+		H5Tclose(attr_dtype);
 	} else {
-		// Attribute was read successfully
-		strcpy(detector_name,string_out);
+		// Attribute could not be read
+		strcpy(detectorName,"");
 	}
-	ret =  H5Aclose(attr);
-		
+
+	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_ID);
+	
+	if (attr_exists > 0){
+		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_ID);
+		H5Aread(attr,H5T_NATIVE_INT64,&detectorID);
+		H5Aclose(attr);
+		H5Tclose(attr_dtype);
+	} else {
+		// Attribute could not be read
+		detectorID = -1;
+	}
+
 	// Close and cleanup
 	H5Dclose(dataset_id);
 

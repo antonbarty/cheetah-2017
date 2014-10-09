@@ -92,8 +92,6 @@ static const int ASSEMBLE_INTERPOLATION_LINEAR = 0;
 static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
-
-
 #define DETECTOR_LOOP for(long detID=0; detID < global->nDetectors; detID++)
 
 class cGlobal;

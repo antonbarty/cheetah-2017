@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-
+#include "data2d.h"
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
@@ -820,13 +820,13 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 
 
 void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
-	writeSimpleHDF5(filename, data, width, height, type, attr, NULL);
+	writeSimpleHDF5(filename, data, width, height, type, NULL,-1);
 }
 
 /*
  *	Write data to a simple HDF5 file
  */
-void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type, const char *detector_name)  {
+void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type, const char *detectorName, long detectorID)  {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
 	hsize_t size[2];
@@ -875,17 +875,22 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	}
 	
 	/* Write attributes */
-	if (detector_name != NULL){
-		hsize_t one = 1;
-		hid_t datatype = H5Tcopy(H5T_C_S1);
-		H5Tset_size(datatype, strlen(axis));
-		hid_t memspace = H5Screate_simple(1,&one,NULL);
-		hid_t attr = H5Acreate(dh,"detector_name",datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
-		H5Awrite(attr,datatype,detector_name);
-		H5Aclose(attr);
-		H5Tclose(datatype);
-		H5Sclose(memspace);
-	}
+	hsize_t one = 1;
+	hid_t memspace = H5Screate_simple(1,&one,NULL);
+
+	hid_t datatype = H5Tcopy(H5T_C_S1);
+	H5Tset_size(datatype, strlen(ATTR_NAME_DETECTOR_NAME));
+	hid_t attr_name = H5Acreate(dh,ATTR_NAME_DETECTOR_NAME,datatype,memspace,H5P_DEFAULT,H5P_DEFAULT);
+	H5Awrite(attr_name,datatype,detectorName);
+	H5Aclose(attr_name);
+
+	hid_t attr_id = H5Acreate(dh,ATTR_NAME_DETECTOR_ID,H5T_NATIVE_INT64,memspace,H5P_DEFAULT,H5P_DEFAULT);
+	H5Awrite(attr_id,H5T_NATIVE_INT64,&detectorID);
+	H5Aclose(attr_id);
+
+	/* Closing */
+	H5Tclose(datatype);
+	H5Sclose(memspace);
 
 	H5Gclose(gh);
 	H5Dclose(dh);

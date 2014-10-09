@@ -65,6 +65,7 @@ void nameEvent(cEventData*, cGlobal*);
 void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData *eventData, cGlobal *global);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
+void writeSimpleHDF5(const char*, const void*, int, int, int, const char*,long);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
 

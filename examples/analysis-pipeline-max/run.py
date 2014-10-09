@@ -178,7 +178,7 @@ class Run:
                     elif "Average hit rate:" in line:
                         self.attrs["HRate"] = line.split(" ")[-2][:-1]
     def _get_prior_darkcal(self):
-        dcals = [(self.locations["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-darkcal.h5" % l[:5])) for l in os.listdir(self.locations["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
+        dcals = [(self.locations["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-#-darkcal.h5" % (l[:5]))) for l in os.listdir(self.locations["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
         if dcals == []:
             return None
         dcals.sort()
@@ -222,11 +222,15 @@ class Run:
                     ls_n.append(l)
                 else:
                     appended = False
-                    if "darkcal" in l:
+                    if "detectorid" in l.lower():
+                        ls_n.append(l)
                         if self.type == "data":
                             if self.darkcal != None:
-                                ls_n.append("darkcal=%s\n" % self.darkcal)
+                                detectorID = l[:-1].split("=")[-1]
+                                ls_n.append("darkcal=%s\n" % self.darkcal.replace("#",detectorID))
                             appended = True
+                    if "darkcal" in l.lower():
+                        ls_n.append("#"+l)
                     if not appended:
                         if "=" in l:
                             ll = l.split("=")

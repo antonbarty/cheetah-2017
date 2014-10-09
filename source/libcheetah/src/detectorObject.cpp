@@ -930,14 +930,27 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 		exit(1);
 	} 
 	
-	// Correct detector_name?
-	if (detector_name == NULL) {
-		printf("\tThe attribute detector_name is missing in the darkcal file. Cannot verify whether the darkcal file was generated for the chosen detector.\n");
+	// Correct detector name?
+	if (strcmp(temp2d.detectorName,"") == 0) {
+		printf("\tThe attribute detectorName could not be read from the darkcal file. Cannot verify whether the darkcal file was generated for the selected detector type.\n");
 	}else{
-		if (strcmp(tem2d.detector_name,detector_name) == 0){
-			printf("\tDetector names from darkcal (%s) and the associated detector (%s) match.\n",tem2d.detector_name,detector_name);
+		if (strcmp(temp2d.detectorName,detectorName) == 0){
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) match.\n",temp2d.detectorName,detectorName);
 		}else{
-			printf("\tDetector names from darkcal (%s) and the associated detector (%s) do not match.\n",tem2d.detector_name,detector_name);
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) do not match.\n",temp2d.detectorName,detectorName);
+			printf("\tAborting...\n");
+			exit(1);
+		}
+	}
+
+	// Correct detector ID?
+	if (temp2d.detectorID == -1) {
+		printf("\tThe attribute detectorID could not be read from the darkcal file. Cannot verify whether the darkcal file was generated for the selected detector ID.\n");
+	}else{
+		if (temp2d.detectorID == detectorID){
+			printf("\tDetector IDs from darkcal (%li) and the associated detector (%li) match.\n",temp2d.detectorID,detectorID);
+		}else{
+			printf("\tDetector IDs from darkcal (%li) and the associated detector (%li) do not match.\n",temp2d.detectorID,detectorID);
 			printf("\tAborting...\n");
 			exit(1);
 		}
