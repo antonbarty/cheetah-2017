@@ -85,9 +85,9 @@ void *worker(void *threadarg) {
 	
 	// Copy pixelmask_shared into pixelmask and raw detector data into corrected array as starting point for corrections
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].pixelmask[i] = global->detector[detIndex].pixelmask_shared[i];
+			eventData->detector[detIndex].corrected_data[i] = eventData->detector[detIndex].raw_data[i];
 		}
 	}
 	
@@ -159,7 +159,7 @@ void *worker(void *threadarg) {
 localBGCalculated:
 	// Keep memory of data with only detector artefacts subtracted (possibly needed later)
 	DETECTOR_LOOP {
-		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		memcpy(eventData->detector[detIndex].detector_corrected_data, eventData->detector[detIndex].corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
 	}
 
 	// Subtract residual common mode offsets (cmModule=2) 
@@ -278,14 +278,14 @@ hitknown:
 
 	DETECTOR_LOOP {
 		// Revert to raw detector data
-		if(global->detector[detID].saveDetectorRaw){
-			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+		if(global->detector[detIndex].saveDetectorRaw){
+			for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+				eventData->detector[detIndex].corrected_data[i] = eventData->detector[detIndex].raw_data[i];
 			}
 		}
 		// Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-		else if (global->detector[detID].saveDetectorCorrectedOnly) {
-			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		else if (global->detector[detIndex].saveDetectorCorrectedOnly) {
+			memcpy(eventData->detector[detIndex].corrected_data, eventData->detector[detIndex].detector_corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
 		}
 	}
 

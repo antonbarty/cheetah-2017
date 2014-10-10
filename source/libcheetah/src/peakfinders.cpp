@@ -78,11 +78,11 @@ void freePeakList(tPeakList peak) {
 /*
  *	Wrapper for peakfinders
  */
-int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
+int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 
 	// Bad detector??
-	if(detID > global->nDetectors) {
-		printf("peakfinder: false detectorID %i\n",detID);
+	if(detIndex > global->nDetectors) {
+		printf("peakfinder: false detectorID %i\n",detIndex);
 		exit(1);
 	}
 
@@ -91,11 +91,11 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	
 	
 	// Geometry
-	long	pix_nn = global->detector[detID].pix_nn;
-	long	asic_nx = global->detector[detID].asic_nx;
-	long	asic_ny = global->detector[detID].asic_ny;
-	long	nasics_x = global->detector[detID].nasics_x;
-	long	nasics_y = global->detector[detID].nasics_y;
+	long	pix_nn = global->detector[detIndex].pix_nn;
+	long	asic_nx = global->detector[detIndex].asic_nx;
+	long	asic_ny = global->detector[detIndex].asic_ny;
+	long	nasics_x = global->detector[detIndex].nasics_x;
+	long	nasics_y = global->detector[detIndex].nasics_y;
 	
 	// Thresholds
 	float	hitfinderADCthresh = global->hitfinderADC;
@@ -106,8 +106,8 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
 	
 	// Data
-	float	*data = eventData->detector[detID].corrected_data;
-	float	*pix_r = global->detector[detID].pix_r;
+	float	*data = eventData->detector[detIndex].corrected_data;
+	float	*pix_r = global->detector[detIndex].pix_r;
 	
 	// Peak list
 	tPeakList	*peaklist = &eventData->peaklist;
@@ -117,7 +117,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	char	*mask = (char*) calloc(pix_nn, sizeof(char));
 	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 	for(long i=0;i<pix_nn;i++)
-		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 
 	
 	/*
@@ -173,9 +173,9 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detID) {
 	long e;
 	for(long k=0; k<nPeaks && k<peaklist->nPeaks_max; k++) {
 		e = peaklist->peak_com_index[k];
-		peaklist->peak_com_x_assembled[k] = global->detector[detID].pix_x[e];
-		peaklist->peak_com_y_assembled[k] = global->detector[detID].pix_y[e];
-		peaklist->peak_com_r_assembled[k] = global->detector[detID].pix_r[e];
+		peaklist->peak_com_x_assembled[k] = global->detector[detIndex].pix_x[e];
+		peaklist->peak_com_y_assembled[k] = global->detector[detIndex].pix_y[e];
+		peaklist->peak_com_r_assembled[k] = global->detector[detIndex].pix_r[e];
 	}
 	
 	
@@ -1189,9 +1189,9 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 						peaklist->peak_snr[counter] =snr;
 						peaklist->peak_com_index[counter] = e;
 						peaklist->nPeaks = counter+1;
-						//peaklist->peak_com_x_assembled[counter] = global->detector[detID].pix_x[e];
-						//peaklist->peak_com_y_assembled[counter] = global->detector[detID].pix_y[e];
-						//peaklist->peak_com_r_assembled[counter] = global->detector[detID].pix_r[e];
+						//peaklist->peak_com_x_assembled[counter] = global->detector[detIndex].pix_x[e];
+						//peaklist->peak_com_y_assembled[counter] = global->detector[detIndex].pix_y[e];
+						//peaklist->peak_com_r_assembled[counter] = global->detector[detIndex].pix_r[e];
 					}
 					if ( newpeak )
 						counter++;

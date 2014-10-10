@@ -27,13 +27,13 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 
 	if(global->assemble2DImage) {
 		DETECTOR_LOOP {
-			long		pix_nn = global->detector[detID].pix_nn;
-			long		image_nx = global->detector[detID].image_nx;
-			long		image_nn = global->detector[detID].image_nn;
-			float		*pix_x = global->detector[detID].pix_x;
-			float		*pix_y = global->detector[detID].pix_y;
-			float		*corrected_data = eventData->detector[detID].corrected_data;
-			float		*image = eventData->detector[detID].image;
+			long		pix_nn = global->detector[detIndex].pix_nn;
+			long		image_nx = global->detector[detIndex].image_nx;
+			long		image_nn = global->detector[detIndex].image_nn;
+			float		*pix_x = global->detector[detIndex].pix_x;
+			float		*pix_y = global->detector[detIndex].pix_y;
+			float		*corrected_data = eventData->detector[detIndex].corrected_data;
+			float		*image = eventData->detector[detIndex].image;
 			int             assembleInterpolation = global->assembleInterpolation;
 			assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
 		}
@@ -48,13 +48,13 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 void assemble2Dpowder(cGlobal *global) {
 
     DETECTOR_LOOP {
-		long		pix_nn = global->detector[detID].pix_nn;
-		long		image_nx = global->detector[detID].image_nx;
-		long		image_nn = global->detector[detID].image_nn;
-		float		*pix_x = global->detector[detID].pix_x;
-		float		*pix_y = global->detector[detID].pix_y;
+		long		pix_nn = global->detector[detIndex].pix_nn;
+		long		image_nx = global->detector[detIndex].image_nx;
+		long		image_nn = global->detector[detIndex].image_nn;
+		float		*pix_x = global->detector[detIndex].pix_x;
+		float		*pix_y = global->detector[detIndex].pix_y;
 		int             assembleInterpolation = global->assembleInterpolation;
-        cPixelDetectorCommon     *detector = &(global->detector[detID]);
+        cPixelDetectorCommon     *detector = &(global->detector[detIndex]);
 
         // Floating point buffer
         float   *fdata = (float*) calloc(pix_nn,sizeof(float));
@@ -197,13 +197,13 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
     
     if(global->assemble2DMask) {
         DETECTOR_LOOP {
-            long		pix_nn = global->detector[detID].pix_nn;
-            long		image_nx = global->detector[detID].image_nx;
-            long		image_nn = global->detector[detID].image_nn;
-            float		*pix_x = global->detector[detID].pix_x;
-            float		*pix_y = global->detector[detID].pix_y;
-            uint16_t  *pixelmask = eventData->detector[detID].pixelmask;
-            uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+            long		pix_nn = global->detector[detIndex].pix_nn;
+            long		image_nx = global->detector[detIndex].image_nx;
+            long		image_nn = global->detector[detIndex].image_nn;
+            float		*pix_x = global->detector[detIndex].pix_x;
+            float		*pix_y = global->detector[detIndex].pix_y;
+            uint16_t  *pixelmask = eventData->detector[detIndex].pixelmask;
+            uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
             int       assembleInterpolation = global->assembleInterpolation;
             assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
 		}

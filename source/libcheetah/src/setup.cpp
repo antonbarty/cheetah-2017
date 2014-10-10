@@ -84,7 +84,7 @@ cGlobal::cGlobal(void) {
 	hitfinder = 0;
 	hitfinderForInitials = 1;
     hitfinderInvertHit = 0;
-	hitfinderDetector = 0;
+	hitfinderDetectorID = 0;
 	hitfinderADC = 100;
 	hitfinderTAT = 1e3;
 
@@ -247,24 +247,41 @@ void cGlobal::setup() {
 	/*
 	 *	Configure detectors
 	 */
-	for(long i=0; i<nDetectors; i++) {
-		detector[i].configure();
-		detector[i].readDetectorGeometry(detector[i].geometryFile);
-		detector[i].readDarkcal(detector[i].darkcalFile);
-		detector[i].readGaincal(detector[i].gaincalFile);
-		detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
-		detector[i].pixelmask_shared_max = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
-		detector[i].pixelmask_shared_min = (uint16_t*) malloc(detector[i].pix_nn*sizeof(uint16_t));
-		for(long j=0; j<detector[i].pix_nn; j++){
-			detector[i].pixelmask_shared_min[j] = PIXEL_IS_ALL;
+	hitfinderDetIndex = -1;
+	for(long detIndex=0; detIndex < nDetectors; detIndex++){
+		detector[detIndex].configure();
+		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
+		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
+		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
+		detector[detIndex].pixelmask_shared = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
+		detector[detIndex].pixelmask_shared_max = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
+		detector[detIndex].pixelmask_shared_min = (uint16_t*) malloc(detector[detIndex].pix_nn*sizeof(uint16_t));
+		for(long j=0; j<detector[detIndex].pix_nn; j++){
+			detector[detIndex].pixelmask_shared_min[j] = PIXEL_IS_ALL;
 		}
-		detector[i].readPeakmask(self, peaksearchFile);
-		detector[i].readBadpixelMask(detector[i].badpixelFile);
-		detector[i].readBaddataMask(detector[i].baddataFile);
-		detector[i].readWireMask(detector[i].wireMaskFile);
+		detector[detIndex].readPeakmask(self, peaksearchFile);
+		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
+		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
+		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
+		if (detector[detIndex].detectorID == hitfinderDetectorID){
+			hitfinderDetIndex = detIndex;
+		}
+	}
+
+	// Check whether the detector chosen for hitfinding is configured
+	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0)) {
+		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
+		for(long detIndex=0; detIndex < nDetectors; detIndex++){
+			printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);
+		}
+		printf("hitfinderDetectorID=%i\n", hitfinderDetectorID);
+		printf("This doesn't make sense.\n");
+		printf("in void cGlobal::setup()\n");
+		printf("Quitting...\n");
+		exit(1);
 	}
 	
-	// read hits from list if used as hitfinder
+	// Read hits from list if used as hitfinder
 	if (hitfinder == 1 && hitfinderAlgorithm == 12) {
 		readHits(hitlistFile);
 	}
@@ -305,18 +322,6 @@ void cGlobal::setup() {
 		nPeaksMax[i] = 0;
 	}
 
-	
-
-	if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
-		printf("Error: hitfinderDetector > nDetectors\n");
-		printf("nDetectors = %i\n", nDetectors);
-		printf("hitfinderDetector = detector%i\n", hitfinderDetector);
-		printf("This doesn't make sense.\n");
-		printf("in void cGlobal::setup()\n");
-		printf("Quitting...\n");
-		exit(1);
-	}
-
 	/*
 	 * Set up thread management
 	 */
@@ -346,12 +351,12 @@ void cGlobal::setup() {
 	// Set number of frames for initial calibrations
 	nInitFrames = 0;
 	long temp;
-	for (long detID=0; detID<MAX_DETECTORS; detID++){
-		temp = detector[detID].startFrames;
+	for (long detIndex=0; detIndex<MAX_DETECTORS; detIndex++){
+		temp = detector[detIndex].startFrames;
 		nInitFrames = std::max(nInitFrames,temp);
-		detector[detID].halopixCalibrated = 0;
-		detector[detID].hotpixCalibrated = 0;
-		detector[detID].bgCalibrated = 0;
+		detector[detIndex].halopixCalibrated = 0;
+		detector[detIndex].hotpixCalibrated = 0;
+		detector[detIndex].bgCalibrated = 0;
 	}
 	calibrated = 0;
 
@@ -912,7 +917,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderInvertHit = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderdetector")) {
-		hitfinderDetector = atoi(value);
+		printf("The keyword hitfinderDetector is depreciated.\n"
+			   "Please specify the detector that shall be used for hitfinding by defining hitfinderDetectorID instead.\n"
+			   "For choosing the front detector set hitfinderDetectorID=0, for choosing the back detector set hitfinderDetectorID=1.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
+	}
+	else if (!strcmp(tag, "hitfinderdetectorid")) {
+		hitfinderDetectorID = atoi(value);
 	}
 	else if (!strcmp(tag, "savehits")) {
 		savehits = atoi(value);
@@ -1207,7 +1219,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
     fprintf(fp, "generateGaincal=%d\n",generateGaincal);
     fprintf(fp, "hitfinder=%d\n",hitfinder);
-    fprintf(fp, "hitfinderDetector=%d\n",hitfinderDetector);
+    fprintf(fp, "hitfinderDetectorID=%d\n",hitfinderDetectorID);
     fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
     fprintf(fp, "hitfinderADC=%f\n",hitfinderADC);
     fprintf(fp, "hitfinderTAT=%f\n",hitfinderTAT);
@@ -1523,14 +1535,14 @@ void cGlobal::writeStatus(const char* message) {
 
 void cGlobal::updateCalibrated(void){
 	int temp = 1;
-	for(long detID=0; detID<MAX_DETECTORS; detID++) {
-		temp *= ((detector[detID].useAutoHotpixel == 0) || detector[detID].hotpixCalibrated);
-		temp *= ((detector[detID].useAutoHalopixel == 0) || detector[detID].halopixCalibrated);
-		temp *= ((detector[detID].useSubtractPersistentBackground == 0) || detector[detID].bgCalibrated);
+	for(long detIndex=0; detIndex<MAX_DETECTORS; detIndex++) {
+		temp *= ((detector[detIndex].useAutoHotpixel == 0) || detector[detIndex].hotpixCalibrated);
+		temp *= ((detector[detIndex].useAutoHalopixel == 0) || detector[detIndex].halopixCalibrated);
+		temp *= ((detector[detIndex].useSubtractPersistentBackground == 0) || detector[detIndex].bgCalibrated);
 		/* FOR TESTING
-		   printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHotpixel,detector[detID].hotpixCalibrated);
-		   printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHalopixel,detector[detID].halopixCalibrated);
-		   printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detID,detector[detID].useSubtractPersistentBackground,detector[detID].bgCalibrated);
+		   printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHotpixel,detector[detIndex].hotpixCalibrated);
+		   printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHalopixel,detector[detIndex].halopixCalibrated);
+		   printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detIndex,detector[detIndex].useSubtractPersistentBackground,detector[detIndex].bgCalibrated);
 		*/
 	}
 	calibrated = temp;
