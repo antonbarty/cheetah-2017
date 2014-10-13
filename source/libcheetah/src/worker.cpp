@@ -351,7 +351,7 @@ hitknown:
 	}
 
 //logfile:
-	eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
 
 	// If this is a hit, write out to our favourite HDF5 format

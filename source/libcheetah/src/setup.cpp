@@ -164,7 +164,8 @@ cGlobal::cGlobal(void) {
     assemble2DMask = 0;
 
 	// Saving options
-	savehits = 0;
+	saveHits = 0;
+	saveBlanks = 0;
 	saveAssembled = 1;
 	saveRaw = 0;
 	h5compress = 5;
@@ -370,7 +371,8 @@ void cGlobal::setup() {
 		printf("******************************************************************\n");
 
 		hitfinder = 0;
-		savehits = 0;
+		saveHits = 0;
+		saveBlanks = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
 		nInitFrames = 0;
@@ -400,7 +402,8 @@ void cGlobal::setup() {
 
 		hitfinder = 0;
         hitfinderFastScan = 0;
-		savehits = 0;
+		saveHits = 0;
+		saveBlanks = 0;
 		hdf5dump = 0;
 		saveRaw = 0;
 
@@ -927,7 +930,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderDetectorID = atoi(value);
 	}
 	else if (!strcmp(tag, "savehits")) {
-		savehits = atoi(value);
+		saveHits = atoi(value);
+	}
+	else if (!strcmp(tag, "saveblanks")) {
+		saveBlanks = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
@@ -1247,7 +1253,8 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "saveInterval=%d\n",saveInterval);
     fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
     fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
-    fprintf(fp, "saveHits=%d\n",savehits);
+    fprintf(fp, "saveHits=%d\n",saveHits);
+    fprintf(fp, "saveBlanks=%d\n",saveBlanks);
     fprintf(fp, "saveRaw=%d\n",saveRaw);
     //fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
     fprintf(fp, "saveModular=%d\n",saveModular);
