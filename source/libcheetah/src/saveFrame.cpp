@@ -203,8 +203,8 @@ void writeHDF5(cEventData *info, cGlobal *global){
 
 		}	
 	}
-	// Save raw data (and pixelmask)
-	if(global->saveRaw) {
+	// Save non-assembled data (and pixelmask)
+	if(global->saveNonAssembled) {
 		char fieldID[1023];
 		DETECTOR_LOOP {
 			size[0] = global->detector[detIndex].pix_ny;	// size[0] = height
