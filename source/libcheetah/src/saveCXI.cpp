@@ -439,21 +439,21 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
   |
   entry_1
   |
-  |- data_1 ---------
+  |- data_1 ---------\
   |                  |
   |- instrument_1    | symlink
   |   |              |
-  |   |-detector_1 <-----------------------------
-  |   |   |                                      |
-  |   |   |- data [raw data, 3D array]           |
-  |   |   |- (mask) [raw masks, 3D array]        |
-  |   |   |- mask_shared [raw mask, 2D array]    | 
-  |   |   |- ...                                 | symlink
-  |   .   .                                      |
-  |                                              |
-  |- (image_1)                                   |
-  |    |                                         |
-  |    |- detector_1 ----------------------------|
+  |   |-detector_1 <---------------------------------------\
+  |   |   |                                                |
+  |   |   |- data [non-assembled data, 3D array]           |
+  |   |   |- (mask) [non-asslembled masks, 3D array]       |
+  |   |   |- mask_shared [non-assembled mask, 2D array]    | 
+  |   |   |- ...                                           | symlink
+  |   .   .                                                |
+  |                                                        |
+  |- (image_1)                                             |
+  |    |                                                   |
+  |    |- detector_1 --------------------------------------/
   |    |- data [assembled data, 3D array]        |
   |    |- (mask) [assembled masks, 3D array]     |
   |    |- mask_shared [assembled mask, 2D array] |
@@ -508,8 +508,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
     
-		/* Raw images */
-		if(global->saveRaw){
+		/* Non-assembled images */
+		if(global->saveNonAssembled){
 			// /entry_1/instrument_1/detector_i/
 
 			if (global->saveModular){
@@ -1049,7 +1049,7 @@ void writeCXI(cEventData *info, cGlobal *global ){
 				delete [] thumbnail;
 			}
 		}
-		if(global->saveRaw){
+		if(global->saveNonAssembled){
 			
 			if (global->saveModular){
 				int asic_nx = global->detector[detIndex].asic_nx;

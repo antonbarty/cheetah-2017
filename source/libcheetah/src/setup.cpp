@@ -167,7 +167,7 @@ cGlobal::cGlobal(void) {
 	saveHits = 0;
 	saveBlanks = 0;
 	saveAssembled = 1;
-	saveRaw = 0;
+	saveNonAssembled = 0;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -374,7 +374,7 @@ void cGlobal::setup() {
 		saveHits = 0;
 		saveBlanks = 0;
 		hdf5dump = 0;
-		saveRaw = 0;
+		saveNonAssembled = 0;
 		nInitFrames = 0;
 		hitfinderFastScan = 0;
 		powderSumHits = 0;
@@ -405,7 +405,7 @@ void cGlobal::setup() {
 		saveHits = 0;
 		saveBlanks = 0;
 		hdf5dump = 0;
-		saveRaw = 0;
+		saveNonAssembled = 0;
 
 		nInitFrames = 0;
 
@@ -427,7 +427,8 @@ void cGlobal::setup() {
 	}
 
 	// Make sure to save something...
-	if(saveRaw==0 && saveAssembled == 0) {
+	// !!! I would rather like to throw an error here instead of silently changing the configuration. /Max
+	if(saveNonAssembled==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}
 
@@ -941,8 +942,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
-	else if (!strcmp(tag, "saveraw")) {
-		saveRaw = atoi(value);
+	else if ((!strcmp(tag, "saveraw")) || (!strcmp(tag, "savenonassembled"))) {
+		saveNonAssembled = atoi(value);
 	}
 	else if (!strcmp(tag, "savemodular")) {
 		saveModular = atoi(value);
@@ -1255,7 +1256,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
     fprintf(fp, "saveHits=%d\n",saveHits);
     fprintf(fp, "saveBlanks=%d\n",saveBlanks);
-    fprintf(fp, "saveRaw=%d\n",saveRaw);
+    fprintf(fp, "saveNonAssembled=%d\n",saveNonAssembled);
     //fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
     fprintf(fp, "saveModular=%d\n",saveModular);
     fprintf(fp, "saveAssembled=%d\n",saveAssembled);
