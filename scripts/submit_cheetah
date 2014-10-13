@@ -27,6 +27,7 @@ else
 	echo "#SBATCH --job-name=Cth$RUN" >> process.sh
 	echo "#SBATCH -N1" >> process.sh
 	echo "#SBATCH -n20" >> process.sh
+	echo "#SBATCH --partition=c" >> process.sh
 	echo "cd $H5DIR/$RUNDIR" >> process.sh
 	echo "psana -c psana.cfg  $XTCDIR/*$RUN*.xtc > cheetah_messages.txt" >> process.sh
 	echo "cd .." >> process.sh

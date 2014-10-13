@@ -253,7 +253,7 @@ public:
 	/** @brief Toggle the writing of hdf5 files for frames containing non-hits. */
 	int      saveBlanks;
 	/** @brief Toggle the writing of raw images in hdf5 files. */
-	int      saveRaw;
+	int      saveNonAssembled;
 	/** @brief Toggle the writing of raw modules in hdf5 files. */
 	int      saveModular;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
