@@ -190,6 +190,7 @@ cGlobal::cGlobal(void) {
 	savePeakList = 1;
 
 	// Verbosity
+	// !!! Why such a high verbosity by default? /Max
 	debugLevel = 2;
 
 	// I/O speed test?
