@@ -147,19 +147,19 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 void downsample(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if(global->detector[detID].downsampling > 1){
+		if(global->detector[detIndex].downsampling > 1){
 
-			long              downsampling = global->detector[detID].downsampling;
-			long		image_nx = global->detector[detID].image_nx;
-			long		image_nn = global->detector[detID].image_nn;
-			float		*image = eventData->detector[detID].image;
-			uint16_t	        *image_pixelmask = eventData->detector[detID].image_pixelmask;
-			long		imageXxX_nx = global->detector[detID].imageXxX_nx;
-			long		imageXxX_nn = global->detector[detID].imageXxX_nn;
-			float		*imageXxX = eventData->detector[detID].imageXxX;
-			uint16_t	        *imageXxX_pixelmask = eventData->detector[detID].imageXxX_pixelmask;
+			long              downsampling = global->detector[detIndex].downsampling;
+			long		image_nx = global->detector[detIndex].image_nx;
+			long		image_nn = global->detector[detIndex].image_nn;
+			float		*image = eventData->detector[detIndex].image;
+			uint16_t	        *image_pixelmask = eventData->detector[detIndex].image_pixelmask;
+			long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
+			long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+			float		*imageXxX = eventData->detector[detIndex].imageXxX;
+			uint16_t	        *imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
 
-			if (global->detector[detID].downsamplingConservative == 1){
+			if (global->detector[detIndex].downsamplingConservative == 1){
 				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
 				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
 			} else {

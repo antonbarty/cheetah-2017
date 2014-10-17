@@ -32,15 +32,15 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask);
  */
 void subtractDarkcal(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if(global->detector[detID].useDarkcalSubtraction) {
+		if(global->detector[detIndex].useDarkcalSubtraction) {
 			/*
 			 *	Subtract darkcal (from calibration file)
 			 */
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			float	*darkcal = global->detector[detID].darkcal;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*darkcal = global->detector[detIndex].darkcal;
 			subtractDarkcal(data, darkcal, pix_nn);
-			eventData->detector[detID].pedSubtracted = 1;
+			eventData->detector[detIndex].pedSubtracted = 1;
 		}
 	}
 }
@@ -60,10 +60,10 @@ void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
  */
 void applyGainCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if(global->detector[detID].useGaincal) {
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			float	*gaincal = global->detector[detID].gaincal;
+		if(global->detector[detIndex].useGaincal) {
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*gaincal = global->detector[detIndex].gaincal;
 			
 			applyGainCorrection(data, gaincal, pix_nn);
 		}
@@ -86,10 +86,10 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
 	
 	DETECTOR_LOOP {
-		if(global->detector[detID].applyBadPixelMask) {
-			long	 pix_nn = global->detector[detID].pix_nn;
-			float	 *data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if(global->detector[detIndex].applyBadPixelMask) {
+			long	 pix_nn = global->detector[detIndex].pix_nn;
+			float	 *data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 
 			applyBadPixelMask(data, mask, pix_nn);
 		}
@@ -119,16 +119,16 @@ void cspadModuleSubtract2(cEventData *eventData, cGlobal *global){
 void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cmModule == flag) {
+        if(global->detector[detIndex].cmModule == flag) {
 		
 			// Dereference datector arrays
-			float		threshold = global->detector[detID].cmFloor;
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+			float		threshold = global->detector[detIndex].cmFloor;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 			
 			cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 			
@@ -203,15 +203,15 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cspadSubtractUnbondedPixels) { 
+        if(global->detector[detIndex].cspadSubtractUnbondedPixels) { 
 			
 			// Dereference datector arrays
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 			
 			cspadSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
 			
@@ -265,14 +265,14 @@ void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long
 void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cspadSubtractBehindWires) {
-			float		threshold = global->detector[detID].cmFloor;
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t      	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+        if(global->detector[detIndex].cspadSubtractBehindWires) {
+			float		threshold = global->detector[detIndex].cmFloor;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t      	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 
 			cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 
@@ -339,14 +339,14 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 void identifyHotPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-		if(global->detector[detID].useAutoHotpixel) {
+		if(global->detector[detIndex].useAutoHotpixel) {
 			
-			int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
-			long	pix_nn = global->detector[detID].pix_nn;
-			long	hotpixADC = global->detector[detID].hotpixADC;
-			long	bufferDepth = global->detector[detID].hotpixMemory;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+			int		lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			long	hotpixADC = global->detector[detIndex].hotpixADC;
+			long	bufferDepth = global->detector[detIndex].hotpixMemory;
+			float	*frameData = eventData->detector[detIndex].corrected_data;
+			int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
       
 			/*
 			 *	Update global hot pixel buffer
@@ -363,7 +363,7 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 
 			long frameID = eventData->threadNum%bufferDepth;
 			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-			eventData->nHot = global->detector[detID].nhot;
+			eventData->nHot = global->detector[detIndex].nhot;
 
 			if(lockThreads)
 				pthread_mutex_unlock(&global->hotpixel_mutex);
@@ -382,10 +382,10 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if (global->detector[detID].useAutoHotpixel && global->detector[detID].applyAutoHotpixel){
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if (global->detector[detIndex].useAutoHotpixel && global->detector[detIndex].applyAutoHotpixel){
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*frameData = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 	
 			for(long i=0; i<pix_nn; i++)
 				frameData[i] *= isBitOptionUnset(mask[i],PIXEL_IS_HOT);
@@ -402,32 +402,32 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 
 	DETECTOR_LOOP {
-		if(global->detector[detID].useAutoHotpixel) {
-			float	hotpixFrequency = global->detector[detID].hotpixFreq;
-			long	bufferDepth = global->detector[detID].hotpixMemory;
-			long	hotpixMemory = global->detector[detID].hotpixMemory;
-			long	hotpixRecalc = global->detector[detID].hotpixRecalc;
-			long	hotpixCalibrated = global->detector[detID].hotpixCalibrated;
-			long	lastUpdate = global->detector[detID].hotpixLastUpdate;
+		if(global->detector[detIndex].useAutoHotpixel) {
+			float	hotpixFrequency = global->detector[detIndex].hotpixFreq;
+			long	bufferDepth = global->detector[detIndex].hotpixMemory;
+			long	hotpixMemory = global->detector[detIndex].hotpixMemory;
+			long	hotpixRecalc = global->detector[detIndex].hotpixRecalc;
+			long	hotpixCalibrated = global->detector[detIndex].hotpixCalibrated;
+			long	lastUpdate = global->detector[detIndex].hotpixLastUpdate;
 			
 			if ( ( (eventData->threadNum == lastUpdate+hotpixRecalc) && hotpixCalibrated ) || ( (eventData->threadNum == (hotpixMemory-1)) && !hotpixCalibrated) ) {
 				
 				long	nhot;
-				int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
+				int	lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
 				long	threshold = lrint(bufferDepth*hotpixFrequency);
-				long	pix_nn = global->detector[detID].pix_nn;
-				uint16_t *mask = global->detector[detID].pixelmask_shared;
-				int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+				long	pix_nn = global->detector[detIndex].pix_nn;
+				uint16_t *mask = global->detector[detIndex].pixelmask_shared;
+				int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
 
 				if(lockThreads)
 					pthread_mutex_lock(&global->hotpixel_mutex);
 
-				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
+				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detIndex, threshold, bufferDepth);
 				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-				printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
-				global->detector[detID].nhot = nhot;
-				global->detector[detID].hotpixLastUpdate = eventData->threadNum;
-				global->detector[detID].hotpixCalibrated = 1;
+				printf("Detector %li: Identified %li hot pixels.\n",detIndex,nhot);
+				global->detector[detIndex].nhot = nhot;
+				global->detector[detIndex].hotpixLastUpdate = eventData->threadNum;
+				global->detector[detIndex].hotpixCalibrated = 1;
 	
 				if(lockThreads)
 					pthread_mutex_unlock(&global->hotpixel_mutex);
@@ -470,16 +470,16 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
  */
 void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if (global->detector[detID].usePolarizationCorrection) {
-			float	*data = eventData->detector[detID].corrected_data;
-            float   *pix_x = global->detector[detID].pix_x;
-            float   *pix_y = global->detector[detID].pix_y;
-            float   *pix_z = global->detector[detID].pix_z;
-			long	pix_nn = global->detector[detID].pix_nn;
-            float   pixelSize = global->detector[detID].pixelSize;
-            double  detectorZ = global->detector[detID].detectorZ;
-            float   cameraLengthScale = global->detector[detID].cameraLengthScale;
-            double  horizontalFraction = global->detector[detID].horizontalFractionOfPolarization;
+		if (global->detector[detIndex].usePolarizationCorrection) {
+			float	*data = eventData->detector[detIndex].corrected_data;
+            float   *pix_x = global->detector[detIndex].pix_x;
+            float   *pix_y = global->detector[detIndex].pix_y;
+            float   *pix_z = global->detector[detIndex].pix_z;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+            float   pixelSize = global->detector[detIndex].pixelSize;
+            double  detectorZ = global->detector[detIndex].detectorZ;
+            float   cameraLengthScale = global->detector[detIndex].cameraLengthScale;
+            double  horizontalFraction = global->detector[detIndex].horizontalFractionOfPolarization;
             
 			applyPolarizationCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, horizontalFraction, pix_nn);
 		}
@@ -506,18 +506,18 @@ void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float 
  */
 void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if (global->detector[detID].useSolidAngleCorrection) {
-            float	*data = eventData->detector[detID].corrected_data;
-            float   *pix_x = global->detector[detID].pix_x;
-            float   *pix_y = global->detector[detID].pix_y;
-            float   *pix_z = global->detector[detID].pix_z;
-            long	pix_nn = global->detector[detID].pix_nn;
-            float   pixelSize = global->detector[detID].pixelSize;
-            double  detectorZ = global->detector[detID].detectorZ;
-            float   cameraLengthScale = global->detector[detID].cameraLengthScale;
-            double  solidAngleConst = global->detector[detID].solidAngleConst;
+		if (global->detector[detIndex].useSolidAngleCorrection) {
+            float	*data = eventData->detector[detIndex].corrected_data;
+            float   *pix_x = global->detector[detIndex].pix_x;
+            float   *pix_y = global->detector[detIndex].pix_y;
+            float   *pix_z = global->detector[detIndex].pix_z;
+            long	pix_nn = global->detector[detIndex].pix_nn;
+            float   pixelSize = global->detector[detIndex].pixelSize;
+            double  detectorZ = global->detector[detIndex].detectorZ;
+            float   cameraLengthScale = global->detector[detIndex].cameraLengthScale;
+            double  solidAngleConst = global->detector[detIndex].solidAngleConst;
             
-            if (global->detector[detID].solidAngleAlgorithm == 1) {
+            if (global->detector[detIndex].solidAngleAlgorithm == 1) {
                 applyAzimuthallySymmetricSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
             } else {                
                 applyRigorousSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
@@ -639,9 +639,9 @@ void applyRigorousSolidAngleCorrection(float *data, float *pix_x, float *pix_y, 
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
-			float	*data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].usePnccdOffsetCorrection == 1) {
+			float	*data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			pnccdOffsetCorrection(data,mask);
 		}
 	}
@@ -707,15 +707,15 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask) {
 
 void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
-		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineInterpolation == 1)) {
+		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineInterpolation == 1)) {
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			float *data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+			float *data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			uint16_t mask_out_bits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD |
 				PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD  | PIXEL_IS_MISSING;
 			for(y=0; y<ny; y++){
@@ -734,21 +734,21 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 
 void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
-		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineMasking == 1)) {
+		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineMasking == 1)) {
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			for(y=0; y<ny; y++){
 				for(x=x_min;x<=x_max;x=x+2){
 					i = nx*y+x;
 					i0 = nx*y+x-1;
 					i1 = nx*y+x+1;
 					mask[i] |= PIXEL_IS_BAD;
-					if (global->detector[detID].usePnccdLineInterpolation == 1){
+					if (global->detector[detIndex].usePnccdLineInterpolation == 1){
 						mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
 					}
 				}
@@ -786,9 +786,9 @@ void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 
 void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
-        if(strcmp(global->detector[detID].detectorType, "pnccd") == 0 ) {
-            if(global->detector[detID].usePnccdFixWiringError == 1) {
-                float	*data = eventData->detector[detID].corrected_data;
+        if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 ) {
+            if(global->detector[detIndex].usePnccdFixWiringError == 1) {
+                float	*data = eventData->detector[detIndex].corrected_data;
                 pnccdFixWiringError(data);
             }
         }

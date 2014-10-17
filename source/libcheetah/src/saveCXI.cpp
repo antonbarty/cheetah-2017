@@ -439,21 +439,21 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
   |
   entry_1
   |
-  |- data_1 ---------
+  |- data_1 ---------\
   |                  |
   |- instrument_1    | symlink
   |   |              |
-  |   |-detector_1 <-----------------------------
-  |   |   |                                      |
-  |   |   |- data [raw data, 3D array]           |
-  |   |   |- (mask) [raw masks, 3D array]        |
-  |   |   |- mask_shared [raw mask, 2D array]    | 
-  |   |   |- ...                                 | symlink
-  |   .   .                                      |
-  |                                              |
-  |- (image_1)                                   |
-  |    |                                         |
-  |    |- detector_1 ----------------------------|
+  |   |-detector_1 <---------------------------------------\
+  |   |   |                                                |
+  |   |   |- data [non-assembled data, 3D array]           |
+  |   |   |- (mask) [non-asslembled masks, 3D array]       |
+  |   |   |- mask_shared [non-assembled mask, 2D array]    | 
+  |   |   |- ...                                           | symlink
+  |   .   .                                                |
+  |                                                        |
+  |- (image_1)                                             |
+  |    |                                                   |
+  |    |- detector_1 --------------------------------------/
   |    |- data [assembled data, 3D array]        |
   |    |- (mask) [assembled masks, 3D array]     |
   |    |- mask_shared [assembled mask, 2D array] |
@@ -508,23 +508,18 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		detector->createStack("description",H5T_NATIVE_CHAR,CXI::stringSize);
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
-		detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
-
-		for (int i_corr; i<N_DETECTOR_CORRECTIONS; i++){
-
-			if (i_corr == 0){
-				s_corr = "";
-			}
-
+    
+		/* Non-assembled images */
+		if(global->saveNonAssembled){
 			// /entry_1/instrument_1/detector_i/
 
 			if (global->saveModular){
-				// Save module data (4D: N_frames x N_modules x Ny_module x Nx_module)
+
 				int asic_nx = global->detector[detIndex].asic_nx;
 				int asic_ny = global->detector[detIndex].asic_ny;
 				int asic_nn = asic_nx * asic_ny;
-				int nasics_x = global->detector[detID].nasics_x;
-				int nasics_y = global->detector[detID].nasics_y;
+				int nasics_x = global->detector[detIndex].nasics_x;
+				int nasics_y = global->detector[detIndex].nasics_y;
 				int nasics = nasics_x * nasics_y;
 				
 				detector->createStack("data",H5T_NATIVE_FLOAT, asic_nx, asic_ny, nasics);
@@ -537,17 +532,15 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				}
 				
 				uint16_t* maskModular = (uint16_t *) calloc(asic_nn*nasics_x*nasics_y, sizeof(uint16_t));
-				stackModulesMask(global->detector[detID].pixelmask_shared, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
+				stackModulesMask(global->detector[detIndex].pixelmask_shared, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
 				detector->createDataset("mask_shared",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
 				stackModulesMask(global->detector[detIndex].pixelmask_shared_max, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
 				detector->createDataset("mask_shared_max",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
-				
 				stackModulesMask(global->detector[detIndex].pixelmask_shared_min, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
 				detector->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(maskModular);
 				
 				free(maskModular);
 			}
-
 
 			if(global->saveNonAssembled){
 				// Non-assembled data (3D: N_frames x Ny_frame x Nx_frame)
@@ -565,6 +558,39 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				detector->createStack("thumbnail_non-assembled",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 			}
 
+		/* Assembled images */
+		if(global->saveAssembled){
+			int image_nx = global->detector[detIndex].image_nx;
+			int image_ny = global->detector[detIndex].image_ny;
+			int i_image = detIndex+1;
+			printf("N = %d\n",(i_image));
+			Node * image = entry->createGroup("image",i_image);
+			// /entry_1/image_i/
+			image->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
+			if(global->savePixelmask){
+				image->createStack("mask",H5T_NATIVE_UINT16, image_nx, image_ny);
+			}
+			uint16_t *image_pixelmask_shared = (uint16_t*) calloc(global->detector[detIndex].image_nn,sizeof(uint16_t));
+			assemble2Dmask(image_pixelmask_shared, global->detector[detIndex].pixelmask_shared, 
+						   global->detector[detIndex].pix_x, global->detector[detIndex].pix_y,
+						   global->detector[detIndex].pix_nn, global->detector[detIndex].image_nx,
+						   global->detector[detIndex].image_nn, global->assembleInterpolation);
+			image->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(image_pixelmask_shared);
+
+			image->addClassLink("detector",detector->path());
+			image->addClassLink("source",source->path());
+			image->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
+			image->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
+			image->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
+			image->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+
+			if(global->detector[detIndex].downsampling > 1){
+				int image_nx = global->detector[detIndex].imageXxX_nx;
+				int image_ny = global->detector[detIndex].imageXxX_ny;
+				int i_image = global->nDetectors+detIndex+1;
+				printf("NXX = %d\n",i_image);
+				image = entry->createGroup("image",i_image);
+				// /entry_1/image_j/
 
 			/* Assembled images */
 			if(global->saveAssembled){
@@ -584,7 +610,6 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 							   global->detector[detIndex].pix_nn, global->detector[detIndex].image_nx,
 							   global->detector[detIndex].image_nn, global->assembleInterpolation);
 				image->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(image_pixelmask_shared);
-
 				image->addClassLink("detector",detector->path());
 				image->addClassLink("source",source->path());
 				image->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
@@ -692,7 +717,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
 
 	DETECTOR_LOOP{
-		Node * detector = lcls->createGroup("detector",detID+1);
+		Node * detector = lcls->createGroup("detector",detIndex+1);
 		detector->createStack("position",H5T_NATIVE_DOUBLE);
 		detector->createStack("EncoderValue",H5T_NATIVE_DOUBLE);
 		detector->createStack("SolidAngleConst",H5T_NATIVE_DOUBLE);
@@ -721,7 +746,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	unshared->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
 	unshared->createStack("hit",H5T_NATIVE_INT);
 	DETECTOR_LOOP{
-		Node * detector = unshared->createGroup("detector",detID+1);
+		Node * detector = unshared->createGroup("detector",detIndex+1);
 		detector->createStack("sum",H5T_NATIVE_FLOAT);
 	}
 
@@ -747,7 +772,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	configuration->createDataset("input",H5T_NATIVE_CHAR,size)->write(&(buffer[0]));
 
 	DETECTOR_LOOP{
-		Node * detector = shared->createGroup("detector",detID+1);
+		Node * detector = shared->createGroup("detector",detIndex+1);
 		detector->createStack("lastBgUpdate",H5T_NATIVE_LONG);
 		detector->createStack("nHot",H5T_NATIVE_LONG);
 		detector->createStack("lastHotPixUpdate",H5T_NATIVE_LONG);
@@ -758,7 +783,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 		POWDER_LOOP{
 			Node * cl = detector->createGroup("class",powID+1);
-			cPixelDetectorCommon * detector = &global->detector[detID];
+			cPixelDetectorCommon * detector = &global->detector[detIndex];
 			long pix_nx =  detector->pix_nx;
 			long pix_ny =  detector->pix_ny;
 			long radial_nn = detector->radial_nn;
@@ -775,7 +800,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				cl->createDataset("mean_assembled",H5T_NATIVE_DOUBLE,image_nx,image_ny);
 				cl->createDataset("sigma_assembled",H5T_NATIVE_DOUBLE,image_nx,image_ny);
 			}
-			if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+			if(global->assemblePowders && (global->detector[detIndex].downsampling > 1)){
 				long imageXxX_nx = detector->imageXxX_nx;
 				long imageXxX_ny = detector->imageXxX_ny;
 				cl->createDataset("mean_downsampled",H5T_NATIVE_DOUBLE,imageXxX_nx,imageXxX_ny);
@@ -834,11 +859,11 @@ void writeAccumulatedCXI(cGlobal * global){
 	long	imageXxX_nn,imageXxX_nx,imageXxX_ny;
 
 	DETECTOR_LOOP{
-		Node & det_node = (*cxi)["cheetah"]["shared"].child("detector",detID+1);
+		Node & det_node = (*cxi)["cheetah"]["shared"].child("detector",detIndex+1);
 		POWDER_LOOP{
 			Node & cl = det_node.child("class",powID+1);
 
-			detector = &global->detector[detID];
+			detector = &global->detector[detIndex];
 			radial_nn = detector->radial_nn;
 			pix_nn =  detector->pix_nn;
 			pix_nx =  detector->pix_nx;
@@ -869,7 +894,7 @@ void writeAccumulatedCXI(cGlobal * global){
 			}
 			double * mean_raw_radial = (double*) calloc(radial_nn, sizeof(double));
 			double * mean_raw_angCnt = (double*) calloc(radial_nn, sizeof(double));
-			calculateRadialAverage(mean_raw,mean_raw_radial,mean_raw_angCnt,global,detID);
+			calculateRadialAverage(mean_raw,mean_raw_radial,mean_raw_angCnt,global,detIndex);
 			cl["mean_raw"].write(mean_raw);
 			cl["mean_raw_radial"].write(mean_raw_radial);
 			cl["sigma_raw"].write(sigma_raw);
@@ -886,7 +911,7 @@ void writeAccumulatedCXI(cGlobal * global){
 			}      
 			double * mean_corrected_radial = (double*) calloc(radial_nn, sizeof(double));
 			double * mean_corrected_angCnt = (double*) calloc(radial_nn, sizeof(double));
-			calculateRadialAverage(mean_corrected,mean_corrected_radial,mean_corrected_angCnt,global,detID);
+			calculateRadialAverage(mean_corrected,mean_corrected_radial,mean_corrected_angCnt,global,detIndex);
 			cl["mean_corrected"].write(mean_corrected);
 			cl["mean_corrected_radial"].write(mean_corrected);
 			cl["sigma_corrected"].write(mean_corrected);
@@ -910,7 +935,7 @@ void writeAccumulatedCXI(cGlobal * global){
 			// downsampled
 			double * sum_downsampled = detector->powderDownsampled[powID];
 			double * sum_downsampledSq = detector->powderDownsampledSquared[powID];
-			if(global->assemblePowders && (global->detector[detID].downsampling > 1)){
+			if(global->assemblePowders && (global->detector[detIndex].downsampling > 1)){
 				double * mean_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
 				double * sigma_downsampled = (double*) calloc(imageXxX_nn, sizeof(double));
 
@@ -1023,49 +1048,49 @@ void writeCXI(cEventData *info, cGlobal *global ){
 
 	DETECTOR_LOOP {    
 		/* Save assembled image under image groups */
-		Node & detector = root["entry_1"]["instrument_1"].child("detector",detID+1);
-		double tmp = global->detector[detID].detectorZ/1000.0;
+		Node & detector = root["entry_1"]["instrument_1"].child("detector",detIndex+1);
+		double tmp = global->detector[detIndex].detectorZ/1000.0;
 		detector["distance"].write(&tmp,stackSlice);
-		detector["x_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
-		detector["y_pixel_size"].write(&global->detector[detID].pixelSize,stackSlice);
+		detector["x_pixel_size"].write(&global->detector[detIndex].pixelSize,stackSlice);
+		detector["y_pixel_size"].write(&global->detector[detIndex].pixelSize,stackSlice);
 
 		char buffer[1024];
-		sprintf(buffer,"%s [%s]",global->detector[detID].detectorType,global->detector[detID].detectorName);
+		sprintf(buffer,"%s [%s]",global->detector[detIndex].detectorType,global->detector[detIndex].detectorName);
 		detector["description"].write(buffer,stackSlice);
 		if(global->saveAssembled){
-			Node & image = root["entry_1"].child("image",detID+1);
+			Node & image = root["entry_1"].child("image",detIndex+1);
 
-			image["data"].write(info->detector[detID].image,stackSlice);
+			image["data"].write(info->detector[detIndex].image,stackSlice);
 			if(global->savePixelmask){
-				image["mask"].write(info->detector[detID].image_pixelmask,stackSlice);
+				image["mask"].write(info->detector[detIndex].image_pixelmask,stackSlice);
 			}
-			float * thumbnail = generateThumbnail(info->detector[detID].image,global->detector[detID].image_nx,global->detector[detID].image_ny,CXI::thumbnailScale);
+			float * thumbnail = generateThumbnail(info->detector[detIndex].image,global->detector[detIndex].image_nx,global->detector[detIndex].image_ny,CXI::thumbnailScale);
 			image["thumbnail"].write(thumbnail, stackSlice);
 			image["data_type"].write("intensities", stackSlice);
 			image["data_space"].write("diffraction", stackSlice);
 			delete [] thumbnail;      
-			if (global->detector[detID].downsampling > 1){
-				Node & image = root["entry_1"].child("image",global->nDetectors+detID+1);
+			if (global->detector[detIndex].downsampling > 1){
+				Node & image = root["entry_1"].child("image",global->nDetectors+detIndex+1);
 
-				image["data"].write(info->detector[detID].imageXxX,stackSlice);
+				image["data"].write(info->detector[detIndex].imageXxX,stackSlice);
 				if(global->savePixelmask){
-					image["mask"].write(info->detector[detID].imageXxX_pixelmask,stackSlice);
+					image["mask"].write(info->detector[detIndex].imageXxX_pixelmask,stackSlice);
 				}
-				float * thumbnail = generateThumbnail(info->detector[detID].imageXxX,global->detector[detID].imageXxX_nx,global->detector[detID].imageXxX_ny,CXI::thumbnailScale);
+				float * thumbnail = generateThumbnail(info->detector[detIndex].imageXxX,global->detector[detIndex].imageXxX_nx,global->detector[detIndex].imageXxX_ny,CXI::thumbnailScale);
 				image["thumbnail"].write(thumbnail, stackSlice);
 				image["data_type"].write("intensities", stackSlice);
 				image["data_space"].write("diffraction", stackSlice);
 				delete [] thumbnail;
 			}
 		}
-		if(global->saveRaw){
+		if(global->saveNonAssembled){
 			
 			if (global->saveModular){
-				int asic_nx = global->detector[detID].asic_nx;
-				int asic_ny = global->detector[detID].asic_ny;
-				int asics_nn = global->detector[detID].asic_nn;
-				int nasics_x = global->detector[detID].nasics_x;
-				int nasics_y = global->detector[detID].nasics_y;
+				int asic_nx = global->detector[detIndex].asic_nx;
+				int asic_ny = global->detector[detIndex].asic_ny;
+				int asics_nn = global->detector[detIndex].asic_nn;
+				int nasics_x = global->detector[detIndex].nasics_x;
+				int nasics_y = global->detector[detIndex].nasics_y;
 				int nasics = nasics_x*nasics_y;
 
 				float * dataModular = (float *) calloc(asics_nn*nasics, sizeof(float));
@@ -1074,12 +1099,12 @@ void writeCXI(cEventData *info, cGlobal *global ){
 				free(dataModular);
 
 				float * cornerPos = (float *) calloc(nasics*3, sizeof(float));
-				cornerPositions(cornerPos, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_z, global->detector[detID].pixelSize, asic_nx, asic_ny, nasics_x, nasics);
+				cornerPositions(cornerPos, global->detector[detIndex].pix_x, global->detector[detIndex].pix_y, global->detector[detIndex].pix_z, global->detector[detIndex].pixelSize, asic_nx, asic_ny, nasics_x, nasics);
 				detector["corner_positions"].write(cornerPos, stackSlice);
 				free(cornerPos);
 
 				float * basisVec = (float *) calloc(nasics*2*3, sizeof(float));
-				basisVectors(basisVec, global->detector[detID].pix_x, global->detector[detID].pix_y, global->detector[detID].pix_z, asic_nx, asic_ny, nasics_x, nasics);
+				basisVectors(basisVec, global->detector[detIndex].pix_x, global->detector[detIndex].pix_y, global->detector[detIndex].pix_z, asic_nx, asic_ny, nasics_x, nasics);
 				detector["basis_vectors"].write(basisVec, stackSlice);
 				free(basisVec);
 					
@@ -1128,9 +1153,9 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	/*Write LCLS informations*/
 	Node & lcls = root["LCLS"];
 	DETECTOR_LOOP{
-		lcls.child("detector",detID+1)["position"].write(&global->detector[detID].detectorZ,stackSlice);
-		lcls.child("detector",detID+1)["EncoderValue"].write(&global->detector[detID].detectorEncoderValue,stackSlice);
-		lcls.child("detector",detID+1)["SolidAngleConst"].write(&global->detector[detID].solidAngleConst,stackSlice);
+		lcls.child("detector",detIndex+1)["position"].write(&global->detector[detIndex].detectorZ,stackSlice);
+		lcls.child("detector",detIndex+1)["EncoderValue"].write(&global->detector[detIndex].detectorEncoderValue,stackSlice);
+		lcls.child("detector",detIndex+1)["SolidAngleConst"].write(&global->detector[detIndex].solidAngleConst,stackSlice);
 	}
 	lcls["machineTime"].write(&info->seconds,stackSlice);
 	lcls["fiducial"].write(&info->fiducial,stackSlice);
@@ -1153,8 +1178,8 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	lcls["f_22_ENRC"].write(&info->gmd22,stackSlice);
 	if(info->TOFPresent){
 		for(int i = 0; i<global->nTOFDetectors;i++){
-			int detID = i+global->nDetectors;
-			Node & detector = root["entry_1"]["instrument_1"].child("detector",detID+1);
+			int detIndex = i+global->nDetectors;
+			Node & detector = root["entry_1"]["instrument_1"].child("detector",detIndex+1);
 			detector["data"].write(&(info->tofDetector[i].voltage[0]),stackSlice);
 			detector["tofTime"].write(&(info->tofDetector[i].time[0]),stackSlice);
 		}
@@ -1187,17 +1212,17 @@ void writeCXI(cEventData *info, cGlobal *global ){
 	unshared["hit"].write(&info->hit,stackSlice);
   
 	DETECTOR_LOOP{
-		Node & detector = root["cheetah"]["shared"].child("detector",detID+1);
-		detector["lastBgUpdate"].write(&global->detector[detID].bgLastUpdate,stackSlice);
-		detector["nHot"].write(&global->detector[detID].nhot,stackSlice);
-		detector["lastHotPixUpdate"].write(&global->detector[detID].hotpixLastUpdate,stackSlice);
-		detector["hotPixCounter"].write(&global->detector[detID].hotpixCounter,stackSlice);
-		detector["nHalo"].write(&global->detector[detID].nhalo,stackSlice);
-		detector["lastHaloPixUpdate"].write(&global->detector[detID].halopixLastUpdate,stackSlice);
-		detector["haloPixCounter"].write(&global->detector[detID].halopixCounter,stackSlice);
+		Node & detector = root["cheetah"]["shared"].child("detector",detIndex+1);
+		detector["lastBgUpdate"].write(&global->detector[detIndex].bgLastUpdate,stackSlice);
+		detector["nHot"].write(&global->detector[detIndex].nhot,stackSlice);
+		detector["lastHotPixUpdate"].write(&global->detector[detIndex].hotpixLastUpdate,stackSlice);
+		detector["hotPixCounter"].write(&global->detector[detIndex].hotpixCounter,stackSlice);
+		detector["nHalo"].write(&global->detector[detIndex].nhalo,stackSlice);
+		detector["lastHaloPixUpdate"].write(&global->detector[detIndex].halopixLastUpdate,stackSlice);
+		detector["haloPixCounter"].write(&global->detector[detIndex].halopixCounter,stackSlice);
 
-		Node & detector2 = root["cheetah"]["unshared"].child("detector",detID+1);
-		detector2["sum"].write(&info->detector[detID].sum,stackSlice);
+		Node & detector2 = root["cheetah"]["unshared"].child("detector",detIndex+1);
+		detector2["sum"].write(&info->detector[detIndex].sum,stackSlice);
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){

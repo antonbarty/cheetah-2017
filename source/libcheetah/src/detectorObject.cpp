@@ -276,7 +276,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(badpixelFile, value);
 		useBadPixelMask = 1;
 	}
-	else if ((!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
+	else if ((!strcmp(tag, "setbadpixelstozero")) || (!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
 		applyBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "baddatamap")) {
@@ -350,7 +350,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
-	else if (!strcmp(tag, "applyautohotpixel")) {
+	else if ((!strcmp(tag, "sethotpixelstozero")) || (!strcmp(tag, "applyautohotpixel"))) {
 		applyAutoHotpixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
