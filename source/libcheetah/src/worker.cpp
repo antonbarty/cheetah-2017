@@ -87,7 +87,7 @@ void *worker(void *threadarg) {
 	DETECTOR_LOOP {
 		for(long i=0;i<global->detector[detID].pix_nn;i++){
 			eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].data_raw16[i];
 		}
 	}
 	
@@ -280,7 +280,7 @@ hitknown:
 		// Revert to raw detector data
 		if(global->detector[detID].saveDetectorRaw){
 			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].data_raw16[i];
 			}
 		}
 		// Revert to detector-corrections-only data if we don't want to export data with photon background subtracted

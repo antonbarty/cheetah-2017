@@ -75,7 +75,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
      */
     pthread_mutex_lock(&global->detector[detID].powderRaw_mutex[powderClass]);
     for(long i=0; i<pix_nn; i++) 
-        global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].raw_data[i];
+        global->detector[detID].powderRaw[powderClass][i] += eventData->detector[detID].data_raw16[i];
     pthread_mutex_unlock(&global->detector[detID].powderRaw_mutex[powderClass]);			
 
     
@@ -85,12 +85,12 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, int de
     buffer = (double*) calloc(pix_nn, sizeof(double));
     if(!global->usePowderThresh) {
         for(long i=0; i<pix_nn; i++)
-            buffer[i] = (eventData->detector[detID].raw_data[i])*(eventData->detector[detID].raw_data[i]);
+            buffer[i] = (eventData->detector[detID].data_raw16[i])*(eventData->detector[detID].data_raw16[i]);
     }
     else {
         for(long i=0; i<pix_nn; i++){
-            if(eventData->detector[detID].raw_data[i] > global->powderthresh)
-                buffer[i] = (eventData->detector[detID].raw_data[i])*(eventData->detector[detID].raw_data[i]);
+            if(eventData->detector[detID].data_raw16[i] > global->powderthresh)
+                buffer[i] = (eventData->detector[detID].data_raw16[i])*(eventData->detector[detID].data_raw16[i]);
             else
                 buffer[i] = 0;
         }

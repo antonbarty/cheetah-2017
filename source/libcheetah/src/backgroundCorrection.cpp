@@ -114,7 +114,7 @@ void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
 					}
 				} else {
 					for(long i = 0;i<pix_nn;i++){
-						background[i] = (float) eventData->detector[detID].raw_data[i];
+						background[i] = (float) eventData->detector[detID].data_raw16[i];
 					}
 				}
 				pthread_mutex_unlock(&global->bgbuffer_mutex);
@@ -143,7 +143,7 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 				}
 			} else {
 				for(long i = 0;i<pix_nn;i++){
-					frameBuffer[i+pix_nn*frameID] = eventData->detector[detID].raw_data[i];
+					frameBuffer[i+pix_nn*frameID] = eventData->detector[detID].data_raw16[i];
 				}
 			}
 			pthread_mutex_unlock(&global->bgbuffer_mutex);
@@ -490,10 +490,10 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 /*
  * Make a saturated pixel mask
  */
-void checkSaturatedPixels(uint16_t *raw_data, uint16_t *mask, long pix_nn, long pixelSaturationADC) {
+void checkSaturatedPixels(uint16_t *data_raw16, uint16_t *mask, long pix_nn, long pixelSaturationADC) {
 	
 	for(long i=0; i<pix_nn; i++) { 
-		if ( raw_data[i] >= pixelSaturationADC)
+		if ( data_raw16[i] >= pixelSaturationADC)
 			mask[i] |= PIXEL_IS_SATURATED;
 		else
 			mask[i] &= ~PIXEL_IS_SATURATED;
@@ -503,7 +503,7 @@ void checkSaturatedPixels(uint16_t *raw_data, uint16_t *mask, long pix_nn, long 
 void checkPnccdSaturatedPixels(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
 		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].maskPnccdSaturatedPixels == 1)) {
-			uint16_t	*data = eventData->detector[detID].raw_data;
+			uint16_t	*data = eventData->detector[detID].data_raw16;
 			uint16_t	*mask = eventData->detector[detID].pixelmask;
 			long i,x,y,mx,my,q;
 			long asic_nx = PNCCD_ASIC_NX;
@@ -532,11 +532,11 @@ void checkPnccdSaturatedPixels(cEventData *eventData, cGlobal *global){
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
 		if (global->detector[detID].maskSaturatedPixels) {
-			uint16_t	*raw_data = eventData->detector[detID].raw_data;
+			uint16_t	*data_raw16 = eventData->detector[detID].data_raw16;
 			uint16_t	*mask = eventData->detector[detID].pixelmask;
 			long		nn = global->detector[detID].pix_nn;
 			long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
-			checkSaturatedPixels(raw_data, mask, nn, pixelSaturationADC);
+			checkSaturatedPixels(data_raw16, mask, nn, pixelSaturationADC);
 		}
 	}
 }	

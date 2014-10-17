@@ -92,7 +92,7 @@ static const int ASSEMBLE_INTERPOLATION_LINEAR = 0;
 static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
-#define DETECTOR_LOOP for(long detID=0; detID < global->nDetectors; detID++)
+#define DETECTOR_LOOP for(long detIndex=0; detIndex < global->nDetectors; detIndex++)
 
 class cGlobal;
 
@@ -389,20 +389,23 @@ public:
 	
 	int       cspad_fail;
 	int       pedSubtracted;
-	uint16_t  *raw_data;
-	float     *detector_corrected_data;
-	float     *corrected_data;
+	uint16_t  *data_raw16;
+	float     *data_raw;
+	float     *data_corr1;
+	float     *data_corr2;
 	uint16_t  *pixelmask;
-	float     *image;
+	float     *image_raw;
+	float     *image_corr1;
+	float     *image_corr2;
 	uint16_t  *image_pixelmask;
-	float     *imageXxX;
+	float     *imageXxX_raw;
+	float     *imageXxX_corr1;
+	float     *imageXxX_corr2;
 	uint16_t  *imageXxX_pixelmask;
 	float     *radialAverage;
 	float     *radialAverageCounter;
 	double    detectorZ;
 	float sum;
-
-
 };
 
 #endif

@@ -235,7 +235,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	DETECTOR_LOOP {
 		//for(int quadrant=0; quadrant<4; quadrant++) 
 		//	free(eventData->detector[detID].quad_data[quadrant]);	
-		free(eventData->detector[detID].raw_data);
+		free(eventData->detector[detID].data_raw16);
 		free(eventData->detector[detID].corrected_data);
 		free(eventData->detector[detID].detector_corrected_data);
 		free(eventData->detector[detID].image);
