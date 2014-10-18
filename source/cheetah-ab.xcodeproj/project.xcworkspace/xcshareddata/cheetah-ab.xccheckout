@@ -10,29 +10,29 @@
 	<string>cheetah-ab</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>F53C3602-060E-4FFF-B068-E93703DAB00E</key>
+		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
 		<string>ssh://github.com/antonbarty/cheetah.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>source/cheetah-ab.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>F53C3602-060E-4FFF-B068-E93703DAB00E</key>
+		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>ssh://github.com/antonbarty/cheetah.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>F53C3602-060E-4FFF-B068-E93703DAB00E</string>
+	<string>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>F53C3602-060E-4FFF-B068-E93703DAB00E</string>
+			<string>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</string>
 			<key>IDESourceControlWCCName</key>
 			<string>cheetah</string>
 		</dict>
