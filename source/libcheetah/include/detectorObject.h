@@ -92,9 +92,7 @@ static const int ASSEMBLE_INTERPOLATION_LINEAR = 0;
 static const int ASSEMBLE_INTERPOLATION_NEAREST = 1; 
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
-
-
-#define DETECTOR_LOOP for(long detID=0; detID < global->nDetectors; detID++)
+#define DETECTOR_LOOP for(long detIndex=0; detIndex < global->nDetectors; detIndex++)
 
 class cGlobal;
 
@@ -192,11 +190,14 @@ public:
 	float   detposprev;
 	double  detectorZ;
 	double  detectorEncoderValue;
-
+    
 	// Beam center
 	double  beamCenterPixX;
 	double  beamCenterPixY;
-
+    
+    // Solid angle
+    double  solidAngleConst; // constant term of the solid angle for each pixel
+    
 	/*
 	 *  Flags for detector processing options
 	 */
@@ -212,6 +213,12 @@ public:
 	// Gain calibration
 	int    useGaincal;
 	int    invertGain;
+	// Apply polarization correction
+    int    usePolarizationCorrection;
+    double horizontalFractionOfPolarization;
+	// Apply solid angle correction
+    int    useSolidAngleCorrection;
+    int    solidAngleAlgorithm;
 	// Saturated pixels
 	int    maskSaturatedPixels;
 	long   pixelSaturationADC;
@@ -230,7 +237,7 @@ public:
 	long   bgMemory;
 	long   bgRecalc;
 	long   bgCounter;
-	int   bgCalibrated;
+	int    bgCalibrated;
 	long   bgLastUpdate;
 	int    bgIncludeHits;
 	int    bgNoBeamReset;
@@ -242,7 +249,7 @@ public:
 	int    hotpixRecalc;
 	float  hotpixFreq;
 	long   hotpixCounter;
-	int   hotpixCalibrated;
+	int    hotpixCalibrated;
 	long   nhot;
 	long   hotpixLastUpdate;
 	// Apply persistently hot pixels
@@ -253,7 +260,7 @@ public:
 	long   halopixRecalc;
 	long   halopixMemory;
 	long   halopixCounter;
-	int   halopixCalibrated;
+	int    halopixCalibrated;
 	int    halopixIncludeHits;
 	long   nhalo;
 	long   halopixLastUpdate;
@@ -272,7 +279,7 @@ public:
 	int		histogram;
 	long	histogramMin;
 	long	histogramNbins;
-	long	histogramBinSize;
+	float   histogramBinSize;
 	long	histogram_fs_min;
 	long	histogram_fs_max;
 	long	histogram_ss_min;

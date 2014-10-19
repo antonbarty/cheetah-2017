@@ -7,6 +7,8 @@
  */
 
 #include "data2d.h"
+const char* const ATTR_NAME_DETECTOR_NAME = "detectorName";
+const char* const ATTR_NAME_DETECTOR_ID = "detectorID";
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -60,7 +62,7 @@ void cData2d::readHDF5(char* filename){
 }
 
 void cData2d::readHDF5(char* filename, char* fieldname){
-	
+
 	// Open the file
 	hid_t file_id;
 	file_id = H5Fopen(filename,H5F_ACC_RDONLY,H5P_DEFAULT);
@@ -169,7 +171,37 @@ void cData2d::readHDF5(char* filename, char* fieldname){
 		return;
 	}
 	
+	// Read attributes
+	hid_t attr,attr_dtype;
+	htri_t attr_exists;
+
+	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_NAME);
 	
+	if (attr_exists > 0){
+		// Attribute exists, read attribute
+		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_NAME);
+		attr_dtype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(attr_dtype, 1024);
+		H5Aread(attr,attr_dtype,detectorName);
+		H5Aclose(attr);
+		H5Tclose(attr_dtype);
+	} else {
+		// Attribute does not exist, set detectorName to default value
+		strcpy(detectorName,"");
+	}
+
+	attr_exists = H5Aexists(dataset_id, ATTR_NAME_DETECTOR_ID);
+	
+	if (attr_exists > 0){
+		// Attribute exists, read attribute
+		attr = H5Aopen_name(dataset_id,ATTR_NAME_DETECTOR_ID);
+		H5Aread(attr,H5T_NATIVE_INT64,&detectorID);
+		H5Aclose(attr);
+	} else {
+		// Attribute does not exist, set detectorID to default value
+		detectorID = -1;
+	}
+
 	// Close and cleanup
 	H5Dclose(dataset_id);
 

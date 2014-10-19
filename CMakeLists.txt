@@ -26,7 +26,22 @@ IF(CMAKE_COMPILER_IS_GNUCC)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 SET(RPATH_ON_INSTALLED_BINS TRUE CACHE BOOL "Keep RPATH on installed binaries")
+mark_as_advanced(RPATH_ON_INSTALLED_BINS)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH ${RPATH_ON_INSTALLED_BINS})
+
+# the RPATH to be used when installing, but only if it's not a system directory
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
 
 OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." OFF )
 OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." OFF )

@@ -179,26 +179,26 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create arrays for intermediate detector data, etc 
 	 */
 	DETECTOR_LOOP {
-		long	pix_nn = global->detector[detID].pix_nn;
-		long	image_nn = global->detector[detID].image_nn;
-		long	imageXxX_nn = global->detector[detID].imageXxX_nn;
-		long	radial_nn = global->detector[detID].radial_nn;
+		long	pix_nn = global->detector[detIndex].pix_nn;
+		long	image_nn = global->detector[detIndex].image_nn;
+		long	imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+		long	radial_nn = global->detector[detIndex].radial_nn;
 		
-		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].image = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].image = (float*) calloc(image_nn,sizeof(float));
+		eventData->detector[detIndex].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].imageXxX = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].imageXxX = (float*) calloc(imageXxX_nn,sizeof(float));
+		eventData->detector[detIndex].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverage = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
 
-		eventData->detector[detID].pedSubtracted=0;
-		eventData->detector[detID].sum=0.;
+		eventData->detector[detIndex].pedSubtracted=0;
+		eventData->detector[detIndex].sum=0.;
 	}	
 	
 		
@@ -234,21 +234,21 @@ void cheetahDestroyEvent(cEventData *eventData) {
     // Free memory
 	DETECTOR_LOOP {
 		//for(int quadrant=0; quadrant<4; quadrant++) 
-		//	free(eventData->detector[detID].quad_data[quadrant]);	
-		free(eventData->detector[detID].raw_data);
-		free(eventData->detector[detID].corrected_data);
-		free(eventData->detector[detID].detector_corrected_data);
-		free(eventData->detector[detID].image);
-		free(eventData->detector[detID].pixelmask);
-		free(eventData->detector[detID].image_pixelmask);
+		//	free(eventData->detector[detIndex].quad_data[quadrant]);	
+		free(eventData->detector[detIndex].raw_data);
+		free(eventData->detector[detIndex].corrected_data);
+		free(eventData->detector[detIndex].detector_corrected_data);
+		free(eventData->detector[detIndex].image);
+		free(eventData->detector[detIndex].pixelmask);
+		free(eventData->detector[detIndex].image_pixelmask);
 		
-		//if(global->detector[detID].downsampling > 1){
-		free(eventData->detector[detID].imageXxX);
-		free(eventData->detector[detID].imageXxX_pixelmask);
+		//if(global->detector[detIndex].downsampling > 1){
+		free(eventData->detector[detIndex].imageXxX);
+		free(eventData->detector[detIndex].imageXxX_pixelmask);
 		//}
 
-		free(eventData->detector[detID].radialAverage);
-		free(eventData->detector[detID].radialAverageCounter);
+		free(eventData->detector[detIndex].radialAverage);
+		free(eventData->detector[detIndex].radialAverageCounter);
 	}
 	
 	freePeakList(eventData->peaklist);
@@ -264,11 +264,13 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->specImage);
 	}
 	//TOF stuff.
-	if(eventData->TOFPresent==1){
-		free(eventData->TOFTime);
-		free(eventData->TOFVoltage); 
+	// Explictly call the vector destructor as we're using free and not delete
+	for(int i = 0;i<global->nTOFDetectors;i++){
+		eventData->tofDetector[i].voltage.clear();
+		eventData->tofDetector[i].time.clear();
 	}
-    
+
+
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);
@@ -297,7 +299,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 	 *	More worrysome is the fact that it occasionally gives a bogus value 
 	 *	of detposnew=0, without a fail message.  Hardware problem? 
 	 *
-	 *  event->detector[detID].detectorZ holds the read-out value
+	 *  event->detector[detIndex].detectorZ holds the read-out value
 	 *  fail=std::numeric_limits<float>::quiet_NaN();
 	 */
 	DETECTOR_LOOP {
@@ -306,20 +308,20 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 		int update_camera_length = 0;
 
 		// what's the detector "camera length" for this shot?
-		if ( global->detector[detID].fixedCameraLengthMm != 0 ) {
+		if ( global->detector[detIndex].fixedCameraLengthMm != 0 ) {
 			// If fixed detector camera length is provided, override it here... it's a bit of a hack for now...
-			detposnew = global->detector[detID].fixedCameraLengthMm;
+			detposnew = global->detector[detIndex].fixedCameraLengthMm;
 		} else {
-			detposnew = eventData->detector[detID].detectorZ;
+			detposnew = eventData->detector[detIndex].detectorZ;
 		}
 
 		if ( !isnan(detposnew) ) {
 
 			// New detector position = 0 could be an error
             if ( detposnew == 0 ) {
-                detposnew = global->detector[detID].detposprev;
+                detposnew = global->detector[detIndex].detposprev;
                 printf("WARNING: detector position is zero, which could be an error\n"
-                       "         will use previous position (%s=%f) instead...\n",global->detector[detID].detectorZpvname, detposnew);
+                       "         will use previous position (%s=%f) instead...\n",global->detector[detIndex].detectorZpvname, detposnew);
             }
 			
             //	Apply offsets
@@ -327,32 +329,32 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 			//	position to the specimen, and is 79mm from the centre of the 
 			//	8" flange where the injector is mounted.  
 			//	The injector itself is about 4mm further away from the detector than this. 
-            global->detector[detID].detposprev = detposnew;
-            global->detector[detID].detectorEncoderValue = detposnew;
-            global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
+            global->detector[detIndex].detposprev = detposnew;
+            global->detector[detIndex].detectorEncoderValue = detposnew;
+            global->detector[detIndex].detectorZ = detposnew + global->detector[detIndex].cameraLengthOffset;
 
             //	Round to the nearest two decimal places 
 			//	(10 micron, much less than a pixel size) 
-            global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;
+            global->detector[detIndex].detectorZ = floorf(global->detector[detIndex].detectorZ*100+0.5)/100;
             update_camera_length = 1;
         }	 
         
 		//	What to do if there is no camera length information?  
 		//	Keep skipping frames until this info is found?  
 		//	For now, set a (non-zero) default camera length.
-		if ( global->detector[detID].detectorZ == 0 ) {
+		if ( global->detector[detIndex].detectorZ == 0 ) {
 
-            if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
+            if ( global->detector[detIndex].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
-                printf("WARNING: Camera length %s is zero!\n", global->detector[detID].detectorZpvname);
+                printf("WARNING: Camera length %s is zero!\n", global->detector[detIndex].detectorZpvname);
                 printf("If the problem persists, try setting the keyword\n");
                 printf("defaultCameraLengthMm in your ini file\n"); 
                 printf("======================================================\n");
                 return;
             } 
             else {
-                printf("MESSAGE: Setting default camera length (%gmm).\n",global->detector[detID].defaultCameraLengthMm);
-                global->detector[detID].detectorZ = global->detector[detID].defaultCameraLengthMm;	
+                printf("MESSAGE: Setting default camera length (%gmm).\n",global->detector[detIndex].defaultCameraLengthMm);
+                global->detector[detIndex].detectorZ = global->detector[detIndex].defaultCameraLengthMm;	
                 update_camera_length = 1;
             }
         }
@@ -361,18 +363,18 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
         /*
          * Recalculate reciprocal space geometry if the camera length has changed, 
          */
-        if ( update_camera_length && ( global->detector[detID].detectorZprevious != global->detector[detID].detectorZ ) ) {
+        if ( update_camera_length && ( global->detector[detIndex].detectorZprevious != global->detector[detIndex].detectorZ ) ) {
             // don't tinker with cheetahGlobal geometry while there are active threads...
             while (global->nActiveThreads > 0) 
                 usleep(10000);
             
-            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
+            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detIndex].detectorZprevious,global->detector[detIndex].detectorZ);
             if ( isnan(eventData->wavelengthA ) ) {
                 printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
             }	
-            global->detector[detID].detectorZprevious = global->detector[detID].detectorZ;
+            global->detector[detIndex].detectorZprevious = global->detector[detIndex].detectorZ;
             for(long i=0; i<global->nDetectors; i++) 
-                global->detector[detID].updateKspace(global, eventData->wavelengthA);
+                global->detector[detIndex].updateKspace(global, eventData->wavelengthA);
             
         }	
     }
@@ -397,7 +399,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
      *  Copy over any remaining detector info
      */
     DETECTOR_LOOP {
-        eventData->detector[detID].detectorZ = global->detector[detID].detectorZ;        
+        eventData->detector[detIndex].detectorZ = global->detector[detIndex].detectorZ;        
         
     }
 }
@@ -417,7 +419,7 @@ void cheetahProcessEventMultithreaded(cGlobal *global, cEventData *eventData){
  *  libCheetah event processing function (multithreaded)
  */
 void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
-
+	pthread_mutex_lock(&global->process_mutex);
 	/*
 	 * In case people forget to turn on the beamline data.
 	 */
@@ -451,6 +453,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	if(global->ioSpeedTest==2) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #2 (data read rate)\n", global->runNumber, eventData->frameNumber, global->datarate);
         cheetahDestroyEvent(eventData);
+		pthread_mutex_unlock(&global->process_mutex);
 		return;
 	}
 	
@@ -474,6 +477,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	 *		(each thread is responsible for cleaning up its own eventData structure when done)
 	 */
     if(eventData->useThreads == 1) {
+		pthread_mutex_unlock(&global->process_mutex);
         pthread_t		thread;
         pthread_attr_t	threadAttribute;
         int				returnStatus;
@@ -482,7 +486,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		time(&tstart);
 		double	dtime;
 		float	maxwait = 60.;
-		double  dnextmsg = 1;
+		double  dnextmsg = 20;
         
         /*
          *  Wait until we have a spare thread in the thread pool
@@ -512,44 +516,24 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
 
         // Create a new worker thread for this data frame
+		// Lock acquired before creation to avoid race condition where nActiveThreads decremented before incremented
+		pthread_mutex_lock(&global->nActiveThreads_mutex);
         eventData->threadNum = global->threadCounter;
         returnStatus = pthread_create(&thread, &threadAttribute, worker, (void *)eventData);
 
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
-			pthread_mutex_lock(&global->nActiveThreads_mutex);
 			global->nActiveThreads += 1;
 			global->threadCounter += 1;
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		else{
 			printf("Error: thread creation failed (frame skipped)\n");
+			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
         pthread_attr_destroy(&threadAttribute);
+//		pthread_mutex_lock(&global->process_mutex);
     }
-	
-    /*
-     *  Update counters
-     */
-    global->nprocessedframes += 1;
-	global->nrecentprocessedframes += 1;
-    
-	
-	/*
-	 *	Save some types of information from time to timeperiodic powder patterns
-	 */
-	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
-		if(global->saveCXI){
-			writeAccumulatedCXI(global);
-		} 
-		saveRunningSums(global);
-		saveHistograms(global);
-		saveRadialStacks(global);
-		saveSpectrumStacks(global);
-		global->updateLogfile();
-		global->writeStatus("Not finished");
-	}
-	
 }
 
 
@@ -583,8 +567,8 @@ void cheetahExit(cGlobal *global) {
     }
     
     // Calculate mean photon energy
-    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nprocessedframes;
-    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nprocessedframes - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
+    global->meanPhotonEnergyeV = global->summedPhotonEnergyeV/global->nhitsandblanks;
+    global->photonEnergyeVSigma = sqrt(global->summedPhotonEnergyeVSquared/global->nhitsandblanks - global->meanPhotonEnergyeV * global->meanPhotonEnergyeV);
     printf("Mean photon energy: %f eV\n", global->meanPhotonEnergyeV);
     printf("Sigma of photon energy: %f eV\n", global->photonEnergyeVSigma);
     
@@ -607,12 +591,12 @@ void cheetahExit(cGlobal *global) {
 	
     // Hitrate?
     if (global->nPowderClasses){
-		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("Hits: %li (%2.2f%%) ",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
-		printf("Blanks: %li (%2.2f%%) ",global->nprocessedframes-global->nhits, 100.*( (global->nprocessedframes-global->nhits)/ (float) global->nprocessedframes));
+		printf("Blanks: %li (%2.2f%%) ",global->nhitsandblanks-global->nhits, 100.*( (global->nhitsandblanks-global->nhits)/ (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
     } else {
-		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nprocessedframes));
+		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
     printf("%li files processed\n",global->nprocessedframes);
 

@@ -21,12 +21,15 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream> 
+#include <errno.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
+#include "tofDetector.h"
 
 /*
  *	Default settings/configuration
@@ -60,6 +63,10 @@ cGlobal::cGlobal(void) {
 	strcpy(pumpLaserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
 	pumpLaserDelay = std::numeric_limits<float>::quiet_NaN();
 	pumpLaserDelay = 0;
+	samplePosXPV[0] = 0;
+	samplePosYPV[0] = 0;
+	samplePosZPV[0] = 0;
+	sampleVoltage[0] = 0;
 
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
@@ -75,8 +82,9 @@ cGlobal::cGlobal(void) {
 
 	// Hitfinding
 	hitfinder = 0;
+	hitfinderForInitials = 1;
     hitfinderInvertHit = 0;
-	hitfinderDetector = 0;
+	hitfinderDetectorID = 0;
 	hitfinderADC = 100;
 	hitfinderTAT = 1e3;
 
@@ -96,7 +104,6 @@ cGlobal::cGlobal(void) {
 	hitfinderSubtractLocalBG = 0;
 	hitfinderLocalBGRadius = 4;
     hitfinderLocalBGThickness = 4;
-	//hitfinderLimitRes = 1;
 	hitfinderMinRes = 0;
 	hitfinderMaxRes = 1e6;
 	hitfinderResolutionUnitPixel = 1;
@@ -113,22 +120,12 @@ cGlobal::cGlobal(void) {
 
 	// TOF (Aqiris)
 	hitfinderUseTOF = 0;
-	hitfinderTOFMinSample = 0;
-	hitfinderTOFMaxSample = 1000;
-	hitfinderTOFMeanBackground = 2;
-	hitfinderTOFThresh = 100;
-	hitfinderTOFMinCount = 1;
+	hitfinderTOFMinCount = 0;
+    hitfinderTOFMaxCount = 1000;
 	hitfinderTOFWindow = 3;
 
 	// TOF configuration
 	TOFPresent = 0;
-	TOFchannel = 0;
-	strcpy(tofName, "CxiSc1");
-	// Has to be looked up automatically
-	AcqNumSamples = 12288;
-	//tofType = Pds::DetInfo::Acqiris;
-	//tofPdsDetInfo = Pds::DetInfo::CxiSc1;
-
 	
 	// FEE spectrum
 	useFEEspectrum = 0;
@@ -167,9 +164,10 @@ cGlobal::cGlobal(void) {
     assemble2DMask = 0;
 
 	// Saving options
-	savehits = 0;
+	saveHits = 0;
+	saveBlanks = 0;
 	saveAssembled = 1;
-	saveRaw = 0;
+	saveNonAssembled = 0;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
@@ -178,7 +176,13 @@ cGlobal::cGlobal(void) {
 	saveCXI = 0;
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
+	// Save data in modular stack (see CXI version 1.4)
+	saveModular=0;
+
 	strcpy(dataSaveFormat, "INT16");
+
+	// Do not use SWMR mode by default
+	cxiSWMR = 0;
 
 	// Visualization
 	pythonFile[0] = 0;
@@ -198,6 +202,8 @@ cGlobal::cGlobal(void) {
 	useHelperThreads = 0;
 	// depreciated?
 	threadPurge = 10000;
+
+	anaModThreads = 32;
 	
 	// Saving to subdirectories
 	subdirFileCount = -1;
@@ -242,24 +248,41 @@ void cGlobal::setup() {
 	/*
 	 *	Configure detectors
 	 */
-	for(long i=0; i<nDetectors; i++) {
-		detector[i].configure();
-		detector[i].readDetectorGeometry(detector[i].geometryFile);
-		detector[i].readDarkcal(detector[i].darkcalFile);
-		detector[i].readGaincal(detector[i].gaincalFile);
-		detector[i].pixelmask_shared = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
-		detector[i].pixelmask_shared_max = (uint16_t*) calloc(detector[i].pix_nn,sizeof(uint16_t));
-		detector[i].pixelmask_shared_min = (uint16_t*) malloc(detector[i].pix_nn*sizeof(uint16_t));
-		for(long j=0; j<detector[i].pix_nn; j++){
-			detector[i].pixelmask_shared_min[j] = PIXEL_IS_ALL;
+	hitfinderDetIndex = -1;
+	for(long detIndex=0; detIndex < nDetectors; detIndex++){
+		detector[detIndex].configure();
+		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
+		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
+		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
+		detector[detIndex].pixelmask_shared = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
+		detector[detIndex].pixelmask_shared_max = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
+		detector[detIndex].pixelmask_shared_min = (uint16_t*) malloc(detector[detIndex].pix_nn*sizeof(uint16_t));
+		for(long j=0; j<detector[detIndex].pix_nn; j++){
+			detector[detIndex].pixelmask_shared_min[j] = PIXEL_IS_ALL;
 		}
-		detector[i].readPeakmask(self, peaksearchFile);
-		detector[i].readBadpixelMask(detector[i].badpixelFile);
-		detector[i].readBaddataMask(detector[i].baddataFile);
-		detector[i].readWireMask(detector[i].wireMaskFile);
+		detector[detIndex].readPeakmask(self, peaksearchFile);
+		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
+		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
+		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
+		if (detector[detIndex].detectorID == hitfinderDetectorID){
+			hitfinderDetIndex = detIndex;
+		}
+	}
+
+	// Check whether the detector chosen for hitfinding is configured
+	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0)) {
+		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
+		for(long detIndex=0; detIndex < nDetectors; detIndex++){
+			printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);
+		}
+		printf("hitfinderDetectorID=%i\n", hitfinderDetectorID);
+		printf("This doesn't make sense.\n");
+		printf("in void cGlobal::setup()\n");
+		printf("Quitting...\n");
+		exit(1);
 	}
 	
-	// read hits from list if used as hitfinder
+	// Read hits from list if used as hitfinder
 	if (hitfinder == 1 && hitfinderAlgorithm == 12) {
 		readHits(hitlistFile);
 	}
@@ -300,23 +323,13 @@ void cGlobal::setup() {
 		nPeaksMax[i] = 0;
 	}
 
-	
-
-	if ((hitfinderDetector >= nDetectors || hitfinderDetector < 0) && hitfinderAlgorithm != 0) {
-		printf("Error: hitfinderDetector > nDetectors\n");
-		printf("nDetectors = %i\n", nDetectors);
-		printf("hitfinderDetector = detector%i\n", hitfinderDetector);
-		printf("This doesn't make sense.\n");
-		printf("in void cGlobal::setup()\n");
-		printf("Quitting...\n");
-		exit(1);
-	}
-
 	/*
 	 * Set up thread management
 	 */
 	nActiveThreads = 0;
 	threadCounter = 0;
+	pthread_mutex_init(&hitclass_mutex, NULL);
+	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
 	pthread_mutex_init(&hotpixel_mutex, NULL);
 	pthread_mutex_init(&halopixel_mutex, NULL);
@@ -339,12 +352,12 @@ void cGlobal::setup() {
 	// Set number of frames for initial calibrations
 	nInitFrames = 0;
 	long temp;
-	for (long detID=0; detID<MAX_DETECTORS; detID++){
-		temp = detector[detID].startFrames;
+	for (long detIndex=0; detIndex<MAX_DETECTORS; detIndex++){
+		temp = detector[detIndex].startFrames;
 		nInitFrames = std::max(nInitFrames,temp);
-		detector[detID].halopixCalibrated = 0;
-		detector[detID].hotpixCalibrated = 0;
-		detector[detID].bgCalibrated = 0;
+		detector[detIndex].halopixCalibrated = 0;
+		detector[detIndex].hotpixCalibrated = 0;
+		detector[detIndex].bgCalibrated = 0;
 	}
 	calibrated = 0;
 
@@ -358,9 +371,10 @@ void cGlobal::setup() {
 		printf("******************************************************************\n");
 
 		hitfinder = 0;
-		savehits = 0;
+		saveHits = 0;
+		saveBlanks = 0;
 		hdf5dump = 0;
-		saveRaw = 0;
+		saveNonAssembled = 0;
 		nInitFrames = 0;
 		hitfinderFastScan = 0;
 		powderSumHits = 0;
@@ -388,9 +402,10 @@ void cGlobal::setup() {
 
 		hitfinder = 0;
         hitfinderFastScan = 0;
-		savehits = 0;
+		saveHits = 0;
+		saveBlanks = 0;
 		hdf5dump = 0;
-		saveRaw = 0;
+		saveNonAssembled = 0;
 
 		nInitFrames = 0;
 
@@ -412,7 +427,8 @@ void cGlobal::setup() {
 	}
 
 	// Make sure to save something...
-	if(saveRaw==0 && saveAssembled == 0) {
+	// !!! I would rather like to throw an error here instead of silently changing the configuration. /Max
+	if(saveNonAssembled==0 && saveAssembled == 0) {
 		saveAssembled = 1;
 	}
 
@@ -549,6 +565,8 @@ void cGlobal::setup() {
 }
 
 void cGlobal::freeMutexes(void) {
+	pthread_mutex_unlock(&hitclass_mutex);
+	pthread_mutex_unlock(&process_mutex);
 	pthread_mutex_unlock(&nActiveThreads_mutex);
 	pthread_mutex_unlock(&hotpixel_mutex);
 	pthread_mutex_unlock(&halopixel_mutex);
@@ -732,20 +750,14 @@ void cGlobal::parseConfigFile(char* filename) {
 		fail = parseConfigTag(tag, value);
 		
 		/* Not a global keyword?  Then it must be detector-specific. */
-		if (fail != 0){
+		if (fail != 0 && strcmp(group,"default") != 0){
 
 			int matched=0;
 
-			/* set detector-specific configuration */
-			for (long i=0; i<MAX_DETECTORS; i++){
+			/* First check if group is an existing  detector */
 
-				/* new group? */
-				if (!strcmp("none",detector[i].configGroup)){
-					strncpy(detector[i].configGroup,group,cbufsize);
-					nDetectors++;
-				}
-
-				/* try to match group to detector */
+			/* Check if it's an existing pixel detector */
+			for (long i=0; i<nDetectors && !matched; i++){
 				if (!strcmp(group,detector[i].configGroup)){
 					matched = 1;
 					fail = detector[i].parseConfigTag(tag,value);
@@ -753,7 +765,38 @@ void cGlobal::parseConfigFile(char* filename) {
 				}
 
 			}
+			/* Check if it's an existing TOF detector */
+			for (long i=0; i<nTOFDetectors && !matched; i++){
+				if (strcmp(group,tofDetector[i].configGroup) == 0){
+					matched = 1;
+					fail = tofDetector[i].parseConfigTag(tag,value);
+					break;
+				}
+	
+			}
 
+			/* If it didn't match try to create a new group */
+
+			/* Check if it's a new TOF detector */
+			/* Only consider a new TOF detector if the group starts with "detectortype = tof" */
+			if(!matched && strcasecmp(tag,"detectortype") == 0 && 
+			   strcasecmp(value,"tof") == 0 &&
+			   nTOFDetectors < MAX_TOF_DETECTORS){
+				/* new TOF detector*/
+				strncpy(tofDetector[nTOFDetectors].configGroup,group,cbufsize);
+				matched = 1;
+				fail = tofDetector[nTOFDetectors].parseConfigTag(tag,value);
+				nTOFDetectors++;
+			}
+
+			if(!matched && nDetectors < MAX_DETECTORS){
+				/* new pixel Detector */
+				strncpy(detector[nDetectors].configGroup,group,cbufsize);
+				matched = 1;
+				fail = detector[nDetectors].parseConfigTag(tag,value);
+				nDetectors++;
+			}
+				
 			if (matched == 0){
 				printf("ERROR: Only %i detectors allowed at this time... fix your config file.\n",MAX_DETECTORS);
 				exit(1);
@@ -779,10 +822,14 @@ void cGlobal::parseConfigFile(char* filename) {
 	for (long i=0;i<nDetectors;i++){
 		printf("detector %li: %s\n",i,detector[i].configGroup);
 	}
-
-
+	printf("Configured %d TOF detectors\n",nTOFDetectors);
+	for (long i=0;i<nTOFDetectors;i++){
+		TOFPresent = 1;
+		printf("TOF detector %li: Group - %s Source - %s Channel - %d\n",i,
+			   tofDetector[i].configGroup,tofDetector[i].sourceIdentifier,
+			   tofDetector[i].channel);
+	}
 	fclose(fp);
-
 }
 
 
@@ -824,6 +871,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
 	}
+	else if (!strcmp(tag, "anamodthreads")) {
+		anaModThreads = atoi(value);
+	}
 	else if (!strcmp(tag, "usehelperthreads")) {
 		useHelperThreads = atoi(value);
 	}
@@ -864,14 +914,27 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinder")) {
 		hitfinder = atoi(value);
 	}
+	else if (!strcmp(tag, "hitfinderforinitials")) {
+		hitfinderForInitials = atoi(value);
+	}
 	else if (!strcmp(tag, "hitfinderinverthit")) {
 		hitfinderInvertHit = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderdetector")) {
-		hitfinderDetector = atoi(value);
+		printf("The keyword hitfinderDetector is depreciated.\n"
+			   "Please specify the detector that shall be used for hitfinding by defining hitfinderDetectorID instead.\n"
+			   "For choosing the front detector set hitfinderDetectorID=0, for choosing the back detector set hitfinderDetectorID=1.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
+	}
+	else if (!strcmp(tag, "hitfinderdetectorid")) {
+		hitfinderDetectorID = atoi(value);
 	}
 	else if (!strcmp(tag, "savehits")) {
-		savehits = atoi(value);
+		saveHits = atoi(value);
+	}
+	else if (!strcmp(tag, "saveblanks")) {
+		saveBlanks = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersum")) {
 		printf("The keyword powdersum has been changed.  It is\n"
@@ -879,8 +942,11 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
-	else if (!strcmp(tag, "saveraw")) {
-		saveRaw = atoi(value);
+	else if ((!strcmp(tag, "saveraw")) || (!strcmp(tag, "savenonassembled"))) {
+		saveNonAssembled = atoi(value);
+	}
+	else if (!strcmp(tag, "savemodular")) {
+		saveModular = atoi(value);
 	}
 	else if (!strcmp(tag, "saveassembled")) {
 		saveAssembled = atoi(value);
@@ -903,33 +969,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		saveInterval = atoi(value);
 	}
 	// Time-of-flight
-	else if (!strcmp(tag, "tofpresent")) {
-		TOFPresent = atoi(value);
-	}
-	// depreciated?
-    else if (!strcmp(tag, "tofname")) {
-		strcpy(tofName, value);
-	}
-	else if (!strcmp(tag, "tofchannel")) {
-		TOFchannel = atoi(value);
-	}
 	else if (!strcmp(tag, "hitfinderusetof")) {
 		hitfinderUseTOF = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfindertofminsample")) {
-		hitfinderTOFMinSample = atoi(value);
-	}
-	else if (!strcmp(tag, "hitfindertofmaxsample")) {
-		hitfinderTOFMaxSample = atoi(value);
-	}
-	else if (!strcmp(tag, "hitfindertofmeanbackground")) {
-		hitfinderTOFMeanBackground = atof(value);
-	}
-	else if (!strcmp(tag, "hitfindertofthresh")) {
-		hitfinderTOFThresh = atof(value);
-	}
 	else if (!strcmp(tag, "hitfindertofmincount")) {
 		hitfinderTOFMinCount = atoi(value);
+	}
+    else if (!strcmp(tag, "hitfindertofmaxcount")) {
+		hitfinderTOFMaxCount = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfindertofwindow")) {
 		hitfinderTOFWindow = atoi(value);
@@ -1009,7 +1056,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		assemblePowders = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
-		hitfinderADC = atoi(value);
+		hitfinderADC = atof(value);
 	}
 	else if (!strcmp(tag, "hitfindertit")) {
 		hitfinderTAT = atof(value);
@@ -1054,11 +1101,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfinderminres")) {
 		hitfinderMinRes = atof(value);
-		//hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfindermaxres")) {
 		hitfinderMaxRes = atof(value);
-		//hitfinderLimitRes = 1;
 	}
 	else if (!strcmp(tag, "hitfinderresolutionunitpixel")) {
 		hitfinderResolutionUnitPixel = atoi(value);
@@ -1093,13 +1138,27 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
     else if (!strcmp(tag, "cxiflushperiod")) {
 		cxiFlushPeriod = atoi(value);
-	}
-    else if (!strcmp(tag, "pythonfile")) {
+	} else if (!strcmp(tag, "cxiswmr")) {
+		cxiSWMR = atoi(value);
+	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	}
     else if (!strcmp(tag, "usesinglethreadcalibration")) {
 		useSingleThreadCalibration = atoi(value);
+	} 
+	else if (!strcmp(tag, "sampleposxpv")) {
+		strcpy(samplePosXPV,value);
+	} 
+	else if (!strcmp(tag, "sampleposypv")) {
+		strcpy(samplePosYPV,value);
+	} 
+	else if (!strcmp(tag, "sampleposzpv")) {
+		strcpy(samplePosZPV,value);
 	}
+ 	else if (!strcmp(tag, "samplevoltage")) {
+		strcpy(sampleVoltage,value);
+	}
+	
 	// Unknown tags
 	else {
 		//printf("\tUnknown tag: %s = %s\n",tag,value);
@@ -1158,111 +1217,145 @@ void cGlobal::writeConfigurationLog(void){
 	
 	fprintf(fp, "# Automatic output of all Cheetah configurations settings\n");
 	fprintf(fp, "# (if not set in your .ini, these are the default values used in calculation)\n");
-
-	fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
-	//fprintf(fp, "defaultCameraLengthMm=%f\n",defaultCameraLengthMm);
-	//fprintf(fp, "detectorType=%s\n",detector[0].detectorTypeName);
-	//fprintf(fp, "detectorName=%s\n",detector[0].detectorName);
-	fprintf(fp, "skipFract=%f\n",skipFract);
-	fprintf(fp, "startAtFrame=%ld\n",startAtFrame);
-	fprintf(fp, "stopAtFrame=%ld\n",stopAtFrame);
-	fprintf(fp, "nThreads=%ld\n",nThreads);
-	fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
-	fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
-	fprintf(fp, "threadPurge=%ld\n",threadPurge);
-	//fprintf(fp, "geometry=%s\n",detector[0].geometryFile);
-	//fprintf(fp, "darkcal=%s\n",detector[0].darkcalFile);
-	//fprintf(fp, "gaincal=%s\n",detector[0].gaincalFile);
-	fprintf(fp, "peakmask=%s\n",peaksearchFile);
-	//fprintf(fp, "badPixelMap=%s\n",detector[0].badpixelFile);
-	//fprintf(fp, "subtractcmModule=%d\n",cmModule);
-	//fprintf(fp, "cmModule=%d\n",cmModule);
-	//fprintf(fp, "subtractUnbondedPixels=%d\n",cspadSubtractUnbondedPixels);
-	//fprintf(fp, "wiremaskFile=%s\n",detector[0].wireMaskFile);
-	//fprintf(fp, "subtractBehindWires=%d\n",cspadSubtractBehindWires);
-	//fprintf(fp, "invertGain=%d\n",invertGain);
-	fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
-	fprintf(fp, "generateGaincal=%d\n",generateGaincal);
-	fprintf(fp, "hitfinder=%d\n",hitfinder);
-	fprintf(fp, "saveHits=%d\n",savehits);
-	fprintf(fp, "saveRaw=%d\n",saveRaw);
-	fprintf(fp, "saveAssembled=%d\n",saveAssembled);
-	fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
-	//fprintf(fp, "saveDetectorCorrectedOnly=%d\n",saveDetectorCorrectedOnly);
-	//fprintf(fp, "saveDetectorRaw=%d\n",saveDetectorRaw);
-	fprintf(fp, "hdf5dump=%d\n",hdf5dump);
-	fprintf(fp, "saveInterval=%d\n",saveInterval);
-	fprintf(fp, "savePixelmask=%d\n",savePixelmask);
-	//fprintf(fp, "useAutoHotPixel=%d\n",useAutoHotpixel);
-	//fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-	//fprintf(fp, "pixelSaturationADC=%ld\n",pixelSaturationADC);
-	//fprintf(fp, "maskSaturatedPixels=%d\n",maskSaturatedPixels);
-	//fprintf(fp, "pixelSaturationADC=%d\n",pixelSaturationADC);
-	//fprintf(fp, "useSubtractPersistentBackground=%d\n",useSubtractPersistentBackground);
-	//fprintf(fp, "useBackgroundBufferMutex=%d\n",useBackgroundBufferMutex);
-	//fprintf(fp, "useLocalBackgroundSubtraction=%d\n",useLocalBackgroundSubtraction);
-	//fprintf(fp, "localBackgroundRadius=%ld\n",localBackgroundRadius);
-	fprintf(fp, "tofName=%s\n",tofName);
-	fprintf(fp, "tofChannel=%d\n",TOFchannel);
-	fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
-	fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample);
-	fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample);
-	fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground);
-	fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh);
-	fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
-	fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
-	fprintf(fp, "espectrum=%d\n",espectrum);
-	fprintf(fp, "espectrum1D=%d\n",espectrum1D);
-	fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
-	fprintf(fp, "espectrumLength=%d\n",espectrumLength);
-	fprintf(fp, "espectrumSpreadeV=%d\n",espectrumSpreadeV);
-	fprintf(fp, "espectrumDarkSubtract=%d\n",espectrumDarkSubtract);
-	fprintf(fp, "espectrumDarkFile=%s\n",espectrumDarkFile);
-	fprintf(fp, "espectrumScaleFile=%s\n",espectrumScaleFile);
-	//fprintf(fp, "cmFloor=%f\n",cmFloor);
-	//fprintf(fp, "pixelSize=%f\n",detector[0].pixelSize);
-	fprintf(fp, "debugLevel=%d\n",debugLevel);
-	//fprintf(fp, "hotpixFreq=%f\n",hotpixFreq);
-	//fprintf(fp, "hotpixADC=%d\n",hotpixADC);
-	//fprintf(fp, "hotpixMemory=%d\n",hotpixMemory);
-	fprintf(fp, "powderThresh=%f\n",powderthresh);
-	fprintf(fp, "powderSumHits=%d\n",powderSumHits);
-	fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
-	fprintf(fp, "assemblePowders=%d\n",assemblePowders);
-	fprintf(fp, "hitfinderADC=%d\n",hitfinderADC);
-	fprintf(fp, "hitfinderTIT=%f\n",hitfinderTAT);
-	fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
-	fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
-	fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
-	fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
-	fprintf(fp, "hitfinderNPeaksMax=%d\n",hitfinderNpeaksMax);
-	fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
-	fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
-	fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
-	fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
-	fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
-	fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
-	fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
-	//fprintf(fp, "hitfinderLimitRes=%d\n",hitfinderLimitRes);
-	fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
-	fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
-	fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
-	fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
-	fprintf(fp, "hitlist=%s\n",hitlistFile);
-	fprintf(fp, "saveCXI=%d\n",saveCXI);
-	fprintf(fp, "pythonfile=%s\n", pythonFile);
-	//fprintf(fp, "selfdarkMemory=%li\n",bgMemory);
-	//fprintf(fp, "bgMemory=%li\n",bgMemory);
-	//fprintf(fp, "bgRecalc=%ld\n",bgRecalc);
-	//fprintf(fp, "bgMedian=%f\n",bgMedian);
-	//fprintf(fp, "bgIncludeHits=%d\n",bgIncludeHits);
-	//fprintf(fp, "bgNoBeamReset=%d\n",bgNoBeamReset);
-	//fprintf(fp, "bgFiducialGlitchReset=%d\n",bgFiducialGlitchReset);
-	//fprintf(fp, "scaleBackground=%d\n",scaleBackground);
-	//fprintf(fp, "scaleDarkcal=%d\n",scaleBackground);
-	//fprintf(fp, "startFrames=%d\n",startFrames);
-
-	
+    
+    fprintf(fp, "# --------------------------------------\n");
+    fprintf(fp, "# GLOBAL PARAMETERS\n");
+    fprintf(fp, "# --------------------------------------\n");
+    fprintf(fp, "defaultPhotonEnergyeV=%f\n",defaultPhotonEnergyeV);
+    fprintf(fp, "fixedPhotonEnergyeV=%f\n",fixedPhotonEnergyeV);
+    fprintf(fp, "generateDarkcal=%d\n",generateDarkcal);
+    fprintf(fp, "generateGaincal=%d\n",generateGaincal);
+    fprintf(fp, "hitfinder=%d\n",hitfinder);
+    fprintf(fp, "hitfinderDetectorID=%d\n",hitfinderDetectorID);
+    fprintf(fp, "hitfinderAlgorithm=%d\n",hitfinderAlgorithm);
+    fprintf(fp, "hitfinderADC=%f\n",hitfinderADC);
+    fprintf(fp, "hitfinderTAT=%f\n",hitfinderTAT);
+    //fprintf(fp, "hitfinderCluster=%d\n",hitfinderCluster);
+    fprintf(fp, "hitfinderCheckGradient=%d\n",hitfinderCheckGradient);
+    fprintf(fp, "hitfinderMinGradient=%f\n",hitfinderMinGradient);
+    fprintf(fp, "hitfinderNPeaks=%d\n",hitfinderNpeaks);
+    fprintf(fp, "hitfinderNPeaksMax=%d\n",hitfinderNpeaksMax);
+    fprintf(fp, "hitfinderMinPixCount=%d\n",hitfinderMinPixCount);
+    fprintf(fp, "hitfinderMaxPixCount=%d\n",hitfinderMaxPixCount);
+    fprintf(fp, "hitfinderMinPeakSeparation=%f\n",hitfinderMinPeakSeparation);
+    fprintf(fp, "hitfinderSubtractLocalBG=%d\n",hitfinderSubtractLocalBG);
+    fprintf(fp, "hitfinderLocalBGRadius=%d\n",hitfinderLocalBGRadius);
+    fprintf(fp, "hitfinderLocalBGThickness=%d\n",hitfinderLocalBGThickness);
+    fprintf(fp, "hitfinderMinRes=%f\n",hitfinderMinRes);
+    fprintf(fp, "hitfinderMaxRes=%f\n",hitfinderMaxRes);
+    fprintf(fp, "hitfinderResolutionUnitPixel=%i\n",hitfinderResolutionUnitPixel);
+    fprintf(fp, "hitfinderMinSNR=%f\n",hitfinderMinSNR);
+    fprintf(fp, "hitlist=%s\n",hitlistFile);
+    fprintf(fp, "peakmask=%s\n",peaksearchFile);
+    fprintf(fp, "powderThresh=%f\n",powderthresh);
+    fprintf(fp, "powderSumHits=%d\n",powderSumHits);
+    fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
+    fprintf(fp, "assemblePowders=%d\n",assemblePowders);
+    fprintf(fp, "saveInterval=%d\n",saveInterval);
+    fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
+    fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
+    fprintf(fp, "saveHits=%d\n",saveHits);
+    fprintf(fp, "saveBlanks=%d\n",saveBlanks);
+    fprintf(fp, "saveNonAssembled=%d\n",saveNonAssembled);
+    //fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
+    fprintf(fp, "saveModular=%d\n",saveModular);
+    fprintf(fp, "saveAssembled=%d\n",saveAssembled);
+    fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
+    fprintf(fp, "savePixelmask=%d\n",savePixelmask);
+    fprintf(fp, "saveCXI=%d\n",saveCXI);
+    fprintf(fp, "hdf5dump=%d\n",hdf5dump);
+    fprintf(fp, "pythonfile=%s\n",pythonFile);
+    fprintf(fp, "debugLevel=%d\n",debugLevel);
+    fprintf(fp, "nThreads=%ld\n",nThreads);
+    fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
+    fprintf(fp, "threadPurge=%ld\n",threadPurge);
+    fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
+    //fprintf(fp, "tofName=%s\n",tofName);
+    //fprintf(fp, "tofChannel=%d\n",TOFchannel);
+    fprintf(fp, "hitfinderUseTOF=%d\n",hitfinderUseTOF);
+    //fprintf(fp, "hitfinderTOFMinSample=%d\n",hitfinderTOFMinSample[0]);
+    //fprintf(fp, "hitfinderTOFMaxSample=%d\n",hitfinderTOFMaxSample[0]);
+    //fprintf(fp, "hitfinderTOFMeanBackground=%f\n",hitfinderTOFMeanBackground[0]);
+    //fprintf(fp, "hitfinderTOFThresh=%f\n",hitfinderTOFThresh[0]);
+    fprintf(fp, "espectrum=%d\n",espectrum);
+    fprintf(fp, "espectrum1D=%d\n",espectrum1D);
+    fprintf(fp, "espectrumTiltAng=%f\n",espectrumTiltAng);
+    fprintf(fp, "espectrumLength=%d\n",espectrumLength);
+    fprintf(fp, "espectrumWidth=%d\n",espectrumWidth);
+    fprintf(fp, "espectrumSpreadeV=%d\n",espectrumSpreadeV);
+    fprintf(fp, "espectrumDarkSubtract=%d\n",espectrumDarkSubtract);
+    fprintf(fp, "espectrumDarkFile=%s\n",espectrumDarkFile);
+    fprintf(fp, "espectrumScaleFile=%s\n",espectrumScaleFile);
+    //fprintf(fp, "skipFract=%f\n",skipFract);
+    //fprintf(fp, "startAtFrame=%ld\n",startAtFrame);
+    //fprintf(fp, "stopAtFrame=%ld\n",stopAtFrame);
+    
+    for (int i=0; i<nDetectors; i++) {
+        fprintf(fp, "# --------------------------------------\n");
+        fprintf(fp, "# DETECTOR %d PARAMETERS\n",i);
+        fprintf(fp, "# --------------------------------------\n");
+        fprintf(fp, "detectorType=%s\n",detector[i].detectorType);
+        fprintf(fp, "detectorName=%s\n",detector[i].detectorName);
+        fprintf(fp, "geometry=%s\n",detector[i].geometryFile);
+        fprintf(fp, "pixelSize=%f\n",detector[i].pixelSize);
+        fprintf(fp, "beamCenterX=%f\n",detector[i].beamCenterPixX);
+        fprintf(fp, "beamCenterY=%f\n",detector[i].beamCenterPixY);
+        fprintf(fp, "defaultCameraLengthMm=%f\n",detector[i].defaultCameraLengthMm);
+        fprintf(fp, "cameraLengthOffset=%f\n",detector[i].cameraLengthOffset);
+        fprintf(fp, "cameraLengthScale=%f\n",detector[i].cameraLengthScale);
+        fprintf(fp, "fixedCameraLengthMm=%f\n",detector[i].fixedCameraLengthMm);
+        fprintf(fp, "badPixelMap=%s\n",detector[i].badpixelFile);
+        fprintf(fp, "applyBadPixelMap=%d\n",detector[i].applyBadPixelMask);
+        fprintf(fp, "badDataMap=%s\n",detector[i].baddataFile);
+        fprintf(fp, "wiremaskFile=%s\n",detector[i].wireMaskFile);
+        fprintf(fp, "darkcal=%s\n",detector[i].darkcalFile);
+        fprintf(fp, "cmModule=%d\n",detector[i].cmModule);
+        fprintf(fp, "cmFloor=%f\n",detector[i].cmFloor);
+        fprintf(fp, "subtractBehindWires=%d\n",detector[i].cspadSubtractBehindWires);
+        fprintf(fp, "subtractUnbondedPixels=%d\n",detector[i].cspadSubtractUnbondedPixels);
+        fprintf(fp, "gaincal=%s\n",detector[i].gaincalFile);
+        fprintf(fp, "invertGain=%d\n",detector[i].invertGain);
+        fprintf(fp, "usePolarizationCorrection=%d\n",detector[i].usePolarizationCorrection);
+        fprintf(fp, "horizontalFractionOfPolarization=%f\n",detector[i].horizontalFractionOfPolarization);
+        fprintf(fp, "useSolidAngleCorrection=%d\n",detector[i].useSolidAngleCorrection);
+        fprintf(fp, "solidAngleAlgorithm=%d\n",detector[i].solidAngleAlgorithm);
+        fprintf(fp, "useSubtractPersistentBackground=%d\n",detector[i].useSubtractPersistentBackground);
+        fprintf(fp, "useBackgroundBufferMutex=%d\n",detector[i].useBackgroundBufferMutex);
+        fprintf(fp, "scaleBackground=%d\n",detector[i].scaleBackground);
+        fprintf(fp, "bgMemory=%li\n",detector[i].bgMemory);
+        fprintf(fp, "bgRecalc=%ld\n",detector[i].bgRecalc);
+        fprintf(fp, "bgMedian=%f\n",detector[i].bgMedian);
+        fprintf(fp, "bgIncludeHits=%d\n",detector[i].bgIncludeHits);
+        fprintf(fp, "bgNoBeamReset=%d\n",detector[i].bgNoBeamReset);
+        fprintf(fp, "bgFiducialGlitchReset=%d\n",detector[i].bgFiducialGlitchReset);
+        fprintf(fp, "startFrames=%d\n",detector[i].startFrames);
+        fprintf(fp, "useLocalBackgroundSubtraction=%d\n",detector[i].useLocalBackgroundSubtraction);
+        fprintf(fp, "localBackgroundRadius=%ld\n",detector[i].localBackgroundRadius);
+        fprintf(fp, "#useAutoHotPixel=%d\n",detector[i].useAutoHotpixel);
+        fprintf(fp, "applyAutoHotPixel=%d\n",detector[i].applyAutoHotpixel);
+        fprintf(fp, "hotpixFreq=%f\n",detector[i].hotpixFreq);
+        fprintf(fp, "hotpixADC=%d\n",detector[i].hotpixADC);
+        fprintf(fp, "hotpixMemory=%d\n",detector[i].hotpixMemory);
+        fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
+        fprintf(fp, "pixelSaturationADC=%ld\n",detector[i].pixelSaturationADC);
+        fprintf(fp, "useAutoHalopixel=%d\n",detector[i].useAutoHalopixel);
+        fprintf(fp, "halopixMinDeviation=%f\n",detector[i].halopixMinDeviation);
+        fprintf(fp, "halopixelMemory=%li\n",detector[i].halopixMemory);
+        fprintf(fp, "halopixelRecalc=%ld\n",detector[i].halopixRecalc);
+        fprintf(fp, "histogram=%d\n",detector[i].histogram);
+        fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
+        fprintf(fp, "histogramNbins=%ld\n",detector[i].histogramNbins);
+        fprintf(fp, "histogramBinSize=%f\n",detector[i].histogramBinSize);
+        fprintf(fp, "histogram_fs_min=%ld\n",detector[i].histogram_fs_min);
+        fprintf(fp, "histogram_fs_max=%ld\n",detector[i].histogram_fs_max);
+        fprintf(fp, "histogram_ss_min=%ld\n",detector[i].histogram_ss_min);
+        fprintf(fp, "histogram_ss_max=%ld\n",detector[i].histogram_ss_max);
+        fprintf(fp, "histogramMaxMemoryGb=%f\n",detector[i].histogramMaxMemoryGb);
+        fprintf(fp, "downsampling=%ld\n",detector[i].downsampling);
+        fprintf(fp, "saveDetectorRaw=%d\n",detector[i].saveDetectorRaw);
+        fprintf(fp, "saveDetectorCorrectedOnly=%d\n",detector[i].saveDetectorCorrectedOnly);
+    }
+    
 	// CLose file
 	fclose (fp);
 
@@ -1336,6 +1429,29 @@ void cGlobal::writeInitialLog(void){
 
 }
 
+void cGlobal::writeHitClasses(FILE* to) {
+	fprintf(to, "Hitclasses:\n");
+	for (int coord = 0; coord < 3; coord++) {
+		int lastFirst = 1 << 30;
+		int lastVal = 0;
+		for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
+			fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
+			if (i->first.second)
+			{
+				if (lastFirst != i->first.first) {
+					lastVal = 0;
+				}
+				double sum = lastVal + i->second;
+				fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
+			} else {
+				lastFirst = i->first.first;
+				lastVal = i->second;
+			}
+		}
+	}
+	fprintf(to, "\n\n");
+}
+
 /*
  * Update log file
  */
@@ -1369,6 +1485,8 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
 
@@ -1425,14 +1543,14 @@ void cGlobal::writeStatus(const char* message) {
 
 void cGlobal::updateCalibrated(void){
 	int temp = 1;
-	for(long detID=0; detID<MAX_DETECTORS; detID++) {
-		temp *= ((detector[detID].useAutoHotpixel == 0) || detector[detID].hotpixCalibrated);
-		temp *= ((detector[detID].useAutoHalopixel == 0) || detector[detID].halopixCalibrated);
-		temp *= ((detector[detID].useSubtractPersistentBackground == 0) || detector[detID].bgCalibrated);
+	for(long detIndex=0; detIndex<MAX_DETECTORS; detIndex++) {
+		temp *= ((detector[detIndex].useAutoHotpixel == 0) || detector[detIndex].hotpixCalibrated);
+		temp *= ((detector[detIndex].useAutoHalopixel == 0) || detector[detIndex].halopixCalibrated);
+		temp *= ((detector[detIndex].useSubtractPersistentBackground == 0) || detector[detIndex].bgCalibrated);
 		/* FOR TESTING
-		   printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHotpixel,detector[detID].hotpixCalibrated);
-		   printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detID,detector[detID].useAutoHalopixel,detector[detID].halopixCalibrated);
-		   printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detID,detector[detID].useSubtractPersistentBackground,detector[detID].bgCalibrated);
+		   printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHotpixel,detector[detIndex].hotpixCalibrated);
+		   printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHalopixel,detector[detIndex].halopixCalibrated);
+		   printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detIndex,detector[detIndex].useSubtractPersistentBackground,detector[detIndex].bgCalibrated);
 		*/
 	}
 	calibrated = temp;
@@ -1450,7 +1568,8 @@ void cGlobal::writeFinalLog(void){
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 
-
+    writeHitClasses(::stdout);
+    writeHitClasses(fp);
 	// Calculate hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);
@@ -1551,4 +1670,19 @@ void cGlobal::readHits(char *filename) {
 	}
 	
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
+}
+
+template<typename T>
+void cGlobal::splitList(char * values, std::vector<T> & elems) {
+	char delim = ',';
+    std::stringstream ss(values);
+    std::string item;
+	elems.clear();
+    while (std::getline(ss, item, delim)) {
+		std::stringstream innerss(item);
+		
+		T elem;
+		innerss >> elem;
+		elems.push_back(elem);
+    }
 }

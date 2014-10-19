@@ -9,6 +9,7 @@
 
 
 #include <stdarg.h>
+#include <vector>
 #include "peakfinders.h"
 
 
@@ -41,11 +42,9 @@ public:
 	// Misc. EPICS data
 	float       epicsPvFloatValues[MAX_EPICS_PVS];
 	
-	// Aqiris data
+	// TOF Detector data
+	cTOFDetectorEvent		tofDetector[MAX_TOF_DETECTORS];
 	int			TOFPresent;
-	double		*TOFTime;
-	double		*TOFVoltage;
-	double		TOFtrigtime ;
 	
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;
@@ -75,6 +74,9 @@ public:
 	int			powderClass;
 	
 	
+    // Tof hitfinding
+    int            nProtons;
+    
 	// Peak list
 	tPeakList	peaklist;
 	
@@ -116,6 +118,12 @@ public:
 	int         pumpLaserCode;
 	double      pumpLaserDelay;
 	
+	// Position of the sample stage
+	double      samplePos[3]; // in um
+
+	// Electrojet voltage
+	double      sampleVoltage[1]; // in Volt
+
 	double		fEbeamCharge;		// in nC
 	double		fEbeamL3Energy;		// in MeV
 	double		fEbeamLTUPosX;		// in mm

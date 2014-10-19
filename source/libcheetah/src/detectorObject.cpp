@@ -87,11 +87,19 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	cmFloor = 0.1;
 	cspadSubtractUnbondedPixels = 0;
 	cspadSubtractBehindWires = 0;
-
+    
 	// Gain calibration correction
 	useGaincal = 0;
 	invertGain = 0;
 	
+	// Polarization correction
+	usePolarizationCorrection = 0;
+    horizontalFractionOfPolarization = 1.0;
+    
+	// Solid angle correction
+	useSolidAngleCorrection = 0;
+	solidAngleAlgorithm = 1;
+    
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
 	bgMemory = 50;
@@ -152,7 +160,6 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Downsampling factor (1: no downsampling)
 	downsampling = 1;
-	downsamplingRescale = 1.;
 	downsamplingConservative = 1;
 }
 
@@ -243,6 +250,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(detectorName, value);
 	}
 	else if (!strcmp(tag, "detectortype")) {
+		if(strcasecmp(value,"tof") == 0){
+            fprintf(stderr,"Error: detectortype = tof found, but was not first line in [group]\n");
+            fprintf(stderr,"If you want to specify a TOF detector make sure the detectortype is the first line of the [group]\n");
+			fprintf(stderr,"Quitting...\n");
+			exit(1);
+		}
 		strcpy(detectorType, value);
 	}
 	else if (!strcmp(tag, "detectorid")) {
@@ -263,7 +276,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(badpixelFile, value);
 		useBadPixelMask = 1;
 	}
-	else if ((!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
+	else if ((!strcmp(tag, "setbadpixelstozero")) || (!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
 		applyBadPixelMask = atoi(value);
 	}
 	else if (!strcmp(tag, "baddatamap")) {
@@ -280,7 +293,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		downsampling = atoi(value);
 	}
 	else if (!strcmp(tag, "downsamplingrescale")) {
-		downsamplingRescale = atof(value);
+		printf("The keyword downsamplingRescale is depreciated. The option is no longer supported.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;		
 	}
 	else if (!strcmp(tag, "downsamplingconservative")) {
 		downsamplingConservative = atoi(value);
@@ -335,7 +350,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
-	else if (!strcmp(tag, "applyautohotpixel")) {
+	else if ((!strcmp(tag, "sethotpixelstozero")) || (!strcmp(tag, "applyautohotpixel"))) {
 		applyAutoHotpixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
@@ -396,6 +411,18 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "invertgain")) {
 		invertGain = atoi(value);
 	}
+    else if (!strcmp(tag, "usepolarizationcorrection")) {
+        usePolarizationCorrection = atoi(value);
+    }
+    else if (!strcmp(tag, "horizontalfractionofpolarization")) {
+        horizontalFractionOfPolarization = atof(value);
+    }
+    else if (!strcmp(tag, "usesolidanglecorrection")) {
+        useSolidAngleCorrection = atoi(value);
+    }
+    else if (!strcmp(tag, "solidanglealgorithm")) {
+        solidAngleAlgorithm = atoi(value);
+    }
 	else if ( (!strcmp(tag, "subtractunbondedpixels")) || (!strcmp(tag, "usesubtractunbondedpixels")) ) {
 		cspadSubtractUnbondedPixels = atoi(value);
 	}
@@ -452,7 +479,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		histogramNbins = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrambinsize")) {
-		histogramBinSize = atoi(value);
+		histogramBinSize = atof(value);
 	}
 	else if (!strcmp(tag, "histogram_fs_min")) {
 		histogram_fs_min = atoi(value);
@@ -649,9 +676,9 @@ void cPixelDetectorCommon::readDetectorGeometry(char* filename) {
 		detector_z.create(pix_nx,pix_ny);
 		for (long i=0;i<pix_ny;i++){
 			for(long j=0;j<pix_nx;j++){
-				detector_x.data[i+j*pix_ny] = j-pix_nx/2.;
-				detector_y.data[i+j*pix_ny] = i-pix_ny/2.;
-				detector_z.data[i+j*pix_ny] = 0.;
+				detector_x.data[j+i*pix_nx] = j-pix_nx/2.;
+				detector_y.data[j+i*pix_nx] = i-pix_ny/2.;
+				detector_z.data[j+i*pix_nx] = 0.;
 			}
 		}
 	}
@@ -736,9 +763,9 @@ bounds:
 	}
 
 	xmax = (long) (xmax + 0.5);
-	xmin = (long) (xmin + 0.5);
+	xmin = (long) (xmin - 0.5);
 	ymax = (long) (ymax + 0.5);
-	ymin = (long) (ymin + 0.5);
+	ymin = (long) (ymin - 0.5);
 	printf("\tImage bounds:\n");
 	printf("\tx range %.0f to %.0f\n",xmin,xmax);
 	printf("\ty range %.0f to %.0f\n",ymin,ymax);
@@ -795,7 +822,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 	maxres = 0.;
 	minres_pix = 0;
 	maxres_pix = 1000000;
-
+    
 	printf("Recalculating K-space coordinates\n");
 
 	for (long i=0; i<pix_nn; i++ ) {
@@ -850,8 +877,10 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
 	} else {
 		printf("Defined resolution limits for hitfinders: %.2f - %.2f A\n",global->hitfinderMinRes,global->hitfinderMaxRes);
 	}
-
-
+    
+	// also update constant term of solid angle when detector has moved
+	solidAngleConst = pixelSize*pixelSize/(detectorZ*cameraLengthScale*detectorZ*cameraLengthScale);
+    
 }
 
 
@@ -901,6 +930,32 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 		exit(1);
 	} 
 	
+	// Correct detector name?
+	if (strcmp(temp2d.detectorName,"") == 0) {
+		printf("\tWARNING: The attribute detectorName could not be read from the darkcal file. Cannot verify whether the darkcal file was generated from the detector of the specified detector type.\n");
+	}else{
+		if (strcmp(temp2d.detectorName,detectorName) == 0){
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) match.\n",temp2d.detectorName,detectorName);
+		}else{
+			printf("\tDetector names from darkcal (%s) and the associated detector (%s) do not match.\n",temp2d.detectorName,detectorName);
+			printf("\tAborting...\n");
+			exit(1);
+		}
+	}
+
+	// Correct detector ID?
+	if (temp2d.detectorID == -1) {
+		printf("\tWARNING: The attribute detectorID could not be read from the darkcal file. Cannot verify whether the darkcal file was generated from the detector of the specified detector ID.\n");
+	}else{
+		if (temp2d.detectorID == detectorID){
+			printf("\tDetector IDs from darkcal (%li) and the associated detector (%li) match.\n",temp2d.detectorID,detectorID);
+		}else{
+			printf("\tDetector IDs from darkcal (%li) and the associated detector (%li) do not match.\n",temp2d.detectorID,detectorID);
+			printf("\tAborting...\n");
+			exit(1);
+		}
+	}
+
 	// Copy into darkcal array
 	for(long i=0;i<pix_nn;i++)
 		darkcal[i] = temp2d.data[i];
@@ -1181,8 +1236,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 		exit(1);
 	}
 	
-	
-	// Read darkcal data from file
+	// Read wire mask from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1195,7 +1249,7 @@ void cPixelDetectorCommon::readWireMask(char *filename){
 	} 
 	
 	
-	// Copy into darkcal array
+	// Copy into pixel mask
 	for(long i=0;i<pix_nn;i++){
 		if((int) temp2d.data[i]==0){
 			pixelmask_shared[i] |= PIXEL_IS_SHADOWED;

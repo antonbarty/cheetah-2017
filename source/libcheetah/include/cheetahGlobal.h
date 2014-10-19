@@ -9,9 +9,13 @@
 
 #ifndef CHEETAHGLOBAL_H
 #define CHEETAHGLOBAL_H
+#include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 #include "detectorObject.h"
+#include "tofDetector.h"
+#include <processRateMonitor.h>
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
@@ -49,10 +53,16 @@ public:
 	/** @brief Number of pixel-array detectors present. */
 	int      nDetectors;
 
+	/** @brief Number of TOF detectors present. */
+	int      nTOFDetectors;
+
 	long frameNumber;
 
 	/** @brief Detector settings that don't change from shot to shot. */
 	cPixelDetectorCommon detector[MAX_DETECTORS];
+
+	/** @brief TOF Detector settings that don't change from shot to shot. */
+	cTOFDetectorCommon tofDetector[MAX_TOF_DETECTORS];
 
 	/** @brief Summed photon energy. */
 	double   summedPhotonEnergyeV;
@@ -81,11 +91,14 @@ public:
 	/** @brief Which detector to use for hitfinding (only one is currently used). */
 	/** @brief Invert thit status (i.e. save "misses" if desired) */
 	int      hitfinderInvertHit;
-	int      hitfinderDetector;
+	/** @brief Perform hit finding for initial frames */
+	int      hitfinderForInitials;
+	int      hitfinderDetectorID;
+	long     hitfinderDetIndex;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */
-	int      hitfinderADC;
+	float      hitfinderADC;
 	/** @brief What's this? */
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
@@ -107,22 +120,16 @@ public:
 	int      hitfinderUsePeakmask;
 	/** @brief Path to the peak mask file. */
 	char     peaksearchFile[MAX_FILENAME_LENGTH];
-	/** @brief Toggle the useage of the TOF-based hitfinder.
+	/** @brief Toggle the usage of the TOF-based hitfinder.
 	 *
 	 * Isn't this specified by hitfinderAlgorithm? */
 	int      hitfinderUseTOF;
-	/** @brief First sample in the TOF scan to consider. */
-	int      hitfinderTOFMinSample;
-	/** @brief Last sample in the TOF scan to consider. */
-	int      hitfinderTOFMaxSample;
-	/** @brief Mean voltage of TOF signal for TOF hitfinding */
-	double   hitfinderTOFMeanBackground;
-	/** @brief Intensity threshold of TOF for hitfinding. */
-	double   hitfinderTOFThresh;
 	/** @brief Window used for moving average in some TOF hitfinding. */
 	double   hitfinderTOFWindow;
-	/** @brief Peak count constraint used in some TOF hitfinding. */
+	/** @brief Peak min count constraint used in some TOF hitfinding. */
 	double   hitfinderTOFMinCount;
+    /** @brief Peak max count constraint used in some TOF hitfinding. */
+	double   hitfinderTOFMaxCount;
 	/** @brief Toggle the checking of peak separations. */
 	int      hitfinderCheckPeakSeparation;
 	/** @brief The maximum allowable separation between Bragg peaks. */
@@ -175,18 +182,8 @@ public:
 	/** @brief list of all hits as output string names. */
 	std::vector<std::string>	hitlist;
 
-	/** @brief Name of the time-of-flight instrument? */
-	char     tofName[MAX_FILENAME_LENGTH];
 	/** @brief Indicate the presence of TOF data. */
 	int      TOFPresent;
-	/** @brief Channel of the TOF instrument. */
-	int      TOFchannel;
-	/** @brief What's this? */
-	int      AcqNumChannels;
-	/** @brief What's this? */
-	int      AcqNumSamples;
-	/** @brief What's this? */
-	double   AcqSampleInterval;
     
 	/** @brief Toggle energy spectrum creation. */
     int      espectrum;
@@ -243,11 +240,22 @@ public:
 	/** @brief The pump laser delay. */
 	float    pumpLaserDelay;
 
+	/** @brief The Epics process variable for the sample translation. */
+	char     samplePosXPV[MAX_FILENAME_LENGTH];
+	char     samplePosYPV[MAX_FILENAME_LENGTH];
+	char     samplePosZPV[MAX_FILENAME_LENGTH];
+
+	/** @brief The Epics process variable for the electrojet voltage */
+	char     sampleVoltage[MAX_FILENAME_LENGTH];
 
 	/** @brief Toggle the writing of hdf5 files for frames containing hits. */
-	int      savehits;
+	int      saveHits;
+	/** @brief Toggle the writing of hdf5 files for frames containing non-hits. */
+	int      saveBlanks;
 	/** @brief Toggle the writing of raw images in hdf5 files. */
-	int      saveRaw;
+	int      saveNonAssembled;
+	/** @brief Toggle the writing of raw modules in hdf5 files. */
+	int      saveModular;
 	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
 	int      saveAssembled;
 	int      assemble2DMask;
@@ -271,6 +279,8 @@ public:
 	/** @brief Output 1 HDF5 per image by default */
 	bool    saveCXI;
     char    dataSaveFormat[MAX_FILENAME_LENGTH];
+	/** @brief Save CXIs in SWMR mode. This makes them incompatible with older HDF5 versions */
+	bool cxiSWMR;
 
 	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
 	    Setting it to 0 avoid doing any flushes.
@@ -327,7 +337,13 @@ public:
 	long     nActiveThreads;
 	long     threadCounter;
 	long     threadPurge;
+
+	// Number of threads in cheetah_ana_mod
+	int      anaModThreads;
+
 	pthread_t  *threadID;
+	pthread_mutex_t  hitclass_mutex;
+	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
 	pthread_mutex_t  hotpixel_mutex;
 	pthread_mutex_t  halopixel_mutex;
@@ -344,6 +360,7 @@ public:
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
 	pthread_mutex_t  pixelmask_shared_mutex;
+    pthread_mutex_t  saveinterval_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
 	pthread_mutex_t  swmr_mutex;
@@ -362,11 +379,14 @@ public:
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
 
+	std::map<std::pair<int, int>, int> hitClasses[3];
+
 
     // counters updated with event data
 	long     npowderHits;
 	long     npowderBlanks;
 	long     nprocessedframes;
+    long     nhitsandblanks;
 	long     nhits;
 	long     nrecentprocessedframes;
 	long     nrecenthits;
@@ -414,6 +434,8 @@ public:
 	int      evr41previous;
 	double   lasttime;
 
+	ProcessRateMonitor processRateMonitor;
+	// 
 public:
 	/**
 	 * @brief Set the default configuration.
@@ -438,6 +460,7 @@ public:
 	void updateCalibrated(void);
 	int validateConfiguration(void);
 
+	void writeHitClasses(FILE* to);
 	void writeInitialLog(void);
 	void updateLogfile(void);
     void writeStatus(const char *);
@@ -452,6 +475,8 @@ public:
 
 private:
 	int parseConfigTag(char*, char*);
-
+	template<typename T> void splitList(char * values, std::vector<T> & elems);
+	
 };
+
 #endif

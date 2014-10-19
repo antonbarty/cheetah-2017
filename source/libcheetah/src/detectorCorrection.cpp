@@ -32,15 +32,15 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask);
  */
 void subtractDarkcal(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if(global->detector[detID].useDarkcalSubtraction) {
+		if(global->detector[detIndex].useDarkcalSubtraction) {
 			/*
 			 *	Subtract darkcal (from calibration file)
 			 */
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			float	*darkcal = global->detector[detID].darkcal;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*darkcal = global->detector[detIndex].darkcal;
 			subtractDarkcal(data, darkcal, pix_nn);
-			eventData->detector[detID].pedSubtracted = 1;
+			eventData->detector[detIndex].pedSubtracted = 1;
 		}
 	}
 }
@@ -60,10 +60,10 @@ void subtractDarkcal(float *data, float *darkcal, long pix_nn) {
  */
 void applyGainCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if(global->detector[detID].useGaincal) {
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*data = eventData->detector[detID].corrected_data;
-			float	*gaincal = global->detector[detID].gaincal;
+		if(global->detector[detIndex].useGaincal) {
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*gaincal = global->detector[detIndex].gaincal;
 			
 			applyGainCorrection(data, gaincal, pix_nn);
 		}
@@ -86,10 +86,10 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
 	
 	DETECTOR_LOOP {
-		if(global->detector[detID].applyBadPixelMask) {
-			long	 pix_nn = global->detector[detID].pix_nn;
-			float	 *data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if(global->detector[detIndex].applyBadPixelMask) {
+			long	 pix_nn = global->detector[detIndex].pix_nn;
+			float	 *data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 
 			applyBadPixelMask(data, mask, pix_nn);
 		}
@@ -119,16 +119,16 @@ void cspadModuleSubtract2(cEventData *eventData, cGlobal *global){
 void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cmModule == flag) {
+        if(global->detector[detIndex].cmModule == flag) {
 		
 			// Dereference datector arrays
-			float		threshold = global->detector[detID].cmFloor;
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+			float		threshold = global->detector[detIndex].cmFloor;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 			
 			cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 			
@@ -203,15 +203,15 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cspadSubtractUnbondedPixels) { 
+        if(global->detector[detIndex].cspadSubtractUnbondedPixels) { 
 			
 			// Dereference datector arrays
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 			
 			cspadSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
 			
@@ -222,8 +222,8 @@ void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
-	double		counter;
-	double		background;
+	float		counter;
+	float		background;
 	
 	// Loop over modules (8x8 array)
 	for(long mi=0; mi<nasics_x; mi++){
@@ -265,14 +265,14 @@ void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long
 void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].cspadSubtractBehindWires) {
-			float		threshold = global->detector[detID].cmFloor;
-			float		*data = eventData->detector[detID].corrected_data;
-			uint16_t      	*mask = eventData->detector[detID].pixelmask;
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
+        if(global->detector[detIndex].cspadSubtractBehindWires) {
+			float		threshold = global->detector[detIndex].cmFloor;
+			float		*data = eventData->detector[detIndex].corrected_data;
+			uint16_t      	*mask = eventData->detector[detIndex].pixelmask;
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
 
 			cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 
@@ -302,7 +302,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 				for(long i=0; i<asic_nx; i++){
 					p = (j + mj*asic_ny) * (asic_nx*nasics_x);
 					p += i + mi*asic_nx;
-					if( isBitOptionUnset(mask[i],PIXEL_IS_SHADOWED) ){
+					if( isBitOptionSet(mask[p],PIXEL_IS_SHADOWED) ){
 						buffer[counter] = data[p];
 						counter++;
 					}
@@ -333,21 +333,20 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 
 
 
-
 /*
  *	Identify hot pixels
  */
 void identifyHotPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-		if(global->detector[detID].useAutoHotpixel) {
+		if(global->detector[detIndex].useAutoHotpixel) {
 			
-			int		lockThreads = global->detector[detID].useBackgroundBufferMutex;
-			long	pix_nn = global->detector[detID].pix_nn;
-			long	hotpixADC = global->detector[detID].hotpixADC;
-			long	bufferDepth = global->detector[detID].hotpixMemory;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+			int		lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			long	hotpixADC = global->detector[detIndex].hotpixADC;
+			long	bufferDepth = global->detector[detIndex].hotpixMemory;
+			float	*frameData = eventData->detector[detIndex].corrected_data;
+			int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
       
 			/*
 			 *	Update global hot pixel buffer
@@ -364,7 +363,7 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 
 			long frameID = eventData->threadNum%bufferDepth;
 			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-			eventData->nHot = global->detector[detID].nhot;
+			eventData->nHot = global->detector[detIndex].nhot;
 
 			if(lockThreads)
 				pthread_mutex_unlock(&global->hotpixel_mutex);
@@ -375,16 +374,18 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 	}		
 }
 
+
+
 /*
  *	Kill hot pixels
  */
 void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if (global->detector[detID].useAutoHotpixel && global->detector[detID].applyAutoHotpixel){
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if (global->detector[detIndex].useAutoHotpixel && global->detector[detIndex].applyAutoHotpixel){
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*frameData = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 	
 			for(long i=0; i<pix_nn; i++)
 				frameData[i] *= isBitOptionUnset(mask[i],PIXEL_IS_HOT);
@@ -395,39 +396,38 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 
 
 
-
 /* 
  *	Recalculate hot pixel masks using frame buffer
  */
 void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 
 	DETECTOR_LOOP {
-		if(global->detector[detID].useAutoHotpixel) {
-			float	hotpixFrequency = global->detector[detID].hotpixFreq;
-			long	bufferDepth = global->detector[detID].hotpixMemory;
-			long	hotpixMemory = global->detector[detID].hotpixMemory;
-			long	hotpixRecalc = global->detector[detID].hotpixRecalc;
-			long	hotpixCalibrated = global->detector[detID].hotpixCalibrated;
-			long	lastUpdate = global->detector[detID].hotpixLastUpdate;
+		if(global->detector[detIndex].useAutoHotpixel) {
+			float	hotpixFrequency = global->detector[detIndex].hotpixFreq;
+			long	bufferDepth = global->detector[detIndex].hotpixMemory;
+			long	hotpixMemory = global->detector[detIndex].hotpixMemory;
+			long	hotpixRecalc = global->detector[detIndex].hotpixRecalc;
+			long	hotpixCalibrated = global->detector[detIndex].hotpixCalibrated;
+			long	lastUpdate = global->detector[detIndex].hotpixLastUpdate;
 			
 			if ( ( (eventData->threadNum == lastUpdate+hotpixRecalc) && hotpixCalibrated ) || ( (eventData->threadNum == (hotpixMemory-1)) && !hotpixCalibrated) ) {
 				
 				long	nhot;
-				int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
+				int	lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
 				long	threshold = lrint(bufferDepth*hotpixFrequency);
-				long	pix_nn = global->detector[detID].pix_nn;
-				uint16_t *mask = global->detector[detID].pixelmask_shared;
-				int16_t	*frameBuffer = global->detector[detID].hotpix_buffer;
+				long	pix_nn = global->detector[detIndex].pix_nn;
+				uint16_t *mask = global->detector[detIndex].pixelmask_shared;
+				int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
 
 				if(lockThreads)
 					pthread_mutex_lock(&global->hotpixel_mutex);
 
-				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detID, threshold, bufferDepth);
+				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detIndex, threshold, bufferDepth);
 				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-				printf("Detector %li: Identified %li hot pixels.\n",detID,nhot);
-				global->detector[detID].nhot = nhot;
-				global->detector[detID].hotpixLastUpdate = eventData->threadNum;
-				global->detector[detID].hotpixCalibrated = 1;
+				printf("Detector %li: Identified %li hot pixels.\n",detIndex,nhot);
+				global->detector[detIndex].nhot = nhot;
+				global->detector[detIndex].hotpixLastUpdate = eventData->threadNum;
+				global->detector[detIndex].hotpixCalibrated = 1;
 	
 				if(lockThreads)
 					pthread_mutex_unlock(&global->hotpixel_mutex);
@@ -461,6 +461,144 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 	}	
 	return nhot;
 }
+
+
+
+/*
+ *	Apply polarization correction
+ *	The polarization correction is calculated using classical electrodynamics (expression from Hura et al JCP 2000)
+ */
+void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if (global->detector[detIndex].usePolarizationCorrection) {
+			float	*data = eventData->detector[detIndex].corrected_data;
+            float   *pix_x = global->detector[detIndex].pix_x;
+            float   *pix_y = global->detector[detIndex].pix_y;
+            float   *pix_z = global->detector[detIndex].pix_z;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+            float   pixelSize = global->detector[detIndex].pixelSize;
+            double  detectorZ = global->detector[detIndex].detectorZ;
+            float   cameraLengthScale = global->detector[detIndex].cameraLengthScale;
+            double  horizontalFraction = global->detector[detIndex].horizontalFractionOfPolarization;
+            
+			applyPolarizationCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, horizontalFraction, pix_nn);
+		}
+	}
+}
+
+
+void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double horizontalFraction, long pix_nn) {
+	for (long i=0; i<pix_nn; i++) {
+        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + (pix_z[i]*pixelSize + detectorZ*detectorZScale)*(pix_z[i]*pixelSize + detectorZ*detectorZScale));
+		data[i] /= horizontalFraction*(1 - pix_x[i]*pix_x[i]*pixelSize*pixelSize/(pix_dist*pix_dist)) + (1 - horizontalFraction)*(1 - pix_y[i]*pix_y[i]*pixelSize*pixelSize/(pix_dist*pix_dist));
+	}
+}
+
+
+
+/*
+ *	Apply solid angle correction, two algorithms are available:
+ *  1. Assume pixels are azimuthally symmetric
+ *  2. Rigorous correction from solid angle of a plane triangle
+ *  Both algorithms divides by the constant term of the solid angle so that
+ *  the pixel scale is still comparable to ADU for hitfinding. The constant
+ *  term of the solid angle is saved as an individual value in the HDF5 files.
+ */
+void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
+	DETECTOR_LOOP {
+		if (global->detector[detIndex].useSolidAngleCorrection) {
+            float	*data = eventData->detector[detIndex].corrected_data;
+            float   *pix_x = global->detector[detIndex].pix_x;
+            float   *pix_y = global->detector[detIndex].pix_y;
+            float   *pix_z = global->detector[detIndex].pix_z;
+            long	pix_nn = global->detector[detIndex].pix_nn;
+            float   pixelSize = global->detector[detIndex].pixelSize;
+            double  detectorZ = global->detector[detIndex].detectorZ;
+            float   cameraLengthScale = global->detector[detIndex].cameraLengthScale;
+            double  solidAngleConst = global->detector[detIndex].solidAngleConst;
+            
+            if (global->detector[detIndex].solidAngleAlgorithm == 1) {
+                applyAzimuthallySymmetricSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
+            } else {                
+                applyRigorousSolidAngleCorrection(data, pix_x, pix_y, pix_z, pixelSize, detectorZ, cameraLengthScale, solidAngleConst, pix_nn);
+            }
+        }
+	}
+}
+
+
+void applyAzimuthallySymmetricSolidAngleCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double solidAngleConst, long pix_nn) {
+    
+    // Azimuthally symmetrical (cos(theta)^3) correction
+    for (int i = 0; i < pix_nn; i++) {
+        double z = pix_z[i]*pixelSize + detectorZ*detectorZScale;
+        double pix_dist = sqrt(pix_x[i]*pix_x[i]*pixelSize*pixelSize + pix_y[i]*pix_y[i]*pixelSize*pixelSize + z*z);
+        data[i] /= (z*pixelSize*pixelSize)/(pix_dist*pix_dist*pix_dist)/solidAngleConst; // remove constant term to only get theta/phi dependent part of solid angle correction for 2D pattern
+    }
+}
+
+
+void applyRigorousSolidAngleCorrection(float *data, float *pix_x, float *pix_y, float *pix_z, float pixelSize, double detectorZ, float detectorZScale, double solidAngleConst, long pix_nn) {            
+    
+    // Rigorous correction from solid angle of a plane triangle
+    for (int i = 0; i < pix_nn; i++) {
+        
+        // allocate local arrays
+        double corner_coordinates[4][3]; // array of vector coordinates of pixel corners, first index starts from upper left corner and goes around clock-wise, second index determines X=0/Y=1/Z=2 coordinate
+        double corner_distances[4]; // array of distances of pixel corners, index starts from upper left corner and goes around clock-wise
+        double determinant;
+        double denominator;
+        double solid_angle[2]; // array of solid angles of the two plane triangles that form the pixel
+        double total_solid_angle;
+        
+        // upper left corner
+        corner_coordinates[0][0] = pix_x[i]*pixelSize + pixelSize/2;
+        corner_coordinates[0][1] = pix_y[i]*pixelSize + pixelSize/2;
+        // upper right corner
+        corner_coordinates[1][0] = pix_x[i]*pixelSize - pixelSize/2;
+        corner_coordinates[1][1] = pix_y[i]*pixelSize + pixelSize/2;
+        // lower right corner
+        corner_coordinates[2][0] = pix_x[i]*pixelSize - pixelSize/2;
+        corner_coordinates[2][1] = pix_y[i]*pixelSize - pixelSize/2;
+        // lower left corner
+        corner_coordinates[3][0] = pix_x[i]*pixelSize + pixelSize/2;
+        corner_coordinates[3][1] = pix_y[i]*pixelSize - pixelSize/2;
+        // assign Z coordinate as detector distance and calculate length of the vectors to the pixel coordinates
+        for (int j = 0; j < 4; j++) {
+            corner_coordinates[j][2] = pix_z[i]*pixelSize + detectorZ*detectorZScale;
+            corner_distances[j] = sqrt(corner_coordinates[j][0]*corner_coordinates[j][0] + corner_coordinates[j][1]*corner_coordinates[j][1] + corner_coordinates[j][2]*corner_coordinates[j][2]);
+        }
+        
+        // first triangle made up of upper left, upper right, and lower right corner
+        // nominator in expression for solid angle of a plane triangle - magnitude of triple product of first 3 corners
+        determinant = fabs( corner_coordinates[0][0]*(corner_coordinates[1][1]*corner_coordinates[2][2] - corner_coordinates[1][2]*corner_coordinates[2][1])
+                           - corner_coordinates[0][1]*(corner_coordinates[1][0]*corner_coordinates[2][2] - corner_coordinates[1][2]*corner_coordinates[2][0])
+                           + corner_coordinates[0][2]*(corner_coordinates[1][0]*corner_coordinates[2][1] - corner_coordinates[1][1]*corner_coordinates[2][0]) );
+        denominator = corner_distances[0]*corner_distances[1]*corner_distances[2] + corner_distances[2]*(corner_coordinates[0][0]*corner_coordinates[1][0] + corner_coordinates[0][1]*corner_coordinates[1][1] + corner_coordinates[0][2]*corner_coordinates[1][2])
+        + corner_distances[1]*(corner_coordinates[0][0]*corner_coordinates[2][0] + corner_coordinates[0][1]*corner_coordinates[2][1] + corner_coordinates[0][2]*corner_coordinates[2][2])
+        + corner_distances[0]*(corner_coordinates[1][0]*corner_coordinates[2][0] + corner_coordinates[1][1]*corner_coordinates[2][1] + corner_coordinates[1][2]*corner_coordinates[2][2]);
+        solid_angle[0] = atan2(determinant, denominator);
+        if (solid_angle[0] < 0)
+            solid_angle[0] += M_PI; // If det > 0 and denom < 0 arctan2 returns < 0, so add PI
+        
+        // second triangle made up of lower right, lower left, and upper left corner
+        // nominator in expression for solid angle of a plane triangle - magnitude of triple product of last 3 corners
+        determinant = fabs( corner_coordinates[0][0]*(corner_coordinates[3][1]*corner_coordinates[2][2] - corner_coordinates[3][2]*corner_coordinates[2][1])
+                           - corner_coordinates[0][1]*(corner_coordinates[3][0]*corner_coordinates[2][2] - corner_coordinates[3][2]*corner_coordinates[2][0])
+                           + corner_coordinates[0][2]*(corner_coordinates[3][0]*corner_coordinates[2][1] - corner_coordinates[3][1]*corner_coordinates[2][0]) );
+        denominator = corner_distances[2]*corner_distances[3]*corner_distances[0] + corner_distances[2]*(corner_coordinates[0][0]*corner_coordinates[3][0] + corner_coordinates[0][1]*corner_coordinates[3][1] + corner_coordinates[0][2]*corner_coordinates[3][2])
+        + corner_distances[3]*(corner_coordinates[0][0]*corner_coordinates[2][0] + corner_coordinates[0][1]*corner_coordinates[2][1] + corner_coordinates[0][2]*corner_coordinates[2][2])
+        + corner_distances[0]*(corner_coordinates[3][0]*corner_coordinates[2][0] + corner_coordinates[3][1]*corner_coordinates[2][1] + corner_coordinates[3][2]*corner_coordinates[2][2]);
+        solid_angle[1] = atan2(determinant, denominator);
+        if (solid_angle[1] < 0)
+            solid_angle[1] += M_PI; // If det > 0 and denom < 0 arctan2 returns < 0, so add PI
+        
+        total_solid_angle = 2*(solid_angle[0] + solid_angle[1]);
+        
+        data[i] /= total_solid_angle/solidAngleConst; // remove constant term to only get theta/phi dependent part of solid angle correction for 2D pattern
+    }
+}
+
 
 
 // Read out artifact compensation for pnCCD back detector
@@ -501,9 +639,9 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if(strcmp(global->detector[detID].detectorType, "pnccd") == 0  && global->detector[detID].usePnccdOffsetCorrection == 1) {
-			float	*data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+		if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].usePnccdOffsetCorrection == 1) {
+			float	*data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			pnccdOffsetCorrection(data,mask);
 		}
 	}
@@ -569,15 +707,15 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask) {
 
 void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
-		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineInterpolation == 1)) {
+		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineInterpolation == 1)) {
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			float *data = eventData->detector[detID].corrected_data;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+			float *data = eventData->detector[detIndex].corrected_data;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			uint16_t mask_out_bits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD |
 				PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD  | PIXEL_IS_MISSING;
 			for(y=0; y<ny; y++){
@@ -596,21 +734,21 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 
 void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
-		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].usePnccdLineMasking == 1)) {
+		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineMasking == 1)) {
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			uint16_t *mask = eventData->detector[detID].pixelmask;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			for(y=0; y<ny; y++){
 				for(x=x_min;x<=x_max;x=x+2){
 					i = nx*y+x;
 					i0 = nx*y+x-1;
 					i1 = nx*y+x+1;
 					mask[i] |= PIXEL_IS_BAD;
-					if (global->detector[detID].usePnccdLineInterpolation == 1){
+					if (global->detector[detIndex].usePnccdLineInterpolation == 1){
 						mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
 					}
 				}
@@ -648,9 +786,9 @@ void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 
 void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
-        if(strcmp(global->detector[detID].detectorType, "pnccd") == 0 ) {
-            if(global->detector[detID].usePnccdFixWiringError == 1) {
-                float	*data = eventData->detector[detID].corrected_data;
+        if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 ) {
+            if(global->detector[detIndex].usePnccdFixWiringError == 1) {
+                float	*data = eventData->detector[detIndex].corrected_data;
                 pnccdFixWiringError(data);
             }
         }

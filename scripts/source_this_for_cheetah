@@ -1,0 +1,28 @@
+# Source this for running cheetah
+#. /reg/g/psdm/etc/ana_env.sh
+#. /reg/g/psdm/etc/sit_env.sh
+#. /reg/g/psdm/bin/sit_setup.sh ana-0.11.10
+
+# My home
+MY_HOME=/reg/neh/home/hantke/
+
+# HDF5 with SWMR
+#export SWMR=0
+#if [[ $SWMR == 1 ]]
+#then
+#    # HDF5 and h5py
+#    export PATH=$MY_HOME/local_swmr/bin:${PATH}
+#    export LD_LIBRARY_PATH=$MY_HOME/local_swmr/lib:${LD_LIBRARY_PATH}
+#    export PYTHONPATH=$MY_HOME/src_swmr/python/h5py/build/lib.linux-x86_64-2.7/:${PYTHONPATH}
+#    # Cheetah
+#    #export PATH=/reg/neh/home/hantke/programs/cheetah/build_psana_swmr/source/psana/:$PATH
+#    #export LD_LIBRARY_PATH=$MY_HOME/programs/cheetah/build_psana_swmr/source/libPSShmemInput:$LD_LIBRARY_PATH
+    #export LD_LIBRARY_PATH=$MY_HOME/programs/cheetah/build_psana_swmr/source/libXtcInput:$LD_LIBRARY_PATH
+    #export LD_LIBRARY_PATH=$MY_HOME/programs/cheetah/build_psana_swmr/source/libpsana:$LD_LIBRARY_PATH
+    #export LD_LIBRARY_PATH=$MY_HOME/programs/cheetah/build_psana_swmr/source/libcheetah:$LD_LIBRARY_PATH
+    #export LD_LIBRARY_PATH=$MY_HOME/programs/cheetah/build_psana_swmr/source/cheetah_ana_pkg:$LD_LIBRARY_PATH
+#    export PATH=$MY_HOME/local_cheetah_swmr/bin/:$PATH
+#    export LD_LIBRARY_PATH=$MY_HOME/local_cheetah_swmr/lib/:$LD_LIBRARY_PATH
+#else
+    #export PATH=/reg/neh/home/hantke/programs/cheetah/build_psana/source/psana/:$PATH
+#fi

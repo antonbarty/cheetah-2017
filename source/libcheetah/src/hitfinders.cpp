@@ -28,7 +28,7 @@
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
 	// Dereference stuff
-	int	    detID = global->hitfinderDetector;
+	int	    detIndex = global->hitfinderDetIndex;
 	int		hit=0;
 	int		nPeaks;
 	
@@ -50,15 +50,15 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		break;	
 
 	case 1 :	// Count the number of pixels above ADC threshold
-		hit = hitfinder1(global,eventData,detID);
+		hit = hitfinder1(global,eventData,detIndex);
 		break;	
 	  
 	case 2 :	// Integrated intensity above ADC threshold
-		hit = hitfinder2(global,eventData,detID);
+		hit = hitfinder2(global,eventData,detIndex);
 		break;
 			
 	case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
-		nPeaks = peakfinder(global,eventData, detID);
+		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
@@ -66,11 +66,11 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		break;	
 
 	case 4 :	// Use TOF signal to find hits
-		hit = hitfinder4(global,eventData,detID);
+		hit = hitfinder4(global,eventData,detIndex);
 		break;
 						
 	case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
-		nPeaks = peakfinder(global,eventData, detID);
+		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
@@ -82,26 +82,26 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		eventData->nPeaks = eventData->pumpLaserCode;
 		break;
 	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
-		nPeaks = peakfinder(global,eventData, detID);
+		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
 		break;
 			
 	case 9 :	// Use TOF signal, maximum peak, to find hits
-		hit = hitfinder9(global,eventData,detID);
+		hit = hitfinder9(global,eventData,detIndex);
 		break;
 	case 10 :	// Use TOF signal, maximum peak, excluding classical htis (this was 8 earlier, but it overlapped with Anton's new hitfinder)
-		hit = hitfinder9(global,eventData,detID);
+		hit = hitfinder9(global,eventData,detIndex);
 		if (hit)
 	    {
 			int nPeaks = eventData->nPeaks;
-			hit = !(hitfinder1(global,eventData,detID));
+			hit = !(hitfinder1(global,eventData,detIndex));
 			eventData->nPeaks = nPeaks;
 	    }
 		break;
 	case 11 : // Use TOF signal, voltage above threshold
-		hit = hitfinderTOF(global, eventData, detID);
+		hit = hitfinderTOF(global, eventData, detIndex);
 		break;
 
 
@@ -114,7 +114,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		hit = (int) containsEvent((std::string) eventData->eventname, global);
 		break; 
 			
-
+    case 13 : // Combine hitfinderTOF and hitfinder 1 (using both protons and photons)
+        hit = hitfinderProtonsandPhotons(global, eventData, detIndex);
+        break;
+        
 	default :
 		printf("Unknown hit finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 		printf("Stopping in confusion.\n");
@@ -123,7 +126,17 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 			
 	}
 	
-	
+	// Update central hit counter
+	// !!! This is done also in hitfinder.cpp. Therefore I comment this out. /Max   
+    /*pthread_mutex_lock(&global->nhits_mutex);
+    global->nhitsandblanks++;
+	if(hit) {
+		global->nhits++;
+		global->nrecenthits++;
+	}
+    pthread_mutex_unlock(&global->nhits_mutex);
+	*/
+
 	// Set the appropriate powder class
 	eventData->powderClass = hit;
 		   
@@ -181,20 +194,16 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	
 	// Bad detector??
-	int	    detID = global->hitfinderDetector;
-	if(detID > global->nDetectors) {
-		printf("peakfinder: false detectorID %i\n",detID);
-		exit(1);
-	}
+	long    detIndex = global->hitfinderDetIndex;
 
-	long	pix_nx = global->detector[detID].pix_nx;
-	long	pix_nn = global->detector[detID].pix_nn;
-	long	asic_nx = global->detector[detID].asic_nx;
-	long	asic_ny = global->detector[detID].asic_ny;
-	long	nasics_x = global->detector[detID].nasics_x;
-	long	radius = global->detector[detID].localBackgroundRadius;
-	float	*pix_r = global->detector[detID].pix_r;
-	float	*data = eventData->detector[detID].corrected_data;
+	long	pix_nx = global->detector[detIndex].pix_nx;
+	long	pix_nn = global->detector[detIndex].pix_nn;
+	long	asic_nx = global->detector[detIndex].asic_nx;
+	long	asic_ny = global->detector[detIndex].asic_ny;
+	long	nasics_x = global->detector[detIndex].nasics_x;
+	long	radius = global->detector[detIndex].localBackgroundRadius;
+	float	*pix_r = global->detector[detIndex].pix_r;
+	float	*data = eventData->detector[detIndex].corrected_data;
 
 	float	hitfinderADCthresh = global->hitfinderADC;
 	float	hitfinderMinSNR = global->hitfinderMinSNR;
@@ -209,7 +218,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	//	Bad region masks  (data=0 to ignore regions)
 	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 	for(long i=0;i<pix_nn;i++)
-		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 	
 
 	subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, 2);
@@ -274,7 +283,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 	*tat = 0.0;
 
 	for(long i=0;i<pix_nn;i++){
-		if(isNoneOfBitOptionsSet(mask[i],pixel_options) && (data[i] > ADC_threshold)){
+		if((isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
 			*tat += data[i];
 			*nat += 1;
 		}
@@ -287,7 +296,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
  *	Hit if number of pixels above ADC threshold exceeds MinPixCount
  */
 
-int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
+int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 
 	int       hit = 0;
 	long      nat = 0;
@@ -305,27 +314,27 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
 	}
   
 	if (global->hitfinderOnDetectorCorrectedData) {
-		hitfinderData = eventData->detector[detID].detector_corrected_data;
+		hitfinderData = eventData->detector[detIndex].detector_corrected_data;
 	} else {
-		hitfinderData = eventData->detector[detID].corrected_data;
+		hitfinderData = eventData->detector[detIndex].corrected_data;
 	}
 
 	if (global->hitfinderDownsampling > 1) {
-		long pix_nn_0 = global->detector[detID].pix_nn;  
-		long pix_nx_0 = global->detector[detID].pix_nx;  
+		long pix_nn_0 = global->detector[detIndex].pix_nn;  
+		long pix_nx_0 = global->detector[detIndex].pix_nx;  
 		float *data_0 = hitfinderData;
-		uint16_t *mask_0 = eventData->detector[detID].pixelmask;
+		uint16_t *mask_0 = eventData->detector[detIndex].pixelmask;
 		long pix_nx = (long)ceil(pix_nx_0/(double)global->hitfinderDownsampling);
 		long pix_ny = pix_nx;
 		pix_nn = pix_nx*pix_ny;
 		data = (float *) calloc(pix_nn,sizeof(float));
 		mask = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
-		downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,1.,mask_0,global->hitfinderDownsampling);
+		downsampleImageNonConservative(data_0,data,pix_nn_0,pix_nx_0,pix_nn,pix_nx,mask_0,global->hitfinderDownsampling);
 		downsampleMaskNonConservative(mask_0,mask,pix_nn_0,pix_nx_0,pix_nn,pix_nx,global->hitfinderDownsampling);    
 	} else {
-		pix_nn = global->detector[detID].pix_nn;  
+		pix_nn = global->detector[detIndex].pix_nn;  
 		data = hitfinderData;
-		mask = eventData->detector[detID].pixelmask;
+		mask = eventData->detector[detIndex].pixelmask;
 	}
 
 	integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
@@ -356,14 +365,14 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detID){
  *	Hit if integrated value of pixels above ADC threshold exceeds TAT threshold
  */
 
-int hitfinder2(cGlobal *global, cEventData *eventData, long detID){
+int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
   
 	int       hit = 0;
 	long      nat = 0;
 	float     tat = 0.;
-	uint16_t  *mask = eventData->detector[detID].pixelmask;
-	float     *data = eventData->detector[detID].corrected_data;
-	long	    pix_nn = global->detector[detID].pix_nn;  
+	uint16_t  *mask = eventData->detector[detIndex].pixelmask;
+	float     *data = eventData->detector[detIndex].corrected_data;
+	long	    pix_nn = global->detector[detIndex].pix_nn;  
 	float     ADC_threshold = global->hitfinderADC;
 	// Combine pixel options for pixels to be ignored
 	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
@@ -383,10 +392,10 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detID){
 	return hit;
 }
 
-int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
+int hitfinder4(cGlobal *global,cEventData *eventData,long detIndex){
 	int hit = 0;
-	long		pix_nn = global->detector[detID].pix_nn;
-	uint16_t      *mask = eventData->detector[detID].pixelmask;
+	long		pix_nn = global->detector[detIndex].pix_nn;
+	uint16_t      *mask = eventData->detector[detIndex].pixelmask;
 	long	nat = 0;
 	long	counter;
 	float	total;
@@ -401,7 +410,7 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 	 *	Create a buffer for image data so we don't nuke the main image by mistake 
 	 */
 	float *temp = (float*) calloc(pix_nn, sizeof(float));
-	memcpy(temp, eventData->detector[detID].corrected_data, pix_nn*sizeof(float));
+	memcpy(temp, eventData->detector[detIndex].corrected_data, pix_nn*sizeof(float));
 	
 
 	// combine pixelmask bits
@@ -421,11 +430,13 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 		  
 	if ((global->hitfinderUseTOF==1) && (eventData->TOFPresent==1)){
 		double total_tof = 0.;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			total_tof += eventData->TOFVoltage[i];
+		for(int i=global->tofDetector[0].hitfinderMinSample; i<global->tofDetector[0].hitfinderMaxSample; i++){			
+			// We'll only look at the first TOF detector
+			total_tof += eventData->tofDetector[0].voltage[i];
 		}
-		if (total_tof > global->hitfinderTOFThresh)
+		if (total_tof > global->tofDetector[0].hitfinderThreshold){
 			hit = 1;
+		}
 	}
 	// Use cspad threshold if TOF is not present 
 	else {
@@ -441,9 +452,9 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detID){
 	return hit;
 }
 
-int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
+int hitfinder9(cGlobal *global,cEventData *eventData,long detIndex){
 	int hit = 0;
-	//long		pix_nn = global->detector[detID].pix_nn;
+	//long		pix_nn = global->detector[detIndex].pix_nn;
 	long	nat = 0;
 	long	counter;
 	float	total;
@@ -468,14 +479,15 @@ int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
 			olddata[k] = NAN;
 		}
 		int count = 0;
-		for(int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			olddata[i % nback] = eventData->TOFVoltage[i];
+		for(int i=global->tofDetector[0].hitfinderMinSample; i < global->tofDetector[0].hitfinderMaxSample; i++){
+			// We'll only look at the first TOF detector
+			olddata[i % nback] = eventData->tofDetector[0].voltage[i];
 			double sum = 0;
 			for (int k = 0; k < nback; k++)
 			{
 				sum += olddata[k];
 			}
-			if (sum < global->hitfinderTOFThresh * nback) count++;
+			if (sum < global->tofDetector[0].hitfinderThreshold * nback) count++;
 		}
 		hit = (count >= global->hitfinderTOFMinCount);
 		eventData->nPeaks = count;
@@ -490,17 +502,31 @@ int hitfinder9(cGlobal *global,cEventData *eventData,long detID){
 /* A TOF hitfinder counting the number of protons in the TOF signal given the TOF mean background, the proton window
    and TOF voltage threshold for protons. Every frame with nr. of protons at least TOFMinCount is considered a hit. */
  
-int hitfinderTOF(cGlobal *global, cEventData *eventData, long detID){
+int hitfinderTOF(cGlobal *global, cEventData *eventData, long detIndex){
 	int hit = 0;
 	if (eventData->TOFPresent==1){
 		int count = 0;
-		for (int i=global->hitfinderTOFMinSample; i<global->hitfinderTOFMaxSample; i++){
-			count += (int)floor(fmax((eventData->TOFVoltage[i] - global->hitfinderTOFMeanBackground) / global->hitfinderTOFThresh, 0)) ;
+		for(int i = 0;i<global->nTOFDetectors;i++){
+			for (int j = global->tofDetector[i].hitfinderMinSample; j<global->tofDetector[i].hitfinderMaxSample; j++) {
+				count += (eventData->tofDetector[i].voltage[j] < global->tofDetector[i].hitfinderThreshold);
+			}
 		}
-		hit = (count >= global->hitfinderTOFMinCount);
-		eventData->nPeaks = count;
+		hit = (count >= global->hitfinderTOFMinCount) & (count < global->hitfinderTOFMaxCount);
+		eventData->nProtons = count;
 	}
 	return hit;
+}
+
+/* A combined hitfinder using both protons (hitfinderTOF) and photons (hitfinder1) */
+
+int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detIndex){
+    int hit = 0;
+    int hit_tof = 0;
+    int hit_photons = 0;
+    hit_photons = hitfinder1(global, eventData, detIndex);
+    hit_tof = hitfinderTOF(global, eventData, detIndex);
+    hit = hit_tof & hit_photons;
+    return hit;
 }
 
 

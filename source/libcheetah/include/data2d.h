@@ -7,6 +7,12 @@
  *
  */
 
+#ifndef DATA2D_INCLUDED
+#define DATA2D_INCLUDED
+
+extern const char* const ATTR_NAME_DETECTOR_NAME ;
+extern const char* const ATTR_NAME_DETECTOR_ID ;
+
 #define	tData2d	float
 
 class cData2d {
@@ -26,7 +32,8 @@ public:
 public:
 	long		nx,ny,nn;
 	tData2d		*data;
-	
+	char        detectorName[1024];
+	long        detectorID;
 	
 private:
 	
@@ -34,3 +41,4 @@ private:
 };
 
 
+#endif

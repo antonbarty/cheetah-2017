@@ -85,9 +85,9 @@ void *worker(void *threadarg) {
 	
 	// Copy pixelmask_shared into pixelmask and raw detector data into corrected array as starting point for corrections
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].pixelmask[i] = global->detector[detIndex].pixelmask_shared[i];
+			eventData->detector[detIndex].corrected_data[i] = eventData->detector[detIndex].raw_data[i];
 		}
 	}
 	
@@ -128,6 +128,12 @@ void *worker(void *threadarg) {
 	// Apply gain correction
 	applyGainCorrection(eventData, global);
 	
+    // Apply polarization correction
+	applyPolarizationCorrection(eventData, global);
+    
+    // Apply solid angle correction
+	applySolidAngleCorrection(eventData, global);
+	
 	// Apply bad pixel map
 	applyBadPixelMask(eventData, global);
  
@@ -153,7 +159,7 @@ void *worker(void *threadarg) {
 localBGCalculated:
 	// Keep memory of data with only detector artefacts subtracted (possibly needed later)
 	DETECTOR_LOOP {
-		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		memcpy(eventData->detector[detIndex].detector_corrected_data, eventData->detector[detIndex].corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
 	}
 
 	// Subtract residual common mode offsets (cmModule=2) 
@@ -192,7 +198,8 @@ localBGCalculated:
 		DEBUG("Hit finding");
 	}
 
-	if(global->hitfinder){ 
+	if(global->hitfinder && (global->hitfinderForInitials ||
+							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
 		hit = hitfinder(eventData, global);
 		//if (global->hitfinderInvertHit == 1){
 		//	if ( hit == 1 )
@@ -201,15 +208,23 @@ localBGCalculated:
 		//		hit = 1;
 		//}
 		eventData->hit = hit;
+
+		pthread_mutex_lock(&global->hitclass_mutex);
+		for (int coord = 0; coord < 3; coord++) {
+			if (eventData->nPeaks < 100) continue;
+			global->hitClasses[coord][std::make_pair(eventData->samplePos[coord] * 1000, hit)]++;
+		}
+		pthread_mutex_unlock(&global->hitclass_mutex);
+		sortPowderClass(eventData, global);		
 	}
 
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 hitknown: 
+	// Slightly wrong that all initial frames are blanks
+	// when hitfinderForInitials is 0
     /*
      *	Sort event into different classes (eg: laser on/off)
      */
-    sortPowderClass(eventData, global);
-		
   
 	DEBUGL2_ONLY {
 		DEBUG("Procedures depending on hit tag");
@@ -263,14 +278,14 @@ hitknown:
 
 	DETECTOR_LOOP {
 		// Revert to raw detector data
-		if(global->detector[detID].saveDetectorRaw){
-			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].raw_data[i];
+		if(global->detector[detIndex].saveDetectorRaw){
+			for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+				eventData->detector[detIndex].corrected_data[i] = eventData->detector[detIndex].raw_data[i];
 			}
 		}
 		// Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-		else if (global->detector[detID].saveDetectorCorrectedOnly) {
-			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		else if (global->detector[detIndex].saveDetectorCorrectedOnly) {
+			memcpy(eventData->detector[detIndex].corrected_data, eventData->detector[detIndex].detector_corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
 		}
 	}
 
@@ -336,7 +351,7 @@ hitknown:
 	}
 
 //logfile:
-	eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
 
 	// If this is a hit, write out to our favourite HDF5 format
@@ -353,28 +368,32 @@ hitknown:
 	}
 	
 	// Update central hit counter
+	pthread_mutex_lock(&global->nhits_mutex);	
+    global->nhitsandblanks++;
 	if(hit) {
-		pthread_mutex_lock(&global->nhits_mutex);
 		global->nhits++;
 		global->nrecenthits++;
-		pthread_mutex_unlock(&global->nhits_mutex);
 	}
+	pthread_mutex_unlock(&global->nhits_mutex);
 
 	if(eventData->writeFlag){
 		// one CXI or many H5?
 		if(global->saveCXI){
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, global->cxiFilename, eventData->nPeaks);
-			pthread_mutex_lock(&global->saveCXI_mutex);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
+				   eventData->threadNum, global->processRateMonitor.getRate(), 
+				   100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, 
+				   global->cxiFilename, eventData->nPeaks);
+		    //pthread_mutex_lock(&global->saveCXI_mutex);
 			writeCXI(eventData, global);
-			pthread_mutex_unlock(&global->saveCXI_mutex);
+			//pthread_mutex_unlock(&global->saveCXI_mutex);
 		} else {
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->eventStamp, eventData->nPeaks);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
 	}
 	// This frame is not going to be saved, but print anyway
 	else {
-		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nprocessedframes), eventData->nPeaks);
+		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->nPeaks);
 	}
 
 	// FEE spectrometer data stack 
@@ -454,6 +473,29 @@ cleanup:
 
 	}
 
+    pthread_mutex_unlock(&global->saveinterval_mutex);
+    /*
+     *  Update counters
+     */
+    global->nprocessedframes += 1;
+	global->nrecentprocessedframes += 1;
+    
+	/*
+	 *	Save some types of information from time to timeperiodic powder patterns
+	 */
+	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
+		if(global->saveCXI){
+			writeAccumulatedCXI(global);
+		} 
+		saveRunningSums(global);
+		saveHistograms(global);
+		saveRadialStacks(global);
+		saveSpectrumStacks(global);
+		global->updateLogfile();
+		global->writeStatus("Not finished");
+	}
+	pthread_mutex_unlock(&global->saveinterval_mutex);
+
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveThreads -= 1;
@@ -496,15 +538,15 @@ void evr41fudge(cEventData *t, cGlobal *g){
  
 	//int nCh = g->AcqNumChannels;
 	//int nSamp = g->AcqNumSamples;
-	double * Vtof = t->TOFVoltage;
+	double * Vtof = &(t->tofDetector[0].voltage[0]);
 	int i;
 	double Vtot = 0;
 	double Vmax = 0;
 	int tCounts = 0;
-	for(i=g->hitfinderTOFMinSample; i<g->hitfinderTOFMaxSample; i++){
+	for(i=g->tofDetector[0].hitfinderMinSample; i<g->tofDetector[0].hitfinderMaxSample; i++){
 		Vtot += Vtof[i];
 		if ( Vtof[i] > Vmax ) Vmax = Vtof[i];
-		if ( Vtof[i] >= g->hitfinderTOFThresh ) tCounts++;
+		if ( Vtof[i] >= g->tofDetector[0].hitfinderThreshold ) tCounts++;
 	}
 	
 
