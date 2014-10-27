@@ -33,21 +33,21 @@ using namespace std;
  */
 
 PeakDetect::PeakDetect(uint16_t *Yarray, unsigned length) {
-	x = NULL;
-	y = Yarray;
-	maxima = new PointVector();
-	minima = new PointVector();
-	this->length = length;
-	index = 0;
+    x = NULL;
+    y = Yarray;
+    maxima = new PointVector();
+    minima = new PointVector();
+    this->length = length;
+    index = 0;
 }
 
 PeakDetect::PeakDetect(int *Xarray, uint16_t *Yarray, unsigned length) {
-	x = Xarray;
-	y = Yarray;
-	maxima = new PointVector();
-	minima = new PointVector();
-	this->length = length;
-	index = 0;
+    x = Xarray;
+    y = Yarray;
+    maxima = new PointVector();
+    minima = new PointVector();
+    this->length = length;
+    index = 0;
 }
 
 
@@ -58,8 +58,8 @@ PeakDetect::PeakDetect(int *Xarray, uint16_t *Yarray, unsigned length) {
  */
 
 PeakDetect::~PeakDetect() {
-	delete maxima;
-	delete minima;
+    delete maxima;
+    delete minima;
 }
 
 
@@ -77,9 +77,9 @@ PeakDetect::~PeakDetect() {
  */
 
 void PeakDetect::clear() {
-	maxima->clear();
-	minima->clear();
-	index = 0;
+    maxima->clear();
+    minima->clear();
+    index = 0;
 }
 
 
@@ -91,133 +91,133 @@ void PeakDetect::clear() {
  */
 
 void PeakDetect::findAll(float delta) {
-	
-	clear();
-	
-	Point max(-1, -1);
-	Point min(-1, 65536);
-	bool findMax = false;
-	
-	for (index = 0; index < length; index++) {
-		// check if max/min should be updated
-		if (y[index] > max.getY()) max = Point(index, y[index]);
-		if (minima->size()) {
-			if (y[index] < min.getY()) min = Point(index, y[index]);
-		} else {
-			if (y[index] <= min.getY()) min = Point(index, y[index]);
-		}
-		// check if max/min are larger than delta
-		if (findMax) {
-			if (y[index] < max.getY() - delta) {
-				maxima->add(max.getX(), max.getY());
-				min = Point(index, y[index]);
-				findMax = false;
-			}
-		} else {
-			if (y[index] > min.getY() + delta) {
-				minima->add(min.getX(), min.getY());
-				max = Point(index, y[index]);
-				findMax = true;
-			}
-		}
-	}
-	// add last minimum
-	minima->add(min.getX(), min.getY());
-	
-	if (x != NULL) {
-		
-		PointVector *maxtemp = new PointVector();
-		PointVector *mintemp = new PointVector();
-		
-		for (int i = 0; i < maxima->size(); i++)
-			maxtemp->add(x[(maxima->get(i))->getX()], (maxima->get(i))->getY());
-		for (int i = 0; i < minima->size(); i++)
-			mintemp->add(x[(minima->get(i))->getX()], (minima->get(i))->getY());
-		
-		delete maxima;
-		delete minima;
-		maxima = maxtemp;
-		minima = mintemp;
-		
-	}
+    
+    clear();
+    
+    Point max(-1, -1);
+    Point min(-1, 65536);
+    bool findMax = false;
+    
+    for (index = 0; index < length; index++) {
+        // check if max/min should be updated
+        if (y[index] > max.getY()) max = Point(index, y[index]);
+        if (minima->size()) {
+            if (y[index] < min.getY()) min = Point(index, y[index]);
+        } else {
+            if (y[index] <= min.getY()) min = Point(index, y[index]);
+        }
+        // check if max/min are larger than delta
+        if (findMax) {
+            if (y[index] < max.getY() - delta) {
+                maxima->add(max.getX(), max.getY());
+                min = Point(index, y[index]);
+                findMax = false;
+            }
+        } else {
+            if (y[index] > min.getY() + delta) {
+                minima->add(min.getX(), min.getY());
+                max = Point(index, y[index]);
+                findMax = true;
+            }
+        }
+    }
+    // add last minimum
+    minima->add(min.getX(), min.getY());
+    
+    if (x != NULL) {
+        
+        PointVector *maxtemp = new PointVector();
+        PointVector *mintemp = new PointVector();
+        
+        for (int i = 0; i < maxima->size(); i++)
+            maxtemp->add(x[(maxima->get(i))->getX()], (maxima->get(i))->getY());
+        for (int i = 0; i < minima->size(); i++)
+            mintemp->add(x[(minima->get(i))->getX()], (minima->get(i))->getY());
+        
+        delete maxima;
+        delete minima;
+        maxima = maxtemp;
+        minima = mintemp;
+        
+    }
 }
 
 
 /*
  * Implementation notes: findNext
  * ------------------------------
- * This function 
+ * This function
  */
 
 void PeakDetect::findNext(float delta) {
-
-	Point max(-1, -1);
-	Point min(-1, 65536);
-	bool findMax = true;
-	int maximaSize = 0;
-	int minimaSize = 1;
-	
-	if (index) {
-		max = Point(index, y[index]);
-		min = max;
-		maximaSize = maxima->size();
-		minimaSize = minima->size();
-	}
-	
-	while (maxima->size() - maximaSize < 1 || minima->size() - minimaSize < 1) {
-		
-		if (index >= length) break;
-		// check if max/min should be updated
-		if (y[index] > max.getY()) {
-			if (x == NULL) max = Point(index, y[index]);
-			else max = Point(x[index], y[index]);
-		}
-		if (y[index] < min.getY()) {
-			if (x == NULL) min = Point(index, y[index]);
-			else min = Point(x[index], y[index]);
-		}
-		// check if max/min are larger than delta
-		if (findMax) {
-			if (y[index] < max.getY() - delta) {
-				maxima->add(max.getX(), max.getY());
-				// find first minimum and add it
-				if (maxima->size() == 1) {
-					int jmax;
-					if (x == NULL) jmax = max.getX();
-					else {
-						int k = 0;
-						while (true) {
-							if (x[k] == max.getX()) {
-								jmax = k;
-								break;
-							}
-							k++;
-						}
-					}
-					min = Point(-1, 65536);
-					for (int j = 0; j < jmax; j++) {
-						if (y[j] <= min.getY()) {
-							if (x == NULL) min = Point(j, y[j]);
-							else min = Point(x[index], y[index]);
-						}
-					}
-					minima->add(min.getX(), min.getY());
-				}
-				if (x == NULL) min = Point(index, y[index]);
-				else min = Point(x[index], y[index]);
-				findMax = false;
-			}
-		} else {
-			if (y[index] > min.getY() + delta) {
-				minima->add(min.getX(), min.getY());
-				if (x == NULL) max = Point(index, y[index]);
-				else max = Point(x[index], y[index]);
-				findMax = true;
-			}
-		}
-		if (++index == length) minima->add(min.getX(), min.getY());
-	}
-		
+    
+    Point max(-1, -1);
+    Point min(-1, 65536);
+    bool findMax = true;
+    int maximaSize = 0;
+    int minimaSize = 1;
+    
+    if (index) {
+        max = Point(index, y[index]);
+        min = max;
+        maximaSize = maxima->size();
+        minimaSize = minima->size();
+    }
+    
+    while (maxima->size() - maximaSize < 1 || minima->size() - minimaSize < 1) {
+        
+        if (index >= length) break;
+        // check if max/min should be updated
+        if (y[index] > max.getY()) {
+            if (x == NULL) max = Point(index, y[index]);
+            else max = Point(x[index], y[index]);
+        }
+        if (y[index] < min.getY()) {
+            if (x == NULL) min = Point(index, y[index]);
+            else min = Point(x[index], y[index]);
+        }
+        // check if max/min are larger than delta
+        if (findMax) {
+            if (y[index] < max.getY() - delta) {
+                maxima->add(max.getX(), max.getY());
+                // find first minimum and add it
+                if (maxima->size() == 1) {
+                    int jmax;
+                    if (x == NULL) jmax = max.getX();
+                    else {
+                        int k = 0;
+                        while (true) {
+                            if (x[k] == max.getX()) {
+                                jmax = k;
+                                break;
+                            }
+                            k++;
+                        }
+                    }
+                    min = Point(-1, 65536);
+                    for (int j = 0; j < jmax; j++) {
+                        if (y[j] <= min.getY()) {
+                            if (x == NULL) min = Point(j, y[j]);
+                            else min = Point(x[index], y[index]);
+                        }
+                    }
+                    minima->add(min.getX(), min.getY());
+                }
+                if (x == NULL) min = Point(index, y[index]);
+                else min = Point(x[index], y[index]);
+                findMax = false;
+            }
+        } else {
+            if (y[index] > min.getY() + delta) {
+                minima->add(min.getX(), min.getY());
+                if (x == NULL) max = Point(index, y[index]);
+                else max = Point(x[index], y[index]);
+                findMax = true;
+            }
+        }
+        if (++index == length) minima->add(min.getX(), min.getY());
+    }
+    
 }
 
 
@@ -252,12 +252,12 @@ const int INITIAL_CAPACITY = 100;
  */
 
 PointVector::PointVector() {
-  capacity = INITIAL_CAPACITY;
-  points = new Point *[capacity];
-  for (int i = 0; i < capacity; i++) {
-    points[i] = NULL;
-  }
-  count = 0;
+    capacity = INITIAL_CAPACITY;
+    points = new Point *[capacity];
+    for (int i = 0; i < capacity; i++) {
+        points[i] = NULL;
+    }
+    count = 0;
 }
 
 
@@ -269,8 +269,8 @@ PointVector::PointVector() {
  */
 
 PointVector::~PointVector() {
-  clear();
-  delete[] points;
+    clear();
+    delete[] points;
 }
 
 
@@ -287,11 +287,11 @@ PointVector::~PointVector() {
  */
 
 unsigned PointVector::size() {
-  return count;
+    return count;
 }
 
 bool PointVector::isEmpty() {
-  return count;
+    return count;
 }
 
 
@@ -303,11 +303,11 @@ bool PointVector::isEmpty() {
  */
 
 void PointVector::clear() {
-  for (int i = 0; i < count; i++) {
-    delete points[i];
-    points[i] = NULL;
-  }
-  count = 0;
+    for (int i = 0; i < count; i++) {
+        delete points[i];
+        points[i] = NULL;
+    }
+    count = 0;
 }
 
 
@@ -321,13 +321,13 @@ void PointVector::clear() {
  */
 
 void PointVector::add(int x, int y) {
-  if (count == capacity) expandCapacity();
-  points[count++] = new Point(x, y);
+    if (count == capacity) expandCapacity();
+    points[count++] = new Point(x, y);
 }
 
 void PointVector::add(Point *point) {
-  if (count == capacity) expandCapacity();
-  points[count++] = point;
+    if (count == capacity) expandCapacity();
+    points[count++] = point;
 }
 
 
@@ -339,13 +339,13 @@ void PointVector::add(Point *point) {
  */
 
 Point *PointVector::get() {
-  if (isEmpty()) return NULL;
-  return points[count - 1];
+    if (isEmpty()) return NULL;
+    return points[count - 1];
 }
 
 Point *PointVector::get(unsigned index) {
-  if (index < 0 || index > count - 1) return NULL;
-  return points[index];
+    if (index < 0 || index > count - 1) return NULL;
+    return points[index];
 }
 
 
@@ -360,14 +360,14 @@ Point *PointVector::get(unsigned index) {
  */
 
 void PointVector::expandCapacity() {
-  capacity *= 2;
-  Point **array = new Point *[capacity];
-  for (int i = 0; i < capacity; i++) {
-    if (i < count) array[i] = points[i];
-    else array[i] = NULL;
-  }
-  delete[] points;
-  points = array;
+    capacity *= 2;
+    Point **array = new Point *[capacity];
+    for (int i = 0; i < capacity; i++) {
+        if (i < count) array[i] = points[i];
+        else array[i] = NULL;
+    }
+    delete[] points;
+    points = array;
 }
 
 
@@ -378,12 +378,12 @@ void PointVector::expandCapacity() {
  */
 
 Point::Point(int x, int y) {
-  this->x = x;
-  this->y = y;
+    this->x = x;
+    this->y = y;
 }
 
 Point::~Point() {
-  /* Empty */
+    /* Empty */
 }
 
 
@@ -394,9 +394,9 @@ Point::~Point() {
  */
 
 int Point::getX() {
-  return x;
+    return x;
 }
 
 int Point::getY() {
-  return y;
+    return y;
 }

@@ -28,41 +28,41 @@
  */
 
 class Point {
-  
+    
 public:
-  
-  /*
-   * Constructor: Point(x, y)
-   * ------------------------
-   * Creates a new Point object with the indicated values.
-   */
-  
-  Point(int x, int y);
-  
-  
-  /*
-   * Destructor: ~Point()
-   * --------------------
-   * Called when this Point is deleted or goes out of scope.
-   */
-  
-  ~Point();
-  
-  
-  /*
-   * Methods: getX(), getY()
-   * -----------------------
-   * These methods return the appropriate component.
-   */
-  
-  int getX();
-  int getY();
-		
+    
+    /*
+     * Constructor: Point(x, y)
+     * ------------------------
+     * Creates a new Point object with the indicated values.
+     */
+    
+    Point(int x, int y);
+    
+    
+    /*
+     * Destructor: ~Point()
+     * --------------------
+     * Called when this Point is deleted or goes out of scope.
+     */
+    
+    ~Point();
+    
+    
+    /*
+     * Methods: getX(), getY()
+     * -----------------------
+     * These methods return the appropriate component.
+     */
+    
+    int getX();
+    int getY();
+    
 private:
-  
-  /* Data required to implement a point */
-  int x, y;
-  
+    
+    /* Data required to implement a point */
+    int x, y;
+    
 };
 
 
@@ -81,102 +81,102 @@ private:
  */
 
 class PointVector {
-  
+    
 public:
-  
-  /*
-   * Constructor: PointVector
-   * Usage: PointVector pa;
-   * ----------------------
-   * Initializes a new empty vector that can contain points.
-   */
-  
-  PointVector();
-  
-  
-  /*
-   * Destructor: ~PointVector
-   * Usage: (usually implicit)
-   * -------------------------
-   * Deallocates storage associated with this pa.  This method is
-   * called whenever a PointVector instance variable is deallocated.
-   */
-  
-  ~PointVector();
-  
-  
-  /*
-   * Method: size
-   * Usage: unsigned nElems = pa.size();
-   * --------------------------------
-   * Returns the number of points in this vector.
-   */
-  
-  unsigned size();
-  
-  
-  /*
-   * Method: isEmpty
-   * Usage: if (pa.isEmpty()) . . .
-   * --------------------------------
-   * Returns true if this vector contains no points, and false otherwise.
-   */
-  
-  bool isEmpty();
-  
-  
-  /*
-   * Method: clear
-   * Usage: pa.clear();
-   * --------------------
-   * This method removes all points from this vector.
-   */
-  
-  void clear();
-  
-  
-  /*
-   * Method: add
-   * Usage: pa.add(x, y);
-   * ---------------------
-   * Adds the point defined by x and y onto this vector.
-   * ---------------------------------------------------
-   * Usage: pa.add(mypoint);
-   * ------------------------
-   * Adds the point defined by the pointer mypoint onto this vector.
-   */
-  
-  void add(int x, int y);
-  void add(Point *point);
-  
-  
-  /*
-   * Method: get
-   * Usage: Point *p = pa.get();
-   * -----------------------------
-   * Returns the pointer to the last point from this vector.
-   * -------------------------------------------------------
-   * Usage: Point *p = pa.get(index);
-   * ---------------------------------
-   * Returns the pointer to the point specified by index from this vector.
-   */
-  
-  Point *get();
-  Point *get(unsigned index);
-  
+    
+    /*
+     * Constructor: PointVector
+     * Usage: PointVector pa;
+     * ----------------------
+     * Initializes a new empty vector that can contain points.
+     */
+    
+    PointVector();
+    
+    
+    /*
+     * Destructor: ~PointVector
+     * Usage: (usually implicit)
+     * -------------------------
+     * Deallocates storage associated with this pa.  This method is
+     * called whenever a PointVector instance variable is deallocated.
+     */
+    
+    ~PointVector();
+    
+    
+    /*
+     * Method: size
+     * Usage: unsigned nElems = pa.size();
+     * --------------------------------
+     * Returns the number of points in this vector.
+     */
+    
+    unsigned size();
+    
+    
+    /*
+     * Method: isEmpty
+     * Usage: if (pa.isEmpty()) . . .
+     * --------------------------------
+     * Returns true if this vector contains no points, and false otherwise.
+     */
+    
+    bool isEmpty();
+    
+    
+    /*
+     * Method: clear
+     * Usage: pa.clear();
+     * --------------------
+     * This method removes all points from this vector.
+     */
+    
+    void clear();
+    
+    
+    /*
+     * Method: add
+     * Usage: pa.add(x, y);
+     * ---------------------
+     * Adds the point defined by x and y onto this vector.
+     * ---------------------------------------------------
+     * Usage: pa.add(mypoint);
+     * ------------------------
+     * Adds the point defined by the pointer mypoint onto this vector.
+     */
+    
+    void add(int x, int y);
+    void add(Point *point);
+    
+    
+    /*
+     * Method: get
+     * Usage: Point *p = pa.get();
+     * -----------------------------
+     * Returns the pointer to the last point from this vector.
+     * -------------------------------------------------------
+     * Usage: Point *p = pa.get(index);
+     * ---------------------------------
+     * Returns the pointer to the point specified by index from this vector.
+     */
+    
+    Point *get();
+    Point *get(unsigned index);
+    
 private:
-  
-  /* Data required to implement a vector of points */
-  
-  Point **points;		/* Dynamic array of pointers to the points */
-  unsigned capacity;  /* Allocated size of the array */
-  unsigned count;     /* Number of points in the vector */
-  
-  
-  /* Private method prototypes */
-  
-  void expandCapacity();
-  
+    
+    /* Data required to implement a vector of points */
+    
+    Point **points;		/* Dynamic array of pointers to the points */
+    unsigned capacity;  /* Allocated size of the array */
+    unsigned count;     /* Number of points in the vector */
+    
+    
+    /* Private method prototypes */
+    
+    void expandCapacity();
+    
 };
 
 
@@ -196,86 +196,86 @@ private:
  */
 
 class PeakDetect {
-	
+    
 public:
-	
-	/*
-	 * Constructor: PeakDetect
-	 * -----------------------
-	 * Initializes a new PeakDetect from a C-array of unsigned 16-bit integers and its length.
-	 * The C-array contains the Y-values for which the peak detection is performed.
-	 * Assumes the corresponding X-value of each Y-value is determined by its index in the array.
-	 */
-	
-	PeakDetect(uint16_t *Yarray, unsigned length);
-	
-  
-	/*
-	 * Constructor: PeakDetect
-	 * -----------------------
-	 * Initializes a new PeakDetect from two C-arrays of unsigned 16-bit integers and their length.
-	 * The first C-array contains X-values.
-	 * The second C-array contains Y-values.
-	 * Prerequisites: Both C-arrays must have the same length!
-	 */
-	
-	PeakDetect(int *Xarray, uint16_t *Yarray, unsigned length);
-	
-  
-	/*
-	 * Destructor: ~PeakDetect
-	 * -----------------------
-	 * Deallocates storage associated with this instance of PeakDetect.  This method is
-	 * called whenever a PeakDetect instance variable is deallocated.
-	 */
-	
-	~PeakDetect();
-	
-  
-	/*
-	 * Method: clear
-	 * --------------------
-	 * This method removes all maxima and minima from this PeakDetect and resets all instance variables.
-	 */
-	
-	void clear();
-	
-  
-	/*
-	 * Method: findAll
-	 * --------------------------------
-	 * Finds all the peaks contained in the allocated Y-values whose heights are larger than delta.
-	 */
-	
-	void findAll(float delta);
-	
-  
-	/*
-	 * Method: findNext
-	 * --------------------------------
-	 * Finds the next peak contained in the allocated Y-values whose height is larger than delta.
-	 */
-	
-	void findNext(float delta);
-	
-  
-	/* Public objects */
-	
-	PointVector *maxima;    // Pointer to a dynamic array of points holding the maxima
-	PointVector *minima;    // Pointer to a dynamic array of points holding the minima
-	
+    
+    /*
+     * Constructor: PeakDetect
+     * -----------------------
+     * Initializes a new PeakDetect from a C-array of unsigned 16-bit integers and its length.
+     * The C-array contains the Y-values for which the peak detection is performed.
+     * Assumes the corresponding X-value of each Y-value is determined by its index in the array.
+     */
+    
+    PeakDetect(uint16_t *Yarray, unsigned length);
+    
+    
+    /*
+     * Constructor: PeakDetect
+     * -----------------------
+     * Initializes a new PeakDetect from two C-arrays of unsigned 16-bit integers and their length.
+     * The first C-array contains X-values.
+     * The second C-array contains Y-values.
+     * Prerequisites: Both C-arrays must have the same length!
+     */
+    
+    PeakDetect(int *Xarray, uint16_t *Yarray, unsigned length);
+    
+    
+    /*
+     * Destructor: ~PeakDetect
+     * -----------------------
+     * Deallocates storage associated with this instance of PeakDetect.  This method is
+     * called whenever a PeakDetect instance variable is deallocated.
+     */
+    
+    ~PeakDetect();
+    
+    
+    /*
+     * Method: clear
+     * --------------------
+     * This method removes all maxima and minima from this PeakDetect and resets all instance variables.
+     */
+    
+    void clear();
+    
+    
+    /*
+     * Method: findAll
+     * --------------------------------
+     * Finds all the peaks contained in the allocated Y-values whose heights are larger than delta.
+     */
+    
+    void findAll(float delta);
+    
+    
+    /*
+     * Method: findNext
+     * --------------------------------
+     * Finds the next peak contained in the allocated Y-values whose height is larger than delta.
+     */
+    
+    void findNext(float delta);
+    
+    
+    /* Public objects */
+    
+    PointVector *maxima;    // Pointer to a dynamic array of points holding the maxima
+    PointVector *minima;    // Pointer to a dynamic array of points holding the minima
+    
 private:
-	
-	/* Data required to implement the PeakDetect class*/
-	
-	int *x;					// Pointer to array of X-values
-	uint16_t *y;			// Pointer to array of Y-values
-	unsigned length;		// Length of arrays of X- and Y-values
-	unsigned index;			// Index for arrays of X- and Y-values
-	
-  
-	/* Private method prototypes */
-		
+    
+    /* Data required to implement the PeakDetect class*/
+    
+    int *x;					// Pointer to array of X-values
+    uint16_t *y;			// Pointer to array of Y-values
+    unsigned length;		// Length of arrays of X- and Y-values
+    unsigned index;			// Index for arrays of X- and Y-values
+    
+    
+    /* Private method prototypes */
+    
 };
 
 #endif
