@@ -83,13 +83,8 @@ void *worker(void *threadarg) {
 	// Create a unique name for this event
 	nameEvent(eventData, global);
 	
-	// Copy pixelmask_shared into pixelmask and raw detector data into corrected array as starting point for corrections
-	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
-			eventData->detector[detID].corrected_data[i] = eventData->detector[detID].data_raw16[i];
-		}
-	}
+	// Initialise pixelmask with pixelmask_shared
+	initPixelmask();
 	
 	//---DETECTOR-CORRECTION---//
 
@@ -97,28 +92,31 @@ void *worker(void *threadarg) {
 		DEBUG("Detector correction");
 	}
 
+	// Initialise data_detCorr with data_raw16
+	initDetectorCorrection(eventData,global);
+
 	// Check for saturated pixels before applying any other corrections
 	checkSaturatedPixels(eventData, global);
-	checkPnccdSaturatedPixels(eventData, global);
 
+	// Subtract darkcal image (static electronic offsets)
+	subtractDarkcal(eventData, global);
 	// If no darkcal file: Init background buffer here (background = photon background + static electronic offsets)
 	initBackgroundBuffer(eventData,global);
 	// If no darkcal file: Subtract persistent background here (background = photon background + static electronic offsets)
 	subtractPersistentBackground(eventData, global);
-	// Subtract darkcal image (static electronic offsets)
-	subtractDarkcal(eventData, global);
 
+	// Fix CSPAD artefacts:
 	// Subtract common mode offsets (electronic offsets)
 	// cmModule = 1
+	// (these corrections will be automatically skipped for any non-CSPAD detector)
 	cspadModuleSubtract(eventData, global);
 	cspadSubtractUnbondedPixels(eventData, global);
 	cspadSubtractBehindWires(eventData, global);
 
-	
-	// Fix pnCCD errors:
+	// Fix pnCCD artefacts:
 	// pnCCD offset correction (read out artifacts prominent in lines with high signal)
 	// pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
-	// pnCCD signal drop in every second line (fast changing dimension) is fixed by interpolation
+	// pnCCD signal drop in every second line (fast changing dimension) can be fixed by interpolation and/or masking of the affected lines
 	//  (these corrections will be automatically skipped for any non-pnCCD detector)
 	pnccdOffsetCorrection(eventData, global);
 	pnccdFixWiringError(eventData, global);
@@ -157,21 +155,16 @@ void *worker(void *threadarg) {
 	subtractLocalBackground(eventData, global);
 
 localBGCalculated:
-	// Keep memory of data with only detector artefacts subtracted (possibly needed later)
-	DETECTOR_LOOP {
-		memcpy(eventData->detector[detID].detector_corrected_data, eventData->detector[detID].corrected_data, global->detector[detID].pix_nn*sizeof(float));
-	}
-
 	// Subtract residual common mode offsets (cmModule=2) 
 	cspadModuleSubtract2(eventData, global);
   
-	// Apply bad pixels
-	applyBadPixelMask(eventData, global);
+	// Set bad pixels to zero
+	setBadPixelsToZero(eventData, global);
 	
-	// Identify and kill hot pixels
+	// Identify hot pixels and set them to zero
 	identifyHotPixels(eventData, global);
 	calculateHotPixelMask(eventData,global);
-	applyHotPixelMask(eventData,global);
+	setHotPixelsToZero(eventData,global);
 	
 	// Inside-thread speed test
 	if(global->ioSpeedTest==5) {
@@ -179,17 +172,20 @@ localBGCalculated:
 		goto cleanup;
 	}
     
-	//---BACKGROUND-CORRECTION---//
+	//---PHOTON-BACKGROUND-CORRECTION---//
 
 	DEBUGL2_ONLY {
 		DEBUG("Background correction");
 	}
 	  
+	// Initialise data_detPhotCorr with data_detCorr
+	initPhotonCorrection(eventData,global);
+
 	// If darkcal file available: Init background buffer here (background = photon background)
 	initBackgroundBuffer(eventData,global);
 	// If darkcal file available: Subtract persistent background here (background = photon background)
 	subtractPersistentBackground(eventData, global);
-	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end - not to be crunched with detector )
+	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end - not to be crunched with detector /Max)
 	subtractRadialBackground(eventData, global);
 
 	//---HITFINDING---//
@@ -201,12 +197,6 @@ localBGCalculated:
 	if(global->hitfinder && (global->hitfinderForInitials ||
 							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
 		hit = hitfinder(eventData, global);
-		//if (global->hitfinderInvertHit == 1){
-		//	if ( hit == 1 )
-		//		hit = 0;
-		//	else
-		//		hit = 1;
-		//}
 		eventData->hit = hit;
 
 		pthread_mutex_lock(&global->hitclass_mutex);
@@ -265,7 +255,7 @@ hitknown:
 
 	// Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
 	if(global->powderSumWithBackgroundSubtraction){
-		// If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we might skip it if image is not going to be saved
+		// If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we will skip it if image is not going to be saved.
 		if(global->assemblePowders){
 			// Assemble to realistic image
 			assemble2Dimage(eventData, global);
@@ -284,8 +274,8 @@ hitknown:
 			}
 		}
 		// Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-		else if (global->detector[detID].saveDetectorCorrectedOnly) {
-			memcpy(eventData->detector[detID].corrected_data, eventData->detector[detID].detector_corrected_data, global->detector[detID].pix_nn*sizeof(float));
+		else if (global->detector[detIndex].saveDetectorCorrectedOnly) {
+			memcpy(eventData->detector[detIndex].corrected_data, eventData->detector[detIndex].detector_corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
 		}
 	}
 
@@ -351,7 +341,7 @@ hitknown:
 	}
 
 //logfile:
-	eventData->writeFlag =  ((hit && global->savehits) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
 
 	// If this is a hit, write out to our favourite HDF5 format

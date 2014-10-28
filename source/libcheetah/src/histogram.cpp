@@ -26,28 +26,28 @@
 void addToHistogram(cEventData *eventData, cGlobal *global) {
 	   
 	DETECTOR_LOOP {
-		if (global->detector[detID].histogram) {
-			addToHistogram(eventData, global, detID);
+		if (global->detector[detIndex].histogram) {
+			addToHistogram(eventData, global, detIndex);
 		}
 	}
 }
 
 
-void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
+void addToHistogram(cEventData *eventData, cGlobal *global, int detIndex) {
 	
 	// Dereference common variables
-	long		pix_nx = global->detector[detID].pix_nx;
+	long		pix_nx = global->detector[detIndex].pix_nx;
 
-	long		histMin = global->detector[detID].histogramMin;
-	long		histNbins = global->detector[detID].histogramNbins;
-	float       histBinSize = global->detector[detID].histogramBinSize;
-	long		hist_fs_min = global->detector[detID].histogram_fs_min;
-	long		hist_fs_max = global->detector[detID].histogram_fs_max;
-	long		hist_ss_min = global->detector[detID].histogram_ss_min;
-	long		hist_ss_max = global->detector[detID].histogram_ss_max;
-	long		hist_nfs = global->detector[detID].histogram_nfs;
-	long		hist_nn = global->detector[detID].histogram_nn;
-	uint16_t	*histData = global->detector[detID].histogramData;
+	long		histMin = global->detector[detIndex].histogramMin;
+	long		histNbins = global->detector[detIndex].histogramNbins;
+	float       histBinSize = global->detector[detIndex].histogramBinSize;
+	long		hist_fs_min = global->detector[detIndex].histogram_fs_min;
+	long		hist_fs_max = global->detector[detIndex].histogram_fs_max;
+	long		hist_ss_min = global->detector[detIndex].histogram_ss_min;
+	long		hist_ss_max = global->detector[detIndex].histogram_ss_max;
+	long		hist_nfs = global->detector[detIndex].histogram_nfs;
+	long		hist_nn = global->detector[detIndex].histogram_nn;
+	uint16_t	*histData = global->detector[detIndex].histogramData;
 
 	
 	// Figure out which bin should be filled
@@ -66,7 +66,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 			i_hist = fs + ss*pix_nx;
 			i_buffer = (fs-hist_fs_min) + (ss-hist_ss_min)*hist_nfs;
 			
-			value = eventData->detector[detID].corrected_data[i_hist];
+			value = eventData->detector[detIndex].corrected_data[i_hist];
 			binf = (value-histMin)/histBinSize;
 			bin = (long) lrint(binf);
 			
@@ -80,14 +80,14 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detID) {
 	
 	// Update histogram
 	// This could be a little slow due to sparse memory access conflicting with predictive memory caching
-	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	pthread_mutex_lock(&global->detector[detIndex].histogram_mutex);
 	uint64_t	cell;
 	for(long i=0; i<hist_nn; i++) {
 		cell = i*histNbins;
 		histData[cell+buffer[i]] += 1;
 	}
-	global->detector[detID].histogram_count += 1;
-	pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
+	global->detector[detIndex].histogram_count += 1;
+	pthread_mutex_unlock(&global->detector[detIndex].histogram_mutex);
 	
 	// Free temporary memory
 	free(buffer);
@@ -102,27 +102,27 @@ void saveHistograms(cGlobal *global) {
 	printf("Writing histogram data \n");
 
 	DETECTOR_LOOP {
-		if (global->detector[detID].histogram) {
-			saveHistogram(global, detID);
+		if (global->detector[detIndex].histogram) {
+			saveHistogram(global, detIndex);
 		}
 	}
 
 }
 
 
-void saveHistogram(cGlobal *global, int detID) {
+void saveHistogram(cGlobal *global, int detIndex) {
 	
 	// Dereference common variables
 	
-	long		histMin = global->detector[detID].histogramMin;
-	long		histNbins = global->detector[detID].histogramNbins;
-	float		histBinSize = global->detector[detID].histogramBinSize;
-	long		hist_nfs = global->detector[detID].histogram_nfs;
-	long		hist_nss = global->detector[detID].histogram_nss;
-	long		hist_nn = global->detector[detID].histogram_nn;
-	uint64_t	hist_nnn = global->detector[detID].histogram_nnn;
-	uint16_t	*histData = global->detector[detID].histogramData;
-	float		*darkcal = global->detector[detID].darkcal;
+	long		histMin = global->detector[detIndex].histogramMin;
+	long		histNbins = global->detector[detIndex].histogramNbins;
+	float		histBinSize = global->detector[detIndex].histogramBinSize;
+	long		hist_nfs = global->detector[detIndex].histogram_nfs;
+	long		hist_nss = global->detector[detIndex].histogram_nss;
+	long		hist_nn = global->detector[detIndex].histogram_nn;
+	uint64_t	hist_nnn = global->detector[detIndex].histogram_nnn;
+	uint16_t	*histData = global->detector[detIndex].histogramData;
+	float		*darkcal = global->detector[detIndex].darkcal;
 	
 	long		hist_count;
 
@@ -139,10 +139,10 @@ void saveHistogram(cGlobal *global, int detID) {
     memset(histogramBuffer, 0, hist_nnn*sizeof(uint16_t));
     
     // Copy histogram data inside mutex lock
-	pthread_mutex_lock(&global->detector[detID].histogram_mutex);
+	pthread_mutex_lock(&global->detector[detIndex].histogram_mutex);
 	memcpy(histogramBuffer, histData, hist_nnn*sizeof(uint16_t));
-	hist_count = global->detector[detID].histogram_count;
-    pthread_mutex_unlock(&global->detector[detID].histogram_mutex);
+	hist_count = global->detector[detIndex].histogram_count;
+    pthread_mutex_unlock(&global->detector[detIndex].histogram_mutex);
     
     
 	
@@ -159,7 +159,7 @@ void saveHistogram(cGlobal *global, int detID) {
 	hid_t		h5compression;
 
     
-	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detID);
+	sprintf(filename,"r%04u-detector%d-histogram.h5", global->runNumber, detIndex);
 	printf("Writing histogram data to file: %s\n",filename);
 	
 	fh = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);

@@ -22,6 +22,14 @@
 #include "median.h"
 
 
+void initPhotonCorrection(cEventData *eventData, cGlobal *global){
+	// Copy detector corrected data into photon corrected array as starting point for photon corrections
+	DETECTOR_LOOP {
+		for(long i=0;i<global->detector[detID].pix_nn;i++){
+			eventData->detector[detID].data_detPhotCorr[i] = eventData->detector[detID].data_detCorr[i];
+		}
+	}
+}
 
 
 
@@ -29,61 +37,63 @@
  *	Subtract persistent background 
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
-
 	DETECTOR_LOOP {
-		if(global->detector[detID].useSubtractPersistentBackground && ((eventData->detector[detID].pedSubtracted && global->detector[detID].useDarkcalSubtraction) || (!eventData->detector[detID].pedSubtracted && !global->detector[detID].useDarkcalSubtraction))){
-			/*
-			 *	Subtract persistent background
-			 */
-			int	scaleBg = global->detector[detID].scaleBackground;
-			long	pix_nn = global->detector[detID].pix_nn;
-			float	*frameData = eventData->detector[detID].corrected_data;
-			float	*background = global->detector[detID].selfdark;
-			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
-			eventData->detector[detID].pedSubtracted = 1;
+		if(global->detector[detIndex].useSubtractPersistentBackground) {
+			int	scaleBg = global->detector[detIndex].scaleBackground;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			float	*background = global->detector[detIndex].selfdark;
+			// Running background subtraction to suppress the photon background after dark subtraction
+			if (eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) {
+				float	*frameData = eventData->detector[detIndex].data_detPhotCorr;
+				subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+			// Running background subtraction to suppress both electronic and photon background (without using dark subtraction)
+			} else if (!eventData->detector[detIndex].pedSubtracted && !global->detector[detIndex].useDarkcalSubtraction) {
+				float	*frameData = eventData->detector[detIndex].data_detCorr;
+				eventData->detector[detIndex].pedSubtracted = 1;
+			}
 		}
 	}	
 }
 
 void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
-		if(global->detector[detID].useSubtractPersistentBackground){
+		if(global->detector[detIndex].useSubtractPersistentBackground){
 			/*
 			 *	Recalculate background from time to time
 			 */
-			long	pix_nn = global->detector[detID].pix_nn;
-			int	lockThreads = global->detector[detID].useBackgroundBufferMutex;
-			long	bufferDepth = global->detector[detID].bgMemory;
-			long	bgRecalc = global->detector[detID].bgRecalc;
-			long	bgMemory = global->detector[detID].bgMemory;
-			float	medianPoint = global->detector[detID].bgMedian;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			int	lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
+			long	bufferDepth = global->detector[detIndex].bgMemory;
+			long	bgRecalc = global->detector[detIndex].bgRecalc;
+			long	bgMemory = global->detector[detIndex].bgMemory;
+			float	medianPoint = global->detector[detIndex].bgMedian;
 			long	threshold = lrint(bufferDepth*medianPoint);
 			long	bgCounter,lastUpdate;
-			float	*background = global->detector[detID].selfdark;
+			float	*background = global->detector[detIndex].selfdark;
 
 			if(lockThreads){
 				pthread_mutex_lock(&global->bgbuffer_mutex);
 			}
 			
-			bgCounter = global->detector[detID].bgCounter;
-			lastUpdate = global->detector[detID].bgLastUpdate;
+			bgCounter = global->detector[detIndex].bgCounter;
+			lastUpdate = global->detector[detIndex].bgLastUpdate;
 			if( (eventData->threadNum == bgRecalc+lastUpdate) || ((eventData->threadNum == (bgMemory-1)) && (lastUpdate == 0)) ) {
 				int16_t   *frameBuffer = (int16_t *) calloc(pix_nn*bufferDepth,sizeof(int16_t));
 				for(long i = 0;i<pix_nn*bufferDepth;i++){
-					frameBuffer[i] = global->detector[detID].bg_buffer[i];
+					frameBuffer[i] = global->detector[detIndex].bg_buffer[i];
 				}
 				if(lockThreads){
 					pthread_mutex_unlock(&global->bgbuffer_mutex);
 				}
 
-				printf("Detector %li: Start calculation of persistent background.\n",detID);
+				printf("Detector %li: Start calculation of persistent background.\n",detIndex);
 
 				pthread_mutex_lock(&global->selfdark_mutex);
 				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
 				pthread_mutex_unlock(&global->selfdark_mutex);
-				global->detector[detID].bgLastUpdate = eventData->threadNum;
-				global->detector[detID].bgCalibrated = 1;
-				printf("Detector %li: Persistent background calculated.\n",detID);      
+				global->detector[detIndex].bgLastUpdate = eventData->threadNum;
+				global->detector[detIndex].bgCalibrated = 1;
+				printf("Detector %li: Persistent background calculated.\n",detIndex);      
 
 				free(frameBuffer);			
 			} else {
@@ -98,19 +108,19 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 
 /*
  *  Set background to the first frame by default
- *  (possibly not needed...)
+ *  (possibly not needed)
  */
 void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if(global->detector[detID].useSubtractPersistentBackground && ((eventData->detector[detID].pedSubtracted && global->detector[detID].useDarkcalSubtraction) || (!eventData->detector[detID].pedSubtracted && !global->detector[detID].useDarkcalSubtraction))){
-			if (global->detector[detID].useSubtractPersistentBackground && global->detector[detID].bgCounter == 0){
-				long	pix_nn = global->detector[detID].pix_nn;
-				float	*background = global->detector[detID].selfdark;
+		if(global->detector[detIndex].useSubtractPersistentBackground && ((eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) || (!eventData->detector[detIndex].pedSubtracted && !global->detector[detIndex].useDarkcalSubtraction))){
+			if (global->detector[detIndex].useSubtractPersistentBackground && global->detector[detIndex].bgCounter == 0){
+				long	pix_nn = global->detector[detIndex].pix_nn;
+				float	*background = global->detector[detIndex].selfdark;
                 
 				pthread_mutex_lock(&global->bgbuffer_mutex);
-				if (global->detector[detID].useDarkcalSubtraction){
+				if (global->detector[detIndex].useDarkcalSubtraction){
 					for(long i = 0;i<pix_nn;i++){
-						background[i] = eventData->detector[detID].detector_corrected_data[i];
+						background[i] = eventData->detector[detIndex].data_detCorr[i];
 					}
 				} else {
 					for(long i = 0;i<pix_nn;i++){
@@ -126,34 +136,33 @@ void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
 
 /*
  *	Update background buffer
- *	Requires eventData->detector[detID].corrected_data_int16
  */
 void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
 	DETECTOR_LOOP {
-		if (global->detector[detID].useSubtractPersistentBackground && (hit==0 || global->detector[detID].bgIncludeHits)) {
-			long	bufferDepth = global->detector[detID].bgMemory;
-			long	pix_nn = global->detector[detID].pix_nn;
-			int16_t	*frameBuffer = global->detector[detID].bg_buffer;
+		if (global->detector[detIndex].useSubtractPersistentBackground && (hit==0 || global->detector[detIndex].bgIncludeHits)) {
+			long	bufferDepth = global->detector[detIndex].bgMemory;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			int16_t	*frameBuffer = global->detector[detIndex].bg_buffer;
 			long frameID = eventData->threadNum%bufferDepth;
 			pthread_mutex_lock(&global->bgbuffer_mutex);
-			if (global->detector[detID].useDarkcalSubtraction){
+			if (global->detector[detIndex].useDarkcalSubtraction){
 				for(long i = 0;i<pix_nn;i++){
-					frameBuffer[i+pix_nn*frameID] = (int16_t) lrint(eventData->detector[detID].detector_corrected_data[i]);
+					frameBuffer[i+pix_nn*frameID] = (int16_t) lrint(eventData->detector[detIndex].data_detCorr[i]);
 				}
 			} else {
 				for(long i = 0;i<pix_nn;i++){
-					frameBuffer[i+pix_nn*frameID] = eventData->detector[detID].data_raw16[i];
+					frameBuffer[i+pix_nn*frameID] = eventData->detector[detIndex].data_raw16[i];
 				}
 			}
 			pthread_mutex_unlock(&global->bgbuffer_mutex);
 #ifdef __GNUC__
-			__sync_fetch_and_add(&(global->detector[detID].bgCounter),1);
+			__sync_fetch_and_add(&(global->detector[detIndex].bgCounter),1);
 #else
-			int lockThreads = global->detector[detID].useBackgroundBufferMutex;
+			int lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
 			if(lockThreads){pthread_mutex_lock(&global->bgbuffer_mutex);}
-			long bgCounter = global->detector[detID].bgCounter;
-			global->detector[detID].bgCounter += 1;
+			long bgCounter = global->detector[detIndex].bgCounter;
+			global->detector[detIndex].bgCounter += 1;
 			if(lockThreads){pthread_mutex_unlock(&global->bgbuffer_mutex);}
 #endif
 		}		
@@ -231,17 +240,17 @@ void calculatePersistentBackground(float *background, int16_t *frameBuffer, long
 void subtractRadialBackground(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].useRadialBackgroundSubtraction) {
-			long		pix_nn = global->detector[detID].pix_nn;
-			float		*pix_r = global->detector[detID].pix_r;
-			float		*data = eventData->detector[detID].corrected_data;
+        if(global->detector[detIndex].useRadialBackgroundSubtraction) {
+			long		pix_nn = global->detector[detIndex].pix_nn;
+			float		*pix_r = global->detector[detIndex].pix_r;
+			float		*data = eventData->detector[detIndex].data_detPhotCorr;
 			float		sigmaThresh = 5;
 			
 			//	Masks for bad regions  (mask=0 to ignore regions)
 			char		*mask = (char*) calloc(pix_nn, sizeof(char));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED;
 			for(long i=0;i<pix_nn; i++)
-				mask[i] = isNoneOfBitOptionsSet(eventData->detector[detID].pixelmask[i], combined_pixel_options);
+				mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 			
 			subtractRadialBackground(data, pix_r, mask, pix_nn, sigmaThresh);
 			
@@ -349,13 +358,13 @@ void subtractRadialBackground(float *data, float *pix_r, char *mask, long pix_nn
 void subtractLocalBackground(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detID].useLocalBackgroundSubtraction) {
-			long		asic_nx = global->detector[detID].asic_nx;
-			long		asic_ny = global->detector[detID].asic_ny;
-			long		nasics_x = global->detector[detID].nasics_x;
-			long		nasics_y = global->detector[detID].nasics_y;
-			long		radius = global->detector[detID].localBackgroundRadius;
-			float		*data = eventData->detector[detID].corrected_data;
+        if(global->detector[detIndex].useLocalBackgroundSubtraction) {
+			long		asic_nx = global->detector[detIndex].asic_nx;
+			long		asic_ny = global->detector[detIndex].asic_ny;
+			long		nasics_x = global->detector[detIndex].nasics_x;
+			long		nasics_y = global->detector[detIndex].nasics_y;
+			long		radius = global->detector[detIndex].localBackgroundRadius;
+			float		*data = eventData->detector[detIndex].data_detCorr;
 			
 			subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, nasics_y);
 		}
@@ -485,13 +494,10 @@ void subtractLocalBackground(float *data, long radius, long asic_nx, long asic_n
 }
 
 
-
-
 /*
  * Make a saturated pixel mask
  */
 void checkSaturatedPixels(uint16_t *data_raw16, uint16_t *mask, long pix_nn, long pixelSaturationADC) {
-	
 	for(long i=0; i<pix_nn; i++) { 
 		if ( data_raw16[i] >= pixelSaturationADC)
 			mask[i] |= PIXEL_IS_SATURATED;
@@ -500,28 +506,22 @@ void checkSaturatedPixels(uint16_t *data_raw16, uint16_t *mask, long pix_nn, lon
 	}
 }
 
-void checkPnccdSaturatedPixels(cEventData *eventData, cGlobal *global){
-	DETECTOR_LOOP {
-		if((strcmp(global->detector[detID].detectorType, "pnccd") == 0) && (global->detector[detID].maskPnccdSaturatedPixels == 1)) {
-			uint16_t	*data = eventData->detector[detID].data_raw16;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long i,x,y,mx,my,q;
-			long asic_nx = PNCCD_ASIC_NX;
-			long asic_ny = PNCCD_ASIC_NY;
-			long nasics_x = PNCCD_nASICS_X;
-			long nasics_y = PNCCD_nASICS_Y;
-			uint16_t saturation_threshold[4] = {8500,5600,10000,5600};
-			// Loop over quadrants
-			for(my=0; my<nasics_y; my++){
-				for(mx=0; mx<nasics_x; mx++){
-					q = mx+my*nasics_x;
-					for(y=0; y<asic_ny; y++){
-						for(x=0; x<asic_nx; x++){
-							i = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + mx*asic_nx + x;
-							if (data[i] > saturation_threshold[q]){
-								mask[i] |= PIXEL_IS_SATURATED; 
-							}
-						}
+void checkSaturatedPixelsPnccd(uint16_t *data_raw16, uint16_t *mask){
+	long i,x,y,mx,my,q;
+	long asic_nx = PNCCD_ASIC_NX;
+	long asic_ny = PNCCD_ASIC_NY;
+	long nasics_x = PNCCD_nASICS_X;
+	long nasics_y = PNCCD_nASICS_Y;
+	uint16_t saturation_threshold[4] = {8500,5600,10000,5600};
+	// Loop over quadrants
+	for(my=0; my<nasics_y; my++){
+		for(mx=0; mx<nasics_x; mx++){
+			q = mx+my*nasics_x;
+			for(y=0; y<asic_ny; y++){
+				for(x=0; x<asic_nx; x++){
+					i = my * (asic_ny*asic_nx*nasics_x) + y * asic_nx*nasics_x + mx*asic_nx + x;
+					if (data_raw16[i] > saturation_threshold[q]){
+						mask[i] |= PIXEL_IS_SATURATED; 
 					}
 				}
 			}
@@ -531,16 +531,20 @@ void checkPnccdSaturatedPixels(cEventData *eventData, cGlobal *global){
 
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
-		if (global->detector[detID].maskSaturatedPixels) {
-			uint16_t	*data_raw16 = eventData->detector[detID].data_raw16;
-			uint16_t	*mask = eventData->detector[detID].pixelmask;
-			long		nn = global->detector[detID].pix_nn;
-			long		pixelSaturationADC = global->detector[detID].pixelSaturationADC;
-			checkSaturatedPixels(data_raw16, mask, nn, pixelSaturationADC);
+		if (global->detector[detIndex].maskSaturatedPixels) {
+			uint16_t	*raw_data = eventData->detector[detIndex].raw_data16;
+			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+			if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) {
+				checkSaturatedPixelsPnccd(raw_data,mask);
+			} else {
+				long		nn = global->detector[detIndex].pix_nn;
+				long		pixelSaturationADC = global->detector[detIndex].pixelSaturationADC;			
+				checkSaturatedPixels(raw_data, mask, nn, pixelSaturationADC);
+			}
 		}
 	}
 }	
-    
+
 
 
 
@@ -550,17 +554,17 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
 	DETECTOR_LOOP{
 		/* FOR TESTING
 		   printf("updateHaloBuffer\n");
-		   printf("global->detector[%i].useAutoHalopixel=%i\n",detID,global->detector[detID].useAutoHalopixel);
+		   printf("global->detector[%i].useAutoHalopixel=%i\n",detIndex,global->detector[detIndex].useAutoHalopixel);
 		   printf("hit=%i\n",hit);
-		   printf("global->detector[%i].halopixIncludeHits=%i\n",detID,global->detector[detID].halopixIncludeHits);
-		   printf("global->detector[%i].useSubtractPersistentBackground=%i\n",detID,global->detector[detID].useSubtractPersistentBackground);
-		   printf("global->detector[%i].bgCalibrated=%i\n",detID,global->detector[detID].bgCalibrated);
+		   printf("global->detector[%i].halopixIncludeHits=%i\n",detIndex,global->detector[detIndex].halopixIncludeHits);
+		   printf("global->detector[%i].useSubtractPersistentBackground=%i\n",detIndex,global->detector[detIndex].useSubtractPersistentBackground);
+		   printf("global->detector[%i].bgCalibrated=%i\n",detIndex,global->detector[detIndex].bgCalibrated);
 		*/
-		if(global->detector[detID].useAutoHalopixel && (!hit || global->detector[detID].halopixIncludeHits) && (!global->detector[detID].useSubtractPersistentBackground || global->detector[detID].bgCalibrated)){
-			float	*frameData = eventData->detector[detID].corrected_data;
-			float     *frameBuffer = global->detector[detID].halopix_buffer;
-			long	pix_nn = global->detector[detID].pix_nn;
-			long	bufferDepth = global->detector[detID].halopixMemory;
+		if(global->detector[detIndex].useAutoHalopixel && (!hit || global->detector[detIndex].halopixIncludeHits) && (!global->detector[detIndex].useSubtractPersistentBackground || global->detector[detIndex].bgCalibrated)){
+			float	*frameData = eventData->detector[detIndex].data_detCorr;
+			float     *frameBuffer = global->detector[detIndex].halopix_buffer;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			long	bufferDepth = global->detector[detIndex].halopixMemory;
 			long	frameID = eventData->threadNum%bufferDepth;
 
 			//puts("Update halo buffer");
@@ -570,15 +574,15 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
 			}
 
 			// Update buffer slice
-			pthread_mutex_lock(&global->detector[detID].halopix_mutexes[frameID]);
+			pthread_mutex_lock(&global->detector[detIndex].halopix_mutexes[frameID]);
 			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
-			pthread_mutex_unlock(&global->detector[detID].halopix_mutexes[frameID]);
+			pthread_mutex_unlock(&global->detector[detIndex].halopix_mutexes[frameID]);
 			// Update counter
 #ifdef __GNUC__
-			__sync_fetch_and_add(&(global->detector[detID].halopixCounter),1);
+			__sync_fetch_and_add(&(global->detector[detIndex].halopixCounter),1);
 #else
 			pthread_mutex_lock(&global->halopixel_mutex);
-			global->detector[detID].halopixCounter += 1;
+			global->detector[detIndex].halopixCounter += 1;
 			pthread_mutex_unlock(&global->halopixel_mutex);
 #endif      
 			free(buffer);
@@ -591,35 +595,35 @@ void updateHaloBuffer(cEventData *eventData, cGlobal *global,int hit){
  */
 void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
-		if(global->detector[detID].useAutoHalopixel) {
-			float	halopixMinDeviation = global->detector[detID].halopixMinDeviation;
-			long	bufferDepth = global->detector[detID].halopixMemory;
-			long	halopixRecalc = global->detector[detID].halopixRecalc;
-			long	halopixMemory = global->detector[detID].halopixMemory;
-			long	halopixCounter = global->detector[detID].halopixCounter;
-			int	halopixCalibrated = global->detector[detID].halopixCalibrated;
-			long	lastUpdate = global->detector[detID].halopixLastUpdate;
+		if(global->detector[detIndex].useAutoHalopixel) {
+			float	halopixMinDeviation = global->detector[detIndex].halopixMinDeviation;
+			long	bufferDepth = global->detector[detIndex].halopixMemory;
+			long	halopixRecalc = global->detector[detIndex].halopixRecalc;
+			long	halopixMemory = global->detector[detIndex].halopixMemory;
+			long	halopixCounter = global->detector[detIndex].halopixCounter;
+			int	halopixCalibrated = global->detector[detIndex].halopixCalibrated;
+			long	lastUpdate = global->detector[detIndex].halopixLastUpdate;
 			long	nhalo;
 			float	threshold = bufferDepth*halopixMinDeviation;
-			long	pix_nn = global->detector[detID].pix_nn;
-			uint16_t  *mask = global->detector[detID].pixelmask_shared;
-			uint16_t  *maskMinExtent = global->detector[detID].pixelmask_shared_min;
-			uint16_t  *maskMaxExtent = global->detector[detID].pixelmask_shared_max;
+			long	pix_nn = global->detector[detIndex].pix_nn;
+			uint16_t  *mask = global->detector[detIndex].pixelmask_shared;
+			uint16_t  *maskMinExtent = global->detector[detIndex].pixelmask_shared_min;
+			uint16_t  *maskMaxExtent = global->detector[detIndex].pixelmask_shared_max;
 
 			// here the condition (eventData->threadNum%50 == 0) made multiple initial calibrations unlikely
 			if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory)  /* && (eventData->threadNum%50 == 0) */ && !halopixCalibrated) ) { 
 	
 				pthread_mutex_lock(&global->halopixel_mutex);
 			
-				printf("Detector %li: Calculating halo pixel mask.\n",detID);
-				nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detID].halopix_buffer,threshold, bufferDepth, pix_nn);
+				printf("Detector %li: Calculating halo pixel mask.\n",detIndex);
+				nhalo = calculateHaloPixelMask(mask,maskMinExtent,maskMaxExtent,global->detector[detIndex].halopix_buffer,threshold, bufferDepth, pix_nn);
 				if (nhalo == pix_nn){
-					printf("Warning: Detector %li: All pixels are in halo pixel mask.\n",detID);
+					printf("Warning: Detector %li: All pixels are in halo pixel mask.\n",detIndex);
 				}
-				global->detector[detID].nhalo = nhalo;
-				global->detector[detID].halopixLastUpdate = eventData->threadNum;
-				global->detector[detID].halopixCalibrated = 1;
-				printf("Detector %li: Identified %li halo pixels.\n",detID,nhalo);	
+				global->detector[detIndex].nhalo = nhalo;
+				global->detector[detIndex].halopixLastUpdate = eventData->threadNum;
+				global->detector[detIndex].halopixCalibrated = 1;
+				printf("Detector %li: Identified %li halo pixels.\n",detIndex,nhalo);	
 
 				pthread_mutex_unlock(&global->halopixel_mutex);
 

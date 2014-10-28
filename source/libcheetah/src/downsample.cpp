@@ -145,28 +145,26 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 }
 
 void downsample(cEventData *eventData, cGlobal *global){
-
 	DETECTOR_LOOP {
-		if(global->detector[detID].downsampling > 1){
-
-			long              downsampling = global->detector[detID].downsampling;
-			long		image_nx = global->detector[detID].image_nx;
-			long		image_nn = global->detector[detID].image_nn;
-			float		*image = eventData->detector[detID].image;
-			uint16_t	        *image_pixelmask = eventData->detector[detID].image_pixelmask;
-			long		imageXxX_nx = global->detector[detID].imageXxX_nx;
-			long		imageXxX_nn = global->detector[detID].imageXxX_nn;
-			float		*imageXxX = eventData->detector[detID].imageXxX;
-			uint16_t	        *imageXxX_pixelmask = eventData->detector[detID].imageXxX_pixelmask;
-
-			if (global->detector[detID].downsamplingConservative == 1){
+		long        downsampling = global->detector[detIndex].downsampling;
+		long		image_nx = global->detector[detIndex].image_nx;
+		long		image_nn = global->detector[detIndex].image_nn;
+		uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
+		long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
+		long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+		uint16_t	*imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
+		cDataVersion imageV(eventData->detector[detIndex],DATA_LOOP_SAVE,DATA_FORMAT_ASSEMBLED);
+		cDataVersion imageXxXV(eventData->detector[detIndex],DATA_LOOP_SAVE,DATA_FORMAT_DOWNSAMPLED);
+		while (imageV.next() && imageXxXV.next()) {
+			float	*image = imageV.data;
+			float	*imageXxX = imageXxXV.data;
+			if (global->detector[detIndex].downsamplingConservative == 1){
 				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
 				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
 			} else {
 				downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling);
 				downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);	
 			}
-      
 		}
 	}
 }

@@ -24,17 +24,18 @@
  *  Assemble data into a realistic 2d image using raw data and geometry
  */
 void assemble2Dimage(cEventData *eventData, cGlobal *global) {
-
-	if(global->assemble2DImage) {
-		DETECTOR_LOOP {
-			long		pix_nn = global->detector[detID].pix_nn;
-			long		image_nx = global->detector[detID].image_nx;
-			long		image_nn = global->detector[detID].image_nn;
-			float		*pix_x = global->detector[detID].pix_x;
-			float		*pix_y = global->detector[detID].pix_y;
-			float		*corrected_data = eventData->detector[detID].corrected_data;
-			float		*image = eventData->detector[detID].image;
-			int             assembleInterpolation = global->assembleInterpolation;
+	DETECTOR_LOOP {
+		long		pix_nn = global->detector[detIndex].pix_nn;
+		long		image_nx = global->detector[detIndex].image_nx;
+		long		image_nn = global->detector[detIndex].image_nn;
+		float		*pix_x = global->detector[detIndex].pix_x;
+		float		*pix_y = global->detector[detIndex].pix_y;
+		cDataVersion dataV(eventData->detector[detIndex],DATA_LOOP_MODE_POWDER,DATA_FORMAT_NON_ASSEMBLED);
+		cDataVersion imageV(eventData->detector[detIndex],DATA_LOOP_MODE_POWDER,DATA_FORMAT_ASSEMBLED);
+		while (dataV.next() && imageV.next()) {
+			float		*data = dataV.data;
+			float		*image = imageV.data;
+			int         assembleInterpolation = global->assembleInterpolation;
 			assemble2Dimage(image, corrected_data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
 		}
 	}
@@ -48,39 +49,44 @@ void assemble2Dimage(cEventData *eventData, cGlobal *global) {
 void assemble2Dpowder(cGlobal *global) {
 
     DETECTOR_LOOP {
-		long		pix_nn = global->detector[detID].pix_nn;
-		long		image_nx = global->detector[detID].image_nx;
-		long		image_nn = global->detector[detID].image_nn;
-		float		*pix_x = global->detector[detID].pix_x;
-		float		*pix_y = global->detector[detID].pix_y;
+		long		pix_nn = global->detector[detIndex].pix_nn;
+		long		image_nx = global->detector[detIndex].image_nx;
+		long		image_nn = global->detector[detIndex].image_nn;
+		float		*pix_x = global->detector[detIndex].pix_x;
+		float		*pix_y = global->detector[detIndex].pix_y;
 		int             assembleInterpolation = global->assembleInterpolation;
-        cPixelDetectorCommon     *detector = &(global->detector[detID]);
-
-        // Floating point buffer
-        float   *fdata = (float*) calloc(pix_nn,sizeof(float));
-        float   *fimage = (float*) calloc(image_nn,sizeof(float));
-        
+        cPixelDetectorCommon     *detector = &(global->detector[detIndex]);       
         
         // Assemble each powder type
         for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
-            double  *data = detector->powderCorrected[powderType];
-            double  *image = detector->powderAssembled[powderType];
 
-            // Assembly is done using float; powder data is double (!!)
-            for(long i=0; i<pix_nn; i++)
-                fdata[i] = (float) data[i];
-            
-            // Assemble image
-            assemble2Dimage(fimage, fdata, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+            cDataVersion dataV(eventData->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion imageV(eventData->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED);
+			while (dataV.next() && imageV.next()) {
 
-            // Assembly is done using float; powder data is double (!!)
-            for(long i=0; i<image_nn; i++)
-                image[i] = (double) fimage[i];
+				double * data = dataV.powder;
+				double * image = imageV.powder;
+
+				// Floating point buffer
+				float   *fdata = (float*) calloc(pix_nn,sizeof(float));
+				float   *fimage = (float*) calloc(image_nn,sizeof(float));
+
+				// Assembly is done using float; powder data is double (!!)	
+				for(long i=0; i<pix_nn; i++)
+					fdata[i] = (float) data[i];
+
+				// Assemble image
+				assemble2Dimage(fimage, fdata, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+
+				// Assembly is done using float; powder data is double (!!)
+				for(long i=0; i<image_nn; i++)
+					image[i] = (double) fimage[i];
+				
+				// Cleanup
+				free(fdata);
+				free(fimage);
+			}
 		}
-        
-        // Cleanup
-        free(fdata);
-        free(fimage);
 	}
 }
 
@@ -197,13 +203,13 @@ void assemble2Dmask(cEventData *eventData, cGlobal *global) {
     
     if(global->assemble2DMask) {
         DETECTOR_LOOP {
-            long		pix_nn = global->detector[detID].pix_nn;
-            long		image_nx = global->detector[detID].image_nx;
-            long		image_nn = global->detector[detID].image_nn;
-            float		*pix_x = global->detector[detID].pix_x;
-            float		*pix_y = global->detector[detID].pix_y;
-            uint16_t  *pixelmask = eventData->detector[detID].pixelmask;
-            uint16_t	*image_pixelmask = eventData->detector[detID].image_pixelmask;
+            long		pix_nn = global->detector[detIndex].pix_nn;
+            long		image_nx = global->detector[detIndex].image_nx;
+            long		image_nn = global->detector[detIndex].image_nn;
+            float		*pix_x = global->detector[detIndex].pix_x;
+            float		*pix_y = global->detector[detIndex].pix_y;
+            uint16_t  *pixelmask = eventData->detector[detIndex].pixelmask;
+            uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
             int       assembleInterpolation = global->assembleInterpolation;
             assemble2Dmask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
 		}

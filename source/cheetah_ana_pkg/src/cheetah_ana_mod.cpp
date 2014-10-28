@@ -952,14 +952,13 @@ namespace cheetah_ana_pkg {
 					
 					// Assemble data from all four quadrants into one large array (rawdata layout)
 					// Memcpy is necessary for thread safety.
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					for(int quadrant=0; quadrant<4; quadrant++) {
 						long	i,j,ii;
 						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
 							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 							j = k / (2*asic_nx);
 							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;		
-							eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
+							eventData->detector[detID].raw_data16[ii] = quad_data[quadrant][k];
 						}
 					}
 					// quadrant data no longer needed
@@ -1020,14 +1019,13 @@ namespace cheetah_ana_pkg {
 					
 					// Assemble data from all four quadrants into one large array (rawdata layout)
 					// Memcpy is necessary for thread safety.
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					for(int quadrant=0; quadrant<4; quadrant++) {
 						long	i,j,ii;
 						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
 							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 							j = k / (2*asic_nx);
 							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-							eventData->detector[detID].raw_data[ii] = quad_data[quadrant][k];
+							eventData->detector[detID].raw_data16[ii] = quad_data[quadrant][k];
 						}
 					}
 					// quadrant data no longer needed
@@ -1055,13 +1053,12 @@ namespace cheetah_ana_pkg {
 				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
 				singleQuad = evt.get(m_srcCspad2x2, m_key);
 				if (singleQuad.get()) {
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
 					const ndarray<const int16_t, 3>& data = singleQuad->data();
 					int partsize = asic_nx * asic_ny * 2;
 					for (unsigned s = 0; s < 2; s++) {
 						for (int y = 0; y < asic_ny; y++) {
 							for (int x = 0; x < asic_nx * 2; x++) {
-								eventData->detector[detID].raw_data[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+								eventData->detector[detID].raw_data16[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
 							}
 						}
 					}
@@ -1106,8 +1103,7 @@ namespace cheetah_ana_pkg {
 					long	ny = data.shape()[1];
 					long    pix_nn = nx*ny;
 					//cout << nx << "x" << ny << " = " << pix_nn << endl;
-					eventData->detector[detID].raw_data = (uint16_t*) calloc(pix_nn, sizeof(uint16_t));
-					memcpy(&eventData->detector[detID].raw_data[0],&data[0][0],nx*ny*sizeof(uint16_t));
+					memcpy(&eventData->detector[detID].raw_data16[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
 					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);

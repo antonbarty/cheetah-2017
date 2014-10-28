@@ -93,7 +93,8 @@ public:
 	int      hitfinderInvertHit;
 	/** @brief Perform hit finding for initial frames */
 	int      hitfinderForInitials;
-	int      hitfinderDetector;
+	int      hitfinderDetectorID;
+	long     hitfinderDetIndex;
 	/** @brief Specify the hitfinder algorithm. */
 	int      hitfinderAlgorithm;
 	/** @brief Intensity threshold for hitfinder algorithm. */

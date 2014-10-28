@@ -179,29 +179,36 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create arrays for intermediate detector data, etc 
 	 */
 	DETECTOR_LOOP {
-		long	pix_nn = global->detector[detID].pix_nn;
-		long	image_nn = global->detector[detID].image_nn;
-		long	imageXxX_nn = global->detector[detID].imageXxX_nn;
-		long	radial_nn = global->detector[detID].radial_nn;
-		
-		eventData->detector[detID].corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].detector_corrected_data = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detID].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+		long	pix_nn = global->detector[detIndex].pix_nn;
+		long	image_nn = global->detector[detIndex].image_nn;
+		long	imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+		long	radial_nn = global->detector[detIndex].radial_nn;
 
-		eventData->detector[detID].image = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detID].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].data_raw16 = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].data_raw = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].data_detCorr = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].data_detPhotCorr = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].data_pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].imageXxX = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detID].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].image_raw = (float*) calloc(image_nn,sizeof(float));
+		eventData->detector[detIndex].image_detCorr = (float*) calloc(image_nn,sizeof(float));
+		eventData->detector[detIndex].image_detPhotCorr = (float*) calloc(image_nn,sizeof(float));
+		eventData->detector[detIndex].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].radialAverage = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detID].radialAverageCounter = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].imageXxX_raw = (float*) calloc(imageXxX_nn,sizeof(float));
+		eventData->detector[detIndex].imageXxX_detCorr = (float*) calloc(imageXxX_nn,sizeof(float));
+		eventData->detector[detIndex].imageXxX_detPhotCorr = (float*) calloc(imageXxX_nn,sizeof(float));
+		eventData->detector[detIndex].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
 
-		eventData->detector[detID].pedSubtracted=0;
-		eventData->detector[detID].sum=0.;
+		eventData->detector[detIndex].radialAverage_raw = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverage_detCorr = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverage_detPhotCorr = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverage_pixelmask = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));		
+
+		eventData->detector[detIndex].pedSubtracted=0;
+		eventData->detector[detIndex].sum=0.;		
 	}	
-	
-		
+			
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
@@ -224,6 +231,8 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 }
 
 
+
+
 /*
  *  libCheetah function to clean up all memory allocated in event struture
  */
@@ -233,22 +242,26 @@ void cheetahDestroyEvent(cEventData *eventData) {
     
     // Free memory
 	DETECTOR_LOOP {
-		//for(int quadrant=0; quadrant<4; quadrant++) 
-		//	free(eventData->detector[detID].quad_data[quadrant]);	
-		free(eventData->detector[detID].data_raw16);
-		free(eventData->detector[detID].corrected_data);
-		free(eventData->detector[detID].detector_corrected_data);
-		free(eventData->detector[detID].image);
-		free(eventData->detector[detID].pixelmask);
-		free(eventData->detector[detID].image_pixelmask);
-		
-		//if(global->detector[detID].downsampling > 1){
-		free(eventData->detector[detID].imageXxX);
-		free(eventData->detector[detID].imageXxX_pixelmask);
-		//}
+		free(eventData->detector[detIndex].data_raw16);
+		free(eventData->detector[detIndex].data_raw);
+		free(eventData->detector[detIndex].data_detCorr);
+		free(eventData->detector[detIndex].data_detPhotCorr);
+		free(eventData->detector[detIndex].data_pixelmask);
 
-		free(eventData->detector[detID].radialAverage);
-		free(eventData->detector[detID].radialAverageCounter);
+		free(eventData->detector[detIndex].image_raw);
+		free(eventData->detector[detIndex].image_detCorr);
+		free(eventData->detector[detIndex].image_detPhotCorr);
+		free(eventData->detector[detIndex].image_pixelmask);
+
+		free(eventData->detector[detIndex].imageXxX_raw);
+		free(eventData->detector[detIndex].imageXxX_detCorr);
+		free(eventData->detector[detIndex].imageXxX_detPhotCorr);
+		free(eventData->detector[detIndex].imageXxX_pixelmask);
+
+		free(eventData->detector[detIndex].radialAverage_raw);
+		free(eventData->detector[detIndex].radialAverage_detCorr);
+		free(eventData->detector[detIndex].radialAverage_detPhotCorr);
+		free(eventData->detector[detIndex].radialAverage_pixelmask);
 	}
 	
 	freePeakList(eventData->peaklist);
@@ -299,7 +312,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 	 *	More worrysome is the fact that it occasionally gives a bogus value 
 	 *	of detposnew=0, without a fail message.  Hardware problem? 
 	 *
-	 *  event->detector[detID].detectorZ holds the read-out value
+	 *  event->detector[detIndex].detectorZ holds the read-out value
 	 *  fail=std::numeric_limits<float>::quiet_NaN();
 	 */
 	DETECTOR_LOOP {
@@ -308,20 +321,20 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 		int update_camera_length = 0;
 
 		// what's the detector "camera length" for this shot?
-		if ( global->detector[detID].fixedCameraLengthMm != 0 ) {
+		if ( global->detector[detIndex].fixedCameraLengthMm != 0 ) {
 			// If fixed detector camera length is provided, override it here... it's a bit of a hack for now...
-			detposnew = global->detector[detID].fixedCameraLengthMm;
+			detposnew = global->detector[detIndex].fixedCameraLengthMm;
 		} else {
-			detposnew = eventData->detector[detID].detectorZ;
+			detposnew = eventData->detector[detIndex].detectorZ;
 		}
 
 		if ( !isnan(detposnew) ) {
 
 			// New detector position = 0 could be an error
             if ( detposnew == 0 ) {
-                detposnew = global->detector[detID].detposprev;
+                detposnew = global->detector[detIndex].detposprev;
                 printf("WARNING: detector position is zero, which could be an error\n"
-                       "         will use previous position (%s=%f) instead...\n",global->detector[detID].detectorZpvname, detposnew);
+                       "         will use previous position (%s=%f) instead...\n",global->detector[detIndex].detectorZpvname, detposnew);
             }
 			
             //	Apply offsets
@@ -329,32 +342,32 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
 			//	position to the specimen, and is 79mm from the centre of the 
 			//	8" flange where the injector is mounted.  
 			//	The injector itself is about 4mm further away from the detector than this. 
-            global->detector[detID].detposprev = detposnew;
-            global->detector[detID].detectorEncoderValue = detposnew;
-            global->detector[detID].detectorZ = detposnew + global->detector[detID].cameraLengthOffset;
+            global->detector[detIndex].detposprev = detposnew;
+            global->detector[detIndex].detectorEncoderValue = detposnew;
+            global->detector[detIndex].detectorZ = detposnew + global->detector[detIndex].cameraLengthOffset;
 
             //	Round to the nearest two decimal places 
 			//	(10 micron, much less than a pixel size) 
-            global->detector[detID].detectorZ = floorf(global->detector[detID].detectorZ*100+0.5)/100;
+            global->detector[detIndex].detectorZ = floorf(global->detector[detIndex].detectorZ*100+0.5)/100;
             update_camera_length = 1;
         }	 
         
 		//	What to do if there is no camera length information?  
 		//	Keep skipping frames until this info is found?  
 		//	For now, set a (non-zero) default camera length.
-		if ( global->detector[detID].detectorZ == 0 ) {
+		if ( global->detector[detIndex].detectorZ == 0 ) {
 
-            if ( global->detector[detID].defaultCameraLengthMm == 0 ) {
+            if ( global->detector[detIndex].defaultCameraLengthMm == 0 ) {
                 printf("======================================================\n");
-                printf("WARNING: Camera length %s is zero!\n", global->detector[detID].detectorZpvname);
+                printf("WARNING: Camera length %s is zero!\n", global->detector[detIndex].detectorZpvname);
                 printf("If the problem persists, try setting the keyword\n");
                 printf("defaultCameraLengthMm in your ini file\n"); 
                 printf("======================================================\n");
                 return;
             } 
             else {
-                printf("MESSAGE: Setting default camera length (%gmm).\n",global->detector[detID].defaultCameraLengthMm);
-                global->detector[detID].detectorZ = global->detector[detID].defaultCameraLengthMm;	
+                printf("MESSAGE: Setting default camera length (%gmm).\n",global->detector[detIndex].defaultCameraLengthMm);
+                global->detector[detIndex].detectorZ = global->detector[detIndex].defaultCameraLengthMm;	
                 update_camera_length = 1;
             }
         }
@@ -363,18 +376,18 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
         /*
          * Recalculate reciprocal space geometry if the camera length has changed, 
          */
-        if ( update_camera_length && ( global->detector[detID].detectorZprevious != global->detector[detID].detectorZ ) ) {
+        if ( update_camera_length && ( global->detector[detIndex].detectorZprevious != global->detector[detIndex].detectorZ ) ) {
             // don't tinker with cheetahGlobal geometry while there are active threads...
             while (global->nActiveThreads > 0) 
                 usleep(10000);
             
-            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detID].detectorZprevious,global->detector[detID].detectorZ);
+            printf("Camera length changed from %gmm to %gmm.\n", global->detector[detIndex].detectorZprevious,global->detector[detIndex].detectorZ);
             if ( isnan(eventData->wavelengthA ) ) {
                 printf("MESSAGE: Bad wavelength data (NaN). Consider using defaultPhotonEnergyeV keyword.\n");
             }	
-            global->detector[detID].detectorZprevious = global->detector[detID].detectorZ;
+            global->detector[detIndex].detectorZprevious = global->detector[detIndex].detectorZ;
             for(long i=0; i<global->nDetectors; i++) 
-                global->detector[detID].updateKspace(global, eventData->wavelengthA);
+                global->detector[detIndex].updateKspace(global, eventData->wavelengthA);
             
         }	
     }
@@ -399,7 +412,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
      *  Copy over any remaining detector info
      */
     DETECTOR_LOOP {
-        eventData->detector[detID].detectorZ = global->detector[detID].detectorZ;        
+        eventData->detector[detIndex].detectorZ = global->detector[detIndex].detectorZ;        
         
     }
 }
@@ -576,7 +589,6 @@ void cheetahExit(cGlobal *global) {
     // Save powder patterns and other stuff
     saveRunningSums(global);
     saveHistograms(global);
-    saveRadialStacks(global);
 	saveSpectrumStacks(global);
     global->writeFinalLog();
 
