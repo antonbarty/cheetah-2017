@@ -120,6 +120,7 @@ void *worker(void *threadarg) {
 	// pnCCD wiring error (shift in one set of rows relative to another - and yes, it's a wiring error).
 	// pnCCD signal drop in every second line (fast changing dimension) is fixed by interpolation
 	//  (these corrections will be automatically skipped for any non-pnCCD detector)
+    pnccdModuleSubtract(eventData, global);
 	pnccdOffsetCorrection(eventData, global);
 	pnccdFixWiringError(eventData, global);
 	pnccdLineInterpolation(eventData, global);
