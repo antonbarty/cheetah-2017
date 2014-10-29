@@ -16,6 +16,8 @@
 #ifndef DETECTOROBJECT_H
 #define DETECTOROBJECT_H
 
+#include <stdint.h>
+
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
@@ -83,7 +85,7 @@ inline bool isNoneOfBitOptionsUnset(uint16_t value, uint16_t option) {return ((v
 // for single options
 inline bool isBitOptionSet(uint16_t value, uint16_t option) {return isNoneOfBitOptionsUnset(value,option);}
 inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBitOptionsSet(value,option);}
-inline bool isNthBitOptionSet (uint16_t c, int n) { static unsigned char mask[] = {32768, 16384, 8192, 4096, 2048, 1024, 512 ,256, 128, 64, 32, 16, 8, 4, 2, 1}; return ((c & mask[n]) != 0);}
+//inline bool isNthBitOptionSet (uint16_t c, int n) { static unsigned char mask[] = {32768, 16384, 8192, 4096, 2048, 1024, 512 ,256, 128, 64, 32, 16, 8, 4, 2, 1}; return ((c & mask[n]) != 0);}
 
 /*
  * Assemble modes (see assemble2Dimage.cpp)
@@ -93,7 +95,7 @@ static const int ASSEMBLE_INTERPOLATION_NEAREST = 1;
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
 #define DETECTOR_LOOP for(long detIndex=0; detIndex < global->nDetectors; detIndex++)
-#define DATA_VERSION_LOOP for(int verIndex=0; verIndex < global->nCorrections; verIndex++)
+#define FOREACH_UINT16_T( intpvar, intary ) uint16_t* intpvar; for( intpvar= (uint16_t*) intary; intpvar < (intary + (sizeof(intary)/sizeof(intary[0]))) ; intpvar++)
 
 const int DATA_VERSION_N = 3;
 
@@ -297,13 +299,44 @@ public:
 	pthread_mutex_t histogram_mutex;
 	//long	histogram_depth;
 
-	
-	
-
 	// Saving options
-	int   saveDetectorCorrectedOnly;
+	// Data versions
+	// Toggle saving raw data (no corrections applied)
 	int   saveDetectorRaw;
+	// Toggle saving detector corrected data (only corrections that clean up detector artefacts applied)
+	int   saveDetectorCorrected;
+	// Toggle saving detector and photon corrected data (all corrections applied)
+	int   saveDetectorAndPhotonCorrected;
+	// Data formats
+	int   saveNonAssembled;
+	int   saveAssembled;
+	int   saveAssembledAndDownsampled;
+	int   saveRadialAverage;
+	// Bit options defining formats in which data shall be saved (non-assembled / assembled / assembled and downsampled / radial average)
+	uint16_t saveFormat;
+	// Defining the option that the main dataset link "data" shall point to
+	uint16_t saveFormatMain;
+	// Bit options defining versions of the data to be saved (raw / detector corrected / detector and photon corrected)	
+	uint16_t saveVersion;
+	// Defining the option that the main dataset link "data" shall point to
+	uint16_t saveVersionMain;
 
+	// Powder saving options
+	// Data versions
+	int   savePowderDetectorRaw;
+	int   savePowderDetectorCorrected;
+	int   savePowderDetectorAndPhotonCorrected;
+	// Data formats
+	int   savePowderNonAssembled;
+	int   savePowderAssembled;
+	int   savePowderAssembledAndDownsampled;
+	int   savePowderRadialAverage;
+	// Bit options defining formats in which powder data shall be created and saved (non-assembled / assembled / assembled and downsampled / radial average)
+	uint16_t powderFormat;
+	uint16_t powderFormatMain;
+	// Bit options defining versions of the data to be used for creating and saving powders (raw / detector corrected / detector and photon corrected)	
+	uint16_t powderVersion;
+	uint16_t powderVersionMain;
 
 	/*
 	 * Arrays for all sorts of stuff
@@ -322,48 +355,58 @@ public:
 	/*
 	 * Powder patterns/sums for this detector
 	 */
-//	FILE     *powderlogfp[MAX_POWDER_CLASSES];
+    //	FILE     *powderlogfp[MAX_POWDER_CLASSES];
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
-	double   *powderRaw[MAX_POWDER_CLASSES];
-	double   *powderRawSquared[MAX_POWDER_CLASSES];
-	double   *powderCorrected[MAX_POWDER_CLASSES];
-	double   *powderCorrectedSquared[MAX_POWDER_CLASSES];
-	double   *powderAssembled[MAX_POWDER_CLASSES];
-	double   *powderAssembledSquared[MAX_POWDER_CLASSES];
-	double   *powderDownsampled[MAX_POWDER_CLASSES];
-	double   *powderDownsampledSquared[MAX_POWDER_CLASSES];
+	double   *powderData_raw[MAX_POWDER_CLASSES];
+	double   *powderData_raw_squared[MAX_POWDER_CLASSES];
+	double   *powderData_detCorr[MAX_POWDER_CLASSES];
+	double   *powderData_detCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderData_detPhotCorr[MAX_POWDER_CLASSES];
+	double   *powderData_detPhotCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderImage_raw[MAX_POWDER_CLASSES];
+	double   *powderImage_raw_squared[MAX_POWDER_CLASSES];
+	double   *powderImage_detCorr[MAX_POWDER_CLASSES];
+	double   *powderImage_detCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderImage_detPhotCorr[MAX_POWDER_CLASSES];
+	double   *powderImage_detPhotCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_raw[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_raw_squared[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_detCorr[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_detCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_detPhotCorr[MAX_POWDER_CLASSES];
+	double   *powderImageXxX_detPhotCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_raw[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_raw_squared[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_detCorr[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_detCorr_squared[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_detPhotCorr[MAX_POWDER_CLASSES];
+	double   *powderRadialAverage_detPhotCorr_squared[MAX_POWDER_CLASSES];
 	double   *powderPeaks[MAX_POWDER_CLASSES];
-	float   *correctedMin[MAX_POWDER_CLASSES];
-	float   *assembledMin[MAX_POWDER_CLASSES];
-	float   *correctedMax[MAX_POWDER_CLASSES];
-	float   *assembledMax[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderRaw_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderRawSquared_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderCorrected_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderCorrectedSquared_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderAssembled_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderAssembledSquared_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderDownsampled_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t powderDownsampledSquared_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];
-	pthread_mutex_t assembledMax_mutex[MAX_POWDER_CLASSES];
+	//float   *correctedMin[MAX_POWDER_CLASSES];
+	//float   *assembledMin[MAX_POWDER_CLASSES];
+	//float   *correctedMax[MAX_POWDER_CLASSES];
+	//float   *assembledMax[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderData_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderImage_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderImageXxX_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderRadialAverage_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t powderPeaks_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t correctedMin_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t correctedMax_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t assembledMin_mutex[MAX_POWDER_CLASSES];
+	//pthread_mutex_t assembledMax_mutex[MAX_POWDER_CLASSES];
 
 	/*
 	 *  Radial stacks for this detector
 	 */
 	long            radialStackSize;
-	long            radialStackCounter[MAX_POWDER_CLASSES];
-	float           *radialAverageStack[MAX_POWDER_CLASSES];
+	long   radialStackCounter[MAX_POWDER_CLASSES];
+	float   *radialAverageStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 
-
-public:
-
 	cPixelDetectorCommon();
-	void configure(void);
+	void configure(cGlobal *);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
 	void freePowderMemory(cGlobal*);
@@ -399,32 +442,36 @@ public:
 	// Raw data as read from the XTC file but converted to float
 	float     *data_raw;
 	// Data after detector corrections applied (common-mode, detector artefacts...)
-	float     *data_detcorr;
+	float     *data_detCorr;
 	// Data after both detector corrections and photon corrections (subtraction of persistent parasitic scattering, water ring removal,...)
-	float     *data_detphotcorr;
+	float     *data_detPhotCorr;
 	// Pixelmask
 	uint16_t  *pixelmask;
 	/* DATA ASSEMBLED */
 	// Raw data as read from the XTC file but converted to float
 	float     *image_raw;
 	// Data after detector corrections applied (common-mode, detector artefacts...)
-	float     *image_detcorr;
+	float     *image_detCorr;
 	// Data after both detector corrections and photon corrections (subtraction of persistent parasitic scattering, water ring removal,...)
-	float     *image_detphotcorr;
+	float     *image_detPhotCorr;
 	// Pixelmask
 	uint16_t  *image_pixelmask;
 	/* DATA ASSEMBLED AND DOWN-SAMPLED */
 	// Raw data as read from the XTC file but converted to float
 	float     *imageXxX_raw;
 	// Data after detector corrections applied (common-mode, detector artefacts...)
-	float     *imageXxX_detcorr;
+	float     *imageXxX_detCorr;
 	// Data after both detector corrections and photon corrections (subtraction of persistent parasitic scattering, water ring removal,...)
-	float     *imageXxX_detphotcorr;
+	float     *imageXxX_detPhotCorr;
 	// Pixelmask
 	uint16_t  *imageXxX_pixelmask;
 	/* RADIAL AVERAGE */
-	float     *radialAverage;
-	float     *radialAverageCounter;
+	float     *radialAverage_raw;
+	float     *radialAverage_detCorr;
+	float     *radialAverage_detPhotCorr;
+	uint16_t  *radialAverage_pixelmask;
+	//float     *radialAverage;
+	//float     *radialAverageCounter;
 	double    detectorZ;
 	float     sum;
 };
@@ -432,54 +479,54 @@ public:
 static const uint16_t DATA_VERSION_RAW = 1;
 static const uint16_t DATA_VERSION_DETECTOR_CORRECTED = 2;
 static const uint16_t DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED = 4;
-static const uint16_t DATA_VERSION_INDEX_N = 3;
+static const uint16_t DATA_VERSION_ALL = DATA_VERSION_RAW | DATA_VERSION_DETECTOR_CORRECTED | DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
 static const uint16_t DATA_FORMAT_NON_ASSEMBLED = 1;
 static const uint16_t DATA_FORMAT_ASSEMBLED = 2;
 static const uint16_t DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED = 4;
-static const uint16_t DATA_FORMAT_RADIAL = 16;
-static const uint16_t DATA_FORMATS = {DATA_FORMAT_NON_ASSEMBLED, DATA_FORMAT_ASSEMBLED, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED, DATA_FORMAT_RADIAL};
+static const uint16_t DATA_FORMAT_RADIAL_AVERAGE = 16;
+static const uint16_t DATA_FORMAT_ALL = DATA_FORMAT_NON_ASSEMBLED | DATA_FORMAT_ASSEMBLED | DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED | DATA_FORMAT_RADIAL_AVERAGE;
+static const uint16_t DATA_FORMATS[] = {DATA_FORMAT_NON_ASSEMBLED, DATA_FORMAT_ASSEMBLED, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED, DATA_FORMAT_RADIAL_AVERAGE};
 //static const int DATA_FORMAT_MIN = DATA_FORMAT_NON_ASSEMBLED;
 //static const int DATA_FORMAT_MAX = DATA_FORMAT_IMAGEXXX;
 
 static const uint16_t DATA_LOOP_MODE_POWDER = 1;
 static const uint16_t DATA_LOOP_MODE_SAVE = 2;
-static const uint16_t DATA_LOOP_MODE_ALL = DATA_LOOP_MODE_POWDER | DATA_LOOP_MODE_SAVE;
+static const uint16_t DATA_LOOP_MODE_RADIAL_AVERAGE = 4;
+static const uint16_t DATA_LOOP_MODE_ALL = DATA_LOOP_MODE_POWDER | DATA_LOOP_MODE_SAVE | DATA_LOOP_MODE_RADIAL_AVERAGE;
 
 class cDataVersion {
  private:
 	float *raw;
-	double *powderRaw;
-	pthread_mutex_t *powderRaw_mutex;	
-	double *powderRawSquared;
-	pthread_mutex_t *powderRawSquared_mutex;	
 	float *detCorr;
-	double *powderDetCorr;
-	pthread_mutex_t *powderDetCorr_mutex;	
-	double *powderDetCorrSquared;
-	pthread_mutex_t *powderDetCorrSquared_mutex;	
 	float *detPhotCorr;
-	double *powderDetPhotCorr;
-	pthread_mutex_t *powderDetPhotCorr_mutex;	
-	doubke *powderDetPhotCorrSquared;
-	pthread_mutex_t *powderDetPhotCorrSquared_mutex;	
+	double *powder_raw[MAX_POWDER_CLASSES];
+	double *powder_raw_squared[MAX_POWDER_CLASSES];
+	double *powder_detCorr[MAX_POWDER_CLASSES];
+	double *powder_detCorr_squared[MAX_POWDER_CLASSES];
+	double *powder_detPhotCorr[MAX_POWDER_CLASSES];
+	double *powder_detPhotCorr_squared[MAX_POWDER_CLASSES];
 	int dataVersionIndex;
 	char name_root[1024];
-	int set();
+	int get();
+	cPixelDetectorEvent *detectorEvent;
+	cPixelDetectorCommon *detectorCommon;
+	uint16_t dataLoopMode;
  public:
-	cDataVersion(cPixelDetectorEvent *detector,int dataFormat);
+	cDataVersion(cPixelDetectorEvent *detectorEvent, cPixelDetectorCommon *detectorCommon, const uint16_t loopMode, const uint16_t dataFormat);
 	int next();
-	cPixelDetectorEvent *detector;
-	long size;
 	float *data;
-	double *powder;
-	double *powderSquared;
-	pthread_mutex_t *powder_mutex;	
 	uint16_t *pixelmask;
+	uint16_t *pixelmask_shared;
+	double *powder[MAX_POWDER_CLASSES];
+	double *powder_squared[MAX_POWDER_CLASSES];
+	pthread_mutex_t *powder_mutex;	
 	char name[1024];
 	int isMainDataset;
 	uint16_t dataFormat;
 	uint16_t dataVersion;
+	uint16_t dataFormatMain;
+	uint16_t dataVersionMain;
 	long pix_nn,pix_nx,pix_ny;		
-}
+};
 
 #endif

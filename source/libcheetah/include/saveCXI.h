@@ -72,6 +72,8 @@ namespace CXI{
 		Node * createGroup(const char * s);
 		Node * createGroup(const char * prefix, int n);
 		Node * createLink(const char * s, std::string target);
+		Node * addDatasetLink(const char * s, std::string target);
+		
 		/*
 		  The base name of the class should be used.
 		  For example "entry" if you want to create "entry_N"

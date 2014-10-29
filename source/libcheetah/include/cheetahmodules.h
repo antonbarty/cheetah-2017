@@ -6,6 +6,8 @@
 void *worker(void *);
 
 // detectorCorrection.cpp
+void initDetectorCorrection(cEventData *eventData, cGlobal *global);
+void initPixelmask(cEventData *eventData, cGlobal *global);
 void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
 void applyPolarizationCorrection(cEventData*, cGlobal*);
@@ -26,7 +28,7 @@ void applyGainCorrection(float*, float*, long);
 void applyPolarizationCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
-void applyBadPixelMask(float*, uint16_t*, long);
+void setBadPixelsToZero(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
@@ -39,9 +41,8 @@ void pnccdFixWiringError(float*);
 void pnccdLineInterpolation(cEventData*, cGlobal*);
 void pnccdLineMasking(cEventData*, cGlobal*);
 
-
-
 // backgroundCorrection.cpp
+void initPhotonCorrection(cEventData *eventData, cGlobal *global);
 void subtractLocalBackground(cEventData*, cGlobal*);
 void subtractRadialBackground(cEventData*, cGlobal*);
 void checkSaturatedPixels(cEventData*, cGlobal*);
@@ -59,7 +60,6 @@ void updateHaloBuffer(cEventData*, cGlobal*,int);
 void calculateHaloPixelMask(cEventData*,cGlobal*);
 long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
 
-
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
 void writeHDF5(cEventData*, cGlobal*);
@@ -68,7 +68,6 @@ void writeSimpleHDF5(const char*, const void*, int, int, int);
 void writeSimpleHDF5(const char*, const void*, int, int, int, const char*,long);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
-
 // saveCXI.cpp
 void writeCXI(cEventData *info, cGlobal *global);
 void writeCXIHitstats(cEventData *info, cGlobal *global);
@@ -76,14 +75,12 @@ void writeAccumulatedCXI(cGlobal * global);
 void closeCXIFiles(cGlobal * global);
 herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
 
-
 // assemble2DImage.cpp
-void assemble2Dimage(cEventData*, cGlobal*);
-void assemble2Dpowder(cGlobal*);
-void assemble2Dmask(cEventData*, cGlobal*);
-void assemble2Dimage(float*, float*, float*, float*, long, long, long, int);
-void assemble2Dimage(int16_t*, float*, float*, float*, long, long, long, int);
-void assemble2Dmask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
+void assemble2D(cEventData*, cGlobal*);
+void assemble2DPowder(cGlobal*);
+void assemble2DImage(float*, float*, float*, float*, long, long, long, int);
+void assemble2DImage(int16_t*, float*, float*, float*, long, long, long, int);
+void assemble2DMask(uint16_t*, uint16_t*, float*, float*, long, long, long, int);
 
 // modularDetector.cpp
 int moduleCornerIndex(int, int, int);
@@ -100,14 +97,12 @@ void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_
 void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
 void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk,long downsampling);
 void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
-
+void downsamplePowder(cGlobal*);
 
 // hitfinders.cpp
 int  hitfinder(cEventData*, cGlobal*);
 long hitfinderFastScan(cEventData*, cGlobal*);
 void sortPowderClass(cEventData*, cGlobal*);
-
-
 
 // peakfinders.cpp
 int peakfinder(cGlobal*, cEventData*, int);
@@ -116,14 +111,10 @@ int peakfinder6(tPeakList*, float*, char*, long, long, long, long, float, float,
 int peakfinder8(tPeakList*, float*, char*, float*, long, long, long, long, float, float, long, long, long);
 int killNearbyPeaks(tPeakList*, float );
 
-
-
 // spectrum.cpp
 void addFEEspectrumToStack(cEventData*, cGlobal*, int);
 void saveFEEspectrumStack(cGlobal*, int);
 void saveSpectrumStacks(cGlobal*);
-
-
 void integrateSpectrum(cEventData*, cGlobal*);
 void integrateSpectrum(cEventData*, cGlobal*, int, int);
 void addToSpectrumStack(cEventData*, cGlobal*, int);
@@ -135,17 +126,14 @@ void saveIntegratedRunSpectrum(cGlobal*);
 void readSpectrumDarkcal(cGlobal*, char *);
 void readSpectrumEnergyScale(cGlobal*, char*);
 
-
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);
-void addToPowder(cEventData*, cGlobal*, int, int);
+void addToPowder(cEventData*, cGlobal*, int, long);
 void saveRunningSums(cGlobal*);
-void saveRunningSums(cGlobal*, int);
 void saveDarkcal(cGlobal*, int);
 void saveGaincal(cGlobal*, int);
 void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
-
 
 // histogram.cpp
 void addToHistogram(cEventData*, cGlobal*);
@@ -153,16 +141,15 @@ void addToHistogram(cEventData*, cGlobal*, int);
 void saveHistograms(cGlobal*);
 void saveHistogram(cGlobal*, int);
 
-
-
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);
-void calculateRadialAverage(float*, float*, long, float*, float*, long, int*);
-void calculateRadialAverage(double*, double*, double*, cGlobal*, int);
+template <class T>
+void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uint16_t *pixelmaskRadial, float * pix_r, long radial_nn, long pix_nn);
 void addToRadialAverageStack(cEventData*, cGlobal*);
 void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
+void calculateRadialAveragePowder(cGlobal*);
     
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);
@@ -176,3 +163,6 @@ void integratePattern(cEventData * eventData,cGlobal * global);
 // datarate timing
 void updateDatarate(cEventData*, cGlobal*);
 void updateAvgGMD(cEventData *eventData, cGlobal *global);
+
+// log.cpp
+void writeLog(cEventData * eventData, cGlobal * global);

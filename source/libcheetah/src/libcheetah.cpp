@@ -188,22 +188,19 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detIndex].data_raw = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detIndex].data_detCorr = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detIndex].data_detPhotCorr = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detIndex].data_pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+		eventData->detector[detIndex].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].image_raw = (float*) calloc(image_nn,sizeof(float));
 		eventData->detector[detIndex].image_detCorr = (float*) calloc(image_nn,sizeof(float));
 		eventData->detector[detIndex].image_detPhotCorr = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detIndex].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].imageXxX_raw = (float*) calloc(imageXxX_nn,sizeof(float));
 		eventData->detector[detIndex].imageXxX_detCorr = (float*) calloc(imageXxX_nn,sizeof(float));
 		eventData->detector[detIndex].imageXxX_detPhotCorr = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detIndex].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].radialAverage_raw = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detIndex].radialAverage_detCorr = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detIndex].radialAverage_detPhotCorr = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detIndex].radialAverage_pixelmask = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));		
 
 		eventData->detector[detIndex].pedSubtracted=0;
 		eventData->detector[detIndex].sum=0.;		
@@ -246,22 +243,19 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detIndex].data_raw);
 		free(eventData->detector[detIndex].data_detCorr);
 		free(eventData->detector[detIndex].data_detPhotCorr);
-		free(eventData->detector[detIndex].data_pixelmask);
+		free(eventData->detector[detIndex].pixelmask);
 
 		free(eventData->detector[detIndex].image_raw);
 		free(eventData->detector[detIndex].image_detCorr);
 		free(eventData->detector[detIndex].image_detPhotCorr);
-		free(eventData->detector[detIndex].image_pixelmask);
 
 		free(eventData->detector[detIndex].imageXxX_raw);
 		free(eventData->detector[detIndex].imageXxX_detCorr);
 		free(eventData->detector[detIndex].imageXxX_detPhotCorr);
-		free(eventData->detector[detIndex].imageXxX_pixelmask);
 
 		free(eventData->detector[detIndex].radialAverage_raw);
 		free(eventData->detector[detIndex].radialAverage_detCorr);
 		free(eventData->detector[detIndex].radialAverage_detPhotCorr);
-		free(eventData->detector[detIndex].radialAverage_pixelmask);
 	}
 	
 	freePeakList(eventData->peaklist);

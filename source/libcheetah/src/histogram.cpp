@@ -66,7 +66,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detIndex) {
 			i_hist = fs + ss*pix_nx;
 			i_buffer = (fs-hist_fs_min) + (ss-hist_ss_min)*hist_nfs;
 			
-			value = eventData->detector[detIndex].corrected_data[i_hist];
+			value = eventData->detector[detIndex].data_detPhotCorr[i_hist];
 			binf = (value-histMin)/histBinSize;
 			bin = (long) lrint(binf);
 			

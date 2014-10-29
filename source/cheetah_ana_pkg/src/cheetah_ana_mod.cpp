@@ -217,9 +217,9 @@ namespace cheetah_ana_pkg {
 		 *		return;
 		 *	}
 		 */
-		for(long detID=0; detID < cheetahGlobal.nDetectors; detID++)  {
+		for(long detIndex=0; detIndex < cheetahGlobal.nDetectors; detIndex++)  {
 
-			if (!strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd")) {
+			if (!strcmp(cheetahGlobal.detector[detIndex].detectorType, "pnccd")) {
 
 				// Need to make this do 
 				shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_srcPnccd0);
@@ -244,7 +244,7 @@ namespace cheetah_ana_pkg {
 					cout << "\n  timingFName = " << config2->timingFName() << endl;
 				}
 				else {
-					cout << "Failed to retrieve pnCCD configuration object. " << detID << endl;
+					cout << "Failed to retrieve pnCCD configuration object. " << detIndex << endl;
 					cout << "cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)" << endl;
 					cout << "Exiting..." << endl;
 					exit(1);
@@ -400,7 +400,7 @@ namespace cheetah_ana_pkg {
                 int evr183 = eventCodePresent(data3->fifoEvents(), 183);
                 int evr184 = eventCodePresent(data3->fifoEvents(), 184);
                 int evr186 = eventCodePresent(data3->fifoEvents(), 186);
-                int evr187 = eventCodePresent(data3->fifoEvents(), 187);
+                //int evr187 = eventCodePresent(data3->fifoEvents(), 187);
                 
                 pumpLaserOn = evr183;
                 if(evr183) pumpLaserCode = 1;
@@ -720,24 +720,24 @@ namespace cheetah_ana_pkg {
 		// Don't forget to initialize them
 		std::vector<float> detectorPosition(MAX_DETECTORS,0);
 
-		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
-			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detID].detectorZpvname);
+		for(long detIndex=0; detIndex<=cheetahGlobal.nDetectors; detIndex++) {
+			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.detector[detIndex].detectorZpvname);
 			if (pv && pv->numElements() > 0) {
-				const float& value = estore.value(cheetahGlobal.detector[detID].detectorZpvname,0);
-				detectorPosition[detID] = value;
+				const float& value = estore.value(cheetahGlobal.detector[detIndex].detectorZpvname,0);
+				detectorPosition[detIndex] = value;
 				if (verbose) {
-					cout << "***** DetectorPosition[" << cheetahGlobal.detector[detID].detectorID << "]: " << value << endl;
+					cout << "***** DetectorPosition[" << cheetahGlobal.detector[detIndex].detectorID << "]: " << value << endl;
 				}
 			}
 		}
 
 		// get pumpLaserDelay only for Neutze TiSa delay
-		for(long detID=0; detID<=cheetahGlobal.nDetectors; detID++) {
+		for(long detIndex=0; detIndex<=cheetahGlobal.nDetectors; detIndex++) {
 			shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.pumpLaserDelayPV);
 			if (pv && pv->numElements() > 0) {
 				const float& value = estore.value(cheetahGlobal.pumpLaserDelayPV,0);
 				if (verbose) {
-					cout << "pumpLaserDelay[" << detID << "]: " << value << endl;
+					cout << "pumpLaserDelay[" << detIndex << "]: " << value << endl;
 				}  
 			}
 		}
@@ -880,21 +880,21 @@ namespace cheetah_ana_pkg {
 		 *  SLAC libraries are not thread safe: so we must copy the data and not simply pass a pointer
 		 */
 
-		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {
+		for(long detIndex=0; detIndex<cheetahGlobal.nDetectors; detIndex++) {
       
 			/*
 			 *  cspad
 			 */
-			if(strcmp(cheetahGlobal.detector[detID].detectorType, "cspad") == 0 ) {
+			if(strcmp(cheetahGlobal.detector[detIndex].detectorType, "cspad") == 0 ) {
 				
 				// Pull out front or back detector depending on detectorID=0 or 1
 				shared_ptr<Psana::CsPad::DataV1> data1;
 				shared_ptr<Psana::CsPad::DataV2> data2;
-				if (cheetahGlobal.detector[detID].detectorID == 0) {
+				if (cheetahGlobal.detector[detIndex].detectorID == 0) {
 					data1 = evt.get(m_srcCspad0, m_key);
 					data2 = evt.get(m_srcCspad0, m_key);
 				} 
-				else if (cheetahGlobal.detector[detID].detectorID == 1) {
+				else if (cheetahGlobal.detector[detIndex].detectorID == 1) {
 					data1 = evt.get(m_srcCspad1, m_key);
 					data2 = evt.get(m_srcCspad1, m_key);
 				}
@@ -924,9 +924,9 @@ namespace cheetah_ana_pkg {
 
                     
 					uint16_t *quad_data[4];
-					long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-					long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-					long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+					long    pix_nn = cheetahGlobal.detector[detIndex].pix_nn;
+					long    asic_nx = cheetahGlobal.detector[detIndex].asic_nx;
+					long    asic_ny = cheetahGlobal.detector[detIndex].asic_ny;
                         
                         
 					// Allocate memory for detector data and set to zero
@@ -957,8 +957,8 @@ namespace cheetah_ana_pkg {
 						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
 							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 							j = k / (2*asic_nx);
-							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;		
-							eventData->detector[detID].raw_data16[ii] = quad_data[quadrant][k];
+							ii  = i+(cheetahGlobal.detector[detIndex].nasics_x*asic_nx)*j;		
+							eventData->detector[detIndex].data_raw16[ii] = quad_data[quadrant][k];
 						}
 					}
 					// quadrant data no longer needed
@@ -991,9 +991,9 @@ namespace cheetah_ana_pkg {
 					
 					
 					uint16_t *quad_data[4];
-					long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-					long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-					long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+					long    pix_nn = cheetahGlobal.detector[detIndex].pix_nn;
+					long    asic_nx = cheetahGlobal.detector[detIndex].asic_nx;
+					long    asic_ny = cheetahGlobal.detector[detIndex].asic_ny;
 					
 					
 					// Allocate memory for detector data and set to zero
@@ -1024,8 +1024,8 @@ namespace cheetah_ana_pkg {
 						for(long k=0; k<2*asic_nx*8*asic_ny; k++) {
 							i = k % (2*asic_nx) + quadrant*(2*asic_nx);
 							j = k / (2*asic_nx);
-							ii  = i+(cheetahGlobal.detector[detID].nasics_x*asic_nx)*j;
-							eventData->detector[detID].raw_data16[ii] = quad_data[quadrant][k];
+							ii  = i+(cheetahGlobal.detector[detIndex].nasics_x*asic_nx)*j;
+							eventData->detector[detIndex].data_raw16[ii] = quad_data[quadrant][k];
 						}
 					}
 					// quadrant data no longer needed
@@ -1036,8 +1036,8 @@ namespace cheetah_ana_pkg {
 
 				// Neither V1 nor V2
 				else {
-					printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
-					printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
+					printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					return;
 				}
@@ -1045,10 +1045,9 @@ namespace cheetah_ana_pkg {
 			/*
 			 *	CsPad 2x2
 			 */
-			else if (strcmp(cheetahGlobal.detector[detID].detectorType, "cspad2x2") == 0) {
-				long    pix_nn = cheetahGlobal.detector[detID].pix_nn;
-				long    asic_nx = cheetahGlobal.detector[detID].asic_nx;
-				long    asic_ny = cheetahGlobal.detector[detID].asic_ny;
+			else if (strcmp(cheetahGlobal.detector[detIndex].detectorType, "cspad2x2") == 0) {
+				long    asic_nx = cheetahGlobal.detector[detIndex].asic_nx;
+				long    asic_ny = cheetahGlobal.detector[detIndex].asic_ny;
 				
 				shared_ptr<Psana::CsPad2x2::ElementV1> singleQuad;
 				singleQuad = evt.get(m_srcCspad2x2, m_key);
@@ -1058,13 +1057,13 @@ namespace cheetah_ana_pkg {
 					for (unsigned s = 0; s < 2; s++) {
 						for (int y = 0; y < asic_ny; y++) {
 							for (int x = 0; x < asic_nx * 2; x++) {
-								eventData->detector[detID].raw_data16[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
+								eventData->detector[detIndex].data_raw16[s*partsize + y * asic_nx * 2 + x] = data[y][x][s];
 							}
 						}
 					}
 				} else {
                     
-					printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detID].detectorID);
+					printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					return;
 				}
@@ -1078,19 +1077,18 @@ namespace cheetah_ana_pkg {
 			 *	For an example of use of this new type (which is very similar to the old one) check out the psana_examples/DumpPnccd module:
 			 *		https://pswww.slac.stanford.edu/swdoc/releases/ana-current/psana-modules-doxy/html/DumpPnccd_8cpp-source.html
 			 */
-			else if(strcmp(cheetahGlobal.detector[detID].detectorType, "pnccd") == 0 ) {
+			else if(strcmp(cheetahGlobal.detector[detIndex].detectorType, "pnccd") == 0 ) {
 				
-				// Pull out front or back detector depending on detID=0 or 1
-				// Make this selectable in the .ini file (easier: let which detector is whcih be set in psana.conf)
+				// Pull out front or back detector depending on detectorID=0 or 1
 				shared_ptr<Psana::PNCCD::FrameV1> frame;
 				shared_ptr<Psana::PNCCD::FullFrameV1> fullframe;
 				
-				if (cheetahGlobal.detector[detID].detectorID == 0) {
+				if (cheetahGlobal.detector[detIndex].detectorID == 0) {
 					//cout << "front" << endl;
 					//frame = evt.get(m_srcPnccd0);	
 					fullframe = evt.get(m_srcPnccd0);
 				} 
-				else if (cheetahGlobal.detector[detID].detectorID == 1) {
+				else if (cheetahGlobal.detector[detIndex].detectorID == 1) {
 					//cout << "back" << endl;
 					//frame = evt.get(m_srcPnccd1);
 					fullframe = evt.get(m_srcPnccd1);
@@ -1101,12 +1099,12 @@ namespace cheetah_ana_pkg {
 					const	ndarray<const uint16_t, 2> data = fullframe->data();
 					long	nx = data.shape()[0];
 					long	ny = data.shape()[1];
-					long    pix_nn = nx*ny;
+					//long    pix_nn = nx*ny;
 					//cout << nx << "x" << ny << " = " << pix_nn << endl;
-					memcpy(&eventData->detector[detID].raw_data16[0],&data[0][0],nx*ny*sizeof(uint16_t));
+					memcpy(&eventData->detector[detIndex].data_raw16[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
 				else {
-					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detID].detectorID);
+					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					return;
 				}
@@ -1114,7 +1112,7 @@ namespace cheetah_ana_pkg {
 			
 			// Didn't find any recognised detectors??
 			else {
-				printf("Unknown detector type: %s, aborting/n", cheetahGlobal.detector[detID].detectorType);
+				printf("Unknown detector type: %s, aborting/n", cheetahGlobal.detector[detIndex].detectorType);
 				exit(1);
 			}
 
@@ -1238,8 +1236,8 @@ namespace cheetah_ana_pkg {
 		}
 		
 		// Update detector positions
-		for(long detID=0; detID<cheetahGlobal.nDetectors; detID++) {        
-			eventData->detector[detID].detectorZ = detectorPosition[detID];
+		for(long detIndex=0; detIndex<cheetahGlobal.nDetectors; detIndex++) {        
+			eventData->detector[detIndex].detectorZ = detectorPosition[detIndex];
 		}
 
         

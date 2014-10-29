@@ -222,7 +222,7 @@ class Run:
                     ls_n.append(l)
                 else:
                     appended = False
-                    if "detectorid" in l.lower():
+                    if "detectorid" in l.lower() and not "hitfinder" in l.lower():
                         ls_n.append(l)
                         if self.type == "data":
                             if self.darkcal != None:

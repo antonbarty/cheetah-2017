@@ -203,19 +203,14 @@ public:
 	/** @brief File name of energy spectrum scale calibration file. */
 	char     espectrumScaleFile[MAX_FILENAME_LENGTH];
 
-
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
-    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
-	/** @brief Toggle whether or not additional assembled powders and downsampled images shall be generated. This might slow down execution of cheetah. */
-	int     assemblePowders;
-
 
 	/** @brief Interval between saving of powder patterns, etc. */
 	int      saveInterval;
@@ -224,11 +219,13 @@ public:
 	/** @brief Toggle the writing of Bragg peak information into a text file. */
 	int      savePeakList;
 
-
 	/** @brief Toggle the writing of radial intensity profile data. */
 	int      saveRadialStacks;
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
+
+	/** @brief Toggle the writing of radial intensity profile data. */
+	int      saveRadialAverage;
 
 	/** @brief The number of initial calibration frames */
 	long       nInitFrames;
@@ -379,8 +376,17 @@ public:
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
 
-	std::map<std::pair<int, int>, int> hitClasses[3];
+	uint16_t powderFormat;
+	uint16_t powderVersion;
+	uint16_t powderFormatMain;
+	uint16_t powderVersionMain;
 
+	uint16_t saveFormat;
+	uint16_t saveVersion;
+	uint16_t saveFormatMain;
+	uint16_t saveVersionMain;
+
+	std::map<std::pair<int, int>, int> hitClasses[3];
 
     // counters updated with event data
 	long     npowderHits;
@@ -394,7 +400,6 @@ public:
     long nCXIEvents;
     long nCXIHits;
     
-	
 	// FEE spectrum
 	int		useFEEspectrum;
 	long	FEEspectrumStackSize;
@@ -403,8 +408,6 @@ public:
 	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
 	FILE    *FEElogfp[MAX_POWDER_CLASSES];
-
-	
 	
 	// CXI downstream spectrometer
 	double  *espectrumRun;
@@ -415,7 +418,6 @@ public:
 	long	espectrumStackCounter[MAX_POWDER_CLASSES];
 	float   *espectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
-
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -427,7 +429,6 @@ public:
 	double    datarateWorker;
 	double    datarateWorkerMemory;
 	long      datarateWorkerSkipCounter;
-
 
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int      fudgeevr41;

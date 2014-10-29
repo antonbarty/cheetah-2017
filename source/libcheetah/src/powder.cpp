@@ -32,7 +32,7 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
     
 	DETECTOR_LOOP {
 		if(global->generateDarkcal || global->generateGaincal) {
-			addToPowder(eventData, global, 0);
+			addToPowder(eventData, global, 0, detIndex);
 		} else if (hit && global->powderSumHits) {
 			addToPowder(eventData, global, powderClass, detIndex);
 		} else if (!hit && global->powderSumBlanks) {
@@ -45,26 +45,27 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
 void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long detIndex){
 
 	// Increment counter of number of powder patterns
-	pthread_mutex_lock(&global->detector[detIndex].powderCorrected_mutex[powderClass]);
+	pthread_mutex_lock(&global->detector[detIndex].powderData_mutex[powderClass]);
 	global->detector[detIndex].nPowderFrames[powderClass] += 1;
 	if(detIndex == 0)
 		global->nPowderFrames[powderClass] += 1;
-	pthread_mutex_unlock(&global->detector[detIndex].powderCorrected_mutex[powderClass]);
+	pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
 	
     double  *buffer;	
-	foreach (uint16_t i_f in DATA_FORMATS) {
-		if (isBitOptionSet(global->powderFormat,i_f)) {
-			cDataVersion dataV(eventData->detector[detIndex],DATA_LOOP_POWDER,i_f);
-			while (dataV.next()) {
+	FOREACH_UINT16_T(i_f, DATA_FORMATS) {
+		if (isBitOptionSet(global->powderFormat,*i_f)) {
+			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
+			while (dataV.next() == 0) {
+				pthread_mutex_lock(&dataV.powder_mutex[powderClass]);
 				// Powder
 				pthread_mutex_lock(&dataV.powder_mutex[powderClass]);
 				for(long i=0; i<dataV.pix_nn; i++) 
 					dataV.powder[powderClass][i] += dataV.data[i];
-				pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);			
+				pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);
 				// Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if(!global->usePowderThresh) {
-					for(long i=0; i<pix_nn; i++)
+					for(long i=0; i<dataV.pix_nn; i++)
 						buffer[i] = dataV.data[i]*dataV.data[i];
 				}
 				else {
@@ -75,11 +76,11 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 							buffer[i] = 0;
 					}
 				}
-				pthread_mutex_lock(&dataV.powderSquared_mutex[powderClass]);
+				pthread_mutex_lock(&dataV.powder_mutex[powderClass]);
 				for(long i=0; i<dataV.pix_nn; i++){
-					dataV.powderSquared[powderClass][i] += buffer[i];
+					dataV.powder_squared[powderClass][i] += buffer[i];
 				}
-				pthread_mutex_unlock(&dataV.powderSquared_mutex[powderClass]);
+				pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);
 				free(buffer);
 			}				
 		}
@@ -89,10 +90,14 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
      *  Sum of peaks centroids
      */
 	if (eventData->nPeaks > 0) {
-		pthread_mutex_lock(&global->detector[detIndex].powderAssembled_mutex[powderClass]);
+		pthread_mutex_lock(&global->detector[detIndex].powderPeaks_mutex[powderClass]);
 		long	ci, cx, cy,  e;
 		double  val;
 
+		long	pix_nn = global->detector[detIndex].pix_nn;
+		long	pix_nx = global->detector[detIndex].pix_nx;
+		long	pix_ny = global->detector[detIndex].pix_ny;
+		
 		for(long i=0; i<=eventData->peaklist.nPeaks && i<eventData->peaklist.nPeaks_max; i++) {
 						
 			// Peak position and value
@@ -112,7 +117,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 			global->detector[detIndex].powderPeaks[powderClass][e] += val;
 			//global->detector[detIndex].powderPeaks[powderClass][ci] += val;
 		}
-		pthread_mutex_unlock(&global->detector[detIndex].powderAssembled_mutex[powderClass]);
+		pthread_mutex_unlock(&global->detector[detIndex].powderPeaks_mutex[powderClass]);
 	}
 
 	/*
@@ -135,23 +140,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 }
 
 
-/*
- *	Wrapper for saving all powder patterns for a detector
- *  Also for deciding whether to calculate gain, darkcal, etc.
- */
-void saveRunningSums(cGlobal *global) {
-    for(int detIndex=0; detIndex<global->nDetectors; detIndex++) {
-        saveRunningSums(global, detIndex);
-    }
-}
-
-
 void saveRunningSums(cGlobal *global, int detIndex) {
-    
-    // Assemble 2D powder patterns using geometry (since we don't sum assembled patterns any more)
-    assemble2Dpowder(global);
-
-    //	Save powder patterns from different classes
+	//	Save powder patterns from different classes
     printf("Writing intermediate powder patterns to file\n");
     for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
         if(global->powderSumBlanks && powderType == 0)
@@ -173,7 +163,15 @@ void saveRunningSums(cGlobal *global, int detIndex) {
     }
 }
 
-
+/*
+ *	Wrapper for saving all powder patterns for a detector
+ *  Also for deciding whether to calculate gain, darkcal, etc.
+ */
+void saveRunningSums(cGlobal *global) {
+    for(int detIndex=0; detIndex<global->nDetectors; detIndex++) {
+        saveRunningSums(global, detIndex);
+    }
+}
 
 /*
  *  Actually save the powder pattern to file
@@ -188,8 +186,6 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 	double  *powderBuffer;	
 	double  *powderSquaredBuffer;
 	double  *powderSigmaBuffer;
-	double  *powderRadialBuffer;
-	double  *powderRadialBufferCounter;
 	double  *bufferPeaks;
 	char    sBuffer[1024];
 
@@ -198,7 +194,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
      */
     char	filename[1024];
     char	filenamebase[1024];
-    sprintf(filenamebase,"r%04u-detector%d-class%d", global->runNumber, global->detector[detIndex].detectorID, powderClass);
+    sprintf(filenamebase,"r%04u-detector%ld-class%d", global->runNumber, global->detector[detIndex].detectorID, powderClass);
     sprintf(filename,"%s-sum.h5",filenamebase);
     printf("%s\n",filename);
 	
@@ -233,10 +229,10 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 		h5compression = H5P_DEFAULT;
 	}
 
-	foreach (uint16_t i_f in DATA_FORMATS) {
-		if (isBitOptionSet(global->powderFormat,i_f)) {
-			cDataVersion dataV(eventData->detector[detIndex],DATA_LOOP_POWDER,i_f);
-			while (dataV.next()) {
+	FOREACH_UINT16_T(i_f, DATA_FORMATS) {
+		if (isBitOptionSet(global->powderFormat, *i_f)) {
+			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
+			while (dataV.next() == 0) {
 				if (dataV.dataFormat != DATA_FORMAT_RADIAL_AVERAGE) {
 					// size for 2D data
 					size[0] = dataV.pix_ny;
@@ -272,14 +268,14 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				// Fluctuations (sigma)
 				powderSquaredBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				powderSigmaBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
-				pthread_mutex_lock(&dataV.powderSquared_mutex[powderClass]);
-				memcpy(powderSquaredBuffer, dataV.powderSquared[powderClass], dataV.pix_nn*sizeof(double));
-				pthread_mutex_unlock(&dataV.powderSquared_mutex[powderClass]);
+				pthread_mutex_lock(&dataV.powder_mutex[powderClass]);
+				memcpy(powderSquaredBuffer, dataV.powder_squared[powderClass], dataV.pix_nn*sizeof(double));
+				pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);
 				for(long i=0; i<dataV.pix_nn; i++){
-					powderBufferSigma[i] = sqrt( fabs(powderBufferSquared[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes)) );
+					powderSigmaBuffer[i] = sqrt( fabs(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes)));
 				}
-				sprintf(sBuffer,"%s_sigma",dataV.name)
-					dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+				sprintf(sBuffer,"%s_sigma",dataV.name);
+				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderSigmaBuffer);
 				H5Dclose(dh);
@@ -291,10 +287,10 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 	}
 
     // Peak powder
-    bufferPeaks = (double*) calloc(pix_nn, sizeof(double));
-    pthread_mutex_lock(&detector->powderAssembled_mutex[powderClass]);
-    memcpy(bufferPeaks, detector->powderPeaks[powderClass], pix_nn*sizeof(double));
-    pthread_mutex_unlock(&detector->powderAssembled_mutex[powderClass]);
+    bufferPeaks = (double*) calloc(detector->pix_nn, sizeof(double));
+    pthread_mutex_lock(&detector->powderPeaks_mutex[powderClass]);
+    memcpy(bufferPeaks, detector->powderPeaks[powderClass], detector->pix_nn*sizeof(double));
+    pthread_mutex_unlock(&detector->powderPeaks_mutex[powderClass]);
 	dh = H5Dcreate(gh, "peakpowder", H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
     if (dh < 0) ERROR("Could not create dataset.\n");
     H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, bufferPeaks);
@@ -359,10 +355,10 @@ void saveDarkcal(cGlobal *global, int detIndex) {
 	//sprintf(filename,"r%04u-%s-%li-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
 	sprintf(filename,"r%04u-detector%li-darkcal.h5",global->runNumber,detector->detectorID);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
-	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
+	pthread_mutex_lock(&detector->powderData_mutex[0]);
 	for(long i=0; i<pix_nn; i++)
-		buffer[i] = detector->dataPowder_raw[0][i]/detector->nPowderFrames[0];
-	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
+		buffer[i] = detector->powderData_raw[0][i]/detector->nPowderFrames[0];
+	pthread_mutex_unlock(&detector->powderData_mutex[0]);
 	printf("Saving darkcal to file: %s\n", filename);
 #ifdef H5F_ACC_SWMR_WRITE  
 	pthread_mutex_lock(&global->swmr_mutex);
@@ -388,13 +384,13 @@ void saveGaincal(cGlobal *global, int detIndex) {
 	long	pix_nn = detector->pix_nn;
 	
 	// Grab a snapshot of the current running sum
-	pthread_mutex_lock(&detector->powderCorrected_mutex[0]);
+	pthread_mutex_lock(&detector->powderData_mutex[0]);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	for(long i=0; i<pix_nn; i++)
 		buffer[i] = detector->powderData_raw[0][i];
     for(long i=0; i<pix_nn; i++)
 		buffer[i] /= detector->nPowderFrames[0];
-	pthread_mutex_unlock(&detector->powderCorrected_mutex[0]);
+	pthread_mutex_unlock(&detector->powderData_mutex[0]);
 
     
     

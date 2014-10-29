@@ -151,10 +151,9 @@ cGlobal::cGlobal(void) {
 	powderthresh = 0.0;
 	powderSumHits = 1;
 	powderSumBlanks = 0;
-	powderSumWithBackgroundSubtraction = 1;
-	assemblePowders = 0;
 
 	// Radial average stacks
+	saveRadialStacks=0;
 	radialStackSize=10000;
 
 	// Assemble options
@@ -240,43 +239,41 @@ cGlobal::cGlobal(void) {
  */
 void cGlobal::setup() {
 
-	/*
-	 *  Init timing
-	 */
-	gettimeofday(&datarateWorkerTimevalLast,NULL);
-  
 
 	/*
-	 *	Configure detectors
+	 *  TIME
+	 */
+	// Make sure to use SLAC timezone!
+	setenv("TZ","US/Pacific",1);
+	// Init timing
+	gettimeofday(&datarateWorkerTimevalLast,NULL);
+	time(&tstart);  
+
+	/*
+	 *	AREA DETECTORS
 	 */
 	hitfinderDetIndex = -1;
 	for(long detIndex=0; detIndex < nDetectors; detIndex++){
-		detector[detIndex].configure();
+		detector[detIndex].configure(this);
 		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
 		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
 		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
-		detector[detIndex].pixelmask_shared = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
-		detector[detIndex].pixelmask_shared_max = (uint16_t*) calloc(detector[detIndex].pix_nn,sizeof(uint16_t));
-		detector[detIndex].pixelmask_shared_min = (uint16_t*) malloc(detector[detIndex].pix_nn*sizeof(uint16_t));
-		for(long j=0; j<detector[detIndex].pix_nn; j++){
-			detector[detIndex].pixelmask_shared_min[j] = PIXEL_IS_ALL;
-		}
 		detector[detIndex].readPeakmask(self, peaksearchFile);
 		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
 		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
 		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
+	}
+
+	/*
+	 *  HITFINDING
+	 */
+	// Identify detector that shall be used for hitfinding
+	hitfinderDetIndex = -1;
+	for(long detIndex=0; detIndex < nDetectors; detIndex++){
 		if (detector[detIndex].detectorID == hitfinderDetectorID){
 			hitfinderDetIndex = detIndex;
 		}
 	}
-
-	/*
-	 * Configure corrections
-	 */
-	for (int verIndex=0; verIndex < nVersions; verIndex++){
-		
-	}
-
 	// Check whether the detector chosen for hitfinding is configured
 	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0)) {
 		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
@@ -289,27 +286,38 @@ void cGlobal::setup() {
 		printf("Quitting...\n");
 		exit(1);
 	}
-	
 	// Read hits from list if used as hitfinder
 	if (hitfinder == 1 && hitfinderAlgorithm == 12) {
 		readHits(hitlistFile);
 	}
+	// Only save peak info for certain hitfinders
+	if (( hitfinderAlgorithm == 3 ) ||
+		( hitfinderAlgorithm == 5 ) ||
+		( hitfinderAlgorithm == 6 ) ||
+		( hitfinderAlgorithm == 8 ))
+		savePeakInfo = 1; 
 
 	/*
-	 * How many types of powder pattern do we need?
+	 *  POWDERS
 	 */
+	// How many types of powder pattern do we need?
+	npowderHits = 0;
+	npowderBlanks = 0;
 	if(hitfinder==0)
 		nPowderClasses=1;
 	else
 		nPowderClasses=2;
-
 	if(generateDarkcal || generateGaincal)
 		nPowderClasses=1;
+	for(int i = 0; i<nPowderClasses; i++){
+		nPeaksMin[i] = 1000000000;
+		nPeaksMax[i] = 0;
+	}
 
     /*
-     *  Pump laser logic
-     *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+     *  PUMP LASER LOGIC
      */
+	// Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
 	if(sortPumpLaserOn) {
         if(strcmp(pumpLaserScheme, "evr41") == 0) {
             nPowderClasses *= 2;
@@ -324,16 +332,12 @@ void cGlobal::setup() {
             exit(1);
         }
     }
-    
-	
-	for(int i = 0; i<nPowderClasses; i++){
-		nPeaksMin[i] = 1000000000;
-		nPeaksMax[i] = 0;
-	}
+    	
 
 	/*
-	 * Set up thread management
+	 *  THREAD MANAGEMENT
 	 */
+	// Set up thread management
 	nActiveThreads = 0;
 	threadCounter = 0;
 	pthread_mutex_init(&hitclass_mutex, NULL);
@@ -357,21 +361,25 @@ void cGlobal::setup() {
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	pthread_mutex_init(&gmd_mutex, NULL);  
 
+	/*
+	 *  INITIAL CALIBRATION
+	 */
 	// Set number of frames for initial calibrations
 	nInitFrames = 0;
-	long temp;
 	for (long detIndex=0; detIndex<MAX_DETECTORS; detIndex++){
-		temp = detector[detIndex].startFrames;
-		nInitFrames = std::max(nInitFrames,temp);
+		nInitFrames = std::max(nInitFrames,(long) detector[detIndex].startFrames);
 		detector[detIndex].halopixCalibrated = 0;
 		detector[detIndex].hotpixCalibrated = 0;
 		detector[detIndex].bgCalibrated = 0;
 	}
 	calibrated = 0;
 
+	
 	/*
-	 * Trap specific configurations and mutually incompatible options
+	 *  TRAP SPECIFIC CONFIGURATIONS
 	 */
+	// Trap specific configurations and mutually incompatible options
+	// Detector dark calibration
 	if(generateDarkcal) {
 
 		printf("******************************************************************\n");
@@ -397,11 +405,13 @@ void cGlobal::setup() {
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
-			detector[i].saveDetectorRaw = 1;
-			detector[i].saveDetectorCorrectedOnly = 0;
+			detector[i].saveFormat = 0;
+			detector[i].saveVersion = 0;
+			detector[i].powderFormat = DATA_FORMAT_NON_ASSEMBLED;
+			detector[i].powderVersion = DATA_VERSION_RAW;		
 		}
 	}
-
+	// Detector gain calibration
 	if(generateGaincal) {
 
 		printf("******************************************************************\n");
@@ -429,32 +439,25 @@ void cGlobal::setup() {
             detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].useGaincal=0;
 			detector[i].startFrames = 0;
-			detector[i].saveDetectorRaw = 1;
-			detector[i].saveDetectorCorrectedOnly = 1;
+			detector[i].saveFormat = 0;
+			detector[i].saveVersion = 0;
+			detector[i].powderFormat = DATA_FORMAT_NON_ASSEMBLED;
+			detector[i].powderVersion = DATA_VERSION_RAW;		
 		}
 	}
 
+	/*
+	 *  CHECK VALIDITY OF CONFIGURATION
+	 */
 	// Make sure to save something...
-	// !!! I would rather like to throw an error here instead of silently changing the configuration. /Max
-	if(saveNonAssembled==0 && saveAssembled == 0) {
-		saveAssembled = 1;
-	}
-
-	/* Only save peak info for certain hitfinders */
-	if (( hitfinderAlgorithm == 3 ) ||
-		( hitfinderAlgorithm == 5 ) ||
-		( hitfinderAlgorithm == 6 ) ||
-		( hitfinderAlgorithm == 8 ))
-		savePeakInfo = 1; 
-
-    
-    
+	// -> Why? If we really need such a check here I would rather like to throw a warning/error instead of silently changing the configuration. I comment this out. /Max
+	//if(saveNonAssembled==0 && saveAssembled == 0) {
+	//	saveAssembled = 1;
+	//}
     
 	/*
-	 * Other stuff
+	 *  INIT COUNTERS AND RUNNING AVERAGES
 	 */
-	npowderHits = 0;
-	npowderBlanks = 0;
 	nhits = 0;
 	nrecenthits = 0;
 	nespechits = 0;
@@ -463,9 +466,7 @@ void cGlobal::setup() {
 	lastclock = clock()-10;
 	datarate = 1;
 	runNumber = 0;
-	time(&tstart);
 	avgGMD = 0;
-
 	for(long i=0; i<MAX_DETECTORS; i++) {
 		detector[i].bgCounter = 0;
 		detector[i].bgLastUpdate = 0;
@@ -482,20 +483,9 @@ void cGlobal::setup() {
 		detector[i].detectorZ = 0;
 		detector[i].detectorEncoderValue = 0;
 	}  
-
-	// Make sure to use SLAC timezone!
-	setenv("TZ","US/Pacific",1);
-
-	/*
-	 * Set up arrays for hot pixels, running backround, etc.
-	 */
-	for(long i=0; i<nDetectors; i++) {
-		detector[i].allocatePowderMemory(self);
-	}
-
 	
 	/*
-	 *	Energy spectrum stuff
+	 *	ENERGY SPECTRUM STUFF
 	 */
 	// Set up array for run integrated energy spectrum
 	espectrumRun = (double *) calloc(espectrumLength, sizeof(double));
@@ -519,10 +509,7 @@ void cGlobal::setup() {
 	}
 	readSpectrumDarkcal(self, espectrumDarkFile);
 	readSpectrumEnergyScale(self, espectrumScaleFile);
-	
-	/*
-	 *	Energy spectrum stacks
-	 */
+	// Energy spectrum stacks
 	if (espectrum) {
 		printf("Allocating spectral stacks\n");
 		int spectrumLength = espectrumLength;
@@ -536,7 +523,6 @@ void cGlobal::setup() {
 		}
 		printf("Spectral stack allocated\n");
 	}
-	
 	if (useFEEspectrum) {
 		printf("Allocating FEE spectrum stacks\n");
 		for(long i=0; i<nPowderClasses; i++) {
@@ -544,13 +530,10 @@ void cGlobal::setup() {
 			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
 		}
 	}
-
 	for(long i=0; i<nPowderClasses; i++) {
 		pthread_mutex_init(&espectrumStack_mutex[i], NULL);
 		pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
 	}
-
-
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -592,21 +575,23 @@ void cGlobal::freeMutexes(void) {
 	pthread_mutex_unlock(&saveCXI_mutex);
 	pthread_mutex_unlock(&pixelmask_shared_mutex);
 	
-	for(long i=0; i<nDetectors; i++) {
-		for(long j=0; j<nPowderClasses; j++) {
-			pthread_mutex_unlock(&detector[i].powderRaw_mutex[j]);
-			pthread_mutex_unlock(&detector[i].powderRawSquared_mutex[j]);
-			pthread_mutex_unlock(&detector[i].powderCorrected_mutex[j]);
-			pthread_mutex_unlock(&detector[i].powderCorrectedSquared_mutex[j]);
-			pthread_mutex_unlock(&detector[i].powderAssembled_mutex[j]);
-			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
-			pthread_mutex_unlock(&detector[i].correctedMin_mutex[j]);
-			pthread_mutex_unlock(&detector[i].correctedMax_mutex[j]);
-			pthread_mutex_unlock(&detector[i].assembledMin_mutex[j]);
-			pthread_mutex_unlock(&detector[i].assembledMax_mutex[j]);
-			pthread_mutex_unlock(&detector[i].radialStack_mutex[j]);
+	for(long detIndex=0; detIndex<nDetectors; detIndex++) {
+		for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
+			FOREACH_UINT16_T(i_f, DATA_FORMATS) {
+				if (isBitOptionSet(powderFormat,*i_f)) {
+					cDataVersion dataV(NULL, &detector[detIndex], DATA_LOOP_MODE_ALL, *i_f);
+					while (dataV.next() == 0) {
+						pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);
+					}
+				}
+			}
+			pthread_mutex_unlock(&detector[detIndex].radialStack_mutex[powderClass]);
+			//pthread_mutex_unlock(&detector[detIndex].correctedMin_mutex[powderClass]);
+			//pthread_mutex_unlock(&detector[detIndex].correctedMax_mutex[powderClass]);
+			//pthread_mutex_unlock(&detector[detIndex].assembledMin_mutex[powderClass]);
+			//pthread_mutex_unlock(&detector[detIndex].assembledMax_mutex[powderClass]);
 		}
-		pthread_mutex_unlock(&detector[i].histogram_mutex);
+		pthread_mutex_unlock(&detector[detIndex].histogram_mutex);
 	}
 
 	nCXIEvents = 0;
@@ -771,8 +756,8 @@ void cGlobal::parseConfigFile(char* filename) {
 					fail = detector[i].parseConfigTag(tag,value);
 					break;
 				}
-
 			}
+
 			/* Check if it's an existing TOF detector */
 			for (long i=0; i<nTOFDetectors && !matched; i++){
 				if (strcmp(group,tofDetector[i].configGroup) == 0){
@@ -1039,6 +1024,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		strcpy(espectrumScaleFile, value);
 	}
 
+    // Radial average stacks
+	else if (!strcmp(tag, "saveradialstacks")) {
+		saveRadialStacks = atoi(value);
+	}
+	else if (!strcmp(tag, "radialstacksize")) {
+		radialStackSize = atoi(value);
+	}
+
 	// Radial average stacks
 	else if ((!strcmp(tag, "saveradialstacks")) || (!strcmp(tag, "radialstacksize")))  {
 		printf("The keywords saveradialstacks and radialstacksize have been removed.\n"
@@ -1057,14 +1050,17 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "powdersumhits")) {
 		powderSumHits = atoi(value);
 	}
-	else if (!strcmp(tag, "powdersumblanks")) {
-		powderSumBlanks = atoi(value);
-	}
 	else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
-		powderSumWithBackgroundSubtraction = atoi(value);
+		printf("The keyword powdersumwithbackgroundsubtraction is depreciated.\n"
+			   "Please use respective keywords in the detector section (e.g. savepowderdatadetectorandphotoncorrected=1).\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
 	}
-	else if (!strcmp(tag, "assemblepowders")){
-		assemblePowders = atoi(value);
+	else if (!strcmp(tag, "assemblepowders")) {
+		printf("The keyword assemblepowders is depreciated.\n"
+			   "Please use the keyword savepowderassembled=1 in the respective detector section(s).\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
 	}
 	else if (!strcmp(tag, "hitfinderadc")) {
 		hitfinderADC = atof(value);
@@ -1261,7 +1257,6 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "powderThresh=%f\n",powderthresh);
     fprintf(fp, "powderSumHits=%d\n",powderSumHits);
     fprintf(fp, "powderSumBlanks=%d\n",powderSumBlanks);
-    fprintf(fp, "assemblePowders=%d\n",assemblePowders);
     fprintf(fp, "saveInterval=%d\n",saveInterval);
     fprintf(fp, "saveRadialStacks=%d\n",saveRadialStacks);
     fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
@@ -1365,7 +1360,19 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "histogramMaxMemoryGb=%f\n",detector[i].histogramMaxMemoryGb);
         fprintf(fp, "downsampling=%ld\n",detector[i].downsampling);
         fprintf(fp, "saveDetectorRaw=%d\n",detector[i].saveDetectorRaw);
-        fprintf(fp, "saveDetectorCorrectedOnly=%d\n",detector[i].saveDetectorCorrectedOnly);
+        fprintf(fp, "saveDetectorCorrected=%d\n",detector[i].saveDetectorCorrected);
+        fprintf(fp, "saveDetectorAndPhotonCorrected=%d\n",detector[i].saveDetectorAndPhotonCorrected);
+		fprintf(fp, "saveNonAssembled=%d\n",detector[i].saveNonAssembled);
+		fprintf(fp, "saveAssembled=%d\n",detector[i].saveAssembled);
+		fprintf(fp, "saveAssembledAndDownsampled=%d\n",detector[i].saveAssembledAndDownsampled);
+		fprintf(fp, "saveRadialAverage=%d\n",detector[i].saveRadialAverage);
+		fprintf(fp, "savePowderDetectorRaw=%d\n",detector[i].savePowderDetectorRaw);
+		fprintf(fp, "savePowderDetectorCorrected=%d\n",detector[i].savePowderDetectorCorrected);
+		fprintf(fp, "savePowderDetectorAndPhotonCorrected=%d\n",detector[i].savePowderDetectorAndPhotonCorrected);
+		fprintf(fp, "savePowderNonAssembled=%d\n",detector[i].savePowderNonAssembled);
+		fprintf(fp, "savePowderAssembled=%d\n",detector[i].savePowderAssembled);
+		fprintf(fp, "savePowderAssembledAndDownsampled=%d\n",detector[i].savePowderAssembledAndDownsampled);
+		fprintf(fp, "savePowderRadialAverage=%d\n",detector[i].savePowderRadialAverage);
     }
     
 	// CLose file

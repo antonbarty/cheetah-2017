@@ -37,7 +37,6 @@ void *worker(void *threadarg) {
 	cGlobal			*global;
 	cEventData		*eventData;
 	int             hit = 0;
-	int				powderClass = 0;
 	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
 
@@ -84,7 +83,7 @@ void *worker(void *threadarg) {
 	nameEvent(eventData, global);
 	
 	// Initialise pixelmask with pixelmask_shared
-	initPixelmask();
+	initPixelmask(eventData, global);
 	
 	//---DETECTOR-CORRECTION---//
 
@@ -132,8 +131,8 @@ void *worker(void *threadarg) {
     // Apply solid angle correction
 	applySolidAngleCorrection(eventData, global);
 	
-	// Apply bad pixel map
-	applyBadPixelMask(eventData, global);
+	// Zero out bad pixels
+	setBadPixelsToZero(eventData, global);
  
 	//  Inside-thread speed test
 	if(global->ioSpeedTest==4) {
@@ -208,8 +207,8 @@ localBGCalculated:
 		sortPowderClass(eventData, global);		
 	}
 
-	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 hitknown: 
+	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 	// Slightly wrong that all initial frames are blanks
 	// when hitfinderForInitials is 0
     /*
@@ -253,64 +252,28 @@ hitknown:
 		DEBUG("Assemble and accumulate data");
 	}
 
-	// Maintain a running sum of data (powder patterns) with whatever background subtraction has been applied to date.
-	if(global->powderSumWithBackgroundSubtraction){
-		// If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we will skip it if image is not going to be saved.
-		if(global->assemblePowders){
-			// Assemble to realistic image
-			assemble2Dimage(eventData, global);
-			assemble2Dmask(eventData, global);
-			// Downsample assembled image
-			downsample(eventData,global);
-		}
-		addToPowder(eventData, global);
-	}
-
-	DETECTOR_LOOP {
-		// Revert to raw detector data
-		if(global->detector[detID].saveDetectorRaw){
-			for(long i=0;i<global->detector[detID].pix_nn;i++){
-				eventData->detector[detID].corrected_data[i] = eventData->detector[detID].data_raw16[i];
-			}
-		}
-		// Revert to detector-corrections-only data if we don't want to export data with photon background subtracted
-		else if (global->detector[detIndex].saveDetectorCorrectedOnly) {
-			memcpy(eventData->detector[detIndex].corrected_data, eventData->detector[detIndex].detector_corrected_data, global->detector[detIndex].pix_nn*sizeof(float));
-		}
-	}
-
-
 	// Inside-thread speed test
 	if(global->ioSpeedTest==7) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #7 (after powder sum and reverting images)\n", global->runNumber, eventData->frameNumber, global->datarate);
 		goto cleanup;
 	}
-  
-	// Maintain a running sum of data (powder patterns) without whatever background subtraction has been for hitfinding.
-	if(!global->powderSumWithBackgroundSubtraction){
-		// If we want assembled powders etc. we need to do the assembly and downsampling here. Otherwise we might skip it if image is not going to be saved
-		if(global->assemblePowders){
-			// Assemble to realistic image
-			assemble2Dimage(eventData, global);
-			assemble2Dmask(eventData, global);
-			// Downsample assembled image
-			downsample(eventData,global);
-		}
-		addToPowder(eventData, global);
-	}
 
-	// Calculate radial average and maintain radial average stack
-	calculateRadialAverage(eventData, global); 
-	addToRadialAverageStack(eventData, global);
+	// Assemble, downsample and radially average current frame
+	assemble2D(eventData, global);
+	downsample(eventData, global);
+  
+	// Powder
+	// Maintain a running sum of data (powder patterns)
+	addToPowder(eventData, global);
 	
-	// calculate the one dimesional beam spectrum
+	// Calculate the one dimesional beam spectrum
 	integrateSpectrum(eventData, global);
 	integrateRunSpectrum(eventData, global);
   
-	// update GMD average
+	// Update GMD average
 	updateAvgGMD(eventData,global);
 
-	// integrate pattern
+	// Integrate pattern
 	integratePattern(eventData,global);
 
 	// Inside-thread speed test
@@ -347,15 +310,6 @@ hitknown:
 	// If this is a hit, write out to our favourite HDF5 format
 	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
 	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
-
-	// If we have not assembled and downsampled yet we do it here.
-	if(!global->assemblePowders){
-		// Assemble to realistic image
-		assemble2Dimage(eventData, global);
-		assemble2Dmask(eventData, global);
-		// Downsample assembled image
-		downsample(eventData,global);
-	}
 	
 	// Update central hit counter
 	pthread_mutex_lock(&global->nhits_mutex);	
@@ -401,52 +355,7 @@ hitknown:
 		DEBUG("Logbook keeping");
 	}
 
-	// Write out information on each frame to a log file
-	pthread_mutex_lock(&global->framefp_mutex);
-    fprintf(global->framefp, "%s/%s, ", eventData->eventSubdir, eventData->eventname);
-	fprintf(global->framefp, "%li, ", eventData->frameNumber);
-	fprintf(global->framefp, "%li, ", eventData->threadNum);
-	fprintf(global->framefp, "%i, ", eventData->hit);
-    fprintf(global->framefp, "%i, ", eventData->powderClass);
-	fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
-	fprintf(global->framefp, "%g, ", eventData->wavelengthA);
-	fprintf(global->framefp, "%g, ", eventData->gmd1);
-	fprintf(global->framefp, "%g, ", eventData->gmd2);
-	fprintf(global->framefp, "%g, ", eventData->detector[0].detectorZ);
-	fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
-	fprintf(global->framefp, "%d, ", eventData->nPeaks);
-	fprintf(global->framefp, "%g, ", eventData->peakNpix);
-	fprintf(global->framefp, "%g, ", eventData->peakTotal);
-	fprintf(global->framefp, "%g, ", eventData->peakResolution);
-	fprintf(global->framefp, "%g, ", eventData->peakDensity);
-	fprintf(global->framefp, "%d, ", eventData->pumpLaserCode);
-	fprintf(global->framefp, "%g, ", eventData->pumpLaserDelay);
-    fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
-	pthread_mutex_unlock(&global->framefp_mutex);
-
-	// Keep track of what has gone into each image class
-	powderClass = eventData->powderClass;
-    if(global->powderlogfp[powderClass] != NULL) {
-		pthread_mutex_lock(&global->powderfp_mutex);
-        fprintf(global->powderlogfp[powderClass], "%s/%s, ", eventData->eventSubdir, eventData->eventname);
-        fprintf(global->powderlogfp[powderClass], "%li, ", eventData->frameNumber);
-        fprintf(global->powderlogfp[powderClass], "%li, ", eventData->threadNum);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->photonEnergyeV);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->wavelengthA);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->detector[0].detectorZ);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->gmd1);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->gmd2);
-        fprintf(global->powderlogfp[powderClass], "%i, ", eventData->energySpectrumExist);
-        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->nPeaks);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakNpix);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakTotal);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakResolution);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->peakDensity);
-        fprintf(global->powderlogfp[powderClass], "%d, ", eventData->pumpLaserCode);
-        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->pumpLaserDelay);
-        fprintf(global->powderlogfp[powderClass], "%d\n", eventData->pumpLaserOn);
-		pthread_mutex_unlock(&global->powderfp_mutex);
-	}
+	writeLog(eventData, global);
   
 	// Inside-thread speed test
 	if(global->ioSpeedTest==10) {
@@ -463,23 +372,23 @@ cleanup:
 
 	}
 
-    pthread_mutex_unlock(&global->saveinterval_mutex);
-    /*
-     *  Update counters
-     */
+	// Save accumulated data periodically
+    pthread_mutex_lock(&global->saveinterval_mutex);
+	// Update counters
     global->nprocessedframes += 1;
 	global->nrecentprocessedframes += 1;
-    
-	/*
-	 *	Save some types of information from time to timeperiodic powder patterns
-	 */
+	// Save some types of information from time to timeperiodic powder patterns
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
+		// Assemble, downsample and radially average powder
+		assemble2DPowder(global);
+		downsamplePowder(global);
+		calculateRadialAveragePowder(global);
+		// Save accumulated data
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
 		} 
 		saveRunningSums(global);
 		saveHistograms(global);
-		saveRadialStacks(global);
 		saveSpectrumStacks(global);
 		global->updateLogfile();
 		global->writeStatus("Not finished");

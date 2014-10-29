@@ -25,8 +25,8 @@
 void initPhotonCorrection(cEventData *eventData, cGlobal *global){
 	// Copy detector corrected data into photon corrected array as starting point for photon corrections
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].data_detPhotCorr[i] = eventData->detector[detID].data_detCorr[i];
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].data_detPhotCorr[i] = eventData->detector[detIndex].data_detCorr[i];
 		}
 	}
 }
@@ -37,6 +37,7 @@ void initPhotonCorrection(cEventData *eventData, cGlobal *global){
  *	Subtract persistent background 
  */
 void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
+	float	*frameData;
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useSubtractPersistentBackground) {
 			int	scaleBg = global->detector[detIndex].scaleBackground;
@@ -44,13 +45,13 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 			float	*background = global->detector[detIndex].selfdark;
 			// Running background subtraction to suppress the photon background after dark subtraction
 			if (eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) {
-				float	*frameData = eventData->detector[detIndex].data_detPhotCorr;
-				subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+				frameData = eventData->detector[detIndex].data_detPhotCorr;
 			// Running background subtraction to suppress both electronic and photon background (without using dark subtraction)
 			} else if (!eventData->detector[detIndex].pedSubtracted && !global->detector[detIndex].useDarkcalSubtraction) {
-				float	*frameData = eventData->detector[detIndex].data_detCorr;
+				frameData = eventData->detector[detIndex].data_detCorr;
 				eventData->detector[detIndex].pedSubtracted = 1;
 			}
+			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
 		}
 	}	
 }
@@ -124,7 +125,7 @@ void initBackgroundBuffer(cEventData *eventData, cGlobal *global) {
 					}
 				} else {
 					for(long i = 0;i<pix_nn;i++){
-						background[i] = (float) eventData->detector[detID].data_raw16[i];
+						background[i] = (float) eventData->detector[detIndex].data_raw16[i];
 					}
 				}
 				pthread_mutex_unlock(&global->bgbuffer_mutex);
@@ -532,7 +533,7 @@ void checkSaturatedPixelsPnccd(uint16_t *data_raw16, uint16_t *mask){
 void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].maskSaturatedPixels) {
-			uint16_t	*raw_data = eventData->detector[detIndex].raw_data16;
+			uint16_t	*raw_data = eventData->detector[detIndex].data_raw16;
 			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
 			if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) {
 				checkSaturatedPixelsPnccd(raw_data,mask);

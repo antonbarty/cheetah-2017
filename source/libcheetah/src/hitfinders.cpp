@@ -203,7 +203,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	long	nasics_x = global->detector[detIndex].nasics_x;
 	long	radius = global->detector[detIndex].localBackgroundRadius;
 	float	*pix_r = global->detector[detIndex].pix_r;
-	float	*data = eventData->detector[detIndex].data_detcorr;
+	float	*data = eventData->detector[detIndex].data_detCorr;
 
 	float	hitfinderADCthresh = global->hitfinderADC;
 	float	hitfinderMinSNR = global->hitfinderMinSNR;
@@ -314,9 +314,9 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 	}
   
 	if (global->hitfinderOnDetectorCorrectedData) {
-		hitfinderData = eventData->detector[detIndex].data_detcorr;
+		hitfinderData = eventData->detector[detIndex].data_detCorr;
 	} else {
-		hitfinderData = eventData->detector[detIndex].data_detphotcorr;
+		hitfinderData = eventData->detector[detIndex].data_detPhotCorr;
 	}
 
 	if (global->hitfinderDownsampling > 1) {
@@ -382,9 +382,9 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
 	}
 
 	if (global->hitfinderOnDetectorCorrectedData) {
-		data = eventData->detector[detIndex].data_detcorr;
+		data = eventData->detector[detIndex].data_detCorr;
 	} else {
-		data = eventData->detector[detIndex].data_detphotcorr;
+		data = eventData->detector[detIndex].data_detPhotCorr;
 	}
 
 	integratePixAboveThreshold(data,mask,pix_nn,ADC_threshold,pixel_options,&nat,&tat);
@@ -414,9 +414,9 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detIndex){
 	total = 0.0;
 
 	if (global->hitfinderOnDetectorCorrectedData) {
-		data = eventData->detector[detIndex].data_detcorr;
+		data = eventData->detector[detIndex].data_detCorr;
 	} else {
-		data = eventData->detector[detIndex].data_detphotcorr;
+		data = eventData->detector[detIndex].data_detPhotCorr;
 	}
 
 	/*

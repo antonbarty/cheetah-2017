@@ -27,8 +27,8 @@
 void initDetectorCorrection(cEventData *eventData, cGlobal *global){
 	// Copy raw detector data into detector corrected array as starting point for detector corrections
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].data_detCorr[i] = eventData->detector[detID].data_raw16[i];
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].data_detCorr[i] = eventData->detector[detIndex].data_raw16[i];
 		}
 	}
 }
@@ -36,8 +36,8 @@ void initDetectorCorrection(cEventData *eventData, cGlobal *global){
 void initPixelmask(cEventData *eventData, cGlobal *global){
 	// Copy pixelmask_shared into pixelmask as a starting point for masking
 	DETECTOR_LOOP {
-		for(long i=0;i<global->detector[detID].pix_nn;i++){
-			eventData->detector[detID].pixelmask[i] = global->detector[detID].pixelmask_shared[i];
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].pixelmask[i] = global->detector[detIndex].pixelmask_shared[i];
 		}
 	}
 }
@@ -109,12 +109,12 @@ void setBadPixelsToZero(cEventData *eventData, cGlobal *global){
 			float	 *data = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 
-			applyBadPixelMask(data, mask, pix_nn);
+			setBadPixelsToZero(data, mask, pix_nn);
 		}
 	} 
 }
 
-void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
+void setBadPixelsToZero(float *data, uint16_t *mask, long pix_nn) {
 	for(long i=0; i<pix_nn; i++) {
 		data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
 	}
@@ -738,7 +738,7 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			float *data = eventData->detector[detIndex].data_corr;
+			float *data = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			uint16_t mask_out_bits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD |
 				PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD  | PIXEL_IS_MISSING;
@@ -812,7 +812,7 @@ void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
         if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 ) {
             if(global->detector[detIndex].usePnccdFixWiringError == 1) {
-                float	*data = eventData->detector[detIndex].data_corr;
+                float	*data = eventData->detector[detIndex].data_detCorr;
                 pnccdFixWiringError(data);
             }
         }

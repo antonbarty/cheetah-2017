@@ -153,9 +153,10 @@ void downsample(cEventData *eventData, cGlobal *global){
 		long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
 		long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
 		uint16_t	*imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
-		cDataVersion imageV(eventData->detector[detIndex],DATA_LOOP_SAVE,DATA_FORMAT_ASSEMBLED);
-		cDataVersion imageXxXV(eventData->detector[detIndex],DATA_LOOP_SAVE,DATA_FORMAT_DOWNSAMPLED);
-		while (imageV.next() && imageXxXV.next()) {
+		cDataVersion imageV(&eventData->detector[detIndex],&global->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED);
+		cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+		while (imageV.next() == 0) {
+			imageXxXV.next();
 			float	*image = imageV.data;
 			float	*imageXxX = imageXxXV.data;
 			if (global->detector[detIndex].downsamplingConservative == 1){
@@ -164,6 +165,51 @@ void downsample(cEventData *eventData, cGlobal *global){
 			} else {
 				downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling);
 				downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);	
+			}
+		}
+	}
+}
+
+
+void downsamplePowder(cGlobal *global) {
+
+    DETECTOR_LOOP {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat,DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
+			long        downsampling = global->detector[detIndex].downsampling;
+			long		image_nx = global->detector[detIndex].image_nx;
+			long		image_nn = global->detector[detIndex].image_nn;
+			long		imageXxX_nx = global->detector[detIndex].image_nx;
+			long		imageXxX_nn = global->detector[detIndex].image_nn;
+
+			// Assemble each powder type
+			for(long powderClass=0; powderClass < global->nPowderClasses; powderClass++) {
+				
+				cDataVersion imageV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED);
+				cDataVersion imageXxXV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+				while (imageV.next() == 0) {
+					imageXxXV.next();
+					double * image = imageV.powder[powderClass];
+					double * imageXxX = imageXxXV.powder[powderClass];
+					
+					// Floating point buffer
+					float   *fimage = (float*) calloc(image_nn,sizeof(float));
+					float   *fimageXxX = (float*) calloc(imageXxX_nn,sizeof(float));
+					
+					// Downsample is done using float; powder data is double (!!)	
+					for(long i=0; i<image_nn; i++)
+						fimage[i] = (float) image[i];
+					
+					// Downsample image
+					downsampleImageConservative(fimage,fimageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
+					
+					// Assembly is done using float; powder data is double (!!)
+					for(long i=0; i<image_nn; i++)
+						imageXxX[i] = (double) fimageXxX[i];
+					
+					// Cleanup
+					free(fimage);
+					free(fimageXxX);
+				}
 			}
 		}
 	}
