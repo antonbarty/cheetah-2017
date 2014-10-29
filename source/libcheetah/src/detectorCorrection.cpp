@@ -647,7 +647,7 @@ void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
 
 
 void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, int verbose) {
-    float m, min_border, max_border;
+    float m, st, min_border, max_border;
     int i, j, x, y, mx, my, x_, cm;
     int q;
     // pnCCD geometry
@@ -699,6 +699,16 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                 }
                 m /= float(insensitve_border_width);
                 
+                // calculate corrected sample standard deviation of insensitive pixels
+                st = 0;
+                for (x_ = 0; x_ < insensitve_border_width; x_++) {
+                    x = x_insens_start[q] + x_*read_out_direction[q];
+                    j = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + x;
+                    st += (data[j] - m)*(data[j] - m);
+                }
+                st /= float(insensitve_border_width) - 1;
+                st = sqrt(st);
+                
                 // find peaks in histogram using PeakDetect class
                 PeakDetect peakfinder(line_histogram_x, line_histogram, nhist);
                 peakfinder.findAll(delta);
@@ -710,13 +720,15 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                     for (unsigned k = 0; k < peakfinder.maxima->size(); k++) {
                         min_point = peakfinder.minima->get(k);
                         max_point = peakfinder.maxima->get(k);
-                        // alternative sanity check
-                        //if ((max_point->getX() - min_point->getX() > 4) && (max_point->getY() - line_histogram[max_point->getX() - start - 1] < delta) && (max_point->getY() - line_histogram[max_point->getX() - start + 1] < delta)) {
                         if (verbose >= 4) {
-                            printf("Peak[%u]_min = %d, Peak[%u]_max = %d, Border_min = %f, Border_mean = %f, Border_max = %f\n", k, min_point->getX(), k, max_point->getX(), min_border, m, max_border);
+                            printf("Peak[%u]_min = %d, Peak[%u]_max = %d, Border_min = %f, Border_mean = %f, Border_max = %f, Border_std = %f\n", k, min_point->getX(), k, max_point->getX(), min_border, m, max_border, st);
                         }
-                        // current sanity check for common-mode correction
-                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
+                        // sanity checks for common-mode correction
+                        //if ((max_point->getX() - min_point->getX() > 4) && (max_point->getY() - line_histogram[max_point->getX() - start - 1] < delta) && (max_point->getY() - line_histogram[max_point->getX() - start + 1] < delta)) {
+                        // max/min sanity check
+                        // if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
+                        // stdev sanity check (2 stdev = 95 % probability)
+                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(m + 2*st) && max_point->getX() >= floor(m - 2*st)) {
                             cm = max_point->getX();
                             for (x = 0; x < asic_nx; x++) {
                                 i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
