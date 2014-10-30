@@ -1,5 +1,5 @@
 /*
- *  pixelDetector.cpp
+ *  detectorObject.cpp
  *  cheetah
  *
  *  Created by Anton Barty on 7/2/11.
@@ -85,6 +85,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Common mode subtraction from each ASIC
 	cmModule = 0;
 	cmFloor = 0.1;
+    cmStart = -100;
+    cmStop = 100;
+    cmDelta = 10;
 	cspadSubtractUnbondedPixels = 0;
 	cspadSubtractBehindWires = 0;
     
@@ -371,14 +374,21 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "halopixincludehits")) {
 		halopixIncludeHits = atoi(value);
 	}
-	// depreciated?
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
 	}
-	// depreciated?
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);
 	}
+    else if (!strcmp(tag, "cmstart")) {
+        cmStart = atoi(value);
+    }
+    else if (!strcmp(tag, "cmstop")) {
+        cmStop = atoi(value);
+    }
+    else if (!strcmp(tag, "cmdelta")) {
+        cmDelta = atof(value);
+    }
 	// Local background subtraction
 	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
 		useLocalBackgroundSubtraction = atoi(value);
