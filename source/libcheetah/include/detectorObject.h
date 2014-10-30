@@ -413,6 +413,7 @@ public:
 	void configure(cGlobal *);
 	void parseConfigFile(char *);
 	void allocatePowderMemory(cGlobal*);
+	void allocatePixelmasks(cGlobal*);
 	void freePowderMemory(cGlobal*);
 	void readDetectorGeometry(char *);
 	void updateKspace(cGlobal*, float);
@@ -490,8 +491,6 @@ static const uint16_t DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED = 4;
 static const uint16_t DATA_FORMAT_RADIAL_AVERAGE = 16;
 static const uint16_t DATA_FORMAT_ALL = DATA_FORMAT_NON_ASSEMBLED | DATA_FORMAT_ASSEMBLED | DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED | DATA_FORMAT_RADIAL_AVERAGE;
 static const uint16_t DATA_FORMATS[] = {DATA_FORMAT_NON_ASSEMBLED, DATA_FORMAT_ASSEMBLED, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED, DATA_FORMAT_RADIAL_AVERAGE};
-//static const int DATA_FORMAT_MIN = DATA_FORMAT_NON_ASSEMBLED;
-//static const int DATA_FORMAT_MAX = DATA_FORMAT_IMAGEXXX;
 
 static const uint16_t DATA_LOOP_MODE_POWDER = 1;
 static const uint16_t DATA_LOOP_MODE_SAVE = 2;
@@ -523,7 +522,7 @@ class cDataVersion {
 	uint16_t *pixelmask_shared;
 	double *powder[MAX_POWDER_CLASSES];
 	double *powder_squared[MAX_POWDER_CLASSES];
-	pthread_mutex_t *powder_mutex;	
+	pthread_mutex_t powder_mutex[MAX_POWDER_CLASSES];	
 	char name[1024];
 	int isMainDataset;
 	uint16_t dataFormat;

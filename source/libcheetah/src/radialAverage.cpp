@@ -70,7 +70,7 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 
 		// Don't count bad pixels in radial average
         if (isAnyOfBitOptionsSet(pixelmask2d[i],maskOutBits)) {
-			tempBadBins[rbin] |= pixelmaskRadial[i];
+			tempBadBins[rbin] |= pixelmaskRadial[rbin];
 			continue;
 		}
 
@@ -110,10 +110,12 @@ void calculateRadialAveragePowder(cGlobal *global) {
 			while (dataV_2d.next() == 0) {
 				dataV_r.next();
 				for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) {
-					uint16_t *buffer = (uint16_t *) calloc(radial_nn,sizeof(uint16_t));
-					calculateRadialAverage(dataV_2d.powder[powderClass], dataV_2d.pixelmask, dataV_r.powder[powderClass], buffer, pix_r, radial_nn, pix_nn);
+					uint16_t *buffer_2d = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
+					uint16_t *buffer_radial = (uint16_t *) calloc(radial_nn,sizeof(uint16_t));
+					calculateRadialAverage(dataV_2d.powder[powderClass], buffer_2d , dataV_r.powder[powderClass], buffer_radial, pix_r, radial_nn, pix_nn);
 					// Currently we do not save any mask for the powders
-					free(buffer);
+					free(buffer_radial);
+					free(buffer_2d);
 				}
 			}
 		}

@@ -193,14 +193,17 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detIndex].image_raw = (float*) calloc(image_nn,sizeof(float));
 		eventData->detector[detIndex].image_detCorr = (float*) calloc(image_nn,sizeof(float));
 		eventData->detector[detIndex].image_detPhotCorr = (float*) calloc(image_nn,sizeof(float));
+		eventData->detector[detIndex].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].imageXxX_raw = (float*) calloc(imageXxX_nn,sizeof(float));
 		eventData->detector[detIndex].imageXxX_detCorr = (float*) calloc(imageXxX_nn,sizeof(float));
 		eventData->detector[detIndex].imageXxX_detPhotCorr = (float*) calloc(imageXxX_nn,sizeof(float));
+		eventData->detector[detIndex].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].radialAverage_raw = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detIndex].radialAverage_detCorr = (float *) calloc(radial_nn, sizeof(float));
 		eventData->detector[detIndex].radialAverage_detPhotCorr = (float *) calloc(radial_nn, sizeof(float));
+		eventData->detector[detIndex].radialAverage_pixelmask = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].pedSubtracted=0;
 		eventData->detector[detIndex].sum=0.;		

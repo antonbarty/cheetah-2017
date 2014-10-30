@@ -361,7 +361,7 @@ namespace CXI{
 	}
 
 	template <class T>
-	hid_t Node::get_datatype(const T * foo){
+	hid_t Node::get_datatype(const T *){
 		hid_t datatype = 0;
 		if(typeid(T) == typeid(bool) && sizeof(bool) == 1){
 			datatype = H5T_NATIVE_INT8;
@@ -712,7 +712,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				Node * data_node = image_node->createGroup(sBuffer);		
 				data_node->createStack("data",H5T_NATIVE_FLOAT, radial_nn);
 				if(global->savePixelmask){
-					image_node->createStack("mask",H5T_NATIVE_UINT16, radial_nn);
+					data_node->createStack("mask",H5T_NATIVE_UINT16, radial_nn);
 				}
 				uint16_t *radial_pixelmask_shared = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));
 				float *foo1 = (float *) calloc(pix_nn,sizeof(float));

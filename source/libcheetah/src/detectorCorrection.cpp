@@ -658,7 +658,7 @@ void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
     
     DETECTOR_LOOP {
         if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].cmModule == 1) {
-            float    *data = eventData->detector[detIndex].corrected_data;
+            float    *data = eventData->detector[detIndex].data_detCorr;
             uint16_t *mask = eventData->detector[detIndex].pixelmask;
             int      start = global->detector[detIndex].cmStart;
             int      stop = global->detector[detIndex].cmStop;

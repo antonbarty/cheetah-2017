@@ -258,10 +258,13 @@ void cGlobal::setup() {
 		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
 		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
 		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
+		detector[detIndex].allocatePowderMemory(this);
+		detector[detIndex].allocatePixelmasks(this);
 		detector[detIndex].readPeakmask(self, peaksearchFile);
 		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
 		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
 		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
+		
 	}
 
 	/*

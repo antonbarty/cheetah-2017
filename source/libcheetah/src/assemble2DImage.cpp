@@ -44,7 +44,7 @@ void assemble2DImage(cEventData *eventData, cGlobal *global) {
 	}
 } 
     
-void assemble2DImage(float *image, float *corrected_data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
+void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
  
     if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
         // Loop through all pixels and interpolate onto regular grid
@@ -60,7 +60,7 @@ void assemble2DImage(float *image, float *corrected_data, float *pix_x, float *p
             iy = (long) (y+0.5);
             
             image_index = ix + image_nx*iy;
-            image[image_index]= corrected_data[i];
+            image[image_index]= data[i];
         }
     }
 
@@ -85,7 +85,7 @@ void assemble2DImage(float *image, float *corrected_data, float *pix_x, float *p
 			// Pixel location with (0,0) at array element (0,0) in bottom left corner
 			x = pix_x[i] + image_nx/2.;
 			y = pix_y[i] + image_nx/2.;
-			pixel_value = corrected_data[i];
+			pixel_value = data[i];
 		
 			// Split coordinate into integer and fractional parts
 			ix = (long) floor(x);

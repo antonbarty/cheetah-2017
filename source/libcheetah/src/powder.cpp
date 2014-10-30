@@ -287,6 +287,9 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 	}
 
     // Peak powder
+	size[0] = detector->pix_ny;
+	size[1] = detector->pix_nx;
+	sh = H5Screate_simple(2, size, NULL);
     bufferPeaks = (double*) calloc(detector->pix_nn, sizeof(double));
     pthread_mutex_lock(&detector->powderPeaks_mutex[powderClass]);
     memcpy(bufferPeaks, detector->powderPeaks[powderClass], detector->pix_nn*sizeof(double));
