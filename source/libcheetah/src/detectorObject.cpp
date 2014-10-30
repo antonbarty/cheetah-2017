@@ -1121,7 +1121,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	}
 	
 	
-	// Read darkcal data from file
+	// Read badpixel maskl data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1132,7 +1132,6 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 		printf("\tAborting...\n");
 		exit(1);
 	} 
-	
 	
 	// Copy back into array
 	for(long i=0;i<pix_nn;i++){
