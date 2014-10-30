@@ -1050,6 +1050,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "powdersumhits")) {
 		powderSumHits = atoi(value);
 	}
+	else if (!strcmp(tag, "powdersumblanks")) {
+		powderSumBlanks = atoi(value);
+	}
 	else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
 		printf("The keyword powdersumwithbackgroundsubtraction is depreciated.\n"
 			   "Please use respective keywords in the detector section (e.g. savepowderdatadetectorandphotoncorrected=1).\n"

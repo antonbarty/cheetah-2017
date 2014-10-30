@@ -413,13 +413,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 
 
-	else if (!strcmp(tag, "savepowderdataraw")) {
+	else if (!strcmp(tag, "savepowderdetectorraw")) {
 		savePowderDetectorRaw = atoi(value);
 	}
-	else if (!strcmp(tag, "savepowderdatadetectorcorrected")) {
+	else if (!strcmp(tag, "savepowderdetectorcorrected")) {
 		savePowderDetectorCorrected = atoi(value);
 	}
-	else if (!strcmp(tag, "savepowderdatadetectorandphotoncorrected")) {
+	else if (!strcmp(tag, "savepowderdetectorandphotoncorrected")) {
 		savePowderDetectorAndPhotonCorrected = atoi(value);
 	}
  	else if (!strcmp(tag, "savepowdernonassembled")) {
