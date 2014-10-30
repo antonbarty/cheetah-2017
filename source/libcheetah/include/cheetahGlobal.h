@@ -1,5 +1,5 @@
 /*
- *  setup.cpp
+ *  cheetahGlobal.h
  *  cheetah
  *
  *  Created by Anton Barty on 7/2/11.
@@ -15,7 +15,8 @@
 #include <vector>
 #include "detectorObject.h"
 #include "tofDetector.h"
-#include <processRateMonitor.h>
+#include "peakDetect.h"
+#include "processRateMonitor.h"
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024

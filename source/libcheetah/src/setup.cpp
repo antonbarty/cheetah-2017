@@ -275,7 +275,9 @@ void cGlobal::setup() {
 		}
 	}
 	// Check whether the detector chosen for hitfinding is configured
-	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0)) {
+	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0 &&
+									  // hitfinders that do not use hitfinderDetIndex
+									  hitfinderAlgorithm != 9 && hitfinderAlgorithm != 11)) {
 		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
 		for(long detIndex=0; detIndex < nDetectors; detIndex++){
 			printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);
@@ -1321,6 +1323,9 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "darkcal=%s\n",detector[i].darkcalFile);
         fprintf(fp, "cmModule=%d\n",detector[i].cmModule);
         fprintf(fp, "cmFloor=%f\n",detector[i].cmFloor);
+        fprintf(fp, "cmStart=%d\n",detector[i].cmStart);
+        fprintf(fp, "cmStop=%d\n",detector[i].cmStop);
+        fprintf(fp, "cmDelta=%f\n",detector[i].cmDelta);
         fprintf(fp, "subtractBehindWires=%d\n",detector[i].cspadSubtractBehindWires);
         fprintf(fp, "subtractUnbondedPixels=%d\n",detector[i].cspadSubtractUnbondedPixels);
         fprintf(fp, "gaincal=%s\n",detector[i].gaincalFile);

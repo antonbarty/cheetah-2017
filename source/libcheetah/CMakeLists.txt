@@ -20,7 +20,7 @@ LIST(APPEND sources "src/saveFrame.cpp" "src/setup.cpp")
 LIST(APPEND sources "src/spectrum.cpp" "src/worker.cpp")
 LIST(APPEND sources "src/histogram.cpp" "src/processRateMonitor.cpp")
 LIST(APPEND sources "src/tofDetector.cpp" "src/modularDetector.cpp")
-LIST(APPEND sources "src/log.cpp")
+LIST(APPEND sources "src/log.cpp" "src/peakDetect.cpp")
 
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})

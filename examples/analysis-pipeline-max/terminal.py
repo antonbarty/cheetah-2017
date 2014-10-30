@@ -1,5 +1,6 @@
 import os,sys
 import subprocess
+import time
 
 class TerminalTable:
     def __init__(self,conf):
@@ -80,6 +81,7 @@ class TerminalTable:
         sys.stdout.write("\033[2J") # clear screen and goes to position 0      
         sys.stdout.write("\033[H")
         sys.stdout.flush()
+        time.sleep(0.5)
     def print_screen(self):
         self.refresh_terminal_shape()
         s_head = self._get_s_head()
