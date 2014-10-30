@@ -400,7 +400,7 @@ namespace cheetah_ana_pkg {
                 int evr183 = eventCodePresent(data3->fifoEvents(), 183);
                 int evr184 = eventCodePresent(data3->fifoEvents(), 184);
                 int evr186 = eventCodePresent(data3->fifoEvents(), 186);
-                int evr187 = eventCodePresent(data3->fifoEvents(), 187);
+                //int evr187 = eventCodePresent(data3->fifoEvents(), 187);
                 
                 pumpLaserOn = evr183;
                 if(evr183) pumpLaserCode = 1;

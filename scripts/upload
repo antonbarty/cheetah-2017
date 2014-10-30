@@ -11,6 +11,10 @@ switch ($1)
     rsync -av --exclude 'build' --exclude '.git' . barty@cfelsgi.desy.de:local/c/cheetah-test/
     breaksw
     
+    case sellberg:
+    rsync -rave "ssh -l sellberg" --delete --exclude 'build' --exclude '.git' --exclude '*~' --exclude '*.o' . davinci.icm.uu.se:~/source/cheetah/
+    breaksw
+    
     case psexport:
     echo 'Please use the version of export up one directory higher'
     #rsync -av --exclude 'build' --exclude 'lcls-myana' --exclude '.git' --exclude 'lcls.old.20120504' --exclude '*.tar' . barty@psexport.slac.stanford.edu:c/cheetah-psana/

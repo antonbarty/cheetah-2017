@@ -1,3 +1,12 @@
+/*
+ *  cheetahmodules.h
+ *  cheetah
+ *
+ *  Created by Anton Barty on 7/2/11.
+ *  Copyright 2011 CFEL. All rights reserved.
+ *
+ */
+
 #include <hdf5.h>
 
 /*
@@ -32,6 +41,8 @@ void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
 
+void pnccdModuleSubtract(cEventData*, cGlobal*);
+void pnccdModuleSubtract(float*, uint16_t*, int, int, float, int);
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
