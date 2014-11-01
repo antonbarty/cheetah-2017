@@ -1341,7 +1341,6 @@ namespace cheetah_ana_pkg {
 		time_t	tstart, tnow;
 		time(&tstart);
 		double	dtime;
-		float	maxwait = 60. * 10;
 		int p=0, pp=0;
 
 		while(cheetahGlobal.nActiveThreads > 0) {
@@ -1352,7 +1351,7 @@ namespace cheetah_ana_pkg {
 			}
 			time(&tnow);
 			dtime = difftime(tnow, tstart);
-			if(dtime > maxwait) {
+			if(( dtime > ((float) cheetahGlobal.threadTimeoutInSeconds) ) && (cheetahGlobal.threadTimeoutInSeconds > 0)) {
 				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
 				printf("\tGiving up and exiting anyway\n");
 				cheetahGlobal.nActiveThreads = 0;

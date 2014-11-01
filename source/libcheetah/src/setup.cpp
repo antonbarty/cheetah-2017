@@ -202,6 +202,8 @@ cGlobal::cGlobal(void) {
 	useHelperThreads = 0;
 	// depreciated?
 	threadPurge = 10000;
+	// Timeout of thread activity, if set to 0 or negative no timeout
+	threadTimeoutInSeconds = 60.;
 
 	anaModThreads = 32;
 	
@@ -586,7 +588,7 @@ void cGlobal::freeMutexes(void) {
 				if (isBitOptionSet(powderFormat,*i_f)) {
 					cDataVersion dataV(NULL, &detector[detIndex], DATA_LOOP_MODE_ALL, *i_f);
 					while (dataV.next() == 0) {
-						pthread_mutex_unlock(&dataV.powder_mutex[powderClass]);
+						pthread_mutex_unlock(&dataV.getPowderMutex(powderClass));
 					}
 				}
 			}
@@ -868,6 +870,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
+	}
+	else if (!strcmp(tag, "threadtimeoutinseconds")) {
+		threadTimeoutInSeconds = atof(value);
 	}
 	else if (!strcmp(tag, "anamodthreads")) {
 		anaModThreads = atoi(value);
@@ -1282,6 +1287,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "pythonfile=%s\n",pythonFile);
     fprintf(fp, "debugLevel=%d\n",debugLevel);
     fprintf(fp, "nThreads=%ld\n",nThreads);
+    fprintf(fp, "threadTimeoutInSeconds=%f\n",threadTimeoutInSeconds);
     fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
     fprintf(fp, "threadPurge=%ld\n",threadPurge);
     fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);

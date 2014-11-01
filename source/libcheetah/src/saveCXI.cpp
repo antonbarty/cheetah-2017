@@ -182,7 +182,7 @@ namespace CXI{
 		}
 		w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
 		if( w<0 ){
-			ERROR("Cannot write to file.\n");
+ 			ERROR("Cannot write to file.\n");
 		}
 		if(sliced){
 			writeNumEvents(dataset,stackSlice);
@@ -486,8 +486,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	*/
 
 	using CXI::Node;
+	
+	DEBUGL2_ONLY{ DEBUG("Create Skeleton."); }
 
-	puts("Creating Skeleton");
 	CXI::Node * root = new Node(filename,global->cxiSWMR);
 
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
@@ -510,8 +511,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	}
 	
 	DETECTOR_LOOP{
-		// /entry_1/instrument_1/detector_[i]/
-		Node * detector = instrument->createGroup("detector",detIndex+1);
+		DEBUGL2_ONLY{ DEBUG("Create Skeleton for detector %ld.",detIndex); }
 
 		// For convenience define some detector specific variables
 		int asic_nx = global->detector[detIndex].asic_nx;
@@ -538,25 +538,28 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		uint16_t* pixelmask_shared_max = global->detector[detIndex].pixelmask_shared_max;
 		int downsampling = global->detector[detIndex].downsampling;
 
-		// What does this do?
+		// /entry_1/instrument_1/detector_[i]/
+		Node * detector = instrument->createGroup("detector",detIndex+1);
+		// Create symbolic link /entry_1/data_[i]/ which points to /entry_1/instrument_1/detector_[i]/
 		entry->addClassLink("data",detector->path().c_str());
-		// ?
+
 		detector->createStack("distance",H5T_NATIVE_DOUBLE);
 		detector->createStack("description",H5T_NATIVE_CHAR,CXI::stringSize);
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 
-
 		// DATA_FORMAT_NON_ASSEMBLED
+		DEBUGL2_ONLY{ DEBUG("Data format non-assembled."); }
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_NON_ASSEMBLED)) {
+			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing non-assembled data."); }
 			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
 			while (dataV.next() == 0) {
 				if (global->saveModular) {
 					// Non-assembled images, modular (4D: N_frames x N_modules x Ny_module x Nx_module)
 
-					// Create group /entry_1/instrument_1/detector_[i]/data_modular_[datver]/
-					sprintf(sBuffer,"modular_data_%s",dataV.name);
+					// Create group /entry_1/instrument_1/detector_[i]/modular_[datver]/
+					sprintf(sBuffer,"modular_%s",dataV.name);
 					Node * data_node = detector->createGroup(sBuffer);
 					data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 					data_node->createStack("data",H5T_NATIVE_FLOAT, asic_nx, asic_ny, nasics);
@@ -575,8 +578,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(mask);					
 					free(mask);
 
-					// If this is the main dataset we create symbolic links
-					if (dataV.isMainDataset == 1) {
+					// If this is the main data version we create symbolic links
+					if (dataV.isMainVersion == 1) {
 						detector->addDatasetLink("data",data_node->path().c_str());
 						detector->addDatasetLink("corner_positions",data_node->path().c_str());
 						detector->addDatasetLink("basis_vectors",data_node->path().c_str());
@@ -590,9 +593,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					}
 				} else {
 					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
-					// Create group /entry_1/instrument_1/detector_[i]/data_[datver]/
-					sprintf(sBuffer,"data_%s",dataV.name);
-					Node * data_node = detector->createGroup(sBuffer);
+					// Create group /entry_1/instrument_1/detector_[i]/[datver]/
+					Node * data_node = detector->createGroup(dataV.name_version);
 					data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 					data_node->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
 					if(global->savePixelmask){
@@ -603,8 +605,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared_min);
 					data_node->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 
-					// If this is the main dataset we create links to all datasets
-					if (dataV.isMainDataset) {
+					// If this is the main data version we create links to all datasets
+					if (dataV.isMainVersion) {
 						detector->addDatasetLink("data",data_node->path().c_str());
 						if(global->savePixelmask){
 							detector->addDatasetLink("mask",data_node->path().c_str());
@@ -617,20 +619,22 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			}
 		}
 		
+		int image_counter = 0;
 		// DATA_FORMAT_ASSEMBLED
 		// Assembled images (3D: N_frames x Ny_image x Nx_image)
+		DEBUGL2_ONLY{ DEBUG("Data format assembled."); }
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED)) {
+			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing assembled data."); }
 			// Create group /entry_1/image_i
-			int i_image = detIndex+1;
+			int i_image = 1+global->nDetectors*image_counter+detIndex;
+			image_counter += 1;
 			Node * image_node = entry->createGroup("image",i_image);
-			image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 			image_node->addClassLink("detector",detector->path());
 			image_node->addClassLink("source",source->path());
 			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED);
 			while (dataV.next() == 0) {
 				// Create group /entry_1/image_i/data_[datver]/
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node * data_node = image_node->createGroup(sBuffer);		
+				Node * data_node = image_node->createGroup(dataV.name_version);		
 				data_node->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
 				if(global->savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, image_nx, image_ny);
@@ -644,8 +648,8 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				data_node->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
 				data_node->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_nx/CXI::thumbnailScale);
 				data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
-				// If this is the main dataset we create links to all datasets
-				if (dataV.isMainDataset == 1) {
+				// If this is the main data version we create links to all datasets
+				if (dataV.isMainVersion == 1) {
 					image_node->addDatasetLink("data",data_node->path().c_str());
 					if(global->savePixelmask){
 						image_node->addDatasetLink("mask",data_node->path().c_str());
@@ -654,25 +658,27 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					image_node->addDatasetLink("data_type",data_node->path().c_str());
 					image_node->addDatasetLink("data_space",data_node->path().c_str());
 					image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 				}
 			}
 		}	
 
 		// DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED
 		// Assembled images (3D: N_frames x Ny_imageXxX x Nx_imageXxX)
+		DEBUGL2_ONLY{ DEBUG("Data format assembled and downsampled."); }
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
-			int i_image = global->nDetectors+detIndex+1;
+			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing assembled and downsampled data."); }
+			int i_image = 1+global->nDetectors*image_counter+detIndex;
+			image_counter += 1;
 			// Create group /entry_1/image_[i]
 			Node * image_node;
 			image_node = entry->createGroup("image",i_image);
-			image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 			image_node->addClassLink("detector",detector->path());
 			image_node->addClassLink("source",source->path());
 			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 			while (dataV.next() == 0) {
-				// Create group /entry_1/image_i/data_[datver]/
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node * data_node = image_node->createGroup(sBuffer);			
+				// Create group /entry_1/image_i/[datver]/
+				Node * data_node = image_node->createGroup(dataV.name_version);			
 				data_node->createStack("data",H5T_NATIVE_FLOAT, imageXxX_nx, imageXxX_ny);
 				if(global->savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, imageXxX_nx, imageXxX_ny);
@@ -693,23 +699,36 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				data_node->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
 				data_node->createStack("thumbnail",H5T_NATIVE_FLOAT, image_nx/CXI::thumbnailScale, image_ny/CXI::thumbnailScale);
 				data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+				// If this is the main data version we create links to all datasets
+				if (dataV.isMainVersion == 1) {
+					image_node->addDatasetLink("data",data_node->path().c_str());
+					if(global->savePixelmask){
+						image_node->addDatasetLink("mask",data_node->path().c_str());
+					}
+					image_node->addDatasetLink("mask_shared",data_node->path().c_str());
+					image_node->addDatasetLink("data_type",data_node->path().c_str());
+					image_node->addDatasetLink("data_space",data_node->path().c_str());
+					image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+				}
 			}
 		}
 
 		// DATA_FORMAT_RADIAL_AVERAGE
 		// Radial average (2D: N_frames x N_radial)
+		DEBUGL2_ONLY{ DEBUG("Data format radial average."); }
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_RADIAL_AVERAGE)) {
+			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing radially averaged data."); }
 			// Create group /entry_1/image_[i]
-			int i_image = global->nDetectors*2+detIndex+1;
+			int i_image = 1+global->nDetectors*image_counter+detIndex;
+			image_counter += 1;
 			Node * image_node = entry->createGroup("image",i_image);
-			image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 			image_node->addClassLink("detector",detector->path());
 			image_node->addClassLink("source",source->path());			
 			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_RADIAL_AVERAGE);
 			while (dataV.next() == 0) {
-				// Create group /entry_1/image_i/data_[datver]/
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node * data_node = image_node->createGroup(sBuffer);		
+				// Create group /entry_1/image_i/[datver]/
+				Node * data_node = image_node->createGroup(dataV.name_version);		
 				data_node->createStack("data",H5T_NATIVE_FLOAT, radial_nn);
 				if(global->savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, radial_nn);
@@ -718,16 +737,29 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				float *foo1 = (float *) calloc(pix_nn,sizeof(float));
 				float *foo2 = (float *) calloc(radial_nn,sizeof(float));
 				calculateRadialAverage(foo1, pixelmask_shared, foo2, radial_pixelmask_shared, pix_r, radial_nn, pix_nn);
-				data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,image_nx, image_ny)->write(radial_pixelmask_shared);
+				data_node->createDataset("mask_shared",H5T_NATIVE_UINT16, radial_nn)->write(radial_pixelmask_shared);
 				free(radial_pixelmask_shared);
 				free(foo1);
 				free(foo2);
 				data_node->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
 				data_node->createStack("data_space",H5T_NATIVE_CHAR,CXI::stringSize);
 				data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+				// If this is the main data version we create links to all datasets
+				if (dataV.isMainVersion == 1) {
+					image_node->addDatasetLink("data",data_node->path().c_str());
+					if(global->savePixelmask){
+						image_node->addDatasetLink("mask",data_node->path().c_str());
+					}
+					image_node->addDatasetLink("mask_shared",data_node->path().c_str());
+					image_node->addDatasetLink("data_type",data_node->path().c_str());
+					image_node->addDatasetLink("data_space",data_node->path().c_str());
+					image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+				}
 			}
 		}
 	}
+
+	if (global->debugLevel > 2) printf("Detector skeleton created.");
 
 	if(global->TOFPresent){
 		for(int i = 0;i<global->nTOFDetectors;i++){
@@ -855,11 +887,11 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		det_node->createStack("haloPixCounter",H5T_NATIVE_LONG);
 
 		POWDER_LOOP{
-			Node * cl = det_node->createGroup("class",powID+1);
+			Node * cl = det_node->createGroup("class",powderClass+1);
 			FOREACH_UINT16_T(i_f, DATA_FORMATS) {
 				cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
 				while (dataV.next() == 0) {
-					if (dataV.dataFormat != DATA_FORMAT_RADIAL_AVERAGE) {
+					if (*i_f != DATA_FORMAT_RADIAL_AVERAGE) {
 						sprintf(sBuffer,"mean_%s",dataV.name);
 						cl->createDataset(sBuffer,H5T_NATIVE_DOUBLE,dataV.pix_nx,dataV.pix_ny);
 						sprintf(sBuffer,"sigma_%s",dataV.name);
@@ -874,7 +906,10 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			}
 		}
 	}
-
+	
+	if (global->debugLevel > 2) {
+		puts("Skeleton created.");
+	}
 
 #if defined H5F_ACC_SWMR_READ
 	if(global->cxiSWMR){  
@@ -921,22 +956,22 @@ void writeAccumulatedCXI(cGlobal * global){
 
 	DETECTOR_LOOP{
 		Node & det_node = (*cxi)["cheetah"]["shared"].child("detector",detIndex+1);
-		POWDER_LOOP{
-			Node & cl = det_node.child("class",powID+1);
+		POWDER_LOOP {
+			Node & cl = det_node.child("class",powderClass+1);
 			FOREACH_UINT16_T(i_f, DATA_FORMATS) {
 				cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
 				while (dataV.next() == 0) {
 					long pix_nn =  dataV.pix_nn;
 
 					// raw
-					double * sum = dataV.powder[powID];
-					double * sum_sq = dataV.powder_squared[powID];     
+					double * powder = dataV.getPowder(powderClass);
+					double * powder_squared = dataV.getPowderSquared(powderClass);     
 					double * mean = (double*) calloc(pix_nn, sizeof(double));
 					double * sigma = (double *) calloc(pix_nn,sizeof(double));
 					for(long i = 0; i<pix_nn; i++){
-						mean[i] = sum[i]/(1.*global->detector[detIndex].nPowderFrames[powID]);
-						sigma[i] =	sqrt( fabs(sum_sq[i] - sum[i]*sum[i]/(1.*global->detector[detIndex].nPowderFrames[powID])) /
-										  (1.*global->detector[detIndex].nPowderFrames[powID]) );
+						mean[i] = powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass]);
+						sigma[i] =	sqrt( fabs(powder_squared[i] - powder[i]*powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass])) /
+										  (1.*global->detector[detIndex].nPowderFrames[powderClass]) );
 					}
 					sprintf(sBuffer,"mean_%s",dataV.name); 
 					cl[sBuffer].write(mean);
@@ -1073,13 +1108,15 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_NON_ASSEMBLED)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
 			while (dataV.next() == 0) {
+				float * data = dataV.getData();
+				uint16_t * pixelmask = dataV.getPixelmask();
 				if (global->saveModular){
 					// Non-assembled images, modular (4D: N_frames x N_modules x Ny_module x Nx_module)
-					sprintf(sBuffer,"modular_data_%s",dataV.name);
+					sprintf(sBuffer,"modular_%s",dataV.name);
 					Node & data_node = detector[sBuffer];
 
 					float * dataModular = (float *) calloc(asic_nn*nasics, sizeof(float));
-					stackModulesData(dataV.data, dataModular, asic_nx, asic_ny, nasics_x, nasics_y);
+					stackModulesData(data, dataModular, asic_nx, asic_ny, nasics_x, nasics_y);
 					data_node["data"].write(dataModular, stackSlice);
 					free(dataModular);
 
@@ -1106,13 +1143,12 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 					}
 				} else {
 					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
-					sprintf(sBuffer,"data_%s",dataV.name);
-					Node & data_node = detector[sBuffer];
-					data_node["data"].write(dataV.data,stackSlice);	
+					Node & data_node = detector[dataV.name_version];
+					data_node["data"].write(data,stackSlice);	
 					if(global->savePixelmask){
-						data_node["mask"].write(dataV.pixelmask,stackSlice);
+						data_node["mask"].write(pixelmask,stackSlice);
 					}
-					float * thumbnail = generateThumbnail(dataV.data,pix_nx,pix_ny,CXI::thumbnailScale);
+					float * thumbnail = generateThumbnail(data,pix_nx,pix_ny,CXI::thumbnailScale);
 					data_node["thumbnail"].write(thumbnail, stackSlice);
 					delete [] thumbnail;
 				}			
@@ -1120,18 +1156,21 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		}
 
         // DATA_FORMAT_ASSEMBLED
+		int image_counter = 0;
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED)) {
 			int i_image = detIndex+1;
+			image_counter += 1;
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED);
 			while (dataV.next() == 0) {
 				// Assembled images (3D: N_frames x Ny_image x Nx_image)
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node & data_node = root["entry_1"].child("image",i_image)[sBuffer];
-				data_node["data"].write(dataV.data,stackSlice);
+				float * data = dataV.getData();
+				uint16_t * pixelmask = dataV.getPixelmask();
+				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
+				data_node["data"].write(data,stackSlice);
 				if(global->savePixelmask){
-					data_node["mask"].write(dataV.pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask,stackSlice);
 				}
-				float * thumbnail = generateThumbnail(dataV.data,image_nx,image_ny,CXI::thumbnailScale);
+				float * thumbnail = generateThumbnail(data,image_nx,image_ny,CXI::thumbnailScale);
 				data_node["thumbnail"].write(thumbnail, stackSlice);
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);
@@ -1141,17 +1180,19 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 
 		// DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
-			int i_image = global->nDetectors+detIndex+1;
+			int i_image = global->nDetectors*image_counter+detIndex+1;
+			image_counter += 1;
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 			while (dataV.next() == 0) {
 				// Assembled images (3D: N_frames x Ny_imageXxX x Nx_imageXxX)
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node & data_node = root["entry_1"].child("image",i_image)[sBuffer];
-				data_node["data"].write(dataV.data,stackSlice);
+				float * data = dataV.getData();
+				uint16_t * pixelmask = dataV.getPixelmask();
+				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
+				data_node["data"].write(data,stackSlice);
 				if(global->savePixelmask){
-					data_node["mask"].write(dataV.pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask,stackSlice);
 				}
-				float * thumbnail = generateThumbnail(dataV.data,imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
+				float * thumbnail = generateThumbnail(data,imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
 				data_node["thumbnail"].write(thumbnail, stackSlice);
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);
@@ -1161,15 +1202,17 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 
 		// DATA_FORMAT_RADIAL_AVERAGE
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_RADIAL_AVERAGE)) {
-			int i_image = global->nDetectors*2+detIndex+1;
+			int i_image = global->nDetectors*image_counter+detIndex+1;
+			image_counter += 1;
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_RADIAL_AVERAGE);
 			while (dataV.next() == 0) {
 				// Radial average (2D: N_frames x N_radial)
-				sprintf(sBuffer,"data_%s",dataV.name);
-				Node & data_node = root["entry_1"].child("image",i_image)[sBuffer];
-				data_node["data"].write(dataV.data,stackSlice);
+				float * data = dataV.getData();
+				uint16_t * pixelmask = dataV.getPixelmask();
+				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
+				data_node["data"].write(data,stackSlice);
 				if(global->savePixelmask){
-					data_node["mask"].write(dataV.pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask,stackSlice);
 				}
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);

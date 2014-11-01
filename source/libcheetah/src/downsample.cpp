@@ -157,8 +157,8 @@ void downsample(cEventData *eventData, cGlobal *global){
 		cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 		while (imageV.next() == 0) {
 			imageXxXV.next();
-			float	*image = imageV.data;
-			float	*imageXxX = imageXxXV.data;
+			float	*image = imageV.getData();
+			float	*imageXxX = imageXxXV.getData();
 			if (global->detector[detIndex].downsamplingConservative == 1){
 				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
 				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
@@ -188,8 +188,8 @@ void downsamplePowder(cGlobal *global) {
 				cDataVersion imageXxXV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 				while (imageV.next() == 0) {
 					imageXxXV.next();
-					double * image = imageV.powder[powderClass];
-					double * imageXxX = imageXxXV.powder[powderClass];
+					double * image = imageV.getPowder(powderClass);
+					double * imageXxX = imageXxXV.getPowder(powderClass);
 					
 					// Floating point buffer
 					float   *fimage = (float*) calloc(image_nn,sizeof(float));

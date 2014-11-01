@@ -32,11 +32,16 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_RADIAL_AVERAGE)) {
 			cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
 			cDataVersion dataV_r(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_RADIAL_AVERAGE);
-			while (dataV_2d.next() && dataV_r.next()) {
+			while (dataV_2d.next()) {
+				dataV_r.next();
 				long	 radial_nn = global->detector[detIndex].radial_nn;
 				long     pix_nn = global->detector[detIndex].pix_nn;
 				float    *pix_r = global->detector[detIndex].pix_r;
-				calculateRadialAverage(dataV_2d.data, dataV_2d.pixelmask, dataV_r.data, dataV_r.pixelmask, pix_r, radial_nn, pix_nn);
+				float    *data_r = dataV_r.getData();
+				float    *data_2d = dataV_2d.getData();				
+				uint16_t *pixelmask_r = dataV_r.getPixelmask();
+				uint16_t *pixelmask_2d = dataV_2d.getPixelmask();				
+				calculateRadialAverage(data_2d, pixelmask_2d, data_r, pixelmask_r, pix_r, radial_nn, pix_nn);
 			}
 		}
 	}
@@ -110,9 +115,11 @@ void calculateRadialAveragePowder(cGlobal *global) {
 			while (dataV_2d.next() == 0) {
 				dataV_r.next();
 				for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) {
+					double * powder_r = dataV_r.getPowder(powderClass);
+					double * powder_2d = dataV_2d.getPowder(powderClass);
 					uint16_t *buffer_2d = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
 					uint16_t *buffer_radial = (uint16_t *) calloc(radial_nn,sizeof(uint16_t));
-					calculateRadialAverage(dataV_2d.powder[powderClass], buffer_2d , dataV_r.powder[powderClass], buffer_radial, pix_r, radial_nn, pix_nn);
+					calculateRadialAverage(powder_2d, buffer_2d , powder_r, buffer_radial, pix_r, radial_nn, pix_nn);
 					// Currently we do not save any mask for the powders
 					free(buffer_radial);
 					free(buffer_2d);

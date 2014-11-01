@@ -35,8 +35,8 @@ void assemble2DImage(cEventData *eventData, cGlobal *global) {
 			cDataVersion imageV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_POWDER, DATA_FORMAT_ASSEMBLED);
 			while (dataV.next() == 0) {
 				imageV.next();
-				float		*data = dataV.data;
-				float		*image = imageV.data;
+				float		*data = dataV.getData();
+				float		*image = imageV.getData();
 				int         assembleInterpolation = global->assembleInterpolation;
 				assemble2DImage(image, data, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
 			}
@@ -270,8 +270,8 @@ void assemble2DPowder(cGlobal *global) {
 				while (dataV.next() == 0) {
 					imageV.next();
 
-					double * data = dataV.powder[powderClass];
-					double * image = imageV.powder[powderClass];
+					double * data = dataV.getPowder(powderClass);
+					double * image = imageV.getPowder(powderClass);
 
 					// Floating point buffer
 					float   *fdata = (float*) calloc(pix_nn,sizeof(float));

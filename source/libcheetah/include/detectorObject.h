@@ -96,6 +96,7 @@ static const int ASSEMBLE_INTERPOLATION_NEAREST = 1;
 static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 
 #define DETECTOR_LOOP for(long detIndex=0; detIndex < global->nDetectors; detIndex++)
+#define POWDER_LOOP for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) 
 #define FOREACH_UINT16_T( intpvar, intary ) uint16_t* intpvar; for( intpvar= (uint16_t*) intary; intpvar < (intary + (sizeof(intary)/sizeof(intary[0]))) ; intpvar++)
 
 const int DATA_VERSION_N = 3;
@@ -284,6 +285,9 @@ public:
 	// declare pixel bad if they are located in bad lines
 	int    usePnccdLineMasking;
 
+	// This is just for checking for uninitialised mutexes
+	pthread_mutex_t null_mutex;
+
 	// Histogram stack
 	int		histogram;
 	long	histogramMin;
@@ -318,12 +322,13 @@ public:
 	int   saveRadialAverage;
 	// Bit options defining formats in which data shall be saved (non-assembled / assembled / assembled and downsampled / radial average)
 	uint16_t saveFormat;
-	// Defining the option that the main dataset link "data" shall point to
-	uint16_t saveFormatMain;
 	// Bit options defining versions of the data to be saved (raw / detector corrected / detector and photon corrected)	
 	uint16_t saveVersion;
-	// Defining the option that the main dataset link "data" shall point to
-	uint16_t saveVersionMain;
+
+	// Defining the data format that the main dataset link "data" shall point to
+	uint16_t dataFormatMain;
+	// Defining the data version that the main dataset link "data" shall point to
+	uint16_t dataVersionMain;
 
 	// Powder saving options
 	// Data versions
@@ -337,10 +342,8 @@ public:
 	int   savePowderRadialAverage;
 	// Bit options defining formats in which powder data shall be created and saved (non-assembled / assembled / assembled and downsampled / radial average)
 	uint16_t powderFormat;
-	uint16_t powderFormatMain;
 	// Bit options defining versions of the data to be used for creating and saving powders (raw / detector corrected / detector and photon corrected)	
 	uint16_t powderVersion;
-	uint16_t powderVersionMain;
 
 	/*
 	 * Arrays for all sorts of stuff
@@ -499,6 +502,15 @@ static const uint16_t DATA_LOOP_MODE_ALL = DATA_LOOP_MODE_POWDER | DATA_LOOP_MOD
 
 class cDataVersion {
  private:
+	cPixelDetectorEvent *detectorEvent;
+	cPixelDetectorCommon *detectorCommon;
+
+	float *data;
+	uint16_t *pixelmask;
+	double *powder[MAX_POWDER_CLASSES];
+	double *powder_squared[MAX_POWDER_CLASSES];
+	pthread_mutex_t powder_mutex[MAX_POWDER_CLASSES];	
+
 	float *raw;
 	float *detCorr;
 	float *detPhotCorr;
@@ -508,27 +520,31 @@ class cDataVersion {
 	double *powder_detCorr_squared[MAX_POWDER_CLASSES];
 	double *powder_detPhotCorr[MAX_POWDER_CLASSES];
 	double *powder_detPhotCorr_squared[MAX_POWDER_CLASSES];
+
 	int dataVersionIndex;
-	char name_root[1024];
-	int get();
-	cPixelDetectorEvent *detectorEvent;
-	cPixelDetectorCommon *detectorCommon;
+
 	uint16_t dataLoopMode;
- public:
-	cDataVersion(cPixelDetectorEvent *detectorEvent, cPixelDetectorCommon *detectorCommon, const uint16_t loopMode, const uint16_t dataFormat);
-	int next();
-	float *data;
-	uint16_t *pixelmask;
-	uint16_t *pixelmask_shared;
-	double *powder[MAX_POWDER_CLASSES];
-	double *powder_squared[MAX_POWDER_CLASSES];
-	pthread_mutex_t powder_mutex[MAX_POWDER_CLASSES];	
-	char name[1024];
-	int isMainDataset;
+	//uint16_t *pixelmask_shared;
+
 	uint16_t dataFormat;
 	uint16_t dataVersion;
 	uint16_t dataFormatMain;
 	uint16_t dataVersionMain;
+
+	int get();
+	void clear();
+ public:
+	cDataVersion(cPixelDetectorEvent *detectorEvent, cPixelDetectorCommon *detectorCommon, const uint16_t loopMode, const uint16_t dataFormat);
+	int next();
+	float * getData();
+	uint16_t * getPixelmask();
+	double * getPowder(long powderClass);
+	double * getPowderSquared(long powderClass);
+	pthread_mutex_t getPowderMutex(long powderClass);
+	char name[1024];
+	char name_format[1024];
+	char name_version[1024];
+	int isMainDataset,isMainVersion;
 	long pix_nn,pix_nx,pix_ny;		
 };
 

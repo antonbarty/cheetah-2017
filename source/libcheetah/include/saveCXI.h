@@ -56,7 +56,7 @@ namespace CXI{
 			if(children.find(s) != children.end()){
 				return *children.find(s)->second;
 			}else{
-				ERROR("Could not find child");
+				ERROR("Could not find child %s",s);
 				return *this;
 			}
 		}

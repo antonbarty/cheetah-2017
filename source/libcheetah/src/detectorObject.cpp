@@ -260,28 +260,28 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	saveVersion = 0;
 	if (saveDetectorRaw) {
 		saveVersion               |= DATA_VERSION_RAW;
-		saveVersionMain           = DATA_VERSION_RAW; 
+		dataVersionMain           = DATA_VERSION_RAW; 
 	}
 	if (saveDetectorCorrected) {
 		saveVersion               |= DATA_VERSION_DETECTOR_CORRECTED; 
-		saveVersionMain           = DATA_VERSION_DETECTOR_CORRECTED; 
+		dataVersionMain           = DATA_VERSION_DETECTOR_CORRECTED; 
 	}
 	if (saveDetectorAndPhotonCorrected) {
 	    saveVersion               |= DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
-		saveVersionMain           = DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
+		dataVersionMain           = DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
 	}
 	// Data formats
 	if (saveNonAssembled) {
 		saveFormat                |= DATA_FORMAT_NON_ASSEMBLED; 
-		saveFormatMain            = DATA_FORMAT_NON_ASSEMBLED; 
+		dataFormatMain            = DATA_FORMAT_NON_ASSEMBLED; 
 	}
 	if (downsampling > 1) {
 		saveFormat                |= DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED;
-		saveFormatMain            = DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
+		dataFormatMain            = DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 	}
 	if (saveAssembled) {
 		saveFormat                |= DATA_FORMAT_ASSEMBLED;
-		saveFormatMain            = DATA_FORMAT_ASSEMBLED;
+		dataFormatMain            = DATA_FORMAT_ASSEMBLED;
 	}
 	if (saveRadialAverage) {
 		saveFormat                |= DATA_FORMAT_RADIAL_AVERAGE;
@@ -681,8 +681,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		selfdark[j] = 0;
 	}
     
-
-	//puts("SOON ALLOCATING POWDER MEMORY");
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;
 		// Powder mutexes
@@ -718,10 +716,7 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		powderRadialAverage_detCorr_squared[powderClass]         = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detPhotCorr[powderClass]             = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detPhotCorr_squared[powderClass]     = (double*) calloc(radial_nn, sizeof(double));
-
-
-
-		
+	
 		/*
 		FOREACH_UINT16_T(i_f, DATA_FORMATS) {
 			cDataVersion dataV(NULL,this,DATA_LOOP_MODE_ALL,*i_f);
@@ -749,6 +744,9 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		//pthread_mutex_init(&assembledMax_mutex[powderClass], NULL);
 	}
 
+	// This is just for checking for uninitialised mutexes
+	pthread_mutex_init(&null_mutex, NULL);
+	
 
 	// Histogram memory
 	if(histogram) {
@@ -796,31 +794,33 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 		pthread_mutex_destroy(&halopix_mutexes[j]);
 	}
 	free(halopix_mutexes);
-	for(long i=0; i<nPowderClasses; i++) {
+	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 
-		nPowderFrames[i] = 0;
+		nPowderFrames[powderClass] = 0;
 		FOREACH_UINT16_T(i_f, DATA_FORMATS) {
 			cDataVersion dataV(NULL,this,DATA_LOOP_MODE_ALL,*i_f);
-			pthread_mutex_destroy(&dataV.powder_mutex[i]);
+			pthread_mutex_destroy(&dataV.getPowderMutex(powderClass));
 			while (dataV.next() == 0) {
-				free(dataV.powder[i]);
-				free(dataV.powder_squared[i]);
+				free(dataV.getPowder(powderClass));
+				free(dataV.getPowderSquared(powderClass));
 			}
 		}
 		// Powder peaks 
-		free(powderPeaks[i]);
+		free(powderPeaks[powderClass]);
 		// Radial stacks
-		free(radialAverageStack[i]);
-		pthread_mutex_destroy(&radialStack_mutex[i]);
-		//free(correctedMin[i]);
-		//free(correctedMax[i]);
-		//free(assembledMin[i]);
-		//free(assembledMax[i]);
-		//pthread_mutex_destroy(&correctedMax_mutex[i]);
-		//pthread_mutex_destroy(&correctedMin_mutex[i]);
-		//pthread_mutex_destroy(&assmebledMax_mutex[i]);
-		//pthread_mutex_destroy(&assembledMin_mutex[i]);
+		free(radialAverageStack[powderClass]);
+		pthread_mutex_destroy(&radialStack_mutex[powderClass]);
+		//free(correctedMin[powderClass]);
+		//free(correctedMax[powderClass]);
+		//free(assembledMin[powderClass]);
+		//free(assembledMax[powderClass]);
+		//pthread_mutex_destroy(&correctedMax_mutex[powderClass]);
+		//pthread_mutex_destroy(&correctedMin_mutex[powderClass]);
+		//pthread_mutex_destroy(&assmebledMax_mutex[powderClass]);
+		//pthread_mutex_destroy(&assembledMin_mutex[powderClass]);
 	}
+	pthread_mutex_destroy(&null_mutex);
+	
 	// Pixel histograms
 	if(histogram) {
 		free(histogramData);
@@ -1455,45 +1455,33 @@ cPixelDetectorEvent::cPixelDetectorEvent() {
 
 }
 
+// DATA VERSION CLASS
+
 cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorCommon * detectorCommon0, const uint16_t dataLoopMode0, const uint16_t dataFormat0) {
 	detectorCommon = detectorCommon0;
 	detectorEvent = detectorEvent0;
 	dataLoopMode = dataLoopMode0;
 	dataFormat = dataFormat0;
+	dataFormatMain = detectorCommon->dataFormatMain;
+	dataVersionMain = detectorCommon->dataVersionMain;
 	dataVersionIndex = -1;
-	name[0] = 0;
-	name_root[0] = 0;
-	isMainDataset = 0;
 	if (dataLoopMode == DATA_LOOP_MODE_ALL) {
 		dataVersion = DATA_VERSION_ALL;
-		dataVersionMain = 0;
 	} else if (dataLoopMode == DATA_LOOP_MODE_POWDER) {
 		dataVersion = detectorCommon->powderVersion;
-		dataVersionMain = detectorCommon->powderVersionMain; 
 	} else if (dataLoopMode == DATA_LOOP_MODE_SAVE) {
 		dataVersion = detectorCommon->saveVersion;
-		dataVersionMain = detectorCommon->saveVersionMain;
 	} else if (dataLoopMode == DATA_LOOP_MODE_RADIAL_AVERAGE) {
 		dataVersion = detectorCommon->saveVersion | detectorCommon->powderVersion;
-		dataVersionMain = 0;
 	} else {
 		printf("cDataVersion initialised with invalid dataLoopMode.");
 		exit(1);
 	}
-	pixelmask_shared  = detectorCommon->pixelmask_shared;   
-	if (detectorEvent != NULL) {
-		pixelmask         = detectorEvent->pixelmask;
-	} else {
-		pixelmask         = NULL;
-		raw               = NULL;
-		detCorr           = NULL;
-		detPhotCorr       = NULL;
-	}  
-}
-		
-int cDataVersion::get(){
+
+	clear();
+	
 	if (dataFormat == DATA_FORMAT_NON_ASSEMBLED) {
-		sprintf(name_root,"non_assembled");
+		sprintf(name_format,"non_assembled");
 		// Event
 		if (detectorEvent != NULL) {
 			raw                   = detectorEvent->data_raw;
@@ -1502,18 +1490,18 @@ int cDataVersion::get(){
 			pixelmask             = detectorEvent->pixelmask;
 		}
 		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderData_raw[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderData_raw_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderData_detCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderData_detCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderData_detPhotCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderData_detPhotCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderData_mutex[0]), sizeof(pthread_mutex_t)*MAX_POWDER_CLASSES);
+		memcpy(&(powder_raw[0]), &(detectorCommon->powderData_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderData_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderData_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderData_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderData_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderData_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_mutex[0]), &(detectorCommon->powderData_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
 		pix_nn                     = detectorCommon->pix_nn;
 		pix_nx                     = detectorCommon->pix_nx;
 		pix_ny                     = detectorCommon->pix_ny;
 	} else if (dataFormat == DATA_FORMAT_ASSEMBLED) {
-		sprintf(name_root,"assembled");
+		sprintf(name_format,"assembled");
 		if (detectorEvent != NULL) {
 			// Event
 			raw                   = detectorEvent->image_raw;
@@ -1522,18 +1510,18 @@ int cDataVersion::get(){
 			pixelmask             = detectorEvent->image_pixelmask;
 		}
 		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderImage_raw[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImage_raw_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImage_detCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImage_detCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImage_detPhotCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImage_detPhotCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImage_mutex[0]), sizeof(pthread_mutex_t)*MAX_POWDER_CLASSES);
+		memcpy(&(powder_raw[0]), &(detectorCommon->powderImage_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImage_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImage_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
 		pix_nn                    = detectorCommon->image_nn;
 		pix_nx                    = detectorCommon->image_nx;
 		pix_ny                    = detectorCommon->image_ny;
 	} else if (dataFormat == DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED) {
-		sprintf(name_root,"assembled_and_downsampled");
+		sprintf(name_format,"assembled_and_downsampled");
 		if (detectorEvent != NULL) {
 			// Event
 			raw                   = detectorEvent->imageXxX_raw;
@@ -1542,18 +1530,18 @@ int cDataVersion::get(){
 			pixelmask             = detectorEvent->imageXxX_pixelmask;
 		}
 		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderImageXxX_raw[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImageXxX_raw_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImageXxX_detCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImageXxX_detCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImageXxX_detPhotCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImageXxX_detPhotCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImageXxX_mutex[0]), sizeof(pthread_mutex_t)*MAX_POWDER_CLASSES);
+		memcpy(&(powder_raw[0]), &(detectorCommon->powderImageXxX_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImageXxX_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImageXxX_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImageXxX_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImageXxX_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImageXxX_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImageXxX_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
 		pix_nn                    = detectorCommon->imageXxX_nn;
 		pix_nx                    = detectorCommon->imageXxX_nx;
 		pix_ny                    = detectorCommon->imageXxX_ny;
 	} else if (dataFormat == DATA_FORMAT_RADIAL_AVERAGE) {
-		sprintf(name_root,"radial_average");
+		sprintf(name_format,"radial_average");
 		if (detectorEvent != NULL) {
 			// Event
 			raw                     = detectorEvent->radialAverage_raw;
@@ -1562,56 +1550,109 @@ int cDataVersion::get(){
 			pixelmask               = detectorEvent->radialAverage_pixelmask;
 		}
 		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderRadialAverage_raw[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderRadialAverage_raw_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderRadialAverage_detCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderRadialAverage_detCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderRadialAverage_detPhotCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderRadialAverage_detPhotCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderRadialAverage_mutex[0]), sizeof(pthread_mutex_t)*MAX_POWDER_CLASSES);
+		memcpy(&(powder_raw[0]), &(detectorCommon->powderRadialAverage_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderRadialAverage_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderRadialAverage_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderRadialAverage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderRadialAverage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderRadialAverage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_mutex[0]), &(detectorCommon->powderRadialAverage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
 		pix_nn                  = detectorCommon->radial_nn;
 		pix_nx                  = 0;
 		pix_ny                  = 0;
 	} else {
-		puts("cDataVersion initialised with incorrect data format!");
-		exit(1);
+		ERROR("cDataVersion initialised with incorrect data format!");
 	}
+}
+		
+void cDataVersion::clear() {
+	name[0] = 0;
+	name_version[0] = 0;
+	isMainDataset = 0;
+	isMainVersion = 0;
+	data      = NULL;
+	pixelmask = NULL;
+	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {		
+		powder[powderClass]                     = NULL;
+		powder_squared[powderClass]             = NULL;
+		powder_raw[powderClass]                 = NULL;
+		powder_raw_squared[powderClass]         = NULL;
+		powder_detCorr[powderClass]             = NULL;
+		powder_detCorr_squared[powderClass]     = NULL;
+		powder_detPhotCorr[powderClass]         = NULL;
+		powder_detPhotCorr_squared[powderClass] = NULL;
+		powder_mutex[powderClass]               = detectorCommon->null_mutex;
+	}
+}
 
-	if ((dataVersionIndex == 0) && isBitOptionSet(dataVersion,DATA_VERSION_RAW)) {
-		data = raw;
-		memcpy(&(powder[0]), &(powder_raw[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_squared[0]), &(powder_raw_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		sprintf(name,"%s_raw",name_root);
-		isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_RAW);
-		return 0;
-	} else if ((dataVersionIndex == 1) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_CORRECTED)) {
-		data = detCorr;
-		memcpy(&(powder[0]), &(powder_detCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_squared[0]), &(powder_detCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		sprintf(name,"%s_detector_corrected",name_root);
-		isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED);
-		return 0;
-	} else if ((dataVersionIndex == 2) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED)) {
-		data = detPhotCorr;
-		memcpy(&(powder[0]), &(powder_detPhotCorr[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		memcpy(&(powder_squared[0]), &(powder_detPhotCorr_squared[0]), sizeof(double*)*MAX_POWDER_CLASSES);
-		sprintf(name,"%s_detector_and_photon_corrected",name_root);
-		isMainDataset = ((dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED));
-		return 0;
-	} else { 
-		data = NULL;
-		name[0] = 0;
-		isMainDataset = 0;
-		return 1;
+float * cDataVersion::getData() {
+	if (data == NULL) {
+		ERROR("Trying to access data that does not exist!");
+	} 
+	return data;
+}
+
+uint16_t * cDataVersion::getPixelmask() {
+	if (pixelmask == NULL) {
+		ERROR("Trying to access pixelmask that does not exist!");
 	}
+	return pixelmask;
+}
+
+double * cDataVersion::getPowder(long powderClass) {
+	if (powder == NULL) {
+		ERROR("Trying to access powder data that does not exist!");
+	}
+	return powder[powderClass];
+}
+
+double * cDataVersion::getPowderSquared(long powderClass) {
+	if (powder_squared[powderClass] == NULL) {
+		ERROR("Trying to access squared powder data that does not exist!");
+	} 
+	return powder_squared[powderClass]; 
+}
+
+pthread_mutex_t cDataVersion::getPowderMutex(long powderClass) {
+	if (&powder_mutex[powderClass] == &detectorCommon->null_mutex) {
+		ERROR("Trying to access powder mutex that does not exist!");
+	} 
+	return powder_mutex[powderClass];
 }
 
 int cDataVersion::next(){
 	while (dataVersionIndex < 3){
 		dataVersionIndex++;
-		if (get() == 0) {
+		if ((dataVersionIndex == 0) && isBitOptionSet(dataVersion,DATA_VERSION_RAW)) {
+			data = raw;
+			memcpy(&(powder[0]), &(powder_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_squared[0]), &(powder_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			sprintf(name_version,"raw");
+			sprintf(name,"%s_%s",name_format,name_version);
+			isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_RAW);
+			isMainVersion = (dataVersionMain == DATA_VERSION_RAW);
 			return 0;
-		} 
+		} else if ((dataVersionIndex == 1) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_CORRECTED)) {
+			data = detCorr;
+			memcpy(&(powder[0]), &(powder_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_squared[0]), &(powder_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			sprintf(name_version,"detector_corrected");
+			sprintf(name,"%s_%s",name_format,name_version);
+			isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED)
+;			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED);
+			return 0;
+		} else if ((dataVersionIndex == 2) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED)) {
+			data = detPhotCorr;
+			memcpy(&(powder[0]), &(powder_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_squared[0]), &(powder_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			sprintf(name_version,"detector_and_photon_corrected");
+			sprintf(name,"%s_%s",name_format,name_version);
+			isMainDataset = ((dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED));
+			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
+			return 0;
+		} else { 
+			clear();
+		}
 	}
 	return 1;
 }

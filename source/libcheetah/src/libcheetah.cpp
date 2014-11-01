@@ -207,8 +207,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 
 		eventData->detector[detIndex].pedSubtracted=0;
 		eventData->detector[detIndex].sum=0.;		
-	}	
-			
+		
+	}
+
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
@@ -495,7 +496,6 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		time_t	tstart, tnow;
 		time(&tstart);
 		double	dtime;
-		float	maxwait = 60.;
 		double  dnextmsg = 20;
         
         /*
@@ -511,7 +511,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 					printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
 					dnextmsg += 1;
 				}
-				if(dtime > maxwait) {
+				if(( dtime > ((float) global->threadTimeoutInSeconds) ) && (global->threadTimeoutInSeconds > 0)) {
 					printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
 					printf("\tGiving up and resetting the thread counter\n");
 					global->freeMutexes();

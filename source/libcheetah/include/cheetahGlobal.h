@@ -23,9 +23,6 @@
 #define MAX_EPICS_PVS 10
 #define MAX_EPICS_PV_NAME_LENGTH 512
 
-#define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
-
-
 /** @brief Global variables.
  *
  * Configuration parameters, and things that don't change often.
@@ -335,6 +332,7 @@ public:
 	long     nActiveThreads;
 	long     threadCounter;
 	long     threadPurge;
+	int      threadTimeoutInSeconds;
 
 	// Number of threads in cheetah_ana_mod
 	int      anaModThreads;
