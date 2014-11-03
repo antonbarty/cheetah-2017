@@ -601,6 +601,180 @@ void applyRigorousSolidAngleCorrection(float *data, float *pix_x, float *pix_y, 
 
 
 
+/*
+ *	Subtract common mode on each read-out line for the pnCCD detector
+ *  The common mode is currently implemented as the position of the zero-photon peak
+ *  in the intensity histogram of each line. The histogram uses integer limits and bins (could be changed later).
+ *  Sanity check makes sure that the zero-photon peak lies within the max/min of
+ *  the insensitive pixels (12 pixels closest to the edge), see detector map below:
+ *
+ *              ---> x
+ *              |
+ *              v y
+ *
+ *              insensitive pixels at the edge
+ *              |                 |
+ *              v                 v
+ *              --------- ---------
+ *  read out <- |       | |       | -> read-out
+ *           <- |  q=0  | |  q=1  | ->
+ *           <- |       | |       | ->
+ *           <- | - - - |x| - - - | ->
+ *           <- |       | |       | ->
+ *           <- |  q=2  | |  q=3  | ->
+ *           <- |       | |       | ->
+ *              --------- ---------
+ *              ^                 ^
+ *              |                 |
+ *              insensitive pixels at the edge
+ *
+ *
+ */
+void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
+    
+    DETECTOR_LOOP {
+        if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].cmModule == 1) {
+            float    *data = eventData->detector[detIndex].corrected_data;
+            uint16_t *mask = eventData->detector[detIndex].pixelmask;
+            int      start = global->detector[detIndex].cmStart;
+            int      stop = global->detector[detIndex].cmStop;
+            float    delta = global->detector[detIndex].cmThreshold;
+            float    nstdev = global->detector[detIndex].cmAccuracy;
+            
+            pnccdModuleSubtract(data, mask, start, stop, delta, nstdev, global->debugLevel);
+        }
+    }
+}
+
+
+void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, float nstdev, int verbose) {
+    float m, st, min_border, max_border;
+    int i, j, x, y, mx, my, x_, cm;
+    int q;
+    // pnCCD geometry
+    int asic_nx = PNCCD_ASIC_NX;
+    int asic_ny = PNCCD_ASIC_NY;
+    int nasics_x = PNCCD_nASICS_X;
+    int nasics_y = PNCCD_nASICS_Y;
+    // non-bonded pixels
+    int x_insens_start[4] = {11,1012,11,1012};
+    int insensitve_border_width = 12;
+    int read_out_direction[4] = {-1,1,-1,1};
+    // histogram length
+    int nhist = stop - start + 1;
+    
+    // loop over quadrants
+    for (my = 0; my < nasics_y; my++) {
+        
+        for (mx = 0; mx < nasics_x; mx++) {
+            q = mx + my*nasics_x;
+            
+            for (y = 0; y < asic_ny; y++) {
+                // allocate intensity histogram of line
+                uint16_t *line_histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+                int *line_histogram_x = (int*) calloc(nhist, sizeof(int));
+                
+                // set x-scale
+                for (x = 0; x < nhist; x++)
+                    line_histogram_x[x] = start + x;
+                
+                // fill intensity histogram with data for line
+                for (x = 0; x < asic_nx; x++) {
+                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD)))
+                        line_histogram[int(round(data[i] - start))]++;
+                }
+                
+                // calculate max/min/mean value of insensitve pixels
+                min_border = 65536;
+                max_border = -65536;
+                m = 0;
+                for (x_ = 0; x_ < insensitve_border_width; x_++) {
+                    x = x_insens_start[q] + x_*read_out_direction[q];
+                    j = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + x;
+                    m += data[j];
+                    if (data[j] < min_border)
+                        min_border = data[j];
+                    if (data[j] > max_border)
+                        max_border = data[j];
+                }
+                m /= float(insensitve_border_width);
+                
+                // calculate corrected sample standard deviation of insensitive pixels
+                st = 0;
+                for (x_ = 0; x_ < insensitve_border_width; x_++) {
+                    x = x_insens_start[q] + x_*read_out_direction[q];
+                    j = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + x;
+                    st += (data[j] - m)*(data[j] - m);
+                }
+                st /= float(insensitve_border_width) - 1;
+                st = sqrt(st);
+                
+                // find peaks in histogram using PeakDetect class
+                PeakDetect peakfinder(line_histogram_x, line_histogram, nhist);
+                peakfinder.findAll(delta);
+                
+                Point *min_point, *max_point;
+                cm = 0;
+                if (peakfinder.maxima->size() > 0) {
+                    // step through peaks in the histogram from low to high intensity, stop if peak fulfills common-mode criteria
+                    for (unsigned k = 0; k < peakfinder.maxima->size(); k++) {
+                        min_point = peakfinder.minima->get(k);
+                        max_point = peakfinder.maxima->get(k);
+                        if (verbose >= 4) {
+                            printf("Peak[%u]_min = %d, Peak[%u]_max = %d, Border_min = %f, Border_mean = %f, Border_max = %f, Border_std = %f\n", k, min_point->getX(), k, max_point->getX(), min_border, m, max_border, st);
+                        }
+                        // sanity checks for common-mode correction
+                        //if ((max_point->getX() - min_point->getX() > 4) && (max_point->getY() - line_histogram[max_point->getX() - start - 1] < delta) && (max_point->getY() - line_histogram[max_point->getX() - start + 1] < delta)) {
+                        // max/min sanity check
+                        //if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
+                        // stdev sanity check (1 stdev = 68 % probability, 2 stdev = 95 % probability)
+                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(m + nstdev*st) && max_point->getX() >= floor(m - nstdev*st)) {
+                            cm = max_point->getX();
+                            for (x = 0; x < asic_nx; x++) {
+                                i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                                data[i] -= cm;
+                                mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                            }
+                            if (verbose >= 3) {
+                                printf("Common-mode[%d][%d]: %d (peak)\n", q, y, cm);
+                            }
+                            break;
+                        } else if (k == peakfinder.maxima->size() - 1) {
+                            // if no peaks fulfill common-mode criteria, correct with mean value of insensitive pixels
+                            for (x = 0; x < asic_nx; x++) {
+                                i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                                data[i] -= m;
+                                mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                                mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                            }
+                            if (verbose >= 3) {
+                                printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
+                            }
+                        }
+                    }
+                } else {
+                    // if no peaks are found in intensity histogram, correct with mean value of insensitive pixels
+                    for (x = 0; x < asic_nx; x++) {
+                        i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                        data[i] -= m;
+                        mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                        mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                    }
+                    if (verbose >= 3) {
+                        printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
+                    }
+                }
+                
+                free(line_histogram);
+                free(line_histogram_x);
+            }
+        }
+    }
+}
+
+
+
 // Read out artifact compensation for pnCCD back detector
 /*
   Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.

@@ -89,10 +89,10 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 		break;
 			
 	case 9 :	// Use TOF signal, maximum peak, to find hits
-		hit = hitfinder9(global,eventData,detIndex);
+		hit = hitfinder9(global,eventData);
 		break;
 	case 10 :	// Use TOF signal, maximum peak, excluding classical htis (this was 8 earlier, but it overlapped with Anton's new hitfinder)
-		hit = hitfinder9(global,eventData,detIndex);
+		hit = hitfinder9(global,eventData);
 		if (hit)
 	    {
 			int nPeaks = eventData->nPeaks;
@@ -101,7 +101,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	    }
 		break;
 	case 11 : // Use TOF signal, voltage above threshold
-		hit = hitfinderTOF(global, eventData, detIndex);
+		hit = hitfinderTOF(global, eventData);
 		break;
 
 
@@ -452,7 +452,7 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detIndex){
 	return hit;
 }
 
-int hitfinder9(cGlobal *global,cEventData *eventData,long detIndex){
+int hitfinder9(cGlobal *global,cEventData *eventData){
 	int hit = 0;
 	//long		pix_nn = global->detector[detIndex].pix_nn;
 	long	nat = 0;
@@ -502,7 +502,7 @@ int hitfinder9(cGlobal *global,cEventData *eventData,long detIndex){
 /* A TOF hitfinder counting the number of protons in the TOF signal given the TOF mean background, the proton window
    and TOF voltage threshold for protons. Every frame with nr. of protons at least TOFMinCount is considered a hit. */
  
-int hitfinderTOF(cGlobal *global, cEventData *eventData, long detIndex){
+int hitfinderTOF(cGlobal *global, cEventData *eventData){
 	int hit = 0;
 	if (eventData->TOFPresent==1){
 		int count = 0;
@@ -524,7 +524,7 @@ int hitfinderProtonsandPhotons(cGlobal *global, cEventData *eventData, long detI
     int hit_tof = 0;
     int hit_photons = 0;
     hit_photons = hitfinder1(global, eventData, detIndex);
-    hit_tof = hitfinderTOF(global, eventData, detIndex);
+    hit_tof = hitfinderTOF(global, eventData);
     hit = hit_tof & hit_photons;
     return hit;
 }
