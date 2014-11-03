@@ -670,15 +670,16 @@ void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
             uint16_t *mask = eventData->detector[detIndex].pixelmask;
             int      start = global->detector[detIndex].cmStart;
             int      stop = global->detector[detIndex].cmStop;
-            float    delta = global->detector[detIndex].cmDelta;
+            float    delta = global->detector[detIndex].cmThreshold;
+            float    nstdev = global->detector[detIndex].cmAccuracy;
             
-            pnccdModuleSubtract(data, mask, start, stop, delta, global->debugLevel);
+            pnccdModuleSubtract(data, mask, start, stop, delta, nstdev, global->debugLevel);
         }
     }
 }
 
 
-void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, int verbose) {
+void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, float nstdev, int verbose) {
     float m, st, min_border, max_border;
     int i, j, x, y, mx, my, x_, cm;
     int q;
@@ -712,7 +713,7 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                 // fill intensity histogram with data for line
                 for (x = 0; x < asic_nx; x++) {
                     i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
-                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0)
+                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD)))
                         line_histogram[int(round(data[i] - start))]++;
                 }
                 
@@ -758,9 +759,9 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                         // sanity checks for common-mode correction
                         //if ((max_point->getX() - min_point->getX() > 4) && (max_point->getY() - line_histogram[max_point->getX() - start - 1] < delta) && (max_point->getY() - line_histogram[max_point->getX() - start + 1] < delta)) {
                         // max/min sanity check
-                        // if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
-                        // stdev sanity check (2 stdev = 95 % probability)
-                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(m + 2*st) && max_point->getX() >= floor(m - 2*st)) {
+                        //if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
+                        // stdev sanity check (1 stdev = 68 % probability, 2 stdev = 95 % probability)
+                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(m + nstdev*st) && max_point->getX() >= floor(m - nstdev*st)) {
                             cm = max_point->getX();
                             for (x = 0; x < asic_nx; x++) {
                                 i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
@@ -785,13 +786,15 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                         }
                     }
                 } else {
-                    // if no peaks are found in intensity histogram, do not correct pixel
+                    // if no peaks are found in intensity histogram, correct with mean value of insensitive pixels
                     for (x = 0; x < asic_nx; x++) {
                         i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                        data[i] -= m;
+                        mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
                         mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
                     }
                     if (verbose >= 3) {
-                        printf("Common-mode[%d][%d]: failed\n", q, y);
+                        printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
                     }
                 }
                 

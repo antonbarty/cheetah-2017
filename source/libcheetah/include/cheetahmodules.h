@@ -44,7 +44,7 @@ void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
 
 void pnccdModuleSubtract(cEventData*, cGlobal*);
-void pnccdModuleSubtract(float*, uint16_t*, int, int, float, int);
+void pnccdModuleSubtract(float*, uint16_t*, int, int, float, float, int);
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);

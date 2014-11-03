@@ -86,7 +86,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	cmFloor = 0.1;
     cmStart = -100;
     cmStop = 100;
-    cmDelta = 10;
+    cmThreshold = 10;
+    cmAccuracy = 1.0;
 	cspadSubtractUnbondedPixels = 0;
 	cspadSubtractBehindWires = 0;
     
@@ -530,8 +531,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "cmstop")) {
         cmStop = atoi(value);
     }
-    else if (!strcmp(tag, "cmdelta")) {
-        cmDelta = atof(value);
+    else if (!strcmp(tag, "cmthreshold")) {
+        cmThreshold = atof(value);
+    }
+    else if (!strcmp(tag, "cmaccuracy")) {
+        cmAccuracy = atof(value);
     }
 	// Local background subtraction
 	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
