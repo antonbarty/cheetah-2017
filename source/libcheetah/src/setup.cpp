@@ -270,7 +270,9 @@ void cGlobal::setup() {
 	}
 
 	// Check whether the detector chosen for hitfinding is configured
-	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0)) {
+	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0 &&
+									  // hitfinders that do not use hitfinderDetIndex
+									  hitfinderAlgorithm != 9 && hitfinderAlgorithm != 11)) {
 		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
 		for(long detIndex=0; detIndex < nDetectors; detIndex++){
 			printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);

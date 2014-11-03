@@ -44,6 +44,8 @@ int cTOFDetectorCommon::parseConfigTag(char *tag, char *value) {
 		numSamples = atoi(value);
 	}else if (!strcmp(tag, "description")) {
 		strcpy(description, value);
+	}else if (!strcmp(tag, "sourcename")) {
+		strcpy(sourceName, value);
 	}else{
 		// Unknown tags
 		fail = 1;
