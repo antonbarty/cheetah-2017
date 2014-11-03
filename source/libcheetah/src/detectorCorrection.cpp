@@ -228,20 +228,19 @@ void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 				
 				// Dereference datector arrays
 				float		*data = eventData->detector[detIndex].data_detCorr;
-				uint16_t	*mask = eventData->detector[detIndex].pixelmask;
 				long		asic_nx = global->detector[detIndex].asic_nx;
 				long		asic_ny = global->detector[detIndex].asic_ny;
 				long		nasics_x = global->detector[detIndex].nasics_x;
 				long		nasics_y = global->detector[detIndex].nasics_y;
 				
-				cspadSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
+				cspadSubtractUnbondedPixels(data, asic_nx, asic_ny, nasics_x, nasics_y);
 				
 			}
 		}
 	}
 }
 
-void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+void cspadSubtractUnbondedPixels(float *data, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	float		counter;
@@ -316,7 +315,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 	buffer = (float*) calloc(asic_ny*asic_nx, sizeof(float));
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<nasics_x; mi++){
+	for(long mi=0; mi<nasics_y; mi++){
 		for(long mj=0; mj<nasics_x; mj++){
 			
 			
@@ -381,16 +380,17 @@ void identifyHotPixels(cEventData *eventData, cGlobal *global){
 				buffer[i] = (fabs(frameData[i])>hotpixADC)?(1):(0);
 			}
       
-
-			if(lockThreads)
-				pthread_mutex_lock(&global->hotpixel_mutex);
-
 			long frameID = eventData->threadNum%bufferDepth;
+			if(lockThreads)
+				pthread_mutex_lock(&global->detector[detIndex].hotpix_mutexes[frameID]);
+
 			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-			eventData->nHot = global->detector[detIndex].nhot;
 
 			if(lockThreads)
-				pthread_mutex_unlock(&global->hotpixel_mutex);
+				pthread_mutex_unlock(&global->detector[detIndex].hotpix_mutexes[frameID]);
+
+			// What for?
+			eventData->nHot = global->detector[detIndex].nhot;
       
 			free(buffer);
 
@@ -432,30 +432,38 @@ void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 			long	hotpixMemory = global->detector[detIndex].hotpixMemory;
 			long	hotpixRecalc = global->detector[detIndex].hotpixRecalc;
 			long	hotpixCalibrated = global->detector[detIndex].hotpixCalibrated;
-			long	lastUpdate = global->detector[detIndex].hotpixLastUpdate;
+			int	    lockThreads = global->detector[detIndex].useHotpixelBufferMutex;
+
+			if(lockThreads)
+				pthread_mutex_lock(&global->detector[detIndex].hotpixCounter_mutex);
 			
+			long	lastUpdate = global->detector[detIndex].hotpixLastUpdate;		
 			if ( ( (eventData->threadNum == lastUpdate+hotpixRecalc) && hotpixCalibrated ) || ( (eventData->threadNum == (hotpixMemory-1)) && !hotpixCalibrated) ) {
+				global->detector[detIndex].hotpixLastUpdate = eventData->threadNum;
 				
+				if(lockThreads)
+					pthread_mutex_unlock(&global->detector[detIndex].hotpixCounter_mutex);		
+
 				long	nhot;
-				int	lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
 				long	threshold = lrint(bufferDepth*hotpixFrequency);
 				long	pix_nn = global->detector[detIndex].pix_nn;
 				uint16_t *mask = global->detector[detIndex].pixelmask_shared;
 				int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
 
 				if(lockThreads)
-					pthread_mutex_lock(&global->hotpixel_mutex);
-
+					pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
 				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detIndex, threshold, bufferDepth);
 				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
 				printf("Detector %li: Identified %li hot pixels.\n",detIndex,nhot);
 				global->detector[detIndex].nhot = nhot;
-				global->detector[detIndex].hotpixLastUpdate = eventData->threadNum;
 				global->detector[detIndex].hotpixCalibrated = 1;
-	
 				if(lockThreads)
-					pthread_mutex_unlock(&global->hotpixel_mutex);
+					pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);					
 
+
+			} else {
+				if(lockThreads)
+					pthread_mutex_unlock(&global->detector[detIndex].hotpixCounter_mutex);		
 			}
 		}	
 	}

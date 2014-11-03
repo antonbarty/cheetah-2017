@@ -99,7 +99,7 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detIndex) {
  */
 void saveHistograms(cGlobal *global) {
 
-	printf("Writing histogram data \n");
+	DEBUG("Writing histogram data \n");
 
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].histogram) {

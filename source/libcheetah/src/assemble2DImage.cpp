@@ -25,16 +25,15 @@
  */
 void assemble2DImage(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
-		if (isAnyOfBitOptionsSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED | DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
+		if (isAnyOfBitOptionsSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
 			long		pix_nn = global->detector[detIndex].pix_nn;
 			long		image_nx = global->detector[detIndex].image_nx;
 			long		image_nn = global->detector[detIndex].image_nn;
 			float		*pix_x = global->detector[detIndex].pix_x;
 			float		*pix_y = global->detector[detIndex].pix_y;
-			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_POWDER, DATA_FORMAT_NON_ASSEMBLED);
-			cDataVersion imageV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_POWDER, DATA_FORMAT_ASSEMBLED);
-			while (dataV.next() == 0) {
-				imageV.next();
+			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion imageV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_ASSEMBLED);
+			while (dataV.next() && imageV.next()) {
 				float		*data = dataV.getData();
 				float		*image = imageV.getData();
 				int         assembleInterpolation = global->assembleInterpolation;
@@ -152,22 +151,21 @@ void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long
  *  Assemble mask data into a realistic 2d image using raw data and geometry
  */
 void assemble2DMask(cEventData *eventData, cGlobal *global) {   
-    if(global->assemble2DMask) {
-        DETECTOR_LOOP {
-			if (isAnyOfBitOptionsSet(global->detector[detIndex].saveFormat, DATA_FORMAT_ASSEMBLED | DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
-				long		pix_nn = global->detector[detIndex].pix_nn;
-				long		image_nx = global->detector[detIndex].image_nx;
-				long		image_nn = global->detector[detIndex].image_nn;
-				float		*pix_x = global->detector[detIndex].pix_x;
-				float		*pix_y = global->detector[detIndex].pix_y;
-				uint16_t  *pixelmask = eventData->detector[detIndex].pixelmask;
-				uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
-				int       assembleInterpolation = global->assembleInterpolation;
-				assemble2DMask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
-			}
-		}	
-	}
+	DETECTOR_LOOP {
+		if (isAnyOfBitOptionsSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
+			long		pix_nn = global->detector[detIndex].pix_nn;
+			long		image_nx = global->detector[detIndex].image_nx;
+			long		image_nn = global->detector[detIndex].image_nn;
+			float		*pix_x = global->detector[detIndex].pix_x;
+			float		*pix_y = global->detector[detIndex].pix_y;
+			uint16_t  *pixelmask = eventData->detector[detIndex].pixelmask;
+			uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
+			int       assembleInterpolation = global->assembleInterpolation;
+			assemble2DMask(image_pixelmask,pixelmask, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
+		}
+	}	
 }
+
 
 
 
@@ -254,7 +252,7 @@ void assemble2D(cEventData *eventData, cGlobal *global) {
 void assemble2DPowder(cGlobal *global) {
 
     DETECTOR_LOOP {
-		if (isAnyOfBitOptionsSet(global->detector[detIndex].powderFormat, DATA_FORMAT_ASSEMBLED | DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
+		if (isAnyOfBitOptionsSet(global->detector[detIndex].powderFormat, cDataVersion::DATA_FORMAT_ASSEMBLED | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
 			long		pix_nn = global->detector[detIndex].pix_nn;
 			long		image_nx = global->detector[detIndex].image_nx;
 			long		image_nn = global->detector[detIndex].image_nn;
@@ -265,10 +263,9 @@ void assemble2DPowder(cGlobal *global) {
 			// Assemble each powder type
 			for(long powderClass=0; powderClass < global->nPowderClasses; powderClass++) {
 
-				cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
-				cDataVersion imageV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED);
-				while (dataV.next() == 0) {
-					imageV.next();
+				cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+				cDataVersion imageV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_ASSEMBLED);
+				while (dataV.next() && imageV.next()) {
 
 					double * data = dataV.getPowder(powderClass);
 					double * image = imageV.getPowder(powderClass);

@@ -55,7 +55,7 @@ void *worker(void *threadarg) {
 		DEBUG("Monitoring");
 	}
 
-	updateDatarate(eventData,global);
+	updateDatarate(global);
 
 
 	//---INITIALIZATIONS-AND-PREPARATIONS---//
@@ -298,7 +298,7 @@ hitknown:
 		DEBUG("Write data to h5");
 	}
 
-	updateDatarate(eventData,global);  
+	updateDatarate(global);  
 
 	if(global->saveCXI==1){
 		writeCXIHitstats(eventData, global);
@@ -472,7 +472,7 @@ double difftime_timeval(timeval t1, timeval t2)
 	return ((t1.tv_sec - t2.tv_sec) + (t1.tv_usec - t2.tv_usec) / 1000000.0 );
 }
 
-void updateDatarate(cEventData *eventData, cGlobal *global){
+void updateDatarate(cGlobal *global){
 
 	timeval timevalNow;
 	double mem = global->datarateWorkerMemory;

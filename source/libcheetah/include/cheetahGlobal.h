@@ -247,14 +247,8 @@ public:
 	int      saveHits;
 	/** @brief Toggle the writing of hdf5 files for frames containing non-hits. */
 	int      saveBlanks;
-	/** @brief Toggle the writing of non-assembled images in hdf5 files. */
-	int      saveNonAssembled;
 	/** @brief Toggle the writing of non-assembled modules in hdf5 files. */
 	int      saveModular;
-	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
-	int      saveAssembled;
-	int      assemble2DMask;
-	int      assemble2DImage;
 	/** @brief Toggle assemble interpolation mode (0: linear, weight nearest 4 pixels, 1: nearest, pick value of nearest pixel).*/
 	int      assembleInterpolation;
 	/** @brief Toggle the writing of individual pixelmask. */
@@ -341,10 +335,6 @@ public:
 	pthread_mutex_t  hitclass_mutex;
 	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
-	pthread_mutex_t  hotpixel_mutex;
-	pthread_mutex_t  halopixel_mutex;
-	pthread_mutex_t  selfdark_mutex;
-	pthread_mutex_t  bgbuffer_mutex;
 	pthread_mutex_t  nhits_mutex;
 	pthread_mutex_t  framefp_mutex;
 	pthread_mutex_t  powderfp_mutex;
@@ -355,7 +345,6 @@ public:
 	pthread_mutex_t  espectrumBuffer_mutex;
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
-	pthread_mutex_t  pixelmask_shared_mutex;
     pthread_mutex_t  saveinterval_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
@@ -374,16 +363,8 @@ public:
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
-
-	uint16_t powderFormat;
-	uint16_t powderVersion;
-	uint16_t powderFormatMain;
-	uint16_t powderVersionMain;
-
-	uint16_t saveFormat;
-	uint16_t saveVersion;
-	uint16_t saveFormatMain;
-	uint16_t saveVersionMain;
+	pthread_mutex_t nPeaksMin_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t nPeaksMax_mutex[MAX_POWDER_CLASSES];
 
 	std::map<std::pair<int, int>, int> hitClasses[3];
 
@@ -466,8 +447,9 @@ public:
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
-	void freeMutexes(void);
-
+	void unlockMutexes(void);
+	void freeMemory();
+	
 	/**
 	 * @brief Read text file with list of hits.
 	 **/

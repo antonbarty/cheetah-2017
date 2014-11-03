@@ -39,7 +39,7 @@ void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float
 void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void setBadPixelsToZero(float*, uint16_t*, long);
 void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
-void cspadSubtractUnbondedPixels(float*, uint16_t*, long, long, long, long);
+void cspadSubtractUnbondedPixels(float*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
 
@@ -69,7 +69,7 @@ void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
 void updateHaloBuffer(cEventData*, cGlobal*,int);
 void calculateHaloPixelMask(cEventData*,cGlobal*);
-long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);
+long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);//, pthread_mutex_t, pthread_mutex_t);
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
@@ -103,11 +103,11 @@ void basisVectors(float*, float*, float*, float*, int, int, int, int);
 
 // downsample.cpp
 void downsample(cEventData *eventData, cGlobal *global);
-void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
-void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
-void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
-void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk,long downsampling);
-void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling);
+void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling,int debugLevel);
+void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling,int debugLevel);
+void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling,int debugLevel);
+void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk,long downsampling,int debugLevel);
+void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx,long downsampling,int debugLevel);
 void downsamplePowder(cGlobal*);
 
 // hitfinders.cpp
@@ -172,7 +172,7 @@ void evr41fudge(cEventData*, cGlobal*);
 void integratePattern(cEventData * eventData,cGlobal * global);
 
 // datarate timing
-void updateDatarate(cEventData*, cGlobal*);
+void updateDatarate(cGlobal*);
 void updateAvgGMD(cEventData *eventData, cGlobal *global);
 
 // log.cpp

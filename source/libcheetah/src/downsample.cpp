@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <limits.h> 
 
 #include <string.h>
 #include <pthread.h>
@@ -18,7 +18,7 @@
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
 
-void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
+void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling, int debugLevel){
 	long x0,y0;
 	long x1,y1;
 	long i0,i1;
@@ -29,11 +29,16 @@ void downsampleImageConservative(float *img,float *imgXxX,long img_nn, long img_
 		x1 = x0/downsampling;
 		y1 = y0/downsampling;
 		i1 = y1*imgXxX_nx + x1;
+		if (debugLevel > 2) {
+			if (i1 >= imgXxX_nn) {
+				ERROR("Overrun of memory boundaries detected.");
+			}
+		}
 		imgXxX[i1] += img[i0];
 	}
 }
 
-void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
+void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling, int debugLevel){
 	long i;
 	float int16_t_max = 32767.;
 
@@ -42,7 +47,7 @@ void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long 
 		temp[i] = (float) img[i];
 	}
 	float *  tempXxX = (float *) calloc(imgXxX_nn,sizeof(float));
-	downsampleImageConservative(temp,tempXxX,img_nn,img_nx,imgXxX_nn,imgXxX_nx,downsampling);
+	downsampleImageConservative(temp, tempXxX, img_nn, img_nx, imgXxX_nn, imgXxX_nx, downsampling, debugLevel);
 	for(i = 0;i<imgXxX_nn;i++){
 		// Check for overflow and clamp in case
 		if(tempXxX[i]>int16_t_max){
@@ -58,7 +63,7 @@ void downsampleImageConservative(int16_t *img,int16_t *imgXxX,long img_nn, long 
 
 
 // Pixels in the downsampled image are masked out only if all pixels that contribute have each at least one bit of the mask_out_bits set.
-void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk, long downsampling){
+void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, uint16_t *msk, long downsampling, int debugLevel){
 	long x0,y0;
 	long x1,y1;
 	long i0,i1,i;
@@ -74,6 +79,11 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
 		y1 = y0/downsampling;
 		i1 = y1*imgXxX_nx + x1;
 		good_pixel = (float) isNoneOfBitOptionsSet(msk[i0],mask_out_bits);
+		if (debugLevel > 2) {
+			if (i1 >= imgXxX_nn) {
+				ERROR("Overrun of memory boundaries detected.");
+			}
+		}
 		imgXxX[i1] += good_pixel*img[i0];
 		tempN[i1] += good_pixel;
 	}
@@ -87,7 +97,7 @@ void downsampleImageNonConservative(float *img,float *imgXxX,long img_nn, long i
 }
 
 
-void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
+void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling, int debugLevel){
 	long x0,y0;
 	long x1,y1;
 	long i0,i1;
@@ -101,12 +111,17 @@ void downsampleMaskConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long
 		x1 = x0/downsampling;
 		y1 = y0/downsampling;
 		i1 = y1*imgXxX_nx + x1;
+		if (debugLevel > 2) {
+			if (i1 >= imgXxX_nn) {
+				ERROR("Overrun of memory boundaries detected.");
+			}
+		}
 		mskXxX[i1] |= msk[i0];
 	}
 }
 
 // downsample mask by only masking if all sub-pixels share a bit, if all pixels are having any of the critical bits set they are masked too 
-void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling){
+void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, long img_nx, long imgXxX_nn, long imgXxX_nx, long downsampling, int debugLevel){
 	long x0,y0;
 	long x1,y1;
 	long i0,i1;
@@ -125,6 +140,11 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 		x1 = x0/downsampling;
 		y1 = y0/downsampling;
 		i1 = y1*imgXxX_nx + x1;
+		if (debugLevel > 2) {
+			if (i1 >= imgXxX_nn) {
+				ERROR("Overrun of memory boundaries detected.");
+			}
+		}
 		if (isAnyOfBitOptionsSet(msk[i0],mask_out_bits)){
 			// at least one mask-out-bit is set
 			tempM[i1] |= msk[i0];
@@ -153,18 +173,18 @@ void downsample(cEventData *eventData, cGlobal *global){
 		long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
 		long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
 		uint16_t	*imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
-		cDataVersion imageV(&eventData->detector[detIndex],&global->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED);
-		cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],DATA_LOOP_MODE_SAVE,DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
-		while (imageV.next() == 0) {
-			imageXxXV.next();
+		cDataVersion imageV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED);
+		cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+		int          debugLevel = global->debugLevel;
+		while (imageV.next() && imageXxXV.next()) {		   
 			float	*image = imageV.getData();
 			float	*imageXxX = imageXxXV.getData();
 			if (global->detector[detIndex].downsamplingConservative == 1){
-				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
-				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
+				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
+				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
 			} else {
-				downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling);
-				downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);	
+				downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling,debugLevel);
+				downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);	
 			}
 		}
 	}
@@ -173,21 +193,22 @@ void downsample(cEventData *eventData, cGlobal *global){
 
 void downsamplePowder(cGlobal *global) {
 
+	int          debugLevel = global->debugLevel;
+	
     DETECTOR_LOOP {
-		if (isBitOptionSet(global->detector[detIndex].powderFormat,DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat,cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED)) {
 			long        downsampling = global->detector[detIndex].downsampling;
 			long		image_nx = global->detector[detIndex].image_nx;
 			long		image_nn = global->detector[detIndex].image_nn;
-			long		imageXxX_nx = global->detector[detIndex].image_nx;
-			long		imageXxX_nn = global->detector[detIndex].image_nn;
+			long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
+			long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
 
 			// Assemble each powder type
 			for(long powderClass=0; powderClass < global->nPowderClasses; powderClass++) {
 				
-				cDataVersion imageV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED);
-				cDataVersion imageXxXV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
-				while (imageV.next() == 0) {
-					imageXxXV.next();
+				cDataVersion imageV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_ASSEMBLED);
+				cDataVersion imageXxXV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+				while (imageV.next() && imageXxXV.next()) { 
 					double * image = imageV.getPowder(powderClass);
 					double * imageXxX = imageXxXV.getPowder(powderClass);
 					
@@ -200,12 +221,12 @@ void downsamplePowder(cGlobal *global) {
 						fimage[i] = (float) image[i];
 					
 					// Downsample image
-					downsampleImageConservative(fimage,fimageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling);
-					
+					downsampleImageConservative(fimage, fimageXxX, image_nn, image_nx, imageXxX_nn, imageXxX_nx, downsampling, debugLevel);
+
 					// Assembly is done using float; powder data is double (!!)
-					for(long i=0; i<image_nn; i++)
+					for(long i=0; i<imageXxX_nn; i++)
 						imageXxX[i] = (double) fimageXxX[i];
-					
+
 					// Cleanup
 					free(fimage);
 					free(fimageXxX);

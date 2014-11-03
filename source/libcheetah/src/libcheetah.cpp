@@ -114,7 +114,7 @@ void cheetahNewRun(cGlobal *global) {
 	// Wait for all workers to finish
 	while(global->nActiveThreads > 0) {
 		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
-		usleep(100000);
+		usleep(500000);
 	}
     
 	// Reset the powder log files
@@ -141,158 +141,6 @@ void cheetahNewRun(cGlobal *global) {
     }
     pthread_mutex_unlock(&global->powderfp_mutex);
 }
-
-
-/*
- *  libCheetah function to create structure for holding new event information
- *  Currently only a malloc() but set up as a function so that we have the option of 
- *  initialising variables without needing to change any top level code
- */
-cEventData* cheetahNewEvent(cGlobal	*global) {
-
-	/*
-	 *	Create new event structure
-	 */
-	cEventData	*eventData;
-	eventData = (cEventData*) calloc(sizeof(cEventData),1);
-	eventData->pGlobal = global;
-
-	/*
-	 *	Initialise any common default values
-	 */
-	eventData->useThreads = 0;
-	eventData->hit = 0;
-	eventData->powderClass = 0;
-	eventData->pumpLaserOn = 0;
-	eventData->peakResolution=0.;
-	eventData->nPeaks=0;
-	eventData->peakNpix=0.;
-	eventData->peakTotal=0.;
-	eventData->stackSlice=0;
-
-	//long		pix_nn1 = global->detector[0].pix_nn;
-	//long		asic_nx = global->detector[0].asic_nx;
-	//long		asic_ny = global->detector[0].asic_ny;	
-	//printf("************>>> %li, %li, %li\n", asic_nx, asic_ny, pix_nn1);
-
-	/*
-	 *	Create arrays for intermediate detector data, etc 
-	 */
-	DETECTOR_LOOP {
-		long	pix_nn = global->detector[detIndex].pix_nn;
-		long	image_nn = global->detector[detIndex].image_nn;
-		long	imageXxX_nn = global->detector[detIndex].imageXxX_nn;
-		long	radial_nn = global->detector[detIndex].radial_nn;
-
-		eventData->detector[detIndex].data_raw16 = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
-		eventData->detector[detIndex].data_raw = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detIndex].data_detCorr = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detIndex].data_detPhotCorr = (float*) calloc(pix_nn,sizeof(float));
-		eventData->detector[detIndex].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
-
-		eventData->detector[detIndex].image_raw = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detIndex].image_detCorr = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detIndex].image_detPhotCorr = (float*) calloc(image_nn,sizeof(float));
-		eventData->detector[detIndex].image_pixelmask = (uint16_t*) calloc(image_nn,sizeof(uint16_t));
-
-		eventData->detector[detIndex].imageXxX_raw = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detIndex].imageXxX_detCorr = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detIndex].imageXxX_detPhotCorr = (float*) calloc(imageXxX_nn,sizeof(float));
-		eventData->detector[detIndex].imageXxX_pixelmask = (uint16_t*) calloc(imageXxX_nn,sizeof(uint16_t));
-
-		eventData->detector[detIndex].radialAverage_raw = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detIndex].radialAverage_detCorr = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detIndex].radialAverage_detPhotCorr = (float *) calloc(radial_nn, sizeof(float));
-		eventData->detector[detIndex].radialAverage_pixelmask = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));
-
-		eventData->detector[detIndex].pedSubtracted=0;
-		eventData->detector[detIndex].sum=0.;		
-		
-	}
-
-	/*
-	 *	Create arrays for remembering Bragg peak data
-	 */
-	//global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;
-	long NpeaksMax = global->hitfinderNpeaksMax;
-	//eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
-	
-	allocatePeakList(&(eventData->peaklist), NpeaksMax);
-	
-	
-	/*
-	 *	Create arrays for energy spectrum data
-	 */
-	int spectrumLength = global->espectrumLength;
-	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
-	eventData->energySpectrumExist = 0;
-		
-	// Return
-	return eventData;
-}
-
-
-
-
-/*
- *  libCheetah function to clean up all memory allocated in event struture
- */
-void cheetahDestroyEvent(cEventData *eventData) {
-    
-    cGlobal	*global = eventData->pGlobal;;
-    
-    // Free memory
-	DETECTOR_LOOP {
-		free(eventData->detector[detIndex].data_raw16);
-		free(eventData->detector[detIndex].data_raw);
-		free(eventData->detector[detIndex].data_detCorr);
-		free(eventData->detector[detIndex].data_detPhotCorr);
-		free(eventData->detector[detIndex].pixelmask);
-
-		free(eventData->detector[detIndex].image_raw);
-		free(eventData->detector[detIndex].image_detCorr);
-		free(eventData->detector[detIndex].image_detPhotCorr);
-
-		free(eventData->detector[detIndex].imageXxX_raw);
-		free(eventData->detector[detIndex].imageXxX_detCorr);
-		free(eventData->detector[detIndex].imageXxX_detPhotCorr);
-
-		free(eventData->detector[detIndex].radialAverage_raw);
-		free(eventData->detector[detIndex].radialAverage_detCorr);
-		free(eventData->detector[detIndex].radialAverage_detPhotCorr);
-	}
-	
-	freePeakList(eventData->peaklist);
-	//free(eventData->good_peaks);
-	
-	
-	// Pulnix external camera
-	if(eventData->pulnixFail == 0){
-		free(eventData->pulnixImage);
-	}
-	// Opal spectrum camera
-	if(eventData->specFail == 0){
-		free(eventData->specImage);
-	}
-	//TOF stuff.
-	// Explictly call the vector destructor as we're using free and not delete
-	for(int i = 0;i<global->nTOFDetectors;i++){
-		eventData->tofDetector[i].voltage.clear();
-		eventData->tofDetector[i].time.clear();
-	}
-
-
-	if(eventData->FEEspec_present == 1) {
-		free(eventData->FEEspec_hproj);
-		free(eventData->FEEspec_vproj);
-	}
-    
-    free(eventData->energySpectrum1D);
-    
-    
-	free(eventData);
-}
-
 
 /*
  *  libCheetah function to update global variables where needed from new event data
@@ -514,7 +362,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 				if(( dtime > ((float) global->threadTimeoutInSeconds) ) && (global->threadTimeoutInSeconds > 0)) {
 					printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
 					printf("\tGiving up and resetting the thread counter\n");
-					global->freeMutexes();
+					global->unlockMutexes();
 					global->nActiveThreads = 0;
 					break;
 				}
@@ -571,7 +419,7 @@ void cheetahExit(cGlobal *global) {
 		if(dtime > maxwait) {
 			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
 			printf("\tGiving up and exiting anyway\n");
-			global->freeMutexes();
+			global->unlockMutexes();
 			break;
 		}
     }
@@ -612,21 +460,9 @@ void cheetahExit(cGlobal *global) {
     
     
     // Cleanup
-    for(long i=0; i<global->nDetectors; i++) {
-		global->detector[i].freePowderMemory(global);
-    }
-    pthread_mutex_destroy(&global->nActiveThreads_mutex);
-    pthread_mutex_destroy(&global->selfdark_mutex);
-    pthread_mutex_destroy(&global->hotpixel_mutex);
-    pthread_mutex_destroy(&global->halopixel_mutex);
-    pthread_mutex_destroy(&global->bgbuffer_mutex);
-    pthread_mutex_destroy(&global->framefp_mutex);
-    pthread_mutex_destroy(&global->peaksfp_mutex);
-    pthread_mutex_destroy(&global->powderfp_mutex);
-    pthread_mutex_destroy(&global->subdir_mutex);
-    pthread_mutex_destroy(&global->espectrumRun_mutex);
-    pthread_mutex_destroy(&global->nespechits_mutex);
-    pthread_mutex_destroy(&global->gmd_mutex);
+
+	// Destroy memory and destroy mutexes
+	global->freeMemory();
 
     global->writeStatus("Finished");    
     printf("Cheetah clean exit\n");

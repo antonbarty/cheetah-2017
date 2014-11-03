@@ -150,9 +150,8 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	}
 	
 	// Assembled image
-	if(global->saveAssembled) {
-		char fieldID[1023];
-		DETECTOR_LOOP {
+	DETECTOR_LOOP {
+		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED)) {	
 			// data
 			size[0] = global->detector[detIndex].image_nx;	// size[0] = height
 			size[1] = global->detector[detIndex].image_nx;	// size[1] = width
@@ -182,7 +181,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 			H5Sclose(dataspace_id);
 			// pixelmask
 			dataspace_id = H5Screate_simple(2, size, max_size);
-			if(global->savePixelmask){
+			if(global->detector[detIndex].savePixelmask){
 				sprintf(fieldID, "assembledpixelmask%li", detIndex);
 				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if ( dataset_id < 0 ) {
@@ -204,9 +203,8 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 		}	
 	}
 	// Save non-assembled data (and pixelmask)
-	if(global->saveNonAssembled) {
-		char fieldID[1023];
-		DETECTOR_LOOP {
+	DETECTOR_LOOP {
+		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_NON_ASSEMBLED)) {
 			size[0] = global->detector[detIndex].pix_ny;	// size[0] = height
 			size[1] = global->detector[detIndex].pix_nx;	// size[1] = width
 			max_size[0] = global->detector[detIndex].pix_ny;
@@ -288,7 +286,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 
 			// pixelmask
 			dataspace_id = H5Screate_simple(2, size, max_size);
-			if(global->savePixelmask){
+			if(global->detector[detIndex].savePixelmask){
 				sprintf(fieldID, "pixelmask%li", detIndex);
 				dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if ( dataset_id < 0 ) {
@@ -310,7 +308,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	}
 		
 	// Create symbolic link from /data/data to whatever is deemed the 'main' data set 
-	if(global->saveAssembled) {
+	if (isBitOptionSet(global->detector[0].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED)) {
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/data",0,0);
 		hdf_error = H5Lcreate_soft( "/data/assembleddata0", hdf_fileID, "/data/assembleddata",0,0);
 		hdf_error = H5Lcreate_soft( "/data/rawdata0", hdf_fileID, "/data/rawdata",0,0);
@@ -322,29 +320,31 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	
 	
 	/*
-	 *	Save radial average (always, it's not much space)
+	 *	Save radial average
 	 */
-    DETECTOR_LOOP {
-        size[0] = global->detector[detIndex].radial_nn;
-        dataspace_id = H5Screate_simple(1, size, NULL);
-        
-        sprintf(fieldID, "radialAverage%li", detIndex);
-        dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverage_detPhotCorr);
-        H5Dclose(dataset_id);
-
-        sprintf(fieldID, "radialAverage%li_pixelmask", detIndex);
-		dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverage_pixelmask);
-        H5Dclose(dataset_id);
-        
-        //sprintf(fieldID, "radialAverageCounter%li", detIndex);
-        //dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        //H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverageCounter);
-        //H5Dclose(dataset_id);
-        
-        H5Sclose(dataspace_id);
-    }
+	DETECTOR_LOOP {
+		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
+			size[0] = global->detector[detIndex].radial_nn;
+			dataspace_id = H5Screate_simple(1, size, NULL);
+			
+			sprintf(fieldID, "radialAverage%li", detIndex);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverage_detPhotCorr);
+			H5Dclose(dataset_id);
+			
+			sprintf(fieldID, "radialAverage%li_pixelmask", detIndex);
+			dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_UINT16, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(dataset_id, H5T_NATIVE_UINT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverage_pixelmask);
+			H5Dclose(dataset_id);
+			
+			//sprintf(fieldID, "radialAverageCounter%li", detIndex);
+			//dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			//H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].radialAverageCounter);
+			//H5Dclose(dataset_id);
+			
+			H5Sclose(dataspace_id);
+		}
+	}
 	
     
 
@@ -542,13 +542,17 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 		H5Sclose(dataspace_id);
 		
 		
-		// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set 
-		if(global->saveAssembled) {
-			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-assembled", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
+		DETECTOR_LOOP {
+			if (global->detector[detIndex].detectorID == global->hitfinderDetectorID) {
+				// Create symbolic link from /processing/hitfinder/peakinfo to whatever is deemed the 'main' data set 
+				if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED)) {
+					hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-assembled", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
+				}
+				else {
+					hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
+				}		
+			}
 		}
-		else {
-			hdf_error = H5Lcreate_soft( "/processing/hitfinder/peakinfo-raw", hdf_fileID, "/processing/hitfinder/peakinfo",0,0);
-		}		
 		
 		free(peak_info);
 	}

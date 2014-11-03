@@ -52,18 +52,20 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 	pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
 	
     double  *buffer;	
-	FOREACH_UINT16_T(i_f, DATA_FORMATS) {
-		if (isBitOptionSet(global->powderFormat,*i_f)) {
-			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
-			while (dataV.next() == 0) {
+	
+	FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
+			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
+			while (dataV.next()) {
 				pthread_mutex_t mutex = dataV.getPowderMutex(powderClass);
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
 				// Powder
 				pthread_mutex_lock(&mutex);
-				for(long i=0; i<dataV.pix_nn; i++) 
+				for(long i=0; i<dataV.pix_nn; i++) {
 					powder[i] += data[i];
+				}			
 				pthread_mutex_unlock(&mutex);
 				// Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
@@ -123,23 +125,21 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 		pthread_mutex_unlock(&global->detector[detIndex].powderPeaks_mutex[powderClass]);
 	}
 
-	/*
-    // Min nPeaks: Pattern
+    // Min nPeaks
     if(eventData->nPeaks < global->nPeaksMin[powderClass]){
-        pthread_mutex_lock(&global->detector[detIndex].correctedMin_mutex[powderClass]);
+        pthread_mutex_lock(&global->nPeaksMin_mutex[powderClass]);
         global->nPeaksMin[powderClass] = eventData->nPeaks;
-        memcpy(global->detector[detIndex].correctedMin[powderClass],eventData->detector[detIndex].corrected_data,sizeof(float)*pix_nn);
-        pthread_mutex_unlock(&global->detector[detIndex].correctedMin_mutex[powderClass]);
+        //memcpy(global->detector[detIndex].correctedMin[powderClass],eventData->detector[detIndex].corrected_data,sizeof(float)*pix_nn);
+        pthread_mutex_unlock(&global->nPeaksMin_mutex[powderClass]);
     }
 
-    // Max nPeaks: Pattern
+    // Max nPeaks
     if(eventData->nPeaks > global->nPeaksMax[powderClass]){
-        pthread_mutex_lock(&global->detector[detIndex].correctedMax_mutex[powderClass]);
+        pthread_mutex_lock(&global->nPeaksMax_mutex[powderClass]);
         global->nPeaksMax[powderClass] = eventData->nPeaks;
-        memcpy(global->detector[detIndex].correctedMax[powderClass],eventData->detector[detIndex].corrected_data,sizeof(float)*pix_nn);
-        pthread_mutex_unlock(&global->detector[detIndex].correctedMax_mutex[powderClass]);
+        //memcpy(global->detector[detIndex].correctedMax[powderClass],eventData->detector[detIndex].corrected_data,sizeof(float)*pix_nn);
+        pthread_mutex_unlock(&global->nPeaksMax_mutex[powderClass]);
     } 
-	*/
 }
 
 
@@ -232,25 +232,27 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 		h5compression = H5P_DEFAULT;
 	}
 
-	FOREACH_UINT16_T(i_f, DATA_FORMATS) {
-		if (isBitOptionSet(global->powderFormat, *i_f)) {
-			cDataVersion dataV(NULL, &global->detector[detIndex], DATA_LOOP_MODE_POWDER, *i_f);
-			while (dataV.next() == 0) {
-				if (*i_f != DATA_FORMAT_RADIAL_AVERAGE) {
+	FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat, *i_f)) {
+			cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
+			while (dataV.next()) {
+				if (*i_f != cDataVersion::DATA_FORMAT_RADIAL_AVERAGE) {
 					// size for 2D data
 					size[0] = dataV.pix_ny;
 					size[1] = dataV.pix_nx;
 					sh = H5Screate_simple(2, size, NULL);
-					// Compression
+					// Compression for 1D
 					if (global->h5compress) {
 						H5Pset_chunk(h5compression, 2, size);
 						H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
-					}
-			
+					}			
 				} else {
 					// size for 1D data (radial average)
 					size[0] = dataV.pix_nn;
+					size[1] = 0;
 					sh = H5Screate_simple(1, size, NULL);
+					// Compression for 1D
+					h5compression = H5P_DEFAULT;
 				}
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
@@ -281,7 +283,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 					powderSigmaBuffer[i] = sqrt( fabs(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes)));
 				}
 				sprintf(sBuffer,"%s_sigma",dataV.name);
-				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
+				dh = H5Dcreate(gh, sBuffer, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderSigmaBuffer);
 				H5Dclose(dh);

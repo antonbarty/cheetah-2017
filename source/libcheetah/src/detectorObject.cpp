@@ -126,6 +126,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	hotpixFreq = 0.9;
 	hotpixADC = 1000;
 	hotpixMemory = 50;
+	useHotpixelBufferMutex = 0;
 	// Kill persistently hot pixels
 	applyAutoHotpixel = 0;
 
@@ -157,8 +158,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	usePnccdLineMasking = 0;
 
 	// Downsampling factor (0: no downsampling)
-	downsampling = 0;
+	downsampling = 1;
 	downsamplingConservative = 1;
+
+	// Pixelmask
+	savePixelmask = 1;
 
 	// Saving options
 	saveDetectorRaw                          = 0;
@@ -247,71 +251,79 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	printf("\tASIC size: %lix%li\n",asic_nx,asic_ny);
 	printf("\tPixel size: %g (m)\n",pixelSize);
 
-	if ((downsampling == 0) && (saveAssembledAndDownsampled == 1)) {
-		fprintf(stderr,"Error: downsampling = 0 and saveAssembledAndDownsampled = 1.\n");
+	if ((downsampling <= 1) && (saveAssembledAndDownsampled == 1)) {
+		fprintf(stderr,"Error: downsampling = %ld and saveAssembledAndDownsampled = 1.\n",downsampling);
 		fprintf(stderr,"This does not make sense.\n");
 		fprintf(stderr,"Please edit your ini file and try again.\n");
 		exit(1);
 	} 
 
+	// Set some parameters that are needed to process data from this detector
+	
+	// Powders and radial stacks
+	nPowderClasses = global->nPowderClasses;
+	radialStackSize = global->radialStackSize;    
+	
     // Set modes in accordance to configuration
 	// S-A-V-E
 	// Data versions
-	saveVersion = 0;
+	saveVersion = cDataVersion::DATA_VERSION_NONE;
 	if (saveDetectorRaw) {
-		saveVersion               |= DATA_VERSION_RAW;
-		dataVersionMain           = DATA_VERSION_RAW; 
+		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_RAW);
+		dataVersionMain           = cDataVersion::DATA_VERSION_RAW; 
 	}
 	if (saveDetectorCorrected) {
-		saveVersion               |= DATA_VERSION_DETECTOR_CORRECTED; 
-		dataVersionMain           = DATA_VERSION_DETECTOR_CORRECTED; 
+		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
+		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED; 
 	}
 	if (saveDetectorAndPhotonCorrected) {
-	    saveVersion               |= DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
-		dataVersionMain           = DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
+	    saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
+		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
 	}
 	// Data formats
-	if (saveNonAssembled) {
-		saveFormat                |= DATA_FORMAT_NON_ASSEMBLED; 
-		dataFormatMain            = DATA_FORMAT_NON_ASSEMBLED; 
+	saveFormat = cDataVersion::DATA_FORMAT_NONE;
+	if (saveRadialAverage) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
 	}
-	if (downsampling > 1) {
-		saveFormat                |= DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED;
-		dataFormatMain            = DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
+	if (saveNonAssembled) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
+		dataFormatMain            = cDataVersion::DATA_FORMAT_NON_ASSEMBLED; 
 	}
 	if (saveAssembled) {
-		saveFormat                |= DATA_FORMAT_ASSEMBLED;
-		dataFormatMain            = DATA_FORMAT_ASSEMBLED;
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
 	}
-	if (saveRadialAverage) {
-		saveFormat                |= DATA_FORMAT_RADIAL_AVERAGE;
+	if (downsampling > 1) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 	}
 	// P-O-W-D-E-R
 	// Accumulating data to pseudo-powder patterns etc.
 	// Data versions
-	powderVersion                 = DATA_VERSION_RAW | saveVersion;
+	powderVersion                 = saveVersion;
 	if (savePowderDetectorRaw) {
-		powderVersion             |= DATA_VERSION_RAW;
+		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_RAW);
 	}
 	if (savePowderDetectorCorrected) {
-		powderVersion             |= DATA_VERSION_DETECTOR_CORRECTED; 
+		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
 	}
 	if (savePowderDetectorAndPhotonCorrected) {
-	    powderVersion             |= DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
+	    powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 	}
 	// Data formats
-	powderFormat              = DATA_FORMAT_NON_ASSEMBLED | saveFormat;
-	if (savePowderNonAssembled) {
-		powderFormat              |= DATA_FORMAT_NON_ASSEMBLED; 
+	powderFormat                  = saveFormat;
+	if (savePowderRadialAverage) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
 	}
-	if (savePowderAssembledAndDownsampled > 1) {
-		powderFormat              |= DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED;
+	if (savePowderNonAssembled) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
 	}
 	if (savePowderAssembled) {
-		powderFormat              |= DATA_FORMAT_ASSEMBLED;
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
 	}
-	if (savePowderRadialAverage) {
-		powderFormat              |= DATA_FORMAT_RADIAL_AVERAGE;
+	if (savePowderAssembledAndDownsampled > 1) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 	}
 }
 
@@ -381,6 +393,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 
 	else if ((!strcmp(tag, "savedetectorraw")) || (!strcmp(tag, "savedataraw"))) {
 		saveDetectorRaw = atoi(value);
+	}
+	else if (!strcmp(tag, "savepixelmask")) {
+		savePixelmask = atoi(value);
 	}
 	else if (!strcmp(tag, "savedetectorcorrected")) {
 		saveDetectorCorrected = atoi(value);
@@ -544,6 +559,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);
 	}
+	else if (!strcmp(tag, "usehotpixelbuffermutex")) {
+		useHotpixelBufferMutex = atoi(value);
+	}
 	else if ( (!strcmp(tag, "subtractbehindwires")) || (!strcmp(tag, "usesubtractbehindwires")) ){
 		cspadSubtractBehindWires = atoi(value);
 	}
@@ -648,106 +666,88 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 }
 
 
-void cPixelDetectorCommon::allocatePixelmasks(cGlobal *global) {
-	// Allocate memory for shared pixelmask
-	pixelmask_shared = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
-	pixelmask_shared_max = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
-	pixelmask_shared_min = (uint16_t*) malloc(pix_nn*sizeof(uint16_t));
-	for(long j=0; j<pix_nn; j++){
-		pixelmask_shared_min[j] = PIXEL_IS_ALL;
-	}	
-}
 
 /*
  *  Allocate arrays for memory, etc
  */
-void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
-    
-	// Constants
-	nPowderClasses = global->nPowderClasses;
-	radialStackSize = global->radialStackSize;    
-
-	// Background buffers and the like
-	selfdark = (float*) calloc(pix_nn, sizeof(float));
-	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+void cPixelDetectorCommon::allocateMemory() {
+	// This is just for checking for uninitialised mutexes
+	pthread_mutex_init(&null_mutex, NULL);
+	/*
+	 *  Shared static data
+	 */
+	gaincal = (float*) calloc(pix_nn, sizeof(float));
+	darkcal = (float*) calloc(pix_nn, sizeof(float));
+	/*
+	 *  Shared dynamic data
+	 */
+	// Shared pixelmasks
+	pixelmask_shared = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_mutex,NULL);
+	pixelmask_shared_max = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_max_mutex,NULL);
+	pixelmask_shared_min = (uint16_t*) malloc(pix_nn*sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_min_mutex,NULL);
+	for(long j=0; j<pix_nn; j++){
+		pixelmask_shared_min[j] = PIXEL_IS_ALL;
+	}	
+	// Hot pixel map
+	pthread_mutex_init(&hotpixCounter_mutex, NULL);
 	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
+	hotpix_mutexes = (pthread_mutex_t*) calloc(hotpixMemory, sizeof(pthread_mutex_t));
+	for (long j=0; j<hotpixMemory; j++) {
+		pthread_mutex_init(&hotpix_mutexes[j], NULL);
+	}
+	// Halo pixel map
+	pthread_mutex_init(&halopixCounter_mutex, NULL);
 	halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float));
 	halopix_mutexes = (pthread_mutex_t*) calloc(halopixMemory, sizeof(pthread_mutex_t));
 	for (long j=0; j<halopixMemory; j++) {
 		pthread_mutex_init(&halopix_mutexes[j], NULL);
 	}
-
-	for(long j=0; j<pix_nn; j++) {
-		selfdark[j] = 0;
+	// Persistent background
+	pthread_mutex_init(&bgCounter_mutex, NULL);
+	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
+	bg_mutexes = (pthread_mutex_t*) calloc(bgMemory, sizeof(pthread_mutex_t));
+	for (long j=0; j<bgMemory; j++) {
+		pthread_mutex_init(&bg_mutexes[j], NULL);
 	}
-    
+	persistentBackground = (float*) calloc(pix_nn, sizeof(float));
+	pthread_mutex_init(&persistentBackground_mutex, NULL);
+	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;
-		// Powder mutexes
-		pthread_mutex_init(&powderData_mutex[powderClass],NULL);
-		pthread_mutex_init(&powderImage_mutex[powderClass],NULL);
-		pthread_mutex_init(&powderImageXxX_mutex[powderClass],NULL);
-		pthread_mutex_init(&powderRadialAverage_mutex[powderClass],NULL);
-		// Powder sums
-		powderData_raw[powderClass]                     = (double*) calloc(pix_nn, sizeof(double));
-		powderData_raw_squared[powderClass]             = (double*) calloc(pix_nn, sizeof(double));
-		powderData_detCorr[powderClass]                 = (double*) calloc(pix_nn, sizeof(double));
-		powderData_detCorr_squared[powderClass]         = (double*) calloc(pix_nn, sizeof(double));
-		powderData_detPhotCorr[powderClass]             = (double*) calloc(pix_nn, sizeof(double));
-		powderData_detPhotCorr_squared[powderClass]     = (double*) calloc(pix_nn, sizeof(double));
-
-		powderImage_raw[powderClass]                     = (double*) calloc(image_nn, sizeof(double));
-		powderImage_raw_squared[powderClass]             = (double*) calloc(image_nn, sizeof(double));
-		powderImage_detCorr[powderClass]                 = (double*) calloc(image_nn, sizeof(double));
-		powderImage_detCorr_squared[powderClass]         = (double*) calloc(image_nn, sizeof(double));
-		powderImage_detPhotCorr[powderClass]             = (double*) calloc(image_nn, sizeof(double));
-		powderImage_detPhotCorr_squared[powderClass]     = (double*) calloc(image_nn, sizeof(double));
-
-		powderImageXxX_raw[powderClass]                     = (double*) calloc(imageXxX_nn, sizeof(double));
-		powderImageXxX_raw_squared[powderClass]             = (double*) calloc(imageXxX_nn, sizeof(double));
-		powderImageXxX_detCorr[powderClass]                 = (double*) calloc(imageXxX_nn, sizeof(double));
-		powderImageXxX_detCorr_squared[powderClass]         = (double*) calloc(imageXxX_nn, sizeof(double));
-		powderImageXxX_detPhotCorr[powderClass]             = (double*) calloc(imageXxX_nn, sizeof(double));
-		powderImageXxX_detPhotCorr_squared[powderClass]     = (double*) calloc(imageXxX_nn, sizeof(double));
-
-		powderRadialAverage_raw[powderClass]                     = (double*) calloc(radial_nn, sizeof(double));
-		powderRadialAverage_raw_squared[powderClass]             = (double*) calloc(radial_nn, sizeof(double));
-		powderRadialAverage_detCorr[powderClass]                 = (double*) calloc(radial_nn, sizeof(double));
-		powderRadialAverage_detCorr_squared[powderClass]         = (double*) calloc(radial_nn, sizeof(double));
-		powderRadialAverage_detPhotCorr[powderClass]             = (double*) calloc(radial_nn, sizeof(double));
-		powderRadialAverage_detPhotCorr_squared[powderClass]     = (double*) calloc(radial_nn, sizeof(double));
-	
-		/*
-		FOREACH_UINT16_T(i_f, DATA_FORMATS) {
-			cDataVersion dataV(NULL,this,DATA_LOOP_MODE_ALL,*i_f);
-			pthread_mutex_init(&dataV.powder_mutex[powderClass], NULL);
-			while (dataV.next() == 0) {
-				dataV.powder[powderClass]             = (double*) calloc(dataV.pix_nn, sizeof(double));
-				dataV.powder_squared[powderClass]     = (double*) calloc(dataV.pix_nn, sizeof(double));
-				//puts("ALLOCATE POWDER MEMORY");
-			}
-		}
-		*/
+		powderData_raw[powderClass]                           = (double*) calloc(pix_nn, sizeof(double));
+		powderData_raw_squared[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detCorr[powderClass]                       = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detCorr_squared[powderClass]               = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detPhotCorr[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detPhotCorr_squared[powderClass]           = (double*) calloc(pix_nn, sizeof(double));
+		powderImage_raw[powderClass]                          = (double*) calloc(image_nn, sizeof(double));
+		powderImage_raw_squared[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detCorr[powderClass]                      = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detCorr_squared[powderClass]              = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detPhotCorr[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detPhotCorr_squared[powderClass]          = (double*) calloc(image_nn, sizeof(double));
+		powderImageXxX_raw[powderClass]                       = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_raw_squared[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detCorr[powderClass]                   = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detCorr_squared[powderClass]           = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detPhotCorr[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detPhotCorr_squared[powderClass]       = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderRadialAverage_raw[powderClass]                  = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_raw_squared[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detCorr[powderClass]              = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detCorr_squared[powderClass]      = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detPhotCorr[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detPhotCorr_squared[powderClass]  = (double*) calloc(radial_nn, sizeof(double));
 		// Powder peaks
 		powderPeaks[powderClass] = (double*) calloc(pix_nn, sizeof(double));
 		// Radial stacks
 		radialStackCounter[powderClass] = 0;
-		radialAverageStack[powderClass] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
+		radialAverageStack[powderClass] = (float *) calloc(radial_nn*radialStackSize, sizeof(float));
 		pthread_mutex_init(&radialStack_mutex[powderClass], NULL);
-		//correctedMin[powderClass] = (float*) calloc(pix_nn, sizeof(float));
-		//correctedMax[powderClass] = (float*) calloc(pix_nn, sizeof(float));
-		//assembledMin[powderClass] = (float*) calloc(image_nn, sizeof(float));
-		//assembledMax[powderClass] = (float*) calloc(image_nn, sizeof(float));
-		//pthread_mutex_init(&correctedMin_mutex[powderClass], NULL);
-		//pthread_mutex_init(&correctedMax_mutex[powderClass], NULL);		
-		//pthread_mutex_init(&assembledMin_mutex[powderClass], NULL);
-		//pthread_mutex_init(&assembledMax_mutex[powderClass], NULL);
 	}
-
-	// This is just for checking for uninitialised mutexes
-	pthread_mutex_init(&null_mutex, NULL);
-	
-
 	// Histogram memory
 	if(histogram) {
 		printf("Allocating histogram memory\n");
@@ -755,7 +755,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		histogram_nss = histogram_ss_max - histogram_ss_min;
 		histogram_nn = histogram_nfs*histogram_nss;
 		histogram_nnn = (uint64_t) histogramNbins * (uint64_t)(histogram_nn);
-		
 		float	histogramMemory;
 		float	histogramMemoryGb;
 		histogramMemory = (histogram_nnn * sizeof(uint16_t));
@@ -769,58 +768,88 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 			exit(1);
 		}
 		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
-		
-		// Allocate memory
 		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
-    
-	}
+	}	
 }
-
 
 /*
  *	Free detector specific memory
  */
-void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
-	// Pixel calibrations
-	free(darkcal);
-	free(selfdark);
+void cPixelDetectorCommon::freeMemory() {
+	/*
+	 *  Shared static data
+	 */
 	free(gaincal);
-	// Buffers
-	free(bg_buffer);
+	free(darkcal);
+	/*
+	 *  Shared dynamic data
+	 */
+	// Pixelmasks
+	pthread_mutex_destroy(&pixelmask_shared_mutex);
+	free(pixelmask_shared);
+	pthread_mutex_destroy(&pixelmask_shared_min_mutex);
+	free(pixelmask_shared_min);
+	pthread_mutex_destroy(&pixelmask_shared_max_mutex);
+	free(pixelmask_shared_max);
+	// Hot pixel map
+	pthread_mutex_destroy(&hotpixCounter_mutex);
+	for (long j=0; j<hotpixMemory; j++) {
+		pthread_mutex_destroy(&hotpix_mutexes[j]);
+	}
+	free(hotpix_mutexes);
 	free(hotpix_buffer);
+	// Halo pixel map
+	pthread_mutex_destroy(&halopixCounter_mutex);
 	free(halopix_buffer);
 	for (long j=0; j<halopixMemory; j++) {
 		pthread_mutex_destroy(&halopix_mutexes[j]);
 	}
 	free(halopix_mutexes);
+	// Persistent background
+	pthread_mutex_destroy(&bgCounter_mutex);
+	free(bg_buffer);
+	for (long j=0; j<bgMemory; j++) {
+		pthread_mutex_destroy(&bg_mutexes[j]);
+	}
+	free(bg_mutexes);
+	pthread_mutex_destroy(&persistentBackground_mutex);
+	free(persistentBackground);
+	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 
 		nPowderFrames[powderClass] = 0;
-		FOREACH_UINT16_T(i_f, DATA_FORMATS) {
-			cDataVersion dataV(NULL,this,DATA_LOOP_MODE_ALL,*i_f);
-			pthread_mutex_destroy(&dataV.getPowderMutex(powderClass));
-			while (dataV.next() == 0) {
-				free(dataV.getPowder(powderClass));
-				free(dataV.getPowderSquared(powderClass));
-			}
-		}
+		free(powderData_raw[powderClass]);
+		free(powderData_raw_squared[powderClass]);
+		free(powderData_detCorr[powderClass]);
+		free(powderData_detCorr_squared[powderClass]);
+		free(powderData_detPhotCorr[powderClass]);
+		free(powderData_detPhotCorr_squared[powderClass]);
+		free(powderImage_raw[powderClass]);
+		free(powderImage_raw_squared[powderClass]);
+		free(powderImage_detCorr[powderClass]);
+		free(powderImage_detCorr_squared[powderClass]);
+		free(powderImage_detPhotCorr[powderClass]);
+		free(powderImage_detPhotCorr_squared[powderClass]);
+		free(powderImageXxX_raw[powderClass]);
+		free(powderImageXxX_raw_squared[powderClass]);
+		free(powderImageXxX_detCorr[powderClass]);
+		free(powderImageXxX_detCorr_squared[powderClass]);
+		free(powderImageXxX_detPhotCorr[powderClass]);
+		free(powderImageXxX_detPhotCorr_squared[powderClass]);
+		free(powderRadialAverage_raw[powderClass]);
+		free(powderRadialAverage_raw_squared[powderClass]);
+		free(powderRadialAverage_detCorr[powderClass]);
+		free(powderRadialAverage_detCorr_squared[powderClass]);
+		free(powderRadialAverage_detPhotCorr[powderClass]);
+		free(powderRadialAverage_detPhotCorr_squared[powderClass]);
 		// Powder peaks 
 		free(powderPeaks[powderClass]);
 		// Radial stacks
-		free(radialAverageStack[powderClass]);
 		pthread_mutex_destroy(&radialStack_mutex[powderClass]);
-		//free(correctedMin[powderClass]);
-		//free(correctedMax[powderClass]);
-		//free(assembledMin[powderClass]);
-		//free(assembledMax[powderClass]);
-		//pthread_mutex_destroy(&correctedMax_mutex[powderClass]);
-		//pthread_mutex_destroy(&correctedMin_mutex[powderClass]);
-		//pthread_mutex_destroy(&assmebledMax_mutex[powderClass]);
-		//pthread_mutex_destroy(&assembledMin_mutex[powderClass]);
+		free(radialAverageStack[powderClass]);
 	}
 	pthread_mutex_destroy(&null_mutex);
-	
 	// Pixel histograms
 	if(histogram) {
 		free(histogramData);
@@ -828,6 +857,50 @@ void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
 	}
 }
 
+/*
+ *	Unlock detector specific mutexes
+ */
+void cPixelDetectorCommon::unlockMutexes() {
+	/*
+	 *  Shared dynamic data
+	 */
+	// Pixelmasks
+	pthread_mutex_unlock(&pixelmask_shared_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_min_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_max_mutex);
+	// Hot pixel map
+	pthread_mutex_unlock(&hotpixCounter_mutex);
+	for (long j=0; j<hotpixMemory; j++) {
+		pthread_mutex_unlock(&hotpix_mutexes[j]);
+	}
+	// Halo pixel map
+	pthread_mutex_unlock(&halopixCounter_mutex);
+	for (long j=0; j<halopixMemory; j++) {
+		pthread_mutex_unlock(&halopix_mutexes[j]);
+	}
+	// Persistent background
+	pthread_mutex_unlock(&bgCounter_mutex);
+	for (long j=0; j<bgMemory; j++) {
+		pthread_mutex_unlock(&bg_mutexes[j]);
+	}
+	pthread_mutex_unlock(&persistentBackground_mutex);
+	// Powder data (accumulated sums and sums of squared values)  
+	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
+		// Powders 
+		FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
+			cDataVersion dataV(NULL,this,cDataVersion::DATA_VERSION_ALL,*i_f);
+			pthread_mutex_t powder_mutex = dataV.getPowderMutex(powderClass);
+			pthread_mutex_unlock(&powder_mutex);
+		}
+		// Radial stacks
+		pthread_mutex_unlock(&radialStack_mutex[powderClass]);
+	}
+	pthread_mutex_unlock(&null_mutex);
+	// Pixel histograms
+	if(histogram) {
+		pthread_mutex_unlock(&histogram_mutex);
+	}
+}
 
 
 
@@ -1078,8 +1151,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
  */
 void cPixelDetectorCommon::readDarkcal(char *filename){	
 	
-	// Create memory space and pad with zeros
-	darkcal = (float*) calloc(pix_nn, sizeof(float));
+	// Pad with zeros
 	for(long i=0; i<pix_nn; i++)
 		darkcal[i] = 0;
 
@@ -1158,8 +1230,7 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 void cPixelDetectorCommon::readGaincal(char *filename){
 	
 
-	// Create memory space and set default gain to 1 everywhere
-	gaincal = (float*) calloc(pix_nn, sizeof(float));
+	// Default gain to 1 everywhere
 	for(long i=0;i<pix_nn;i++)
 		gaincal[i] = 1;
 
@@ -1453,206 +1524,4 @@ cPixelDetectorEvent::cPixelDetectorEvent() {
 	/* FM: Warning. This is not run when malloc'ed*/
 	detectorZ=0;
 
-}
-
-// DATA VERSION CLASS
-
-cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorCommon * detectorCommon0, const uint16_t dataLoopMode0, const uint16_t dataFormat0) {
-	detectorCommon = detectorCommon0;
-	detectorEvent = detectorEvent0;
-	dataLoopMode = dataLoopMode0;
-	dataFormat = dataFormat0;
-	dataFormatMain = detectorCommon->dataFormatMain;
-	dataVersionMain = detectorCommon->dataVersionMain;
-	dataVersionIndex = -1;
-	if (dataLoopMode == DATA_LOOP_MODE_ALL) {
-		dataVersion = DATA_VERSION_ALL;
-	} else if (dataLoopMode == DATA_LOOP_MODE_POWDER) {
-		dataVersion = detectorCommon->powderVersion;
-	} else if (dataLoopMode == DATA_LOOP_MODE_SAVE) {
-		dataVersion = detectorCommon->saveVersion;
-	} else if (dataLoopMode == DATA_LOOP_MODE_RADIAL_AVERAGE) {
-		dataVersion = detectorCommon->saveVersion | detectorCommon->powderVersion;
-	} else {
-		printf("cDataVersion initialised with invalid dataLoopMode.");
-		exit(1);
-	}
-
-	clear();
-	
-	if (dataFormat == DATA_FORMAT_NON_ASSEMBLED) {
-		sprintf(name_format,"non_assembled");
-		// Event
-		if (detectorEvent != NULL) {
-			raw                   = detectorEvent->data_raw;
-			detCorr               = detectorEvent->data_detCorr;
-			detPhotCorr           = detectorEvent->data_detPhotCorr;
-			pixelmask             = detectorEvent->pixelmask;
-		}
-		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderData_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderData_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderData_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderData_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderData_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderData_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderData_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
-		pix_nn                     = detectorCommon->pix_nn;
-		pix_nx                     = detectorCommon->pix_nx;
-		pix_ny                     = detectorCommon->pix_ny;
-	} else if (dataFormat == DATA_FORMAT_ASSEMBLED) {
-		sprintf(name_format,"assembled");
-		if (detectorEvent != NULL) {
-			// Event
-			raw                   = detectorEvent->image_raw;
-			detCorr               = detectorEvent->image_detCorr;
-			detPhotCorr           = detectorEvent->image_detPhotCorr;
-			pixelmask             = detectorEvent->image_pixelmask;
-		}
-		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderImage_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImage_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImage_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
-		pix_nn                    = detectorCommon->image_nn;
-		pix_nx                    = detectorCommon->image_nx;
-		pix_ny                    = detectorCommon->image_ny;
-	} else if (dataFormat == DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED) {
-		sprintf(name_format,"assembled_and_downsampled");
-		if (detectorEvent != NULL) {
-			// Event
-			raw                   = detectorEvent->imageXxX_raw;
-			detCorr               = detectorEvent->imageXxX_detCorr;
-			detPhotCorr           = detectorEvent->imageXxX_detPhotCorr;
-			pixelmask             = detectorEvent->imageXxX_pixelmask;
-		}
-		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderImageXxX_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderImageXxX_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderImageXxX_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImageXxX_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImageXxX_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImageXxX_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImageXxX_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
-		pix_nn                    = detectorCommon->imageXxX_nn;
-		pix_nx                    = detectorCommon->imageXxX_nx;
-		pix_ny                    = detectorCommon->imageXxX_ny;
-	} else if (dataFormat == DATA_FORMAT_RADIAL_AVERAGE) {
-		sprintf(name_format,"radial_average");
-		if (detectorEvent != NULL) {
-			// Event
-			raw                     = detectorEvent->radialAverage_raw;
-			detCorr                 = detectorEvent->radialAverage_detCorr;
-			detPhotCorr             = detectorEvent->radialAverage_detPhotCorr;
-			pixelmask               = detectorEvent->radialAverage_pixelmask;
-		}
-		// Global
-		memcpy(&(powder_raw[0]), &(detectorCommon->powderRadialAverage_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderRadialAverage_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderRadialAverage_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderRadialAverage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderRadialAverage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderRadialAverage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderRadialAverage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
-		pix_nn                  = detectorCommon->radial_nn;
-		pix_nx                  = 0;
-		pix_ny                  = 0;
-	} else {
-		ERROR("cDataVersion initialised with incorrect data format!");
-	}
-}
-		
-void cDataVersion::clear() {
-	name[0] = 0;
-	name_version[0] = 0;
-	isMainDataset = 0;
-	isMainVersion = 0;
-	data      = NULL;
-	pixelmask = NULL;
-	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {		
-		powder[powderClass]                     = NULL;
-		powder_squared[powderClass]             = NULL;
-		powder_raw[powderClass]                 = NULL;
-		powder_raw_squared[powderClass]         = NULL;
-		powder_detCorr[powderClass]             = NULL;
-		powder_detCorr_squared[powderClass]     = NULL;
-		powder_detPhotCorr[powderClass]         = NULL;
-		powder_detPhotCorr_squared[powderClass] = NULL;
-		powder_mutex[powderClass]               = detectorCommon->null_mutex;
-	}
-}
-
-float * cDataVersion::getData() {
-	if (data == NULL) {
-		ERROR("Trying to access data that does not exist!");
-	} 
-	return data;
-}
-
-uint16_t * cDataVersion::getPixelmask() {
-	if (pixelmask == NULL) {
-		ERROR("Trying to access pixelmask that does not exist!");
-	}
-	return pixelmask;
-}
-
-double * cDataVersion::getPowder(long powderClass) {
-	if (powder == NULL) {
-		ERROR("Trying to access powder data that does not exist!");
-	}
-	return powder[powderClass];
-}
-
-double * cDataVersion::getPowderSquared(long powderClass) {
-	if (powder_squared[powderClass] == NULL) {
-		ERROR("Trying to access squared powder data that does not exist!");
-	} 
-	return powder_squared[powderClass]; 
-}
-
-pthread_mutex_t cDataVersion::getPowderMutex(long powderClass) {
-	if (&powder_mutex[powderClass] == &detectorCommon->null_mutex) {
-		ERROR("Trying to access powder mutex that does not exist!");
-	} 
-	return powder_mutex[powderClass];
-}
-
-int cDataVersion::next(){
-	while (dataVersionIndex < 3){
-		dataVersionIndex++;
-		if ((dataVersionIndex == 0) && isBitOptionSet(dataVersion,DATA_VERSION_RAW)) {
-			data = raw;
-			memcpy(&(powder[0]), &(powder_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			memcpy(&(powder_squared[0]), &(powder_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			sprintf(name_version,"raw");
-			sprintf(name,"%s_%s",name_format,name_version);
-			isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_RAW);
-			isMainVersion = (dataVersionMain == DATA_VERSION_RAW);
-			return 0;
-		} else if ((dataVersionIndex == 1) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_CORRECTED)) {
-			data = detCorr;
-			memcpy(&(powder[0]), &(powder_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			memcpy(&(powder_squared[0]), &(powder_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			sprintf(name_version,"detector_corrected");
-			sprintf(name,"%s_%s",name_format,name_version);
-			isMainDataset = (dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED)
-;			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED);
-			return 0;
-		} else if ((dataVersionIndex == 2) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED)) {
-			data = detPhotCorr;
-			memcpy(&(powder[0]), &(powder_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			memcpy(&(powder_squared[0]), &(powder_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-			sprintf(name_version,"detector_and_photon_corrected");
-			sprintf(name,"%s_%s",name_format,name_version);
-			isMainDataset = ((dataFormatMain == dataFormat) && (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED));
-			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
-			return 0;
-		} else { 
-			clear();
-		}
-	}
-	return 1;
 }

@@ -29,11 +29,10 @@
 
 void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
  	DETECTOR_LOOP {
-		if (isBitOptionSet(global->detector[detIndex].saveFormat, DATA_FORMAT_RADIAL_AVERAGE)) {
-			cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
-			cDataVersion dataV_r(&eventData->detector[detIndex], &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_RADIAL_AVERAGE);
-			while (dataV_2d.next()) {
-				dataV_r.next();
+		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
+			cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion dataV_r(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+			while (dataV_2d.next() && dataV_r.next()) {
 				long	 radial_nn = global->detector[detIndex].radial_nn;
 				long     pix_nn = global->detector[detIndex].pix_nn;
 				float    *pix_r = global->detector[detIndex].pix_r;
@@ -106,14 +105,13 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
  */
 void calculateRadialAveragePowder(cGlobal *global) {
  	DETECTOR_LOOP {
-		if (isBitOptionSet(global->detector[detIndex].powderFormat, DATA_FORMAT_RADIAL_AVERAGE)) {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
 			long	 radial_nn = global->detector[detIndex].radial_nn;
 			long     pix_nn = global->detector[detIndex].pix_nn;
 			float    *pix_r = global->detector[detIndex].pix_r;
-			cDataVersion dataV_2d(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_NON_ASSEMBLED);
-			cDataVersion dataV_r(NULL, &global->detector[detIndex], DATA_LOOP_MODE_SAVE, DATA_FORMAT_RADIAL_AVERAGE);
-			while (dataV_2d.next() == 0) {
-				dataV_r.next();
+			cDataVersion dataV_2d(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion dataV_r(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+			while (dataV_2d.next() && dataV_r.next()) {
 				for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) {
 					double * powder_r = dataV_r.getPowder(powderClass);
 					double * powder_2d = dataV_2d.getPowder(powderClass);

@@ -1357,7 +1357,7 @@ namespace cheetah_ana_pkg {
 				cheetahGlobal.nActiveThreads = 0;
 				break;
 			}
-			usleep(100000);
+			usleep(500000);
 		}
 		
 	}
@@ -1365,7 +1365,7 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::waitForAnaModWorkers(){
 		printf("Waiting for %d cheetah ana mod workers to finish.\n", nActiveThreads);
 		while(nActiveThreads > 0) {
-			usleep(10000);
+			usleep(50000);
 		}
 		printf("cheetah ana mod workers stopped successfully.\n");
 	}

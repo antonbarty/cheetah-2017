@@ -158,19 +158,13 @@ cGlobal::cGlobal(void) {
 
 	// Assemble options
 	assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
-    assemble2DImage = 0;
-    assemble2DMask = 0;
 
 	// Saving options
 	saveHits = 0;
 	saveBlanks = 0;
-	saveAssembled = 1;
-	saveNonAssembled = 0;
-	saveRadialAverage = 1;
 	h5compress = 5;
 	hdf5dump = 0;
 	saveInterval = 1000;
-	savePixelmask = 1;
     // Do not output 1 HDF5 per image by default
 	saveCXI = 0;
 	// Flush after every image by default
@@ -258,15 +252,13 @@ void cGlobal::setup() {
 	for(long detIndex=0; detIndex < nDetectors; detIndex++){
 		detector[detIndex].configure(this);
 		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
+		detector[detIndex].allocateMemory();
 		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
 		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
-		detector[detIndex].allocatePowderMemory(this);
-		detector[detIndex].allocatePixelmasks(this);
 		detector[detIndex].readPeakmask(self, peaksearchFile);
 		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
 		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
 		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
-		
 	}
 
 	/*
@@ -316,9 +308,9 @@ void cGlobal::setup() {
 		nPowderClasses=2;
 	if(generateDarkcal || generateGaincal)
 		nPowderClasses=1;
-	for(int i = 0; i<nPowderClasses; i++){
-		nPeaksMin[i] = 1000000000;
-		nPeaksMax[i] = 0;
+	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
+		nPeaksMin[powderClass] = 1000000000;
+		nPeaksMax[powderClass] = 0;
 	}
 
     /*
@@ -348,12 +340,12 @@ void cGlobal::setup() {
 	nActiveThreads = 0;
 	threadCounter = 0;
 	pthread_mutex_init(&hitclass_mutex, NULL);
+	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
+		pthread_mutex_init(&nPeaksMin_mutex[powderClass], NULL);
+		pthread_mutex_init(&nPeaksMax_mutex[powderClass], NULL);
+	}
 	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
-	pthread_mutex_init(&hotpixel_mutex, NULL);
-	pthread_mutex_init(&halopixel_mutex, NULL);
-	pthread_mutex_init(&selfdark_mutex, NULL);
-	pthread_mutex_init(&bgbuffer_mutex, NULL);
 	pthread_mutex_init(&nhits_mutex, NULL);
 	pthread_mutex_init(&framefp_mutex, NULL);
 	pthread_mutex_init(&powderfp_mutex, NULL);
@@ -364,7 +356,6 @@ void cGlobal::setup() {
 	pthread_mutex_init(&espectrumBuffer_mutex, NULL);
 	pthread_mutex_init(&datarateWorker_mutex, NULL);  
 	pthread_mutex_init(&saveCXI_mutex, NULL);  
-	pthread_mutex_init(&pixelmask_shared_mutex, NULL);  
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	pthread_mutex_init(&gmd_mutex, NULL);  
 
@@ -397,7 +388,6 @@ void cGlobal::setup() {
 		saveHits = 0;
 		saveBlanks = 0;
 		hdf5dump = 0;
-		saveNonAssembled = 0;
 		nInitFrames = 0;
 		hitfinderFastScan = 0;
 		powderSumHits = 0;
@@ -412,10 +402,10 @@ void cGlobal::setup() {
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
-			detector[i].saveFormat = 0;
-			detector[i].saveVersion = 0;
-			detector[i].powderFormat = DATA_FORMAT_NON_ASSEMBLED;
-			detector[i].powderVersion = DATA_VERSION_RAW;		
+			detector[i].saveFormat = cDataVersion::DATA_FORMAT_NONE;
+			detector[i].saveVersion = cDataVersion::DATA_VERSION_NONE;
+			detector[i].powderFormat = cDataVersion::DATA_FORMAT_NON_ASSEMBLED;
+			detector[i].powderVersion = cDataVersion::DATA_VERSION_RAW;		
 		}
 	}
 	// Detector gain calibration
@@ -430,7 +420,6 @@ void cGlobal::setup() {
 		saveHits = 0;
 		saveBlanks = 0;
 		hdf5dump = 0;
-		saveNonAssembled = 0;
 
 		nInitFrames = 0;
 
@@ -446,10 +435,10 @@ void cGlobal::setup() {
             detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].useGaincal=0;
 			detector[i].startFrames = 0;
-			detector[i].saveFormat = 0;
-			detector[i].saveVersion = 0;
-			detector[i].powderFormat = DATA_FORMAT_NON_ASSEMBLED;
-			detector[i].powderVersion = DATA_VERSION_RAW;		
+			detector[i].saveFormat = cDataVersion::DATA_FORMAT_NONE;
+			detector[i].saveVersion = cDataVersion::DATA_VERSION_NONE;
+			detector[i].powderFormat = cDataVersion::DATA_FORMAT_NON_ASSEMBLED;
+			detector[i].powderVersion = cDataVersion::DATA_VERSION_RAW;		
 		}
 	}
 
@@ -562,14 +551,14 @@ void cGlobal::setup() {
 
 }
 
-void cGlobal::freeMutexes(void) {
+void cGlobal::unlockMutexes(void) {
 	pthread_mutex_unlock(&hitclass_mutex);
+	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
+		pthread_mutex_unlock(&nPeaksMin_mutex[powderClass]);
+		pthread_mutex_unlock(&nPeaksMax_mutex[powderClass]);
+	}
 	pthread_mutex_unlock(&process_mutex);
 	pthread_mutex_unlock(&nActiveThreads_mutex);
-	pthread_mutex_unlock(&hotpixel_mutex);
-	pthread_mutex_unlock(&halopixel_mutex);
-	pthread_mutex_unlock(&selfdark_mutex);
-	pthread_mutex_unlock(&bgbuffer_mutex);
 	pthread_mutex_unlock(&nhits_mutex);
 	pthread_mutex_unlock(&framefp_mutex);
 	pthread_mutex_unlock(&powderfp_mutex);
@@ -580,25 +569,9 @@ void cGlobal::freeMutexes(void) {
 	pthread_mutex_unlock(&espectrumBuffer_mutex);
 	pthread_mutex_unlock(&datarateWorker_mutex);
 	pthread_mutex_unlock(&saveCXI_mutex);
-	pthread_mutex_unlock(&pixelmask_shared_mutex);
-	
+
 	for(long detIndex=0; detIndex<nDetectors; detIndex++) {
-		for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
-			FOREACH_UINT16_T(i_f, DATA_FORMATS) {
-				if (isBitOptionSet(powderFormat,*i_f)) {
-					cDataVersion dataV(NULL, &detector[detIndex], DATA_LOOP_MODE_ALL, *i_f);
-					while (dataV.next() == 0) {
-						pthread_mutex_unlock(&dataV.getPowderMutex(powderClass));
-					}
-				}
-			}
-			pthread_mutex_unlock(&detector[detIndex].radialStack_mutex[powderClass]);
-			//pthread_mutex_unlock(&detector[detIndex].correctedMin_mutex[powderClass]);
-			//pthread_mutex_unlock(&detector[detIndex].correctedMax_mutex[powderClass]);
-			//pthread_mutex_unlock(&detector[detIndex].assembledMin_mutex[powderClass]);
-			//pthread_mutex_unlock(&detector[detIndex].assembledMax_mutex[powderClass]);
-		}
-		pthread_mutex_unlock(&detector[detIndex].histogram_mutex);
+		detector[detIndex].unlockMutexes();
 	}
 
 	nCXIEvents = 0;
@@ -945,25 +918,21 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
-	else if ((!strcmp(tag, "saveraw")) || (!strcmp(tag, "savenonassembled"))) {
-		saveNonAssembled = atoi(value);
-	}
-	else if (!strcmp(tag, "savemodular")) {
-		saveModular = atoi(value);
-	}
-	else if (!strcmp(tag, "saveassembled")) {
-		saveAssembled = atoi(value);
-		assemble2DImage = saveAssembled;
-		assemble2DMask = saveAssembled;
+	else if ((!strcmp(tag, "saveraw")) || (!strcmp(tag, "savenonassembled")) || (!strcmp(tag, "saveassembled"))) {
+		printf("The keyword %s has been removed from the general section. Please specify saving options in the respective detector section.\n"
+			   "Modify your ini file and try again...\n",tag);
+		fail = 1;
 	}
 	else if (!strcmp(tag, "assembleinterpolation")) {
 		assembleInterpolation = atoi(value);
 	}
-	else if (!strcmp(tag, "saveassembled")) {
-		saveRadialAverage = atoi(value);
-	}
+	else if (!strcmp(tag, "savemodular")) {
+		saveModular = atoi(value);
+	}   
 	else if (!strcmp(tag, "savepixelmask")) {
-		savePixelmask = atoi(value);
+		printf("The keyword savepixelmask has been removed from the general section. Please specify saving options in the respective detector section.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;
 	}
 	else if (!strcmp(tag, "h5compress")) {
 		h5compress = atoi(value);
@@ -1275,19 +1244,15 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "radialStackSize=%ld\n",radialStackSize);
     fprintf(fp, "saveHits=%d\n",saveHits);
     fprintf(fp, "saveBlanks=%d\n",saveBlanks);
-    fprintf(fp, "saveNonAssembled=%d\n",saveNonAssembled);
     //fprintf(fp, "saveRawInt16=%d\n",saveRawInt16);
     fprintf(fp, "saveModular=%d\n",saveModular);
-    fprintf(fp, "saveAssembled=%d\n",saveAssembled);
-    fprintf(fp, "saveRadialAverage=%d\n",saveRadialAverage);	
     fprintf(fp, "assembleInterpolation=%d\n",assembleInterpolation);
-    fprintf(fp, "savePixelmask=%d\n",savePixelmask);
     fprintf(fp, "saveCXI=%d\n",saveCXI);
     fprintf(fp, "hdf5dump=%d\n",hdf5dump);
     fprintf(fp, "pythonfile=%s\n",pythonFile);
     fprintf(fp, "debugLevel=%d\n",debugLevel);
     fprintf(fp, "nThreads=%ld\n",nThreads);
-    fprintf(fp, "threadTimeoutInSeconds=%f\n",threadTimeoutInSeconds);
+    fprintf(fp, "threadTimeoutInSeconds=%d\n",threadTimeoutInSeconds);
     fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
     fprintf(fp, "threadPurge=%ld\n",threadPurge);
     fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
@@ -1466,6 +1431,7 @@ void cGlobal::writeInitialLog(void){
 }
 
 void cGlobal::writeHitClasses(FILE* to) {
+	// This is quite a cryptic output and I am getting always 100% hits of every hit class (???)
 	fprintf(to, "Hitclasses:\n");
 	for (int coord = 0; coord < 3; coord++) {
 		int lastFirst = 1 << 30;
@@ -1721,4 +1687,18 @@ void cGlobal::splitList(char * values, std::vector<T> & elems) {
 		innerss >> elem;
 		elems.push_back(elem);
     }
+}
+
+void cGlobal::freeMemory() {
+    for(long i=0; i<nDetectors; i++) {
+		detector[i].freeMemory();
+    }
+    pthread_mutex_destroy(&nActiveThreads_mutex);
+    pthread_mutex_destroy(&framefp_mutex);
+    pthread_mutex_destroy(&peaksfp_mutex);
+    pthread_mutex_destroy(&powderfp_mutex);
+    pthread_mutex_destroy(&subdir_mutex);
+    pthread_mutex_destroy(&espectrumRun_mutex);
+    pthread_mutex_destroy(&nespechits_mutex);
+    pthread_mutex_destroy(&gmd_mutex);
 }
