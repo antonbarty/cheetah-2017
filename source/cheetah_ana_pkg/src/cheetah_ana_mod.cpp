@@ -156,6 +156,10 @@ namespace cheetah_ana_pkg {
 	/// Method which is called once at the beginning of the job
 	void cheetah_ana_mod::beginJob(Event& evt, Env& env)
 	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
 		//cout << "*** beginJob ***" << endl;
 		time(&startT);
 		if (cheetahInit(&cheetahGlobal)){
@@ -203,6 +207,10 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		//
+
 		cout << "beginCalibCycle()" << endl;
 		
 		/*
@@ -1330,6 +1338,10 @@ namespace cheetah_ana_pkg {
 	void 
 	cheetah_ana_mod::endCalibCycle(Event& evt, Env& env)
 	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
 	}
 
 	void cheetah_ana_mod::waitForAllWorkers(){
@@ -1373,6 +1385,10 @@ namespace cheetah_ana_pkg {
 	/// Method which is called at the end of the run
 	void cheetah_ana_mod::endRun(Event& evt, Env& env)
 	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
 		
 		/*
 		 *	Wait for all worker threads to finish
@@ -1394,6 +1410,11 @@ namespace cheetah_ana_pkg {
 	///	Clean up all variables associated with libCheetah
 	void cheetah_ana_mod::endJob(Event& evt, Env& env)
 	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
+
 		printf("Ending job. ");
 		waitForAnaModWorkers();		
 		cheetahExit(&cheetahGlobal);
