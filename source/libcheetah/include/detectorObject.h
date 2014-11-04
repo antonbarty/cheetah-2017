@@ -214,7 +214,7 @@ public:
     int    cmStart;         // pnCCD: intensity (ADU) from which the peakfinding should start in the histogram
     int    cmStop;          // pnCCD: intensity (ADU) at which the peakfinding should stop in the histogram
     float  cmThreshold;     // pnCCD: noise threshold intensity (ADU) over which the peakfinding should consider as true peaks in the histogram
-    float  cmAccuracy;      // pnCCD: number of standard deviations from the mean of the insensitive pixels at which the peakfinding should accept the found zero-photon peak
+    float  cmRange;         // pnCCD: number of standard deviations from the mean of the insensitive pixels at which the peakfinding should accept the found zero-photon peak
 	// Gain calibration
 	int    useGaincal;
 	int    invertGain;

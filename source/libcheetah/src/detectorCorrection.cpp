@@ -639,7 +639,7 @@ void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
             int      start = global->detector[detIndex].cmStart;
             int      stop = global->detector[detIndex].cmStop;
             float    delta = global->detector[detIndex].cmThreshold;
-            float    nstdev = global->detector[detIndex].cmAccuracy;
+            float    nstdev = global->detector[detIndex].cmRange;
             
             pnccdModuleSubtract(data, mask, start, stop, delta, nstdev, global->debugLevel);
         }

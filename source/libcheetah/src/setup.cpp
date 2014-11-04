@@ -1316,7 +1316,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "cmStart=%d\n",detector[i].cmStart);
         fprintf(fp, "cmStop=%d\n",detector[i].cmStop);
         fprintf(fp, "cmThreshold=%f\n",detector[i].cmThreshold);
-        fprintf(fp, "cmAccuracy=%f\n",detector[i].cmAccuracy);
+        fprintf(fp, "cmRange=%f\n",detector[i].cmRange);
         fprintf(fp, "subtractBehindWires=%d\n",detector[i].cspadSubtractBehindWires);
         fprintf(fp, "subtractUnbondedPixels=%d\n",detector[i].cspadSubtractUnbondedPixels);
         fprintf(fp, "gaincal=%s\n",detector[i].gaincalFile);
