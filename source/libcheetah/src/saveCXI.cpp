@@ -774,7 +774,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 	if (global->debugLevel > 2) DEBUG("Detector skeleton created.");
 
-	if(0 && global->TOFPresent){
+	if(global->TOFPresent){
 		for(int i = 0;i<global->nTOFDetectors;i++){
 			char buffer[1024];
 			Node * detector = instrument->createGroup("detector",1+i+global->nDetectors);
@@ -782,7 +782,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			detector->createStack("tofTime",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
 			sprintf(buffer,"TOF detector with source %s and channel %d\n%s",global->tofDetector[i].sourceIdentifier,
 					global->tofDetector[i].channel, global->tofDetector[i].description);
-			//detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
+			detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
 		}
 	}
 
