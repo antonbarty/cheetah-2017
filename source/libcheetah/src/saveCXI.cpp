@@ -940,8 +940,6 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 	H5Fflush(root->hid(), H5F_SCOPE_GLOBAL);
 
-	puts("BLA");
-
 	return root;
 }
 
