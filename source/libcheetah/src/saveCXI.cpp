@@ -68,7 +68,6 @@ namespace CXI{
 
 		hsize_t dims[4] = {0, length, height, width};
 
-
 		if(heightChunkSize == 0){
 			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/height/length);
 		}else{
@@ -111,15 +110,11 @@ namespace CXI{
 	}
 
 	template <class T> 
-	void Node::write(T * data, int stackSlice, int sliceSize){  
+	void Node::write(T * data, int stackSlice, int sliceSize, bool variableSlice){  
 		bool sliced = true;
-		bool variableSlice = false;
 		if(stackSlice == -1){
 			stackSlice = 0;
 			sliced = false;
-		}
-		if(sliceSize > 0){
-			variableSlice = true;
 		}
 
 		hid_t hs,w;
@@ -167,6 +162,20 @@ namespace CXI{
 		}
 		if(variableSlice){
 			block[1] = sliceSize;
+		}
+
+		if(!variableSlice && (sliceSize != -1)) {
+			// Check whether given sliceSize extends the size of the dataspace
+			int ds_sliceSize = 0;
+			if (ndims > 0) {
+				ds_sliceSize = 1;
+				for (int i=0; i<ndims; i++) {
+					ds_sliceSize *=  ((int) block[i]);
+				}
+			}
+			if (ds_sliceSize != sliceSize) {
+				ERROR("Trying to write slice of %i elements to a dataset that was allocated for slices of a size of %i elements.",sliceSize,ds_sliceSize);
+			}
 		}
 
 		hid_t memspace = H5Screate_simple (ndims, block, NULL);
@@ -570,13 +579,14 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					if(global->detector[detIndex].savePixelmask){
 						data_node->createStack("mask",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics);
 					}				
-					uint16_t* mask = (uint16_t *) calloc(asic_nn*nasics_x*nasics_y, sizeof(uint16_t));
+					long nn = asic_nn*nasics_x*nasics_y;
+					uint16_t* mask = (uint16_t *) calloc(nn, sizeof(uint16_t));
 					stackModulesMask(pixelmask_shared, mask, asic_nx, asic_ny, nasics_x, nasics_y);
-					data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(mask);
+					data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write1(mask, nn);
 					stackModulesMask(pixelmask_shared_max, mask, asic_nx, asic_ny, nasics_x, nasics_y);
-					data_node->createDataset("mask_shared_max",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(mask);
+					data_node->createDataset("mask_shared_max",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write1(mask, nn);
 					stackModulesMask(pixelmask_shared_min, mask, asic_nx, asic_ny, nasics_x, nasics_y);
-					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write(mask);					
+					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,asic_nx, asic_ny, nasics)->write1(mask, nn);					
 					free(mask);
 
 					// If this is the main data version we create symbolic links
@@ -601,9 +611,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					if(global->detector[detIndex].savePixelmask){
 						data_node->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
 					}
-					data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared);
-					data_node->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared_max);
-					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared_min);
+					data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write1(pixelmask_shared, pix_nn);
+					data_node->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write1(pixelmask_shared_max, pix_nn);
+					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write1(pixelmask_shared_min, pix_nn);
 					data_node->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
 
 					// If this is the main data version we create links to all datasets
@@ -693,7 +703,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				} else {
 					downsampleMaskNonConservative(image_pixelmask_shared,imageXxX_pixelmask_shared, image_nn, image_nx, imageXxX_nn, imageXxX_nx, downsampling, debugLevel);
 				}
-				data_node->createDataset("mask_shared", H5T_NATIVE_UINT16, imageXxX_nx, imageXxX_ny)->write(imageXxX_pixelmask_shared);
+				data_node->createDataset("mask_shared", H5T_NATIVE_UINT16, imageXxX_nx, imageXxX_ny)->write1(imageXxX_pixelmask_shared, imageXxX_nn);
 				free(imageXxX_pixelmask_shared);
 				free(image_pixelmask_shared);
 				data_node->createStack("data_type",H5T_NATIVE_CHAR,CXI::stringSize);
@@ -738,7 +748,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				float *foo1 = (float *) calloc(pix_nn,sizeof(float));
 				float *foo2 = (float *) calloc(radial_nn,sizeof(float));
 				calculateRadialAverage(foo1, pixelmask_shared, foo2, radial_pixelmask_shared, pix_r, radial_nn, pix_nn);
-				data_node->createDataset("mask_shared",H5T_NATIVE_UINT16, radial_nn)->write(radial_pixelmask_shared);
+				data_node->createDataset("mask_shared",H5T_NATIVE_UINT16, radial_nn)->write1(radial_pixelmask_shared, radial_nn);
 				free(radial_pixelmask_shared);
 				free(foo1);
 				free(foo2);
@@ -977,9 +987,9 @@ void writeAccumulatedCXI(cGlobal * global){
 											  (1.*global->detector[detIndex].nPowderFrames[powderClass]) );
 						}
 						sprintf(sBuffer,"mean_%s",dataV.name); 
-						cl[sBuffer].write(mean);
+						cl[sBuffer].write1(mean, pix_nn);
 						sprintf(sBuffer,"sigma_%s",dataV.name); 
-						cl[sBuffer].write(sigma);
+						cl[sBuffer].write1(sigma, pix_nn);
 
 						free(mean);
 						free(sigma);
@@ -1091,14 +1101,18 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		int nasics = nasics_x * nasics_y;
 		long pix_nx = global->detector[detIndex].pix_nx;
 		long pix_ny = global->detector[detIndex].pix_ny;
+		long pix_nn = global->detector[detIndex].pix_nn;
 		float* pix_x = global->detector[detIndex].pix_x;
 		float* pix_y = global->detector[detIndex].pix_y;
 		float* pix_z = global->detector[detIndex].pix_z;
 		float pixelSize = global->detector[detIndex].pixelSize;
 		long image_nx = global->detector[detIndex].image_nx;
 		long image_ny = global->detector[detIndex].image_ny;
+		long image_nn = global->detector[detIndex].image_nn;
 		long imageXxX_nx = global->detector[detIndex].imageXxX_nx;
 		long imageXxX_ny = global->detector[detIndex].imageXxX_ny;
+		long imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+		long radial_nn = global->detector[detIndex].radial_nn;
 
 		detector["distance"].write(&tmp,stackSlice);
 		detector["x_pixel_size"].write(&pixelSize,stackSlice);
@@ -1117,42 +1131,48 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 					// Non-assembled images, modular (4D: N_frames x N_modules x Ny_module x Nx_module)
 					sprintf(sBuffer,"modular_%s",dataV.name);
 					Node & data_node = detector[sBuffer];
-
-					float * dataModular = (float *) calloc(asic_nn*nasics, sizeof(float));
+					
+					long nn = asic_nn*nasics;
+					float * dataModular = (float *) calloc(nn, sizeof(float));
 					stackModulesData(data, dataModular, asic_nx, asic_ny, nasics_x, nasics_y);
-					data_node["data"].write(dataModular, stackSlice);
+					data_node["data"].write(dataModular, stackSlice, nn);
 					free(dataModular);
 
-					float * cornerPos = (float *) calloc(nasics*3, sizeof(float));
+					nn = nasics*3;
+					float * cornerPos = (float *) calloc(nn, sizeof(float));
 					cornerPositions(cornerPos, pix_x, pix_y, pix_z, pixelSize, asic_nx, asic_ny, nasics_x, nasics);
-					detector["corner_positions"].write(cornerPos, stackSlice);
+					detector["corner_positions"].write(cornerPos, stackSlice, nn);
 					free(cornerPos);
 
-					float * basisVec = (float *) calloc(nasics*2*3, sizeof(float));
+					nn = nasics*2*3;
+					float * basisVec = (float *) calloc(nn, sizeof(float));
 					basisVectors(basisVec, pix_x, pix_y, pix_z, asic_nx, asic_ny, nasics_x, nasics);
-					data_node["basis_vectors"].write(basisVec, stackSlice);
+					data_node["basis_vectors"].write(basisVec, stackSlice, nn);
 					free(basisVec);
 					
-					char * moduleId = (char *) calloc(nasics*CXI::stringSize, sizeof(char));							   
+					nn = nasics*CXI::stringSize;
+					char * moduleId = (char *) calloc(nn, sizeof(char));							   
 					moduleIdentifier(moduleId, nasics_x*nasics_y, CXI::stringSize);
-					data_node["module_identifier"].write(moduleId, stackSlice);
+					data_node["module_identifier"].write(moduleId, stackSlice, nn);
 					free(moduleId);
 
 					if(global->detector[detIndex].savePixelmask){
-						uint16_t* maskModular = (uint16_t *) calloc(asic_nn*nasics_x*nasics_y, sizeof(uint16_t));
+						nn = asic_nn*nasics_x*nasics_y;
+						uint16_t* maskModular = (uint16_t *) calloc(nn, sizeof(uint16_t));
 						stackModulesMask(eventData->detector[detIndex].pixelmask, maskModular, asic_nx, asic_ny, nasics_x, nasics_y);
-						data_node["mask"].write(maskModular,stackSlice);
+						data_node["mask"].write(maskModular,stackSlice, nn);
 						free(maskModular);
 					}
 				} else {
 					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
 					Node & data_node = detector[dataV.name_version];
-					data_node["data"].write(data,stackSlice);	
+					data_node["data"].write(data, stackSlice, pix_nn);	
 					if(global->detector[detIndex].savePixelmask){
-						data_node["mask"].write(pixelmask,stackSlice);
+						data_node["mask"].write(pixelmask, stackSlice, pix_nn);
 					}
-					float * thumbnail = generateThumbnail(data,pix_nx,pix_ny,CXI::thumbnailScale);
-					data_node["thumbnail"].write(thumbnail, stackSlice);
+					long nn = (pix_nx/CXI::thumbnailScale) * (pix_ny/CXI::thumbnailScale);
+					float * thumbnail = generateThumbnail(data, pix_nx, pix_ny, CXI::thumbnailScale);
+					data_node["thumbnail"].write(thumbnail, stackSlice, nn);
 					delete [] thumbnail;
 				}			
 			}
@@ -1169,12 +1189,13 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				float * data = dataV.getData();
 				uint16_t * pixelmask = dataV.getPixelmask();
 				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
-				data_node["data"].write(data,stackSlice);
+				data_node["data"].write(data, stackSlice, image_nn);
 				if(global->detector[detIndex].savePixelmask){
-					data_node["mask"].write(pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask, stackSlice, image_nn);
 				}
+				long nn = (image_nx/CXI::thumbnailScale) * (image_ny/CXI::thumbnailScale);
 				float * thumbnail = generateThumbnail(data,image_nx,image_ny,CXI::thumbnailScale);
-				data_node["thumbnail"].write(thumbnail, stackSlice);
+				data_node["thumbnail"].write(thumbnail, stackSlice, nn);
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);
 				delete [] thumbnail;
@@ -1191,12 +1212,13 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				float * data = dataV.getData();
 				uint16_t * pixelmask = dataV.getPixelmask();
 				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
-				data_node["data"].write(data,stackSlice);
+				data_node["data"].write(data, stackSlice, imageXxX_nn);
 				if(global->detector[detIndex].savePixelmask){
-					data_node["mask"].write(pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask, stackSlice, imageXxX_nn);
 				}
+				long nn = (imageXxX_nx/CXI::thumbnailScale) * (imageXxX_ny/CXI::thumbnailScale);
 				float * thumbnail = generateThumbnail(data,imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
-				data_node["thumbnail"].write(thumbnail, stackSlice);
+				data_node["thumbnail"].write(thumbnail, stackSlice, nn);
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);
 				delete [] thumbnail;
@@ -1213,9 +1235,9 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				float * data = dataV.getData();
 				uint16_t * pixelmask = dataV.getPixelmask();
 				Node & data_node = root["entry_1"].child("image",i_image)[dataV.name_version];
-				data_node["data"].write(data,stackSlice);
+				data_node["data"].write(data, stackSlice, radial_nn);
 				if(global->detector[detIndex].savePixelmask){
-					data_node["mask"].write(pixelmask,stackSlice);
+					data_node["mask"].write(pixelmask, stackSlice, radial_nn);
 				}
 				data_node["data_type"].write("intensities", stackSlice);
 				data_node["data_space"].write("diffraction", stackSlice);

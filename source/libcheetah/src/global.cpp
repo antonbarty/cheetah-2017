@@ -723,7 +723,7 @@ void cGlobal::parseConfigFile(char* filename) {
 		fail = parseConfigTag(tag, value);
 		
 		/* Not a global keyword?  Then it must be detector-specific. */
-		if (fail != 0 && strcmp(group,"default") != 0){
+		if (fail == 1 && strcmp(group,"default") != 0){
 
 			int matched=0;
 
@@ -918,22 +918,25 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
+	/*
 	else if ((!strcmp(tag, "saveraw")) || (!strcmp(tag, "savenonassembled")) || (!strcmp(tag, "saveassembled"))) {
 		printf("The keyword %s has been removed from the general section. Please specify saving options in the respective detector section.\n"
 			   "Modify your ini file and try again...\n",tag);
 		fail = 1;
 	}
+	*/
 	else if (!strcmp(tag, "assembleinterpolation")) {
 		assembleInterpolation = atoi(value);
 	}
 	else if (!strcmp(tag, "savemodular")) {
 		saveModular = atoi(value);
-	}   
+	}
+	/*
 	else if (!strcmp(tag, "savepixelmask")) {
 		printf("The keyword savepixelmask has been removed from the general section. Please specify saving options in the respective detector section.\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;
-	}
+	}*/
 	else if (!strcmp(tag, "h5compress")) {
 		h5compress = atoi(value);
 	}
@@ -962,8 +965,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderondetectorcorrecteddata")) {
 		hitfinderOnDetectorCorrectedData = atoi(value);
 	}
-
-
 	// Sorting
 	else if (!strcmp(tag, "sortpumplaseron")) {
 		sortPumpLaserOn = atoi(value);
@@ -971,9 +972,6 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "pumplaserscheme")) {
 		strcpy(pumpLaserScheme, value);
 	}
-
-	
-
 	// Energy spectrum parameters
 	else if (!strcmp(tag, "usefeespectrum")) {
 		useFEEspectrum = atoi(value);
