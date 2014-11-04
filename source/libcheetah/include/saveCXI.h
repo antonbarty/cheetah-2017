@@ -88,11 +88,7 @@ namespace CXI{
 			return createDataset(s,dataType,width,height,length,stackSize,chunkSize,heightChunkSize,userAxis);
 		}
 		template<class T>
-			void write(T * data, int stackSlice = -1, int sliceSize = -1, bool varibleSliceSize = false);
-		template<class T>
-			void write1(T * data, int sliceSize = -1) {
-			return write(data,-1,sliceSize);
-		}
+			void write(T * data, int stackSlice = -1, int sliceSize = 0, bool varibleSliceSize = false);
 		
 		void closeAll();
 		void openAll();
