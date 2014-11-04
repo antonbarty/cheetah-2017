@@ -39,7 +39,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Calibration files
 	//strcpy(detectorConfigFile, "No_file_specified");
 	strcpy(geometryFile, "No_file_specified");
-	strcpy(badpixelFile, "No_file_specified");
+	strcpy(initialPixelmaskFile, "No_file_specified");
 	strcpy(darkcalFile, "No_file_specified");
 	strcpy(wireMaskFile, "No_file_specified");
 	strcpy(gaincalFile, "No_file_specified");
@@ -69,8 +69,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	beamCenterPixX = 0;
 	beamCenterPixY = 0;
     
-	// Bad pixel mask    
-	useBadPixelMask = 0;
+	// Initial pixelmask from file  
+	useInitialPixelmask = 0;
+	initialPixelmaskIsBitmask = 0;
 	applyBadPixelMask = 1;
     
 	// Saturated pixels
@@ -368,9 +369,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(gaincalFile, value);
 		useGaincal = 1;
 	}
-	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask"))) {
-		strcpy(badpixelFile, value);
-		useBadPixelMask = 1;
+	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask")) || (!strcmp(tag, "initialpixelmask"))) {
+		strcpy(initialPixelmaskFile, value);
+		useInitialPixelmask = 1;
+	}
+	else if ((!strcmp(tag, "initialpixelmaskisbitmask"))) {
+		initialPixelmaskIsBitmask = atoi(value);
 	}
 	else if ((!strcmp(tag, "setbadpixelstozero")) || (!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
 		applyBadPixelMask = atoi(value);
@@ -1356,11 +1360,11 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
  *	Read in bad pixel mask
  *  (Pixels will be set to zero before any analysis and when data is exported)
  */
-void cPixelDetectorCommon::readBadpixelMask(char *filename){
+void cPixelDetectorCommon::readInitialPixelmask(char *filename){
      	
 	
 	// Do we need a bad pixel map?
-	if ( useBadPixelMask == 0 ){
+	if ( useInitialPixelmask == 0 ){
 		return;
 	}
 
@@ -1385,7 +1389,7 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	}
 	
 	
-	// Read badpixel maskl data from file
+	// Read initial pixel mask data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1399,11 +1403,14 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	
 	// Copy back into array
 	for(long i=0;i<pix_nn;i++){
-		if((int) temp2d.data[i]==0){
-			pixelmask_shared[i] |= PIXEL_IS_BAD;
-		}
-		else{
-			pixelmask_shared[i] &= ~PIXEL_IS_BAD;
+		if (initialPixelmaskIsBitmask) {
+			pixelmask_shared[i] = (uint16_t) temp2d.data[i];
+		} else {
+			if((int) temp2d.data[i]==0){
+				pixelmask_shared[i] |= PIXEL_IS_BAD;
+			} else { 
+				pixelmask_shared[i] &= ~PIXEL_IS_BAD;
+			}
 		}
 	}
 }

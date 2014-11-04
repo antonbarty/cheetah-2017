@@ -172,7 +172,7 @@ Point *PointVector::get() {
 }
 
 Point *PointVector::get(unsigned index) {
-    if (index < 0 || index > count - 1) return NULL;
+    if ((index < 0) || (index > count - 1)) return NULL;
     return points[index];
 }
 

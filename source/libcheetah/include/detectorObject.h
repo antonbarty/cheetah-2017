@@ -130,7 +130,7 @@ public:
 	/** @brief File containing gain calibration */
 	char  gaincalFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing bad pixel mask */
-	char  badpixelFile[MAX_FILENAME_LENGTH];
+	char  initialPixelmaskFile[MAX_FILENAME_LENGTH];
 	/** @brief What is this? */
 	char  baddataFile[MAX_FILENAME_LENGTH];
 	/** @brief File containing mask of area behind wires */
@@ -205,7 +205,8 @@ public:
 	/*
 	 *  Flags for detector processing options
 	 */
-	int    useBadPixelMask;
+	int    useInitialPixelmask;
+	int    initialPixelmaskIsBitmask;	
 	int    applyBadPixelMask;
 	int    useBadDataMask;
 	int    useDarkcalSubtraction;
@@ -429,7 +430,7 @@ public:
 	void readDarkcal(char *);
 	void readGaincal(char *);
 	void readPeakmask(cGlobal*, char *);
-	void readBadpixelMask(char *);
+	void readInitialPixelmask(char *);
 	void readBaddataMask(char *);
 	void readWireMask(char *);
 

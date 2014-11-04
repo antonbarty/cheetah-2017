@@ -256,7 +256,7 @@ void cGlobal::setup() {
 		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
 		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
 		detector[detIndex].readPeakmask(self, peaksearchFile);
-		detector[detIndex].readBadpixelMask(detector[detIndex].badpixelFile);
+		detector[detIndex].readInitialPixelmask(detector[detIndex].initialPixelmaskFile);
 		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
 		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
 	}
@@ -1288,7 +1288,8 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "cameraLengthOffset=%f\n",detector[i].cameraLengthOffset);
         fprintf(fp, "cameraLengthScale=%f\n",detector[i].cameraLengthScale);
         fprintf(fp, "fixedCameraLengthMm=%f\n",detector[i].fixedCameraLengthMm);
-        fprintf(fp, "badPixelMap=%s\n",detector[i].badpixelFile);
+        fprintf(fp, "intialPixelmask=%s\n",detector[i].initialPixelmaskFile);
+        fprintf(fp, "intialPixelmaskIsBitmask=%i\n",detector[i].initialPixelmaskIsBitmask);
         fprintf(fp, "applyBadPixelMap=%d\n",detector[i].applyBadPixelMask);
         fprintf(fp, "badDataMap=%s\n",detector[i].baddataFile);
         fprintf(fp, "wiremaskFile=%s\n",detector[i].wireMaskFile);
