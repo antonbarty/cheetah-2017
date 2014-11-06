@@ -1370,12 +1370,12 @@ void cPixelDetectorCommon::readInitialPixelmask(char *filename){
 
 	// Check if a bad pixel mask file has been specified
 	if ( strcmp(filename,"") == 0 ){
-		printf("Bad pixel mask file path was not specified.\n");
+		printf("Initial pixel mask file path was not specified.\n");
 		printf("Aborting...\n");
 		exit(1);
 	}	
 
-	printf("Reading bad pixel mask:\n");
+	printf("Reading initial pixel mask:\n");
 	printf("\t%s\n",filename);
 
 	// Check whether file exists!
@@ -1383,7 +1383,7 @@ void cPixelDetectorCommon::readInitialPixelmask(char *filename){
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("\tBad pixel mask does not exist: %s\n",filename);
+		printf("\tInitial pixel mask does not exist: %s\n",filename);
 		printf("\tAborting...\n");
 		exit(1);
 	}

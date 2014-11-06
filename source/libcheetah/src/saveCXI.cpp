@@ -504,6 +504,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	CXI::Node * root = new Node(filename,global->cxiSWMR);
 
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
+	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(GIT_SHA1);
+	if (getenv("PSANA_GIT_SHA"))
+		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(getenv("PSANA_GIT_SHA"));
 
 	Node * entry = root->addClass("entry");
 	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,CXI::stringSize);
