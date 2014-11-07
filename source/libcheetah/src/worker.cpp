@@ -307,8 +307,6 @@ hitknown:
 //logfile:
 	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
-	printf("writeFlag=%i\n",eventData->writeFlag);
-
 	// If this is a hit, write out to our favourite HDF5 format
 	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
 	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
