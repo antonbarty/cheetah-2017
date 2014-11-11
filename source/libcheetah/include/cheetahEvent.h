@@ -148,6 +148,10 @@ public:
 #define DEBUGL1_ONLY if(global->debugLevel >= 1)
 #define DEBUGL2_ONLY if(global->debugLevel >= 2)
 
+#define DEBUG1(...) if(global->debugLevel >= 1) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG2(...) if(global->debugLevel >= 2) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
+#define DEBUG3(...) if(global->debugLevel >= 3) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
+
 #define DEBUG(...) cheetahDebug(__FILE__, __LINE__, __VA_ARGS__)
 
 void cheetahError(const char *filename, int line, const char *format, ...);

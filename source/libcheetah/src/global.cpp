@@ -248,7 +248,6 @@ void cGlobal::setup() {
 	/*
 	 *	AREA DETECTORS
 	 */
-	hitfinderDetIndex = -1;
 	for(long detIndex=0; detIndex < nDetectors; detIndex++){
 		detector[detIndex].configure(this);
 		detector[detIndex].readDetectorGeometry(detector[detIndex].geometryFile);
@@ -264,44 +263,44 @@ void cGlobal::setup() {
 	/*
 	 *  HITFINDING
 	 */
-	// Identify detector that shall be used for hitfinding
-	hitfinderDetIndex = -1;
-	for(long detIndex=0; detIndex < nDetectors; detIndex++){
-		if (detector[detIndex].detectorID == hitfinderDetectorID){
-			hitfinderDetIndex = detIndex;
-		}
-	}
-	// Check whether the detector chosen for hitfinding is configured
-	if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0 &&
-									  // hitfinders that do not use hitfinderDetIndex
-									  hitfinderAlgorithm != 9 && hitfinderAlgorithm != 11)) {
-		printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
+	if (hitfinder) {
+		hitfinderDetIndex = -1;
 		for(long detIndex=0; detIndex < nDetectors; detIndex++){
-			printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);
+			if (detector[detIndex].detectorID == hitfinderDetectorID){
+				hitfinderDetIndex = detIndex;
+			}
 		}
-		printf("hitfinderDetectorID=%i\n", hitfinderDetectorID);
-		printf("This doesn't make sense.\n");
-		printf("in void cGlobal::setup()\n");
-		printf("Quitting...\n");
-		exit(1);
+		// Identify detector that shall be used for hitfinding
+		// Check whether the detector chosen for hitfinding is configured
+		if ((hitfinderDetIndex == -1) && (hitfinderAlgorithm != 0 &&
+										  // hitfinders that do not use hitfinderDetIndex
+										  hitfinderAlgorithm != 9 && hitfinderAlgorithm != 11)) {
+			printf("ERROR: hitfinderDetectorID is not listed among the configured detectors:\n");
+			for(long detIndex=0; detIndex < nDetectors; detIndex++){
+				printf("\t%s with detectorID=%li configured.\n",detector[detIndex].detectorName,detector[detIndex].detectorID);
+			}
+			printf("hitfinderDetectorID=%i\n", hitfinderDetectorID);
+			printf("This doesn't make sense.\n");
+			printf("in void cGlobal::setup()\n");
+			printf("Quitting...\n");
+			exit(1);
+		}
+		// Read hits from list if used as hitfinder
+		if (hitfinder == 1 && hitfinderAlgorithm == 12) {
+			readHits(hitlistFile);
+		}
+		// Only save peak info for certain hitfinders
+		if (( hitfinderAlgorithm == 3 ) ||
+			( hitfinderAlgorithm == 5 ) ||
+			( hitfinderAlgorithm == 6 ) ||
+			( hitfinderAlgorithm == 8 ))
+			savePeakInfo = 1; 
 	}
-	// Read hits from list if used as hitfinder
-	if (hitfinder == 1 && hitfinderAlgorithm == 12) {
-		readHits(hitlistFile);
-	}
-	// Only save peak info for certain hitfinders
-	if (( hitfinderAlgorithm == 3 ) ||
-		( hitfinderAlgorithm == 5 ) ||
-		( hitfinderAlgorithm == 6 ) ||
-		( hitfinderAlgorithm == 8 ))
-		savePeakInfo = 1; 
 
 	/*
 	 *  POWDERS
 	 */
 	// How many types of powder pattern do we need?
-	npowderHits = 0;
-	npowderBlanks = 0;
 	if(hitfinder==0)
 		nPowderClasses=1;
 	else
@@ -455,6 +454,8 @@ void cGlobal::setup() {
 	 *  INIT COUNTERS AND RUNNING AVERAGES
 	 */
 	nhits = 0;
+	npowderHits = 0;
+	npowderBlanks = 0;
 	nrecenthits = 0;
 	nespechits = 0;
 	nprocessedframes = 0;

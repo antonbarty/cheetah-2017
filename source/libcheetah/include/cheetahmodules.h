@@ -16,6 +16,7 @@ void *worker(void *);
 
 // detectorCorrection.cpp
 void initDetectorCorrection(cEventData *eventData, cGlobal *global);
+void initRaw(cEventData *eventData, cGlobal *global);
 void initPixelmask(cEventData *eventData, cGlobal *global);
 void subtractDarkcal(cEventData*, cGlobal*);
 void applyGainCorrection(cEventData*, cGlobal*);
