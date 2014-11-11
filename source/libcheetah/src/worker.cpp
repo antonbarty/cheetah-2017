@@ -85,6 +85,9 @@ void *worker(void *threadarg) {
 	// Initialise pixelmask with pixelmask_shared
 	initPixelmask(eventData, global);
 	
+	// Initialise raw data array (float) THIS MIGHT SLOW THINGS DOWN, WE MIGHT WANT TO CHANGE THIS
+	initRaw(eventData, global);
+	
 	//---DETECTOR-CORRECTION---//
 
 	DEBUGL2_ONLY {
@@ -379,6 +382,7 @@ cleanup:
 	global->nrecentprocessedframes += 1;
 	// Save some types of information from time to timeperiodic powder patterns
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
+		DEBUG3("Save data.");
 		// Assemble, downsample and radially average powder
 		assemble2DPowder(global);
 		downsamplePowder(global);
