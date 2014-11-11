@@ -98,8 +98,10 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int detIndex) {
  *	Save histograms
  */
 void saveHistograms(cGlobal *global) {
-
-	DEBUG("Writing histogram data \n");
+    
+    DEBUGL2_ONLY {
+        DEBUG("Writing histogram data \n");
+    }
 
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].histogram) {

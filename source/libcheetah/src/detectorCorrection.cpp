@@ -704,17 +704,12 @@ void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
 
 void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, float nstdev, int verbose) {
     float m, st, min_border, max_border;
-    int i, j, x, y, mx, my, x_, cm;
-    int q;
+    int i, n, q, x, y, mx, my, cm;
     // pnCCD geometry
     int asic_nx = PNCCD_ASIC_NX;
     int asic_ny = PNCCD_ASIC_NY;
     int nasics_x = PNCCD_nASICS_X;
     int nasics_y = PNCCD_nASICS_Y;
-    // non-bonded pixels
-    int x_insens_start[4] = {11,1012,11,1012};
-    int insensitve_border_width = 12;
-    int read_out_direction[4] = {-1,1,-1,1};
     // histogram length
     int nhist = stop - start + 1;
     
@@ -734,35 +729,38 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                     line_histogram_x[x] = start + x;
                 
                 // fill intensity histogram with data for line
-                for (x = 0; x < asic_nx; x++) {
-                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
-                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD)))
-                        line_histogram[int(round(data[i] - start))]++;
-                }
-                
-                // calculate max/min/mean value of insensitve pixels
                 min_border = 65536;
                 max_border = -65536;
                 m = 0;
-                for (x_ = 0; x_ < insensitve_border_width; x_++) {
-                    x = x_insens_start[q] + x_*read_out_direction[q];
-                    j = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + x;
-                    m += data[j];
-                    if (data[j] < min_border)
-                        min_border = data[j];
-                    if (data[j] > max_border)
-                        max_border = data[j];
+                n = 0;
+                for (x = 0; x < asic_nx; x++) {
+                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                    // criteria for picking pixels for intensity histogram
+                    //if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD)) || isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)))
+                    //if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SHADOWED))))
+                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD))))
+                        line_histogram[int(round(data[i] - start))]++;
+                    if (isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)) {
+                        // calculate max/min/mean value of shadowed pixels
+                        m += data[i];
+                        if (data[i] < min_border)
+                            min_border = data[i];
+                        if (data[i] > max_border)
+                            max_border = data[i];
+                        n++;
+                    }
                 }
-                m /= float(insensitve_border_width);
+                m /= float(n);
                 
-                // calculate corrected sample standard deviation of insensitive pixels
+                // calculate corrected sample standard deviation of shadowed pixels at the edges of lines
                 st = 0;
-                for (x_ = 0; x_ < insensitve_border_width; x_++) {
-                    x = x_insens_start[q] + x_*read_out_direction[q];
-                    j = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + x;
-                    st += (data[j] - m)*(data[j] - m);
+                for (x = 0; x < asic_nx; x++) {
+                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                    if (isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)) {
+                        st += (data[i] - m)*(data[i] - m);
+                    }
                 }
-                st /= float(insensitve_border_width) - 1;
+                st /= float(n) - 1;
                 st = sqrt(st);
                 
                 // find peaks in histogram using PeakDetect class
@@ -801,7 +799,8 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                                 i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
                                 data[i] -= m;
                                 mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
-                                mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                                if (nstdev > 0)
+                                    mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
                             }
                             if (verbose >= 5) {
                                 printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
@@ -814,7 +813,8 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                         i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
                         data[i] -= m;
                         mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
-                        mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                        if (nstdev > 0)
+                            mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
                     }
                     if (verbose >= 5) {
                         printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
