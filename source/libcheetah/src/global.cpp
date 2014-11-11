@@ -192,14 +192,14 @@ cGlobal::cGlobal(void) {
 
 	// Default to only a few threads
 	nThreads = 16;
-	// depreciated?
+	// deprecated?
 	useHelperThreads = 0;
-	// depreciated?
+	// deprecated?
 	threadPurge = 10000;
 	// Timeout of thread activity, if set to 0 or negative no timeout
 	threadTimeoutInSeconds = 60.;
 
-	anaModThreads = 32;
+	anaModThreads = 8;
 	
 	// Saving to subdirectories
 	subdirFileCount = -1;
@@ -871,7 +871,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	// Processing options
 	else if (!strcmp(tag, "subtractcmmodule")) {
-		printf("The keyword subtractcmModule is depreciated.\n"
+		printf("The keyword subtractcmModule is deprecated.\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
@@ -897,7 +897,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		hitfinderInvertHit = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderdetector")) {
-		printf("The keyword hitfinderDetector is depreciated.\n"
+		printf("The keyword hitfinderDetector is deprecated.\n"
 			   "Please specify the detector that shall be used for hitfinding by defining hitfinderDetectorID instead.\n"
 			   "For choosing the front detector set hitfinderDetectorID=0, for choosing the back detector set hitfinderDetectorID=1.\n"
 			   "Modify your ini file and try again...\n");
@@ -1031,13 +1031,13 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		powderSumBlanks = atoi(value);
 	}
 	else if (!strcmp(tag, "powdersumwithbackgroundsubtraction")) {
-		printf("The keyword powdersumwithbackgroundsubtraction is depreciated.\n"
+		printf("The keyword powdersumwithbackgroundsubtraction is deprecated.\n"
 			   "Please use respective keywords in the detector section (e.g. savepowderdatadetectorandphotoncorrected=1).\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
 	else if (!strcmp(tag, "assemblepowders")) {
-		printf("The keyword assemblepowders is depreciated.\n"
+		printf("The keyword assemblepowders is deprecated.\n"
 			   "Please use the keyword savepowderassembled=1 in the respective detector section(s).\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;
@@ -1054,7 +1054,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindermingradient")) {
 		hitfinderMinGradient = atof(value);
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "hitfindercluster")) {
 		hitfinderCluster = atoi(value);
 	}
@@ -1110,7 +1110,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 			   "Modify your ini file and try again...\n");
 		fail = 1;
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "fudgeevr41")) {
 		fudgeevr41 = atoi(value);
 	}
