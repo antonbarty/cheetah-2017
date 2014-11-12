@@ -635,6 +635,7 @@ void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
 			if( (eventData->threadNum == halopixRecalc+lastUpdate && halopixCalibrated) || ( (halopixCounter >= halopixMemory)  /* && (eventData->threadNum%50 == 0) */ && !halopixCalibrated) ) { 
 				DEBUG3("Actually calculate a new halo pixel mask now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 				global->detector[detIndex].halopixLastUpdate = eventData->threadNum;				
+				global->detector[detIndex].halopixCalibrated = 1;
 				pthread_mutex_unlock(&global->detector[detIndex].halopixCounter_mutex);
 
 				pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
@@ -644,7 +645,6 @@ void calculateHaloPixelMask(cEventData *eventData,cGlobal *global){
 					printf("Warning: Detector %li: All pixels are in halo pixel mask.\n",detIndex);
 				}
 				global->detector[detIndex].nhalo = nhalo;
-				global->detector[detIndex].halopixCalibrated = 1;
 				printf("Detector %li: Identified %li halo pixels.\n",detIndex,nhalo);	
 				pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);					
 
