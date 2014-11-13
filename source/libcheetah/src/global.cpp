@@ -59,6 +59,10 @@ cGlobal::cGlobal(void) {
 	datarateWorkerSkipCounter = 0;
 	lastTimingFrame = 0;
 
+	// GMD threshold for skipping frames where FEL is off
+	skipEventsBelowGmdThreshold = 0;
+	gmdThreshold = 0.0;
+
 	// Pv values
 	strcpy(pumpLaserDelayPV, "LAS:FS5:Angle:Shift:Ramp:rd");
 	pumpLaserDelay = std::numeric_limits<float>::quiet_NaN();
@@ -108,7 +112,7 @@ cGlobal::cGlobal(void) {
 	hitfinderMaxRes = 1e6;
 	hitfinderResolutionUnitPixel = 1;
 	hitfinderMinSNR = 40;
-	hitfinderIgnoreHaloPixels = 0;
+	hitfinderIgnoreNoisyPixels = 0;
 	hitfinderDownsampling = 0;
 	hitfinderOnDetectorCorrectedData = 0;
 	hitfinderFastScan = 0;
@@ -189,6 +193,9 @@ cGlobal::cGlobal(void) {
 
 	// I/O speed test?
 	ioSpeedTest = 0;
+
+	// Thread safety level
+	threadSafetyLevel = 0;
 
 	// Default to only a few threads
 	nThreads = 16;
@@ -365,8 +372,8 @@ void cGlobal::setup() {
 	nInitFrames = 0;
 	for (long detIndex=0; detIndex<MAX_DETECTORS; detIndex++){
 		nInitFrames = std::max(nInitFrames,(long) detector[detIndex].startFrames);
-		detector[detIndex].halopixCalibrated = 0;
-		detector[detIndex].hotpixCalibrated = 0;
+		detector[detIndex].noisyPixCalibrated = 0;
+		detector[detIndex].hotPixCalibrated = 0;
 		detector[detIndex].bgCalibrated = 0;
 	}
 	calibrated = 0;
@@ -397,7 +404,7 @@ void cGlobal::setup() {
 			detector[i].cspadSubtractUnbondedPixels = 0;
 			detector[i].useDarkcalSubtraction = 0;
 			detector[i].useGaincal=0;
-			detector[i].useAutoHotpixel = 0;
+			detector[i].useAutoHotPixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
@@ -429,7 +436,7 @@ void cGlobal::setup() {
 			detector[i].cmModule = 0;
 			detector[i].cspadSubtractUnbondedPixels = 0;
 			detector[i].useDarkcalSubtraction = 1;
-			detector[i].useAutoHotpixel = 0;
+			detector[i].useAutoHotPixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
             detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].useGaincal=0;
@@ -463,19 +470,19 @@ void cGlobal::setup() {
 	lastclock = clock()-10;
 	datarate = 1;
 	runNumber = 0;
-	avgGMD = 0;
+	avgGmd = 0;
 	for(long i=0; i<MAX_DETECTORS; i++) {
 		detector[i].bgCounter = 0;
 		detector[i].bgLastUpdate = 0;
-		detector[i].hotpixCounter = 0;
-		detector[i].hotpixLastUpdate = 0;
-		detector[i].hotpixRecalc = detector[i].bgRecalc;
+		detector[i].hotPixBufferCounter = 0;
+		detector[i].hotPixLastUpdate = 0;
+		detector[i].hotPixRecalc = detector[i].bgRecalc;
 		detector[i].nhot = 0;
-		detector[i].halopixCounter = 0;
-		detector[i].halopixLastUpdate = 0;
-		detector[i].halopixRecalc = detector[i].bgRecalc;
-		detector[i].halopixMemory = detector[i].bgRecalc;
-		detector[i].nhalo = 0;
+		detector[i].noisyPixBufferCounter = 0;
+		detector[i].noisyPixLastUpdate = 0;
+		detector[i].noisyPixRecalc = detector[i].bgRecalc;
+		detector[i].noisyPixMemory = detector[i].bgRecalc;
+		detector[i].nNoisy = 0;
 		detector[i].detectorZprevious = 0;
 		detector[i].detectorZ = 0;
 		detector[i].detectorEncoderValue = 0;
@@ -779,7 +786,13 @@ void cGlobal::parseConfigFile(char* filename) {
 		}
 
 		if (fail != 0){
-			printf("ERROR: The keyword %s is not recognized.\n",tag);
+			if (!strcmp(tag, "saveassembled") || !strcmp(tag, "saveraw")) {
+				printf("ERROR: The keyword %s is not recognized in the general section. Please move it to the respective detector section.",tag);
+			} else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+				printf("ERROR: The keyword %s has been removed. Please specify instead in the respective detector section saveDetectorCorrected=1, saveDetectorAndPhotonCorrected=0 and saveRaw=0 to obtain the desired configuration.",tag);
+			} else {
+				printf("ERROR: The keyword %s is not recognized.\n",tag);
+			}
 			exitCheetah = 1;
 		}
 
@@ -841,6 +854,15 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "stopatframe")) {
 		stopAtFrame = atoi(value);
+	}
+	else if (!strcmp(tag, "gmdthreshold")) {
+		gmdThreshold = atof(value);
+	}
+	else if (!strcmp(tag, "skipeventsbelowgmdthreshold")) {
+		skipEventsBelowGmdThreshold = atoi(value);
+	}
+	else if (!strcmp(tag, "threadsafetylevel")) {
+		threadSafetyLevel = atoi(value);
 	}
 	else if (!strcmp(tag, "nthreads")) {
 		nThreads = atoi(value);
@@ -960,8 +982,8 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfindertofwindow")) {
 		hitfinderTOFWindow = atoi(value);
 	}
-	else if (!strcmp(tag, "hitfinderignorehalopixels")) {
-		hitfinderIgnoreHaloPixels = atoi(value);
+	else if (!strcmp(tag, "hitfinderignorehalopixels") || !strcmp(tag, "hitfinderignorenoisypixels")) {
+		hitfinderIgnoreNoisyPixels = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfinderondetectorcorrecteddata")) {
 		hitfinderOnDetectorCorrectedData = atoi(value);
@@ -1250,6 +1272,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "hdf5dump=%d\n",hdf5dump);
     fprintf(fp, "pythonfile=%s\n",pythonFile);
     fprintf(fp, "debugLevel=%d\n",debugLevel);
+    fprintf(fp, "threadSafetyLevel=%d\n",threadSafetyLevel);
     fprintf(fp, "nThreads=%ld\n",nThreads);
     fprintf(fp, "threadTimeoutInSeconds=%d\n",threadTimeoutInSeconds);
     fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
@@ -1321,17 +1344,17 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "startFrames=%d\n",detector[i].startFrames);
         fprintf(fp, "useLocalBackgroundSubtraction=%d\n",detector[i].useLocalBackgroundSubtraction);
         fprintf(fp, "localBackgroundRadius=%ld\n",detector[i].localBackgroundRadius);
-        fprintf(fp, "#useAutoHotPixel=%d\n",detector[i].useAutoHotpixel);
-        fprintf(fp, "applyAutoHotPixel=%d\n",detector[i].applyAutoHotpixel);
-        fprintf(fp, "hotpixFreq=%f\n",detector[i].hotpixFreq);
-        fprintf(fp, "hotpixADC=%d\n",detector[i].hotpixADC);
-        fprintf(fp, "hotpixMemory=%d\n",detector[i].hotpixMemory);
+        fprintf(fp, "useAutoHotPixel=%d\n",detector[i].useAutoHotPixel);
+        fprintf(fp, "applyAutoHotPixel=%d\n",detector[i].applyAutoHotPixel);
+        fprintf(fp, "hotPixFreq=%f\n",detector[i].hotPixFreq);
+        fprintf(fp, "hotPixADC=%d\n",detector[i].hotPixADC);
+        fprintf(fp, "hotPixMemory=%d\n",detector[i].hotPixMemory);
         fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
         fprintf(fp, "pixelSaturationADC=%ld\n",detector[i].pixelSaturationADC);
-        fprintf(fp, "useAutoHalopixel=%d\n",detector[i].useAutoHalopixel);
-        fprintf(fp, "halopixMinDeviation=%f\n",detector[i].halopixMinDeviation);
-        fprintf(fp, "halopixelMemory=%li\n",detector[i].halopixMemory);
-        fprintf(fp, "halopixelRecalc=%ld\n",detector[i].halopixRecalc);
+        fprintf(fp, "useAutoNoisyPixel=%d\n",detector[i].useAutoNoisyPixel);
+        fprintf(fp, "noisyPixMinDeviation=%f\n",detector[i].noisyPixMinDeviation);
+        fprintf(fp, "noisyPixMemory=%li\n",detector[i].noisyPixMemory);
+        fprintf(fp, "noisyPixRecalc=%ld\n",detector[i].noisyPixRecalc);
         fprintf(fp, "histogram=%d\n",detector[i].histogram);
         fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
         fprintf(fp, "histogramNbins=%ld\n",detector[i].histogramNbins);
@@ -1547,14 +1570,9 @@ void cGlobal::writeStatus(const char* message) {
 void cGlobal::updateCalibrated(void){
 	int temp = 1;
 	for(long detIndex=0; detIndex<MAX_DETECTORS; detIndex++) {
-		temp *= ((detector[detIndex].useAutoHotpixel == 0) || detector[detIndex].hotpixCalibrated);
-		temp *= ((detector[detIndex].useAutoHalopixel == 0) || detector[detIndex].halopixCalibrated);
+		temp *= ((detector[detIndex].useAutoHotPixel == 0) || detector[detIndex].hotPixCalibrated);
+		temp *= ((detector[detIndex].useAutoNoisyPixel == 0) || detector[detIndex].noisyPixCalibrated);
 		temp *= ((detector[detIndex].useSubtractPersistentBackground == 0) || detector[detIndex].bgCalibrated);
-		/* FOR TESTING
-		   printf("detector[%i].useAutoHotpixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHotpixel,detector[detIndex].hotpixCalibrated);
-		   printf("detector[%i].useAutoHalopixel=%i,calibrated=%i\n",detIndex,detector[detIndex].useAutoHalopixel,detector[detIndex].halopixCalibrated);
-		   printf("detector[%i].useSubtractPersistentBackground=%i,calibrated=%i\n",detIndex,detector[detIndex].useSubtractPersistentBackground,detector[detIndex].bgCalibrated);
-		*/
 	}
 	calibrated = temp;
 }

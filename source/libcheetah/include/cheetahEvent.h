@@ -107,6 +107,7 @@ public:
 	double		photonEnergyeV;		// in eV
 	double		wavelengthA;		// in Angstrom
 	
+	double      gmd;
 	double      gmd1;
 	double      gmd2;
 	double		gmd11;

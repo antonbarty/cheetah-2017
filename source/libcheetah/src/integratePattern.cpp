@@ -23,7 +23,7 @@ void integratePattern(cEventData * eventData,cGlobal * global){
 		long	pix_nn = global->detector[detIndex].pix_nn;
 		uint16_t	*mask = eventData->detector[detIndex].pixelmask;
 		float       *data = eventData->detector[detIndex].data_detPhotCorr;
-		uint16_t  combined_pixel_options = PIXEL_IS_IN_HALO | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
+		uint16_t  combined_pixel_options = PIXEL_IS_NOISY | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
 		
 		eventData->detector[detIndex].sum = 0.;
 		for(long i=0;i<pix_nn;i++){

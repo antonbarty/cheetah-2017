@@ -73,10 +73,10 @@ static const uint16_t PIXEL_IS_TO_BE_IGNORED = 64;          // bit 6
 static const uint16_t PIXEL_IS_BAD = 128;                   // bit 7
 static const uint16_t PIXEL_IS_OUT_OF_RESOLUTION_LIMITS = 256; // bit 8
 static const uint16_t PIXEL_IS_MISSING = 512;                // bit 9
-static const uint16_t PIXEL_IS_IN_HALO = 1024;               // bit 10
+static const uint16_t PIXEL_IS_NOISY = 1024;                 // bit 10
 static const uint16_t PIXEL_IS_ARTIFACT_CORRECTED = 2048;    // bit 11
 static const uint16_t PIXEL_FAILED_ARTIFACT_CORRECTION = 4096;    // bit 12
-static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION;   // all bits
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_NOISY | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -253,30 +253,30 @@ public:
 	int    bgNoBeamReset;
 	int    bgFiducialGlitchReset;
 	// Identify persistently hot pixels
-	int    useAutoHotpixel;
-	int    hotpixADC;
-	int    hotpixMemory;
-	int    hotpixRecalc;
-	float  hotpixFreq;
-	long   hotpixCounter;
-	pthread_mutex_t hotpixCounter_mutex;
-	int    hotpixCalibrated;
+	int    useAutoHotPixel;
+	int    hotPixADC;
+	int    hotPixMemory;
+	int    hotPixRecalc;
+	float  hotPixFreq;
+	long   hotPixBufferCounter;
+	pthread_mutex_t hotPixCounter_mutex;
+	int    hotPixCalibrated;
 	long   nhot;
-	long   hotpixLastUpdate;
-	int    useHotpixelBufferMutex;
+	long   hotPixLastUpdate;
+	int    useHotPixelBufferMutex;
 	// Apply persistently hot pixels
-	int    applyAutoHotpixel;
-	// Identify persistently illuminated pixels (Halo)
-	int    useAutoHalopixel;
-	float  halopixMinDeviation;
-	long   halopixRecalc;
-	long   halopixMemory;
-	long   halopixCounter;
-	pthread_mutex_t   halopixCounter_mutex;
-	int    halopixCalibrated;
-	int    halopixIncludeHits;
-	long   nhalo;
-	long   halopixLastUpdate;
+	int    applyAutoHotPixel;
+	// Identify persistently illuminated pixels (noisy)
+	int    useAutoNoisyPixel;
+	float  noisyPixMinDeviation;
+	long   noisyPixRecalc;
+	long   noisyPixMemory;
+	long   noisyPixBufferCounter;
+	pthread_mutex_t   noisyPixCounter_mutex;
+	int    noisyPixCalibrated;
+	int    noisyPixIncludeHits;
+	long   nNoisy;
+	long   noisyPixLastUpdate;
 	// Start frames for calibration before output
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
@@ -345,11 +345,11 @@ public:
 	pthread_mutex_t   pixelmask_shared_min_mutex;
 	pthread_mutex_t   pixelmask_shared_max_mutex;
 	// Hot pixel map
-	int16_t           *hotpix_buffer;
-	pthread_mutex_t   *hotpix_mutexes;
-	// Halo pixel map
-	float             *halopix_buffer;
-	pthread_mutex_t   *halopix_mutexes;	
+	int16_t           *hotPix_buffer;
+	pthread_mutex_t   *hotPix_mutexes;
+	// Noisy pixel map
+	float             *noisyPix_buffer;
+	pthread_mutex_t   *noisyPix_mutexes;	
 	// Persistent background
 	int16_t           *bg_buffer;
 	pthread_mutex_t   *bg_mutexes;
