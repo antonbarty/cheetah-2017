@@ -24,7 +24,7 @@ LIST(APPEND ana_libs AppUtils Cint ConfigSvc Core ErrSvc ExpNameDb Gpad
 Graf Graf3d Hist IData MathCore Matrix MsgLogger Net PSEnv PSEvt PSHist 
 PSTime PSXtcInput Physics Postscript RIO RdbMySQL Rint RootHistoManager 
 Thread Tree appdata dl m psddl_pdsdata psddl_psana rt xtcdata XtcInput 
-PSShmemInput)
+PSShmemInput psana)
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first
