@@ -23,13 +23,13 @@ endif(rhel5)
 LIST(APPEND ana_libs AppUtils Cint ConfigSvc Core ErrSvc ExpNameDb Gpad 
 Graf Graf3d Hist IData MathCore Matrix MsgLogger Net PSEnv PSEvt PSHist 
 PSTime PSXtcInput Physics Postscript RIO RdbMySQL Rint RootHistoManager 
-Thread Tree appdata dl m psddl_pdsdata psddl_psana rt xtcdata XtcInput 
-PSShmemInput psana)
+Thread Tree appdata psddl_pdsdata psddl_psana xtcdata XtcInput 
+PSShmemInput psana boost_thread boost_filesystem boost_regex)
 
 foreach(ana_lib IN LISTS ana_libs)
 	# Clear variable first
 	SET(ANA_${ana_lib}_LIBRARY "ANA_${ana_lib}_LIBRARY-NOTFOUND" CACHE INTERNAL "Internal" FORCE)
-	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/)
+	find_library(ANA_${ana_lib}_LIBRARY ${ana_lib} PATHS ${ANA_RELEASE}/arch/${ANA_ARCH}/lib/ NO_DEFAULT_PATH)
 	SET(ANA_${ana_lib}_LIBRARY ${ANA_${ana_lib}_LIBRARY} CACHE INTERNAL "Internal" FORCE)
 	message(STATUS "Found ${ana_lib} in ${ANA_${ana_lib}_LIBRARY}")
 #	mark_as_advanced(ANA_${ana_lib}_LIBRARY)
