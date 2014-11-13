@@ -1260,9 +1260,11 @@ namespace cheetah_ana_pkg {
 	///
 	///	Event method
 	/// This method is called with event data
-	///	Copy across data into Cheetah structure and process
+	///	Start the threads which will copy across data into Cheetah structure and process
 	///
-	void cheetah_ana_mod::event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
+	void cheetah_ana_mod::event(PSEvt::Event& evt, PSEnv::Env& env) {
+		boost::shared_ptr<Event> evtp = evt.shared_from_this();
+		boost::shared_ptr<Env> envp = env.shared_from_this();
 		pthread_t         thread;
 		pthread_attr_t    threadAttribute;
 		int returnStatus;
