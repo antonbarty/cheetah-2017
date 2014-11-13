@@ -309,8 +309,8 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 	// Combine pixel options for pixels to be ignored
 	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
 
-	if (global->hitfinderIgnoreHaloPixels) {
-		pixel_options |= PIXEL_IS_IN_HALO;
+	if (global->hitfinderIgnoreNoisyPixels) {
+		pixel_options |= PIXEL_IS_NOISY;
 	}
   
 	if (global->hitfinderOnDetectorCorrectedData) {
@@ -377,8 +377,8 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
 	// Combine pixel options for pixels to be ignored
 	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
   
-	if (global->hitfinderIgnoreHaloPixels) {
-		pixel_options |= PIXEL_IS_IN_HALO;
+	if (global->hitfinderIgnoreNoisyPixels) {
+		pixel_options |= PIXEL_IS_NOISY;
 	}
 
 	if (global->hitfinderOnDetectorCorrectedData) {
@@ -429,8 +429,8 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detIndex){
 	// combine pixelmask bits
 	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
 
-	if (global->hitfinderIgnoreHaloPixels) {
-		combined_pixel_options |= PIXEL_IS_IN_HALO;
+	if (global->hitfinderIgnoreNoisyPixels) {
+		combined_pixel_options |= PIXEL_IS_NOISY;
 	}
 	
 	/*

@@ -81,7 +81,14 @@ void *worker(void *threadarg) {
 	
 	// Create a unique name for this event
 	nameEvent(eventData, global);
-	
+
+	// GMD
+	calculateGmd(eventData);
+	if (gmdBelowThreshold(eventData, global)) {
+		printf("Skipping frame (GMD below threshold: %f mJ < %f mJ).\n",eventData->gmd,global->gmdThreshold);
+		goto cleanup; 
+	}
+
 	// Initialise pixelmask with pixelmask_shared
 	initPixelmask(eventData, global);
 	
@@ -226,9 +233,9 @@ hitknown:
 	// Update running backround estimate based on non-hits
 	updateBackgroundBuffer(eventData, global, hit); 
 
-	// Identify halo pixels
-	updateHaloBuffer(eventData,global,hit);
-	calculateHaloPixelMask(eventData,global);
+	// Identify noisy pixels
+	updateNoisyPixelBuffer(eventData,global,hit);
+	calculateNoisyPixelMask(eventData,global);
 
 	// Skip first set of frames to build up running estimate of background...
 	if (eventData->threadNum < global->nInitFrames || !global->calibrated){
@@ -275,7 +282,7 @@ hitknown:
 	integrateRunSpectrum(eventData, global);
   
 	// Update GMD average
-	updateAvgGMD(eventData,global);
+	updateAvgGmd(eventData,global);
 
 	// Integrate pattern
 	integratePattern(eventData,global);
@@ -497,13 +504,3 @@ void updateDatarate(cGlobal *global){
   
 }
 
-void updateAvgGMD(cEventData *eventData, cGlobal *global){
-	/*
-	 *	Remember GMD values  (why is this here?)
-	 */
-	float	gmd;
-	pthread_mutex_lock(&global->gmd_mutex);
-	gmd = (eventData->gmd21+eventData->gmd22)/2;
-	global->avgGMD = ( gmd + (global->detector[0].bgMemory-1)*global->avgGMD) / global->detector[0].bgMemory;
-	pthread_mutex_unlock(&global->gmd_mutex);
-}

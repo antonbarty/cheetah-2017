@@ -352,7 +352,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
          */
         while(global->nActiveThreads >= global->nThreads || (global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)) {
 			usleep(10000);
-			if (!(global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)){
+			if (!(global->useSingleThreadCalibration && (global->nActiveThreads > 1) && !global->calibrated)){
 				time(&tnow);
 				dtime = difftime(tnow, tstart);
 				if(dtime > dnextmsg) {
@@ -383,12 +383,11 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 			// Increment threadpool counter
 			global->nActiveThreads += 1;
 			global->threadCounter += 1;
-			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		else{
 			printf("Error: thread creation failed (frame skipped)\n");
-			pthread_mutex_unlock(&global->nActiveThreads_mutex);
         }
+		pthread_mutex_unlock(&global->nActiveThreads_mutex);
         pthread_attr_destroy(&threadAttribute);
 //		pthread_mutex_lock(&global->process_mutex);
     }

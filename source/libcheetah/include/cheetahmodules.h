@@ -68,9 +68,9 @@ void subtractLocalBackground(float*, long, long, long, long, long);
 void subtractRadialBackground(float*, float*, char*, long, float);
 void subtractPersistentBackground(float*, float*, int, long);
 void calculatePersistentBackground(float*, int16_t*, long, long, long);
-void updateHaloBuffer(cEventData*, cGlobal*,int);
-void calculateHaloPixelMask(cEventData*,cGlobal*);
-long calculateHaloPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);//, pthread_mutex_t, pthread_mutex_t);
+void updateNoisyPixelBuffer(cEventData*, cGlobal*,int);
+void calculateNoisyPixelMask(cEventData*,cGlobal*);
+long calculateNoisyPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);//, pthread_mutex_t, pthread_mutex_t);
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
@@ -174,7 +174,11 @@ void integratePattern(cEventData * eventData,cGlobal * global);
 
 // datarate timing
 void updateDatarate(cGlobal*);
-void updateAvgGMD(cEventData *eventData, cGlobal *global);
+
+// gmd.cpp
+void calculateGmd(cEventData *eventData);
+bool gmdBelowThreshold(cEventData *eventData, cGlobal *global);
+void updateAvgGmd(cEventData *eventData, cGlobal *global);
 
 // log.cpp
 void writeLog(cEventData * eventData, cGlobal * global);

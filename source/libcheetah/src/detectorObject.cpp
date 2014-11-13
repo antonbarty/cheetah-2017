@@ -124,20 +124,20 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useRadialBackgroundSubtraction = 0;
 
 	// Identify persistently hot pixels
-	useAutoHotpixel = 0;
-	hotpixFreq = 0.9;
-	hotpixADC = 1000;
-	hotpixMemory = 50;
-	useHotpixelBufferMutex = 0;
+	useAutoHotPixel = 0;
+	hotPixFreq = 0.9;
+	hotPixADC = 1000;
+	hotPixMemory = 50;
+	useHotPixelBufferMutex = 0;
 	// Kill persistently hot pixels
-	applyAutoHotpixel = 0;
+	applyAutoHotPixel = 0;
 
-	// Identify persistently illuminated pixels (halo)
-	useAutoHalopixel = 0;
-	halopixIncludeHits = 0;
-	halopixMinDeviation = 100;
-	halopixRecalc = bgRecalc;
-	halopixMemory = bgRecalc;
+	// Identify persistently illuminated pixels (noisy pixels)
+	useAutoNoisyPixel = 0;
+	noisyPixIncludeHits = 0;
+	noisyPixMinDeviation = 100;
+	noisyPixRecalc = bgRecalc;
+	noisyPixMemory = bgRecalc;
     
 	// Histogram stack
 	histogram = 0;
@@ -489,39 +489,39 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		bgMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "useautohotpixel")) {
-		useAutoHotpixel = atoi(value);
+		useAutoHotPixel = atoi(value);
 		// Eventually delete this, but not during beamtime!
 	}
 	else if (!strcmp(tag, "hotpixfreq")) {
-		hotpixFreq = atof(value);
+		hotPixFreq = atof(value);
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
-		hotpixADC = atoi(value);
+		hotPixADC = atoi(value);
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
 	else if ((!strcmp(tag, "sethotpixelstozero")) || (!strcmp(tag, "applyautohotpixel"))) {
-		applyAutoHotpixel = atoi(value);
+		applyAutoHotPixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
-		hotpixMemory = atoi(value);
+		hotPixMemory = atoi(value);
 	}
-	else if (!strcmp(tag, "useautohalopixel")) {
-		useAutoHalopixel = atoi(value);
+	else if (!strcmp(tag, "useautohalopixel") || !strcmp(tag, "useautonoisypixel")) {
+		useAutoNoisyPixel = atoi(value);
 	}
-	else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory"))) {
-		halopixMemory = atoi(value);
+	else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory")) || (!strcmp(tag, "noisypixmemory")) || (!strcmp(tag, "noisypixelmemory"))) {
+		noisyPixMemory = atoi(value);
 	}
-	else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc"))) {
-		halopixRecalc = atoi(value);
+	else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc")) || (!strcmp(tag, "noisypixrecalc")) || (!strcmp(tag, "noisypixelrecalc"))) {
+		noisyPixRecalc = atoi(value);
 	}
-	else if (!strcmp(tag, "halopixmindeviation")) {
-		halopixMinDeviation = atof(value);
+	else if (!strcmp(tag, "halopixmindeviation") || !strcmp(tag, "noisypixmindeviation")) {
+		noisyPixMinDeviation = atof(value);
 	}
-	else if (!strcmp(tag, "halopixincludehits")) {
-		halopixIncludeHits = atoi(value);
+	else if (!strcmp(tag, "halopixincludehits") || !strcmp(tag, "noisypixincludehits")) {
+		noisyPixIncludeHits = atoi(value);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
@@ -568,7 +568,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		useBackgroundBufferMutex = atoi(value);
 	}
 	else if (!strcmp(tag, "usehotpixelbuffermutex")) {
-		useHotpixelBufferMutex = atoi(value);
+		useHotPixelBufferMutex = atoi(value);
 	}
 	else if ( (!strcmp(tag, "subtractbehindwires")) || (!strcmp(tag, "usesubtractbehindwires")) ){
 		cspadSubtractBehindWires = atoi(value);
@@ -700,18 +700,18 @@ void cPixelDetectorCommon::allocateMemory() {
 		pixelmask_shared_min[j] = PIXEL_IS_ALL;
 	}	
 	// Hot pixel map
-	pthread_mutex_init(&hotpixCounter_mutex, NULL);
-	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-	hotpix_mutexes = (pthread_mutex_t*) calloc(hotpixMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<hotpixMemory; j++) {
-		pthread_mutex_init(&hotpix_mutexes[j], NULL);
+	pthread_mutex_init(&hotPixCounter_mutex, NULL);
+	hotPix_buffer = (int16_t*) calloc(hotPixMemory*pix_nn, sizeof(int16_t)); 
+	hotPix_mutexes = (pthread_mutex_t*) calloc(hotPixMemory, sizeof(pthread_mutex_t));
+	for (long j=0; j<hotPixMemory; j++) {
+		pthread_mutex_init(&hotPix_mutexes[j], NULL);
 	}
-	// Halo pixel map
-	pthread_mutex_init(&halopixCounter_mutex, NULL);
-	halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float));
-	halopix_mutexes = (pthread_mutex_t*) calloc(halopixMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<halopixMemory; j++) {
-		pthread_mutex_init(&halopix_mutexes[j], NULL);
+	// Noisy pixel map
+	pthread_mutex_init(&noisyPixCounter_mutex, NULL);
+	noisyPix_buffer = (float*) calloc(noisyPixMemory*pix_nn, sizeof(float));
+	noisyPix_mutexes = (pthread_mutex_t*) calloc(noisyPixMemory, sizeof(pthread_mutex_t));
+	for (long j=0; j<noisyPixMemory; j++) {
+		pthread_mutex_init(&noisyPix_mutexes[j], NULL);
 	}
 	// Persistent background
 	pthread_mutex_init(&bgCounter_mutex, NULL);
@@ -801,19 +801,19 @@ void cPixelDetectorCommon::freeMemory() {
 	pthread_mutex_destroy(&pixelmask_shared_max_mutex);
 	free(pixelmask_shared_max);
 	// Hot pixel map
-	pthread_mutex_destroy(&hotpixCounter_mutex);
-	for (long j=0; j<hotpixMemory; j++) {
-		pthread_mutex_destroy(&hotpix_mutexes[j]);
+	pthread_mutex_destroy(&hotPixCounter_mutex);
+	for (long j=0; j<hotPixMemory; j++) {
+		pthread_mutex_destroy(&hotPix_mutexes[j]);
 	}
-	free(hotpix_mutexes);
-	free(hotpix_buffer);
+	free(hotPix_mutexes);
+	free(hotPix_buffer);
 	// Halo pixel map
-	pthread_mutex_destroy(&halopixCounter_mutex);
-	free(halopix_buffer);
-	for (long j=0; j<halopixMemory; j++) {
-		pthread_mutex_destroy(&halopix_mutexes[j]);
+	pthread_mutex_destroy(&noisyPixCounter_mutex);
+	free(noisyPix_buffer);
+	for (long j=0; j<noisyPixMemory; j++) {
+		pthread_mutex_destroy(&noisyPix_mutexes[j]);
 	}
-	free(halopix_mutexes);
+	free(noisyPix_mutexes);
 	// Persistent background
 	pthread_mutex_destroy(&bgCounter_mutex);
 	free(bg_buffer);
@@ -877,14 +877,14 @@ void cPixelDetectorCommon::unlockMutexes() {
 	pthread_mutex_unlock(&pixelmask_shared_min_mutex);
 	pthread_mutex_unlock(&pixelmask_shared_max_mutex);
 	// Hot pixel map
-	pthread_mutex_unlock(&hotpixCounter_mutex);
-	for (long j=0; j<hotpixMemory; j++) {
-		pthread_mutex_unlock(&hotpix_mutexes[j]);
+	pthread_mutex_unlock(&hotPixCounter_mutex);
+	for (long j=0; j<hotPixMemory; j++) {
+		pthread_mutex_unlock(&hotPix_mutexes[j]);
 	}
 	// Halo pixel map
-	pthread_mutex_unlock(&halopixCounter_mutex);
-	for (long j=0; j<halopixMemory; j++) {
-		pthread_mutex_unlock(&halopix_mutexes[j]);
+	pthread_mutex_unlock(&noisyPixCounter_mutex);
+	for (long j=0; j<noisyPixMemory; j++) {
+		pthread_mutex_unlock(&noisyPix_mutexes[j]);
 	}
 	// Persistent background
 	pthread_mutex_unlock(&bgCounter_mutex);

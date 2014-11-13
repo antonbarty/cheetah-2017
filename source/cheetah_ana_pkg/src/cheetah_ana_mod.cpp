@@ -1269,7 +1269,7 @@ namespace cheetah_ana_pkg {
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */
-		while(nActiveThreads >= cheetahGlobal.anaModThreads) {
+		while((nActiveThreads >= cheetahGlobal.anaModThreads) || (cheetahGlobal.useSingleThreadCalibration && (cheetahGlobal.nActiveThreads > 1) && !cheetahGlobal.calibrated)) {
 			usleep(10000);
 		}
 		

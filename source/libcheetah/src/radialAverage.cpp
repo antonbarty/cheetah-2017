@@ -52,7 +52,7 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 	// Alloc temporary arrays
 	int *      tempRadialAverageCounter = (int*) calloc(radial_nn, sizeof(int));
 	uint16_t * tempBadBins              = (uint16_t*) calloc(radial_nn, sizeof(uint16_t));
-	uint16_t maskOutBits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_MISSING | PIXEL_IS_IN_HALO;
+	uint16_t maskOutBits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_MISSING | PIXEL_IS_NOISY;
 	
 	// Init arrays
 	for(long i=0; i<radial_nn; i++) {

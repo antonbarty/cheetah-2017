@@ -160,7 +160,7 @@ public:
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
 	/** @brief Toggle ignoring halo pixels during hitfinding. */
-	int      hitfinderIgnoreHaloPixels;
+	int      hitfinderIgnoreNoisyPixels;
 	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
 	long      hitfinderDownsampling;
 	/** @brief Data for hitfinding only based on detector corrected data (photon correction ignored for hitfinding). Only hitfinder 1. */
@@ -327,6 +327,7 @@ public:
 	long     threadCounter;
 	long     threadPurge;
 	int      threadTimeoutInSeconds;
+	int      threadSafetyLevel;
 
 	// Number of threads in cheetah_ana_mod
 	int      anaModThreads;
@@ -353,7 +354,9 @@ public:
 	/*
 	 *	Common variables
 	 */
-	float    avgGMD;
+	float    avgGmd;
+	int      skipEventsBelowGmdThreshold;
+	double   gmdThreshold;
 
 	/*
 	 *	Powder patterns/sums

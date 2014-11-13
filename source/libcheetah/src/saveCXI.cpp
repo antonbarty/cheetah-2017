@@ -849,34 +849,34 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 	// Save cheetah variables  
 	Node * cheetah = root->createGroup("cheetah");
-	Node * unshared = cheetah->createGroup("unshared");
+	Node * event_data = cheetah->createGroup("event_data");
 
 	/* For some reason the swmr version of hdf5 can't cope with string stacks larger than 255 characters */
-	unshared->createStack("eventName",H5T_NATIVE_CHAR,255);
-	unshared->createStack("frameNumber",H5T_NATIVE_LONG);
-	unshared->createStack("frameNumberIncludingSkipped",H5T_NATIVE_LONG);
-	unshared->createStack("threadID",H5T_NATIVE_LONG);
-	unshared->createStack("gmd1",H5T_NATIVE_DOUBLE);
-	unshared->createStack("gmd2",H5T_NATIVE_DOUBLE);
-	unshared->createStack("energySpectrumExist",H5T_NATIVE_INT);
-	unshared->createStack("nPeaks",H5T_NATIVE_INT);
-    unshared->createStack("nProtons",H5T_NATIVE_INT);
-	unshared->createStack("peakNpix",H5T_NATIVE_FLOAT);
-	unshared->createStack("peakTotal",H5T_NATIVE_FLOAT);
-	unshared->createStack("peakResolution",H5T_NATIVE_FLOAT);
-	unshared->createStack("peakResolutionA",H5T_NATIVE_FLOAT);
-	unshared->createStack("peakDensity",H5T_NATIVE_FLOAT);
-	unshared->createStack("pumpLaserCode",H5T_NATIVE_INT);
-	unshared->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
-	unshared->createStack("hit",H5T_NATIVE_INT);
+	event_data->createStack("eventName",H5T_NATIVE_CHAR,255);
+	event_data->createStack("frameNumber",H5T_NATIVE_LONG);
+	event_data->createStack("frameNumberIncludingSkipped",H5T_NATIVE_LONG);
+	event_data->createStack("threadID",H5T_NATIVE_LONG);
+	event_data->createStack("gmd1",H5T_NATIVE_DOUBLE);
+	event_data->createStack("gmd2",H5T_NATIVE_DOUBLE);
+	event_data->createStack("energySpectrumExist",H5T_NATIVE_INT);
+	event_data->createStack("nPeaks",H5T_NATIVE_INT);
+    event_data->createStack("nProtons",H5T_NATIVE_INT);
+	event_data->createStack("peakNpix",H5T_NATIVE_FLOAT);
+	event_data->createStack("peakTotal",H5T_NATIVE_FLOAT);
+	event_data->createStack("peakResolution",H5T_NATIVE_FLOAT);
+	event_data->createStack("peakResolutionA",H5T_NATIVE_FLOAT);
+	event_data->createStack("peakDensity",H5T_NATIVE_FLOAT);
+	event_data->createStack("pumpLaserCode",H5T_NATIVE_INT);
+	event_data->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
+	event_data->createStack("hit",H5T_NATIVE_INT);
 	DETECTOR_LOOP{
-		Node * detector = unshared->createGroup("detector",detIndex+1);
+		Node * detector = event_data->createGroup("detector",detIndex+1);
 		detector->createStack("sum",H5T_NATIVE_FLOAT);
 	}
 
-	Node * shared = cheetah->createGroup("shared");
-	shared->createStack("hit",H5T_NATIVE_INT);
-	shared->createStack("nPeaks",H5T_NATIVE_INT);
+	Node * global_data = cheetah->createGroup("global_data");
+	global_data->createStack("hit",H5T_NATIVE_INT);
+	global_data->createStack("nPeaks",H5T_NATIVE_INT);
 
 	// First read configuration file to memory
 	std::ifstream file(global->configFile, std::ios::binary);
@@ -894,14 +894,14 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	configuration->createDataset("input",H5T_NATIVE_CHAR,size)->write(&(buffer[0]));
 
 	DETECTOR_LOOP{
-		Node * det_node = shared->createGroup("detector",detIndex+1);
+		Node * det_node = global_data->createGroup("detector",detIndex+1);
 		det_node->createStack("lastBgUpdate",H5T_NATIVE_LONG);
 		det_node->createStack("nHot",H5T_NATIVE_LONG);
 		det_node->createStack("lastHotPixUpdate",H5T_NATIVE_LONG);
-		det_node->createStack("hotPixCounter",H5T_NATIVE_LONG);
-		det_node->createStack("nHalo",H5T_NATIVE_LONG);
-		det_node->createStack("lastHaloPixUpdate",H5T_NATIVE_LONG);
-		det_node->createStack("haloPixCounter",H5T_NATIVE_LONG);
+		det_node->createStack("hotPixBufferCounter",H5T_NATIVE_LONG);
+		det_node->createStack("nNoisy",H5T_NATIVE_LONG);
+		det_node->createStack("lastNoisyPixUpdate",H5T_NATIVE_LONG);
+		det_node->createStack("noisyPixBufferCounter",H5T_NATIVE_LONG);
 
 		POWDER_LOOP{
 			Node * cl = det_node->createGroup("class",powderClass+1);
@@ -977,7 +977,7 @@ void writeAccumulatedCXI(cGlobal * global){
 	char    sBuffer[1024];
 
 	DETECTOR_LOOP{
-		Node & det_node = (*cxi)["cheetah"]["shared"].child("detector",detIndex+1);
+		Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 		POWDER_LOOP {
 			Node & cl = det_node.child("class",powderClass+1);
 			FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
@@ -1049,8 +1049,8 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 	/* Get the existing CXI file or open a new one */
 	CXI::Node * cxi = getCXIFileByName(global);
 
-	(*cxi)["cheetah"]["shared"]["hit"].write(&info->hit,global->nCXIEvents);
-	(*cxi)["cheetah"]["shared"]["nPeaks"].write(&info->nPeaks,global->nCXIEvents);
+	(*cxi)["cheetah"]["global_data"]["hit"].write(&info->hit,global->nCXIEvents);
+	(*cxi)["cheetah"]["global_data"]["nPeaks"].write(&info->nPeaks,global->nCXIEvents);
 	global->nCXIEvents += 1;
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){
@@ -1312,36 +1312,36 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	ctime_r(&eventTime,timestr);
 	lcls["eventTimeString"].write(timestr,stackSlice);
 
-	Node & unshared = root["cheetah"]["unshared"];
-	unshared["eventName"].write(eventData->eventname,stackSlice);
-	unshared["frameNumber"].write(&eventData->frameNumber,stackSlice);
-	unshared["frameNumberIncludingSkipped"].write(&eventData->frameNumberIncludingSkipped,stackSlice);
-	unshared["threadID"].write(&eventData->threadNum,stackSlice);
-	unshared["gmd1"].write(&eventData->gmd1,stackSlice);
-	unshared["gmd2"].write(&eventData->gmd2,stackSlice);
-	unshared["energySpectrumExist"].write(&eventData->energySpectrumExist,stackSlice);
-	unshared["nPeaks"].write(&eventData->nPeaks,stackSlice);
-    unshared["nProtons"].write(&eventData->nProtons,stackSlice);
-	unshared["peakNpix"].write(&eventData->peakNpix,stackSlice);
+	Node & event_data = root["cheetah"]["event_data"];
+	event_data["eventName"].write(eventData->eventname,stackSlice);
+	event_data["frameNumber"].write(&eventData->frameNumber,stackSlice);
+	event_data["frameNumberIncludingSkipped"].write(&eventData->frameNumberIncludingSkipped,stackSlice);
+	event_data["threadID"].write(&eventData->threadNum,stackSlice);
+	event_data["gmd1"].write(&eventData->gmd1,stackSlice);
+	event_data["gmd2"].write(&eventData->gmd2,stackSlice);
+	event_data["energySpectrumExist"].write(&eventData->energySpectrumExist,stackSlice);
+	event_data["nPeaks"].write(&eventData->nPeaks,stackSlice);
+    event_data["nProtons"].write(&eventData->nProtons,stackSlice);
+	event_data["peakNpix"].write(&eventData->peakNpix,stackSlice);
 
-	unshared["peakTotal"].write(&eventData->peakTotal,stackSlice);
-	unshared["peakResolution"].write(&eventData->peakResolution,stackSlice);
-	unshared["peakResolutionA"].write(&eventData->peakResolutionA,stackSlice);
-	unshared["peakDensity"].write(&eventData->peakDensity,stackSlice);
-	unshared["pumpLaserCode"].write(&eventData->pumpLaserCode,stackSlice);
-	unshared["pumpLaserDelay"].write(&eventData->pumpLaserDelay,stackSlice);
-	unshared["hit"].write(&eventData->hit,stackSlice);
+	event_data["peakTotal"].write(&eventData->peakTotal,stackSlice);
+	event_data["peakResolution"].write(&eventData->peakResolution,stackSlice);
+	event_data["peakResolutionA"].write(&eventData->peakResolutionA,stackSlice);
+	event_data["peakDensity"].write(&eventData->peakDensity,stackSlice);
+	event_data["pumpLaserCode"].write(&eventData->pumpLaserCode,stackSlice);
+	event_data["pumpLaserDelay"].write(&eventData->pumpLaserDelay,stackSlice);
+	event_data["hit"].write(&eventData->hit,stackSlice);
   
 	DETECTOR_LOOP{
-		Node & detector = root["cheetah"]["shared"].child("detector",detIndex+1);
+		Node & detector = root["cheetah"]["global_data"].child("detector",detIndex+1);
 		detector["lastBgUpdate"].write(&global->detector[detIndex].bgLastUpdate,stackSlice);
 		detector["nHot"].write(&global->detector[detIndex].nhot,stackSlice);
-		detector["lastHotPixUpdate"].write(&global->detector[detIndex].hotpixLastUpdate,stackSlice);
-		detector["hotPixCounter"].write(&global->detector[detIndex].hotpixCounter,stackSlice);
-		detector["nHalo"].write(&global->detector[detIndex].nhalo,stackSlice);
-		detector["lastHaloPixUpdate"].write(&global->detector[detIndex].halopixLastUpdate,stackSlice);
-		detector["haloPixCounter"].write(&global->detector[detIndex].halopixCounter,stackSlice);
-		Node & detector2 = root["cheetah"]["unshared"].child("detector",detIndex+1);
+		detector["lastHotPixUpdate"].write(&global->detector[detIndex].hotPixLastUpdate,stackSlice);
+		detector["hotPixBufferCounter"].write(&global->detector[detIndex].hotPixBufferCounter,stackSlice);
+		detector["nNoisy"].write(&global->detector[detIndex].nNoisy,stackSlice);
+		detector["lastNoisyPixUpdate"].write(&global->detector[detIndex].noisyPixLastUpdate,stackSlice);
+		detector["noisyPixBufferCounter"].write(&global->detector[detIndex].noisyPixBufferCounter,stackSlice);
+		Node & detector2 = root["cheetah"]["event_data"].child("detector",detIndex+1);
 		detector2["sum"].write(&eventData->detector[detIndex].sum,stackSlice);		
 	}
 #ifdef H5F_ACC_SWMR_WRITE  
