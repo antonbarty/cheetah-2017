@@ -85,7 +85,7 @@ void *worker(void *threadarg) {
 	// GMD
 	calculateGmd(eventData);
 	if (gmdBelowThreshold(eventData, global)) {
-		printf("Skipping frame (GMD below threshold: %f mJ < %f mJ).\n",eventData->gmd,global->gmdThreshold);
+		printf("r%04u:%li Skipping frame (GMD below threshold: %f mJ < %f mJ).\n",global->runNumber, eventData->frameNumber,eventData->gmd,global->gmdThreshold);
 		goto cleanup; 
 	}
 
@@ -200,12 +200,13 @@ localBGCalculated:
 
 	//---HITFINDING---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Hit finding");
-	}
-
 	if(global->hitfinder && (global->hitfinderForInitials ||
 							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
+
+		DEBUGL2_ONLY {
+			DEBUG("Hit finding");
+		}
+
 		hit = hitfinder(eventData, global);
 		eventData->hit = hit;
 
@@ -232,6 +233,7 @@ hitknown:
 	
 	// Update running backround estimate based on non-hits
 	updateBackgroundBuffer(eventData, global, hit); 
+	calculatePersistentBackground(eventData,global);  
 
 	// Identify noisy pixels
 	updateNoisyPixelBuffer(eventData,global,hit);
@@ -240,15 +242,9 @@ hitknown:
 	// Skip first set of frames to build up running estimate of background...
 	if (eventData->threadNum < global->nInitFrames || !global->calibrated){
 		// Update running backround estimate based on non-hits and calculate background from buffer
-		updateBackgroundBuffer(eventData, global, 0); 
-		calculatePersistentBackground(eventData,global);  
 		global->updateCalibrated();
 		printf("r%04u:%li (%3.1fHz): Digesting initial frames (npeaks=%i)\n", global->runNumber, eventData->threadNum,global->datarateWorker, eventData->nPeaks);
 		goto cleanup;
-	}  else {
-		// Update running backround estimate based on non-hits and calculate background from buffer
-		updateBackgroundBuffer(eventData, global, hit); 
-		calculatePersistentBackground(eventData,global);  
 	}
     
 	// Inside-thread speed test

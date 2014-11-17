@@ -905,6 +905,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 		POWDER_LOOP{
 			Node * cl = det_node->createGroup("class",powderClass+1);
+			// Mean and sigma
 			FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
 				if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 					cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
@@ -923,6 +924,11 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					}
 				}
 			}
+		}
+		// Persistent background (median)
+		if (global->detector[detIndex].useSubtractPersistentBackground) {
+			sprintf(sBuffer,"perisistent_background"); 
+			det_node->createDataset(sBuffer,H5T_NATIVE_FLOAT,global->detector[detIndex].pix_nx,global->detector[detIndex].pix_ny);
 		}
 	}
 	
@@ -984,7 +990,7 @@ void writeAccumulatedCXI(cGlobal * global){
 				if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 					cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 					while (dataV.next()) {
-						// raw
+						// mean and sigma
 						long pix_nn =  dataV.pix_nn;
 						double * powder = dataV.getPowder(powderClass);
 						double * powder_squared = dataV.getPowderSquared(powderClass);     
@@ -999,11 +1005,17 @@ void writeAccumulatedCXI(cGlobal * global){
 						cl[sBuffer].write(mean, -1, pix_nn);
 						sprintf(sBuffer,"sigma_%s",dataV.name); 
 						cl[sBuffer].write(sigma, -1, pix_nn);
-
 						free(mean);
 						free(sigma);
 					}      
 				}
+			}
+			// Persistent background (median)
+			if (global->detector[detIndex].useSubtractPersistentBackground) {
+				float	*background = global->detector[detIndex].persistentBackground;
+				long	pix_nn = global->detector[detIndex].pix_nn;
+				sprintf(sBuffer,"perisistent_background"); 
+				det_node[sBuffer].write(background, -1, pix_nn);
 			}
 		}
 	}

@@ -119,7 +119,7 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 
 			pthread_mutex_lock(&global->detector[detIndex].bgCounter_mutex);
 
-			if( /* has processed recalc events since last update?  */ (eventData->threadNum == recalc+lastUpdate) || /* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
+			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == recalc+lastUpdate) && (lastUpdate != 0)) || /* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
 
 				global->detector[detIndex].bgLastUpdate = eventData->threadNum;
 				if(!lockThreads)	pthread_mutex_unlock(&global->detector[detIndex].bgCounter_mutex);
@@ -139,10 +139,11 @@ void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
 					}
 					if(lockThreads) pthread_mutex_unlock(&global->detector[detIndex].bg_mutexes[i]);
 				}
-				
+		  
+
 				// Calculate persistent background
 				if(lockThreads) pthread_mutex_lock(&global->detector[detIndex].persistentBackground_mutex);
-				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn);
+				calculatePersistentBackground(background, frameBuffer, threshold, bufferDepth, pix_nn, 1);
 				if(lockThreads) pthread_mutex_unlock(&global->detector[detIndex].persistentBackground_mutex);
 				global->detector[detIndex].bgCalibrated = 1;
 				printf("Detector %li: Persistent background calculated.\n",detIndex);      
@@ -219,6 +220,8 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 			global->detector[detIndex].bgCounter += 1;
 			if(lockThreads){pthread_mutex_unlock(&global->detector[detIndex].bgCounter_mutex);}
 #endif
+			if (!global->detector[detIndex].bgCalibrated)
+				printf("Background ring buffer fill status: %li/%li.\n",global->detector[detIndex].bgCounter,bufferDepth);
 		}		
 	}
 }
@@ -228,23 +231,40 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 /*
  *	Calculate persistent background from stack of remembered frames
  */
-void calculatePersistentBackground(float *background, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn) {
+void calculatePersistentBackground(float *background, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn, uint16_t mode) {
 
-	// Buffer for median calculation
-	int16_t	*buffer = (int16_t*) calloc(bufferDepth, sizeof(int16_t));
-		
-	// Loop over all pixels 
-	for(long i=0; i<pix_nn; i++) {
-		
-		// Create a local array for sorting
-		for(long j=0; j< bufferDepth; j++) {
-			buffer[j] = frameBuffer[j*pix_nn+i];
+	if (mode == 0) {
+		// MEAN
+		int16_t	*buffer = (int16_t*) calloc(pix_nn, sizeof(int16_t));
+		for (long j=0; j<bufferDepth; j++) {
+			for(long i=0; i<pix_nn; i++) {
+				buffer[i] += frameBuffer[j*pix_nn+i];
+			}
 		}
+		for(long i=0; i<pix_nn; i++) {
+			background[i] = buffer[i]/bufferDepth;
+		}
+		free (buffer);   
+	} else if (mode == 1) {
+		// MEDIAN
+		// Buffer fo median calculation
+		int16_t	*buffer = (int16_t*) calloc(bufferDepth, sizeof(int16_t));
 		
-		// Find median value of the temporary array
-		background[i] = (float) kth_smallest(buffer, bufferDepth, threshold);
+		// Loop over all pixels 
+		for(long i=0; i<pix_nn; i++) {
+		
+			// Create a local array for sorting
+			for(long j=0; j< bufferDepth; j++) {
+				buffer[j] = frameBuffer[j*pix_nn+i];
+			}
+		
+			// Find median value of the temporary array
+			background[i] = (float) kth_smallest(buffer, bufferDepth, threshold);
+		}
+		free (buffer);
+	} else {
+		ERROR("Mode %i is an invalid mode for calculating the persistent background.");
 	}
-	free (buffer);
 }
 
 

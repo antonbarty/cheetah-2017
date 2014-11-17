@@ -67,7 +67,7 @@ void initBackgroundBuffer(cEventData*, cGlobal*);
 void subtractLocalBackground(float*, long, long, long, long, long);
 void subtractRadialBackground(float*, float*, char*, long, float);
 void subtractPersistentBackground(float*, float*, int, long);
-void calculatePersistentBackground(float*, int16_t*, long, long, long);
+void calculatePersistentBackground(float*, int16_t*, long, long, long, uint16_t);
 void updateNoisyPixelBuffer(cEventData*, cGlobal*,int);
 void calculateNoisyPixelMask(cEventData*,cGlobal*);
 long calculateNoisyPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);//, pthread_mutex_t, pthread_mutex_t);
