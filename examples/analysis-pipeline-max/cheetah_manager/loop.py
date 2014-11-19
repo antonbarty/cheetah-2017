@@ -4,20 +4,30 @@ import time,datetime
 import numpy as np
 import run,terminal,google
 
-def loop(configfilename,password):
+def loop(configfilename,email,password):
     C = configobj.ConfigObj(configfilename)
     Cl = C["locations"]
     L = {}
     for k,l in Cl.items():
         L[k] = os.path.expandvars(l)
     Cs = C["spreadsheet"]
-    email = Cs["email"]
     spreadsheet_name = Cs["spreadsheet_name"]
     worksheet_name = Cs["worksheet_name"]
     Cg = C["general"]
     dry_run = Cg.as_bool("dry_run")
     swmr = Cg.as_bool("swmr")
     n_jobs_max = Cg.as_int("n_jobs_max")
+
+    if email == "":
+        if "email" in Cs.keys():
+            email = Cs["email"]
+        else:
+            print "ERROR: No email address given. Cannot login to google."
+    if password == "":
+        if "password" in Cs.keys():
+            email = Cs["password"]
+        else:
+            print "ERROR: No password given. Cannot login to google."
 
     # Init google table client
     gtab = google.GoogleTable(email,password,spreadsheet_name,worksheet_name)

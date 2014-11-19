@@ -21,13 +21,14 @@ if len(sys.argv) >= 3:
 configfilename = sys.argv[1]
 
 print "Gmail login"
-password = getpass.getpass()
+email = raw_input("Email address: ")
+password = getpass.getpass("Password: ")
 
 if debug:
-    loop.loop(configfilename,password)
+    loop.loop(configfilename,email,password)
 else:
     while True:
         try:
-            loop.loop(configfilename,password)
+            loop.loop(configfilename,email,password)
         except:
             print "WARNING: loop() crashed, restarting..."

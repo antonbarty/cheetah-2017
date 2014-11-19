@@ -128,6 +128,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	hotPixFreq = 0.9;
 	hotPixADC = 1000;
 	hotPixMemory = 50;
+	hotPixRecalc = bgMemory;
 	useHotPixelBufferMutex = 0;
 	// Kill persistently hot pixels
 	applyAutoHotPixel = 0;
@@ -136,8 +137,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useAutoNoisyPixel = 0;
 	noisyPixIncludeHits = 0;
 	noisyPixMinDeviation = 100;
-	noisyPixRecalc = bgRecalc;
-	noisyPixMemory = bgRecalc;
+	noisyPixRecalc = bgMemory;
+	noisyPixMemory = bgMemory;
     
 	// Histogram stack
 	histogram = 0;

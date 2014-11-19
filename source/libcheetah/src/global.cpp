@@ -114,7 +114,7 @@ cGlobal::cGlobal(void) {
 	hitfinderMinSNR = 40;
 	hitfinderIgnoreNoisyPixels = 0;
 	hitfinderDownsampling = 0;
-	hitfinderOnDetectorCorrectedData = 0;
+	hitfinderOnDetectorCorrectedData = 1;
 	hitfinderFastScan = 0;
 
 	// Sorting (eg: pump laser on/off)
@@ -476,12 +476,9 @@ void cGlobal::setup() {
 		detector[i].bgLastUpdate = 0;
 		detector[i].hotPixBufferCounter = 0;
 		detector[i].hotPixLastUpdate = 0;
-		detector[i].hotPixRecalc = detector[i].bgRecalc;
 		detector[i].nhot = 0;
 		detector[i].noisyPixBufferCounter = 0;
 		detector[i].noisyPixLastUpdate = 0;
-		detector[i].noisyPixRecalc = detector[i].bgRecalc;
-		detector[i].noisyPixMemory = detector[i].bgRecalc;
 		detector[i].nNoisy = 0;
 		detector[i].detectorZprevious = 0;
 		detector[i].detectorZ = 0;

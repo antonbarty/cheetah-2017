@@ -220,8 +220,8 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 			global->detector[detIndex].bgCounter += 1;
 			if(lockThreads){pthread_mutex_unlock(&global->detector[detIndex].bgCounter_mutex);}
 #endif
-			if (!global->detector[detIndex].bgCalibrated)
-				printf("Background ring buffer fill status: %li/%li.\n",global->detector[detIndex].bgCounter,bufferDepth);
+			if (global->detector[detIndex].bgCounter < bufferDepth)
+				printf("Persistent background ring buffer fill status: %li/%li.\n",global->detector[detIndex].bgCounter+1,bufferDepth);
 		}		
 	}
 }
@@ -587,15 +587,14 @@ void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 
 
 
-
-
-
 void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global,int hit){
 	DETECTOR_LOOP{
-		if(global->detector[detIndex].useAutoNoisyPixel && (!hit || global->detector[detIndex].noisyPixIncludeHits) && (!global->detector[detIndex].useSubtractPersistentBackground || global->detector[detIndex].bgCalibrated)){
+		if(global->detector[detIndex].useAutoNoisyPixel &&
+		   (!hit || global->detector[detIndex].noisyPixIncludeHits) &&
+		   (!global->detector[detIndex].useSubtractPersistentBackground || (global->detector[detIndex].bgCalibrated || global->detector[detIndex].useDarkcalSubtraction))){
 			DEBUG3("Add frame to noisy pixel buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			float	*frameData = eventData->detector[detIndex].data_detCorr;
-			float     *frameBuffer = global->detector[detIndex].noisyPix_buffer;
+			float   *frameBuffer = global->detector[detIndex].noisyPix_buffer;
 			long	pix_nn = global->detector[detIndex].pix_nn;
 			long	bufferDepth = global->detector[detIndex].noisyPixMemory;
 			long	frameID = eventData->threadNum%bufferDepth;
@@ -619,7 +618,10 @@ void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global,int hit){
 			pthread_mutex_unlock(&global->detector[detIndex].noisyPixBufferCounter_mutex);
 #endif      
 			free(buffer);
-		}
+
+			if (global->detector[detIndex].noisyPixBufferCounter < bufferDepth)
+				printf("Noisy pixel detection ring buffer fill status: %li/%li.\n",global->detector[detIndex].noisyPixBufferCounter+1,bufferDepth);
+		} 
 	}
 }
      
