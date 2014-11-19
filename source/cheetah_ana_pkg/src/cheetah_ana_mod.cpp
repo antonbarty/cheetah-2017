@@ -1373,15 +1373,16 @@ namespace cheetah_ana_pkg {
 			}
 			usleep(500000);
 		}
+		printf("Cheetah workers stopped successfully.\n");
 		
 	}
 
 	void cheetah_ana_mod::waitForAnaModWorkers(){
-		printf("Waiting for %d cheetah ana mod workers to finish.\n", nActiveThreads);
+		printf("Waiting for %d ana mod workers to finish.\n", nActiveThreads);
 		while(nActiveThreads > 0) {
 			usleep(50000);
 		}
-		printf("cheetah ana mod workers stopped successfully.\n");
+		printf("Ana mod workers stopped successfully.\n");
 	}
 
 	/// Method which is called at the end of the run
@@ -1396,7 +1397,7 @@ namespace cheetah_ana_pkg {
 		 *	Wait for all worker threads to finish
 		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
 		 */
-		printf("Ending run. ");
+		printf("Ending run.\n");
 		waitForAnaModWorkers();		
 		waitForAllWorkers();		
 		

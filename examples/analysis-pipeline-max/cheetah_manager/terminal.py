@@ -13,7 +13,7 @@ class TerminalTable:
         curses.noecho() 
         curses.curs_set(0) 
         self.screen.keypad(1)
-        self.col_names = ["Run","Type","Status","#Frames","#Hits","HRate"]
+        self.col_names = ["Run","Type","Status","FRateHz","#Frames","#Hits","HRate%"]
         self.title = ["# Cheetah queue status",("-"*self.shape[0]),"",("-"*self.shape[0])]
         self.runs = {}
         self.set_message("Initializing...")

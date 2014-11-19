@@ -66,7 +66,7 @@ class Run:
             print "ERROR: Trying to start non-prepared run. Aborting..."
             sys.exit(0)
         if os.path.expandvars(self.conf["general"]["job_manager"]) == "lsf":
-            s = "bsub -n 6 -q psnehq -J C%s -o %s %s" % (self.run_name,self.processout,self.processexec)
+            s = "bsub -n %s -q psnehq -J C%s -o %s %s" % (self.conf["general"]["n_cores_per_job"],self.run_name,self.processout,self.processexec)
         elif os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
             s = "sbatch %s" % self.processexec
         os.system(s)
@@ -108,7 +108,8 @@ class Run:
             os.system("scancel --name=C%s" % self.run_name)
             os.system("scancel --name=C%sS" % self.run_name)
         os.system("rm -r %s/*%s*" % (self.locations["h5dir"],self.run_name))
-        os.system("rm -r %s/*%s*" % (self.locations["h5dir_swmr"],self.run_name))
+        if self.conf["general"].as_bool("swmr"): 
+            os.system("rm -r %s/*%s*" % (self.locations["h5dir_swmr"],self.run_name))
         os.system("rm -r %s/*%s*" % (self.locations["h5dir_dark"],self.run_name))
         self.init2()
     def _load_type(self):
@@ -170,13 +171,26 @@ class Run:
         if self.logfile != None and self.logfile_present:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
-                for line in loglines:
-                    if "Frames processed:" in line:
-                        self.attrs["#Frames"] = line.split(" ")[-1][:-1]
-                    elif "Number of hits:" in line:
-                        self.attrs["#Hits"] = line.split(" ")[-1][:-1]
-                    elif "Average hit rate:" in line:
-                        self.attrs["HRate"] = line.split(" ")[-2][:-1]
+                if self.status == "runs":
+                    for line in loglines:
+                        for frag in line.split(", "):
+                            if "nFrames:" in frag:
+                                self.attrs["#Frames"] = frag.split(" ")[-1]
+                            if "nHits:" in frag:
+                                self.attrs["#Hits"] = frag.split(" ")[-2]
+                                self.attrs["HRate%"] = frag.split(" ")[-1][1:-2]                   
+                            if "wallTime" in frag:
+                                self.attrs["FRateHz"] = frag.split(" ")[-2][1:]
+                elif self.status == "ended":
+                    for line in loglines:
+                        if "Frames processed:" in line:
+                            self.attrs["#Frames"] = line.split(" ")[-1][:-1]
+                        elif "Number of hits:" in line:
+                            self.attrs["#Hits"] = line.split(" ")[-1][:-1]
+                        elif "Average hit rate:" in line:
+                            self.attrs["HRate%"] = line.split(" ")[-2][:-1]
+                        elif "Average frame rate:" in line:
+                            self.attrs["FRateHz"] = line.split(" ")[-2]
     def _get_prior_darkcal(self):
         dcals = [(self.locations["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-detectorID#-darkcal.h5" % (l[:5]))) for l in os.listdir(self.locations["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
         if dcals == []:
@@ -248,7 +262,7 @@ class Run:
         if os.path.expandvars(self.conf["general"]["job_manager"]) == "slurm":
             txt += "#SBATCH --job-name=C%s\n" % self.run_name
             txt += "#SBATCH -N1\n"
-            txt += "#SBATCH -n8\n"
+            txt += "#SBATCH -n%s\n" % self.conf["general"]["n_cores_per_job"]
             txt += "#SBATCH --output=%s\n" % processout
         txt += ["cd %s\n" % processdir]
         txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.locations["xtcdir"],self.run_name)]

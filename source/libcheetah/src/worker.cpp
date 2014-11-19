@@ -310,7 +310,6 @@ hitknown:
 		writeCXIHitstats(eventData, global);
 	}
 
-//logfile:
 	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
 
 	// If this is a hit, write out to our favourite HDF5 format
@@ -394,9 +393,11 @@ cleanup:
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
 		} 
-		saveRunningSums(global);
-		saveHistograms(global);
-		saveSpectrumStacks(global);
+		if(global->writeRunningSumsFiles){
+			saveRunningSums(global);
+			saveHistograms(global);
+			saveSpectrumStacks(global);
+		}
 		global->updateLogfile();
 		global->writeStatus("Not finished");
 	}

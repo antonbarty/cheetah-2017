@@ -83,6 +83,7 @@ cGlobal::cGlobal(void) {
 	// Calibrations
 	generateDarkcal = 0;
 	generateGaincal = 0;
+	writeRunningSumsFiles = 1;
 
 	// Hitfinding
 	hitfinder = 0;
@@ -396,6 +397,7 @@ void cGlobal::setup() {
 		hdf5dump = 0;
 		nInitFrames = 0;
 		hitfinderFastScan = 0;
+		writeRunningSumsFiles = 1;
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
@@ -426,9 +428,8 @@ void cGlobal::setup() {
 		saveHits = 0;
 		saveBlanks = 0;
 		hdf5dump = 0;
-
 		nInitFrames = 0;
-
+		writeRunningSumsFiles = 1;
 		powderSumHits = 0;
 		powderSumBlanks = 0;
 		powderthresh = -30000;
@@ -900,6 +901,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "generategaincal")) {
 		generateGaincal = atoi(value);
+	}
+	else if (!strcmp(tag, "writeRunningSumsFiles")) {
+		writeRunningSumsFiles = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {
 		printf("The keyword subtractBg has been changed.  It is\n"

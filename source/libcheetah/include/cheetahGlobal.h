@@ -83,6 +83,8 @@ public:
 	/** @brief Toggle the creation of a gaincal image. */
 	int      generateGaincal;
 
+    /** @brief Toggle the creation of separate running sums files. */
+	int      writeRunningSumsFiles;
 
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;

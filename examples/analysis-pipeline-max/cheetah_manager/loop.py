@@ -25,7 +25,7 @@ def loop(configfilename,email,password):
             print "ERROR: No email address given. Cannot login to google."
     if password == "":
         if "password" in Cs.keys():
-            email = Cs["password"]
+            password = Cs["password"]
         else:
             print "ERROR: No password given. Cannot login to google."
 
