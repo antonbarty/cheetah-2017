@@ -902,7 +902,7 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "generategaincal")) {
 		generateGaincal = atoi(value);
 	}
-	else if (!strcmp(tag, "writeRunningSumsFiles")) {
+	else if (!strcmp(tag, "writerunningsumsfiles")) {
 		writeRunningSumsFiles = atoi(value);
 	}
 	else if (!strcmp(tag, "subtractbg")) {

@@ -6,7 +6,7 @@ import time
 run_col = 0
 run_type_col = 1
 run_cmd_col = 2
-title = ["Run","Type","Cmd","Status","#Frames","#Hits","HRate"]
+title = ["Run","Type","Cmd","Status","FRateHz","#Frames","#Hits","HRate%"]
 
 class GoogleTable:
     def __init__(self,email,password,spreadsheet_name,worksheet_name):
@@ -36,9 +36,9 @@ class GoogleTable:
         for i,r in zip(range(len(run_names_old)),run_names_old):
             if r in ks:
                 d = runs[r].attrs
-                vs = [r,runs[r].type,d.get("Cmd","auto"),d.get("Status",""),d.get("#Frames",""),d.get("#Hits",""),d.get("HRate","")]
+                vs = [r,runs[r].type,d.get("Cmd","auto"),d.get("Status",""),d.get("FRateHz",""),d.get("#Frames",""),d.get("#Hits",""),d.get("HRate%","")]
             else:
-                vs = [r,D["Type"][i],D["Cmd"][i],D["Status"][i],D["#Frames"][i],D["#Hits"][i],D["HRate"][i]]
+                vs = [r,D["Type"][i],D["Cmd"][i],D["Status"][i],D["FRateHz"][i],D["#Frames"][i],D["#Hits"][i],D["HRate%"][i]]
             rows.append(vs)
         # Select a range
         s = "A1:%s%i" % (chr(len(title) - 1 + ord('a')).upper(),len(rows))
