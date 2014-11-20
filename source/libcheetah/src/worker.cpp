@@ -172,7 +172,7 @@ localBGCalculated:
 	setBadPixelsToZero(eventData, global);
 	
 	// Identify hot pixels and set them to zero
-	identifyHotPixels(eventData, global);
+	updateHotPixelBuffer(eventData, global);
 	calculateHotPixelMask(eventData,global);
 	setHotPixelsToZero(eventData,global);
 	

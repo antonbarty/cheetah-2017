@@ -1350,6 +1350,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "hotPixFreq=%f\n",detector[i].hotPixFreq);
         fprintf(fp, "hotPixADC=%d\n",detector[i].hotPixADC);
         fprintf(fp, "hotPixMemory=%d\n",detector[i].hotPixMemory);
+        fprintf(fp, "hotPixRecalc=%d\n",detector[i].hotPixRecalc);
         fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
         fprintf(fp, "pixelSaturationADC=%ld\n",detector[i].pixelSaturationADC);
         fprintf(fp, "useAutoNoisyPixel=%d\n",detector[i].useAutoNoisyPixel);

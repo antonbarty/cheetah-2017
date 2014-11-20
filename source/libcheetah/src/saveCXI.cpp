@@ -962,10 +962,12 @@ static CXI::Node * getCXIFileByName(cGlobal *global){
 	for(uint i = 0;i<openFilenames.size();i++){
 		if(openFilenames[i] == std::string(filename)){
 			pthread_mutex_unlock(&global->framefp_mutex);
+			puts("Found file pointer to already opened file.");
 			return openFiles[i];
 		}
 	}
 	openFilenames.push_back(filename);
+	puts("Creating a new file.");
 	CXI::Node * cxi = createCXISkeleton(filename,global);
 	openFiles.push_back(cxi);
 	pthread_mutex_unlock(&global->framefp_mutex);

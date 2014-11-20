@@ -29,7 +29,7 @@ void cspadModuleSubtract(cEventData*, cGlobal*, int);
 void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void calculateHotPixelMask(cGlobal*);
-void identifyHotPixels(cEventData*, cGlobal*);
+void updateHotPixelBuffer(cEventData*, cGlobal*);
 void calculateHotPixelMask(cEventData*, cGlobal*);
 void setHotPixelsToZero(cEventData*, cGlobal*);
 
