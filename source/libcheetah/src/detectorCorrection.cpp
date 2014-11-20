@@ -410,7 +410,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global){
 
 			free(buffer);
 
-			if (frameID < bufferDepth)
+			if (eventData->threadNum < bufferDepth)
 				printf("Hot pixel detection ring buffer fill status: %li/%li.\n",frameID+1,bufferDepth);
 
 
@@ -455,7 +455,7 @@ void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
 			long	recalc = global->detector[detIndex].hotPixRecalc;
 			long	calibrated = global->detector[detIndex].hotPixCalibrated;
 			int	    lockThreads = global->detector[detIndex].useHotPixelBufferMutex;
-			long    counter = eventData->threadNum%bufferDepth;
+			long    counter = eventData->threadNum;
 
 			if(lockThreads)
 				pthread_mutex_lock(&global->detector[detIndex].hotPixCounter_mutex);
