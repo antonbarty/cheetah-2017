@@ -300,9 +300,7 @@ hitknown:
 
 	//---WRITE-DATA-TO-H5---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Write data to h5");
-	}
+	DEBUG2("Write data to h5");
 
 	updateDatarate(global);  
 
@@ -327,6 +325,7 @@ hitknown:
 
 	if(eventData->writeFlag){
 		// one CXI or many H5?
+		DEBUG2("About to write frame.");
 		if(global->saveCXI){
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
 				   eventData->threadNum, global->processRateMonitor.getRate(), 
@@ -339,6 +338,7 @@ hitknown:
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
+		DEBUG2("Frame written.");
 	}
 	// This frame is not going to be saved, but print anyway
 	else {

@@ -1131,6 +1131,7 @@ void closeCXIFiles(cGlobal * global){
 }
 
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
+	DEBUG2("Writing Hitstats.");
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->swmr_mutex);
@@ -1151,6 +1152,7 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 
 
 void writeCXI(cEventData *eventData, cGlobal *global ){
+	DEBUG2("Write a data of one frame to CXI file.");
 	using CXI::Node;
 #ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;

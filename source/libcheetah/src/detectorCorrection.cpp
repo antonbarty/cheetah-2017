@@ -781,7 +781,7 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
                     for (unsigned k = 0; k < peakfinder.maxima->size(); k++) {
                         min_point = peakfinder.minima->get(k);
                         max_point = peakfinder.maxima->get(k);
-                        if (verbose >= 4) {
+                        if (verbose >= 5) {
                             printf("Peak[%u]_min = %d, Peak[%u]_max = %d, Border_min = %f, Border_mean = %f, Border_max = %f, Border_std = %f\n", k, min_point->getX(), k, max_point->getX(), min_border, m, max_border, st);
                         }
                         // sanity checks for common-mode correction
