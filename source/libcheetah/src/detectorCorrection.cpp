@@ -440,7 +440,6 @@ void setHotPixelsToZero(cEventData *eventData, cGlobal *global){
 }	
 
 
-
 /* 
  *	Recalculate hot pixel masks using frame buffer
  */

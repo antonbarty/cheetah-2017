@@ -736,6 +736,8 @@ long calculateNoisyPixelMask(uint16_t *mask, uint16_t *maskMinExtent, uint16_t *
     //pthread_mutex_unlock(&mask_max_mutex);
 #endif
 
+	free(buffer);
+
 	return nNoisy;
 
 }

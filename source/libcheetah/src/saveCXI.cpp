@@ -504,9 +504,10 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	CXI::Node * root = new Node(filename,global->cxiSWMR);
 
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
-	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(GIT_SHA1);
-	if (getenv("PSANA_GIT_SHA"))
-		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(getenv("PSANA_GIT_SHA"));
+	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,strlen(GIT_SHA1))->write(GIT_SHA1);
+	char * psana_git_sha = getenv("PSANA_GIT_SHA");
+	if (psana_git_sha)
+		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,strlen(psana_git_sha))->write(psana_git_sha);
 
 	Node * entry = root->addClass("entry");
 	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,CXI::stringSize);
@@ -559,10 +560,13 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		entry->addClassLink("data",detector->path().c_str());
 
 		detector->createStack("distance",H5T_NATIVE_DOUBLE);
-		detector->createStack("description",H5T_NATIVE_CHAR,CXI::stringSize);
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
+
 		detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+
+		int sBufferLen = sprintf(sBuffer,"%s [%s]",global->detector[detIndex].detectorType,global->detector[detIndex].detectorName);
+		detector->createDataset("description",H5T_NATIVE_CHAR,sBufferLen)->write(sBuffer);
 
 		// DATA_FORMAT_NON_ASSEMBLED
 		DEBUGL2_ONLY{ DEBUG("Data format non-assembled."); }
@@ -783,9 +787,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			Node * detector = instrument->createGroup("detector",1+i+global->nDetectors);
 			detector->createStack("data",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
 			detector->createStack("tofTime",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
-			sprintf(buffer,"TOF detector with source %s and channel %d\n%s",global->tofDetector[i].sourceIdentifier,
-					global->tofDetector[i].channel, global->tofDetector[i].description);
-			detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
+			int buffLen = sprintf(buffer,"TOF detector\nSource identifier: %s\nChannel number: %d\nDescription: %s\n",global->tofDetector[i].sourceIdentifier,
+								  global->tofDetector[i].channel, global->tofDetector[i].description);
+			detector->createDataset("description",H5T_NATIVE_CHAR,buffLen)->write(buffer);
 		}
 	}
 
@@ -836,7 +840,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("f_21_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
-	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,CXI::stringSize);
+	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,26);
 	lcls->createLink("eventTime","eventTimeString");
 	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
 
@@ -962,12 +966,12 @@ static CXI::Node * getCXIFileByName(cGlobal *global){
 	for(uint i = 0;i<openFilenames.size();i++){
 		if(openFilenames[i] == std::string(filename)){
 			pthread_mutex_unlock(&global->framefp_mutex);
-			puts("Found file pointer to already opened file.");
+			DEBUG2("Found file pointer to already opened file.");
 			return openFiles[i];
 		}
 	}
 	openFilenames.push_back(filename);
-	puts("Creating a new file.");
+	DEBUG2("Creating a new file.");
 	CXI::Node * cxi = createCXISkeleton(filename,global);
 	openFiles.push_back(cxi);
 	pthread_mutex_unlock(&global->framefp_mutex);
@@ -1140,9 +1144,6 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		detector["distance"].write(&tmp,stackSlice);
 		detector["x_pixel_size"].write(&pixelSize,stackSlice);
 		detector["y_pixel_size"].write(&pixelSize,stackSlice);
-
-		sprintf(sBuffer,"%s [%s]",global->detector[detIndex].detectorType,global->detector[detIndex].detectorName);
-		detector["description"].write(sBuffer,stackSlice);
 
 		// DATA_FORMAT_NON_ASSEMBLED
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_NON_ASSEMBLED)) {

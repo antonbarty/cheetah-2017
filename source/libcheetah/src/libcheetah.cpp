@@ -456,7 +456,7 @@ void cheetahExit(cGlobal *global) {
     } else {
 		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
-    printf("%li files processed\n",global->nprocessedframes);
+    printf("%li frames processed\n",global->nprocessedframes);
 
     
     

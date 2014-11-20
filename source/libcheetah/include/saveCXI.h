@@ -23,7 +23,8 @@ namespace CXI{
 	class Node{
 	public:
 		enum Type{Dataset, Group, Link};
-
+		
+		// Constructors
 		Node(const char * filename, bool swmr){
 			parent = NULL;
 			type = Group;
@@ -63,6 +64,12 @@ namespace CXI{
 		hid_t hid(){
 			return id;
 			
+		}
+		// Destructor
+		~Node(){
+			for(Iter it = children.begin(); it != children.end(); it++) {
+				delete it->second;
+			}
 		}
 		/*
 		  The base name of the class should be used.
