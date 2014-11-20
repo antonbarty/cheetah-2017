@@ -92,7 +92,7 @@ namespace cheetah_ana_pkg {
 		void waitForAnaModWorkers();
 		
 		// Data members
-		int nActiveThreads;
+		int nActiveAnaThreads;
 		pthread_mutex_t  nActiveThreads_mutex;
 		pthread_mutex_t  counting_mutex;
 		pthread_mutex_t  process_mutex;

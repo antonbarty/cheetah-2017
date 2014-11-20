@@ -405,7 +405,7 @@ cleanup:
 
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
-	global->nActiveThreads -= 1;
+	global->nActiveCheetahThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 
 	// Free memory only if running multi-threaded

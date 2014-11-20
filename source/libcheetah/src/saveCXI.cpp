@@ -94,14 +94,16 @@ namespace CXI{
 			H5Pset_chunk(cparms, ndims, dims);
 		}
 		//  H5Pset_deflate (cparms, 2);
-		hid_t dataset = H5Dcreate(loc, s, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+		hid_t dapl_id = H5Pcreate(H5P_DATASET_ACCESS);
+		if((ndims == 3 || ndims == 4) && chunkSize){
+			H5Pset_chunk_cache(dapl_id,H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
+		}
+		hid_t dataset = H5Dcreate(loc, s, dataType, dataspace, H5P_DEFAULT, cparms, dapl_id);
 		if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
 		H5Sclose(dataspace);
 		H5Pclose(cparms);		
+		H5Pclose(dapl_id);		
 
-		if((ndims == 3 || ndims == 4) && chunkSize){
-			H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
-		}
 
 		if(stackSize == H5S_UNLIMITED){
 			addStackAttributes(dataset,ndims,userAxis);
@@ -233,7 +235,7 @@ namespace CXI{
 		}
 
 		hid_t xfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
-		H5Pset_type_conv_cb(xfer_plist_id, handle_conversion_exceptions, &ignoreConversionExceptions);
+//		H5Pset_type_conv_cb(xfer_plist_id, handle_conversion_exceptions, &ignoreConversionExceptions);
 
 
 		w = H5Dwrite (dataset, type, memspace, dataspace, xfer_plist_id, data);
@@ -245,6 +247,7 @@ namespace CXI{
 		}
 		H5Sclose(memspace);
 		H5Sclose(dataspace);
+		H5Pclose(xfer_plist_id);
 	}
 
 	Node * Node::addClass(const char * s){
@@ -1156,8 +1159,8 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	bool didDecreaseActive = false;
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->nActiveThreads_mutex);
-		if (global->nActiveThreads) {
-			global->nActiveThreads--;
+		if (global->nActiveCheetahThreads) {
+			global->nActiveCheetahThreads--;
 			didDecreaseActive = true;
 		}
 		pthread_mutex_unlock(&global->nActiveThreads_mutex);
@@ -1439,7 +1442,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		
 		if (didDecreaseActive) {
 			pthread_mutex_lock(&global->nActiveThreads_mutex);
-			global->nActiveThreads++;
+			global->nActiveCheetahThreads++;
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		pthread_mutex_unlock(&global->swmr_mutex);

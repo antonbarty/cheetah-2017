@@ -333,7 +333,7 @@ public:
 	// Thread management
 	int      useHelperThreads;
 	long     nThreads;
-	long     nActiveThreads;
+	long     nActiveCheetahThreads;
 	long     threadCounter;
 	long     threadPurge;
 	int      threadTimeoutInSeconds;
