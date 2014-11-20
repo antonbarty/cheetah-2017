@@ -272,6 +272,14 @@ public:
     char    dataSaveFormat[MAX_FILENAME_LENGTH];
 	/** @brief Save CXIs in SWMR mode. This makes them incompatible with older HDF5 versions */
 	bool cxiSWMR;
+	/** @brief Ignore overflows in type conversion while saving CXIs. */
+	bool ignoreConversionOverflow;
+	/** @brief Ignore truncations in type conversion while saving CXIs. */
+	bool ignoreConversionTruncate;
+	/** @brief Ignore loss of precison in type conversion while saving CXIs. */
+	bool ignoreConversionPrecision;
+	/** @brief Ignore type conversion from NAN while saving CXIs. */
+	bool ignoreConversionNAN;
 
 	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
 	    Setting it to 0 avoid doing any flushes.

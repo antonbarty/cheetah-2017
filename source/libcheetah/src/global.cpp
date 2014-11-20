@@ -182,6 +182,15 @@ cGlobal::cGlobal(void) {
 	// Do not use SWMR mode by default
 	cxiSWMR = 0;
 
+	// Warn on conversion overflow
+	ignoreConversionOverflow = 0;
+	// Warn on conversion truncate
+	ignoreConversionTruncate = 0;
+	// Warn on conversion from not real numbers
+	ignoreConversionNAN = 0;
+	// Warn on precision loss on conversion
+	ignoreConversionPrecision = 0;
+
 	// Visualization
 	pythonFile[0] = 0;
 
@@ -1151,6 +1160,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		cxiFlushPeriod = atoi(value);
 	} else if (!strcmp(tag, "cxiswmr")) {
 		cxiSWMR = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionoverflow")) {
+		ignoreConversionOverflow = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversiontruncate")) {
+		ignoreConversionTruncate = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionprecision")) {
+		ignoreConversionPrecision = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionnan")) {
+		ignoreConversionNAN = atoi(value);
 	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	}
