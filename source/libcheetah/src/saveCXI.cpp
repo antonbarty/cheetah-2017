@@ -235,7 +235,7 @@ namespace CXI{
 		}
 
 		hid_t xfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
-//		H5Pset_type_conv_cb(xfer_plist_id, handle_conversion_exceptions, &ignoreConversionExceptions);
+		H5Pset_type_conv_cb(xfer_plist_id, handle_conversion_exceptions, &ignoreConversionExceptions);
 
 
 		w = H5Dwrite (dataset, type, memspace, dataspace, xfer_plist_id, data);
