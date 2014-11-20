@@ -74,8 +74,8 @@ namespace cheetah_ana_pkg {
 	{
 		if (signo == SIGINT){
 			// Wait for threads to finish
-			while(cheetahGlobal.nActiveThreads > 0) {
-				printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveThreads);
+			while(cheetahGlobal.nActiveCheetahThreads > 0) {
+				printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveCheetahThreads);
 				usleep(100000);
 			}
 			printf("Attempting to close CXIs cleanly\n");
@@ -139,7 +139,7 @@ namespace cheetah_ana_pkg {
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
-		nActiveThreads = 0;
+		nActiveAnaThreads = 0;
 		pthread_mutex_init(&nActiveThreads_mutex, NULL);
 		pthread_mutex_init(&counting_mutex, NULL);
 		pthread_mutex_init(&process_mutex, NULL);
@@ -274,7 +274,7 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::real_event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
 		inner_real_event(evtp, envp);
 		pthread_mutex_lock(&nActiveThreads_mutex);
-		nActiveThreads -= 1;
+		nActiveAnaThreads -= 1;
 		pthread_mutex_unlock(&nActiveThreads_mutex);		
 	}
 	
@@ -1271,7 +1271,7 @@ namespace cheetah_ana_pkg {
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */
-		while((nActiveThreads >= cheetahGlobal.anaModThreads) || (cheetahGlobal.useSingleThreadCalibration && (cheetahGlobal.nActiveThreads > 1) && !cheetahGlobal.calibrated)) {
+		while((nActiveAnaThreads >= cheetahGlobal.anaModThreads) || (cheetahGlobal.useSingleThreadCalibration && (cheetahGlobal.nActiveCheetahThreads > 1) && !cheetahGlobal.calibrated)) {
 			usleep(10000);
 		}
 		
@@ -1285,7 +1285,7 @@ namespace cheetah_ana_pkg {
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
 			pthread_mutex_lock(&nActiveThreads_mutex);
-			nActiveThreads += 1;
+			nActiveAnaThreads += 1;
 			pthread_mutex_unlock(&nActiveThreads_mutex);
 		}
 		else{
@@ -1357,18 +1357,18 @@ namespace cheetah_ana_pkg {
 		double	dtime;
 		int p=0, pp=0;
 
-		while(cheetahGlobal.nActiveThreads > 0) {
-			p = cheetahGlobal.nActiveThreads;
+		while(cheetahGlobal.nActiveCheetahThreads > 0) {
+			p = cheetahGlobal.nActiveCheetahThreads;
 			if ( pp != p){
 				pp = p;
-				printf("Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveThreads);
+				printf("Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveCheetahThreads);
 			}
 			time(&tnow);
 			dtime = difftime(tnow, tstart);
 			if(( dtime > ((float) cheetahGlobal.threadTimeoutInSeconds) ) && (cheetahGlobal.threadTimeoutInSeconds > 0)) {
-				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveThreads, dtime);
+				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveCheetahThreads, dtime);
 				printf("\tGiving up and exiting anyway\n");
-				cheetahGlobal.nActiveThreads = 0;
+				cheetahGlobal.nActiveCheetahThreads = 0;
 				break;
 			}
 			usleep(500000);
@@ -1378,8 +1378,8 @@ namespace cheetah_ana_pkg {
 	}
 
 	void cheetah_ana_mod::waitForAnaModWorkers(){
-		printf("Waiting for %d ana mod workers to finish.\n", nActiveThreads);
-		while(nActiveThreads > 0) {
+		printf("Waiting for %d ana mod workers to finish.\n", nActiveAnaThreads);
+		while(nActiveAnaThreads > 0) {
 			usleep(50000);
 		}
 		printf("Ana mod workers stopped successfully.\n");

@@ -353,7 +353,7 @@ void cGlobal::setup() {
 	 *  THREAD MANAGEMENT
 	 */
 	// Set up thread management
-	nActiveThreads = 0;
+	nActiveCheetahThreads = 0;
 	threadCounter = 0;
 	pthread_mutex_init(&hitclass_mutex, NULL);
 	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){

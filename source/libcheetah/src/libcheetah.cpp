@@ -112,8 +112,8 @@ int cheetahInit(cGlobal *global) {
  */
 void cheetahNewRun(cGlobal *global) {
 	// Wait for all workers to finish
-	while(global->nActiveThreads > 0) {
-		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+	while(global->nActiveCheetahThreads > 0) {
+		printf("Waiting for %li worker threads to terminate\n", global->nActiveCheetahThreads);
 		usleep(500000);
 	}
     
@@ -224,7 +224,7 @@ void cheetahUpdateGlobal(cGlobal *global, cEventData *eventData){
          */
         if ( update_camera_length && ( global->detector[detIndex].detectorZprevious != global->detector[detIndex].detectorZ ) ) {
             // don't tinker with cheetahGlobal geometry while there are active threads...
-            while (global->nActiveThreads > 0) 
+            while (global->nActiveCheetahThreads > 0) 
                 usleep(10000);
             
             printf("Camera length changed from %gmm to %gmm.\n", global->detector[detIndex].detectorZprevious,global->detector[detIndex].detectorZ);
@@ -350,20 +350,21 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
          *  Wait until we have a spare thread in the thread pool
          *  If nothing happens for 2 minutes, assume we have some sort of thread lockup and keep going anyway
          */
-        while(global->nActiveThreads >= global->nThreads || (global->useSingleThreadCalibration && (global->nActiveThreads == 1) && !global->calibrated)) {
+        while(global->nActiveCheetahThreads >= global->nThreads ||
+			  (global->useSingleThreadCalibration && (global->nActiveCheetahThreads == 1) && !global->calibrated)) {
 			usleep(10000);
-			if (!(global->useSingleThreadCalibration && (global->nActiveThreads > 1) && !global->calibrated)){
+			if (!(global->useSingleThreadCalibration && (global->nActiveCheetahThreads > 1) && !global->calibrated)){
 				time(&tnow);
 				dtime = difftime(tnow, tstart);
 				if(dtime > dnextmsg) {
-					printf("Waiting for available worker thread (%li active)\n", global->nActiveThreads);
+					printf("Waiting for available worker thread (%li active)\n", global->nActiveCheetahThreads);
 					dnextmsg += 1;
 				}
 				if(( dtime > ((float) global->threadTimeoutInSeconds) ) && (global->threadTimeoutInSeconds > 0)) {
 					printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
 					printf("\tGiving up and resetting the thread counter\n");
 					global->unlockMutexes();
-					global->nActiveThreads = 0;
+					global->nActiveCheetahThreads = 0;
 					break;
 				}
 			}
@@ -381,7 +382,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
-			global->nActiveThreads += 1;
+			global->nActiveCheetahThreads += 1;
 			global->threadCounter += 1;
 		}
 		else{
@@ -410,13 +411,13 @@ void cheetahExit(cGlobal *global) {
     double	dtime;
     float	maxwait = 10*60.;
 
-    while(global->nActiveThreads > 0) {
-		printf("Waiting for %li worker threads to terminate\n", global->nActiveThreads);
+    while(global->nActiveCheetahThreads > 0) {
+		printf("Waiting for %li worker threads to terminate\n", global->nActiveCheetahThreads);
 		usleep(100000);
 		time(&tnow);
 		dtime = difftime(tnow, tstart);
 		if(dtime > maxwait) {
-			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveThreads, dtime);
+			printf("\t%li threads still active after waiting %f seconds\n", global->nActiveCheetahThreads, dtime);
 			printf("\tGiving up and exiting anyway\n");
 			global->unlockMutexes();
 			break;
