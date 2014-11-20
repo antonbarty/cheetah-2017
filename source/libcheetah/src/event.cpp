@@ -14,7 +14,6 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 *	Create new event structure
 	 */
 	cEventData	*eventData;
-	//eventData = (cEventData*) calloc(sizeof(cEventData),1);
 	eventData = new cEventData();
 	eventData->pGlobal = global;
 
@@ -138,13 +137,6 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	if(eventData->specFail == 0){
 		free(eventData->specImage);
 	}
-	//TOF stuff.
-	// Explictly call the vector destructor as we're using free and not delete
-	/*for(int i = 0;i<global->nTOFDetectors;i++){
-		eventData->tofDetector[i].voltage.clear();
-		eventData->tofDetector[i].time.clear();
-		}*/
-
 
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
@@ -152,8 +144,6 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	}
     
     free(eventData->energySpectrum1D);
-    
-    
-	//free(eventData);
+   
 	delete eventData;
 }

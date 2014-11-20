@@ -185,7 +185,7 @@ cGlobal::cGlobal(void) {
 	// Warn on conversion overflow
 	ignoreConversionOverflow = 0;
 	// Warn on conversion truncate
-	ignoreConversionTruncate = 0;
+	ignoreConversionTruncate = 1;
 	// Warn on conversion from not real numbers
 	ignoreConversionNAN = 0;
 	// Warn on precision loss on conversion
