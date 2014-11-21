@@ -60,14 +60,11 @@ PSANA_MODULE_FACTORY(cheetah_ana_mod)
 // 		-- Public Function Member Definitions --
 //		----------------------------------------
 namespace cheetah_ana_pkg {
-	class CspadDataWrapper {
-    
-	};
-
     cGlobal cheetahGlobal;
 	std::queue<pthread_t> runningThreads;
 	volatile bool runCheetahCaller;
 	pthread_t cheetahCallerThread;
+	pthread_mutex_t pthread_queue_mutex;
 
 	void sig_handler(int signo)
 	{
@@ -135,13 +132,10 @@ namespace cheetah_ana_pkg {
 		nActiveAnaThreads = 0;
 		pthread_mutex_init(&nActiveThreads_mutex, NULL);
 		pthread_mutex_init(&counting_mutex, NULL);
-		pthread_mutex_init(&process_mutex, NULL);
 		pthread_mutex_init(&pthread_queue_mutex, NULL);
 
 		runCheetahCaller = true;
-		pthread_attr_t    threadAttribute;
-		pthread_attr_init(&threadAttribute);
-		int returnStatus = pthread_create(&cheetahCallerThread, &threadAttribute, cheetah_caller, &pthread_queue_mutex);
+		int returnStatus = pthread_create(&cheetahCallerThread, NULL, cheetah_caller, &pthread_queue_mutex);
 
 		if (returnStatus != 0) { // creation successful
 			printf("Error: thread creation failed\n");
@@ -276,8 +270,7 @@ namespace cheetah_ana_pkg {
 	void cheetah_ana_mod::event(PSEvt::Event& evt, PSEnv::Env& env) {
 		boost::shared_ptr<Event> evtp = evt.shared_from_this();
 		boost::shared_ptr<Env> envp = env.shared_from_this();
-		pthread_t         thread;
-		pthread_attr_t    threadAttribute;
+		pthread_t thread;
 		int returnStatus;
 		/*
 		 *  Wait until we have a spare thread in the thread pool
@@ -286,12 +279,8 @@ namespace cheetah_ana_pkg {
 			usleep(10000);
 		}
 		
-		// Set detached state
-		pthread_attr_init(&threadAttribute);
-//		pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-		
 		// Create a new worker thread for this data frame
-		returnStatus = pthread_create(&thread, &threadAttribute, threaded_event, (void*) new AnaModEventData(this, evtp, envp));		
+		returnStatus = pthread_create(&thread, NULL, threaded_event, (void*) new AnaModEventData(this, evtp, envp));		
 
 		if (returnStatus == 0) { // creation successful
 			// Increment threadpool counter
@@ -306,7 +295,6 @@ namespace cheetah_ana_pkg {
 		else{
 			printf("Error: thread creation failed (frame skipped)\n");
 		}
-		pthread_attr_destroy(&threadAttribute);		
 	}
 	// End of psana event method
 
@@ -456,22 +444,21 @@ namespace cheetah_ana_pkg {
 	
 
 	// This function joins all the threads that copied the Ana events and calls cheetah
-	void * cheetah_caller(void* threadData){
-		pthread_mutex_t * pthread_queue_mutex = (pthread_mutex_t *)threadData;
+	void * cheetah_caller(void* ){
 		while(runCheetahCaller){
-			pthread_mutex_lock(pthread_queue_mutex);
+			pthread_mutex_lock(&pthread_queue_mutex);
 			bool empty = runningThreads.empty();
 			// sleep if empty
 			if(empty){
 				// Unlikely to happen after the beginning
-				pthread_mutex_unlock(pthread_queue_mutex);
+				pthread_mutex_unlock(&pthread_queue_mutex);
 				usleep(100000);
 				continue;
 			}
 			pthread_t thread = runningThreads.front();
 			cEventData * eventData;
 			runningThreads.pop();
-			pthread_mutex_unlock(pthread_queue_mutex);
+			pthread_mutex_unlock(&pthread_queue_mutex);
 			pthread_join(thread,(void **)&eventData);
 			cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
 			

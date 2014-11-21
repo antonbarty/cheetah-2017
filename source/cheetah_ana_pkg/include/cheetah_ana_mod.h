@@ -101,9 +101,7 @@ namespace cheetah_ana_pkg {
 		int nActiveAnaThreads;
 		pthread_mutex_t  nActiveThreads_mutex;
 		pthread_mutex_t  counting_mutex;
-		pthread_mutex_t  process_mutex;
 
-		pthread_mutex_t  pthread_queue_mutex;
 
 		std::string m_key;
 		Source m_srcCspad0;
@@ -140,6 +138,7 @@ namespace cheetah_ana_pkg {
     extern std::queue<pthread_t> runningThreads;
     extern volatile bool runCheetahCaller;
     extern pthread_t cheetahCallerThread;
+	extern pthread_mutex_t pthread_queue_mutex;
     void * threaded_event(void* threadData);
     void * cheetah_caller(void * threadData);
 } // namespace cheetah_ana_pkg
