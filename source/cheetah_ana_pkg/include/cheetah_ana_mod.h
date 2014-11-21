@@ -15,6 +15,7 @@
 //-----------------
 #include <vector>
 #include <queue>
+#include <semaphore.h>
 
 #include <cheetah.h>
 
@@ -98,8 +99,6 @@ namespace cheetah_ana_pkg {
 		void waitForAnaModWorkers();
 		
 		// Data members
-		int nActiveAnaThreads;
-		pthread_mutex_t  nActiveThreads_mutex;
 		pthread_mutex_t  counting_mutex;
 
 
@@ -120,7 +119,7 @@ namespace cheetah_ana_pkg {
 
 		time_t startT;	
 
-
+        int finishedAnaThreads;
        
     };
 	
@@ -139,6 +138,7 @@ namespace cheetah_ana_pkg {
     extern volatile bool runCheetahCaller;
     extern pthread_t cheetahCallerThread;
 	extern pthread_mutex_t pthread_queue_mutex;
+    extern sem_t availableAnaThreads;
     void * threaded_event(void* threadData);
     void * cheetah_caller(void * threadData);
 } // namespace cheetah_ana_pkg

@@ -65,6 +65,7 @@ namespace cheetah_ana_pkg {
 	volatile bool runCheetahCaller;
 	pthread_t cheetahCallerThread;
 	pthread_mutex_t pthread_queue_mutex;
+    sem_t availableAnaThreads;
 
 	void sig_handler(int signo)
 	{
@@ -129,10 +130,10 @@ namespace cheetah_ana_pkg {
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");
 
-		nActiveAnaThreads = 0;
-		pthread_mutex_init(&nActiveThreads_mutex, NULL);
 		pthread_mutex_init(&counting_mutex, NULL);
 		pthread_mutex_init(&pthread_queue_mutex, NULL);
+
+		finishedAnaThreads = 0;
 
 		runCheetahCaller = true;
 		int returnStatus = pthread_create(&cheetahCallerThread, NULL, cheetah_caller, &pthread_queue_mutex);
@@ -165,6 +166,9 @@ namespace cheetah_ana_pkg {
 		if(cheetahGlobal.saveCXI){
 			signal(SIGINT, sig_handler);
 		}
+		// Initialize signal that keeps track of available threads
+		sem_init(&availableAnaThreads,0,cheetahGlobal.anaModThreads);
+
 
 		/* We need to know the names of the TOF detector source
 		   from the cheetah config file, that's why we're doing this here */
@@ -274,20 +278,12 @@ namespace cheetah_ana_pkg {
 		int returnStatus;
 		/*
 		 *  Wait until we have a spare thread in the thread pool
-		 */
-		while((nActiveAnaThreads >= cheetahGlobal.anaModThreads) || (cheetahGlobal.useSingleThreadCalibration && (cheetahGlobal.nActiveCheetahThreads > 1) && !cheetahGlobal.calibrated)) {
-			usleep(10000);
-		}
-		
+		 */		
+		sem_wait(&availableAnaThreads);
 		// Create a new worker thread for this data frame
 		returnStatus = pthread_create(&thread, NULL, threaded_event, (void*) new AnaModEventData(this, evtp, envp));		
 
 		if (returnStatus == 0) { // creation successful
-			// Increment threadpool counter
-			pthread_mutex_lock(&nActiveThreads_mutex);
-			nActiveAnaThreads += 1;
-			pthread_mutex_unlock(&nActiveThreads_mutex);
-
 			pthread_mutex_lock(&pthread_queue_mutex);
 			runningThreads.push(thread);
 			pthread_mutex_unlock(&pthread_queue_mutex);
@@ -381,9 +377,11 @@ namespace cheetah_ana_pkg {
 	}
 
 	void cheetah_ana_mod::waitForAnaModWorkers(){
-		printf("Waiting for %d ana mod workers to finish.\n", nActiveAnaThreads);
-		while(nActiveAnaThreads > 0) {
-			usleep(50000);
+		while(finishedAnaThreads < cheetahGlobal.anaModThreads){			
+			printf("Waiting for %d ana mod workers to finish.\n", cheetahGlobal.anaModThreads-finishedAnaThreads);
+			//wait for a thread to finish
+			sem_wait(&availableAnaThreads);
+			finishedAnaThreads++;
 		}
 		printf("Ana mod workers stopped successfully.\n");
 	}
@@ -460,6 +458,7 @@ namespace cheetah_ana_pkg {
 			runningThreads.pop();
 			pthread_mutex_unlock(&pthread_queue_mutex);
 			pthread_join(thread,(void **)&eventData);
+			sem_post(&availableAnaThreads);
 			cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
 			
 		}

@@ -1009,10 +1009,6 @@ namespace cheetah_ana_pkg {
 			eventData->detector[detIndex].detectorZ = detectorPosition[detIndex];
 		}
 
-		pthread_mutex_lock(&nActiveThreads_mutex);
-		nActiveAnaThreads -= 1;
-		pthread_mutex_unlock(&nActiveThreads_mutex);		
-
 		pthread_exit(eventData);
 	}
 
