@@ -102,6 +102,8 @@ int cheetahInit(cGlobal *global) {
 		spawnPython(global->pythonFile);
 	}
 
+
+
 	printf("Cheetah clean initialisation\n");
 	return 0;
 }
@@ -341,33 +343,25 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
         pthread_attr_t	threadAttribute;
         int				returnStatus;
         
-		time_t	tstart, tnow;
-		time(&tstart);
-		double	dtime;
-		double  dnextmsg = 20;
-        
         /*
          *  Wait until we have a spare thread in the thread pool
-         *  If nothing happens for 2 minutes, assume we have some sort of thread lockup and keep going anyway
+         *  If nothing happens for some time, assume we have some sort of thread lockup and keep going anyway
          */
-        while(global->nActiveCheetahThreads >= global->nThreads ||
-			  (global->useSingleThreadCalibration && (global->nActiveCheetahThreads == 1) && !global->calibrated)) {
-			usleep(10000);
-			if (!(global->useSingleThreadCalibration && (global->nActiveCheetahThreads > 1) && !global->calibrated)){
-				time(&tnow);
-				dtime = difftime(tnow, tstart);
-				if(dtime > dnextmsg) {
-					printf("Waiting for available worker thread (%li active)\n", global->nActiveCheetahThreads);
-					dnextmsg += 1;
-				}
-				if(( dtime > ((float) global->threadTimeoutInSeconds) ) && (global->threadTimeoutInSeconds > 0)) {
-					printf("\tApparent thread lock - no free thread for %li seconds.\n", (long int) dtime);
-					printf("\tGiving up and resetting the thread counter\n");
-					global->unlockMutexes();
-					global->nActiveCheetahThreads = 0;
-					break;
-				}
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		ts.tv_sec += global->threadTimeoutInSeconds;
+		int sem_ret = sem_timedwait(&global->availableCheetahThreads, &ts);
+		if(sem_ret == ETIMEDOUT){
+			printf("\tApparent thread lock - no free thread for %li seconds.\n", global->threadTimeoutInSeconds);
+			printf("\tGiving up and resetting the thread counter\n");
+			global->unlockMutexes();
+			global->nActiveCheetahThreads = 0;
+			int semValue = 0;
+			while(semValue < global->nThreads){
+				sem_post(&global->availableCheetahThreads);
+				sem_getvalue(&global->availableCheetahThreads, &semValue);
 			}
+				
 		}
         
         // Set detached state

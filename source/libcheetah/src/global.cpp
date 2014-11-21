@@ -375,6 +375,8 @@ void cGlobal::setup() {
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	pthread_mutex_init(&gmd_mutex, NULL);  
 
+	sem_init(&availableCheetahThreads, 0, nThreads);
+
 	/*
 	 *  INITIAL CALIBRATION
 	 */

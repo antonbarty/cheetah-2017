@@ -13,6 +13,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <semaphore.h>
+
 #include "detectorObject.h"
 #include "tofDetector.h"
 #include "peakDetect.h"
@@ -360,6 +362,7 @@ public:
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
 	pthread_mutex_t  swmr_mutex;
+	sem_t availableCheetahThreads;
 
 	/*
 	 *	Common variables
