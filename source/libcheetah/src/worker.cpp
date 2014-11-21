@@ -408,6 +408,7 @@ cleanup:
 	global->nActiveCheetahThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
 
+	global->processRateMonitor.frameFinished();
 	// Free memory only if running multi-threaded
 	if(eventData->useThreads == 1) {
 		cheetahDestroyEvent(eventData);
