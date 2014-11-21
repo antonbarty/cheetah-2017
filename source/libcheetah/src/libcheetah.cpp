@@ -380,6 +380,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 			global->threadCounter += 1;
 		}
 		else{
+			sem_post(&global->availableCheetahThreads);
 			printf("Error: thread creation failed (frame skipped)\n");
         }
 		pthread_mutex_unlock(&global->nActiveThreads_mutex);
