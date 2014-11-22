@@ -98,48 +98,6 @@ void subtractPersistentBackground(float *data, float *background, int scaleBg, l
 }
 
 
-void calculatePersistentBackground(cEventData *eventData, cGlobal *global){
-	DETECTOR_LOOP {
-		if(global->detector[detIndex].useSubtractPersistentBackground){
-			/*
-			 *	Recalculate background from time to time
-			 */
-			DEBUG3("Check wheter or not we need to calculate a persistent background from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			long    lastUpdate = global->detector[detIndex].bgLastUpdate;
-			long    counter = global->detector[detIndex].bgCounter;
-			long	recalc = global->detector[detIndex].bgRecalc;
-			long	memory = global->detector[detIndex].bgMemory;
-			float	medianPoint = global->detector[detIndex].bgMedian;
-			bool    lockThreads = global->detector[detIndex].bgCalibrated || global->threadSafetyLevel < 1;
-
-			pthread_mutex_lock(&global->detector[detIndex].bg_update_mutex);
-
-			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == recalc+lastUpdate) && (lastUpdate != 0)) || 
-				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
-
-				global->detector[detIndex].bgLastUpdate = eventData->threadNum;
-
-				// Keep the lock if not calibrated or high thread safety level
-				if(!lockThreads) pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);
-
-				DEBUG3("Actually calculate a persistent background from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
-				printf("Detector %li: Start calculation of persistent background.\n",detIndex);			
-				
-				global->detector[detIndex].frameBufferBlanks->updateMedian(medianPoint);
-				
-				printf("Detector %li: Persistent background calculated.\n",detIndex);      
-				global->detector[detIndex].bgCalibrated = 1;
-
-				if(lockThreads)	pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);		   
-
-			} else {
-				pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);			
-			}
-		}
-	}
-}	
-
-
 /*
  *	Update background buffer
  */
@@ -147,6 +105,10 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].useSubtractPersistentBackground && (hit==0 || global->detector[detIndex].bgIncludeHits)) {
+			long	recalc = global->detector[detIndex].bgRecalc;
+			long	memory = global->detector[detIndex].bgMemory;
+			float	medianPoint = global->detector[detIndex].bgMedian;
+
 			// Select data type to add
 			float* data;
 			if (global->detector[detIndex].useDarkcalSubtraction){
@@ -160,6 +122,36 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 			long bufferDepth = global->detector[detIndex].frameBufferBlanks->depth;
 			if (counter < bufferDepth)
 				printf("Persistent background ring buffer fill status: %li/%li.\n",counter+1,bufferDepth);
+			
+			// Do we have to update the persistent background (median from the buffer)
+			DEBUG3("Check wheter or not we need to calculate a persistent background from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			pthread_mutex_lock(&global->detector[detIndex].bg_update_mutex);
+			long lastUpdate = global->detector[detIndex].bgLastUpdate;
+			
+			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
+				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
+
+				bool  keepThreadsLocked = global->detector[detIndex].bgCalibrated || global->threadSafetyLevel < 1;
+				global->detector[detIndex].bgLastUpdate = eventData->threadNum;
+
+				// Keep the lock during calculation of median either
+				// - if we run at high thread safety level or
+				// - if we are not calibrated yet (we do not want to loose frames unnecessarily during calibration)
+				if(!keepThreadsLocked) pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);
+
+				DEBUG3("Actually calculate a persistent background from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
+				printf("Detector %li: Start calculation of persistent background.\n",detIndex);			
+				
+				global->detector[detIndex].frameBufferBlanks->updateMedian(medianPoint);
+				
+				printf("Detector %li: Persistent background calculated.\n",detIndex);      
+				global->detector[detIndex].bgCalibrated = 1;
+
+				if(keepThreadsLocked)	pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);		   
+
+			} else {
+				pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);			
+			}
 		}		
 	}
 }

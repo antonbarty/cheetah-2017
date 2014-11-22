@@ -229,7 +229,6 @@ hitknown:
 	
 	// Update running backround estimate based on non-hits
 	updateBackgroundBuffer(eventData, global, hit); 
-	calculatePersistentBackground(eventData,global);  
 
 	// Identify noisy pixels
 	updateNoisyPixelBuffer(eventData,global,hit);
