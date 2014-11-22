@@ -270,8 +270,10 @@ class Run:
         txt += ["cd ..\n"]
         s = processdir.split("/")[-1]
         txt += ["ln -s -f %s %s\n" % (s,self.run_name)]
-        txt += ["chmod -R a+xr %s\n" % s]
-        txt += ["chmod a+xr %s\n" % (self.run_name)]
+        txt += ["chgrp -R %s %s\n" % (self.conf["general"]["unix_group"],s)]
+        txt += ["chmod -R g+xr %s\n" % s]
+        txt += ["chgrp %s %s\n" % (self.conf["general"]["unix_group"],self.run_name)]
+        txt += ["chmod g+xr %s\n" % (self.run_name)]
         with open(processexec,"w") as f:
             f.writelines(txt)
         os.system("chmod u+x %s" % processexec)

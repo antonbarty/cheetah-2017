@@ -127,7 +127,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useAutoHotPixel = 0;
 	hotPixFreq = 0.9;
 	hotPixADC = 1000;
-	hotPixMemory = 50;
+	hotPixMemory = bgMemory;
 	hotPixRecalc = bgMemory;
 	useHotPixelBufferMutex = 0;
 	// Kill persistently hot pixels
@@ -508,6 +508,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
 		hotPixMemory = atoi(value);
+	}
+	else if (!strcmp(tag, "hotpixrecalc")) {
+		hotPixRecalc = atoi(value);
 	}
 	else if (!strcmp(tag, "useautohalopixel") || !strcmp(tag, "useautonoisypixel")) {
 		useAutoNoisyPixel = atoi(value);

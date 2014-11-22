@@ -170,7 +170,7 @@ localBGCalculated:
 	setBadPixelsToZero(eventData, global);
 	
 	// Identify hot pixels and set them to zero
-	identifyHotPixels(eventData, global);
+	updateHotPixelBuffer(eventData, global);
 	calculateHotPixelMask(eventData,global);
 	setHotPixelsToZero(eventData,global);
 	
@@ -296,9 +296,7 @@ hitknown:
 
 	//---WRITE-DATA-TO-H5---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Write data to h5");
-	}
+	DEBUG2("Write data to h5");
 
 	updateDatarate(global);  
 
@@ -323,6 +321,7 @@ hitknown:
 
 	if(eventData->writeFlag){
 		// one CXI or many H5?
+		DEBUG2("About to write frame.");
 		if(global->saveCXI){
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
 				   eventData->threadNum, global->processRateMonitor.getRate(), 
@@ -335,6 +334,7 @@ hitknown:
 			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
+		DEBUG2("Frame written.");
 	}
 	// This frame is not going to be saved, but print anyway
 	else {
@@ -401,8 +401,11 @@ cleanup:
 
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
-	global->nActiveThreads -= 1;
+	global->nActiveCheetahThreads -= 1;
 	pthread_mutex_unlock(&global->nActiveThreads_mutex);
+	sem_post(&global->availableCheetahThreads);
+
+	global->processRateMonitor.frameFinished();
 
 	// Free memory only if running multi-threaded
 	if(eventData->useThreads == 1) {

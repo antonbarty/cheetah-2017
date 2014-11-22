@@ -4,7 +4,7 @@ find_package(PSANA REQUIRED)
 find_package(HDF5 REQUIRED)
 
 
-LIST(APPEND sources "src/cheetah_ana_mod.cpp")
+LIST(APPEND sources "src/cheetah_ana_mod.cpp" "src/event_copy.cpp")
 
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 

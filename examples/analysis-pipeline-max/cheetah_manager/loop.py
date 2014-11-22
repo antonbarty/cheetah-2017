@@ -100,8 +100,10 @@ def loop(configfilename,email,password):
         counter += 1
 
     #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
-    
-        time.sleep(0.1)
+        ttab.note("Waiting for user to press a key...") 
+        
+        ttab.screen.getch()
+
     #except:
     #    print "ERROR OCCURED - RESTARTING IN A FEW SECONDS..."
     #    time.sleep(5)

@@ -20,11 +20,15 @@
 namespace CXI{
 	const char* ATTR_NAME_NUM_EVENTS = "numEvents";
 
+	const int IgnoreOverflow = 1;
+	const int IgnoreTruncate = 2;
+	const int IgnorePrecision = 4;
+	const int IgnoreNAN = 8;
 	class Node{
 	public:
 		enum Type{Dataset, Group, Link};
-
-		Node(const char * filename, bool swmr){
+		Node(const char * filename, bool swmr, int _ignore_flags){
+			ignoreConversionExceptions = _ignore_flags;
 			parent = NULL;
 			type = Group;
 			name = std::string("/");
@@ -46,11 +50,12 @@ namespace CXI{
 			if( id<0 ) {ERROR("Cannot create file.\n");}
 			stackCounter = 0;
 		}
-		Node(std::string s, hid_t oid, Node * p, Type t){
+		Node(std::string s, hid_t oid, Node * p, Type t,  int _ignore_flags){
 			name = s;
 			parent = p;
 			id = oid;
 			type = t;
+			ignoreConversionExceptions = _ignore_flags;
 		}
 		Node & operator [](std::string s){
 			if(children.find(s) != children.end()){
@@ -63,6 +68,12 @@ namespace CXI{
 		hid_t hid(){
 			return id;
 			
+		}
+		// Destructor
+		~Node(){
+			for(Iter it = children.begin(); it != children.end(); it++) {
+				delete it->second;
+			}
 		}
 		/*
 		  The base name of the class should be used.
@@ -114,7 +125,7 @@ namespace CXI{
 		/*  This counter defines where in the file each image is stored.
 		 *  It is atomically incremented by each thread */
 		uint stackCounter;
-
+		int ignoreConversionExceptions;
 	};
 
 	const int version = 140;

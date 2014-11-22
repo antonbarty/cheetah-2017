@@ -94,20 +94,64 @@ namespace CXI{
 			H5Pset_chunk(cparms, ndims, dims);
 		}
 		//  H5Pset_deflate (cparms, 2);
-		hid_t dataset = H5Dcreate(loc, s, dataType, dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+		hid_t dapl_id = H5Pcreate(H5P_DATASET_ACCESS);
+		if((ndims == 3 || ndims == 4) && chunkSize){
+			H5Pset_chunk_cache(dapl_id,H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
+		}
+		hid_t dataset = H5Dcreate(loc, s, dataType, dataspace, H5P_DEFAULT, cparms, dapl_id);
 		if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
 		H5Sclose(dataspace);
 		H5Pclose(cparms);		
+		H5Pclose(dapl_id);		
 
-		if((ndims == 3 || ndims == 4) && chunkSize){
-			H5Pset_chunk_cache(H5Dget_access_plist(dataset),H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
-		}
 
 		if(stackSize == H5S_UNLIMITED){
 			addStackAttributes(dataset,ndims,userAxis);
 		}
 		return addNode(s, dataset, Dataset);    
 	}
+
+	H5T_conv_ret_t handle_conversion_exceptions( H5T_conv_except_t except_type, hid_t , hid_t,
+												 void *, void *, void *op_data){
+		int ignoreFlags = *((int *)op_data);
+		if(except_type == H5T_CONV_EXCEPT_RANGE_HI ||
+		   except_type == H5T_CONV_EXCEPT_RANGE_LOW){
+			if((ignoreFlags & IgnoreOverflow) == 0){							
+				printf("WARNING: Datatype conversion exception (overflow)!\n");
+				printf("Changing dataSaveFormat in cheetah.ini to a larger type might avoid the exception.\n");
+				printf("Add ignoreConversionOverflow=1 to your cheetah.ini to supress this warning\n");
+			}
+		}
+		if(except_type == H5T_CONV_EXCEPT_TRUNCATE){
+			if((ignoreFlags & IgnoreTruncate) == 0){							
+				printf("WARNING: Datatype conversion exception (truncation of fractional part)!\n");
+				printf("Changing dataSaveFormat in cheetah.ini to float might avoid the exception.\n");
+				printf("Add ignoreConversionTruncate=1 to your cheetah.ini to supress this warning\n");
+			}
+		}
+		if(except_type == H5T_CONV_EXCEPT_PRECISION){
+			if((ignoreFlags & IgnorePrecision) == 0){							
+				printf("WARNING: Datatype conversion exception (loss of precision)!\n");
+				printf("Changing dataSaveFormat in cheetah.ini to a larger type might avoid the exception.\n");
+				printf("Add ignoreConversionPrecision=1 to your cheetah.ini to supress this warning\n");
+			}
+		}
+		if(except_type == H5T_CONV_EXCEPT_PINF ||
+				 except_type == H5T_CONV_EXCEPT_NINF){
+			if((ignoreFlags & IgnoreNAN) == 0){							
+				printf("WARNING: Datatype conversion exception (input is infinity)!\n");
+				printf("Add ignoreConversionNAN=1 to your cheetah.ini to supress this warning\n");
+			}
+		}
+		if(except_type == H5T_CONV_EXCEPT_NAN){
+			if((ignoreFlags & IgnoreNAN) == 0){							
+				printf("WARNING: Datatype conversion exception (input is NAN)!\n");
+				printf("Add ignoreConversionNAN=1 to your cheetah.ini to supress this warning\n");
+			}
+		}
+		return H5T_CONV_UNHANDLED;
+	}
+
 
 	template <class T> 
 	void Node::write(T * data, int stackSlice, int sliceSize, bool variableSlice){  
@@ -189,7 +233,12 @@ namespace CXI{
 				ERROR("Cannot select hyperslab.\n");
 			}
 		}
-		w = H5Dwrite (dataset, type, memspace, dataspace, H5P_DEFAULT, data);
+
+		hid_t xfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
+		H5Pset_type_conv_cb(xfer_plist_id, handle_conversion_exceptions, &ignoreConversionExceptions);
+
+
+		w = H5Dwrite (dataset, type, memspace, dataspace, xfer_plist_id, data);
 		if( w<0 ){
  			ERROR("Cannot write to file.\n");
 		}
@@ -198,6 +247,7 @@ namespace CXI{
 		}
 		H5Sclose(memspace);
 		H5Sclose(dataspace);
+		H5Pclose(xfer_plist_id);
 	}
 
 	Node * Node::addClass(const char * s){
@@ -311,7 +361,7 @@ namespace CXI{
 
 
 	Node * Node::addNode(const char * s, hid_t oid, Type t){
-		Node * n = new Node(s, oid, this, t);
+		Node * n = new Node(s, oid, this, t, ignoreConversionExceptions);
 		children[s] = n;
 		return n;
 	}
@@ -501,12 +551,38 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	
 	DEBUGL2_ONLY{ DEBUG("Create Skeleton."); }
 
-	CXI::Node * root = new Node(filename,global->cxiSWMR);
+
+	int ignoreConversionFlags = 0;
+	if(global->ignoreConversionOverflow){
+		ignoreConversionFlags |= CXI::IgnoreOverflow;
+	}
+	if(global->ignoreConversionTruncate){
+		ignoreConversionFlags |= CXI::IgnoreTruncate;
+	}
+	if(global->ignoreConversionPrecision){
+		ignoreConversionFlags |= CXI::IgnorePrecision;
+	}
+	if(global->ignoreConversionNAN){
+		ignoreConversionFlags |= CXI::IgnoreNAN;
+	}
+	CXI::Node * root = new Node(filename,global->cxiSWMR,ignoreConversionFlags);
+
+	// Check what data type format we want to save things in. Defaults to float
+	hid_t h5type = H5T_NATIVE_FLOAT;
+	if(!strcasecmp(global->dataSaveFormat,"INT16")){
+		h5type = H5T_STD_I16LE;
+	}else if(!strcasecmp(global->dataSaveFormat,"INT32")){
+		h5type = H5T_STD_I32LE;
+	}else if(!strcasecmp(global->dataSaveFormat,"float")){
+		h5type = H5T_NATIVE_FLOAT;
+	}
+	
 
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
-	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(GIT_SHA1);
-	if (getenv("PSANA_GIT_SHA"))
-		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,CXI::stringSize)->write(getenv("PSANA_GIT_SHA"));
+	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,strlen(GIT_SHA1))->write(GIT_SHA1);
+	char * psana_git_sha = getenv("PSANA_GIT_SHA");
+	if (psana_git_sha)
+		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,strlen(psana_git_sha))->write(psana_git_sha);
 
 	Node * entry = root->addClass("entry");
 	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,CXI::stringSize);
@@ -559,10 +635,13 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		entry->addClassLink("data",detector->path().c_str());
 
 		detector->createStack("distance",H5T_NATIVE_DOUBLE);
-		detector->createStack("description",H5T_NATIVE_CHAR,CXI::stringSize);
 		detector->createStack("x_pixel_size",H5T_NATIVE_DOUBLE);
 		detector->createStack("y_pixel_size",H5T_NATIVE_DOUBLE);
+
 		detector->createLink("experiment_identifier", "/entry_1/experiment_identifier");
+
+		int sBufferLen = sprintf(sBuffer,"%s [%s]",global->detector[detIndex].detectorType,global->detector[detIndex].detectorName);
+		detector->createDataset("description",H5T_NATIVE_CHAR,sBufferLen)->write(sBuffer);
 
 		// DATA_FORMAT_NON_ASSEMBLED
 		DEBUGL2_ONLY{ DEBUG("Data format non-assembled."); }
@@ -577,7 +656,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					sprintf(sBuffer,"modular_%s",dataV.name);
 					Node * data_node = detector->createGroup(sBuffer);
 					data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
-					data_node->createStack("data",H5T_NATIVE_FLOAT, asic_nx, asic_ny, nasics);
+					data_node->createStack("data", h5type, asic_nx, asic_ny, nasics);
 					data_node->createStack("corner_positions",H5T_NATIVE_FLOAT, 3, nasics, H5S_UNLIMITED, 0, 0, 0, "experiment_identifier:module_identifier:coordinate");
 					data_node->createStack("basis_vectors", H5T_NATIVE_FLOAT, 3, 2, nasics, H5S_UNLIMITED, 0, 0, "experiment_identifier:module_identifier:dimension:coordinate");
 					data_node->createStack("module_identifier", H5T_NATIVE_CHAR, CXI::stringSize, nasics, 0, H5S_UNLIMITED, 0,0,"experiment_identifier:module_identifier");
@@ -612,7 +691,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 					// Create group /entry_1/instrument_1/detector_[i]/[datver]/
 					Node * data_node = detector->createGroup(dataV.name_version);
 					data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
-					data_node->createStack("data",H5T_NATIVE_FLOAT,pix_nx, pix_ny);
+					data_node->createStack("data", h5type,pix_nx, pix_ny);
 					if(global->detector[detIndex].savePixelmask){
 						data_node->createStack("mask",H5T_NATIVE_UINT16,pix_nx, pix_ny);
 					}
@@ -651,7 +730,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			while (dataV.next()) {
 				// Create group /entry_1/image_i/data_[datver]/
 				Node * data_node = image_node->createGroup(dataV.name_version);		
-				data_node->createStack("data",H5T_NATIVE_FLOAT, image_nx, image_ny);
+				data_node->createStack("data", h5type, image_nx, image_ny);
 				if(global->detector[detIndex].savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, image_nx, image_ny);
 				}
@@ -695,7 +774,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			while (dataV.next()) {
 				// Create group /entry_1/image_i/[datver]/
 				Node * data_node = image_node->createGroup(dataV.name_version);			
-				data_node->createStack("data",H5T_NATIVE_FLOAT, imageXxX_nx, imageXxX_ny);
+				data_node->createStack("data", h5type, imageXxX_nx, imageXxX_ny);
 				if(global->detector[detIndex].savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, imageXxX_nx, imageXxX_ny);
 				}
@@ -745,7 +824,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			while (dataV.next()) {
 				// Create group /entry_1/image_i/[datver]/
 				Node * data_node = image_node->createGroup(dataV.name_version);		
-				data_node->createStack("data",H5T_NATIVE_FLOAT, radial_nn);
+				data_node->createStack("data", H5T_NATIVE_FLOAT, radial_nn);
 				if(global->detector[detIndex].savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, radial_nn);
 				}
@@ -783,9 +862,9 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			Node * detector = instrument->createGroup("detector",1+i+global->nDetectors);
 			detector->createStack("data",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
 			detector->createStack("tofTime",H5T_NATIVE_DOUBLE,global->tofDetector[i].numSamples);
-			sprintf(buffer,"TOF detector with source %s and channel %d\n%s",global->tofDetector[i].sourceIdentifier,
-					global->tofDetector[i].channel, global->tofDetector[i].description);
-			detector->createDataset("description",H5T_NATIVE_CHAR,MAX_FILENAME_LENGTH)->write(buffer);
+			int buffLen = sprintf(buffer,"TOF detector\nSource identifier: %s\nChannel number: %d\nDescription: %s\n",global->tofDetector[i].sourceIdentifier,
+								  global->tofDetector[i].channel, global->tofDetector[i].description);
+			detector->createDataset("description",H5T_NATIVE_CHAR,buffLen)->write(buffer);
 		}
 	}
 
@@ -836,7 +915,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("f_21_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
-	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,CXI::stringSize);
+	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,26);
 	lcls->createLink("eventTime","eventTimeString");
 	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
 
@@ -962,10 +1041,12 @@ static CXI::Node * getCXIFileByName(cGlobal *global){
 	for(uint i = 0;i<openFilenames.size();i++){
 		if(openFilenames[i] == std::string(filename)){
 			pthread_mutex_unlock(&global->framefp_mutex);
+			DEBUG2("Found file pointer to already opened file.");
 			return openFiles[i];
 		}
 	}
 	openFilenames.push_back(filename);
+	DEBUG2("Creating a new file.");
 	CXI::Node * cxi = createCXISkeleton(filename,global);
 	openFiles.push_back(cxi);
 	pthread_mutex_unlock(&global->framefp_mutex);
@@ -1055,6 +1136,7 @@ void closeCXIFiles(cGlobal * global){
 }
 
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
+	DEBUG2("Writing Hitstats.");
 #ifdef H5F_ACC_SWMR_WRITE  
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->swmr_mutex);
@@ -1075,13 +1157,14 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 
 
 void writeCXI(cEventData *eventData, cGlobal *global ){
+	DEBUG2("Write a data of one frame to CXI file.");
 	using CXI::Node;
 #ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->nActiveThreads_mutex);
-		if (global->nActiveThreads) {
-			global->nActiveThreads--;
+		if (global->nActiveCheetahThreads) {
+			global->nActiveCheetahThreads--;
 			didDecreaseActive = true;
 		}
 		pthread_mutex_unlock(&global->nActiveThreads_mutex);
@@ -1140,9 +1223,6 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		detector["distance"].write(&tmp,stackSlice);
 		detector["x_pixel_size"].write(&pixelSize,stackSlice);
 		detector["y_pixel_size"].write(&pixelSize,stackSlice);
-
-		sprintf(sBuffer,"%s [%s]",global->detector[detIndex].detectorType,global->detector[detIndex].detectorName);
-		detector["description"].write(sBuffer,stackSlice);
 
 		// DATA_FORMAT_NON_ASSEMBLED
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_NON_ASSEMBLED)) {
@@ -1366,7 +1446,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		
 		if (didDecreaseActive) {
 			pthread_mutex_lock(&global->nActiveThreads_mutex);
-			global->nActiveThreads++;
+			global->nActiveCheetahThreads++;
 			pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		}
 		pthread_mutex_unlock(&global->swmr_mutex);

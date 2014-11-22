@@ -182,6 +182,15 @@ cGlobal::cGlobal(void) {
 	// Do not use SWMR mode by default
 	cxiSWMR = 0;
 
+	// Warn on conversion overflow
+	ignoreConversionOverflow = 0;
+	// Warn on conversion truncate
+	ignoreConversionTruncate = 1;
+	// Warn on conversion from not real numbers
+	ignoreConversionNAN = 0;
+	// Warn on precision loss on conversion
+	ignoreConversionPrecision = 0;
+
 	// Visualization
 	pythonFile[0] = 0;
 
@@ -344,7 +353,7 @@ void cGlobal::setup() {
 	 *  THREAD MANAGEMENT
 	 */
 	// Set up thread management
-	nActiveThreads = 0;
+	nActiveCheetahThreads = 0;
 	threadCounter = 0;
 	pthread_mutex_init(&hitclass_mutex, NULL);
 	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
@@ -365,6 +374,8 @@ void cGlobal::setup() {
 	pthread_mutex_init(&saveCXI_mutex, NULL);  
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
 	pthread_mutex_init(&gmd_mutex, NULL);  
+
+	sem_init(&availableCheetahThreads, 0, nThreads);
 
 	/*
 	 *  INITIAL CALIBRATION
@@ -1151,6 +1162,14 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 		cxiFlushPeriod = atoi(value);
 	} else if (!strcmp(tag, "cxiswmr")) {
 		cxiSWMR = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionoverflow")) {
+		ignoreConversionOverflow = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversiontruncate")) {
+		ignoreConversionTruncate = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionprecision")) {
+		ignoreConversionPrecision = atoi(value);
+	} else if (!strcmp(tag, "ignoreconversionnan")) {
+		ignoreConversionNAN = atoi(value);
 	} else if (!strcmp(tag, "pythonfile")) {
 		strcpy(pythonFile, value);
 	}
@@ -1350,6 +1369,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "hotPixFreq=%f\n",detector[i].hotPixFreq);
         fprintf(fp, "hotPixADC=%d\n",detector[i].hotPixADC);
         fprintf(fp, "hotPixMemory=%d\n",detector[i].hotPixMemory);
+        fprintf(fp, "hotPixRecalc=%d\n",detector[i].hotPixRecalc);
         fprintf(fp, "maskSaturatedPixels=%d\n",detector[i].maskSaturatedPixels);
         fprintf(fp, "pixelSaturationADC=%ld\n",detector[i].pixelSaturationADC);
         fprintf(fp, "useAutoNoisyPixel=%d\n",detector[i].useAutoNoisyPixel);
