@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include "dataVersion.h"
+#include "frameBuffer.h"
 
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
@@ -99,7 +100,6 @@ static const int ASSEMBLE_INTERPOLATION_DEFAULT = ASSEMBLE_INTERPOLATION_LINEAR;
 #define POWDER_LOOP for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) 
 
 class cGlobal;
-
 
 /** @brief Detector configuration common to all events */
 class cPixelDetectorCommon {
@@ -239,14 +239,14 @@ public:
 	long   localBackgroundRadius;
 	// Running background subtraction
 	int    useSubtractPersistentBackground;
-	int    subtractBg;
+	//int    subtractBg;
 	int    scaleBackground;
 	int    useBackgroundBufferMutex;
 	float  bgMedian;
 	long   bgMemory;
 	long   bgRecalc;
 	long   bgCounter;
-	pthread_mutex_t bgCounter_mutex;
+	pthread_mutex_t bg_update_mutex;
 	int    bgCalibrated;
 	long   bgLastUpdate;
 	int    bgIncludeHits;
@@ -287,6 +287,9 @@ public:
 	int    usePnccdLineInterpolation;
 	// declare pixel bad if they are located in bad lines
 	int    usePnccdLineMasking;
+
+	// Ring buffer of blank frames
+	cFrameBuffer *frameBufferBlanks;
 
 	// Saving options
 	// Data versions
@@ -351,10 +354,10 @@ public:
 	float             *noisyPix_buffer;
 	pthread_mutex_t   *noisyPix_mutexes;	
 	// Persistent background
-	int16_t           *bg_buffer;
-	pthread_mutex_t   *bg_mutexes;
-	float             *persistentBackground;
-	pthread_mutex_t   persistentBackground_mutex;
+	//int16_t           *bg_buffer;
+	//pthread_mutex_t   *bg_mutexes;
+	//float             *persistentBackground;
+	//pthread_mutex_t   persistentBackground_mutex;
 	// Powder data (accumulated sums and sums of squared values)
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];

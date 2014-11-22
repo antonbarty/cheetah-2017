@@ -109,8 +109,6 @@ void *worker(void *threadarg) {
 
 	// Subtract darkcal image (static electronic offsets)
 	subtractDarkcal(eventData, global);
-	// If no darkcal file: Init background buffer here (background = photon background + static electronic offsets)
-	initBackgroundBuffer(eventData,global);
 	// If no darkcal file: Subtract persistent background here (background = photon background + static electronic offsets)
 	subtractPersistentBackground(eventData, global);
 
@@ -191,8 +189,6 @@ localBGCalculated:
 	// Initialise data_detPhotCorr with data_detCorr
 	initPhotonCorrection(eventData,global);
 
-	// If darkcal file available: Init background buffer here (background = photon background)
-	initBackgroundBuffer(eventData,global);
 	// If darkcal file available: Subtract persistent background here (background = photon background)
 	subtractPersistentBackground(eventData, global);
 	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end - not to be crunched with detector /Max)

@@ -715,6 +715,8 @@ void cPixelDetectorCommon::allocateMemory() {
 		pthread_mutex_init(&noisyPix_mutexes[j], NULL);
 	}
 	// Persistent background
+	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,0);
+	/*
 	pthread_mutex_init(&bgCounter_mutex, NULL);
 	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
 	bg_mutexes = (pthread_mutex_t*) calloc(bgMemory, sizeof(pthread_mutex_t));
@@ -723,6 +725,7 @@ void cPixelDetectorCommon::allocateMemory() {
 	}
 	persistentBackground = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_init(&persistentBackground_mutex, NULL);
+	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;
@@ -816,14 +819,16 @@ void cPixelDetectorCommon::freeMemory() {
 	}
 	free(noisyPix_mutexes);
 	// Persistent background
-	pthread_mutex_destroy(&bgCounter_mutex);
-	free(bg_buffer);
+	delete frameBufferBlanks;
+	pthread_mutex_destroy(&bg_update_mutex);
+	/*free(bg_buffer);
 	for (long j=0; j<bgMemory; j++) {
 		pthread_mutex_destroy(&bg_mutexes[j]);
 	}
 	free(bg_mutexes);
 	pthread_mutex_destroy(&persistentBackground_mutex);
 	free(persistentBackground);
+	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 
@@ -888,11 +893,12 @@ void cPixelDetectorCommon::unlockMutexes() {
 		pthread_mutex_unlock(&noisyPix_mutexes[j]);
 	}
 	// Persistent background
-	pthread_mutex_unlock(&bgCounter_mutex);
-	for (long j=0; j<bgMemory; j++) {
+	pthread_mutex_unlock(&bg_update_mutex);
+	/*for (long j=0; j<bgMemory; j++) {
 		pthread_mutex_unlock(&bg_mutexes[j]);
 	}
 	pthread_mutex_unlock(&persistentBackground_mutex);
+	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 

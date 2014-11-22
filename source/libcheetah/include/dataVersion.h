@@ -1,5 +1,5 @@
 /*
- *  dataVersion.cpp
+ *  dataVersion.h
  *  cheetah
  *
  *  Created by Max Felix Hantke on 3/11/14.

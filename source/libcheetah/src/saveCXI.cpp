@@ -1012,10 +1012,12 @@ void writeAccumulatedCXI(cGlobal * global){
 			}
 			// Persistent background (median)
 			if (global->detector[detIndex].useSubtractPersistentBackground) {
-				float	*background = global->detector[detIndex].persistentBackground;
 				long	pix_nn = global->detector[detIndex].pix_nn;
+				float	*background = (float *) malloc(pix_nn*sizeof(float));
+				global->detector[detIndex].frameBufferBlanks->copyMedian(background);
 				sprintf(sBuffer,"perisistent_background"); 
 				det_node[sBuffer].write(background, -1, pix_nn);
+				free(background);
 			}
 		}
 	}

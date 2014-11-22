@@ -11,6 +11,7 @@ mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_DEBUG)
 # Add source files here
 LIST(APPEND sources "src/assemble2DImage.cpp" "src/backgroundCorrection.cpp")
 LIST(APPEND sources "src/data2d.cpp" "src/detectorCorrection.cpp")
+LIST(APPEND sources "src/frameBuffer.cpp")
 LIST(APPEND sources "src/dataVersion.cpp" "src/detectorObject.cpp")
 LIST(APPEND sources "src/hitfinders.cpp")	    
 LIST(APPEND sources "src/downsample.cpp" "src/integratePattern.cpp")
