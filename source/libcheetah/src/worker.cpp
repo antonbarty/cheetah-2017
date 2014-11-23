@@ -51,18 +51,14 @@ void *worker(void *threadarg) {
 
 	//--------MONITORING---------//
 
-	DEBUGL2_ONLY {
-		DEBUG("Monitoring");
-	}
+	DEBUG2("Monitoring");
 
 	updateDatarate(global);
 
 
 	//---INITIALIZATIONS-AND-PREPARATIONS---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Initializations and preparations");
-	}
+	DEBUG2("Initializations and preparations");
 
 	/*
 	 *  Inside-thread speed test
@@ -97,9 +93,7 @@ void *worker(void *threadarg) {
 	
 	//---DETECTOR-CORRECTION---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Detector correction");
-	}
+	DEBUG2("Detector correction");
 
 	// Initialise data_detCorr with data_raw16
 	initDetectorCorrection(eventData,global);
@@ -171,7 +165,6 @@ localBGCalculated:
 	
 	// Identify hot pixels and set them to zero
 	updateHotPixelBuffer(eventData, global);
-	calculateHotPixelMask(eventData,global);
 	setHotPixelsToZero(eventData,global);
 	
 	// Inside-thread speed test
@@ -182,26 +175,22 @@ localBGCalculated:
     
 	//---PHOTON-BACKGROUND-CORRECTION---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Background correction");
-	}
+	DEBUG2("Background correction");
 	  
 	// Initialise data_detPhotCorr with data_detCorr
 	initPhotonCorrection(eventData,global);
 
 	// If darkcal file available: Subtract persistent background here (background = photon background)
 	subtractPersistentBackground(eventData, global);
-	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end - not to be crunched with detector /Max)
+	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end /Max)
 	subtractRadialBackground(eventData, global);
 
 	//---HITFINDING---//
 
 	if(global->hitfinder && (global->hitfinderForInitials ||
 							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
-
-		DEBUGL2_ONLY {
-			DEBUG("Hit finding");
-		}
+		
+		DEBUG2("Hit finding");
 
 		hit = hitfinder(eventData, global);
 		eventData->hit = hit;
@@ -223,16 +212,13 @@ hitknown:
      *	Sort event into different classes (eg: laser on/off)
      */
   
-	DEBUGL2_ONLY {
-		DEBUG("Procedures depending on hit tag");
-	}
+	DEBUG2("Procedures depending on hit tag");
 	
 	// Update running backround estimate based on non-hits
 	updateBackgroundBuffer(eventData, global, hit); 
 
 	// Identify noisy pixels
 	updateNoisyPixelBuffer(eventData,global,hit);
-	calculateNoisyPixelMask(eventData,global);
 
 	// Skip first set of frames to build up running estimate of background...
 	if (eventData->threadNum < global->nInitFrames || !global->calibrated){
@@ -250,9 +236,7 @@ hitknown:
     
 	//---ASSEMBLE-AND-ACCUMULATE-DATA---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Assemble and accumulate data");
-	}
+	DEBUG2("Assemble and accumulate data");
 
 	// Inside-thread speed test
 	if(global->ioSpeedTest==7) {
@@ -351,9 +335,7 @@ hitknown:
 
 	//---LOGBOOK-KEEPING---//
 
-	DEBUGL2_ONLY {
-		DEBUG("Logbook keeping");
-	}
+	DEBUG2("Logbook keeping");
 
 	writeLog(eventData, global);
   
@@ -367,11 +349,8 @@ hitknown:
 	//---CLEANUP-AND-EXIT----//
 cleanup:
 
-	DEBUGL2_ONLY {
-		DEBUG("Clean up and exit");
-
-	}
-
+	DEBUG2("Clean up and exit");
+	
 	// Save accumulated data periodically
     pthread_mutex_lock(&global->saveinterval_mutex);
 	// Update counters

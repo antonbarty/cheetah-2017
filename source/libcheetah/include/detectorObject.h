@@ -258,23 +258,21 @@ public:
 	int    hotPixMemory;
 	int    hotPixRecalc;
 	float  hotPixFreq;
-	long   hotPixBufferCounter;
-	pthread_mutex_t hotPixCounter_mutex;
+	pthread_mutex_t hotPix_update_mutex;
 	int    hotPixCalibrated;
-	long   nhot;
+	long   nHot;
 	long   hotPixLastUpdate;
 	int    useHotPixelBufferMutex;
 	// Apply persistently hot pixels
 	int    applyAutoHotPixel;
 	// Identify persistently illuminated pixels (noisy)
 	int    useAutoNoisyPixel;
+	int    noisyPixIncludeHits;
 	float  noisyPixMinDeviation;
 	long   noisyPixRecalc;
 	long   noisyPixMemory;
-	long   noisyPixBufferCounter;
-	pthread_mutex_t   noisyPixCounter_mutex;
+	pthread_mutex_t   noisyPix_update_mutex;
 	int    noisyPixCalibrated;
-	int    noisyPixIncludeHits;
 	long   nNoisy;
 	long   noisyPixLastUpdate;
 	// Start frames for calibration before output
@@ -288,8 +286,10 @@ public:
 	// declare pixel bad if they are located in bad lines
 	int    usePnccdLineMasking;
 
-	// Ring buffer of blank frames
+	// Ring frame buffers
 	cFrameBuffer *frameBufferBlanks;
+	cFrameBuffer *frameBufferHotPix;
+	cFrameBuffer *frameBufferNoisyPix;
 
 	// Saving options
 	// Data versions
@@ -347,17 +347,6 @@ public:
 	pthread_mutex_t   pixelmask_shared_mutex;
 	pthread_mutex_t   pixelmask_shared_min_mutex;
 	pthread_mutex_t   pixelmask_shared_max_mutex;
-	// Hot pixel map
-	int16_t           *hotPix_buffer;
-	pthread_mutex_t   *hotPix_mutexes;
-	// Noisy pixel map
-	float             *noisyPix_buffer;
-	pthread_mutex_t   *noisyPix_mutexes;	
-	// Persistent background
-	//int16_t           *bg_buffer;
-	//pthread_mutex_t   *bg_mutexes;
-	//float             *persistentBackground;
-	//pthread_mutex_t   persistentBackground_mutex;
 	// Powder data (accumulated sums and sums of squared values)
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];

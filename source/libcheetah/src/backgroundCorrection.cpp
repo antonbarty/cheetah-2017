@@ -21,7 +21,6 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-
 void initPhotonCorrection(cEventData *eventData, cGlobal *global){
 	// Copy detector corrected data into photon corrected array as starting point for photon corrections
 	DETECTOR_LOOP {
@@ -32,8 +31,6 @@ void initPhotonCorrection(cEventData *eventData, cGlobal *global){
 	}
 }
 
-
-
 /*
  *	Subtract persistent background 
  */
@@ -41,12 +38,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 	float	*frameData;
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useSubtractPersistentBackground) {
-			DEBUG3("Subtract persistent background. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			int	    scaleBg = global->detector[detIndex].scaleBackground;
-			long	pix_nn = global->detector[detIndex].pix_nn;
-			float	*background = (float *) malloc(pix_nn*sizeof(float));
-			// Copy background
-			global->detector[detIndex].frameBufferBlanks->copyMedian(background);
+			DEBUG3("Subtract persistent background. (detectorID=%ld)",global->detector[detIndex].detectorID);
 			// Running background subtraction to suppress the photon background after dark subtraction
 			if (eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) {
 				frameData = eventData->detector[detIndex].data_detPhotCorr;
@@ -55,48 +47,11 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 				frameData = eventData->detector[detIndex].data_detCorr;
 				eventData->detector[detIndex].pedSubtracted = 1;
 			}
-			subtractPersistentBackground(frameData, background, scaleBg, pix_nn);
+			// Subtract median
+			global->detector[detIndex].frameBufferBlanks->subtractMedian(frameData,global->detector[detIndex].scaleBackground);
 		}
 	}	
 }
-
-
-/*
- *	Subtract pre-calculated persistent background value
- */
-void subtractPersistentBackground(float *data, float *background, int scaleBg, long pix_nn) {
-	
-	float	top = 0;
-	float	s1 = 0;
-	float	s2 = 0;
-	float	v1, v2;
-	float	factor;
-	
-	
-	/*
-	 *	Find appropriate scaling factor to match background with current image
-	 *	Use with care: this assumes background vector is orthogonal to the image vector (which is often not true)
-	 */
-	factor = 1;
-	if(scaleBg) {
-		for(long i=0; i<pix_nn; i++){
-			v1 = background[i];
-			v2 = data[i];
-			
-			// Simple inner product gives cos(theta), which is always less than zero
-			// Want ( (a.b)/|b| ) * (b/|b|)
-			top += v1*v2;
-			s1 += v1*v1;
-			s2 += v2*v2;
-		}
-		factor = top/s1;
-	}
-	// Do the weighted subtraction
-	for(long i=0; i<pix_nn; i++) {
-		data[i] -= (factor*background[i]);	
-	}	
-}
-
 
 /*
  *	Update background buffer
@@ -473,161 +428,76 @@ void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 }	
 
 
-
-void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global,int hit){
-	DETECTOR_LOOP{
-		if(global->detector[detIndex].useAutoNoisyPixel &&
-		   (!hit || global->detector[detIndex].noisyPixIncludeHits) &&
-		   (!global->detector[detIndex].useSubtractPersistentBackground || (global->detector[detIndex].bgCalibrated || global->detector[detIndex].useDarkcalSubtraction))){
-			DEBUG3("Add frame to noisy pixel buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			float	*frameData = eventData->detector[detIndex].data_detCorr;
-			float   *frameBuffer = global->detector[detIndex].noisyPix_buffer;
-			long	pix_nn = global->detector[detIndex].pix_nn;
-			long	bufferDepth = global->detector[detIndex].noisyPixMemory;
-			long	frameID = eventData->threadNum%bufferDepth;
-
-			//puts("Update noisy pixel buffer");
-			float	*buffer = (float *) malloc(pix_nn*sizeof(float));
-			for(long i=0; i<pix_nn; i++){
-				buffer[i] = frameData[i];
-			}
-
-			// Update buffer slice
-			pthread_mutex_lock(&global->detector[detIndex].noisyPix_mutexes[frameID]);
-			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(float));
-			pthread_mutex_unlock(&global->detector[detIndex].noisyPix_mutexes[frameID]);
-			// Update counter
-#ifdef __GNUC__
-			__sync_fetch_and_add(&(global->detector[detIndex].noisyPixBufferCounter),1);
-#else
-			pthread_mutex_lock(&global->detector[detIndex].noisyPixBufferCounter_mutex);
-			global->detector[detIndex].noisyPixBufferCounter += 1;
-			pthread_mutex_unlock(&global->detector[detIndex].noisyPixBufferCounter_mutex);
-#endif      
-			free(buffer);
-
-			if (global->detector[detIndex].noisyPixBufferCounter < bufferDepth)
-				printf("Noisy pixel detection ring buffer fill status: %li/%li.\n",global->detector[detIndex].noisyPixBufferCounter+1,bufferDepth);
-		} 
-	}
-}
-     
-/* 
- *	Recalculate noisy pixel masks using frame buffer
+/*
+ *	Update noisy pixel buffer
  */
-void calculateNoisyPixelMask(cEventData *eventData,cGlobal *global){
+void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
+	
 	DETECTOR_LOOP {
-		if(global->detector[detIndex].useAutoNoisyPixel) {
-			DEBUG3("Check wheter or not we need to calculate a new noisy pixel mask yet. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			float	minDeviation = global->detector[detIndex].noisyPixMinDeviation;
-			long	bufferDepth = global->detector[detIndex].noisyPixMemory;
+		if (global->detector[detIndex].useAutoHotPixel && (hit == 0 || global->detector[detIndex].noisyPixIncludeHits)) {
 			long	recalc = global->detector[detIndex].noisyPixRecalc;
 			long	memory = global->detector[detIndex].noisyPixMemory;
-			long	lastUpdate = global->detector[detIndex].noisyPixLastUpdate;
-			long	counter = global->detector[detIndex].noisyPixBufferCounter;
-			int	    calibrated = global->detector[detIndex].noisyPixCalibrated;
-			long	nNoisy;
-			float	threshold = bufferDepth*minDeviation;
-			long	pix_nn = global->detector[detIndex].pix_nn;
-			uint16_t  *mask = global->detector[detIndex].pixelmask_shared;
-			uint16_t  *maskMinExtent = global->detector[detIndex].pixelmask_shared_min;
-			uint16_t  *maskMaxExtent = global->detector[detIndex].pixelmask_shared_max;
-			int     threadSafetyLevel = global->threadSafetyLevel;
+			cFrameBuffer * frameBuffer = global->detector[detIndex].frameBufferNoisyPix;
+			long bufferDepth = frameBuffer->depth;
 
-			pthread_mutex_lock(&global->detector[detIndex].noisyPixCounter_mutex);
+			// Select data
+			float * data = eventData->detector[detIndex].data_detCorr;
+			// Adding frame to buffer
+			DEBUG3("Add a new frame to the noisy pixel frame buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			long counter = frameBuffer->writeNextFrame(data);
+			if (counter < bufferDepth)
+				printf("Noisy pixel ring buffer fill status: %li/%li.\n",counter+1,bufferDepth);
+			
+			// Do we have to update?
+			DEBUG3("Check wheter or not we need to calculate a new noisy pixel map from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			pthread_mutex_lock(&global->detector[detIndex].noisyPix_update_mutex);
+			long lastUpdate = global->detector[detIndex].noisyPixLastUpdate;
+			
+			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
+				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
 
-			if( /* has processed recalc events since last update?  */ (eventData->threadNum == recalc+lastUpdate && calibrated) || 
-				/* uninitialised and buffer filled? */ ( (counter >= memory)  && (lastUpdate == 0)) ) { 
+				bool  keepThreadsLocked = global->detector[detIndex].noisyPixCalibrated || global->threadSafetyLevel < 1;
+				global->detector[detIndex].noisyPixLastUpdate = eventData->threadNum;
 
-				DEBUG3("Actually calculate a new noisy pixel mask now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-				global->detector[detIndex].noisyPixLastUpdate = eventData->threadNum;				
+				// Keep the lock during calculation of median either
+				// - if we run at high thread safety level or
+				// - if we are not calibrated yet (we do not want to loose frames unnecessarily during calibration)
+				if(!keepThreadsLocked) pthread_mutex_unlock(&global->detector[detIndex].noisyPix_update_mutex);
 
-				if (!(threadSafetyLevel > 0)) pthread_mutex_unlock(&global->detector[detIndex].noisyPixCounter_mutex);
-				uint16_t * temp_mask = (uint16_t *) malloc(global->detector[detIndex].pix_nn*sizeof(uint16_t));
-				if (threadSafetyLevel > 0) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
-				memcpy(temp_mask,mask,global->detector[detIndex].pix_nn*sizeof(uint16_t));
-				if (threadSafetyLevel > 0) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
+				DEBUG3("Actually calculate a new noisy pixel mask from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
+				printf("Detector %li: Start calculation of persistent background.\n",detIndex);			
 
-				printf("Detector %li: Calculating noisy pixel mask.\n",detIndex);
-				nNoisy = calculateNoisyPixelMask(temp_mask,maskMinExtent,maskMaxExtent,global->detector[detIndex].noisyPix_buffer,threshold, bufferDepth, pix_nn);//, maskMinMutex, maskMaxMutex);
-				if (nNoisy == pix_nn){
-					printf("Warning: Detector %li: All pixels are in noisy pixel mask.\n",detIndex);
+				// Update std
+				frameBuffer->updateStd();
+
+				// Apply to shared mask
+				float minStd = global->detector[detIndex].noisyPixMinDeviation;
+				long pix_nn = global->detector[detIndex].pix_nn;
+				float * std = (float *) malloc(pix_nn*sizeof(float)); 
+				frameBuffer->copyStd(std);
+				uint16_t * mask = global->detector[detIndex].pixelmask_shared;
+				long	nNoisy = 0;
+				for(long i=0; i<pix_nn; i++) {
+					// Apply threshold
+					if(std[i] < minStd) {
+						mask[i] &= ~(PIXEL_IS_NOISY);
+					}
+					else {
+						mask[i] |= PIXEL_IS_NOISY;
+						nNoisy++;				
+					}		
 				}
+				free(std);
 				global->detector[detIndex].nNoisy = nNoisy;
-				printf("Detector %li: Identified %li noisy pixels.\n",detIndex,nNoisy);	
+				printf("Detector %li: New noisy pixel mask calculated - %li noisy pixels identified.\n",detIndex,nNoisy);      
 				global->detector[detIndex].noisyPixCalibrated = 1;
 
-				if (threadSafetyLevel > 0) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
-				memcpy(mask,temp_mask,global->detector[detIndex].pix_nn*sizeof(uint16_t));
-				if (threadSafetyLevel > 0) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
+				if(keepThreadsLocked)	pthread_mutex_unlock(&global->detector[detIndex].noisyPix_update_mutex);		   
 
-				if (threadSafetyLevel > 0) pthread_mutex_unlock(&global->detector[detIndex].noisyPixCounter_mutex);					
-
-				free(temp_mask);
 			} else {
-				pthread_mutex_unlock(&global->detector[detIndex].noisyPixCounter_mutex);
-
+				pthread_mutex_unlock(&global->detector[detIndex].noisyPix_update_mutex);			
 			}
-
-		}	
+		}		
 	}
 }
-  
 
-long calculateNoisyPixelMask(uint16_t *mask, uint16_t *maskMinExtent, uint16_t *maskMaxExtent, float *frameBuffer, float threshold, long bufferDepth, long pix_nn) { //,  pthread_mutex_t maskMin_mutex, pthread_mutex_t maskMax_mutex){
-
-	// Loop over all pixels 
-	float sum;
-	long	nNoisy = 0;
-
-	bool* buffer = (bool *) calloc(pix_nn,sizeof(bool));
-
-	for(long i=0; i<pix_nn; i++) {
-		sum = 0.;
-		for(long j=0; j< bufferDepth; j++) {
-			sum += frameBuffer[j*pix_nn+i]; 
-		}
-		if(sum >= threshold) {
-			buffer[i] = true;
-			nNoisy += 1;
-		} else {
-			buffer[i] = false;
-		}
-	}
-
-#ifndef __GNUC__
-	//pthread_mutex_lock(&mask_min_mutex);
-	//pthread_mutex_lock(&mask_max_mutex);
-#endif
-	for(long i=0; i<pix_nn; i++) {
-		if (buffer[i]){
-#ifdef __GNUC__
-			__sync_fetch_and_or(&(mask[i]),PIXEL_IS_NOISY);
-			__sync_fetch_and_or(&(maskMaxExtent[i]),PIXEL_IS_NOISY);
-#else
-			mask[i] |= PIXEL_IS_IN_NOISY; 
-			maskMaxExtent[i] |= PIXEL_IS_NOISY;
-#endif
-		} else {
-#ifdef __GNUC__
-			__sync_fetch_and_and(&(mask[i]),~PIXEL_IS_NOISY);
-			__sync_fetch_and_and(&(maskMinExtent[i]),~PIXEL_IS_NOISY);
-#else
-			mask[i] &= ~PIXEL_IS_NOISY; 
-			maskMinExtent[i] &= ~PIXEL_IS_NOISY;
-#endif
-		}
-	}
-#ifndef __GNUC__
-    //pthread_mutex_unlock(&mask_min_mutex);
-    //pthread_mutex_unlock(&mask_max_mutex);
-#endif
-
-	free(buffer);
-
-	return nNoisy;
-
-}
-
-
-			

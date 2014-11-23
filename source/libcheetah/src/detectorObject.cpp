@@ -704,31 +704,14 @@ void cPixelDetectorCommon::allocateMemory() {
 		pixelmask_shared_min[j] = PIXEL_IS_ALL;
 	}	
 	// Hot pixel map
-	pthread_mutex_init(&hotPixCounter_mutex, NULL);
-	hotPix_buffer = (int16_t*) calloc(hotPixMemory*pix_nn, sizeof(int16_t)); 
-	hotPix_mutexes = (pthread_mutex_t*) calloc(hotPixMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<hotPixMemory; j++) {
-		pthread_mutex_init(&hotPix_mutexes[j], NULL);
-	}
+	pthread_mutex_init(&hotPix_update_mutex, NULL);
+	frameBufferHotPix = new cFrameBuffer(pix_nn,hotPixMemory,0);
 	// Noisy pixel map
-	pthread_mutex_init(&noisyPixCounter_mutex, NULL);
-	noisyPix_buffer = (float*) calloc(noisyPixMemory*pix_nn, sizeof(float));
-	noisyPix_mutexes = (pthread_mutex_t*) calloc(noisyPixMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<noisyPixMemory; j++) {
-		pthread_mutex_init(&noisyPix_mutexes[j], NULL);
-	}
+	pthread_mutex_init(&noisyPix_update_mutex, NULL);
+	frameBufferNoisyPix = new cFrameBuffer(pix_nn,noisyPixMemory,0);
 	// Persistent background
+	pthread_mutex_init(&bg_update_mutex, NULL);
 	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,0);
-	/*
-	pthread_mutex_init(&bgCounter_mutex, NULL);
-	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-	bg_mutexes = (pthread_mutex_t*) calloc(bgMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<bgMemory; j++) {
-		pthread_mutex_init(&bg_mutexes[j], NULL);
-	}
-	persistentBackground = (float*) calloc(pix_nn, sizeof(float));
-	pthread_mutex_init(&persistentBackground_mutex, NULL);
-	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;
@@ -808,30 +791,14 @@ void cPixelDetectorCommon::freeMemory() {
 	pthread_mutex_destroy(&pixelmask_shared_max_mutex);
 	free(pixelmask_shared_max);
 	// Hot pixel map
-	pthread_mutex_destroy(&hotPixCounter_mutex);
-	for (long j=0; j<hotPixMemory; j++) {
-		pthread_mutex_destroy(&hotPix_mutexes[j]);
-	}
-	free(hotPix_mutexes);
-	free(hotPix_buffer);
+	delete frameBufferHotPix;
+	pthread_mutex_destroy(&hotPix_update_mutex);
 	// Halo pixel map
-	pthread_mutex_destroy(&noisyPixCounter_mutex);
-	free(noisyPix_buffer);
-	for (long j=0; j<noisyPixMemory; j++) {
-		pthread_mutex_destroy(&noisyPix_mutexes[j]);
-	}
-	free(noisyPix_mutexes);
+	delete frameBufferNoisyPix;
+	pthread_mutex_destroy(&noisyPix_update_mutex);
 	// Persistent background
 	delete frameBufferBlanks;
 	pthread_mutex_destroy(&bg_update_mutex);
-	/*free(bg_buffer);
-	for (long j=0; j<bgMemory; j++) {
-		pthread_mutex_destroy(&bg_mutexes[j]);
-	}
-	free(bg_mutexes);
-	pthread_mutex_destroy(&persistentBackground_mutex);
-	free(persistentBackground);
-	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 
@@ -886,22 +853,11 @@ void cPixelDetectorCommon::unlockMutexes() {
 	pthread_mutex_unlock(&pixelmask_shared_min_mutex);
 	pthread_mutex_unlock(&pixelmask_shared_max_mutex);
 	// Hot pixel map
-	pthread_mutex_unlock(&hotPixCounter_mutex);
-	for (long j=0; j<hotPixMemory; j++) {
-		pthread_mutex_unlock(&hotPix_mutexes[j]);
-	}
+	pthread_mutex_unlock(&hotPix_update_mutex);
 	// Halo pixel map
-	pthread_mutex_unlock(&noisyPixCounter_mutex);
-	for (long j=0; j<noisyPixMemory; j++) {
-		pthread_mutex_unlock(&noisyPix_mutexes[j]);
-	}
+	pthread_mutex_unlock(&noisyPix_update_mutex);
 	// Persistent background
 	pthread_mutex_unlock(&bg_update_mutex);
-	/*for (long j=0; j<bgMemory; j++) {
-		pthread_mutex_unlock(&bg_mutexes[j]);
-	}
-	pthread_mutex_unlock(&persistentBackground_mutex);
-	*/
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		// Powders 

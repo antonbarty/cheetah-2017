@@ -28,9 +28,7 @@ void cspadModuleSubtract2(cEventData*, cGlobal*);
 void cspadModuleSubtract(cEventData*, cGlobal*, int);
 void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
-void calculateHotPixelMask(cGlobal*);
 void updateHotPixelBuffer(cEventData*, cGlobal*);
-void calculateHotPixelMask(cEventData*, cGlobal*);
 void setHotPixelsToZero(cEventData*, cGlobal*);
 
 void subtractDarkcal(float*, float*, long);
@@ -66,8 +64,6 @@ void subtractLocalBackground(float*, long, long, long, long, long);
 void subtractRadialBackground(float*, float*, char*, long, float);
 void subtractPersistentBackground(float*, float*, int, long);
 void updateNoisyPixelBuffer(cEventData*, cGlobal*,int);
-void calculateNoisyPixelMask(cEventData*,cGlobal*);
-long calculateNoisyPixelMask(uint16_t*, uint16_t*, uint16_t*, float*, float, long, long);//, pthread_mutex_t, pthread_mutex_t);
 
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);

@@ -370,56 +370,6 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 	free(buffer);
 }
 
-
-
-/*
- *	Identify hot pixels
- */
-void updateHotPixelBuffer(cEventData *eventData, cGlobal *global){
-	
-	DETECTOR_LOOP {
-		if(global->detector[detIndex].useAutoHotPixel) {
-			DEBUG3("Identify hot pixels. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			int		lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
-			long	pix_nn = global->detector[detIndex].pix_nn;
-			long	hotPixADC = global->detector[detIndex].hotPixADC;
-			long	bufferDepth = global->detector[detIndex].hotPixMemory;
-			float	*frameData = eventData->detector[detIndex].data_detCorr;
-			int16_t	*frameBuffer = global->detector[detIndex].hotPix_buffer;
-      
-			/*
-			 *	Update global hot pixel buffer
-			 */
-
-			int16_t	*buffer = (int16_t *) calloc(pix_nn,sizeof(int16_t));
-			for(long i=0; i<pix_nn; i++){
-				buffer[i] = (fabs(frameData[i])>hotPixADC)?(1):(0);
-			}
-      
-			long frameID = eventData->threadNum%bufferDepth;
-			if(lockThreads)
-				pthread_mutex_lock(&global->detector[detIndex].hotPix_mutexes[frameID]);
-
-			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-
-			if(lockThreads)
-				pthread_mutex_unlock(&global->detector[detIndex].hotPix_mutexes[frameID]);
-
-			// What for?
-			eventData->nHot = global->detector[detIndex].nhot;
-
-			free(buffer);
-
-			if (eventData->threadNum < bufferDepth)
-				printf("Hot pixel detection ring buffer fill status: %li/%li.\n",frameID+1,bufferDepth);
-
-
-		}
-	}		
-}
-
-
-
 /*
  *	Set hot pixels to zero
  */
@@ -440,85 +390,79 @@ void setHotPixelsToZero(cEventData *eventData, cGlobal *global){
 }	
 
 
-/* 
- *	Recalculate hot pixel masks using frame buffer
+/*
+ *	Update hot pixel buffer
  */
-void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
-
+void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
+	
 	DETECTOR_LOOP {
-		if(global->detector[detIndex].useAutoHotPixel) {
-			DEBUG3("Check if it is time to calculate hot pixel mask. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			float	frequency = global->detector[detIndex].hotPixFreq;
-			long	bufferDepth = global->detector[detIndex].hotPixMemory;
-			long	memory = global->detector[detIndex].hotPixMemory;
+		if (global->detector[detIndex].useAutoHotPixel) {
 			long	recalc = global->detector[detIndex].hotPixRecalc;
-			long	calibrated = global->detector[detIndex].hotPixCalibrated;
-			int	    lockThreads = global->detector[detIndex].useHotPixelBufferMutex;
-			long    counter = eventData->threadNum;
+			long	memory = global->detector[detIndex].hotPixMemory;
+			cFrameBuffer * frameBuffer = global->detector[detIndex].frameBufferHotPix;
+			long bufferDepth = frameBuffer->depth;
 
-			if(lockThreads)
-				pthread_mutex_lock(&global->detector[detIndex].hotPixCounter_mutex);
+			// Select data
+			float * data = eventData->detector[detIndex].data_detCorr;
+			// Adding frame to buffer
+			DEBUG3("Add a new frame to the hot pixel frame buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			long counter = frameBuffer->writeNextFrame(data);
+			if (counter < bufferDepth)
+				printf("Hot pixel ring buffer fill status: %li/%li.\n",counter+1,bufferDepth);
 			
-			long	lastUpdate = global->detector[detIndex].hotPixLastUpdate;		
-			if ( /* has processed recalc events since last update?  */ (eventData->threadNum == recalc+lastUpdate && calibrated) || 
-				 /* uninitialised and buffer filled? */ ( (counter >= memory)  && (lastUpdate == 0)) ) { 
+			// Do we have to update the hot pixel map
+			DEBUG3("Check wheter or not we need to calculate a new hot pixel map from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			pthread_mutex_lock(&global->detector[detIndex].hotPix_update_mutex);
+			long lastUpdate = global->detector[detIndex].hotPixLastUpdate;
+			
+			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
+				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
 
+				bool  keepThreadsLocked = global->detector[detIndex].hotPixCalibrated || global->threadSafetyLevel < 1;
 				global->detector[detIndex].hotPixLastUpdate = eventData->threadNum;
+
+				// Keep the lock during calculation of median either
+				// - if we run at high thread safety level or
+				// - if we are not calibrated yet (we do not want to loose frames unnecessarily during calibration)
+				if(!keepThreadsLocked) pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);
+
+				DEBUG3("Actually calculate a new hot pixel mask from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
+				printf("Detector %li: Start calculation of hot pixel mask.\n",detIndex);			
 				
-				if(lockThreads)
-					pthread_mutex_unlock(&global->detector[detIndex].hotPixCounter_mutex);		
 
-				DEBUG3("Actually calculate hot pixel mask. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+				// Update map of absolute values above thrheshold
+				float threshold = global->detector[detIndex].hotPixADC;
+				frameBuffer->updateAbsAboveThresh(threshold);
 
-				long	nhot;
-				long	threshold = lrint(bufferDepth*frequency);
-				long	pix_nn = global->detector[detIndex].pix_nn;
-				uint16_t *mask = global->detector[detIndex].pixelmask_shared;
-				int16_t	*frameBuffer = global->detector[detIndex].hotPix_buffer;
-
-				if(lockThreads)
-					pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
-				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detIndex, threshold, bufferDepth);
-				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-				printf("Detector %li: Identified %li hot pixels.\n",detIndex,nhot);
-				global->detector[detIndex].nhot = nhot;
+				// Apply to shared mask
+				float frequency = global->detector[detIndex].hotPixFreq;
+				long pix_nn = global->detector[detIndex].pix_nn;
+				float * absAboveThreshold = (float *) malloc(pix_nn*sizeof(float)); 
+				frameBuffer->copyAbsAboveThresh(absAboveThreshold);
+				uint16_t * mask = global->detector[detIndex].pixelmask_shared;
+				long	nHot = 0;
+				for(long i=0; i<pix_nn; i++) {
+					// Apply threshold
+					if(absAboveThreshold[i] < frequency) {
+						mask[i] &= ~(PIXEL_IS_HOT);
+					}
+					else {
+						mask[i] |= PIXEL_IS_HOT;
+						nHot++;				
+					}		
+				}
+				free(absAboveThreshold);
+				global->detector[detIndex].nHot = nHot;
+				printf("Detector %li: New hot pixel mask calculated - %li hot pixels identified.\n",detIndex,nHot);      
 				global->detector[detIndex].hotPixCalibrated = 1;
-				if(lockThreads)
-					pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);					
 
+				if(keepThreadsLocked)	pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);		   
 
 			} else {
-				if(lockThreads)
-					pthread_mutex_unlock(&global->detector[detIndex].hotPixCounter_mutex);	
-				DEBUG3("Do not calculate hot pixel mask yet. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+				pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);			
 			}
-		}	
-	}
-}
-
-
-long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn){
-
-	// Loop over all pixels 
-	long	counter;
-	long	nhot = 0;
-	for(long i=0; i<pix_nn; i++) {
-		
-		counter = 0;
-		for(long j=0; j< bufferDepth; j++) {
-			counter += frameBuffer[j*pix_nn+i]; 
-		}
-		
-		// Apply threshold
-		if(counter < threshold) {
-			mask[i] &= ~(PIXEL_IS_HOT);
-		}
-		else {
-			mask[i] |= PIXEL_IS_HOT;
-			nhot++;				
 		}		
-	}	
-	return nhot;
+	}
 }
 
 

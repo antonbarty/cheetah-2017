@@ -486,10 +486,8 @@ void cGlobal::setup() {
 	for(long i=0; i<MAX_DETECTORS; i++) {
 		detector[i].bgCounter = 0;
 		detector[i].bgLastUpdate = 0;
-		detector[i].hotPixBufferCounter = 0;
 		detector[i].hotPixLastUpdate = 0;
-		detector[i].nhot = 0;
-		detector[i].noisyPixBufferCounter = 0;
+		detector[i].nHot = 0;
 		detector[i].noisyPixLastUpdate = 0;
 		detector[i].nNoisy = 0;
 		detector[i].detectorZprevious = 0;

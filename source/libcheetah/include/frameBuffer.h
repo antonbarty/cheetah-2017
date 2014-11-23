@@ -18,9 +18,12 @@ class cFrameBuffer {
 	~cFrameBuffer();
 	long writeNextFrame(float * data);
 	void copyMedian(float * target);
+	void subtractMedian(float * data, int scale);
 	void updateMedian(float point);
 	void copyStd(float * target);
 	void updateStd();
+	void copyAbsAboveThresh(float * target);
+	void updateAbsAboveThresh(float threshold);
 	long pix_nn;
 	long depth;
 	int threadSafetyLevel;
@@ -29,10 +32,11 @@ class cFrameBuffer {
 	float * frames;
 	float * median;
 	float * std;
-	bool filled,median_calculated,std_calculated;
+	float * absAboveThresh;
+	bool filled,median_calculated,std_calculated,absAboveThresh_calculated;
 	pthread_mutex_t * frame_mutexes;
-	pthread_mutex_t median_mutex,std_mutex;
-	long n_std_readers,n_median_readers;
+	pthread_mutex_t median_mutex,std_mutex,absAboveThresh_mutex;
+	long n_std_readers,n_median_readers,n_absAboveThresh_readers;
 	long * n_frame_readers;
 	// Scheduling reading and writing
 	void lockFrameWriters(long frameID);
@@ -51,6 +55,10 @@ class cFrameBuffer {
 	void unlockMedianWriters();
 	void lockMedianReadersAndWriters();
 	void unlockMedianReadersAndWriters();
+	void lockAbsAboveThreshWriters();
+	void unlockAbsAboveThreshWriters();
+	void lockAbsAboveThreshReadersAndWriters();
+	void unlockAbsAboveThreshReadersAndWriters();
 };
 
 #endif

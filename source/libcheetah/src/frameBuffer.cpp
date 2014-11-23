@@ -27,6 +27,7 @@ cFrameBuffer::cFrameBuffer(long pix_nn0, long depth0, int threadSafetyLevel0) {
 	counter = 0;
     median = (float *) calloc(pix_nn, sizeof(float));
 	std = (float *) calloc(pix_nn, sizeof(float));
+	absAboveThresh = (float *) calloc(pix_nn, sizeof(float));
 	// Frames scheduling
 	n_frame_readers = (long *) calloc(depth,sizeof(long));
 	frame_mutexes = (pthread_mutex_t*) calloc(depth, sizeof(pthread_mutex_t));
@@ -37,17 +38,22 @@ cFrameBuffer::cFrameBuffer(long pix_nn0, long depth0, int threadSafetyLevel0) {
 	// Median scheduling
 	n_median_readers = 0;
 	pthread_mutex_init(&median_mutex, NULL);
-	std_calculated = false;
+	median_calculated = false;
 	// Std scheduling
 	n_std_readers = 0;
 	pthread_mutex_init(&std_mutex, NULL);
-	median_calculated = false;
+	std_calculated = false;
+	// absAbovethresh scheduling
+	n_absAboveThresh_readers = 0;
+	pthread_mutex_init(&absAboveThresh_mutex, NULL);
+	absAboveThresh_calculated = false;	
 }
 
 cFrameBuffer::~cFrameBuffer() {
 	free(frames);
 	free(median);
 	free(std);
+	free(absAboveThresh);
 	for (long j=0; j<depth; j++) {
 		pthread_mutex_destroy(&frame_mutexes[j]);
 	}
@@ -55,6 +61,7 @@ cFrameBuffer::~cFrameBuffer() {
 	free(n_frame_readers);
 	pthread_mutex_destroy(&std_mutex);
 	pthread_mutex_destroy(&median_mutex);
+	pthread_mutex_destroy(&absAboveThresh_mutex);
 }
 
 //.........................................//
@@ -148,6 +155,30 @@ void cFrameBuffer::unlockMedianReadersAndWriters() {
 	pthread_mutex_unlock(&median_mutex);
 }
 //.........................................//
+// absAboveThresh write / read scheduler functions
+void cFrameBuffer::lockAbsAboveThreshWriters() {
+	pthread_mutex_lock(&absAboveThresh_mutex);
+	__sync_fetch_and_add(&n_absAboveThresh_readers,1);
+	pthread_mutex_unlock(&absAboveThresh_mutex);
+}
+
+void cFrameBuffer::unlockAbsAboveThreshWriters() {
+	__sync_fetch_and_sub(&n_absAboveThresh_readers,1);
+}
+
+void cFrameBuffer::lockAbsAboveThreshReadersAndWriters() {
+	// Prevent new reader from starting
+	pthread_mutex_lock(&absAboveThresh_mutex);
+	// Wait for readers to finish
+	while (n_absAboveThresh_readers > 0)
+		usleep(10000);
+}
+
+void cFrameBuffer::unlockAbsAboveThreshReadersAndWriters() {
+	// Allows readers and writers to start
+	pthread_mutex_unlock(&absAboveThresh_mutex);
+}
+//.........................................//
 
 long cFrameBuffer::writeNextFrame(float * data) {
 	long counter_last = __sync_fetch_and_add(&counter,1);
@@ -165,6 +196,36 @@ void cFrameBuffer::copyMedian(float * target) {
 	unlockMedianWriters();
 }
 
+void cFrameBuffer::subtractMedian(float * data,int scale) {
+	float	top = 0;
+	float	s1 = 0;
+	float	s2 = 0;
+	float	v1, v2;
+	float	factor = 1;
+	lockMedianWriters();
+	/*
+	 *	Find appropriate scaling factor to match background with current image
+	 *	Use with care: this assumes background vector is orthogonal to the image vector (which is often not true)
+	 */
+	if(scale) {
+		for(long i=0; i<pix_nn; i++){
+			v1 = median[i];
+			v2 = data[i];
+			
+			// Simple inner product gives cos(theta), which is always less than zero
+			// Want ( (a.b)/|b| ) * (b/|b|)
+			top += v1*v2;
+			s1 += v1*v1;
+			s2 += v2*v2;
+		}
+		factor = top/s1;
+	}
+	// Do the weighted subtraction
+	for(long i=0; i<pix_nn; i++) {
+		data[i] -= (factor*median[i]);	
+	}
+	unlockMedianWriters();
+}
 
 void cFrameBuffer::updateMedian(float point) {
 	float * buffer = (float *) calloc(depth, sizeof(float));
@@ -185,6 +246,27 @@ void cFrameBuffer::updateMedian(float point) {
 	median_calculated = true;
 }
 
+void cFrameBuffer::copyAbsAboveThresh(float * target) {
+	lockAbsAboveThreshWriters();
+	memcpy(target,absAboveThresh,pix_nn*sizeof(float));
+	unlockAbsAboveThreshWriters();
+}
+
+void cFrameBuffer::updateAbsAboveThresh(float threshold) {
+	lockAllFramesReadersAndWriters();
+	long * n = (long *) calloc(pix_nn,sizeof(long));
+	for (long j=0; j<depth; j++) {
+		for (long i=0; i<pix_nn; i++) {
+			n[i] += (fabs(frames[j*pix_nn+i])>threshold)?(1):(0);
+		}
+	}
+	unlockAllFramesReadersAndWriters();
+	lockAbsAboveThreshReadersAndWriters();
+	for (long i=0; i<pix_nn; i++) {
+		absAboveThresh[i] = ((float) n[i])/((float) depth);
+	}
+	unlockAbsAboveThreshReadersAndWriters();
+}
 
 void cFrameBuffer::copyStd(float * target) {
 	lockStdWriters();

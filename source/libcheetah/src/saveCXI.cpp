@@ -1429,12 +1429,10 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	DETECTOR_LOOP{
 		Node & detector = root["cheetah"]["global_data"].child("detector",detIndex+1);
 		detector["lastBgUpdate"].write(&global->detector[detIndex].bgLastUpdate,stackSlice);
-		detector["nHot"].write(&global->detector[detIndex].nhot,stackSlice);
+		detector["nHot"].write(&global->detector[detIndex].nHot,stackSlice);
 		detector["lastHotPixUpdate"].write(&global->detector[detIndex].hotPixLastUpdate,stackSlice);
-		detector["hotPixBufferCounter"].write(&global->detector[detIndex].hotPixBufferCounter,stackSlice);
 		detector["nNoisy"].write(&global->detector[detIndex].nNoisy,stackSlice);
 		detector["lastNoisyPixUpdate"].write(&global->detector[detIndex].noisyPixLastUpdate,stackSlice);
-		detector["noisyPixBufferCounter"].write(&global->detector[detIndex].noisyPixBufferCounter,stackSlice);
 		Node & detector2 = root["cheetah"]["event_data"].child("detector",detIndex+1);
 		detector2["sum"].write(&eventData->detector[detIndex].sum,stackSlice);		
 	}

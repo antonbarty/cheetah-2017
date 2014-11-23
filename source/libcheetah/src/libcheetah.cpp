@@ -352,7 +352,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 		ts.tv_sec += global->threadTimeoutInSeconds;
 		int sem_ret = sem_timedwait(&global->availableCheetahThreads, &ts);
 		if(sem_ret == ETIMEDOUT){
-			printf("\tApparent thread lock - no free thread for %li seconds.\n", global->threadTimeoutInSeconds);
+			printf("\tApparent thread lock - no free thread for %d seconds.\n", global->threadTimeoutInSeconds);
 			printf("\tGiving up and resetting the thread counter\n");
 			global->unlockMutexes();
 			global->nActiveCheetahThreads = 0;
