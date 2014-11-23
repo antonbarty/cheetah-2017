@@ -291,6 +291,8 @@ public:
 	cFrameBuffer *frameBufferHotPix;
 	cFrameBuffer *frameBufferNoisyPix;
 
+	int threadSafetyLevel;
+
 	// Saving options
 	// Data versions
 	// Toggle saving raw data (no corrections applied)

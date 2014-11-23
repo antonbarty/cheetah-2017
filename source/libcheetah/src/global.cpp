@@ -205,7 +205,7 @@ cGlobal::cGlobal(void) {
 	ioSpeedTest = 0;
 
 	// Thread safety level
-	threadSafetyLevel = 0;
+	threadSafetyLevel = 1;
 
 	// Default to only a few threads
 	nThreads = 16;

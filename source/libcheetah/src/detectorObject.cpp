@@ -267,6 +267,9 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	nPowderClasses = global->nPowderClasses;
 	radialStackSize = global->radialStackSize;    
 	
+	// Thread safety
+	threadSafetyLevel = global->threadSafetyLevel;
+
     // Set modes in accordance to configuration
 	// S-A-V-E
 	// Data versions
@@ -705,13 +708,13 @@ void cPixelDetectorCommon::allocateMemory() {
 	}	
 	// Hot pixel map
 	pthread_mutex_init(&hotPix_update_mutex, NULL);
-	frameBufferHotPix = new cFrameBuffer(pix_nn,hotPixMemory,0);
+	frameBufferHotPix = new cFrameBuffer(pix_nn,hotPixMemory,threadSafetyLevel);
 	// Noisy pixel map
 	pthread_mutex_init(&noisyPix_update_mutex, NULL);
-	frameBufferNoisyPix = new cFrameBuffer(pix_nn,noisyPixMemory,0);
+	frameBufferNoisyPix = new cFrameBuffer(pix_nn,noisyPixMemory,threadSafetyLevel);
 	// Persistent background
 	pthread_mutex_init(&bg_update_mutex, NULL);
-	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,0);
+	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,threadSafetyLevel);
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;

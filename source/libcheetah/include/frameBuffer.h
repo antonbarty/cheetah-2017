@@ -33,7 +33,7 @@ class cFrameBuffer {
 	float * median;
 	float * std;
 	float * absAboveThresh;
-	bool filled,median_calculated,std_calculated,absAboveThresh_calculated;
+	bool filled,median_updated,std_updated,absAboveThresh_updated;
 	pthread_mutex_t * frame_mutexes;
 	pthread_mutex_t median_mutex,std_mutex,absAboveThresh_mutex;
 	long n_std_readers,n_median_readers,n_absAboveThresh_readers;

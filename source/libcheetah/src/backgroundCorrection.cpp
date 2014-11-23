@@ -110,7 +110,6 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 		}		
 	}
 }
-		   
 
 /*
  *	Radial average background subtraction
@@ -432,7 +431,7 @@ void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
  *	Update noisy pixel buffer
  */
 void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
-	
+	int threadSafetyLevel = global->threadSafetyLevel;
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].useAutoHotPixel && (hit == 0 || global->detector[detIndex].noisyPixIncludeHits)) {
 			long	recalc = global->detector[detIndex].noisyPixRecalc;
@@ -456,7 +455,7 @@ void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
 			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
 				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
 
-				bool  keepThreadsLocked = global->detector[detIndex].noisyPixCalibrated || global->threadSafetyLevel < 1;
+				bool  keepThreadsLocked = global->detector[detIndex].noisyPixCalibrated || threadSafetyLevel < 1;
 				global->detector[detIndex].noisyPixLastUpdate = eventData->threadNum;
 
 				// Keep the lock during calculation of median either
@@ -475,6 +474,7 @@ void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
 				long pix_nn = global->detector[detIndex].pix_nn;
 				float * std = (float *) malloc(pix_nn*sizeof(float)); 
 				frameBuffer->copyStd(std);
+				if (threadSafetyLevel > 1) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);
 				uint16_t * mask = global->detector[detIndex].pixelmask_shared;
 				long	nNoisy = 0;
 				for(long i=0; i<pix_nn; i++) {
@@ -487,6 +487,7 @@ void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
 						nNoisy++;				
 					}		
 				}
+				if (threadSafetyLevel > 1) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);					
 				free(std);
 				global->detector[detIndex].nNoisy = nNoisy;
 				printf("Detector %li: New noisy pixel mask calculated - %li noisy pixels identified.\n",detIndex,nNoisy);      

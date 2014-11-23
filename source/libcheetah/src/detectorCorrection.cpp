@@ -49,9 +49,9 @@ void initPixelmask(cEventData *eventData, cGlobal *global){
 	int threadSafetyLevel = global->threadSafetyLevel;
 	DETECTOR_LOOP {
 		DEBUG3("Initializing pixelmask with shared pixelmask. (detectorID=%ld)",global->detector[detIndex].detectorID);
-		if (threadSafetyLevel > 0) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
+		if (threadSafetyLevel > 1) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
 		memcpy(eventData->detector[detIndex].pixelmask,global->detector[detIndex].pixelmask_shared,global->detector[detIndex].pix_nn*sizeof(uint16_t));
-		if (threadSafetyLevel > 0) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
+		if (threadSafetyLevel > 1) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
 	}
 }
 
@@ -394,7 +394,7 @@ void setHotPixelsToZero(cEventData *eventData, cGlobal *global){
  *	Update hot pixel buffer
  */
 void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
-	
+	int threadSafetyLevel = global->threadSafetyLevel;
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].useAutoHotPixel) {
 			long	recalc = global->detector[detIndex].hotPixRecalc;
@@ -418,7 +418,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
 			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
 				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
 
-				bool  keepThreadsLocked = global->detector[detIndex].hotPixCalibrated || global->threadSafetyLevel < 1;
+				bool  keepThreadsLocked = global->detector[detIndex].hotPixCalibrated || threadSafetyLevel < 1;
 				global->detector[detIndex].hotPixLastUpdate = eventData->threadNum;
 
 				// Keep the lock during calculation of median either
@@ -439,6 +439,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
 				long pix_nn = global->detector[detIndex].pix_nn;
 				float * absAboveThreshold = (float *) malloc(pix_nn*sizeof(float)); 
 				frameBuffer->copyAbsAboveThresh(absAboveThreshold);
+				if (threadSafetyLevel > 1) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
 				uint16_t * mask = global->detector[detIndex].pixelmask_shared;
 				long	nHot = 0;
 				for(long i=0; i<pix_nn; i++) {
@@ -451,6 +452,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
 						nHot++;				
 					}		
 				}
+				if (threadSafetyLevel > 1) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
 				free(absAboveThreshold);
 				global->detector[detIndex].nHot = nHot;
 				printf("Detector %li: New hot pixel mask calculated - %li hot pixels identified.\n",detIndex,nHot);      

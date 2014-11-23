@@ -38,15 +38,15 @@ cFrameBuffer::cFrameBuffer(long pix_nn0, long depth0, int threadSafetyLevel0) {
 	// Median scheduling
 	n_median_readers = 0;
 	pthread_mutex_init(&median_mutex, NULL);
-	median_calculated = false;
+	median_updated = false;
 	// Std scheduling
 	n_std_readers = 0;
 	pthread_mutex_init(&std_mutex, NULL);
-	std_calculated = false;
+	std_updated = false;
 	// absAbovethresh scheduling
 	n_absAboveThresh_readers = 0;
 	pthread_mutex_init(&absAboveThresh_mutex, NULL);
-	absAboveThresh_calculated = false;	
+	absAboveThresh_updated = false;	
 }
 
 cFrameBuffer::~cFrameBuffer() {
@@ -183,17 +183,17 @@ void cFrameBuffer::unlockAbsAboveThreshReadersAndWriters() {
 long cFrameBuffer::writeNextFrame(float * data) {
 	long counter_last = __sync_fetch_and_add(&counter,1);
 	long frameID = counter_last % depth;
-	lockFrameReadersAndWriters(frameID);
+	if (threadSafetyLevel > 0) lockFrameReadersAndWriters(frameID);
 	memcpy(frames+frameID*pix_nn,data,pix_nn*sizeof(float));
-	unlockFrameReadersAndWriters(frameID);
+	if (threadSafetyLevel > 0) unlockFrameReadersAndWriters(frameID);
 	filled = counter >= (depth-1);
 	return counter_last;
 }
 
 void cFrameBuffer::copyMedian(float * target) {
-	lockMedianWriters();
+	if (threadSafetyLevel > 0) lockMedianWriters();
 	memcpy(target,median,pix_nn*sizeof(float));
-	unlockMedianWriters();
+	if (threadSafetyLevel > 0) unlockMedianWriters();
 }
 
 void cFrameBuffer::subtractMedian(float * data,int scale) {
@@ -202,7 +202,7 @@ void cFrameBuffer::subtractMedian(float * data,int scale) {
 	float	s2 = 0;
 	float	v1, v2;
 	float	factor = 1;
-	lockMedianWriters();
+	if (threadSafetyLevel > 0) lockMedianWriters();
 	/*
 	 *	Find appropriate scaling factor to match background with current image
 	 *	Use with care: this assumes background vector is orthogonal to the image vector (which is often not true)
@@ -224,13 +224,15 @@ void cFrameBuffer::subtractMedian(float * data,int scale) {
 	for(long i=0; i<pix_nn; i++) {
 		data[i] -= (factor*median[i]);	
 	}
-	unlockMedianWriters();
+	if (threadSafetyLevel > 0) unlockMedianWriters();
 }
 
 void cFrameBuffer::updateMedian(float point) {
 	float * buffer = (float *) calloc(depth, sizeof(float));
-	lockAllFramesReadersAndWriters();
-	lockMedianReadersAndWriters();
+	if (threadSafetyLevel > 0) {
+		lockAllFramesReadersAndWriters();
+		lockMedianReadersAndWriters();
+	}
 	// Loop over all pixels 
 	for(long i=0; i<pix_nn; i++) {
 		// Create a local array for sorting
@@ -240,32 +242,35 @@ void cFrameBuffer::updateMedian(float point) {
 		// Find median value of the temporary array
 		median[i] = (float) kth_smallest(buffer, depth, point);
 	}
-	unlockAllFramesReadersAndWriters();
-	unlockMedianReadersAndWriters();
+	if (threadSafetyLevel > 0) {
+		unlockAllFramesReadersAndWriters();
+		unlockMedianReadersAndWriters();
+	}
 	free (buffer);	
-	median_calculated = true;
+	median_updated = true;
 }
 
 void cFrameBuffer::copyAbsAboveThresh(float * target) {
-	lockAbsAboveThreshWriters();
+	if (threadSafetyLevel > 0) lockAbsAboveThreshWriters();
 	memcpy(target,absAboveThresh,pix_nn*sizeof(float));
-	unlockAbsAboveThreshWriters();
+	if (threadSafetyLevel > 0) unlockAbsAboveThreshWriters();
 }
 
 void cFrameBuffer::updateAbsAboveThresh(float threshold) {
-	lockAllFramesReadersAndWriters();
+	if (threadSafetyLevel > 0) lockAllFramesReadersAndWriters();
 	long * n = (long *) calloc(pix_nn,sizeof(long));
 	for (long j=0; j<depth; j++) {
 		for (long i=0; i<pix_nn; i++) {
 			n[i] += (fabs(frames[j*pix_nn+i])>threshold)?(1):(0);
 		}
 	}
-	unlockAllFramesReadersAndWriters();
-	lockAbsAboveThreshReadersAndWriters();
+	if (threadSafetyLevel > 0) unlockAllFramesReadersAndWriters();
+	if (threadSafetyLevel > 0) lockAbsAboveThreshReadersAndWriters();
 	for (long i=0; i<pix_nn; i++) {
 		absAboveThresh[i] = ((float) n[i])/((float) depth);
 	}
-	unlockAbsAboveThreshReadersAndWriters();
+	if (threadSafetyLevel > 0) unlockAbsAboveThreshReadersAndWriters();
+	absAboveThresh_updated = true;
 }
 
 void cFrameBuffer::copyStd(float * target) {
@@ -277,8 +282,10 @@ void cFrameBuffer::copyStd(float * target) {
 
 void cFrameBuffer::updateStd() {
 	float sum,sumsq,v;
-	lockAllFramesReadersAndWriters();
-	lockStdReadersAndWriters();
+	if (threadSafetyLevel > 0) {
+		lockAllFramesReadersAndWriters();
+		lockStdReadersAndWriters();
+	}
 	// Loop over all pixels 
 	for(long i=0; i<pix_nn; i++) {
 		sum = 0.;
@@ -292,7 +299,9 @@ void cFrameBuffer::updateStd() {
 		// Calculate standard deviation for this pixel
 		std[i] = sqrt(sumsq/depth - (sum*sum)/depth);
 	}
-	unlockAllFramesReadersAndWriters();
-	unlockStdReadersAndWriters();
-	std_calculated = true;
+	if (threadSafetyLevel > 0) {
+		unlockAllFramesReadersAndWriters();
+		unlockStdReadersAndWriters();
+	}
+	std_updated = true;
 }
