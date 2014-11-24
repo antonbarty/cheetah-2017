@@ -39,6 +39,9 @@ void *worker(void *threadarg) {
 	int             hit = 0;
 	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
+	
+	// Take a copy of the calibrated flag, important is the status at the beginning of the worker call
+	int calibrated = global->calibrated;
 
 	std::vector<int> myvector;
 	std::stringstream sstm;
@@ -188,7 +191,7 @@ localBGCalculated:
 	//---HITFINDING---//
 
 	if(global->hitfinder && (global->hitfinderForInitials ||
-							 !(eventData->threadNum < global->nInitFrames || !global->calibrated))){ 
+							 !(eventData->threadNum < global->nInitFrames || !calibrated))){ 
 		
 		DEBUG2("Hit finding");
 
@@ -221,7 +224,7 @@ hitknown:
 	updateNoisyPixelBuffer(eventData,global,hit);
 
 	// Skip first set of frames to build up running estimate of background...
-	if (eventData->threadNum < global->nInitFrames || !global->calibrated){
+	if (eventData->threadNum < global->nInitFrames || !calibrated){
 		// Update running backround estimate based on non-hits and calculate background from buffer
 		global->updateCalibrated();
 		printf("r%04u:%li (%3.1fHz): Digesting initial frames (npeaks=%i)\n", global->runNumber, eventData->threadNum,global->datarateWorker, eventData->nPeaks);

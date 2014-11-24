@@ -297,7 +297,7 @@ void cFrameBuffer::updateStd() {
 			sumsq += v*v;
 		}
 		// Calculate standard deviation for this pixel
-		std[i] = sqrt(sumsq/depth - (sum*sum)/depth);
+		std[i] = sqrt(sumsq/depth - (sum*sum)/(depth*depth));
 	}
 	if (threadSafetyLevel > 0) {
 		unlockAllFramesReadersAndWriters();
