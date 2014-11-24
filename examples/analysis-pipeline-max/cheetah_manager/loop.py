@@ -2,108 +2,65 @@ import os,sys
 import configobj
 import time,datetime
 import numpy as np
-import run,terminal,google
+import run,run_table
+
 
 def loop(configfilename,email,password):
+    # Read configuration
     C = configobj.ConfigObj(configfilename)
-    Cl = C["locations"]
-    L = {}
-    for k,l in Cl.items():
-        L[k] = os.path.expandvars(l)
-    Cs = C["spreadsheet"]
-    spreadsheet_name = Cs["spreadsheet_name"]
-    worksheet_name = Cs["worksheet_name"]
-    Cg = C["general"]
-    dry_run = Cg.as_bool("dry_run")
-    swmr = Cg.as_bool("swmr")
-    n_jobs_max = Cg.as_int("n_jobs_max")
+    
+    # Initialize ZMQ server
+    S = server.Server(C)
 
-    if email == "":
-        if "email" in Cs.keys():
-            email = Cs["email"]
-        else:
-            print "ERROR: No email address given. Cannot login to google."
-    if password == "":
-        if "password" in Cs.keys():
-            password = Cs["password"]
-        else:
-            print "ERROR: No password given. Cannot login to google."
+    # Try to open run table
+    rtab = run_table.RunTable(C)
 
-    # Init google table client
-    gtab = google.GoogleTable(email,password,spreadsheet_name,worksheet_name)
-    ttab = terminal.TerminalTable(C)
+    # Try to open google spreadsheet
+    #gtab = get_gtab(C,email,password)
+
     runs = {}
     
     counter = 0
     
     while True:
-        # Read the google spread sheet from the web
-        ttab.note("Reading from google spreadsheet")
-        gtab.read()
-        
-        # extract valid runs (XTCs exist,etc.)
-        valid_runs = set(gtab.get_valid_runs())
-        # we want to add only valid runs and only those that we have not added before
-        runs_to_add = valid_runs - set(runs.keys())
+        # Send out current run table
+        S.send(run_table.get())
 
-        # adding runs as "Run" objects to "runs"
-        ttab.note("Looking for runs to add to data table")
-        ns = list(runs_to_add)
-        ns.sort()
-        for n in ns:
-            ttab.note("%s - adding" % n)
-            runs[n] = run.Run(n,gtab,L,C)
+        # Check files in XTC directory and if new runs appeared add them to the table
+        rtab.checkForNewXTCs()
 
-        # update run information / status
-        ttab.note("Updating run status")
-        ns = list(valid_runs)
+        # Update information / status of all runs
+        #ttab.note("Updating run status")
+        ns = list(runs.keys())
         ns.sort()
         n_jobs = 0
         runs_to_start = []
         for n in ns:
             r = runs[n]
-            ttab.note("%s - updating" % r.run_name)
+            #ttab.note("%s - updating" % r.run_name)
             r.update()
             if r.status == "runs" or r.status == "started":
                 n_jobs += 1
             if r.status == "new" or r.status == "ready":
                 runs_to_start.append(n)
-
-        # start preprocessing of runs
-        ns = list(runs_to_start)
-        ns.sort()
-        for n in ns:
-            r = runs[n]
-            if n_jobs > n_jobs_max:
-                break
-            if not r.prepared:
-                ttab.note("%s - initialization" % r.run_name)
-                r.init_process()
-            if r.prepared:
-                r.start()
-                n_jobs += 1
-                ttab.note("%s - started" % r.run_name)
-                if swmr:
-                    r.start_swmr()                                                     
-                    n_jobs += 1
-                    ttab.note("%s - started (swmr)" % r.run_name)
-            else:
-                ttab.note("%s - processing postponed." % r.run_name)
     
-        ttab.note("Updating run information")
-        ttab.set_runs(runs)
+        #ttab.note("Updating run information")
+        #ttab.set_runs(runs)
     
-        if (counter % 10) == 0 or gtab.tabDict_modified:
-            ttab.note("Writing to google spreadsheet")
-            gtab.write(runs)
+        #if (counter % 10) == 0 or gtab.tabDict_modified:
+        #    ttab.note("Writing to google spreadsheet")
+        #    gtab.write(runs)
 
         counter += 1
 
-    #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
-        ttab.note("Waiting for user to press a key...") 
+        #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
+        #ttab.note("Waiting for user to press a key...") 
         
-        ttab.screen.getch()
+        #ttab.screen.getch()
 
-    #except:
-    #    print "ERROR OCCURED - RESTARTING IN A FEW SECONDS..."
-    #    time.sleep(5)
+        # Receive message from client
+        m = S.recv(10000)
+        if m != None:
+            runs[m["name"]].update(m)
+        
+        
