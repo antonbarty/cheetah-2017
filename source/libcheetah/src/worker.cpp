@@ -37,6 +37,8 @@ void *worker(void *threadarg) {
 	cGlobal			*global;
 	cEventData		*eventData;
 	int             hit = 0;
+	float hitRatio;
+	double processRate;
 	eventData = (cEventData*) threadarg;
 	global = eventData->pGlobal;
 	
@@ -57,7 +59,7 @@ void *worker(void *threadarg) {
 	DEBUG2("Monitoring");
 
 	updateDatarate(global);
-
+	processRate = global->processRateMonitor.getRate();
 
 	//---INITIALIZATIONS-AND-PREPARATIONS---//
 
@@ -217,6 +219,16 @@ hitknown:
   
 	DEBUG2("Procedures depending on hit tag");
 	
+	// Update central hit counter
+	pthread_mutex_lock(&global->nhits_mutex);	
+    global->nhitsandblanks++;
+	if(hit) {
+		global->nhits++;
+		global->nrecenthits++;
+	}
+	pthread_mutex_unlock(&global->nhits_mutex);
+	hitRatio = 100.*( global->nhits / (float) global->nhitsandblanks);
+
 	// Update running backround estimate based on non-hits
 	updateBackgroundBuffer(eventData, global, hit); 
 
@@ -227,7 +239,7 @@ hitknown:
 	if (eventData->threadNum < global->nInitFrames || !calibrated){
 		// Update running backround estimate based on non-hits and calculate background from buffer
 		global->updateCalibrated();
-		printf("r%04u:%li (%3.1fHz): Digesting initial frames (npeaks=%i)\n", global->runNumber, eventData->threadNum,global->datarateWorker, eventData->nPeaks);
+		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Digesting initial frame %s (hit=%i, npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
 		goto cleanup;
 	}
     
@@ -290,41 +302,30 @@ hitknown:
 		writeCXIHitstats(eventData, global);
 	}
 
-	eventData->writeFlag =  ((hit && global->saveHits) || (!hit && global->saveBlanks) || ((global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) ));
+	eventData->writeFlag = 
+		(hit && global->saveHits && (eventData->nPeaks >= global->saveHitsMinNPeaks)) || 
+		(!hit && global->saveBlanks) || 
+		( (global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) );
 
 	// If this is a hit, write out to our favourite HDF5 format
 	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
 	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
 	
-	// Update central hit counter
-	pthread_mutex_lock(&global->nhits_mutex);	
-    global->nhitsandblanks++;
-	if(hit) {
-		global->nhits++;
-		global->nrecenthits++;
-	}
-	pthread_mutex_unlock(&global->nhits_mutex);
-
 	if(eventData->writeFlag){
 		// one CXI or many H5?
 		DEBUG2("About to write frame.");
 		if(global->saveCXI){
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s to %s (npeaks=%i)\n",global->runNumber, 
-				   eventData->threadNum, global->processRateMonitor.getRate(), 
-				   100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, 
-				   global->cxiFilename, eventData->nPeaks);
-		    //pthread_mutex_lock(&global->saveCXI_mutex);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
 			writeCXI(eventData, global);
-			//pthread_mutex_unlock(&global->saveCXI_mutex);
 		} else {
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to: %s.h5 (npeaks=%i)\n",global->runNumber, eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->eventStamp, eventData->nPeaks);
+			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to %s.h5 (hit=%i,npeaks=%i)\n",global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
 			writeHDF5(eventData, global);
 		}
 		DEBUG2("Frame written.");
 	}
 	// This frame is not going to be saved, but print anyway
 	else {
-		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed (npeaks=%i)\n", global->runNumber,eventData->threadNum,global->datarateWorker, 100.*( global->nhits / (float) global->nhitsandblanks), eventData->nPeaks);
+		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed %s (hit=%i,npeaks=%i)\n", global->runNumber,eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
 	}
 
 	// FEE spectrometer data stack 

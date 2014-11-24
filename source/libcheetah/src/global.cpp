@@ -95,6 +95,7 @@ cGlobal::cGlobal(void) {
 
 	hitfinderNpeaks = 50;
 	hitfinderNpeaksMax = 100000;
+	saveHitsMinNPeaks = 0;
 	hitfinderAlgorithm = 8;
 	hitfinderMinPixCount = 3;
 	// hitfinderMaxPixCount is a new feature. For backwards compatibility it should be neutral by default, therefore hitfinderMaxPixCount = 0
@@ -1093,6 +1094,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "hitfindernpeaks")) {
 		hitfinderNpeaks = atoi(value);
+	}
+	else if (!strcmp(tag, "savehitsminnpeaks")) {
+		saveHitsMinNPeaks = atoi(value);
 	}
 	else if (!strcmp(tag, "hitfindernpeaksmax")) {
 		hitfinderNpeaksMax = atoi(value);

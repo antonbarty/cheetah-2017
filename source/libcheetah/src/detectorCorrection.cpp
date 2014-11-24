@@ -408,7 +408,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
 			DEBUG3("Add a new frame to the hot pixel frame buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			long counter = frameBuffer->writeNextFrame(data);
 			if (counter < bufferDepth)
-				printf("Hot pixel ring buffer fill status: %li/%li.\n",counter+1,bufferDepth);
+				printf("Calibrating hot pixel map: Ring buffer fill status %li/%li.\n",counter+1,bufferDepth);
 			
 			// Do we have to update the hot pixel map
 			DEBUG3("Check wheter or not we need to calculate a new hot pixel map from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										

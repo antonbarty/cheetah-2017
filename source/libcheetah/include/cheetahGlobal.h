@@ -105,6 +105,8 @@ public:
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
 	int      hitfinderNpeaks;
+	/** @brief Minimum number of nPeaks that constitute a hit that shall be saved. */
+	int      saveHitsMinNPeaks;
 	/** @brief Maximum number of Bragg peaks that constitute a hit. */
 	int      hitfinderNpeaksMax;
 	//int      hitfinderPeakBufferSize;
