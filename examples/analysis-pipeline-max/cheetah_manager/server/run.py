@@ -6,56 +6,60 @@ class Run:
     def __init__(self,name,C):
         self.name = name
         self.run_nr = int(name[1:])
-        #self.google_table = google_table
         self.C = C
         self.clear()
     def clear(self):
-        self.stopped = True
+        self.attrs_copy = {}
+        self.touched = True
+        self.blocked = True
         self.prepared = False
-        self.logfile_present = False
         self.started = False
-        self.started_swmr = False
-        self.attrs = {}
-        self.type = ""
+        self.attrs = {"Name": self.name, "Type": ""}
         self.xtcs = []
         self.logfile = None
-        self.status = None
         self.processdir = None
+        self.darkcal = None
         self._load_xtcs()
         self._load_processdir()
         self._load_logfile()
-        self._load_status()
-    def setType(self,type):
-        self.type = type
-    def update(self,message): 
-        if message["cmd"] == "delete":
-            self._delete()
-        if message["cmd"] == "start":
-            self.stopped = False
+        self._refresh_status()
+    def update(self,attrs=None):
+        if attrs != None:
+            self._change_attrs(attrs)
         if self.xtcs == []:
             self._load_xtcs()
-        if self.processdir == None:
-            self._load_processdir()
-        if not self.logfile_present:
-            self._load_logfile()
-        self._load_status()
+        if self.attrs["Type"] in ["Dark","Data"]:
+            if self.processdir == None:
+                self._load_processdir()
+            if self.processdir != None and self.logfile == None:
+                self._load_logfile()
+        self._refresh_status()
         self._refresh_attrs()
-        if not self.stopped:
-            if not self.prepared:
-                self._init_process()
+        if not self.blocked and self.attrs["Status"] == "Waiting":
+            if self.processdir == None:
+                self._init_processdir()
             if self.prepared:
                 self._start()
-    def _init_process(self):
-        ready = False
-        if self.type == "data": 
-            self.darkcal = self._get_prior_darkcal()
-            if self.darkcal != None:
-                ready = True
-        elif self.type == "dark":
-            ready = True
-        if ready:
-            self._init_processdir()
-            self.prepared = True
+        self._check_touched()
+    def _check_touched(self):
+        self.touched = False
+        for n,i in self.attrs_copy.items():
+            if n in self.attrs:
+                if self.attrs[n] != self.attrs_copy[n]:
+                    self.touched = True
+                    break
+            else:
+                self.touched = True
+                break
+        for n,i in self.attrs.items():
+            if n in self.attrs_copy:
+                if self.attrs[n] != self.attrs_copy[n]:
+                    self.touched = True
+                    break
+            else:
+                self.touched = True
+                break
+        self.attrs_copy = dict(self.attrs)
     def _start(self):
         if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
             s = "bsub -n %s -q psnehq -J C%s -o %s %s" % (self.C["general"]["n_cores_per_job"],self.name,self.processout,self.processexec)
@@ -63,35 +67,6 @@ class Run:
             s = "sbatch %s" % self.processexec
         os.system(s)
         self.started = True
-    def _start_swmr(self):
-        if self.type == "dark":
-            return 
-        if not self.prepared:
-            print "ERROR: Trying to start non-prepared run. Aborting..."
-            sys.exit(0)
-        self.processdir_swmr = self.C["locations"]["h5dir_swmr"]+"/"+self.name+"_"+self.st
-	self.psanaexec_swmr = self.C["locations"]["psanaexec_swmr"]
-        self.processexec_swmr = self.processdir_swmr+"/process.sh"
-        self.processout_swmr = self.processdir_swmr+"/process.out"
-        os.system("cp -r %s %s/" % (self.processdir,self.processdir_swmr))
-        self.cheetah_ini_swmr = self.processdir_swmr+"/cheetah.ini"
-        with open(self.cheetah_ini_swmr,"r") as f:
-            ls = f.readlines()
-        ls_n = []
-        for l in ls:
-            if "cxiswmr" in l.lower():
-                ls_n.append("cxiswmr=1\n")
-            else:
-                ls_n.append(l)
-        with open(self.cheetah_ini_swmr,"w") as f:
-            f.writelines(ls_n)
-        self._write_processexec(self.processout_swmr,self.processdir_swmr,self.psanaexec_swmr,self.processexec_swmr)
-        if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
-            s = "bsub -n 6 -q psnehq -J C%sS -o %s %s" % (self.name,self.processout_swmr,self.processexec_swmr)
-        elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
-            s = "sbatch %s" % self.processexec_swmr
-        os.system(s)
-        self.started_swmr = True
     def _delete(self):
         if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
             os.system("bkill -J C%s" % self.name)
@@ -100,29 +75,24 @@ class Run:
             os.system("scancel --name=C%s" % self.name)
             os.system("scancel --name=C%sS" % self.name)
         os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir"],self.name))
-        if self.C["general"].as_bool("swmr"): 
-            os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_swmr"],self.name))
         os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_dark"],self.name))
         self.clear()
-    #def _load_type(self):
-    #    self.type = self.google_table.get_run_type(self.name)
     def _load_xtcs(self):
         self.xtcs =  [(self.C["locations"]["xtcdir"]+"/"+l) for l in os.listdir(self.C["locations"]["xtcdir"]) if self.name in l]
     def _load_processdir(self):
-        if self.type == "":
+        if self.attrs["Type"] == "":
+            self.processdir = None
+            return
+        rootdir = {"Dark":self.C["locations"]["h5dir_dark"],"Data":self.C["locations"]["h5dir"]}[self.attrs["Type"]]
+        dirs = [(rootdir+"/"+l) for l in os.listdir(rootdir) if self.name in l and len(l) > 5]
+        if dirs == []:
             self.processdir = None
         else:
-            rootdir = {"dark":self.C["locations"]["h5dir_dark"],"data":self.C["locations"]["h5dir"]}[self.type]
-            dirs = [(rootdir+"/"+l) for l in os.listdir(rootdir) if self.name in l and len(l) > 5]
-            if dirs == []:
-                self.processdir = None
-            else:
-                dirs.sort()
-                self.processdir = dirs[-1] # load most recent one
+            dirs.sort()
+            self.processdir = dirs[-1] # load most recent one
     def _load_logfile(self):
         if self.processdir == None:
             self.logfile = None
-            self.logfile_present = False
             return
         logf = self.processdir + "/" + "log.txt"
         if os.path.isfile(logf):
@@ -131,58 +101,68 @@ class Run:
         else:
             self.logfile = logf
             self.logfile_present = False
-    def _load_status(self):
-        if self.type not in ["data","dark"]:
-            self.status = "invalid"
-        elif self.xtcs == []:
-            self.status = "no XTCs"
+    def _refresh_status(self):
+        if self.attrs["Type"] not in ["Data","Dark"]:
+            self.attrs["Status"] = "Invalid"
         elif self.processdir == None:
-            if self.started:
-                self.status = "started"
+            if self.attrs["Type"] == "Data":
+                if self.darkcal == None:
+                    self.darkcal = self._get_prior_darkcal()
+                if self.darkcal == None:
+                    self.attrs["Status"] = "Postponed"
+                else:
+                    self.attrs["Status"] = "Waiting"
             else:
-                self.status = "new"
-        elif not self.logfile_present:
-            if self.started:
-                self.status = "started"
-            else:
-                self.status = "ready"
+                self.attrs["Status"] = "Waiting"
+        elif self.logfile == None:
+            self.attrs["Status"] = "Started"
         else:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
-
                 if ">-------- End of job --------<\n" in loglines:
-                    self.status = "ended"
+                    self.attrs["Status"] = "Finished"
                 else:
-                    self.status = "runs"
+                    self.attrs["Status"] = "Runs"
+    def _change_attrs(self,attrs):
+        for n,it in attrs.items():
+            if n == "Cmd":
+                if attrs["Cmd"] == "Delete":
+                    self._delete()
+                    self.blocked = True
+                elif attrs["Cmd"] == "Start":
+                    self.blocked = False
+                elif attrs["Cmd"] == "refreshDark":
+                    self.darkcal = self._get_prior_darkcal()
+                    if self.darkcal == None:
+                        self.attrs["Darkcal"] = "-"
+                    else:
+                        self.attrs["Darkcal"] = re.search("r[0-9][0-9][0-9][0-9]",self.darkcal).group()
+            else:
+                self.attrs[n] = it
     def _refresh_attrs(self):
-        self.attrs = {}
-        # ["Run","Type","Status","#Frames","#Hits","HRate"]
-        self.attrs["Type"] = self.type
-        self.attrs["Status"] = self.status
-        self.attrs["Cmd"] = self.cmd
         if self.logfile != None and self.logfile_present:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
-                if self.status == "runs":
+                if self.rAttr["Status"] == "Runs":
                     for line in loglines:
                         for frag in line.split(", "):
                             if "nFrames:" in frag:
-                                self.attrs["#Frames"] = frag.split(" ")[-1]
+                                self.attrs["No. Frames"] = frag.split(" ")[-1]
                             if "nHits:" in frag:
-                                self.attrs["#Hits"] = frag.split(" ")[-2]
-                                self.attrs["HRate%"] = frag.split(" ")[-1][1:-2]                   
+                                self.attrs["No. Hits"] = frag.split(" ")[-2]
+                                self.attrs["Hit Ratio"] = frag.split(" ")[-1][1:-2] + " %"                   
                             if "wallTime" in frag:
-                                self.attrs["FRateHz"] = frag.split(" ")[-2][1:]
-                elif self.status == "ended":
+                                self.attrs["Process Rate"] = frag.split(" ")[-2][1:] + " Hz"
+                elif self.rAttr["Status"] == "finished":
                     for line in loglines:
                         if "Frames processed:" in line:
-                            self.attrs["#Frames"] = line.split(" ")[-1][:-1]
+                            self.attrs["No. Frames"] = line.split(" ")[-1][:-1]
                         elif "Number of hits:" in line:
-                            self.attrs["#Hits"] = line.split(" ")[-1][:-1]
+                            self.attrs["No. Hits"] = line.split(" ")[-1][:-1]
                         elif "Average hit rate:" in line:
-                            self.attrs["HRate%"] = line.split(" ")[-2][:-1]
+                            self.attrs["Hit Ratio"] = line.split(" ")[-2][:-1] + " %"
                         elif "Average frame rate:" in line:
-                            self.attrs["FRateHz"] = line.split(" ")[-2]
+                            self.attrs["Process Rate"] = line.split(" ")[-2] + " Hz"
     def _get_prior_darkcal(self):
         dcals = [(self.C["locations"]["h5dir_dark"]+"/"+l+"/"+("%s-pnCCD-detectorID#-darkcal.h5" % (l[:5]))) for l in os.listdir(self.C["locations"]["h5dir_dark"]) if (len(l) == 5) and (int(l[1:]) < self.run_nr)]
         if dcals == []:
@@ -191,9 +171,9 @@ class Run:
         return dcals[-1]       
     def _init_processdir(self):
         self.st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d_%H%M%S')
-        if self.type == "data":
+        if self.rAttr["Type"] == "Data":
             self.processdir = self.C["locations"]["h5dir"] + "/" + self.name + "_" + self.st
-        elif self.type == "dark":
+        elif self.rAttr["Type"] == "Dark":
             self.processdir = self.C["locations"]["h5dir_dark"] + "/" + self.name + "_" + self.st
 	self.psanaexec = self.C["locations"]["psanaexec"]
         self.processexec = self.processdir + "/" + "process.sh"
@@ -205,9 +185,9 @@ class Run:
         self._write_processexec(self.processout,self.processdir,self.psanaexec,self.processexec)
     def _init_process_config(self):
         # select source files for configurations
-        if self.type == "data":
+        if self.rAttr["Type"] == "Data":
             cdir = self.C["locations"]["confdir"]
-        elif self.type == "dark":
+        elif self.rAttr["Type"] == "Dark":
             cdir = self.C["locations"]["confdir_dark"]
         c = {}
         for f,prefix,suffix in zip([self.cheetah_ini,self.psana_cfg],["cheetah","psana"],["ini","cfg"]): 
@@ -230,7 +210,7 @@ class Run:
                     appended = False
                     if "detectorid" in l.lower() and not "hitfinder" in l.lower():
                         ls_n.append(l)
-                        if self.type == "data":
+                        if self.rAttr["Type"] == "Data":
                             if self.darkcal != None:
                                 detectorID = l[:-1].split("=")[-1]
                                 ls_n.append("darkcal=%s\n" % self.darkcal.replace("#",detectorID))
@@ -246,8 +226,6 @@ class Run:
                         
         with open(self.cheetah_ini,"w") as f:
                 f.writelines(ls_n)
-        #if self.C["swmr"]
-        # write psana.cfg
         os.system("cp %s %s" % (c["psana"],self.psana_cfg))        
     def _write_processexec(self,processout,processdir,psanaexec,processexec):
         txt = ["#!/bin/bash\n"]
