@@ -6,7 +6,6 @@ import clientZMQ
 import runTableWidget
 
 class CheManClient(QtGui.QMainWindow):
-    newRequest = QtCore.Signal(dict)
     def __init__(self,args):
         QtGui.QMainWindow.__init__(self)
         self.resize(800, 500)
@@ -17,24 +16,33 @@ class CheManClient(QtGui.QMainWindow):
 
         self.C = configobj.ConfigObj(args.filename)
 
-        self.runTable = runTableWidget.RunTableWidget(self,self.C)
+        self.tabs = QtGui.QTabWidget()
+
+        self.runTable = runTableWidget.RunTableWidget(self.C)
+        self.tabs.addTab(self.runTable,"Run Table")
         
-        self.setCentralWidget(self.runTable)
+        self.setCentralWidget(self.tabs)
 
         self.client = clientZMQ.Client(self.C)
         self.client.newRList.connect(self.runTable.update)
-        self.runTable.changed.connect(self.sendRequest)
-        self.newRequest.connect(self.client.sendRequest)
+        self.runTable.changed.connect(self.client.sendChangeRunRequest)
+        
+        self.updateReqTimer = QtCore.QTimer(self)
+        self.updateReqTimer.setInterval(1000)
+        self.updateReqTimer.timeout.connect(self.client.sendUpdateRequest)
+        self.updateReqTimer.start()
 
-        self.timer = QtCore.QTimer(self)
-        self.timer.setInterval(5000)
-        self.timer.timeout.connect(self.sendRequest)
-        self.timer.start()
+        self.updateRecvTimer = QtCore.QTimer(self)
+        self.updateRecvTimer.setInterval(1000)
+        self.updateRecvTimer.timeout.connect(self.client.recvUpdate)
+        self.updateRecvTimer.start()
 
-        self.sendRequest({})
+        self.client.sendUpdateRequest("REQ_FULL_LIST")
 
-    def sendRequest(self,req=[]):
-        self.newRequest.emit(req)
+    def terminate(self):
+        self.updateReqTimer.stop()
+        self.updateRecvTimer.stop()
+        self.client.terminate()
 
 def main():
     parser = argparse.ArgumentParser(description='')
@@ -51,7 +59,7 @@ def main():
     CMC = CheManClient(args)
     CMC.show()
     ret = app.exec_()
-    CMC.client.terminate()
+    CMC.terminate()
     time.sleep(1)
     sys.exit(ret)
 

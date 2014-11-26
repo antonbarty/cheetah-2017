@@ -5,7 +5,7 @@ import numpy as np
 import run,runTable
 import serverZMQ
 
-def loop(configfilename,email,password):
+def loop(configfilename):#,email,password):
     print "Read config"
     # Read configuration
     C = configobj.ConfigObj(configfilename)
@@ -44,25 +44,31 @@ def loop(configfilename,email,password):
         #ttab.screen.getch()
 
         # Receive request from clients
-        print "Receive request"
-        req = S.recvReq()
-        if req != None:
-            print req
-            if req == [{}]:
-                # Send out full rList for initialization of client
-                print "Send full list"
-                S.answerReq(rtab.getList())
+        print "Receive requests"
+        reqs = S.recvReqs()
+        sendListFull = False
+        sendListUpdate = False
+        print reqs
+        print "Update"
+        for req in reqs:
+            if req == "REQ_FULL_LIST":
+                sendListFull = True
+            elif req == "REQ_UPDATED_LIST":
+                sendListUpdate = True
+            elif isinstance(req,dict):
+                sendListUpdate = True
+                rtab.R[req["Name"]].update(req) 
             else:
-                print "Update requests"
-                for r in req:
-                    n = r["Name"]
-                    rtab.R[n].update(r)       
-                # Answer request
-                print "Answer request"
-                # Send out update
-                print "Send list update"
-                S.answerReq(rtab.getListUpdate())
+                print "WARNING: Invalid package received."
+        print "Answer requests"       
+        L = []
+        if sendListFull: 
+            L = rtab.getList()
+        elif sendListUpdate:
+            L = rtab.getListUpdate()
+        S.answerReqs(L)
 
+        print "Cache table to file"
         rtab.writeTable()
             
 

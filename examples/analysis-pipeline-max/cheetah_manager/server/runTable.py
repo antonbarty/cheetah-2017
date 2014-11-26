@@ -10,6 +10,7 @@ class RunTable:
     def getValidRuns(self):
         return [r.name for r in self.R if r.type != ""]
     def _getRunsWithXTCs(self):
+        print "Collecting runs with XTCs"
         xtcdir = self.C["locations"]["xtcdir"]
         tmp = list(set([re.search("r[0-9][0-9][0-9][0-9]",l).group() for l in os.listdir(xtcdir) if (re.search("r[0-9][0-9][0-9][0-9].*xtc$",l) != None)]))
         tmp.sort()
@@ -27,14 +28,14 @@ class RunTable:
         for n in names:
             self.R[n].update()
     def getList(self,getAll=True):
-        touched = False
         out = []
         names = self.R.keys()
         names.sort()
         for n in names:
             r = self.R[n]
-            if r.touched or getAll:
-                out.append(r.attrs)
+            attrs = r.get_if_touched()
+            if attrs != None or getAll:
+                out.append(attrs)
         return out
     def getListUpdate(self):
         return self.getList(False)
@@ -43,12 +44,14 @@ class RunTable:
         runs_with_xtcs = self._getRunsWithXTCs()
         for r in runs_with_xtcs:
             if r not in self.R:
+                print "Adding run " + r
                 self.R[r] = run.Run(r,self.C)
         if os.path.isfile(filename):
             with open(filename,"r") as csvfile:
                 reader = csv.reader(csvfile)
                 for [n,t] in reader:
                     if n in self.R:
+                        print "Setting type for run " + r
                         self.R[n].attrs["Type"] = t 
     def writeTable(self):
         filename = self.C["general"]["runtable_filename"]

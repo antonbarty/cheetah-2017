@@ -10,12 +10,14 @@ class Run:
         self.clear()
     def clear(self):
         self.attrs_copy = {}
-        self.touched = True
+        self.new = True
         self.blocked = True
-        self.prepared = False
-        self.started = False
-        self.attrs = {"Name": self.name, "Type": ""}
-        self.xtcs = []
+        self.attrs = {"Name": self.name,
+                      "Type": "",
+                      "No. Frames": "-",
+                      "No. Hits": "-",
+                      "Hit Ratio": "-",
+                      "Process Rate": "-"}
         self.logfile = None
         self.processdir = None
         self.darkcal = None
@@ -26,8 +28,6 @@ class Run:
     def update(self,attrs=None):
         if attrs != None:
             self._change_attrs(attrs)
-        if self.xtcs == []:
-            self._load_xtcs()
         if self.attrs["Type"] in ["Dark","Data"]:
             if self.processdir == None:
                 self._load_processdir()
@@ -38,35 +38,38 @@ class Run:
         if not self.blocked and self.attrs["Status"] == "Waiting":
             if self.processdir == None:
                 self._init_processdir()
-            if self.prepared:
+            if self.processdir != None:
                 self._start()
-        self._check_touched()
-    def _check_touched(self):
-        self.touched = False
+    def get_if_touched(self):
+        touched = self.new
         for n,i in self.attrs_copy.items():
             if n in self.attrs:
                 if self.attrs[n] != self.attrs_copy[n]:
-                    self.touched = True
+                    touched = True
                     break
             else:
-                self.touched = True
+                touched = True
                 break
         for n,i in self.attrs.items():
             if n in self.attrs_copy:
                 if self.attrs[n] != self.attrs_copy[n]:
-                    self.touched = True
+                    touched = True
                     break
             else:
-                self.touched = True
+                touched = True
                 break
         self.attrs_copy = dict(self.attrs)
+        self.new = False
+        if touched:
+            return self.attrs
+        else:
+            return None
     def _start(self):
         if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
             s = "bsub -n %s -q psnehq -J C%s -o %s %s" % (self.C["general"]["n_cores_per_job"],self.name,self.processout,self.processexec)
         elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
             s = "sbatch %s" % self.processexec
         os.system(s)
-        self.started = True
     def _delete(self):
         if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
             os.system("bkill -J C%s" % self.name)
@@ -74,8 +77,10 @@ class Run:
         elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
             os.system("scancel --name=C%s" % self.name)
             os.system("scancel --name=C%sS" % self.name)
-        os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir"],self.name))
-        os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_dark"],self.name))
+        if len([f for f in os.listdir(self.C["locations"]["h5dir"]) if self.name in f]) > 0:
+            os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir"],self.name))
+        if len([f for f in os.listdir(self.C["locations"]["h5dir_dark"]) if self.name in f]) > 0:
+            os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_dark"],self.name))
         self.clear()
     def _load_xtcs(self):
         self.xtcs =  [(self.C["locations"]["xtcdir"]+"/"+l) for l in os.listdir(self.C["locations"]["xtcdir"]) if self.name in l]
@@ -97,10 +102,6 @@ class Run:
         logf = self.processdir + "/" + "log.txt"
         if os.path.isfile(logf):
             self.logfile = logf
-            self.logfile_present = True
-        else:
-            self.logfile = logf
-            self.logfile_present = False
     def _refresh_status(self):
         if self.attrs["Type"] not in ["Data","Dark"]:
             self.attrs["Status"] = "Invalid"
@@ -140,10 +141,10 @@ class Run:
             else:
                 self.attrs[n] = it
     def _refresh_attrs(self):
-        if self.logfile != None and self.logfile_present:
+        if self.logfile != None:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
-                if self.rAttr["Status"] == "Runs":
+                if self.attrs["Status"] == "Runs":
                     for line in loglines:
                         for frag in line.split(", "):
                             if "nFrames:" in frag:
@@ -153,7 +154,7 @@ class Run:
                                 self.attrs["Hit Ratio"] = frag.split(" ")[-1][1:-2] + " %"                   
                             if "wallTime" in frag:
                                 self.attrs["Process Rate"] = frag.split(" ")[-2][1:] + " Hz"
-                elif self.rAttr["Status"] == "finished":
+                elif self.attrs["Status"] == "finished":
                     for line in loglines:
                         if "Frames processed:" in line:
                             self.attrs["No. Frames"] = line.split(" ")[-1][:-1]
@@ -171,9 +172,9 @@ class Run:
         return dcals[-1]       
     def _init_processdir(self):
         self.st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d_%H%M%S')
-        if self.rAttr["Type"] == "Data":
+        if self.attrs["Type"] == "Data":
             self.processdir = self.C["locations"]["h5dir"] + "/" + self.name + "_" + self.st
-        elif self.rAttr["Type"] == "Dark":
+        elif self.attrs["Type"] == "Dark":
             self.processdir = self.C["locations"]["h5dir_dark"] + "/" + self.name + "_" + self.st
 	self.psanaexec = self.C["locations"]["psanaexec"]
         self.processexec = self.processdir + "/" + "process.sh"
@@ -185,9 +186,9 @@ class Run:
         self._write_processexec(self.processout,self.processdir,self.psanaexec,self.processexec)
     def _init_process_config(self):
         # select source files for configurations
-        if self.rAttr["Type"] == "Data":
+        if self.attrs["Type"] == "Data":
             cdir = self.C["locations"]["confdir"]
-        elif self.rAttr["Type"] == "Dark":
+        elif self.attrs["Type"] == "Dark":
             cdir = self.C["locations"]["confdir_dark"]
         c = {}
         for f,prefix,suffix in zip([self.cheetah_ini,self.psana_cfg],["cheetah","psana"],["ini","cfg"]): 
@@ -210,7 +211,7 @@ class Run:
                     appended = False
                     if "detectorid" in l.lower() and not "hitfinder" in l.lower():
                         ls_n.append(l)
-                        if self.rAttr["Type"] == "Data":
+                        if self.attrs["Type"] == "Data":
                             if self.darkcal != None:
                                 detectorID = l[:-1].split("=")[-1]
                                 ls_n.append("darkcal=%s\n" % self.darkcal.replace("#",detectorID))

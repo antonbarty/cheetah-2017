@@ -7,16 +7,16 @@ HEADER = ["Run ID","Type"]#,"Number of events","Number of hits","Hit ratio","Pro
 
 class RunTableWidget(QtGui.QWidget):
     changed = QtCore.Signal(dict)
-    def __init__(self,parent,C):
+    def __init__(self,C):
         QtGui.QWidget.__init__(self)
         self.vbox = QtGui.QVBoxLayout(self)
-        self.hbox = QtGui.QHBoxLayout(self)
+        self.hbox = QtGui.QHBoxLayout()
         sp = QtGui.QSizePolicy()
         sp.setHorizontalStretch(1)
         elements = []
         elements.append(QtGui.QLabel("Run ID"))
         elements.append(QtGui.QLabel("Type"))
-        elements.append(QtGui.QLabel("Send Command"))
+        elements.append(QtGui.QLabel("Command"))
         elements.append(QtGui.QLabel("Status"))
         elements.append(QtGui.QLabel("Process Rate"))
         elements.append(QtGui.QLabel("No. Frames"))
@@ -74,22 +74,31 @@ class RunLayout(QtGui.QHBoxLayout):
         QtGui.QHBoxLayout.__init__(self)
         self.parent = parent
         self.C = C
+        self.rAttr = rAttr
+        self.rAttr["Type"] = rAttr.get("Type","-")
+        self.rAttr["Status"] = rAttr.get("Status","-")
+        self.rAttr["Process Rate"] = rAttr.get("Process Rate","-")
+        self.rAttr["No. Hits"] = rAttr.get("No. Hits","-")
+        self.rAttr["No. Frames"] = rAttr.get("No. Frames","-")
+        self.rAttr["Hit Ratio"] = rAttr.get("Hit Ratio","-")
         elements = []
-        self.nameLabel = QtGui.QLabel(rAttr["Name"])
+        self.nameLabel = QtGui.QLabel(self.rAttr["Name"])
         elements.append(self.nameLabel)
-        self.typeCombo = QtGui.QComboBox()
+        self.typeCombo = ComboBoxNoWheel()
         self.typeCombo.addItems(["","Data","Dark"])
-        self.typeCombo.setCurrentIndex(0)
+        self.typeCombo.setCurrentIndex(["","Data","Dark"].index(self.rAttr["Type"]))
         elements.append(self.typeCombo)
         self.cmdButton = QtGui.QPushButton()
         elements.append(self.cmdButton)
-        self.statusLabel = QtGui.QLabel(rAttr.get("Status","-"))
+        self.statusLabel = QtGui.QLabel(self.rAttr["Status"])
+        self.statusMovie = QtGui.QMovie("loader.gif")
+        self.statusMovie.start()
         elements.append(self.statusLabel)
-        self.processRateLabel = QtGui.QLabel(rAttr.get("Process Rate","-"))
+        self.processRateLabel = QtGui.QLabel(self.rAttr["Process Rate"])
         elements.append(self.processRateLabel)
-        self.nFramesLabel = QtGui.QLabel(rAttr.get("No. Frames","-"))
+        self.nFramesLabel = QtGui.QLabel(self.rAttr["No. Frames"])
         elements.append(self.nFramesLabel)
-        self.hitRatioLabel = QtGui.QLabel(rAttr.get("Hit Ratio","-"))
+        self.hitRatioLabel = QtGui.QLabel(self.rAttr["Hit Ratio"])
         elements.append(self.hitRatioLabel)
         sp = QtGui.QSizePolicy()
         sp.setHorizontalStretch(1)
@@ -113,11 +122,11 @@ class RunLayout(QtGui.QHBoxLayout):
         self.nameLabel.setText(rAttr["Name"])
         self.typeCombo.setCurrentIndex(self.typeCombo.findText(rAttr["Type"]))
         s = self.rAttr["Status"]
-        if s in ["Running","Finished"]:
+        if s in ["Started","Postponed","Running","Finished"]:
             self.cmdButton.setText("Delete")
-        elif s in ["Waiting","Postponed","Invalid"]:
+        elif s in ["Waiting","Invalid"]:
             self.cmdButton.setText("Start")
-        self.cmdButton.setEnabled(s not in ["Invalid","Postponed"])
+        self.cmdButton.setEnabled(s not in ["Invalid"])
         self.statusLabel.setText(rAttr.get("Status","-"))
         self.processRateLabel.setText(rAttr.get("Process Rate","-"))
         self.nFramesLabel.setText(rAttr.get("No. Frames","-"))
@@ -128,5 +137,13 @@ class RunLayout(QtGui.QHBoxLayout):
         rAttr["Type"] = self.typeCombo.currentText()
         self.parent.changed.emit(rAttr)
     def emitCmd(self):
+        rAttr = dict(self.rAttr)
         rAttr["Cmd"] = self.cmdButton.text()
-        self.emitChange()
+        rAttr["Type"] = self.typeCombo.currentText()
+        self.statusLabel.setMovie(self.statusMovie)
+        self.parent.changed.emit(rAttr)
+        
+
+class ComboBoxNoWheel(QtGui.QComboBox):
+    def wheelEvent (self, event):
+        event.ignore()

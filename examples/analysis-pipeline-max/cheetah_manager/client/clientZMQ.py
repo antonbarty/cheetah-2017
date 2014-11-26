@@ -12,17 +12,27 @@ class Client(QtCore.QObject):
         self.process = multiprocessing.Process(target=ClientHelper,
                                                args=(C,self.pipe_end_helper,))
         self.process.start()
-    def sendRequest(self,cmd=[]):
+    def sendUpdateRequest(self,cmd="REQ_UPDATED_LIST"):
         self.pipe_end_worker.send(cmd)
-        rList = self.pipe_end_worker.recv()
-        if rList != []:
-            self.newRList.emit(rList)            
+    def sendChangeRunRequest(self,r):
+        self.pipe_end_worker.send(r)
+    def recvUpdate(self):
+        if self.pipe_end_worker.poll():
+            rList = self.pipe_end_worker.recv()
+            if rList != []:
+                self.newRList.emit(rList)
     def terminate(self):
-        self.pipe_end_worker.send("terminate")
-        self.process.join()
+        print "Terminating (polling last update)"
+        if self.pipe_end_worker.poll():
+            self.pipe_end_worker.recv()
+        print "Terminating (sending terminate signal to process)"
+        self.pipe_end_worker.send("REQ_TERMINATE")
+        print "Terminating (closing pipe)"
         self.pipe_end_worker.close()
+        print "Terminating (joining process)"
+        self.process.join()
         #self.pipe_end_helper.close()
-
+        
 class ClientHelper:
     def __init__(self,C,pipe):
         # Worker connection
@@ -36,7 +46,7 @@ class ClientHelper:
         while True: 
             # Worker communication
             msg = self.workerPipe.recv()
-            if msg == "terminate":
+            if msg == "REQ_TERMINATE":
                 break
             self.socket.send_json(msg)
             self.workerPipe.send(self.socket.recv_json())
