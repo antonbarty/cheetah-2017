@@ -8,6 +8,29 @@ run_type_col = 1
 run_cmd_col = 2
 title = ["Run","Type","Cmd","Status","FRateHz","#Frames","#Hits","HRate%"]
 
+def get_gtab(C,email,password):
+    Cs = C["spreadsheet"]
+    failed = False
+    if email == "":
+        if "email" in Cs.keys():
+            email = Cs["email"]
+        else:
+            print "WARNING: No email address given. Cannot login to google."
+            failed = True
+    if password == "":
+        if "password" in Cs.keys():
+            password = Cs["password"]
+        else:
+            print "WARNING: No password given. Cannot login to google."
+            failed = True
+
+    if not failed:
+        # Init google table client
+        return GoogleTable(email,password,spreadsheet_name,worksheet_name)
+    else:
+        return None
+
+
 class GoogleTable:
     def __init__(self,email,password,spreadsheet_name,worksheet_name):
         self.email = email
