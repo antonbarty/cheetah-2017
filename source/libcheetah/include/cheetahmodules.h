@@ -45,6 +45,7 @@ long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
 void pnccdModuleSubtract(cEventData*, cGlobal*);
 void pnccdModuleSubtract(float*, uint16_t*, int, int, float, float, int);
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
+void pnccdOffsetCorrection(float*, uint16_t*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdOffsetCorrection(float*);
 void pnccdFixWiringError(float*);

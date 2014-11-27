@@ -394,7 +394,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		pixelSize = atof(value);
 	}
 	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
-		printf("The keyword saveDetectorCorrectedOnly is depreciated. The option is no longer supported.\n"
+		printf("The keyword saveDetectorCorrectedOnly is deprecated. The option is no longer supported.\n"
 			   "To achieve the desired configuration please use instead the keywords saveDetectorCorrected=1 in combination with saveDetectorRaw=0 and saveDetectorAndPhotonCorrected=0.\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;		
@@ -453,7 +453,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		saveAssembledAndDownsampled = 1;
 	}
 	else if (!strcmp(tag, "downsamplingrescale")) {
-		printf("The keyword downsamplingRescale is depreciated. The option is no longer supported.\n"
+		printf("The keyword downsamplingRescale is deprecated. The option is no longer supported.\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;		
 	}
@@ -619,11 +619,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "bgincludehits")) {
 		bgIncludeHits = atoi(value);
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "bgnobeamreset")) {
 		bgNoBeamReset = atoi(value);
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "bgfiducialglitchreset")) {
 		bgFiducialGlitchReset = atoi(value);
 	}	

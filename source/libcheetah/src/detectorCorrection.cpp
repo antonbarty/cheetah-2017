@@ -57,8 +57,6 @@ void initPixelmask(cEventData *eventData, cGlobal *global){
 
 
 
-void pnccdOffsetCorrection(float *data,uint16_t *mask);
-
 /*
  *	Subtract pre-loaded darkcal file
  */
