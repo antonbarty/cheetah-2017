@@ -47,6 +47,7 @@ class ClientHelper:
             # Worker communication
             msg = self.workerPipe.recv()
             if msg == "REQ_TERMINATE":
+                print "Client helper terminates"
                 break
             self.socket.send_json(msg)
             self.workerPipe.send(self.socket.recv_json())

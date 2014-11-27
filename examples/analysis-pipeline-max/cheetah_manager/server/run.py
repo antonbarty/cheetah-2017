@@ -3,11 +3,12 @@ import time,datetime
 
 
 class Run:
-    def __init__(self,name,C):
+    def __init__(self,name,C,xtcs):
         self.name = name
         self.run_nr = int(name[1:])
         self.C = C
         self.clear()
+        self.xtcs = xtcs
     def clear(self):
         self.attrs_copy = {}
         self.new = True
@@ -21,9 +22,7 @@ class Run:
         self.logfile = None
         self.processdir = None
         self.darkcal = None
-        self._load_xtcs()
-        self._load_processdir()
-        self._load_logfile()
+        self.xtcs = []
         self._refresh_status()
     def update(self,attrs=None):
         if attrs != None:
@@ -40,6 +39,8 @@ class Run:
                 self._init_processdir()
             if self.processdir != None:
                 self._start()
+    def get(self):
+        return self.attrs
     def get_if_touched(self):
         touched = self.new
         for n,i in self.attrs_copy.items():
@@ -61,6 +62,7 @@ class Run:
         self.attrs_copy = dict(self.attrs)
         self.new = False
         if touched:
+            print self.attrs
             return self.attrs
         else:
             return None
@@ -82,8 +84,8 @@ class Run:
         if len([f for f in os.listdir(self.C["locations"]["h5dir_dark"]) if self.name in f]) > 0:
             os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_dark"],self.name))
         self.clear()
-    def _load_xtcs(self):
-        self.xtcs =  [(self.C["locations"]["xtcdir"]+"/"+l) for l in os.listdir(self.C["locations"]["xtcdir"]) if self.name in l]
+    #def _load_xtcs(self):
+    #    self.xtcs =  [(self.C["locations"]["xtcdir"]+"/"+l) for l in os.listdir(self.C["locations"]["xtcdir"]) if self.name in l]
     def _load_processdir(self):
         if self.attrs["Type"] == "":
             self.processdir = None
@@ -123,7 +125,7 @@ class Run:
                 if ">-------- End of job --------<\n" in loglines:
                     self.attrs["Status"] = "Finished"
                 else:
-                    self.attrs["Status"] = "Runs"
+                    self.attrs["Status"] = "Running"
     def _change_attrs(self,attrs):
         for n,it in attrs.items():
             if n == "Cmd":
@@ -141,10 +143,15 @@ class Run:
             else:
                 self.attrs[n] = it
     def _refresh_attrs(self):
-        if self.logfile != None:
+        if self.logfile == None:
+            self.attrs["No. Frames"] = "-"
+            self.attrs["No. Hits"] = "-"
+            self.attrs["Hit Ratio"] = "-"
+            self.attrs["Process Rate"] = "-"
+        else:
             with open(self.logfile,"r") as f:
                 loglines = f.readlines()
-                if self.attrs["Status"] == "Runs":
+                if self.attrs["Status"] == "Running":
                     for line in loglines:
                         for frag in line.split(", "):
                             if "nFrames:" in frag:
@@ -154,7 +161,7 @@ class Run:
                                 self.attrs["Hit Ratio"] = frag.split(" ")[-1][1:-2] + " %"                   
                             if "wallTime" in frag:
                                 self.attrs["Process Rate"] = frag.split(" ")[-2][1:] + " Hz"
-                elif self.attrs["Status"] == "finished":
+                elif self.attrs["Status"] == "Finished":
                     for line in loglines:
                         if "Frames processed:" in line:
                             self.attrs["No. Frames"] = line.split(" ")[-1][:-1]

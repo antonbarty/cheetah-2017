@@ -26,6 +26,8 @@ class CheManClient(QtGui.QMainWindow):
         self.client = clientZMQ.Client(self.C)
         self.client.newRList.connect(self.runTable.update)
         self.runTable.changed.connect(self.client.sendChangeRunRequest)
+
+        self.client.sendUpdateRequest("REQ_FULL_LIST")
         
         self.updateReqTimer = QtCore.QTimer(self)
         self.updateReqTimer.setInterval(1000)
@@ -36,8 +38,9 @@ class CheManClient(QtGui.QMainWindow):
         self.updateRecvTimer.setInterval(1000)
         self.updateRecvTimer.timeout.connect(self.client.recvUpdate)
         self.updateRecvTimer.start()
+        
+        print "Done with init"
 
-        self.client.sendUpdateRequest("REQ_FULL_LIST")
 
     def terminate(self):
         self.updateReqTimer.stop()

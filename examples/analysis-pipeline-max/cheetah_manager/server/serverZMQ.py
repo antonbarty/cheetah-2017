@@ -1,6 +1,7 @@
+import sys,time
+import signal
 import zmq
 import multiprocessing
-import time
 
 class Server:
     def __init__(self,C):
@@ -15,13 +16,19 @@ class Server:
         return self.pipe_end_worker.recv()
     def answerReqs(self,rList):
         self.pipe_end_worker.send(rList)
-    def terminate(self):
+    def terminate(self,foo1=None,foo2=None):
         self.updateEvent.set()
+        print "Terminating (receiving last message)"
         foo = self.pipe_end_worker.recv()
+        print "Terminating (sending out terminate signal to server helper)"
         self.pipe_end_worker.send("REQ_TERMINATE")
+        print "Terminating (joining process)"
         self.process.join()
+        print "Terminating (closing pipe)"
         self.pipe_end_worker.close()
+        print "Terminating (program closes)"
         #self.pipe_end_helper.close()
+        sys.exit(0)
 
 class ServerHelper:
     def __init__(self,C,pipe,event):
@@ -34,6 +41,7 @@ class ServerHelper:
         self.socket.bind("tcp://*:%s" % C["zmq"]["port"])
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.start()
     def start(self):
         msgsToWorker = []

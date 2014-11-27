@@ -1,9 +1,9 @@
+import os,time
 import PySide
 from PySide import QtGui,QtCore
 import numpy as np
 
-HEADER = ["Run ID","Type"]#,"Number of events","Number of hits","Hit ratio","Process rate","Status"]
-
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 class RunTableWidget(QtGui.QWidget):
     changed = QtCore.Signal(dict)
@@ -42,6 +42,7 @@ class RunTableWidget(QtGui.QWidget):
         self.indices = []
         self.names = []
     def addRun(self,rAttr):
+        t0 = time.time()
         # where to insert?
         i = int(rAttr["Name"][1:])
         if self.indices == []:
@@ -60,6 +61,7 @@ class RunTableWidget(QtGui.QWidget):
         self.indices.insert(k_ins,i)
         self.names.insert(k_ins,rAttr["Name"])
         self.vboxScroll.insertLayout(k_ins,R)
+        print "Adding run took ", (time.time()-t0)
     def update(self,rList):
         print "update",rList
         for rAttr in rList:
@@ -68,6 +70,7 @@ class RunTableWidget(QtGui.QWidget):
             else:
                 i = self.names.index(rAttr["Name"])
                 self.runs[i].update(rAttr)
+        print "Done with update"
 
 class RunLayout(QtGui.QHBoxLayout):
     def __init__(self,parent,C,rAttr):
@@ -91,7 +94,7 @@ class RunLayout(QtGui.QHBoxLayout):
         self.cmdButton = QtGui.QPushButton()
         elements.append(self.cmdButton)
         self.statusLabel = QtGui.QLabel(self.rAttr["Status"])
-        self.statusMovie = QtGui.QMovie("loader.gif")
+        self.statusMovie = QtGui.QMovie(THIS_DIR+"/loader.gif")
         self.statusMovie.start()
         elements.append(self.statusLabel)
         self.processRateLabel = QtGui.QLabel(self.rAttr["Process Rate"])
@@ -133,17 +136,19 @@ class RunLayout(QtGui.QHBoxLayout):
         self.hitRatioLabel.setText(rAttr.get("Hit Ratio","-"))
         self.connectSignals()
     def emitChange(self):
-        rAttr = dict(self.rAttr)
+        rAttr = {}
+        rAttr["Name"] = self.rAttr["Name"]
         rAttr["Type"] = self.typeCombo.currentText()
         self.parent.changed.emit(rAttr)
     def emitCmd(self):
-        rAttr = dict(self.rAttr)
-        rAttr["Cmd"] = self.cmdButton.text()
+        rAttr = {}
+        rAttr["Name"] = self.rAttr["Name"]
         rAttr["Type"] = self.typeCombo.currentText()
+        rAttr["Cmd"] = self.cmdButton.text()
+        self.statusLabel.setText("")
         self.statusLabel.setMovie(self.statusMovie)
         self.parent.changed.emit(rAttr)
         
-
 class ComboBoxNoWheel(QtGui.QComboBox):
     def wheelEvent (self, event):
         event.ignore()

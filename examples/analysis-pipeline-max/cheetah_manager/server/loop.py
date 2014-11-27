@@ -1,4 +1,4 @@
-import os,sys
+import os,sys,signal
 import configobj
 import time,datetime
 import numpy as np
@@ -22,6 +22,9 @@ def loop(configfilename):#,email,password):
     #gtab = get_gtab(C,email,password)
     
     #counter = 0
+
+    # Set the signal handler and a 5-second alarm
+    signal.signal(signal.SIGINT, S.terminate)
     
     while True:
         print "Update"
@@ -71,5 +74,4 @@ def loop(configfilename):#,email,password):
         print "Cache table to file"
         rtab.writeTable()
             
-
-
+    
