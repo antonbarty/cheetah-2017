@@ -9,7 +9,6 @@ class CheManClient(QtGui.QMainWindow):
     def __init__(self,args):
         QtGui.QMainWindow.__init__(self)
         self.resize(800, 500)
-        #self.move(300, 300)
         self.setWindowTitle('Cheetah Manager Client')
 
         self.init = True
@@ -24,23 +23,23 @@ class CheManClient(QtGui.QMainWindow):
         self.setCentralWidget(self.tabs)
 
         self.client = clientZMQ.Client(self.C)
-        self.client.newRList.connect(self.runTable.update)
-        self.runTable.changed.connect(self.client.sendChangeRunRequest)
-
-        self.client.sendUpdateRequest("REQ_FULL_LIST")
         
         self.updateReqTimer = QtCore.QTimer(self)
         self.updateReqTimer.setInterval(1000)
-        self.updateReqTimer.timeout.connect(self.client.sendUpdateRequest)
-        self.updateReqTimer.start()
-
         self.updateRecvTimer = QtCore.QTimer(self)
         self.updateRecvTimer.setInterval(1000)
-        self.updateRecvTimer.timeout.connect(self.client.recvUpdate)
-        self.updateRecvTimer.start()
-        
-        print "Done with init"
 
+        # Connect signals
+        self.client.newRList.connect(self.runTable.update)
+        self.runTable.changed.connect(self.client.sendChangeRunRequest)
+        self.updateReqTimer.timeout.connect(self.client.sendUpdateRequest)
+        self.updateRecvTimer.timeout.connect(self.client.recvUpdate)
+       
+        # Initialize list by sending out request for full list
+        self.client.sendUpdateRequest("REQ_FULL_LIST")
+        # Starting timers
+        self.updateReqTimer.start()
+        self.updateRecvTimer.start()
 
     def terminate(self):
         self.updateReqTimer.stop()

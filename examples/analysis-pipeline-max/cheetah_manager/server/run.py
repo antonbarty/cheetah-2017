@@ -62,7 +62,7 @@ class Run:
         self.attrs_copy = dict(self.attrs)
         self.new = False
         if touched:
-            print self.attrs
+            #print self.attrs
             return self.attrs
         else:
             return None

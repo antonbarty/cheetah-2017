@@ -6,30 +6,27 @@ class RunTable:
     def __init__(self,C):
         self.C = C
         self.R = {}
-        self.readTable()
         self.lastXTCCheck = None
+        self.readTable()
     def getValidRuns(self):
         return [r.name for r in self.R if r.type != ""]
     def _getRunsWithXTCs(self):
-        print "Collecting runs with XTCs"
         ls = os.listdir(self.C["locations"]["xtcdir"])
         runs = list(set([re.search("r[0-9][0-9][0-9][0-9]",l).group() for l in ls if (re.search("r[0-9][0-9][0-9][0-9].*xtc$",l) != None)]))
         runs.sort()
         xtcs = [] 
         for r in runs:
             xtcs.append([l for l in ls if (re.search("r[0-9][0-9][0-9][0-9].*xtc$",l) != None)])
+        self.lastXTCCheck = time.time()
         return runs,xtcs
     def checkForNewXTCs(self):
         runs,xtcs = self._getRunsWithXTCs()        
         for r,x in zip(runs,xtcs):
             if r not in self.R:
                 self.R[r] = run.Run(r,self.C,x)
-        self.lastXTCCheck = time.time()
     def update(self):
         # Check files in XTC directory and if new runs appeared add them to the table
-        if self.lastXTCCheck == None:
-            self.checkForNewXTCs()
-        elif ((time.time()-self.lastXTCCheck) > 30):
+        if ((time.time()-self.lastXTCCheck) > 30):
             self.checkForNewXTCs()
         names = self.R.keys()
         names.sort()
@@ -55,14 +52,14 @@ class RunTable:
         runs,xtcs = self._getRunsWithXTCs()
         for r,x in zip(runs,xtcs):
             if r not in self.R:
-                print "Adding run " + r
+                #print "Adding run " + r
                 self.R[r] = run.Run(r,self.C,x)
         if os.path.isfile(filename):
             with open(filename,"r") as csvfile:
                 reader = csv.reader(csvfile)
                 for [n,t] in reader:
                     if n in self.R:
-                        print "Setting type for run " + r
+                        #print "Setting type for run " + r
                         self.R[n].attrs["Type"] = t 
     def writeTable(self):
         filename = self.C["general"]["runtable_filename"]

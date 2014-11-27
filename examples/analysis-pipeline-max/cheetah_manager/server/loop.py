@@ -25,9 +25,11 @@ def loop(configfilename):#,email,password):
 
     # Set the signal handler and a 5-second alarm
     signal.signal(signal.SIGINT, S.terminate)
+
+    print "Enter server loop"
     
     while True:
-        print "Update"
+        #print "Update"
         # Update information / status of all runs
         #ttab.note("Updating run status")
         rtab.update()
@@ -47,12 +49,12 @@ def loop(configfilename):#,email,password):
         #ttab.screen.getch()
 
         # Receive request from clients
-        print "Receive requests"
+        #print "Receive requests"
         reqs = S.recvReqs()
         sendListFull = False
         sendListUpdate = False
-        print reqs
-        print "Update"
+        #print reqs
+        #print "Update"
         for req in reqs:
             if req == "REQ_FULL_LIST":
                 sendListFull = True
@@ -63,7 +65,7 @@ def loop(configfilename):#,email,password):
                 rtab.R[req["Name"]].update(req) 
             else:
                 print "WARNING: Invalid package received."
-        print "Answer requests"       
+        #print "Answer requests"       
         L = []
         if sendListFull: 
             L = rtab.getList()
@@ -71,7 +73,7 @@ def loop(configfilename):#,email,password):
             L = rtab.getListUpdate()
         S.answerReqs(L)
 
-        print "Cache table to file"
+        #print "Cache table to file"
         rtab.writeTable()
             
     

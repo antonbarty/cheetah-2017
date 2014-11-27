@@ -1,3 +1,4 @@
+import time
 import PySide
 from PySide import QtGui,QtCore
 import zmq,multiprocessing
@@ -18,6 +19,7 @@ class Client(QtCore.QObject):
         self.pipe_end_worker.send(r)
     def recvUpdate(self):
         if self.pipe_end_worker.poll():
+            t0 = time.time()
             rList = self.pipe_end_worker.recv()
             if rList != []:
                 self.newRList.emit(rList)
@@ -27,10 +29,10 @@ class Client(QtCore.QObject):
             self.pipe_end_worker.recv()
         print "Terminating (sending terminate signal to process)"
         self.pipe_end_worker.send("REQ_TERMINATE")
-        print "Terminating (closing pipe)"
-        self.pipe_end_worker.close()
         print "Terminating (joining process)"
         self.process.join()
+        print "Terminating (closing pipe)"
+        self.pipe_end_worker.close()
         #self.pipe_end_helper.close()
         
 class ClientHelper:
@@ -45,10 +47,17 @@ class ClientHelper:
     def start(self):
         while True: 
             # Worker communication
+            #t0 = time.time()
             msg = self.workerPipe.recv()
+            #print "Client loop 1", time.time()-t0, msg
+            #t0 = time.time()
             if msg == "REQ_TERMINATE":
-                print "Client helper terminates"
+                #print "Client helper terminates"
                 break
+            #print "Client loop 2", time.time()-t0
+            #t0 = time.time()
             self.socket.send_json(msg)
+            #print "Client loop 3", time.time()-t0
+            #t0 = time.time()
             self.workerPipe.send(self.socket.recv_json())
-
+            #print "Client loop 4", time.time()-t0

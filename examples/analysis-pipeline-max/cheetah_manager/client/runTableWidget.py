@@ -42,7 +42,7 @@ class RunTableWidget(QtGui.QWidget):
         self.indices = []
         self.names = []
     def addRun(self,rAttr):
-        t0 = time.time()
+        #t0 = time.time()
         # where to insert?
         i = int(rAttr["Name"][1:])
         if self.indices == []:
@@ -61,16 +61,16 @@ class RunTableWidget(QtGui.QWidget):
         self.indices.insert(k_ins,i)
         self.names.insert(k_ins,rAttr["Name"])
         self.vboxScroll.insertLayout(k_ins,R)
-        print "Adding run took ", (time.time()-t0)
+        #print "Adding run took ", (time.time()-t0)
     def update(self,rList):
-        print "update",rList
+        #print "update",rList
         for rAttr in rList:
             if rAttr["Name"] not in self.names:
                 self.addRun(rAttr)
             else:
                 i = self.names.index(rAttr["Name"])
                 self.runs[i].update(rAttr)
-        print "Done with update"
+        #print "Done with update"
 
 class RunLayout(QtGui.QHBoxLayout):
     def __init__(self,parent,C,rAttr):
@@ -147,6 +147,7 @@ class RunLayout(QtGui.QHBoxLayout):
         rAttr["Cmd"] = self.cmdButton.text()
         self.statusLabel.setText("")
         self.statusLabel.setMovie(self.statusMovie)
+        self.cmdButton.setEnabled(False)
         self.parent.changed.emit(rAttr)
         
 class ComboBoxNoWheel(QtGui.QComboBox):
