@@ -422,7 +422,7 @@ void cGlobal::setup() {
             detector[i].cspadSubtractUnbondedPixels = 0;
             detector[i].cspadSubtractBehindWires = 0;
             detector[i].usePnccdOffsetCorrection = 0;
-            detector[i].useFixWiringError = 0;
+            detector[i].usePnccdFixWiringError = 0;
             detector[i].usePnccdLineInterpolation = 0;
             detector[i].usePnccdLineMasking = 0;
             detector[i].maskPnccdSaturatedPixels = 0;
