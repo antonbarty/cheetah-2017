@@ -383,13 +383,16 @@ void cGlobal::setup() {
 	 */
 	// Set number of frames for initial calibrations
 	nInitFrames = 0;
+    calibrated = 1;
 	for (long detIndex=0; detIndex<MAX_DETECTORS; detIndex++){
 		nInitFrames = std::max(nInitFrames,(long) detector[detIndex].startFrames);
 		detector[detIndex].noisyPixCalibrated = 0;
 		detector[detIndex].hotPixCalibrated = 0;
 		detector[detIndex].bgCalibrated = 0;
+        if (detector[detIndex].useAutoHotPixel || detector[detIndex].useAutoNoisyPixel || detector[detIndex].useSubtractPersistentBackground)
+            calibrated = 0;
 	}
-	calibrated = 0;
+
 
 	
 	/*
@@ -426,7 +429,8 @@ void cGlobal::setup() {
             detector[i].usePnccdLineInterpolation = 0;
             detector[i].usePnccdLineMasking = 0;
             detector[i].maskPnccdSaturatedPixels = 0;
-			detector[i].useAutoHotPixel = 0;
+            detector[i].useAutoHotPixel = 0;
+            detector[i].useAutoNoisyPixel = 0;
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
@@ -1487,26 +1491,28 @@ void cGlobal::writeInitialLog(void){
 
 void cGlobal::writeHitClasses(FILE* to) {
 	// This is quite a cryptic output and I am getting always 100% hits of every hit class (???)
-	fprintf(to, "Hitclasses:\n");
-	for (int coord = 0; coord < 3; coord++) {
-		int lastFirst = 1 << 30;
-		int lastVal = 0;
-		for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
-			fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
-			if (i->first.second)
-			{
-				if (lastFirst != i->first.first) {
-					lastVal = 0;
-				}
-				double sum = lastVal + i->second;
-				fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
-			} else {
-				lastFirst = i->first.first;
-				lastVal = i->second;
-			}
-		}
-	}
-	fprintf(to, "\n\n");
+    if (hitfinder) {
+        fprintf(to, "Hitclasses:\n");
+        for (int coord = 0; coord < 3; coord++) {
+            int lastFirst = 1 << 30;
+            int lastVal = 0;
+            for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
+                fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
+                if (i->first.second)
+                {
+                    if (lastFirst != i->first.first) {
+                        lastVal = 0;
+                    }
+                    double sum = lastVal + i->second;
+                    fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
+                } else {
+                    lastFirst = i->first.first;
+                    lastVal = i->second;
+                }
+            }
+        }
+	//fprintf(to, "\n\n");
+    }
 }
 
 /*

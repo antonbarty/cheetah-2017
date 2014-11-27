@@ -199,7 +199,7 @@ namespace cheetah_ana_pkg {
 		sprintf(cheetahGlobal.cxiFilename,"%s-r%04d.cxi", env.experiment().c_str(),runNumber);
 
 		cheetahNewRun(&cheetahGlobal);
-		printf("User analysis beginrun() routine called.\n");
+		//printf("User analysis beginrun() routine called.\n");
 		printf("*** Processing r%04u ***\n",runNumber);
 	}
 
@@ -212,7 +212,7 @@ namespace cheetah_ana_pkg {
 		(void)evt;
 		//
 
-		cout << "beginCalibCycle()" << endl;
+		//cout << "beginCalibCycle()" << endl;
 		
 		/*
 		 *	pnCCD configuration
@@ -236,21 +236,21 @@ namespace cheetah_ana_pkg {
 
 				if (config1.get()) {
 					cout << "PNCCD::ConfigV1:" << endl;
-					cout << "\n  numLinks = " << config1->numLinks() << endl;
-					cout << "\n  payloadSizePerLink = " << config1->payloadSizePerLink() << endl;
+                    cout << "\tnumLinks = " << config1->numLinks() << endl;
+                    cout << "\tpayloadSizePerLink = " << config1->payloadSizePerLink() << endl;
 				}
 				else if (config2.get()) {
 					cout << "PNCCD::ConfigV2:" << endl;
-					cout << "\n  numLinks = " << config2->numLinks() << endl;
-					cout << "\n  payloadSizePerLink = " << config2->payloadSizePerLink() << endl;
-					cout << "\n  numChannels = " << config2->numChannels() << endl;
-					cout << "\n  numRows = " << config2->numRows() << endl;
-					cout << "\n  numSubmoduleChannels = " << config2->numSubmoduleChannels() << endl;
-					cout << "\n  numSubmoduleRows = " << config2->numSubmoduleRows() << endl;
-					cout << "\n  numSubmodules = " << config2->numSubmodules() << endl;
-					cout << "\n  camexMagic = " << config2->camexMagic() << endl;
-					cout << "\n  info = " << config2->info() << endl;
-					cout << "\n  timingFName = " << config2->timingFName() << endl;
+                    cout << "\tnumLinks = " << config2->numLinks() << endl;
+                    cout << "\tpayloadSizePerLink = " << config2->payloadSizePerLink() << endl;
+                    cout << "\tnumChannels = " << config2->numChannels() << endl;
+                    cout << "\tnumRows = " << config2->numRows() << endl;
+                    cout << "\tnumSubmoduleChannels = " << config2->numSubmoduleChannels() << endl;
+                    cout << "\tnumSubmoduleRows = " << config2->numSubmoduleRows() << endl;
+                    cout << "\tnumSubmodules = " << config2->numSubmodules() << endl;
+                    cout << "\tcamexMagic = " << config2->camexMagic() << endl;
+                    cout << "\tinfo = " << config2->info() << endl;
+                    cout << "\ttimingFName = " << config2->timingFName() << endl;
 				}
 				else {
 					cout << "Failed to retrieve pnCCD configuration object. " << detIndex << endl;
@@ -426,7 +426,7 @@ namespace cheetah_ana_pkg {
 		time_t endT;
 		time(&endT);
 		double dif = difftime(endT,startT);
-		cout << "time taken: " << dif << " seconds" << endl;
+		cout << "Time taken: " << dif << " seconds" << endl;
 		// We shouldn't exit, and specially not with a value of 1
 		//	  exit(1);
 		// Just retuning allows the proper destructors to be called

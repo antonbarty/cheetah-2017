@@ -148,7 +148,6 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 
 void saveRunningSums(cGlobal *global, int detIndex) {
 	//	Save powder patterns from different classes
-    printf("Writing intermediate powder patterns to file\n");
     for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
         if(global->powderSumBlanks && powderType == 0)
             savePowderPattern(global, detIndex, powderType);
@@ -158,13 +157,11 @@ void saveRunningSums(cGlobal *global, int detIndex) {
 	
     // Compute and save darkcal
     if(global->generateDarkcal) {
-        saveDarkcal(global, detIndex);
         savePowderPattern(global, detIndex, 0);
     }
 	
     // Compute and save gain calibration
     if(global->generateGaincal) {
-        saveGaincal(global, detIndex);
         savePowderPattern(global, detIndex, 0);
     }
 }
@@ -174,8 +171,25 @@ void saveRunningSums(cGlobal *global, int detIndex) {
  *  Also for deciding whether to calculate gain, darkcal, etc.
  */
 void saveRunningSums(cGlobal *global) {
+    printf("Writing powder patterns to file:\n");
     for(int detIndex=0; detIndex<global->nDetectors; detIndex++) {
         saveRunningSums(global, detIndex);
+    }
+    
+    // Compute and save darkcal
+    if(global->generateDarkcal) {
+        printf("Saving darkcal to file:\n");
+        for (int detIndex=0; detIndex<global->nDetectors; detIndex++) {
+            saveDarkcal(global, detIndex);
+        }
+    }
+
+    // Compute and save gain calibration
+    if(global->generateGaincal) {
+        printf("Saving gaincal to file:\n");
+        for (int detIndex=0; detIndex<global->nDetectors; detIndex++) {
+            saveGaincal(global, detIndex);
+        }
     }
 }
 
@@ -365,7 +379,7 @@ void saveDarkcal(cGlobal *global, int detIndex) {
 	long	pix_nn = detector->pix_nn;
 	char	filename[1024];
 	
-	printf("Processing darkcal\n");
+	//printf("Processing darkcal\n");
 	//sprintf(filename,"r%04u-%s-%li-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
 	sprintf(filename,"r%04u-%s-detectorID%li-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
@@ -373,8 +387,9 @@ void saveDarkcal(cGlobal *global, int detIndex) {
 	for(long i=0; i<pix_nn; i++)
 		buffer[i] = detector->powderData_raw[0][i]/detector->nPowderFrames[0];
 	pthread_mutex_unlock(&detector->powderData_mutex[0]);
-	printf("Saving darkcal to file: %s\n", filename);
-#ifdef H5F_ACC_SWMR_WRITE  
+    //printf("Saving darkcal to file: %s\n", filename);
+    printf("%s\n", filename);
+#ifdef H5F_ACC_SWMR_WRITE
 	pthread_mutex_lock(&global->swmr_mutex);
 #endif
 	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT,detector->detectorName,detector->detectorID);	
@@ -391,7 +406,7 @@ void saveDarkcal(cGlobal *global, int detIndex) {
  */
 void saveGaincal(cGlobal *global, int detIndex) {
 	
-	printf("Processing gaincal\n");
+	//printf("Processing gaincal\n");
 
 	// Dereference common variables
 	cPixelDetectorCommon     *detector = &(global->detector[detIndex]);
@@ -435,8 +450,9 @@ void saveGaincal(cGlobal *global, int detIndex) {
 
 	char	filename[1024];
 	sprintf(filename,"r%04u-%s-gaincal.h5",global->runNumber, detector->detectorName);
-	printf("Saving gaincal to file: %s\n", filename);
-#ifdef H5F_ACC_SWMR_WRITE  
+    //printf("Saving gaincal to file: %s\n", filename);
+    printf("%s\n", filename);
+#ifdef H5F_ACC_SWMR_WRITE
 	pthread_mutex_lock(&global->swmr_mutex);
 #endif
 	writeSimpleHDF5(filename, buffer, detector->pix_nx, detector->pix_ny, H5T_NATIVE_FLOAT);
