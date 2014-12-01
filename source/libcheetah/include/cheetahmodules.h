@@ -142,10 +142,10 @@ void savePowderPattern(cGlobal*, int, int);
 void writePowderData(char*, void*, int, int, void*, void*, long, long, int);
 
 // histogram.cpp
-void addToHistogram(cEventData*, cGlobal*);
 void addToHistogram(cEventData*, cGlobal*, int);
 void saveHistograms(cGlobal*);
 void saveHistogram(cGlobal*, int);
+void calculateHistogramScale(long histMin, long histNBins, float histBinSize, float * scaleTarget);
 
 // RadialAverage.cpp
 void calculateRadialAverage(cEventData*, cGlobal*);

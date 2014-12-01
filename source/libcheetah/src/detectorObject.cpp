@@ -23,6 +23,8 @@
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
+#include "cheetahEvent.h"
+#include "cheetahmodules.h"
 
 /*
  *	Set default values to something reasonable for CSPAD at CXI 
@@ -142,6 +144,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Histogram stack
 	histogram = 0;
+	histogramOnlyBlanks = 0;
 	histogramMin = -100;
 	histogramNbins = 200;
 	histogramBinSize = 1;
@@ -153,7 +156,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	histogram_nss = 1480;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
-  
+	histogramDataVersion = 2; // 0: raw; 1: detector corrected; 2: detector and photon corrected
+
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
 	usePnccdFixWiringError = 0;
@@ -450,7 +454,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 
 	else if (!strcmp(tag, "downsampling")) {
 		downsampling = atoi(value);
-		saveAssembledAndDownsampled = 1;
 	}
 	else if (!strcmp(tag, "downsamplingrescale")) {
 		printf("The keyword downsamplingRescale is deprecated. The option is no longer supported.\n"
@@ -644,6 +647,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "histogram")) {
 		histogram = atoi(value);
 	}
+	else if (!strcmp(tag, "histogramdataversion")) {
+		histogramDataVersion = atoi(value);
+	}
+	else if (!strcmp(tag, "histogramonlyblanks")) {
+		histogramOnlyBlanks = atoi(value);
+	}
 	else if (!strcmp(tag, "histogrammin")) {
 		histogramMin = atoi(value);
 	}
@@ -771,6 +780,8 @@ void cPixelDetectorCommon::allocateMemory() {
 		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
 		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
+		histogramScale = (float *) malloc(histogramNbins*sizeof(float));
+		calculateHistogramScale(histogramMin, histogramNbins, histogramBinSize, histogramScale);
 	}	
 }
 
@@ -840,6 +851,7 @@ void cPixelDetectorCommon::freeMemory() {
 	// Pixel histograms
 	if(histogram) {
 		free(histogramData);
+		free(histogramScale);
 		pthread_mutex_destroy(&histogram_mutex);
 	}
 }

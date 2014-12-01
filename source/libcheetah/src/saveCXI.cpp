@@ -21,6 +21,7 @@ namespace CXI{
 							   hsize_t length, hsize_t stackSize, int chunkSize, int heightChunkSize, const char * userAxis){
 		hid_t loc = hid();
 
+		// Exception for char arrays
 		if(dataType == H5T_NATIVE_CHAR){
 			dataType = H5Tcopy(H5T_C_S1);
 			if(H5Tset_size(dataType, width) < 0){
@@ -30,7 +31,8 @@ namespace CXI{
 			height = 0;
 		}
 
-		// right shift the dimensions
+		// Count dimensions
+		// First right shift the dimensions
 		hsize_t * dimsP[4] = {&width, &height, &length, &stackSize};
 		for (int i=2; i>=0; i--){
 			for (int j=i+1; j<4; j++){
@@ -40,22 +42,15 @@ namespace CXI{
 				}
 			}
 		}
+		// Count dimensions from dimsP
 		int ndims = 0;
 		for (int i=0; i<4; i++){
 			if (*dimsP[i]>0){
 				ndims++;
 			}
 		}
-		
-		if(stackSize == H5S_UNLIMITED && chunkSize <= 0){
-			chunkSize = CXI::chunkSize1D;
-			if(ndims == 3){
-				chunkSize = CXI::chunkSize2D;
-			} else if(ndims == 4){
-				chunkSize = CXI::chunkSize2D;
-			}
-		}
 
+		// Make sure every dimension has at least length 1
 		if(length == 0){
 			length = 1;
 		}
@@ -65,9 +60,20 @@ namespace CXI{
 		if(width == 0){
 			width = 1;
 		}
-
+		// Build then dimensions list
 		hsize_t dims[4] = {0, length, height, width};
 
+		// For stacks define the chunk size
+		if(stackSize == H5S_UNLIMITED && chunkSize <= 0){
+			chunkSize = CXI::chunkSize1D;
+			if(ndims == 3){
+				chunkSize = CXI::chunkSize2D;
+			} else if(ndims == 4){
+				chunkSize = CXI::chunkSize2D;
+			}
+		}
+
+		// Calculate dimensions for the first chunk
 		if(heightChunkSize == 0){
 			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/height/length);
 		}else{
@@ -75,6 +81,7 @@ namespace CXI{
 			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/height);
 		}
 
+		// Chunk size
 		if(!chunkSize){
 			if(stackSize == 0){
 				stackSize = 1;
@@ -1004,11 +1011,23 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 				}
 			}
 		}
+
 		// Persistent background (median)
 		if (global->detector[detIndex].useSubtractPersistentBackground) {
 			sprintf(sBuffer,"perisistent_background"); 
 			det_node->createDataset(sBuffer,H5T_NATIVE_FLOAT,global->detector[detIndex].pix_nx,global->detector[detIndex].pix_ny);
 		}
+
+		// Pixel value histogram
+		if (global->detector[detIndex].histogram) {
+			sprintf(sBuffer,"pixel_histogram");
+			Node * hist_node = det_node->createGroup(sBuffer);
+			sprintf(sBuffer,"histogram");
+			hist_node->createDataset(sBuffer, H5T_NATIVE_UINT16, global->detector[detIndex].histogramNbins, global->detector[detIndex].histogram_nfs, global->detector[detIndex].histogram_nss);
+			sprintf(sBuffer,"histogram_scale");
+			hist_node->createDataset(sBuffer, H5T_NATIVE_FLOAT, global->detector[detIndex].histogramNbins)->write(global->detector[detIndex].histogramScale);
+		}
+
 	}
 	
 	if (global->debugLevel > 2) {
@@ -1099,6 +1118,14 @@ void writeAccumulatedCXI(cGlobal * global){
 				sprintf(sBuffer,"perisistent_background"); 
 				det_node[sBuffer].write(background, -1, pix_nn);
 				free(background);
+			}
+			// Pixel value histogram
+			if (global->detector[detIndex].histogram) {
+				long     N = global->detector[detIndex].histogram_nfs *
+					         global->detector[detIndex].histogram_nss *
+					         global->detector[detIndex].histogramNbins;
+				uint16_t *histData = global->detector[detIndex].histogramData;
+				det_node["pixel_histogram"]["histogram"].write(histData, -1, N);
 			}
 		}
 	}

@@ -42,7 +42,7 @@ class ClientHelper:
         # Server connection
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PAIR)
-        self.socket.connect("tcp://localhost:%s" % C["zmq"]["port"])
+        self.socket.connect("tcp://%s:%s" % (C["zmq"].get("host","localhost"),C["zmq"]["port"]))
         self.start()
     def start(self):
         while True: 

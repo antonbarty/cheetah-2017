@@ -388,6 +388,8 @@ public:
 	pthread_mutex_t radialStack_mutex[MAX_POWDER_CLASSES];
 	// Histogram stack
 	int		histogram;
+	int     histogramDataVersion;
+	int		histogramOnlyBlanks;
 	long	histogramMin;
 	long	histogramNbins;
 	float   histogramBinSize;
@@ -402,6 +404,7 @@ public:
 	float	histogramMaxMemoryGb;
 	uint64_t	histogram_nnn;
 	uint16_t	*histogramData;
+	float       *histogramScale;
 	pthread_mutex_t histogram_mutex;
 	//long	histogram_depth;
 
