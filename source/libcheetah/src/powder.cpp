@@ -55,42 +55,42 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 	pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
 	
     double  *buffer;	
-	
 	FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
 		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 			while (dataV.next()) {
-				pthread_mutex_t mutex = dataV.getPowderMutex(powderClass);
+				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
-				// Powder
-				pthread_mutex_lock(&mutex);
-				for(long i=0; i<dataV.pix_nn; i++) {
-					powder[i] += data[i];
-				}			
-				pthread_mutex_unlock(&mutex);
 				// Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if(!global->usePowderThresh) {
 					for(long i=0; i<dataV.pix_nn; i++)
-						buffer[i] = data[i]*data[i];
+                        // Use double precision throughout the multiplication to reduce rounding errors in powder_squared
+						buffer[i] = ((double) data[i])*data[i];
 				}
 				else {
 					for(long i=0; i<dataV.pix_nn; i++){
 						if(data[i] > global->powderthresh)
-							buffer[i] = data[i]*data[i];
+                            // Use double precision throughout the multiplication to reduce rounding errors in powder_squared
+							buffer[i] = ((double) data[i])*data[i];
 						else
 							buffer[i] = 0;
 					}
 				}
-				pthread_mutex_lock(&mutex);
-				for(long i=0; i<dataV.pix_nn; i++){
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
+                for(long i=0; i<dataV.pix_nn; i++){
+                    // Powder
+                    powder[i] += data[i];
+                    // Powder squared
 					powder_squared[i] += buffer[i];
 				}
-				pthread_mutex_unlock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
 				free(buffer);
-			}				
+			}
 		}
 	}
 	
@@ -262,7 +262,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 					if (global->h5compress) {
 						H5Pset_chunk(h5compression, 2, size);
 						H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
-					}			
+					}
 				} else {
 					// size for 1D data (radial average)
 					size[0] = dataV.pix_nn;
@@ -273,18 +273,19 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				}
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
-				pthread_mutex_t mutex = dataV.getPowderMutex(powderClass);
+				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				// Powder
 				powderBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
-				pthread_mutex_lock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
 				memcpy(powderBuffer, powder, dataV.pix_nn*sizeof(double));
-				pthread_mutex_unlock(&mutex);			
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
 				// Write to dataset
 				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderBuffer);
 				H5Dclose(dh);
-				free(powderBuffer);
 				if (dataV.isMainDataset) {
 					// Create symbolic link if this is the main dataset
 					sprintf(sBuffer,"/data/%s",dataV.name);
@@ -293,21 +294,24 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				// Fluctuations (sigma)
 				powderSquaredBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				powderSigmaBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
-				pthread_mutex_lock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
 				memcpy(powderSquaredBuffer, powder_squared, dataV.pix_nn*sizeof(double));
-				pthread_mutex_unlock(&mutex);
-				for(long i=0; i<dataV.pix_nn; i++){
-					powderSigmaBuffer[i] = sqrt( fabs(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes)));
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
+				for (long i=0; i<dataV.pix_nn; i++) {
+                    powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes));
 				}
 				sprintf(sBuffer,"%s_sigma",dataV.name);
 				dh = H5Dcreate(gh, sBuffer, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderSigmaBuffer);
 				H5Dclose(dh);
+                free(powderBuffer);
 				free(powderSquaredBuffer);
 				free(powderSigmaBuffer);
 				H5Sclose(sh);
-			}				
+			}
 		}
 	}
 

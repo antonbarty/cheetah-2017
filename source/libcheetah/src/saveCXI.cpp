@@ -1098,8 +1098,9 @@ void writeAccumulatedCXI(cGlobal * global){
 						double * sigma = (double *) calloc(pix_nn,sizeof(double));
 						for(long i = 0; i<pix_nn; i++){
 							mean[i] = powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass]);
-							sigma[i] =	sqrt( fabs(powder_squared[i] - powder[i]*powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass])) /
-											  (1.*global->detector[detIndex].nPowderFrames[powderClass]) );
+                            // removed the absolute square since the rounding errors should now be negligible so that the variance is always positive
+							sigma[i] =	sqrt((powder_squared[i] - powder[i]*powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass]))/(1.*global->detector[detIndex].nPowderFrames[powderClass]));
+                            //sigma[i] =	sqrt( fabs(powder_squared[i] - powder[i]*powder[i]/(1.*global->detector[detIndex].nPowderFrames[powderClass])) / (1.*global->detector[detIndex].nPowderFrames[powderClass]) );
 						}
 						sprintf(sBuffer,"mean_%s",dataV.name); 
 						cl[sBuffer].write(mean, -1, pix_nn);

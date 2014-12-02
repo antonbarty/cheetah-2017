@@ -38,7 +38,7 @@ class cDataVersion {
 	uint16_t * getPixelmask();
 	double * getPowder(long powderClass);
 	double * getPowderSquared(long powderClass);
-	pthread_mutex_t getPowderMutex(long powderClass);
+	pthread_mutex_t * getPowderMutex(long powderClass);
 	char name[1024];
 	char name_format[1024];
 	char name_version[1024];
@@ -53,7 +53,7 @@ class cDataVersion {
 	uint16_t *pixelmask;
 	double *powder[MAX_POWDER_CLASSES];
 	double *powder_squared[MAX_POWDER_CLASSES];
-	pthread_mutex_t powder_mutex[MAX_POWDER_CLASSES];	
+	pthread_mutex_t * powder_mutex[MAX_POWDER_CLASSES];	
 
 	float *raw;
 	float *detCorr;

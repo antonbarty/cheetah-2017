@@ -7,7 +7,7 @@ else
     cd $H5DIR
     eval RUN=$1
     eval NUMBER_OF_FRAMES=$2
-    echo "Processing $NUMBER_OF_FRAMES of run $RUN"
+    echo "Preparing to process $NUMBER_OF_FRAMES frames of run $RUN"
     eval RUNDIR="test_"$RUN"_"$(date -d "today" +"%Y%m%d_%H%M%S")
     eval RUNLINK="test_$RUN" 
     echo "Creating directory: "$RUNDIR

@@ -47,7 +47,7 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		powder_detCorr_squared[powderClass]     = NULL;
 		powder_detPhotCorr[powderClass]         = NULL;
 		powder_detPhotCorr_squared[powderClass] = NULL;
-		powder_mutex[powderClass]               = detectorCommon->null_mutex;
+		powder_mutex[powderClass]               = &detectorCommon->null_mutex;
 	}
 	
 	if (dataFormat == DATA_FORMAT_NON_ASSEMBLED) {
@@ -66,7 +66,10 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderData_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderData_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderData_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderData_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
+		for (long i = 0; i < detectorCommon->nPowderClasses; i++) {
+			powder_mutex[i] = &detectorCommon->powderData_mutex[i];
+		}
+
 		pix_nn                     = detectorCommon->pix_nn;
 		pix_nx                     = detectorCommon->pix_nx;
 		pix_ny                     = detectorCommon->pix_ny;
@@ -86,7 +89,10 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
+		for (long i = 0; i < detectorCommon->nPowderClasses; i++) {
+			powder_mutex[i] = &detectorCommon->powderImage_mutex[i];
+		}
+
 		pix_nn                    = detectorCommon->image_nn;
 		pix_nx                    = detectorCommon->image_nx;
 		pix_ny                    = detectorCommon->image_ny;
@@ -106,7 +112,10 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderImageXxX_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderImageXxX_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderImageXxX_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderImageXxX_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
+		for (long i = 0; i < detectorCommon->nPowderClasses; i++) {
+			powder_mutex[i] = &detectorCommon->powderImageXxX_mutex[i];
+		}
+
 		pix_nn                    = detectorCommon->imageXxX_nn;
 		pix_nx                    = detectorCommon->imageXxX_nx;
 		pix_ny                    = detectorCommon->imageXxX_ny;
@@ -126,7 +135,10 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderRadialAverage_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderRadialAverage_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderRadialAverage_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
-		memcpy(&(powder_mutex[0]), &(detectorCommon->powderRadialAverage_mutex[0]), sizeof(pthread_mutex_t)*detectorCommon->nPowderClasses);
+		for (long i = 0; i < detectorCommon->nPowderClasses; i++) {
+			powder_mutex[i] = &detectorCommon->powderRadialAverage_mutex[i];
+		}
+
 		pix_nn                  = detectorCommon->radial_nn;
 		pix_nx                  = 0;
 		pix_ny                  = 0;
@@ -249,8 +261,8 @@ double * cDataVersion::getPowderSquared(long powderClass) {
 	return powder_squared[powderClass]; 
 }
 
-pthread_mutex_t cDataVersion::getPowderMutex(long powderClass) {
-	if (&powder_mutex[powderClass] == &detectorCommon->null_mutex) {
+pthread_mutex_t * cDataVersion::getPowderMutex(long powderClass) {
+	if (powder_mutex[powderClass] == &detectorCommon->null_mutex) {
 		ERROR("Trying to access powder mutex that does not exist!");
 	} 
 	return powder_mutex[powderClass];

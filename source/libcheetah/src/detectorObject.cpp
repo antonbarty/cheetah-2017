@@ -733,26 +733,31 @@ void cPixelDetectorCommon::allocateMemory() {
 		powderData_detCorr_squared[powderClass]               = (double*) calloc(pix_nn, sizeof(double));
 		powderData_detPhotCorr[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
 		powderData_detPhotCorr_squared[powderClass]           = (double*) calloc(pix_nn, sizeof(double));
+		pthread_mutex_init(&powderData_mutex[powderClass], NULL);
 		powderImage_raw[powderClass]                          = (double*) calloc(image_nn, sizeof(double));
 		powderImage_raw_squared[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
 		powderImage_detCorr[powderClass]                      = (double*) calloc(image_nn, sizeof(double));
 		powderImage_detCorr_squared[powderClass]              = (double*) calloc(image_nn, sizeof(double));
 		powderImage_detPhotCorr[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
 		powderImage_detPhotCorr_squared[powderClass]          = (double*) calloc(image_nn, sizeof(double));
+		pthread_mutex_init(&powderImage_mutex[powderClass], NULL);
 		powderImageXxX_raw[powderClass]                       = (double*) calloc(imageXxX_nn, sizeof(double));
 		powderImageXxX_raw_squared[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
 		powderImageXxX_detCorr[powderClass]                   = (double*) calloc(imageXxX_nn, sizeof(double));
 		powderImageXxX_detCorr_squared[powderClass]           = (double*) calloc(imageXxX_nn, sizeof(double));
 		powderImageXxX_detPhotCorr[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
 		powderImageXxX_detPhotCorr_squared[powderClass]       = (double*) calloc(imageXxX_nn, sizeof(double));
+		pthread_mutex_init(&powderImageXxX_mutex[powderClass], NULL);
 		powderRadialAverage_raw[powderClass]                  = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_raw_squared[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detCorr[powderClass]              = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detCorr_squared[powderClass]      = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detPhotCorr[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
 		powderRadialAverage_detPhotCorr_squared[powderClass]  = (double*) calloc(radial_nn, sizeof(double));
+		pthread_mutex_init(&powderRadialAverage_mutex[powderClass], NULL);
 		// Powder peaks
 		powderPeaks[powderClass] = (double*) calloc(pix_nn, sizeof(double));
+		pthread_mutex_init(&powderPeaks_mutex[powderClass], NULL);
 		// Radial stacks
 		radialStackCounter[powderClass] = 0;
 		radialAverageStack[powderClass] = (float *) calloc(radial_nn*radialStackSize, sizeof(float));
@@ -878,9 +883,11 @@ void cPixelDetectorCommon::unlockMutexes() {
 		// Powders 
 		FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
 			cDataVersion dataV(NULL,this,cDataVersion::DATA_VERSION_ALL,*i_f);
-			pthread_mutex_t powder_mutex = dataV.getPowderMutex(powderClass);
-			pthread_mutex_unlock(&powder_mutex);
+			pthread_mutex_t * powder_mutex = dataV.getPowderMutex(powderClass);
+			pthread_mutex_unlock(powder_mutex);
 		}
+		// Powder peak
+		pthread_mutex_unlock(&powderPeaks_mutex[powderClass]);
 		// Radial stacks
 		pthread_mutex_unlock(&radialStack_mutex[powderClass]);
 	}
