@@ -81,7 +81,7 @@ namespace cheetah_ana_pkg {
 		 */
 		if(cheetahGlobal.ioSpeedTest==1) {
 			printf("*** r%04u:%li (%3.1fHz): I/O Speed test #1 (psana event rate)\n", cheetahGlobal.runNumber, frameNumber, cheetahGlobal.datarate);		
-			return;
+			pthread_exit(NULL);
 		}
 
 		
@@ -808,7 +808,7 @@ namespace cheetah_ana_pkg {
 					printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
-					return;
+					pthread_exit(NULL);
 				}
 			}
 			/*
@@ -834,7 +834,7 @@ namespace cheetah_ana_pkg {
                     
 					printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
-					return;
+					pthread_exit(NULL);
 				}
 			}
        
@@ -875,7 +875,7 @@ namespace cheetah_ana_pkg {
 				else {
 					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
-					return;
+					pthread_exit(NULL);
 				}
 			}
 			

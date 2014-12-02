@@ -63,7 +63,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
-				// Powder squared
+                // Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if(!global->usePowderThresh) {
 					for(long i=0; i<dataV.pix_nn; i++)

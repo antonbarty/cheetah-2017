@@ -459,8 +459,9 @@ namespace cheetah_ana_pkg {
 			pthread_mutex_unlock(&pthread_queue_mutex);
 			pthread_join(thread,(void **)&eventData);
 			sem_post(&availableAnaThreads);
-			cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
-			
+			if (eventData != NULL) {
+				cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
+			}
 		}
 		pthread_exit(NULL);
 		return 0;
