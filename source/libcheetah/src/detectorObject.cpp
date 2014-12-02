@@ -883,7 +883,7 @@ void cPixelDetectorCommon::unlockMutexes() {
 		// Powders 
 		FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
 			cDataVersion dataV(NULL,this,cDataVersion::DATA_VERSION_ALL,*i_f);
-			pthread_mutex_t powder_mutex = dataV.getPowderMutex(powderClass);
+			pthread_mutex_t powder_mutex = *dataV.getPowderMutex(powderClass);
 			pthread_mutex_unlock(&powder_mutex);
 		}
 		// Powder peak

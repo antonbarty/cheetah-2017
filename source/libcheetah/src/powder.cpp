@@ -59,7 +59,8 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 			while (dataV.next()) {
-				pthread_mutex_t mutex = dataV.getPowderMutex(powderClass);
+				pthread_mutex_t mutex = *dataV.getPowderMutex(powderClass);
+				///printf("mutex = %p\n",&mutex)
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
@@ -79,19 +80,19 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 							buffer[i] = 0;
 					}
 				}
-                //pthread_mutex_lock(&mutex);
+                pthread_mutex_lock(&mutex);
                 // WARNING:
                 // dataV.getPowderMutex(powderClass) currently gives a mutex that is not thread-safe
                 // Quick and dirty fix to avoid dynamic fetching of the proper mutex
-                pthread_mutex_lock(&global->detector[detIndex].powderData_mutex[powderClass]);
+                //pthread_mutex_lock(&global->detector[detIndex].powderData_mutex[powderClass]);
                 for(long i=0; i<dataV.pix_nn; i++){
                     // Powder
                     powder[i] += data[i];
                     // Powder squared
 					powder_squared[i] += buffer[i];
 				}
-                //pthread_mutex_unlock(&mutex);
-                pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
+                pthread_mutex_unlock(&mutex);
+                //pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
 				free(buffer);
 			}
 		}
@@ -276,7 +277,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				}
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
-				pthread_mutex_t mutex = dataV.getPowderMutex(powderClass);
+				pthread_mutex_t mutex = *dataV.getPowderMutex(powderClass);
 				// Powder
 				powderBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				pthread_mutex_lock(&mutex);
