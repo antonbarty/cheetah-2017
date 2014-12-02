@@ -59,8 +59,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 			while (dataV.next()) {
-				pthread_mutex_t mutex = *dataV.getPowderMutex(powderClass);
-				///printf("mutex = %p\n",&mutex)
+				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
@@ -80,19 +79,16 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 							buffer[i] = 0;
 					}
 				}
-                pthread_mutex_lock(&mutex);
-                // WARNING:
-                // dataV.getPowderMutex(powderClass) currently gives a mutex that is not thread-safe
-                // Quick and dirty fix to avoid dynamic fetching of the proper mutex
-                //pthread_mutex_lock(&global->detector[detIndex].powderData_mutex[powderClass]);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
                 for(long i=0; i<dataV.pix_nn; i++){
                     // Powder
                     powder[i] += data[i];
                     // Powder squared
 					powder_squared[i] += buffer[i];
 				}
-                pthread_mutex_unlock(&mutex);
-                //pthread_mutex_unlock(&global->detector[detIndex].powderData_mutex[powderClass]);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
 				free(buffer);
 			}
 		}
@@ -277,12 +273,14 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				}
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
-				pthread_mutex_t mutex = *dataV.getPowderMutex(powderClass);
+				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				// Powder
 				powderBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
-				pthread_mutex_lock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
 				memcpy(powderBuffer, powder, dataV.pix_nn*sizeof(double));
-				pthread_mutex_unlock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
 				// Write to dataset
 				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
@@ -296,9 +294,11 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				// Fluctuations (sigma)
 				powderSquaredBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				powderSigmaBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
-				pthread_mutex_lock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_lock(mutex);
 				memcpy(powderSquaredBuffer, powder_squared, dataV.pix_nn*sizeof(double));
-				pthread_mutex_unlock(&mutex);
+				if (global->threadSafetyLevel > 0)
+					pthread_mutex_unlock(mutex);
 				for (long i=0; i<dataV.pix_nn; i++) {
                     powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes));
 				}
