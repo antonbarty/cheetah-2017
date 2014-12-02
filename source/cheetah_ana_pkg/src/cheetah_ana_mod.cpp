@@ -321,12 +321,30 @@ namespace cheetah_ana_pkg {
 				double timestamp = timestamps[seg].value();
 				tofEvent.timeStamp = timestamp;
 				ndarray<const int16_t, 1> raw(waveforms[seg]);
-				for (int i = 0; i < tofDetector.numSamples; ++ i) {
-					tofEvent.time.push_back(timestamp + i*sampInterval);
-					tofEvent.voltage.push_back(raw[i]*slope - offset);
+				int nbrSamplesInSeg = elem.nbrSamplesInSeg();
+				if(nbrSamplesInSeg == 0){
+					printf("Warning: TOF data for detector %d is missing. Filling with zeros\n", i);
+				}else if(nbrSamplesInSeg != tofDetector.numSamples){
+					printf("Warning: expected %d numSamples but found %d numSamples in TOF detector %d.\n",  tofDetector.numSamples, nbrSamplesInSeg, i);
+				}
+				int j = 0;
+				for (; j < nbrSamplesInSeg; ++j) {
+					tofEvent.time.push_back(timestamp + j*sampInterval);
+					tofEvent.voltage.push_back(raw[j]*slope - offset);
+				}
+				for (; j < tofDetector.numSamples; ++j) {
+					tofEvent.time.push_back(0);
+					tofEvent.voltage.push_back(0);
 				}
 				tofPresent = 1;
 				
+			}else{
+				printf("Warning: TOF data for detector %d is missing. Filling with zeros\n", i);
+				for (int j = 0; j < tofDetector.numSamples; ++j) {
+					tofEvent.time.push_back(0);
+					tofEvent.voltage.push_back(0);
+				}
+				tofPresent = 1;
 			}
 		}
 		return tofPresent;
