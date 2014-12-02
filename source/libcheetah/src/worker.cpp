@@ -311,24 +311,29 @@ hitknown:
 	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
 	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
 	
-	if(eventData->writeFlag){
-		// one CXI or many H5?
-		DEBUG2("About to write frame.");
-		if(global->saveCXI){
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
-			writeCXI(eventData, global);
-		} else {
-			printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to %s.h5 (hit=%i,npeaks=%i)\n",global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
-			writeHDF5(eventData, global);
-		}
-		DEBUG2("Frame written.");
-	}
-	// This frame is not going to be saved, but print anyway
-	else {
-		printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed %s (hit=%i,npeaks=%i)\n", global->runNumber,eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
-	}
+    if (global->generateDarkcal || global->generateGaincal) {
+        // Print frames for dark/gain
+        printf("r%04u:%li (%2.1lf Hz): Processed %s\n", global->runNumber, eventData->threadNum, processRate, eventData->eventStamp);
+    } else {
+        if(eventData->writeFlag){
+            // one CXI or many H5?
+            DEBUG2("About to write frame.");
+            if(global->saveCXI){
+                printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
+                writeCXI(eventData, global);
+            } else {
+                printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to %s.h5 (hit=%i,npeaks=%i)\n",global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
+                writeHDF5(eventData, global);
+            }
+            DEBUG2("Frame written.");
+        }
+        // This frame is not going to be saved, but print anyway
+        else {
+            printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Processed %s (hit=%i,npeaks=%i)\n", global->runNumber,eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
+        }
+    }
 
-	// FEE spectrometer data stack 
+	// FEE spectrometer data stack
 	// (needs knowledge of subdirectory for file list, which is why it's done here)
 	addFEEspectrumToStack(eventData, global, hit);
     
