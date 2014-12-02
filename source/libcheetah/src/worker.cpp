@@ -284,7 +284,7 @@ hitknown:
 	}
 
 	// Histogram
-	addToHistogram(eventData, global);
+	addToHistogram(eventData, global, hit);
 
 	// Inside-thread speed test
 	if(global->ioSpeedTest==9) {

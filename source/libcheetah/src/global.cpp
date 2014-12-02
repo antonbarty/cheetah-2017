@@ -1392,6 +1392,7 @@ void cGlobal::writeConfigurationLog(void){
         fprintf(fp, "noisyPixMemory=%li\n",detector[i].noisyPixMemory);
         fprintf(fp, "noisyPixRecalc=%ld\n",detector[i].noisyPixRecalc);
         fprintf(fp, "histogram=%d\n",detector[i].histogram);
+		fprintf(fp, "histogramDataVersion=%d\n",detector[i].histogramDataVersion);
         fprintf(fp, "histogramMin=%ld\n",detector[i].histogramMin);
         fprintf(fp, "histogramNbins=%ld\n",detector[i].histogramNbins);
         fprintf(fp, "histogramBinSize=%f\n",detector[i].histogramBinSize);
