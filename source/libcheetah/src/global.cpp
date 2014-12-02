@@ -403,7 +403,7 @@ void cGlobal::setup() {
 	if(generateDarkcal) {
 
 		printf("******************************************************************\n");
-		printf("keyword generatedarkcal set: this overrides some keyword values!!!\n");
+		printf("keyword generateDarkcal set: this overrides some keyword values!!!\n");
 		printf("******************************************************************\n");
 
 		hitfinder = 0;
@@ -431,6 +431,7 @@ void cGlobal::setup() {
             detector[i].maskPnccdSaturatedPixels = 0;
             detector[i].useAutoHotPixel = 0;
             detector[i].useAutoNoisyPixel = 0;
+            detector[i].applyBadPixelMask = 0;
 			detector[i].useSubtractPersistentBackground = 0;
 			detector[i].useLocalBackgroundSubtraction = 0;
 			detector[i].startFrames = 0;
@@ -444,7 +445,7 @@ void cGlobal::setup() {
 	if(generateGaincal) {
 
 		printf("******************************************************************\n");
-		printf("keyword generategaincal set: this overrides some keyword values!!!\n");
+		printf("keyword generateGaincal set: this overrides some keyword values!!!\n");
 		printf("******************************************************************\n");
 
 		hitfinder = 0;
