@@ -24,6 +24,36 @@
 #include "cheetahEvent.h"
 #include "detectorObject.h"
 
+void initRaw(cEventData *eventData, cGlobal *global){
+	// Copy raw detector data into float array
+	DETECTOR_LOOP {
+		DEBUG3("Initializing raw data array (float). (detectorID=%ld)",global->detector[detIndex].detectorID);
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].data_raw[i] = eventData->detector[detIndex].data_raw16[i];
+		}
+	}
+}
+
+void initDetectorCorrection(cEventData *eventData, cGlobal *global){
+	// Copy raw detector data into detector corrected array as starting point for detector corrections
+	DETECTOR_LOOP {
+		DEBUG3("Initializing detector corrected data with raw data. (detectorID=%ld)",global->detector[detIndex].detectorID);
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].data_detCorr[i] = eventData->detector[detIndex].data_raw16[i];
+		}
+	}
+}
+
+void initPhotonCorrection(cEventData *eventData, cGlobal *global){
+	// Copy detector corrected data into photon corrected array as starting point for photon corrections
+	DETECTOR_LOOP {
+		DEBUG3("Initialise photon corrected data with detector corrected data. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
+			eventData->detector[detIndex].data_detPhotCorr[i] = eventData->detector[detIndex].data_detCorr[i];
+		}
+	}
+}
+
 const cDataVersion::dataFormat_t cDataVersion::DATA_FORMATS[4] = {DATA_FORMAT_NON_ASSEMBLED,
 																  DATA_FORMAT_ASSEMBLED,
 																  DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED,

@@ -196,7 +196,7 @@ void cFrameBuffer::copyMedian(float * target) {
 	if (threadSafetyLevel > 0) unlockMedianWriters();
 }
 
-void cFrameBuffer::subtractMedian(float * data,int scale) {
+void cFrameBuffer::subtractMedian(float * data,int scale,float minAbsMedianOverStdRatio) {
 	float	top = 0;
 	float	s1 = 0;
 	float	s2 = 0;
@@ -221,8 +221,15 @@ void cFrameBuffer::subtractMedian(float * data,int scale) {
 		factor = top/s1;
 	}
 	// Do the weighted subtraction
+	bool flag = false; 
 	for(long i=0; i<pix_nn; i++) {
-		data[i] -= (factor*median[i]);	
+		if(minAbsMedianOverStdRatio > 0.){
+			flag = (abs(median[i]/std[i]) >= minAbsMedianOverStdRatio);
+		} else {
+			flag = true;
+		}
+		if(flag)
+			data[i] -= (factor*median[i]);
 	}
 	if (threadSafetyLevel > 0) unlockMedianWriters();
 }

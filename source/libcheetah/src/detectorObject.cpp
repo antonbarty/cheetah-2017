@@ -108,6 +108,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
+	subtractPersistentBackgroundMinAbsMedianOverStdRatio = 0.;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -264,6 +265,12 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		fprintf(stderr,"Please edit your ini file and try again.\n");
 		exit(1);
 	} 
+	if ((downsampling > 1) && (saveAssembledAndDownsampled == 0)) {
+		fprintf(stderr,"Error: downsampling = %ld and saveAssembledAndDownsampled = 0.\n",downsampling);
+		fprintf(stderr,"This does not make sense.\n");
+		fprintf(stderr,"Please edit your ini file and try again.\n");
+		exit(1);
+	} 
 
 	// Set some parameters that are needed to process data from this detector
 	
@@ -304,7 +311,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
 	}
-	if (downsampling > 1) {
+	if (saveAssembledAndDownsampled) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 	}
@@ -332,7 +339,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	if (savePowderAssembled) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
 	}
-	if (savePowderAssembledAndDownsampled > 1) {
+	if (savePowderAssembledAndDownsampled) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 	}
 }
@@ -488,6 +495,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if ((!strcmp(tag, "maskpnccdsaturatedpixels"))){
 		maskPnccdSaturatedPixels = atoi(value);
+		if (maskPnccdSaturatedPixels)
+			maskSaturatedPixels = 1;
 	}
 	else if ((!strcmp(tag, "masksaturatedpixels")) || (!strcmp(tag, "usemasksaturatedpixels"))) {
 		maskSaturatedPixels = atoi(value);
@@ -573,6 +582,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundminabsmedianoverstdratio")) {
+		subtractPersistentBackgroundMinAbsMedianOverStdRatio = atof(value);
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);

@@ -286,6 +286,7 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 		if((isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] > ADC_threshold)){
 			*tat += data[i];
 			*nat += 1;
+			mask[i] |= PIXEL_IS_PEAK_FOR_HITFINDER;
 		}
 	}
 }

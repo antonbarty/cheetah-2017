@@ -24,38 +24,6 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-void initRaw(cEventData *eventData, cGlobal *global){
-	// Copy raw detector data into float array
-	DETECTOR_LOOP {
-		DEBUG3("Initializing raw data array (float). (detectorID=%ld)",global->detector[detIndex].detectorID);
-		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-			eventData->detector[detIndex].data_raw[i] = eventData->detector[detIndex].data_raw16[i];
-		}
-	}
-}
-
-void initDetectorCorrection(cEventData *eventData, cGlobal *global){
-	// Copy raw detector data into detector corrected array as starting point for detector corrections
-	DETECTOR_LOOP {
-		DEBUG3("Initializing detector corrected data with raw data. (detectorID=%ld)",global->detector[detIndex].detectorID);
-		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-			eventData->detector[detIndex].data_detCorr[i] = eventData->detector[detIndex].data_raw16[i];
-		}
-	}
-}
-
-void initPixelmask(cEventData *eventData, cGlobal *global){
-	// Copy pixelmask_shared into pixelmask as a starting point for masking
-	int threadSafetyLevel = global->threadSafetyLevel;
-	DETECTOR_LOOP {
-		DEBUG3("Initializing pixelmask with shared pixelmask. (detectorID=%ld)",global->detector[detIndex].detectorID);
-		if (threadSafetyLevel > 1) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
-		memcpy(eventData->detector[detIndex].pixelmask,global->detector[detIndex].pixelmask_shared,global->detector[detIndex].pix_nn*sizeof(uint16_t));
-		if (threadSafetyLevel > 1) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
-	}
-}
-
-
 
 /*
  *	Subtract pre-loaded darkcal file

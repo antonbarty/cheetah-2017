@@ -18,7 +18,7 @@ class cFrameBuffer {
 	~cFrameBuffer();
 	long writeNextFrame(float * data);
 	void copyMedian(float * target);
-	void subtractMedian(float * data, int scale);
+	void subtractMedian(float * data, int scale, float minAbsMedianOverStdRati);
 	void updateMedian(float point);
 	void copyStd(float * target);
 	void updateStd();
