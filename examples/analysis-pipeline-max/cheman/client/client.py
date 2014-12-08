@@ -3,7 +3,7 @@ import sys,time
 from PySide import QtGui,QtCore
 import argparse,configobj
 import clientZMQ
-import runTableWidget
+import runTable
 
 class CheManClient(QtGui.QMainWindow):
     def __init__(self,args):
@@ -17,7 +17,7 @@ class CheManClient(QtGui.QMainWindow):
 
         self.tabs = QtGui.QTabWidget()
 
-        self.runTable = runTableWidget.RunTableWidget(self.C)
+        self.runTable = runTable.RunTableWidget(self.C)
         self.tabs.addTab(self.runTable,"Run Table")
         
         self.setCentralWidget(self.tabs)

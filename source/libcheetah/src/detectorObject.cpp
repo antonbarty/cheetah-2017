@@ -108,7 +108,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	subtractPersistentBackgroundMinAbsMedianOverStdRatio = 0.;
+	subtractPersistentBackgroundMean = 0;
+	subtractPersistentBackgroundMinAbsBgOverStdRatio = 0.;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -583,8 +584,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
-	else if (!strcmp(tag, "subtractpersistentbackgroundminabsmedianoverstdratio")) {
-		subtractPersistentBackgroundMinAbsMedianOverStdRatio = atof(value);
+	else if (!strcmp(tag, "subtractpersistentbackgroundmean")) {
+		subtractPersistentBackgroundMean = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundminabsbgoverstdratio")) {
+		subtractPersistentBackgroundMinAbsBgOverStdRatio = atof(value);
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);

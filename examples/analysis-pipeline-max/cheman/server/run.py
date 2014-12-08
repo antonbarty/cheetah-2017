@@ -244,7 +244,7 @@ class Run:
             txt += "#SBATCH --output=%s\n" % processout
         txt += ["cd %s\n" % processdir]
         txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.C["locations"]["xtcdir"],self.name)]
-        txt += ["if [[ ! -f *.cxi ]] && [[ ! -f *.h5 ]] ; then exit ; fi\n"]
+        txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
         txt += ["cd ..\n"]
         s = processdir.split("/")[-1]
         txt += ["ln -s -f %s %s\n" % (s,self.name)]
