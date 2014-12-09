@@ -20,8 +20,6 @@ def loop(configfilename):#,email,password):
 
     # Try to open google spreadsheet
     #gtab = get_gtab(C,email,password)
-    
-    #counter = 0
 
     # Set the signal handler and a 5-second alarm
     signal.signal(signal.SIGINT, S.terminate)
@@ -31,29 +29,15 @@ def loop(configfilename):#,email,password):
     while True:
         #print "Update"
         # Update information / status of all runs
-        #ttab.note("Updating run status")
         rtab.update()
 
-        #ttab.note("Updating run information")
-        #ttab.set_runs(runs)
-    
-        #if (counter % 10) == 0 or gtab.tabDict_modified:
-        #    ttab.note("Writing to google spreadsheet")
-        #    gtab.write(runs)
-
-        #counter += 1
-
-        #sys.stdout.write("\r"+mill[i%len(mill)] + " Waiting for new XTC files to appear...")
-        #ttab.note("Waiting for user to press a key...") 
-        
-        #ttab.screen.getch()
 
         # Receive request from clients
         #print "Receive requests"
         reqs = S.recvReqs()
         sendListFull = False
         sendListUpdate = False
-        #print reqs
+        print reqs
         #print "Update"
         for req in reqs:
             if req == "REQ_FULL_LIST":

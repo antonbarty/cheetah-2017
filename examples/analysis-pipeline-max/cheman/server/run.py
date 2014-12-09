@@ -13,6 +13,7 @@ class Run:
         self.attrs_copy = {}
         self.new = True
         self.blocked = True
+        self.test_blocked = True
         self.attrs = {"Name": self.name,
                       "Type": "",
                       "No. Frames": "-",
@@ -21,6 +22,7 @@ class Run:
                       "Process Rate": "-"}
         self.logfile = None
         self.processdir = None
+        self.processdir_test = None
         self.darkcal = None
         self.xtcs = []
         self._refresh_status()
@@ -34,11 +36,17 @@ class Run:
                 self._load_logfile()
         self._refresh_status()
         self._refresh_attrs()
-        if not self.blocked and self.attrs["Status"] == "Waiting":
+        if not self.test_blocked and self.attrs["Status"] not in ["Invalid","Waiting"]:
+            if self.processdir_test == None:
+                self._init_processdir(test=True)
+            if self.processdir_test != None:
+                self._start(test=True)
+                self.test_blocked = True
+        if not self.blocked and self.attrs["Status"] in ["Ready"]:
             if self.processdir == None:
-                self._init_processdir()
+                self._init_processdir(test=False)
             if self.processdir != None:
-                self._start()
+                self._start(test=False)
     def get(self):
         return self.attrs
     def get_if_touched(self):
@@ -66,12 +74,6 @@ class Run:
             return self.attrs
         else:
             return None
-    def _start(self):
-        if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
-            s = "bsub -n %s -q psnehq -J C%s -o %s %s" % (self.C["general"]["n_cores_per_job"],self.name,self.processout,self.processexec)
-        elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
-            s = "sbatch %s" % self.processexec
-        os.system(s)
     def _delete(self):
         if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
             os.system("bkill -J C%s" % self.name)
@@ -84,8 +86,6 @@ class Run:
         if len([f for f in os.listdir(self.C["locations"]["h5dir_dark"]) if self.name in f]) > 0:
             os.system("rm -r %s/*%s*" % (self.C["locations"]["h5dir_dark"],self.name))
         self.clear()
-    #def _load_xtcs(self):
-    #    self.xtcs =  [(self.C["locations"]["xtcdir"]+"/"+l) for l in os.listdir(self.C["locations"]["xtcdir"]) if self.name in l]
     def _load_processdir(self):
         if self.attrs["Type"] == "":
             self.processdir = None
@@ -112,11 +112,11 @@ class Run:
                 if self.darkcal == None:
                     self.darkcal = self._get_prior_darkcal()
                 if self.darkcal == None:
-                    self.attrs["Status"] = "Postponed"
-                else:
                     self.attrs["Status"] = "Waiting"
+                else:
+                    self.attrs["Status"] = "Ready"
             else:
-                self.attrs["Status"] = "Waiting"
+                self.attrs["Status"] = "Ready"
         elif self.logfile == None:
             self.attrs["Status"] = "Started"
         else:
@@ -134,6 +134,9 @@ class Run:
                     self.blocked = True
                 elif attrs["Cmd"] == "Start":
                     self.blocked = False
+                elif attrs["Cmd"] == "Test":
+                    self.test_blocked = False
+                # STILL NEEDED?
                 elif attrs["Cmd"] == "refreshDark":
                     self.darkcal = self._get_prior_darkcal()
                     if self.darkcal == None:
@@ -177,28 +180,64 @@ class Run:
             return None
         dcals.sort()
         return dcals[-1]       
-    def _init_processdir(self):
-        self.st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d_%H%M%S')
+    def _init_processdir(self,test=False):
+        st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d_%H%M%S')
         if self.attrs["Type"] == "Data":
-            self.processdir = self.C["locations"]["h5dir"] + "/" + self.name + "_" + self.st
+            if test:
+                rootdir = self.C["locations"]["h5dir"] + "/test"
+            else:
+                rootdir = self.C["locations"]["h5dir"]
+            processdir = rootdir + "/" + self.name + "_" + st
         elif self.attrs["Type"] == "Dark":
-            self.processdir = self.C["locations"]["h5dir_dark"] + "/" + self.name + "_" + self.st
-	self.psanaexec = self.C["locations"]["psanaexec"]
-        self.processexec = self.processdir + "/" + "process.sh"
-        self.processout = self.processdir + "/" + "process.out"
-        self.cheetah_ini = self.processdir + "/" + "cheetah.ini"
-        self.psana_cfg = self.processdir + "/" + "psana.cfg"
-        os.system("mkdir %s" % self.processdir)
-        self._init_process_config()
-        self._write_processexec(self.processout,self.processdir,self.psanaexec,self.processexec)
-    def _init_process_config(self):
+            if test:
+                rootdir = self.C["locations"]["h5dir_dark"] + "/test"
+            else:
+                rootdir = self.C["locations"]["h5dir_dark"]
+            processdir = rootdir + "/" + self.name + "_" + st
+        if not os.path.exists(rootdir):
+            os.system("mkdir %s" % rootdir)
+        os.system("mkdir %s" % processdir)
+        processexec = processdir + "/" + "process.sh"
+        if test:
+            self.processdir_test = processdir
+            self.processexec_test = processexec
+            self.processout_test = processdir + "/" + "process.out"
+            self.cheetah_ini_test = processdir + "/" + "cheetah.ini"
+            self.psana_cfg_test = processdir + "/" + "psana.cfg"
+        else:
+            self.processdir = processdir
+            self.processexec = processexec
+            self.processout = processdir + "/" + "process.out"
+            self.cheetah_ini = processdir + "/" + "cheetah.ini"
+            self.psana_cfg = processdir + "/" + "psana.cfg"
+        self._init_process_config(test)
+        self._write_processexec(self.processout_test,processdir,self.C["locations"]["psanaexec"],processexec,test)
+    def _start(self,test=False):
+        if test:
+            processout = self.processout_test
+            processexec = self.processexec_test
+        else:
+            processout = self.processout
+            processexec = self.processexec
+        if os.path.expandvars(self.C["general"]["job_manager"]) == "lsf":
+            s = "bsub -n %s -q psnehq -J C%s -o %s %s" % (self.C["general"]["n_cores_per_job"],self.name,processout,processexec)
+        elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
+            s = "sbatch %s" % processexec
+        os.system(s)
+    def _init_process_config(self,test=False):
         # select source files for configurations
         if self.attrs["Type"] == "Data":
             cdir = self.C["locations"]["confdir"]
         elif self.attrs["Type"] == "Dark":
             cdir = self.C["locations"]["confdir_dark"]
         c = {}
-        for f,prefix,suffix in zip([self.cheetah_ini,self.psana_cfg],["cheetah","psana"],["ini","cfg"]): 
+        if test:
+            cheetah_ini = self.cheetah_ini_test
+            psana_cfg = self.psana_cfg_test
+        else:
+            cheetah_ini = self.cheetah_ini
+            psana_cfg = self.psana_cfg
+        for f,prefix,suffix in zip([cheetah_ini,psana_cfg],["cheetah","psana"],["ini","cfg"]): 
             c_template_run = cdir+"/"+("%s_template_%s.%s" % (prefix,self.name,suffix))
             c_template = cdir+"/"+("%s_template.%s" % (prefix,suffix))
             if os.path.isfile(c_template_run):
@@ -232,10 +271,10 @@ class Run:
                         else:
                             ls_n.append(l)
                         
-        with open(self.cheetah_ini,"w") as f:
+        with open(cheetah_ini,"w") as f:
                 f.writelines(ls_n)
-        os.system("cp %s %s" % (c["psana"],self.psana_cfg))        
-    def _write_processexec(self,processout,processdir,psanaexec,processexec):
+        os.system("cp %s %s" % (c["psana"],psana_cfg))        
+    def _write_processexec(self,processout,processdir,psanaexec,processexec,test=False):
         txt = ["#!/bin/bash\n"]
         if os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
             txt += "#SBATCH --job-name=C%s\n" % self.name
@@ -243,7 +282,11 @@ class Run:
             txt += "#SBATCH -n%s\n" % self.C["general"]["n_cores_per_job"]
             txt += "#SBATCH --output=%s\n" % processout
         txt += ["cd %s\n" % processdir]
-        txt += ["%s -c psana.cfg %s/*%s*.xtc\n" % (psanaexec,self.C["locations"]["xtcdir"],self.name)]
+        if test:
+            s_nframes = ("-n %s " % self.C["general"]["n_frames_test"])
+        else:
+            s_nframes = ""
+        txt += ["%s -c psana.cfg %s%s/*%s*.xtc\n" % (psanaexec,s_nframes,self.C["locations"]["xtcdir"],self.name)]
         txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
         txt += ["cd ..\n"]
         s = processdir.split("/")[-1]

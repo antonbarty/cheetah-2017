@@ -49,6 +49,7 @@ class ClientHelper:
             # Worker communication
             #t0 = time.time()
             msg = self.workerPipe.recv()
+            print msg
             #print "Client loop 1", time.time()-t0, msg
             #t0 = time.time()
             if msg == "REQ_TERMINATE":
@@ -61,3 +62,4 @@ class ClientHelper:
             #t0 = time.time()
             self.workerPipe.send(self.socket.recv_json())
             #print "Client loop 4", time.time()-t0
+
