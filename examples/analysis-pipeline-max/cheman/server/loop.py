@@ -6,15 +6,15 @@ import run,runTable
 import serverZMQ
 
 def loop(configfilename):#,email,password):
-    print "Read config"
+    #print "Read config"
     # Read configuration
     C = configobj.ConfigObj(configfilename)
     
-    print "Init ZMQ"
+    #print "Init ZMQ"
     # Initialize ZMQ server
     S = serverZMQ.Server(C)
 
-    print "Init run table"
+    #print "Init run table"
     # Try to open run table
     rtab = runTable.RunTable(C)
 
@@ -24,7 +24,7 @@ def loop(configfilename):#,email,password):
     # Set the signal handler and a 5-second alarm
     signal.signal(signal.SIGINT, S.terminate)
 
-    print "Enter server loop"
+    #print "Enter server loop"
     
     while True:
         #print "Update"
@@ -37,7 +37,7 @@ def loop(configfilename):#,email,password):
         reqs = S.recvReqs()
         sendListFull = False
         sendListUpdate = False
-        print reqs
+        #print reqs
         #print "Update"
         for req in reqs:
             if req == "REQ_FULL_LIST":

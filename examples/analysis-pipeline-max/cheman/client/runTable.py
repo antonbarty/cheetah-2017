@@ -4,7 +4,7 @@ from PySide import QtGui,QtCore
 import numpy as np
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-HEADER = ["Type","Run","Test","Status","Process Rate","No. Frames","Hit Ratio"]
+HEADER = ["Type","Test","Run","Status","Process Rate","No. Frames","Hit Ratio"]
 RUN_TYPES = ["","Data","Dark"]
 
 class RunTableWidget(QtGui.QTableWidget):
@@ -28,13 +28,13 @@ class RunTableWidget(QtGui.QTableWidget):
         self.indices.append(i)
         self.names.append(rAttr["Name"])
         self.setCellWidget(N,0,R.typeCBox)
-        self.setCellWidget(N,1,R.cmdPButton)
-        self.setCellWidget(N,2,R.cmdTestPButton)
+        self.setCellWidget(N,1,R.cmdTestPButton)
+        self.setCellWidget(N,2,R.cmdPButton)
         self.setCellWidget(N,3,R.statusLabel)
         self.setCellWidget(N,4,R.pRateLabel)
         self.setCellWidget(N,5,R.nFramesLabel)
         self.setCellWidget(N,6,R.hitRatioLabel)
-        print rAttr["Name"]#,N,self.names
+        #print rAttr["Name"]#,N,self.names
         #print "Adding run took ", (time.time()-t0)
     def update(self,rList):
         #print "update",rList
@@ -59,11 +59,12 @@ class RunRow(QtCore.QObject):
         self.rAttr["No. Frames"] = rAttr.get("No. Frames","-")
         self.rAttr["Hit Ratio"] = rAttr.get("Hit Ratio","-")
         # Initialize items and widgets
-        self.typeCBox = QtGui.QComboBox(self.parent)
+        self.typeCBox = ComboBoxNoWheel(self.parent)
         self.typeCBox.addItems(RUN_TYPES)
         self.typeCBox.setCurrentIndex(RUN_TYPES.index(self.rAttr["Type"]))
-        self.cmdPButton = QtGui.QPushButton("")
-        self.cmdTestPButton = QtGui.QPushButton("Test")
+        self.cmdPButton = PushButtonNoWheel("")
+        self.cmdTestPButton = PushButtonNoWheel("Start Test")
+        self.test_started = False
         self.statusLabel = QtGui.QLabel(rAttr["Status"])
         self.statusLabel.setAlignment(QtCore.Qt.AlignCenter)
         s = rAttr["Status"]
@@ -95,20 +96,30 @@ class RunRow(QtCore.QObject):
         self.typeCBox.currentIndexChanged.connect(self.emitChange)
         self.cmdPButton.released.connect(self.emitCmd)       
         self.cmdTestPButton.released.connect(self.emitCmdTest)       
-    def update(self,rAttr):
+    def update(self,rAttr0):
         self.disconnectSignals()
+        rAttr = dict(rAttr0)
         if rAttr == {}:
             return
+        s = self.rAttr["Status"]
+        if "Messages" in rAttr:
+            M = rAttr.pop("Messages")
+        else:
+            M = ""
         self.rAttr = rAttr
         #self.nameLabel.setText(rAttr["Name"])
         self.typeCBox.setCurrentIndex(self.typeCBox.findText(rAttr["Type"]))
-        s = self.rAttr["Status"]
         if s in ["Started","Waiting","Running","Finished"]:
             self.cmdPButton.setText("Delete")
         elif s in ["Ready","Invalid"]:
             self.cmdPButton.setText("Start")
         self.cmdPButton.setEnabled(s not in ["Invalid"])
-        self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+        if not self.test_started:
+            self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+        else:
+            if "Finished test run" in M:
+                self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+                self.test_started = False
         self.statusLabel.setText(rAttr.get("Status","-"))
         if s in ["Invalid",""]:
             self.statusLabel.setStyleSheet("background-color: rgb(150, 150, 150);")
@@ -142,12 +153,15 @@ class RunRow(QtCore.QObject):
         rAttr["Name"] = self.rAttr["Name"]
         rAttr["Type"] = self.typeCBox.currentText()
         rAttr["Cmd"] = self.cmdTestPButton.text()
-        #self.statusLabel.setText("")
-        #self.statusLabel.setMovie(self.wheel)
-        #self.cmdPButton.setEnabled(False)
+        self.test_started = True
+        self.cmdTestPButton.setEnabled(False)
         self.parent.changed.emit(rAttr)
 
         
-#class ComboBoxNoWheel(QtGui.QComboBox):
-#    def wheelEvent (self, event):
-#        event.ignore()
+class ComboBoxNoWheel(QtGui.QComboBox):
+    def wheelEvent (self, event):
+        event.ignore()
+
+class PushButtonNoWheel(QtGui.QPushButton):
+    def wheelEvent (self, event):
+        event.ignore()

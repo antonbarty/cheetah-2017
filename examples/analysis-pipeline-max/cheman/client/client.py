@@ -4,6 +4,7 @@ from PySide import QtGui,QtCore
 import argparse,configobj
 import clientZMQ
 import runTable
+import messages
 
 class CheManClient(QtGui.QMainWindow):
     def __init__(self,args):
@@ -19,18 +20,22 @@ class CheManClient(QtGui.QMainWindow):
 
         self.runTable = runTable.RunTableWidget(self.C)
         self.tabs.addTab(self.runTable,"Run Table")
+
+        self.messages = messages.Messages(self.C)
+        self.tabs.addTab(self.messages,"Log messages")
         
         self.setCentralWidget(self.tabs)
 
         self.client = clientZMQ.Client(self.C)
         
         self.updateReqTimer = QtCore.QTimer(self)
-        self.updateReqTimer.setInterval(1000)
+        self.updateReqTimer.setInterval(5000)
         self.updateRecvTimer = QtCore.QTimer(self)
         self.updateRecvTimer.setInterval(1000)
 
         # Connect signals
         self.client.newRList.connect(self.runTable.update)
+        self.client.newRList.connect(self.messages.update)
         self.runTable.changed.connect(self.client.sendChangeRunRequest)
         self.updateReqTimer.timeout.connect(self.client.sendUpdateRequest)
         self.updateRecvTimer.timeout.connect(self.client.recvUpdate)

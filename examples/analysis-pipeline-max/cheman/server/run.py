@@ -23,8 +23,11 @@ class Run:
         self.logfile = None
         self.processdir = None
         self.processdir_test = None
+        self.processdirs_started = []
+        self.processdirs_tests_started = []
         self.darkcal = None
         self.xtcs = []
+        self.messages = ""
         self._refresh_status()
     def update(self,attrs=None):
         if attrs != None:
@@ -47,31 +50,59 @@ class Run:
                 self._init_processdir(test=False)
             if self.processdir != None:
                 self._start(test=False)
+        self.check_for_finished_runs()
+    def check_for_finished_runs(self):
+        for s,P in zip(["test ",""],[self.processdirs_tests_started,self.processdirs_started]):
+            P_cp = list(P)
+            for p in P_cp:
+                if self._finished(p):
+                    self.append_message("Finished %srun (%s)." % (s,p))
+                    P.remove(p)
+    def _finished(self,processdir):
+        l = processdir[:-len(processdir.split("/")[-1])]+self.name
+        if os.path.exists(l):
+            if os.readlink(l) == processdir.split("/")[-1]:
+                return True
+        return False
+    def append_message(self,s):
+        ts = time.time()
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        self.messages += st + " " + self.name + ": " + s + "\n" 
+    def get_messages(self):
+        m = str(self.messages)
+        self.messages = ""
+        return m
     def get(self):
-        return self.attrs
+        attrs = dict(self.attrs)
+        attrs["Messages"] = self.get_messages() 
+        return attrs
     def get_if_touched(self):
         touched = self.new
-        for n,i in self.attrs_copy.items():
-            if n in self.attrs:
-                if self.attrs[n] != self.attrs_copy[n]:
+        if not touched:
+            for n,i in self.attrs_copy.items():
+                if n in self.attrs:
+                    if self.attrs[n] != self.attrs_copy[n]:
+                        touched = True
+                        break
+                else:
                     touched = True
                     break
-            else:
-                touched = True
-                break
-        for n,i in self.attrs.items():
-            if n in self.attrs_copy:
-                if self.attrs[n] != self.attrs_copy[n]:
+        if not touched:
+            for n,i in self.attrs.items():
+                if n in self.attrs_copy:
+                    if self.attrs[n] != self.attrs_copy[n]:
+                        touched = True
+                        break
+                else:
                     touched = True
                     break
-            else:
-                touched = True
-                break
         self.attrs_copy = dict(self.attrs)
+        attrs = dict(self.attrs)
+        attrs["Messages"] = self.get_messages()
+        touched = touched or (attrs["Messages"] != "")
         self.new = False
         if touched:
-            #print self.attrs
-            return self.attrs
+            return attrs
         else:
             return None
     def _delete(self):
@@ -134,7 +165,7 @@ class Run:
                     self.blocked = True
                 elif attrs["Cmd"] == "Start":
                     self.blocked = False
-                elif attrs["Cmd"] == "Test":
+                elif attrs["Cmd"] == "Start Test":
                     self.test_blocked = False
                 # STILL NEEDED?
                 elif attrs["Cmd"] == "refreshDark":
@@ -224,6 +255,13 @@ class Run:
         elif os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
             s = "sbatch %s" % processexec
         os.system(s)
+        if test:
+            self.processdirs_tests_started.append(self.processdir_test)
+            self.processdir_test = None
+            self.append_message("Started test run (%s).\n" % self.processdirs_tests_started[-1])
+        else:
+            self.processdirs_started.append(self.processdir)
+            self.append_message("Started run (%s)." % self.processdirs_started[-1])           
     def _init_process_config(self,test=False):
         # select source files for configurations
         if self.attrs["Type"] == "Data":
@@ -290,7 +328,7 @@ class Run:
         txt += ["if [ ! -f *.cxi ] && [ ! -f *.h5 ] ; then exit ; fi\n"]
         txt += ["cd ..\n"]
         s = processdir.split("/")[-1]
-        txt += ["ln -s -f %s %s\n" % (s,self.name)]
+        txt += ["ln -sfn %s %s\n" % (s,self.name)]
         txt += ["chgrp -R %s %s\n" % (self.C["general"]["unix_group"],s)]
         txt += ["chmod -R g+xr %s\n" % s]
         txt += ["chgrp %s %s\n" % (self.C["general"]["unix_group"],self.name)]
