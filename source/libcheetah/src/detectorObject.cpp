@@ -122,7 +122,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Identify persistently hot pixels
 	useAutoHotpixel = 0;
 	hotpixFreq = 0.9;
-	hotpixADC = 1000;
+	hotpixADC = 10000;
 	hotpixMemory = 50;
 	// Kill persistently hot pixels
 	applyAutoHotpixel = 0;

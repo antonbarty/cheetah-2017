@@ -841,10 +841,10 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						 */
                         float   localSigma=0;
                         float   localOffset=0;
-						long    ringWidth = 2*hitfinderLocalBGRadius;
+						long    ringWidth = hitfinderLocalBGRadius+1;
 						
-						float   sum = 0;
-						float   sumsquared = 0;
+						float   sumI = 0;
+						float   sumIsquared = 0;
 						long    np_sigma = 0;
 						long	np_counted = 0;
 						float	fbgr;
@@ -887,14 +887,16 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 								//	continue;
 								
 								// Keep track of value and value-squared for offset and sigma calculation
-								if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
+								//if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
+								if(peakpixel[e] == 0 && mask[e] != 0) {
 									np_sigma++;
-									sum += thisI;
-									sumsquared += (thisI*thisI);
+									sumI += thisI;
+									sumIsquared += (thisI*thisI);
 								}
                                 
 								// Keep track of maximum value in the background region
-								if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
+								//if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
+								if(peakpixel[e] == 0 && mask[e] != 0) {
 									if(thisI > backgroundMaxI) {
 										backgroundMaxI = thisI;
 									}
@@ -908,22 +910,24 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						// Calculate =standard deviation
 						//if (np_sigma == 0)
 						//	continue;
-						if (np_sigma < 3)
-							continue;
+						//if (np_sigma < 3)
+						//	continue;
 						
 						if (np_sigma != 0) {
-							localOffset = sum/np_sigma;
-							localSigma = sqrt(sumsquared/np_sigma - ((sum/np_sigma)*(sum/np_sigma)));
+							localOffset = sumI/np_sigma;
+							localSigma = sqrt(sumIsquared/np_sigma - ((sumI/np_sigma)*(sumI/np_sigma)));
 						}
 						else {
 							localOffset = 0;
 							localSigma = 0.01;
 						}
-						snr = (float) (maxI-localOffset)/localSigma;
-						
-						
-						// Signal to noise criterion
-						// The more pixels there are in the peak, the more relaxed we are about this criterion
+                        
+                        
+                        // Signal to noise criterion
+                        snr = (float) (sumI-localOffset)/localSigma;
+						//snr = (float) (maxI-localOffset)/localSigma;
+
+                        // The more pixels there are in the peak, the more relaxed we are about this criterion
 						if( snr < hitfinderMinSNR )        //   - nat +hitfinderMinPixCount
 						  continue;
 						
@@ -931,7 +935,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						// The more pixels there are in the peak, the more relaxed we are about this criterion
 	 					//fBackgroundThresh = hitfinderMinSNR - nat;
 						//if(fBackgroundThresh > 4) fBackgroundThresh = 4;
-                        fBackgroundThresh = 2;
+                        fBackgroundThresh = 1;
                         fBackgroundThresh *= (backgroundMaxI-localOffset);
 						if( maxI < fBackgroundThresh)
 							continue;
