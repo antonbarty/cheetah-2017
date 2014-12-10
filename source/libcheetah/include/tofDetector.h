@@ -4,6 +4,7 @@
 #define MAX_FILENAME_LENGTH 1024
 
 #include <vector>
+#include <string.h>
 
 #define MAX_TOF_DETECTORS 20
 

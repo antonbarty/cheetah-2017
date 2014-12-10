@@ -1,5 +1,5 @@
 /*
- *  setup.cpp
+ *  cheetahGlobal.h
  *  cheetah
  *
  *  Created by Anton Barty on 7/2/11.
@@ -13,17 +13,17 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <semaphore.h>
+
 #include "detectorObject.h"
 #include "tofDetector.h"
-#include <processRateMonitor.h>
+#include "peakDetect.h"
+#include "processRateMonitor.h"
 #define MAX_POWDER_CLASSES 16
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
 #define MAX_EPICS_PVS 10
 #define MAX_EPICS_PV_NAME_LENGTH 512
-
-#define POWDER_LOOP for(long powID=0; powID < global->nPowderClasses; powID++)
-
 
 /** @brief Global variables.
  *
@@ -85,6 +85,8 @@ public:
 	/** @brief Toggle the creation of a gaincal image. */
 	int      generateGaincal;
 
+    /** @brief Toggle the creation of separate running sums files. */
+	int      writeRunningSumsFiles;
 
 	/** @brief Toggle the usage of a hitfinder. */
 	int      hitfinder;
@@ -103,6 +105,8 @@ public:
 	float    hitfinderTAT;
 	/** @brief Minimum number of Bragg peaks that constitute a hit. */
 	int      hitfinderNpeaks;
+	/** @brief Minimum number of nPeaks that constitute a hit that shall be saved. */
+	int      saveHitsMinNPeaks;
 	/** @brief Maximum number of Bragg peaks that constitute a hit. */
 	int      hitfinderNpeaksMax;
 	//int      hitfinderPeakBufferSize;
@@ -162,7 +166,7 @@ public:
 	/** @brief The minimum signal/noise ratio for peakfinding purposes. */
 	float    hitfinderMinSNR;
 	/** @brief Toggle ignoring halo pixels during hitfinding. */
-	int      hitfinderIgnoreHaloPixels;
+	int      hitfinderIgnoreNoisyPixels;
 	/** @brief Downsampling factor that will be applied to pattern during hitfinding (decoupled from output). */
 	long      hitfinderDownsampling;
 	/** @brief Data for hitfinding only based on detector corrected data (photon correction ignored for hitfinding). Only hitfinder 1. */
@@ -203,19 +207,14 @@ public:
 	/** @brief File name of energy spectrum scale calibration file. */
 	char     espectrumScaleFile[MAX_FILENAME_LENGTH];
 
-
 	/** @brief Toggle the creation of a virtual powder pattern from hits. */
 	int      powderSumHits;
 	/** @brief Toggle the creation of virtual powder patterns from non-hits. */
 	int      powderSumBlanks;
-    int      powderSumWithBackgroundSubtraction;
 	/** @brief Lower intensity threshold for forming powder patterns. */
 	float   powderthresh;
 	/** @brief Toggle intensity threshold for forming powder patterns. */
 	int		usePowderThresh;
-	/** @brief Toggle whether or not additional assembled powders and downsampled images shall be generated. This might slow down execution of cheetah. */
-	int     assemblePowders;
-
 
 	/** @brief Interval between saving of powder patterns, etc. */
 	int      saveInterval;
@@ -224,11 +223,13 @@ public:
 	/** @brief Toggle the writing of Bragg peak information into a text file. */
 	int      savePeakList;
 
-
 	/** @brief Toggle the writing of radial intensity profile data. */
 	int      saveRadialStacks;
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
+
+	/** @brief Toggle the writing of radial intensity profile data. */
+	int      saveRadialAverage;
 
 	/** @brief The number of initial calibration frames */
 	long       nInitFrames;
@@ -252,14 +253,8 @@ public:
 	int      saveHits;
 	/** @brief Toggle the writing of hdf5 files for frames containing non-hits. */
 	int      saveBlanks;
-	/** @brief Toggle the writing of raw images in hdf5 files. */
-	int      saveNonAssembled;
-	/** @brief Toggle the writing of raw modules in hdf5 files. */
+	/** @brief Toggle the writing of non-assembled modules in hdf5 files. */
 	int      saveModular;
-	/** @brief Toggle the writing of assembled (i.e. interpolated) images. */
-	int      saveAssembled;
-	int      assemble2DMask;
-	int      assemble2DImage;
 	/** @brief Toggle assemble interpolation mode (0: linear, weight nearest 4 pixels, 1: nearest, pick value of nearest pixel).*/
 	int      assembleInterpolation;
 	/** @brief Toggle the writing of individual pixelmask. */
@@ -281,6 +276,14 @@ public:
     char    dataSaveFormat[MAX_FILENAME_LENGTH];
 	/** @brief Save CXIs in SWMR mode. This makes them incompatible with older HDF5 versions */
 	bool cxiSWMR;
+	/** @brief Ignore overflows in type conversion while saving CXIs. */
+	bool ignoreConversionOverflow;
+	/** @brief Ignore truncations in type conversion while saving CXIs. */
+	bool ignoreConversionTruncate;
+	/** @brief Ignore loss of precison in type conversion while saving CXIs. */
+	bool ignoreConversionPrecision;
+	/** @brief Ignore type conversion from NAN while saving CXIs. */
+	bool ignoreConversionNAN;
 
 	/** @brief Flush the CXI file every \p cxiFlushPeriod images.
 	    Setting it to 0 avoid doing any flushes.
@@ -334,9 +337,11 @@ public:
 	// Thread management
 	int      useHelperThreads;
 	long     nThreads;
-	long     nActiveThreads;
+	long     nActiveCheetahThreads;
 	long     threadCounter;
 	long     threadPurge;
+	int      threadTimeoutInSeconds;
+	int      threadSafetyLevel;
 
 	// Number of threads in cheetah_ana_mod
 	int      anaModThreads;
@@ -345,10 +350,6 @@ public:
 	pthread_mutex_t  hitclass_mutex;
 	pthread_mutex_t  process_mutex;
 	pthread_mutex_t  nActiveThreads_mutex;
-	pthread_mutex_t  hotpixel_mutex;
-	pthread_mutex_t  halopixel_mutex;
-	pthread_mutex_t  selfdark_mutex;
-	pthread_mutex_t  bgbuffer_mutex;
 	pthread_mutex_t  nhits_mutex;
 	pthread_mutex_t  framefp_mutex;
 	pthread_mutex_t  powderfp_mutex;
@@ -359,16 +360,18 @@ public:
 	pthread_mutex_t  espectrumBuffer_mutex;
 	pthread_mutex_t  datarateWorker_mutex;
 	pthread_mutex_t  saveCXI_mutex;
-	pthread_mutex_t  pixelmask_shared_mutex;
     pthread_mutex_t  saveinterval_mutex;
 	//pthread_mutex_t  hitVector_mutex;
 	pthread_mutex_t  gmd_mutex;
 	pthread_mutex_t  swmr_mutex;
+	sem_t availableCheetahThreads;
 
 	/*
 	 *	Common variables
 	 */
-	float    avgGMD;
+	float    avgGmd;
+	int      skipEventsBelowGmdThreshold;
+	double   gmdThreshold;
 
 	/*
 	 *	Powder patterns/sums
@@ -378,9 +381,10 @@ public:
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
+	pthread_mutex_t nPeaksMin_mutex[MAX_POWDER_CLASSES];
+	pthread_mutex_t nPeaksMax_mutex[MAX_POWDER_CLASSES];
 
 	std::map<std::pair<int, int>, int> hitClasses[3];
-
 
     // counters updated with event data
 	long     npowderHits;
@@ -394,7 +398,6 @@ public:
     long nCXIEvents;
     long nCXIHits;
     
-	
 	// FEE spectrum
 	int		useFEEspectrum;
 	long	FEEspectrumStackSize;
@@ -403,8 +406,6 @@ public:
 	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
 	FILE    *FEElogfp[MAX_POWDER_CLASSES];
-
-	
 	
 	// CXI downstream spectrometer
 	double  *espectrumRun;
@@ -415,7 +416,6 @@ public:
 	long	espectrumStackCounter[MAX_POWDER_CLASSES];
 	float   *espectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t espectrumStack_mutex[MAX_POWDER_CLASSES];
-
 	
 	// time keeping
 	time_t   tstart, tend;
@@ -427,7 +427,6 @@ public:
 	double    datarateWorker;
 	double    datarateWorkerMemory;
 	long      datarateWorkerSkipCounter;
-
 
 	// Attempt to fix missing EVR41 signal based on Acqiris signal?
 	int      fudgeevr41;
@@ -466,8 +465,9 @@ public:
     void writeStatus(const char *);
 	void writeFinalLog(void);
 	void writeConfigurationLog(void);
-	void freeMutexes(void);
-
+	void unlockMutexes(void);
+	void freeMemory();
+	
 	/**
 	 * @brief Read text file with list of hits.
 	 **/

@@ -28,106 +28,107 @@
  */
 
 void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
-    
  	DETECTOR_LOOP {
-        float   *corrected_data = eventData->detector[detIndex].corrected_data;
-        float   *pix_r = global->detector[detIndex].pix_r;
-       	long	pix_nn = global->detector[detIndex].pix_nn;
-        float   *radial_average = eventData->detector[detIndex].radialAverage;
-        float   *radial_average_counter = eventData->detector[detIndex].radialAverageCounter;
-        long	radial_nn = global->detector[detIndex].radial_nn;
-        
-        // Mask for where to calculate average
-        int     *mask = (int *) calloc(pix_nn, sizeof(int));
-        for(long i=0; i<pix_nn; i++){
-			mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD));
-        }
-        
-        calculateRadialAverage(corrected_data, pix_r, pix_nn, radial_average, radial_average_counter, radial_nn, mask);
-        
-        // Remember to free the mask
-        free(mask);
-    }
-    
+		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
+			cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion dataV_r(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+			while (dataV_2d.next() && dataV_r.next()) {
+				long	 radial_nn = global->detector[detIndex].radial_nn;
+				long     pix_nn = global->detector[detIndex].pix_nn;
+				float    *pix_r = global->detector[detIndex].pix_r;
+				float    *data_r = dataV_r.getData();
+				float    *data_2d = dataV_2d.getData();				
+				uint16_t *pixelmask_r = dataV_r.getPixelmask();
+				uint16_t *pixelmask_2d = dataV_2d.getPixelmask();				
+				calculateRadialAverage(data_2d, pixelmask_2d, data_r, pixelmask_r, pix_r, radial_nn, pix_nn);
+			}
+		}
+	}
 }
 
+template <class T>
+void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uint16_t *pixelmaskRadial, float * pix_r, long radial_nn, long pix_nn) {
 
-void calculateRadialAverage(float *data, float *pix_r, long pix_nn, float *radialAverage, float *radialAverageCounter, long radial_nn, int *mask){
-    
-	// Zero arrays
+	// Alloc temporary arrays
+	int *      tempRadialAverageCounter = (int*) calloc(radial_nn, sizeof(int));
+	uint16_t * tempBadBins              = (uint16_t*) calloc(radial_nn, sizeof(uint16_t));
+	uint16_t maskOutBits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_MISSING | PIXEL_IS_NOISY;
+	
+	// Init arrays
 	for(long i=0; i<radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
+		dataRadial[i] = 0.;
+		pixelmaskRadial[i] = 0;
+		tempBadBins[i] = PIXEL_IS_MISSING;
 	}
 	
 	// Radial average
 	long	rbin;
 	for(long i=0; i<pix_nn; i++){
-        
-        // Don't count bad pixels in radial average
-        if(mask[i] == 0)
-            continue;
-        
         // Radius of this pixel
 		rbin = lrint(pix_r[i]);
 		
 		// Array bounds check (paranoia)
-		if(rbin < 0) rbin = 0;
-		
+		if(rbin < 0){
+			rbin = 0;
+		}
+
+		// Don't count bad pixels in radial average
+        if (isAnyOfBitOptionsSet(pixelmask2d[i],maskOutBits)) {
+			tempBadBins[rbin] |= pixelmaskRadial[rbin];
+			continue;
+		}
+
         // Add to average
-		radialAverage[rbin] += data[i];
-		radialAverageCounter[rbin] += 1;
+		dataRadial[rbin] += data2d[i];
+		tempRadialAverageCounter[rbin] += 1;
+	    pixelmaskRadial[rbin] |= pixelmask2d[i];
 	}
-	
+
 	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
+	for(long rbin=0; rbin<radial_nn; rbin++) {
+        // Check if radial bin did receive any values
+		if (tempRadialAverageCounter[rbin] == 0) {
+			pixelmaskRadial[rbin] |= tempBadBins[rbin];
+		} else {
+			dataRadial[rbin] /= tempRadialAverageCounter[rbin];
+		}
 	}
-	
+
+	// Free temporary arrays
+	free(tempRadialAverageCounter);
+	free(tempBadBins);
 }
 
 
-void calculateRadialAverage(double *data, double *radialAverage, double *radialAverageCounter, cGlobal *global, int detIndex){
-	
-	long	radial_nn = global->detector[detIndex].radial_nn;
-	long	pix_nn = global->detector[detIndex].pix_nn;
-	uint16_t *mask = global->detector[detIndex].pixelmask_shared;
-	
-	// Zero arrays
-	for(long i=0; i<radial_nn; i++) {
-		radialAverage[i] = 0.;
-		radialAverageCounter[i] = 0.;
+/*
+ * Calculate radial average of powder data
+ */
+void calculateRadialAveragePowder(cGlobal *global) {
+ 	DETECTOR_LOOP {
+		if (isBitOptionSet(global->detector[detIndex].powderFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
+			long	 radial_nn = global->detector[detIndex].radial_nn;
+			long     pix_nn = global->detector[detIndex].pix_nn;
+			float    *pix_r = global->detector[detIndex].pix_r;
+			cDataVersion dataV_2d(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			cDataVersion dataV_r(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+			while (dataV_2d.next() && dataV_r.next()) {
+				for (long powderClass=0; powderClass < global->detector[detIndex].nPowderClasses; powderClass++) {
+					double * powder_r = dataV_r.getPowder(powderClass);
+					double * powder_2d = dataV_2d.getPowder(powderClass);
+					uint16_t *buffer_2d = (uint16_t *) calloc(pix_nn,sizeof(uint16_t));
+					uint16_t *buffer_radial = (uint16_t *) calloc(radial_nn,sizeof(uint16_t));
+					calculateRadialAverage(powder_2d, buffer_2d , powder_r, buffer_radial, pix_r, radial_nn, pix_nn);
+					// Currently we do not save any mask for the powders
+					free(buffer_radial);
+					free(buffer_2d);
+				}
+			}
+		}
 	}
-	
-	// Radial average
-	long	rbin;
-	for(long i=0; i<pix_nn; i++){
-        
-        // Don't count bad pixels in radial average
-        if( isAnyOfBitOptionsSet(mask[i],(PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD)) )
-            continue;
-        
-        rbin = lrint(global->detector[detIndex].pix_r[i]);
-		
-        // Array bounds check (paranoia)
-        if(rbin < 0) rbin = 0;
-        
-        radialAverage[rbin] += data[i];
-        radialAverageCounter[rbin] += 1;
-	}
-	
-	// Divide by number of actual pixels in ring to get the average
-	for(long i=0; i<radial_nn; i++) {
-		if (radialAverageCounter[i] != 0)
-			radialAverage[i] /= radialAverageCounter[i];
-	}
-	
 }
 
 
-
-
+// RADIAL-AVERAGE-STACKS
 
 /*
  *	Add radial average to stack
@@ -154,7 +155,7 @@ void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderC
     cPixelDetectorCommon     *detector = &global->detector[detIndex];
     
     float   *stack = detector->radialAverageStack[powderClass];
-    float   *radialAverage = eventData->detector[detIndex].radialAverage;
+    float   *radialAverage = eventData->detector[detIndex].radialAverage_detPhotCorr;
     long	radial_nn = detector->radial_nn;
     long    stackCounter = detector->radialStackCounter[powderClass];
     long    stackSize = detector->radialStackSize;
@@ -248,6 +249,4 @@ void saveRadialAverageStack(cGlobal *global, int powderClass, int detIndex) {
     pthread_mutex_unlock(&detector->radialStack_mutex[powderClass]);
     
 }
-
-
 

@@ -1,5 +1,5 @@
 /*
- *  pixelDetector.cpp
+ *  detectorObject.cpp
  *  cheetah
  *
  *  Created by Anton Barty on 7/2/11.
@@ -17,13 +17,14 @@
 #include <hdf5.h>
 #include <fenv.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "data2d.h"
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
 #include "cheetahEvent.h"
-
-
+#include "cheetahEvent.h"
+#include "cheetahmodules.h"
 
 /*
  *	Set default values to something reasonable for CSPAD at CXI 
@@ -40,7 +41,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Calibration files
 	//strcpy(detectorConfigFile, "No_file_specified");
 	strcpy(geometryFile, "No_file_specified");
-	strcpy(badpixelFile, "No_file_specified");
+	strcpy(initialPixelmaskFile, "No_file_specified");
 	strcpy(darkcalFile, "No_file_specified");
 	strcpy(wireMaskFile, "No_file_specified");
 	strcpy(gaincalFile, "No_file_specified");
@@ -70,8 +71,9 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	beamCenterPixX = 0;
 	beamCenterPixY = 0;
     
-	// Bad pixel mask    
-	useBadPixelMask = 0;
+	// Initial pixelmask from file  
+	useInitialPixelmask = 0;
+	initialPixelmaskIsBitmask = 0;
 	applyBadPixelMask = 1;
     
 	// Saturated pixels
@@ -85,6 +87,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Common mode subtraction from each ASIC
 	cmModule = 0;
 	cmFloor = 0.1;
+    cmStart = -100;
+    cmStop = 100;
+    cmThreshold = 10;
+    cmRange = 1.0;
 	cspadSubtractUnbondedPixels = 0;
 	cspadSubtractBehindWires = 0;
     
@@ -102,6 +108,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
+	subtractPersistentBackgroundMean = 0;
+	subtractPersistentBackgroundMinAbsBgOverStdRatio = 0.;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -120,22 +128,32 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	useRadialBackgroundSubtraction = 0;
 
 	// Identify persistently hot pixels
+<<<<<<< HEAD
 	useAutoHotpixel = 0;
 	hotpixFreq = 0.9;
 	hotpixADC = 10000;
 	hotpixMemory = 50;
+=======
+	useAutoHotPixel = 0;
+	hotPixFreq = 0.9;
+	hotPixADC = 1000;
+	hotPixMemory = bgMemory;
+	hotPixRecalc = bgMemory;
+	useHotPixelBufferMutex = 0;
+>>>>>>> 7571f7bdddef0d5e507685468c25c49e3dc9e465
 	// Kill persistently hot pixels
-	applyAutoHotpixel = 0;
+	applyAutoHotPixel = 0;
 
-	// Identify persistently illuminated pixels (halo)
-	useAutoHalopixel = 0;
-	halopixIncludeHits = 0;
-	halopixMinDeviation = 100;
-	halopixRecalc = bgRecalc;
-	halopixMemory = bgRecalc;
+	// Identify persistently illuminated pixels (noisy pixels)
+	useAutoNoisyPixel = 0;
+	noisyPixIncludeHits = 0;
+	noisyPixMinDeviation = 100;
+	noisyPixRecalc = bgMemory;
+	noisyPixMemory = bgMemory;
     
 	// Histogram stack
 	histogram = 0;
+	histogramOnlyBlanks = 0;
 	histogramMin = -100;
 	histogramNbins = 200;
 	histogramBinSize = 1;
@@ -147,23 +165,41 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	histogram_nss = 1480;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
-  
+	histogramDataVersion = 2; // 0: raw; 1: detector corrected; 2: detector and photon corrected
+
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
 	usePnccdFixWiringError = 0;
 	usePnccdLineInterpolation = 0;
 	usePnccdLineMasking = 0;
 
-	// Saving options
-	saveDetectorCorrectedOnly = 0;
-	saveDetectorRaw = 0;
-
-	// Downsampling factor (1: no downsampling)
+	// Downsampling factor (0: no downsampling)
 	downsampling = 1;
 	downsamplingConservative = 1;
+
+	// Pixelmask
+	savePixelmask = 1;
+
+	// Saving options
+	saveDetectorRaw                          = 0;
+	saveDetectorCorrected                    = 0;
+	saveDetectorAndPhotonCorrected           = 1;
+    saveNonAssembled                         = 1;
+	saveAssembled                            = 1;
+	saveAssembledAndDownsampled              = 0;
+	saveRadialAverage                        = 1;
+
+	// Powder saving options
+    savePowderDetectorRaw                    = 1;
+	savePowderDetectorCorrected              = 1;
+	savePowderDetectorAndPhotonCorrected     = 1;
+	savePowderNonAssembled                   = 1;
+	savePowderAssembled                      = 1;
+	savePowderAssembledAndDownsampled        = 0;
+	savePowderRadialAverage                  = 1;
 }
 
-void cPixelDetectorCommon::configure(void) {
+void cPixelDetectorCommon::configure(cGlobal * global) {
 	
 	/*
 	 * Configure basic detector parameters
@@ -230,6 +266,90 @@ void cPixelDetectorCommon::configure(void) {
 	printf("\tASIC geometry: %lix%li\n",nasics_x,nasics_y);
 	printf("\tASIC size: %lix%li\n",asic_nx,asic_ny);
 	printf("\tPixel size: %g (m)\n",pixelSize);
+
+	if ((downsampling <= 1) && (saveAssembledAndDownsampled == 1)) {
+		fprintf(stderr,"Error: downsampling = %ld and saveAssembledAndDownsampled = 1.\n",downsampling);
+		fprintf(stderr,"This does not make sense.\n");
+		fprintf(stderr,"Please edit your ini file and try again.\n");
+		exit(1);
+	} 
+	if ((downsampling > 1) && (saveAssembledAndDownsampled == 0)) {
+		fprintf(stderr,"Error: downsampling = %ld and saveAssembledAndDownsampled = 0.\n",downsampling);
+		fprintf(stderr,"This does not make sense.\n");
+		fprintf(stderr,"Please edit your ini file and try again.\n");
+		exit(1);
+	} 
+
+	// Set some parameters that are needed to process data from this detector
+	
+	// Powders and radial stacks
+	nPowderClasses = global->nPowderClasses;
+	radialStackSize = global->radialStackSize;    
+	
+	// Thread safety
+	threadSafetyLevel = global->threadSafetyLevel;
+
+    // Set modes in accordance to configuration
+	// S-A-V-E
+	// Data versions
+	saveVersion = cDataVersion::DATA_VERSION_NONE;
+	if (saveDetectorRaw) {
+		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_RAW);
+		dataVersionMain           = cDataVersion::DATA_VERSION_RAW; 
+	}
+	if (saveDetectorCorrected) {
+		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
+		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED; 
+	}
+	if (saveDetectorAndPhotonCorrected) {
+	    saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
+		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
+	}
+	// Data formats
+	saveFormat = cDataVersion::DATA_FORMAT_NONE;
+	if (saveRadialAverage) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
+	}
+	if (saveNonAssembled) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
+		dataFormatMain            = cDataVersion::DATA_FORMAT_NON_ASSEMBLED; 
+	}
+	if (saveAssembled) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
+	}
+	if (saveAssembledAndDownsampled) {
+		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
+	}
+	// P-O-W-D-E-R
+	// Accumulating data to pseudo-powder patterns etc.
+	// Data versions
+	powderVersion                 = saveVersion;
+	if (savePowderDetectorRaw) {
+		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_RAW);
+	}
+	if (savePowderDetectorCorrected) {
+		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
+	}
+	if (savePowderDetectorAndPhotonCorrected) {
+	    powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
+	}
+	// Data formats
+	powderFormat                  = saveFormat;
+	if (savePowderRadialAverage) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+	}
+	if (savePowderNonAssembled) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
+	}
+	if (savePowderAssembled) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
+	}
+	if (savePowderAssembledAndDownsampled) {
+		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+	}
 }
 
 
@@ -272,9 +392,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		strcpy(gaincalFile, value);
 		useGaincal = 1;
 	}
-	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask"))) {
-		strcpy(badpixelFile, value);
-		useBadPixelMask = 1;
+	else if ((!strcmp(tag, "badpixelmap")) || (!strcmp(tag, "badpixelmask")) || (!strcmp(tag, "initialpixelmask"))) {
+		strcpy(initialPixelmaskFile, value);
+		useInitialPixelmask = 1;
+	}
+	else if ((!strcmp(tag, "initialpixelmaskisbitmask"))) {
+		initialPixelmaskIsBitmask = atoi(value);
 	}
 	else if ((!strcmp(tag, "setbadpixelstozero")) || (!strcmp(tag, "applybadpixelmap")) || (!strcmp(tag, "applybadpixelmask"))) {
 		applyBadPixelMask = atoi(value);
@@ -289,23 +412,74 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "pixelsize")) {
 		pixelSize = atof(value);
 	}
+	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
+		printf("The keyword saveDetectorCorrectedOnly is deprecated. The option is no longer supported.\n"
+			   "To achieve the desired configuration please use instead the keywords saveDetectorCorrected=1 in combination with saveDetectorRaw=0 and saveDetectorAndPhotonCorrected=0.\n"
+			   "Modify your ini file and try again...\n");
+		fail = 1;		
+	}
+
+	else if ((!strcmp(tag, "savedetectorraw")) || (!strcmp(tag, "savedataraw"))) {
+		saveDetectorRaw = atoi(value);
+	}
+	else if (!strcmp(tag, "savepixelmask")) {
+		savePixelmask = atoi(value);
+	}
+	else if (!strcmp(tag, "savedetectorcorrected")) {
+		saveDetectorCorrected = atoi(value);
+	}
+	else if (!strcmp(tag, "savedetectorandphotoncorrected")) {
+		saveDetectorAndPhotonCorrected = atoi(value);
+	}
+ 	else if (!strcmp(tag, "savenonassembled")) {
+		saveNonAssembled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "saveassembled")) {
+		saveAssembled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "saveassembledanddownsampled")) {
+		saveAssembledAndDownsampled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "saveradialaverage")) {
+		saveRadialAverage = atoi(value);
+	}
+
+
+	else if (!strcmp(tag, "savepowderdetectorraw")) {
+		savePowderDetectorRaw = atoi(value);
+	}
+	else if (!strcmp(tag, "savepowderdetectorcorrected")) {
+		savePowderDetectorCorrected = atoi(value);
+	}
+	else if (!strcmp(tag, "savepowderdetectorandphotoncorrected")) {
+		savePowderDetectorAndPhotonCorrected = atoi(value);
+	}
+ 	else if (!strcmp(tag, "savepowdernonassembled")) {
+		savePowderNonAssembled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "savepowderassembled")) {
+		savePowderAssembled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "savepowderassembledanddownsampled")) {
+		savePowderAssembledAndDownsampled = atoi(value);
+	}
+ 	else if (!strcmp(tag, "savepowderradialaverage")) {
+		savePowderRadialAverage = atoi(value);
+	}
+
 	else if (!strcmp(tag, "downsampling")) {
 		downsampling = atoi(value);
 	}
 	else if (!strcmp(tag, "downsamplingrescale")) {
-		printf("The keyword downsamplingRescale is depreciated. The option is no longer supported.\n"
+		printf("The keyword downsamplingRescale is deprecated. The option is no longer supported.\n"
 			   "Modify your ini file and try again...\n");
 		fail = 1;		
 	}
 	else if (!strcmp(tag, "downsamplingconservative")) {
 		downsamplingConservative = atoi(value);
 	}
-	else if (!strcmp(tag, "savedetectorcorrectedonly")) {
-		saveDetectorCorrectedOnly = atoi(value);
-	}
-	else if (!strcmp(tag, "savedetectorraw")) {
-		saveDetectorRaw = atoi(value);
-	}
+
+
 	else if (!strcmp(tag, "beamcenterx")) {
 		beamCenterPixX  = atof(value);
 	}
@@ -329,6 +503,8 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if ((!strcmp(tag, "maskpnccdsaturatedpixels"))){
 		maskPnccdSaturatedPixels = atoi(value);
+		if (maskPnccdSaturatedPixels)
+			maskSaturatedPixels = 1;
 	}
 	else if ((!strcmp(tag, "masksaturatedpixels")) || (!strcmp(tag, "usemasksaturatedpixels"))) {
 		maskSaturatedPixels = atoi(value);
@@ -337,48 +513,61 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 		bgMemory = atoi(value);
 	}
 	else if (!strcmp(tag, "useautohotpixel")) {
-		useAutoHotpixel = atoi(value);
+		useAutoHotPixel = atoi(value);
 		// Eventually delete this, but not during beamtime!
 	}
 	else if (!strcmp(tag, "hotpixfreq")) {
-		hotpixFreq = atof(value);
+		hotPixFreq = atof(value);
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
 	else if (!strcmp(tag, "hotpixadc")) {
-		hotpixADC = atoi(value);
+		hotPixADC = atoi(value);
 		//useAutoHotpixel = 1;
 		//applyAutoHotpixel = 1;
 	}
 	else if ((!strcmp(tag, "sethotpixelstozero")) || (!strcmp(tag, "applyautohotpixel"))) {
-		applyAutoHotpixel = atoi(value);
+		applyAutoHotPixel = atoi(value);
 	}
 	else if (!strcmp(tag, "hotpixmemory")) {
-		hotpixMemory = atoi(value);
+		hotPixMemory = atoi(value);
 	}
-	else if (!strcmp(tag, "useautohalopixel")) {
-		useAutoHalopixel = atoi(value);
+	else if (!strcmp(tag, "hotpixrecalc")) {
+		hotPixRecalc = atoi(value);
 	}
-	else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory"))) {
-		halopixMemory = atoi(value);
+	else if (!strcmp(tag, "useautohalopixel") || !strcmp(tag, "useautonoisypixel")) {
+		useAutoNoisyPixel = atoi(value);
 	}
-	else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc"))) {
-		halopixRecalc = atoi(value);
+	else if ((!strcmp(tag, "halopixmemory")) || (!strcmp(tag, "halopixelmemory")) || (!strcmp(tag, "noisypixmemory")) || (!strcmp(tag, "noisypixelmemory"))) {
+		noisyPixMemory = atoi(value);
 	}
-	else if (!strcmp(tag, "halopixmindeviation")) {
-		halopixMinDeviation = atof(value);
+	else if ((!strcmp(tag, "halopixrecalc")) || (!strcmp(tag, "halopixelrecalc")) || (!strcmp(tag, "noisypixrecalc")) || (!strcmp(tag, "noisypixelrecalc"))) {
+		noisyPixRecalc = atoi(value);
 	}
-	else if (!strcmp(tag, "halopixincludehits")) {
-		halopixIncludeHits = atoi(value);
+	else if (!strcmp(tag, "halopixmindeviation") || !strcmp(tag, "noisypixmindeviation")) {
+		noisyPixMinDeviation = atof(value);
 	}
-	// depreciated?
+	else if (!strcmp(tag, "halopixincludehits") || !strcmp(tag, "noisypixincludehits")) {
+		noisyPixIncludeHits = atoi(value);
+	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);
 	}
-	// depreciated?
 	else if (!strcmp(tag, "cmfloor")) {
 		cmFloor = atof(value);
 	}
+    else if (!strcmp(tag, "cmstart")) {
+        cmStart = atoi(value);
+    }
+    else if (!strcmp(tag, "cmstop")) {
+        cmStop = atoi(value);
+    }
+    else if (!strcmp(tag, "cmthreshold")) {
+        cmThreshold = atof(value);
+    }
+    else if (!strcmp(tag, "cmrange")) {
+        cmRange = atof(value);
+    }
 	// Local background subtraction
 	else if (!strcmp(tag, "uselocalbackgroundsubtraction")) {
 		useLocalBackgroundSubtraction = atoi(value);
@@ -402,8 +591,17 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundmean")) {
+		subtractPersistentBackgroundMean = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundminabsbgoverstdratio")) {
+		subtractPersistentBackgroundMinAbsBgOverStdRatio = atof(value);
+	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);
+	}
+	else if (!strcmp(tag, "usehotpixelbuffermutex")) {
+		useHotPixelBufferMutex = atoi(value);
 	}
 	else if ( (!strcmp(tag, "subtractbehindwires")) || (!strcmp(tag, "usesubtractbehindwires")) ){
 		cspadSubtractBehindWires = atoi(value);
@@ -447,11 +645,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "bgincludehits")) {
 		bgIncludeHits = atoi(value);
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "bgnobeamreset")) {
 		bgNoBeamReset = atoi(value);
 	}
-	// depreciated?
+	// deprecated?
 	else if (!strcmp(tag, "bgfiducialglitchreset")) {
 		bgFiducialGlitchReset = atoi(value);
 	}	
@@ -471,6 +669,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	// Histograms
 	else if (!strcmp(tag, "histogram")) {
 		histogram = atoi(value);
+	}
+	else if (!strcmp(tag, "histogramdataversion")) {
+		histogramDataVersion = atoi(value);
+	}
+	else if (!strcmp(tag, "histogramonlyblanks")) {
+		histogramOnlyBlanks = atoi(value);
 	}
 	else if (!strcmp(tag, "histogrammin")) {
 		histogramMin = atoi(value);
@@ -509,76 +713,79 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 }
 
 
+
 /*
  *  Allocate arrays for memory, etc
  */
-void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
-    
-	// Constants
-	nPowderClasses = global->nPowderClasses;
-	radialStackSize = global->radialStackSize;
-    
-	// Background buffers and the like
-	selfdark = (float*) calloc(pix_nn, sizeof(float));
-	bg_buffer = (int16_t*) calloc(bgMemory*pix_nn, sizeof(int16_t)); 
-	hotpix_buffer = (int16_t*) calloc(hotpixMemory*pix_nn, sizeof(int16_t)); 
-	halopix_buffer = (float*) calloc(halopixMemory*pix_nn, sizeof(float));
-	halopix_mutexes = (pthread_mutex_t*) calloc(halopixMemory, sizeof(pthread_mutex_t));
-	for (long j=0; j<halopixMemory; j++) {
-		pthread_mutex_init(&halopix_mutexes[j], NULL);
+void cPixelDetectorCommon::allocateMemory() {
+	// This is just for checking for uninitialised mutexes
+	pthread_mutex_init(&null_mutex, NULL);
+	/*
+	 *  Shared static data
+	 */
+	gaincal = (float*) calloc(pix_nn, sizeof(float));
+	darkcal = (float*) calloc(pix_nn, sizeof(float));
+	/*
+	 *  Shared dynamic data
+	 */
+	// Shared pixelmasks
+	pixelmask_shared = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_mutex,NULL);
+	pixelmask_shared_max = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_max_mutex,NULL);
+	pixelmask_shared_min = (uint16_t*) malloc(pix_nn*sizeof(uint16_t));
+	pthread_mutex_init(&pixelmask_shared_min_mutex,NULL);
+	for(long j=0; j<pix_nn; j++){
+		pixelmask_shared_min[j] = PIXEL_IS_ALL;
+	}	
+	// Hot pixel map
+	pthread_mutex_init(&hotPix_update_mutex, NULL);
+	frameBufferHotPix = new cFrameBuffer(pix_nn,hotPixMemory,threadSafetyLevel);
+	// Noisy pixel map
+	pthread_mutex_init(&noisyPix_update_mutex, NULL);
+	frameBufferNoisyPix = new cFrameBuffer(pix_nn,noisyPixMemory,threadSafetyLevel);
+	// Persistent background
+	pthread_mutex_init(&bg_update_mutex, NULL);
+	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,threadSafetyLevel);
+	// Powder data (accumulated sums and sums of squared values)  
+	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
+		nPowderFrames[powderClass] = 0;
+		powderData_raw[powderClass]                           = (double*) calloc(pix_nn, sizeof(double));
+		powderData_raw_squared[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detCorr[powderClass]                       = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detCorr_squared[powderClass]               = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detPhotCorr[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detPhotCorr_squared[powderClass]           = (double*) calloc(pix_nn, sizeof(double));
+		pthread_mutex_init(&powderData_mutex[powderClass], NULL);
+		powderImage_raw[powderClass]                          = (double*) calloc(image_nn, sizeof(double));
+		powderImage_raw_squared[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detCorr[powderClass]                      = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detCorr_squared[powderClass]              = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detPhotCorr[powderClass]                  = (double*) calloc(image_nn, sizeof(double));
+		powderImage_detPhotCorr_squared[powderClass]          = (double*) calloc(image_nn, sizeof(double));
+		pthread_mutex_init(&powderImage_mutex[powderClass], NULL);
+		powderImageXxX_raw[powderClass]                       = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_raw_squared[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detCorr[powderClass]                   = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detCorr_squared[powderClass]           = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detPhotCorr[powderClass]               = (double*) calloc(imageXxX_nn, sizeof(double));
+		powderImageXxX_detPhotCorr_squared[powderClass]       = (double*) calloc(imageXxX_nn, sizeof(double));
+		pthread_mutex_init(&powderImageXxX_mutex[powderClass], NULL);
+		powderRadialAverage_raw[powderClass]                  = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_raw_squared[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detCorr[powderClass]              = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detCorr_squared[powderClass]      = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detPhotCorr[powderClass]          = (double*) calloc(radial_nn, sizeof(double));
+		powderRadialAverage_detPhotCorr_squared[powderClass]  = (double*) calloc(radial_nn, sizeof(double));
+		pthread_mutex_init(&powderRadialAverage_mutex[powderClass], NULL);
+		// Powder peaks
+		powderPeaks[powderClass] = (double*) calloc(pix_nn, sizeof(double));
+		pthread_mutex_init(&powderPeaks_mutex[powderClass], NULL);
+		// Radial stacks
+		radialStackCounter[powderClass] = 0;
+		radialAverageStack[powderClass] = (float *) calloc(radial_nn*radialStackSize, sizeof(float));
+		pthread_mutex_init(&radialStack_mutex[powderClass], NULL);
 	}
-
-	for(long j=0; j<pix_nn; j++) {
-		selfdark[j] = 0;
-	}
-    
-	// Powder sums and mutexes
-	for(long i=0; i<nPowderClasses; i++) {
-		nPowderFrames[i] = 0;
-		powderRaw[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderRawSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderCorrected[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderCorrectedSquared[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderPeaks[i] = (double*) calloc(pix_nn, sizeof(double));
-		powderAssembled[i] = (double*) calloc(image_nn, sizeof(double));
-		powderAssembledSquared[i] = (double*) calloc(image_nn, sizeof(double));
-		powderDownsampled[i] = (double*) calloc(image_nn, sizeof(double));
-		powderDownsampledSquared[i] = (double*) calloc(image_nn, sizeof(double));
-		correctedMin[i] = (float*) calloc(pix_nn, sizeof(float));
-		correctedMax[i] = (float*) calloc(pix_nn, sizeof(float));
-		assembledMin[i] = (float*) calloc(image_nn, sizeof(float));
-		assembledMax[i] = (float*) calloc(image_nn, sizeof(float));
-        
-		pthread_mutex_init(&powderRaw_mutex[i], NULL);
-		pthread_mutex_init(&powderRawSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderCorrected_mutex[i], NULL);
-		pthread_mutex_init(&powderCorrectedSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderAssembled_mutex[i], NULL);
-		pthread_mutex_init(&powderAssembledSquared_mutex[i], NULL);
-		pthread_mutex_init(&powderDownsampled_mutex[i], NULL);
-		pthread_mutex_init(&powderDownsampledSquared_mutex[i], NULL);
-		pthread_mutex_init(&radialStack_mutex[i], NULL);
-		pthread_mutex_init(&correctedMin_mutex[i], NULL);
-		pthread_mutex_init(&correctedMax_mutex[i], NULL);		
-		pthread_mutex_init(&assembledMin_mutex[i], NULL);
-		pthread_mutex_init(&assembledMax_mutex[i], NULL);
-	  
-	}
-	
-    
-	// Radial stacks
-	printf("Allocating radial stacks\n");
-	for(long i=0; i<nPowderClasses; i++) {
-		radialStackCounter[i] = 0;
-		radialAverageStack[i] = (float *) calloc(radial_nn*global->radialStackSize, sizeof(float));
-        
-		for(long j=0; j<radial_nn*global->radialStackSize; j++) {
-			radialAverageStack[i][j] = 0;
-		}
-	}
-	printf("Radial stacks allocated\n");
-	
-	
 	// Histogram memory
 	if(histogram) {
 		printf("Allocating histogram memory\n");
@@ -586,7 +793,6 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 		histogram_nss = histogram_ss_max - histogram_ss_min;
 		histogram_nn = histogram_nfs*histogram_nss;
 		histogram_nnn = (uint64_t) histogramNbins * (uint64_t)(histogram_nn);
-		
 		float	histogramMemory;
 		float	histogramMemoryGb;
 		histogramMemory = (histogram_nnn * sizeof(uint16_t));
@@ -600,44 +806,119 @@ void cPixelDetectorCommon::allocatePowderMemory(cGlobal *global) {
 			exit(1);
 		}
 		printf("Histogram buffer size (GB): %f\n", histogramMemoryGb);
-		
-		// Allocate memory
 		histogramData = (uint16_t*) calloc(histogram_nnn, sizeof(uint16_t));
 		pthread_mutex_init(&histogram_mutex, NULL);
-    
-	}
+		histogramScale = (float *) malloc(histogramNbins*sizeof(float));
+		calculateHistogramScale(histogramMin, histogramNbins, histogramBinSize, histogramScale);
+	}	
 }
-
 
 /*
  *	Free detector specific memory
  */
-void cPixelDetectorCommon::freePowderMemory(cGlobal* global) {
-	free(darkcal);
-	free(selfdark);
+void cPixelDetectorCommon::freeMemory() {
+	/*
+	 *  Shared static data
+	 */
 	free(gaincal);
-	free(bg_buffer);
-	free(hotpix_buffer);
-	free(halopix_buffer);
-	
-	for(long j=0; j<global->nPowderClasses; j++) {
-		free(powderRaw[j]);
-		free(powderCorrected[j]);
-		free(powderCorrectedSquared[j]);
-		free(powderPeaks[j]);
-		free(powderAssembled[j]);
-		free(radialAverageStack[j]);
-		pthread_mutex_destroy(&powderRaw_mutex[j]);
-		pthread_mutex_destroy(&powderCorrected_mutex[j]);
-		pthread_mutex_destroy(&powderCorrectedSquared_mutex[j]);
-		pthread_mutex_destroy(&powderAssembled_mutex[j]);
-		pthread_mutex_destroy(&radialStack_mutex[j]);
+	free(darkcal);
+	/*
+	 *  Shared dynamic data
+	 */
+	// Pixelmasks
+	pthread_mutex_destroy(&pixelmask_shared_mutex);
+	free(pixelmask_shared);
+	pthread_mutex_destroy(&pixelmask_shared_min_mutex);
+	free(pixelmask_shared_min);
+	pthread_mutex_destroy(&pixelmask_shared_max_mutex);
+	free(pixelmask_shared_max);
+	// Hot pixel map
+	delete frameBufferHotPix;
+	pthread_mutex_destroy(&hotPix_update_mutex);
+	// Halo pixel map
+	delete frameBufferNoisyPix;
+	pthread_mutex_destroy(&noisyPix_update_mutex);
+	// Persistent background
+	delete frameBufferBlanks;
+	pthread_mutex_destroy(&bg_update_mutex);
+	// Powder data (accumulated sums and sums of squared values)  
+	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
+		// Powders 
+		nPowderFrames[powderClass] = 0;
+		free(powderData_raw[powderClass]);
+		free(powderData_raw_squared[powderClass]);
+		free(powderData_detCorr[powderClass]);
+		free(powderData_detCorr_squared[powderClass]);
+		free(powderData_detPhotCorr[powderClass]);
+		free(powderData_detPhotCorr_squared[powderClass]);
+		free(powderImage_raw[powderClass]);
+		free(powderImage_raw_squared[powderClass]);
+		free(powderImage_detCorr[powderClass]);
+		free(powderImage_detCorr_squared[powderClass]);
+		free(powderImage_detPhotCorr[powderClass]);
+		free(powderImage_detPhotCorr_squared[powderClass]);
+		free(powderImageXxX_raw[powderClass]);
+		free(powderImageXxX_raw_squared[powderClass]);
+		free(powderImageXxX_detCorr[powderClass]);
+		free(powderImageXxX_detCorr_squared[powderClass]);
+		free(powderImageXxX_detPhotCorr[powderClass]);
+		free(powderImageXxX_detPhotCorr_squared[powderClass]);
+		free(powderRadialAverage_raw[powderClass]);
+		free(powderRadialAverage_raw_squared[powderClass]);
+		free(powderRadialAverage_detCorr[powderClass]);
+		free(powderRadialAverage_detCorr_squared[powderClass]);
+		free(powderRadialAverage_detPhotCorr[powderClass]);
+		free(powderRadialAverage_detPhotCorr_squared[powderClass]);
+		// Powder peaks 
+		free(powderPeaks[powderClass]);
+		// Radial stacks
+		pthread_mutex_destroy(&radialStack_mutex[powderClass]);
+		free(radialAverageStack[powderClass]);
 	}
-	
+	pthread_mutex_destroy(&null_mutex);
+	// Pixel histograms
 	if(histogram) {
 		free(histogramData);
+		free(histogramScale);
+		pthread_mutex_destroy(&histogram_mutex);
 	}
+}
 
+/*
+ *	Unlock detector specific mutexes
+ */
+void cPixelDetectorCommon::unlockMutexes() {
+	/*
+	 *  Shared dynamic data
+	 */
+	// Pixelmasks
+	pthread_mutex_unlock(&pixelmask_shared_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_min_mutex);
+	pthread_mutex_unlock(&pixelmask_shared_max_mutex);
+	// Hot pixel map
+	pthread_mutex_unlock(&hotPix_update_mutex);
+	// Halo pixel map
+	pthread_mutex_unlock(&noisyPix_update_mutex);
+	// Persistent background
+	pthread_mutex_unlock(&bg_update_mutex);
+	// Powder data (accumulated sums and sums of squared values)  
+	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
+		// Powders 
+		FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
+			cDataVersion dataV(NULL,this,cDataVersion::DATA_VERSION_ALL,*i_f);
+			pthread_mutex_t * powder_mutex = dataV.getPowderMutex(powderClass);
+			pthread_mutex_unlock(powder_mutex);
+		}
+		// Powder peak
+		pthread_mutex_unlock(&powderPeaks_mutex[powderClass]);
+		// Radial stacks
+		pthread_mutex_unlock(&radialStack_mutex[powderClass]);
+	}
+	pthread_mutex_unlock(&null_mutex);
+	// Pixel histograms
+	if(histogram) {
+		pthread_mutex_unlock(&histogram_mutex);
+	}
 }
 
 
@@ -889,8 +1170,7 @@ void cPixelDetectorCommon::updateKspace(cGlobal *global, float wavelengthA) {
  */
 void cPixelDetectorCommon::readDarkcal(char *filename){	
 	
-	// Create memory space and pad with zeros
-	darkcal = (float*) calloc(pix_nn, sizeof(float));
+	// Pad with zeros
 	for(long i=0; i<pix_nn; i++)
 		darkcal[i] = 0;
 
@@ -969,8 +1249,7 @@ void cPixelDetectorCommon::readDarkcal(char *filename){
 void cPixelDetectorCommon::readGaincal(char *filename){
 	
 
-	// Create memory space and set default gain to 1 everywhere
-	gaincal = (float*) calloc(pix_nn, sizeof(float));
+	// Default gain to 1 everywhere
 	for(long i=0;i<pix_nn;i++)
 		gaincal[i] = 1;
 
@@ -1092,22 +1371,22 @@ void cPixelDetectorCommon::readPeakmask(cGlobal *global, char *filename){
  *	Read in bad pixel mask
  *  (Pixels will be set to zero before any analysis and when data is exported)
  */
-void cPixelDetectorCommon::readBadpixelMask(char *filename){
+void cPixelDetectorCommon::readInitialPixelmask(char *filename){
      	
 	
 	// Do we need a bad pixel map?
-	if ( useBadPixelMask == 0 ){
+	if ( useInitialPixelmask == 0 ){
 		return;
 	}
 
 	// Check if a bad pixel mask file has been specified
 	if ( strcmp(filename,"") == 0 ){
-		printf("Bad pixel mask file path was not specified.\n");
+		printf("Initial pixel mask file path was not specified.\n");
 		printf("Aborting...\n");
 		exit(1);
 	}	
 
-	printf("Reading bad pixel mask:\n");
+	printf("Reading initial pixel mask:\n");
 	printf("\t%s\n",filename);
 
 	// Check whether file exists!
@@ -1115,13 +1394,13 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 	if (fp) 	// file exists
 		fclose(fp);
 	else {		// file doesn't exist
-		printf("\tBad pixel mask does not exist: %s\n",filename);
+		printf("\tInitial pixel mask does not exist: %s\n",filename);
 		printf("\tAborting...\n");
 		exit(1);
 	}
 	
 	
-	// Read darkcal data from file
+	// Read initial pixel mask data from file
 	cData2d		temp2d;
 	temp2d.readHDF5(filename);
 	
@@ -1133,14 +1412,16 @@ void cPixelDetectorCommon::readBadpixelMask(char *filename){
 		exit(1);
 	} 
 	
-	
 	// Copy back into array
 	for(long i=0;i<pix_nn;i++){
-		if((int) temp2d.data[i]==0){
-			pixelmask_shared[i] |= PIXEL_IS_BAD;
-		}
-		else{
-			pixelmask_shared[i] &= ~PIXEL_IS_BAD;
+		if (initialPixelmaskIsBitmask) {
+			pixelmask_shared[i] = (uint16_t) temp2d.data[i];
+		} else {
+			if((int) temp2d.data[i]==0){
+				pixelmask_shared[i] |= PIXEL_IS_BAD;
+			} else { 
+				pixelmask_shared[i] &= ~PIXEL_IS_BAD;
+			}
 		}
 	}
 }
@@ -1266,4 +1547,3 @@ cPixelDetectorEvent::cPixelDetectorEvent() {
 	detectorZ=0;
 
 }
-

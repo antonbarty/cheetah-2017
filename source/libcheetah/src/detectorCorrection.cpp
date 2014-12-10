@@ -24,8 +24,6 @@
 #include "cheetahmodules.h"
 #include "median.h"
 
-void pnccdOffsetCorrection(float *data,uint16_t *mask);
-
 
 /*
  *	Subtract pre-loaded darkcal file
@@ -36,8 +34,9 @@ void subtractDarkcal(cEventData *eventData, cGlobal *global) {
 			/*
 			 *	Subtract darkcal (from calibration file)
 			 */
+			DEBUG3("Subtract darkcal. (detectorID=%ld)",global->detector[detIndex].detectorID);
 			long	pix_nn = global->detector[detIndex].pix_nn;
-			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*data = eventData->detector[detIndex].data_detCorr;
 			float	*darkcal = global->detector[detIndex].darkcal;
 			subtractDarkcal(data, darkcal, pix_nn);
 			eventData->detector[detIndex].pedSubtracted = 1;
@@ -62,9 +61,9 @@ void applyGainCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useGaincal) {
 			long	pix_nn = global->detector[detIndex].pix_nn;
-			float	*data = eventData->detector[detIndex].corrected_data;
+			float	*data = eventData->detector[detIndex].data_detCorr;
 			float	*gaincal = global->detector[detIndex].gaincal;
-			
+			DEBUG3("Apply gain correction. (detectorID=%ld)",global->detector[detIndex].detectorID);			
 			applyGainCorrection(data, gaincal, pix_nn);
 		}
 	}
@@ -79,27 +78,27 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 
 
 /*
- *	Apply bad pixel mask
- *	Assumes that all we have to do here is a multiplication.
+ *	Set bad pixels to zero
  */
 
-void applyBadPixelMask(cEventData *eventData, cGlobal *global){	
+void setBadPixelsToZero(cEventData *eventData, cGlobal *global){	
 	
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].applyBadPixelMask) {
+			DEBUG3("Set bad pixels to zero. (detectorID=%ld)",global->detector[detIndex].detectorID);			
 			long	 pix_nn = global->detector[detIndex].pix_nn;
-			float	 *data = eventData->detector[detIndex].corrected_data;
+			float	 *data = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 
-			applyBadPixelMask(data, mask, pix_nn);
+			setBadPixelsToZero(data, mask, pix_nn);
 		}
 	} 
 }
 
-void applyBadPixelMask(float *data, uint16_t *mask, long pix_nn) {
-for(long i=0; i<pix_nn; i++) {
-data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
-}
+void setBadPixelsToZero(float *data, uint16_t *mask, long pix_nn) {
+	for(long i=0; i<pix_nn; i++) {
+		data[i] *= isBitOptionUnset(mask[i],PIXEL_IS_BAD); 
+	}
 }
 
 
@@ -119,19 +118,21 @@ void cspadModuleSubtract2(cEventData *eventData, cGlobal *global){
 void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detIndex].cmModule == flag) {
-		
-			// Dereference datector arrays
-			float		threshold = global->detector[detIndex].cmFloor;
-			float		*data = eventData->detector[detIndex].corrected_data;
-			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
-			long		asic_nx = global->detector[detIndex].asic_nx;
-			long		asic_ny = global->detector[detIndex].asic_ny;
-			long		nasics_x = global->detector[detIndex].nasics_x;
-			long		nasics_y = global->detector[detIndex].nasics_y;
+		if((strcmp(global->detector[detIndex].detectorType, "cspad") == 0) || (strcmp(global->detector[detIndex].detectorType, "cspad2x2") == 0)) {
+			if(global->detector[detIndex].cmModule == flag) {
+				DEBUG3("CSPAD module subtraction. (detectorID=%ld)",global->detector[detIndex].detectorID);			
+				// Dereference datector arrays
+				float		threshold = global->detector[detIndex].cmFloor;
+				float		*data = eventData->detector[detIndex].data_detCorr;
+				uint16_t	*mask = eventData->detector[detIndex].pixelmask;
+				long		asic_nx = global->detector[detIndex].asic_nx;
+				long		asic_ny = global->detector[detIndex].asic_ny;
+				long		nasics_x = global->detector[detIndex].nasics_x;
+				long		nasics_y = global->detector[detIndex].nasics_y;
 			
-			cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+				cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
 			
+			}
 		}
 	}
 }
@@ -203,23 +204,24 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 void cspadSubtractUnbondedPixels(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detIndex].cspadSubtractUnbondedPixels) { 
-			
-			// Dereference datector arrays
-			float		*data = eventData->detector[detIndex].corrected_data;
-			uint16_t	*mask = eventData->detector[detIndex].pixelmask;
-			long		asic_nx = global->detector[detIndex].asic_nx;
-			long		asic_ny = global->detector[detIndex].asic_ny;
-			long		nasics_x = global->detector[detIndex].nasics_x;
-			long		nasics_y = global->detector[detIndex].nasics_y;
-			
-			cspadSubtractUnbondedPixels(data, mask, asic_nx, asic_ny, nasics_x, nasics_y);
-			
+		if((strcmp(global->detector[detIndex].detectorType, "cspad") == 0) || (strcmp(global->detector[detIndex].detectorType, "cspad2x2") == 0)) {
+			if(global->detector[detIndex].cspadSubtractUnbondedPixels) { 
+				DEBUG3("CSPAD subtraction of background measured in unbonded pixels. (detectorID=%ld)",global->detector[detIndex].detectorID);							
+				// Dereference datector arrays
+				float		*data = eventData->detector[detIndex].data_detCorr;
+				long		asic_nx = global->detector[detIndex].asic_nx;
+				long		asic_ny = global->detector[detIndex].asic_ny;
+				long		nasics_x = global->detector[detIndex].nasics_x;
+				long		nasics_y = global->detector[detIndex].nasics_y;
+				
+				cspadSubtractUnbondedPixels(data, asic_nx, asic_ny, nasics_x, nasics_y);
+				
+			}
 		}
 	}
 }
 
-void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+void cspadSubtractUnbondedPixels(float *data, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	float		counter;
@@ -265,20 +267,23 @@ void cspadSubtractUnbondedPixels(float *data, uint16_t *mask, long asic_nx, long
 void cspadSubtractBehindWires(cEventData *eventData, cGlobal *global){
 	
 	DETECTOR_LOOP {
-        if(global->detector[detIndex].cspadSubtractBehindWires) {
-			float		threshold = global->detector[detIndex].cmFloor;
-			float		*data = eventData->detector[detIndex].corrected_data;
-			uint16_t      	*mask = eventData->detector[detIndex].pixelmask;
-			long		asic_nx = global->detector[detIndex].asic_nx;
-			long		asic_ny = global->detector[detIndex].asic_ny;
-			long		nasics_x = global->detector[detIndex].nasics_x;
-			long		nasics_y = global->detector[detIndex].nasics_y;
-
-			cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
-
+		if((strcmp(global->detector[detIndex].detectorType, "cspad") == 0) || (strcmp(global->detector[detIndex].detectorType, "cspad2x2") == 0)) {
+			if(global->detector[detIndex].cspadSubtractBehindWires) {
+				DEBUG3("CSPAD subtraction of background measured in behind wires. (detectorID=%ld)",global->detector[detIndex].detectorID);							
+				float		threshold = global->detector[detIndex].cmFloor;
+				float		*data = eventData->detector[detIndex].data_detCorr;
+				uint16_t      	*mask = eventData->detector[detIndex].pixelmask;
+				long		asic_nx = global->detector[detIndex].asic_nx;
+				long		asic_ny = global->detector[detIndex].asic_ny;
+				long		nasics_x = global->detector[detIndex].nasics_x;
+				long		nasics_y = global->detector[detIndex].nasics_y;
+				
+				cspadSubtractBehindWires(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+				
+			}
 		}
-	}
-}		
+	}		
+}
 
 void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
@@ -292,7 +297,7 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 	buffer = (float*) calloc(asic_ny*asic_nx, sizeof(float));
 	
 	// Loop over modules (8x8 array)
-	for(long mi=0; mi<nasics_x; mi++){
+	for(long mi=0; mi<nasics_y; mi++){
 		for(long mj=0; mj<nasics_x; mj++){
 			
 			
@@ -331,60 +336,16 @@ void cspadSubtractBehindWires(float *data, uint16_t *mask, float threshold, long
 	free(buffer);
 }
 
-
-
 /*
- *	Identify hot pixels
+ *	Set hot pixels to zero
  */
-void identifyHotPixels(cEventData *eventData, cGlobal *global){
-	
-	DETECTOR_LOOP {
-		if(global->detector[detIndex].useAutoHotpixel) {
-			
-			int		lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
-			long	pix_nn = global->detector[detIndex].pix_nn;
-			long	hotpixADC = global->detector[detIndex].hotpixADC;
-			long	bufferDepth = global->detector[detIndex].hotpixMemory;
-			float	*frameData = eventData->detector[detIndex].corrected_data;
-			int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
-      
-			/*
-			 *	Update global hot pixel buffer
-			 */
-
-			int16_t	*buffer = (int16_t *) calloc(pix_nn,sizeof(int16_t));
-			for(long i=0; i<pix_nn; i++){
-				buffer[i] = (fabs(frameData[i])>hotpixADC)?(1):(0);
-			}
-      
-
-			if(lockThreads)
-				pthread_mutex_lock(&global->hotpixel_mutex);
-
-			long frameID = eventData->threadNum%bufferDepth;
-			memcpy(frameBuffer+pix_nn*frameID, buffer, pix_nn*sizeof(int16_t));
-			eventData->nHot = global->detector[detIndex].nhot;
-
-			if(lockThreads)
-				pthread_mutex_unlock(&global->hotpixel_mutex);
-      
-			free(buffer);
-
-		}
-	}		
-}
-
-
-
-/*
- *	Kill hot pixels
- */
-void applyHotPixelMask(cEventData *eventData, cGlobal *global){
+void setHotPixelsToZero(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
-		if (global->detector[detIndex].useAutoHotpixel && global->detector[detIndex].applyAutoHotpixel){
+		if (global->detector[detIndex].useAutoHotPixel && global->detector[detIndex].applyAutoHotPixel){
+			DEBUG3("Set hot pixels to zero. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			long	pix_nn = global->detector[detIndex].pix_nn;
-			float	*frameData = eventData->detector[detIndex].corrected_data;
+			float	*frameData = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 	
 			for(long i=0; i<pix_nn; i++)
@@ -395,71 +356,81 @@ void applyHotPixelMask(cEventData *eventData, cGlobal *global){
 }	
 
 
-
-/* 
- *	Recalculate hot pixel masks using frame buffer
+/*
+ *	Update hot pixel buffer
  */
-void calculateHotPixelMask(cEventData *eventData,cGlobal *global){
-
+void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
+	int threadSafetyLevel = global->threadSafetyLevel;
 	DETECTOR_LOOP {
-		if(global->detector[detIndex].useAutoHotpixel) {
-			float	hotpixFrequency = global->detector[detIndex].hotpixFreq;
-			long	bufferDepth = global->detector[detIndex].hotpixMemory;
-			long	hotpixMemory = global->detector[detIndex].hotpixMemory;
-			long	hotpixRecalc = global->detector[detIndex].hotpixRecalc;
-			long	hotpixCalibrated = global->detector[detIndex].hotpixCalibrated;
-			long	lastUpdate = global->detector[detIndex].hotpixLastUpdate;
+		if (global->detector[detIndex].useAutoHotPixel) {
+			long	recalc = global->detector[detIndex].hotPixRecalc;
+			long	memory = global->detector[detIndex].hotPixMemory;
+			cFrameBuffer * frameBuffer = global->detector[detIndex].frameBufferHotPix;
+			long bufferDepth = frameBuffer->depth;
+
+			// Select data
+			float * data = eventData->detector[detIndex].data_detCorr;
+			// Adding frame to buffer
+			DEBUG3("Add a new frame to the hot pixel frame buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			long counter = frameBuffer->writeNextFrame(data);
+			if (counter < bufferDepth)
+				printf("Calibrating hot pixel map: Ring buffer fill status %li/%li.\n",counter+1,bufferDepth);
 			
-			if ( ( (eventData->threadNum == lastUpdate+hotpixRecalc) && hotpixCalibrated ) || ( (eventData->threadNum == (hotpixMemory-1)) && !hotpixCalibrated) ) {
+			// Do we have to update the hot pixel map
+			DEBUG3("Check wheter or not we need to calculate a new hot pixel map from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			pthread_mutex_lock(&global->detector[detIndex].hotPix_update_mutex);
+			long lastUpdate = global->detector[detIndex].hotPixLastUpdate;
+			
+			if( /* has processed recalc events since last update?  */ ((eventData->threadNum == lastUpdate+recalc) && (lastUpdate != 0)) || 
+				/* uninitialised and buffer filled? */ ((counter >= memory) && (lastUpdate == 0)) ) {
+
+				bool  keepThreadsLocked = global->detector[detIndex].hotPixCalibrated || threadSafetyLevel < 1;
+				global->detector[detIndex].hotPixLastUpdate = eventData->threadNum;
+
+				// Keep the lock during calculation of median either
+				// - if we run at high thread safety level or
+				// - if we are not calibrated yet (we do not want to loose frames unnecessarily during calibration)
+				if(!keepThreadsLocked) pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);
+
+				DEBUG3("Actually calculate a new hot pixel mask from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
+				printf("Detector %li: Start calculation of hot pixel mask.\n",detIndex);			
 				
-				long	nhot;
-				int	lockThreads = global->detector[detIndex].useBackgroundBufferMutex;
-				long	threshold = lrint(bufferDepth*hotpixFrequency);
-				long	pix_nn = global->detector[detIndex].pix_nn;
-				uint16_t *mask = global->detector[detIndex].pixelmask_shared;
-				int16_t	*frameBuffer = global->detector[detIndex].hotpix_buffer;
 
-				if(lockThreads)
-					pthread_mutex_lock(&global->hotpixel_mutex);
+				// Update map of absolute values above thrheshold
+				float threshold = global->detector[detIndex].hotPixADC;
+				frameBuffer->updateAbsAboveThresh(threshold);
 
-				printf("Detector %li: Calculating hot pixel mask at %li/%li.\n",detIndex, threshold, bufferDepth);
-				nhot = calculateHotPixelMask(mask,frameBuffer,threshold, bufferDepth, pix_nn);
-				printf("Detector %li: Identified %li hot pixels.\n",detIndex,nhot);
-				global->detector[detIndex].nhot = nhot;
-				global->detector[detIndex].hotpixLastUpdate = eventData->threadNum;
-				global->detector[detIndex].hotpixCalibrated = 1;
-	
-				if(lockThreads)
-					pthread_mutex_unlock(&global->hotpixel_mutex);
+				// Apply to shared mask
+				float frequency = global->detector[detIndex].hotPixFreq;
+				long pix_nn = global->detector[detIndex].pix_nn;
+				float * absAboveThreshold = (float *) malloc(pix_nn*sizeof(float)); 
+				frameBuffer->copyAbsAboveThresh(absAboveThreshold);
+				if (threadSafetyLevel > 1) pthread_mutex_lock(&global->detector[detIndex].pixelmask_shared_mutex);					
+				uint16_t * mask = global->detector[detIndex].pixelmask_shared;
+				long	nHot = 0;
+				for(long i=0; i<pix_nn; i++) {
+					// Apply threshold
+					if(absAboveThreshold[i] < frequency) {
+						mask[i] &= ~(PIXEL_IS_HOT);
+					}
+					else {
+						mask[i] |= PIXEL_IS_HOT;
+						nHot++;				
+					}		
+				}
+				if (threadSafetyLevel > 1) pthread_mutex_unlock(&global->detector[detIndex].pixelmask_shared_mutex);
+				free(absAboveThreshold);
+				global->detector[detIndex].nHot = nHot;
+				printf("Detector %li: New hot pixel mask calculated - %li hot pixels identified.\n",detIndex,nHot);      
+				global->detector[detIndex].hotPixCalibrated = 1;
 
+				if(keepThreadsLocked)	pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);		   
+
+			} else {
+				pthread_mutex_unlock(&global->detector[detIndex].hotPix_update_mutex);			
 			}
-		}	
-	}
-}
-
-
-long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold, long bufferDepth, long pix_nn){
-
-	// Loop over all pixels 
-	long	counter;
-	long	nhot = 0;
-	for(long i=0; i<pix_nn; i++) {
-		
-		counter = 0;
-		for(long j=0; j< bufferDepth; j++) {
-			counter += frameBuffer[j*pix_nn+i]; 
-		}
-		
-		// Apply threshold
-		if(counter < threshold) {
-			mask[i] &= ~(PIXEL_IS_HOT);
-		}
-		else {
-			mask[i] |= PIXEL_IS_HOT;
-			nhot++;				
 		}		
-	}	
-	return nhot;
+	}
 }
 
 
@@ -471,7 +442,8 @@ long calculateHotPixelMask(uint16_t *mask, int16_t *frameBuffer, long threshold,
 void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].usePolarizationCorrection) {
-			float	*data = eventData->detector[detIndex].corrected_data;
+			DEBUG3("Apply polarization correction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			float	*data = eventData->detector[detIndex].data_detCorr;
             float   *pix_x = global->detector[detIndex].pix_x;
             float   *pix_y = global->detector[detIndex].pix_y;
             float   *pix_z = global->detector[detIndex].pix_z;
@@ -507,7 +479,8 @@ void applyPolarizationCorrection(float *data, float *pix_x, float *pix_y, float 
 void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].useSolidAngleCorrection) {
-            float	*data = eventData->detector[detIndex].corrected_data;
+			DEBUG3("Apply solid angle correction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+            float	*data = eventData->detector[detIndex].data_detCorr;
             float   *pix_x = global->detector[detIndex].pix_x;
             float   *pix_y = global->detector[detIndex].pix_y;
             float   *pix_z = global->detector[detIndex].pix_z;
@@ -601,6 +574,181 @@ void applyRigorousSolidAngleCorrection(float *data, float *pix_x, float *pix_y, 
 
 
 
+/*
+ *	Subtract common mode on each read-out line for the pnCCD detector
+ *  The common mode is currently implemented as the position of the zero-photon peak
+ *  in the intensity histogram of each line. The histogram uses integer limits and bins (could be changed later).
+ *  Sanity check makes sure that the zero-photon peak lies within the max/min of
+ *  the insensitive pixels (12 pixels closest to the edge), see detector map below:
+ *
+ *              ---> x
+ *              |
+ *              v y
+ *
+ *              insensitive pixels at the edge
+ *              |                 |
+ *              v                 v
+ *              --------- ---------
+ *  read out <- |       | |       | -> read-out
+ *           <- |  q=0  | |  q=1  | ->
+ *           <- |       | |       | ->
+ *           <- | - - - |x| - - - | ->
+ *           <- |       | |       | ->
+ *           <- |  q=2  | |  q=3  | ->
+ *           <- |       | |       | ->
+ *              --------- ---------
+ *              ^                 ^
+ *              |                 |
+ *              insensitive pixels at the edge
+ *
+ *
+ */
+void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
+    
+    DETECTOR_LOOP {
+        if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].cmModule == 1) {
+			DEBUG3("Apply PNCCD module subtraction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+            float    *data = eventData->detector[detIndex].data_detCorr;
+            uint16_t *mask = eventData->detector[detIndex].pixelmask;
+            int      start = global->detector[detIndex].cmStart;
+            int      stop = global->detector[detIndex].cmStop;
+            float    delta = global->detector[detIndex].cmThreshold;
+            float    nstdev = global->detector[detIndex].cmRange;
+            
+            pnccdModuleSubtract(data, mask, start, stop, delta, nstdev, global->debugLevel);
+        }
+    }
+}
+
+
+void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float delta, float nstdev, int verbose) {
+    float m, st, min_border, max_border;
+    int i, n, q, x, y, mx, my, cm;
+    // pnCCD geometry
+    int asic_nx = PNCCD_ASIC_NX;
+    int asic_ny = PNCCD_ASIC_NY;
+    int nasics_x = PNCCD_nASICS_X;
+    int nasics_y = PNCCD_nASICS_Y;
+    // histogram length
+    int nhist = stop - start + 1;
+    
+    // loop over quadrants
+    for (my = 0; my < nasics_y; my++) {
+        
+        for (mx = 0; mx < nasics_x; mx++) {
+            q = mx + my*nasics_x;
+            
+            for (y = 0; y < asic_ny; y++) {
+                // allocate intensity histogram of line
+                uint16_t *line_histogram = (uint16_t*) calloc(nhist, sizeof(uint16_t));
+                int *line_histogram_x = (int*) calloc(nhist, sizeof(int));
+                
+                // set x-scale
+                for (x = 0; x < nhist; x++)
+                    line_histogram_x[x] = start + x;
+                
+                // fill intensity histogram with data for line
+                min_border = 65536;
+                max_border = -65536;
+                m = 0;
+                n = 0;
+                for (x = 0; x < asic_nx; x++) {
+                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                    // criteria for picking pixels for intensity histogram
+                    //if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD)) || isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)))
+                    //if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SHADOWED))))
+                    if (round(data[i] - start) >= 0 && round(data[i] - stop) <= 0 && (isNoneOfBitOptionsSet(mask[i], (PIXEL_IS_DEAD | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_BAD))))
+                        line_histogram[int(round(data[i] - start))]++;
+                    if (isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)) {
+                        // calculate max/min/mean value of shadowed pixels
+                        m += data[i];
+                        if (data[i] < min_border)
+                            min_border = data[i];
+                        if (data[i] > max_border)
+                            max_border = data[i];
+                        n++;
+                    }
+                }
+                m /= float(n);
+                
+                // calculate corrected sample standard deviation of shadowed pixels at the edges of lines
+                st = 0;
+                for (x = 0; x < asic_nx; x++) {
+                    i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                    if (isBitOptionSet(mask[i], PIXEL_IS_SHADOWED)) {
+                        st += (data[i] - m)*(data[i] - m);
+                    }
+                }
+                st /= float(n) - 1;
+                st = sqrt(st);
+                
+                // find peaks in histogram using PeakDetect class
+                PeakDetect peakfinder(line_histogram_x, line_histogram, nhist);
+                peakfinder.findAll(delta);
+                
+                Point *min_point, *max_point;
+                cm = 0;
+                if (peakfinder.maxima->size() > 0) {
+                    // step through peaks in the histogram from low to high intensity, stop if peak fulfills common-mode criteria
+                    for (unsigned k = 0; k < peakfinder.maxima->size(); k++) {
+                        min_point = peakfinder.minima->get(k);
+                        max_point = peakfinder.maxima->get(k);
+                        if (verbose >= 5) {
+                            printf("Peak[%u]_min = %d, Peak[%u]_max = %d, Border_min = %f, Border_mean = %f, Border_max = %f, Border_std = %f\n", k, min_point->getX(), k, max_point->getX(), min_border, m, max_border, st);
+                        }
+                        // sanity checks for common-mode correction
+                        //if ((max_point->getX() - min_point->getX() > 4) && (max_point->getY() - line_histogram[max_point->getX() - start - 1] < delta) && (max_point->getY() - line_histogram[max_point->getX() - start + 1] < delta)) {
+                        // max/min sanity check
+                        //if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(max_border) && max_point->getX() >= floor(min_border)) {
+                        // stdev sanity check (1 stdev = 68 % probability, 2 stdev = 95 % probability)
+                        if (max_point->getX() - min_point->getX() > 2 && max_point->getX() <= ceil(m + nstdev*st) && max_point->getX() >= floor(m - nstdev*st)) {
+                            cm = max_point->getX();
+                            for (x = 0; x < asic_nx; x++) {
+                                i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                                data[i] -= cm;
+                                mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                            }
+                            if (verbose >= 5) {
+                                printf("Common-mode[%d][%d]: %d (peak)\n", q, y, cm);
+                            }
+                            break;
+                        } else if (k == peakfinder.maxima->size() - 1) {
+                            // if no peaks fulfill common-mode criteria, correct with mean value of insensitive pixels
+                            for (x = 0; x < asic_nx; x++) {
+                                i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                                data[i] -= m;
+                                mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                                if (nstdev > 0)
+                                    mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                            }
+                            if (verbose >= 5) {
+                                printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
+                            }
+                        }
+                    }
+                } else {
+                    // if no peaks are found in intensity histogram, correct with mean value of insensitive pixels
+                    for (x = 0; x < asic_nx; x++) {
+                        i = my*asic_ny*asic_nx*nasics_x + y*asic_nx*nasics_x + mx*asic_nx + x;
+                        data[i] -= m;
+                        mask[i] |= PIXEL_IS_ARTIFACT_CORRECTED;
+                        if (nstdev > 0)
+                            mask[i] |= PIXEL_FAILED_ARTIFACT_CORRECTION;
+                    }
+                    if (verbose >= 5) {
+                        printf("Common-mode[%d][%d]: %f (mean)\n", q, y, m);
+                    }
+                }
+                
+                free(line_histogram);
+                free(line_histogram_x);
+            }
+        }
+    }
+}
+
+
+
 // Read out artifact compensation for pnCCD back detector
 /*
   Effect: Negative offset in lines orthogonal to the read out direction. Occurs if integrated signal in line is high.
@@ -640,7 +788,8 @@ void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){
 
 	DETECTOR_LOOP {
 		if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0  && global->detector[detIndex].usePnccdOffsetCorrection == 1) {
-			float	*data = eventData->detector[detIndex].corrected_data;
+			DEBUG3("Apply PNCCD offset correction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+			float	*data = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			pnccdOffsetCorrection(data,mask);
 		}
@@ -708,13 +857,14 @@ void pnccdOffsetCorrection(float *data,uint16_t *mask) {
 void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
 		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineInterpolation == 1)) {
+			DEBUG3("Apply PNCCD line interpolation. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
 			long x,y,i,i0,i1;
 			long x_min = 1;
 			long x_max = nx-1;
-			float *data = eventData->detector[detIndex].corrected_data;
+			float *data = eventData->detector[detIndex].data_detCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			uint16_t mask_out_bits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD |
 				PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD  | PIXEL_IS_MISSING;
@@ -735,6 +885,7 @@ void pnccdLineInterpolation(cEventData *eventData,cGlobal *global){
 void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 	DETECTOR_LOOP {
 		if((strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) && (global->detector[detIndex].usePnccdLineMasking == 1)) {
+			DEBUG3("Apply PNCCD mask erroneous lines. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			// lines in direction of the slowly changing dimension 
 			long nx = PNCCD_ASIC_NX * PNCCD_nASICS_X;
 			long ny = PNCCD_ASIC_NY * PNCCD_nASICS_Y;
@@ -788,7 +939,8 @@ void pnccdFixWiringError(cEventData *eventData, cGlobal *global) {
     DETECTOR_LOOP {
         if(strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 ) {
             if(global->detector[detIndex].usePnccdFixWiringError == 1) {
-                float	*data = eventData->detector[detIndex].corrected_data;
+				DEBUG3("Fix PNCCD wiring error. (detectorID=%ld)",global->detector[detIndex].detectorID);										
+                float	*data = eventData->detector[detIndex].data_detCorr;
                 pnccdFixWiringError(data);
             }
         }

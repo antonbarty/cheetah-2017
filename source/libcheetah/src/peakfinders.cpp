@@ -106,7 +106,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
 	
 	// Data
-	float	*data = eventData->detector[detIndex].corrected_data;
+	float	*data = eventData->detector[detIndex].data_detPhotCorr;
 	float	*pix_r = global->detector[detIndex].pix_r;
 	
 	// Peak list

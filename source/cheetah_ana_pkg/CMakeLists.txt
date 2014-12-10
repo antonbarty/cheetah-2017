@@ -4,12 +4,12 @@ find_package(PSANA REQUIRED)
 find_package(HDF5 REQUIRED)
 
 
-LIST(APPEND sources "src/cheetah_ana_mod.cpp")
+LIST(APPEND sources "src/cheetah_ana_mod.cpp" "src/event_copy.cpp")
 
 add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
 include_directories("include")
-include_directories("../libpsana/include")
+#include_directories("../libpsana/include")
 include_directories(${PSANA_INCLUDES} ${CHEETAH_INCLUDES})
 include_directories(${HDF5_INCLUDE_DIR})
 
