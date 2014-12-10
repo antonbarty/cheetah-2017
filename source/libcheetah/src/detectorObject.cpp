@@ -108,7 +108,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	subtractPersistentBackgroundMinAbsMedianOverStdRatio = 0.;
+	subtractPersistentBackgroundMean = 0;
+	subtractPersistentBackgroundMinAbsBgOverStdRatio = 0.;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -129,7 +130,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Identify persistently hot pixels
 	useAutoHotPixel = 0;
 	hotPixFreq = 0.9;
-	hotPixADC = 1000;
+	hotPixADC = 10000;
+	hotPixMemory = 50;
+	useAutoHotPixel = 0;
+	hotPixFreq = 0.9;
+	hotPixADC = 10000;
 	hotPixMemory = bgMemory;
 	hotPixRecalc = bgMemory;
 	useHotPixelBufferMutex = 0;
@@ -174,10 +179,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Saving options
 	saveDetectorRaw                          = 0;
-	saveDetectorCorrected                    = 0;
-	saveDetectorAndPhotonCorrected           = 1;
+	saveDetectorCorrected                    = 1;
+	saveDetectorAndPhotonCorrected           = 0;
     saveNonAssembled                         = 1;
-	saveAssembled                            = 1;
+	saveAssembled                            = 0;
 	saveAssembledAndDownsampled              = 0;
 	saveRadialAverage                        = 1;
 
@@ -583,8 +588,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
-	else if (!strcmp(tag, "subtractpersistentbackgroundminabsmedianoverstdratio")) {
-		subtractPersistentBackgroundMinAbsMedianOverStdRatio = atof(value);
+	else if (!strcmp(tag, "subtractpersistentbackgroundmean")) {
+		subtractPersistentBackgroundMean = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundminabsbgoverstdratio")) {
+		subtractPersistentBackgroundMinAbsBgOverStdRatio = atof(value);
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);

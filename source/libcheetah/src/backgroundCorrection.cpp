@@ -29,6 +29,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useSubtractPersistentBackground) {
 			DEBUG3("Subtract persistent background. (detectorID=%ld)",global->detector[detIndex].detectorID);
+			uint16_t * frameMask = eventData->detector[detIndex].pixelmask;
 			// Running background subtraction to suppress the photon background after dark subtraction
 			if (eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) {
 				frameData = eventData->detector[detIndex].data_detPhotCorr;
@@ -37,8 +38,13 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 				frameData = eventData->detector[detIndex].data_detCorr;
 				eventData->detector[detIndex].pedSubtracted = 1;
 			}
-			// Subtract median
-			global->detector[detIndex].frameBufferBlanks->subtractMedian(frameData,global->detector[detIndex].scaleBackground,global->detector[detIndex].subtractPersistentBackgroundMinAbsMedianOverStdRatio);
+			if (global->detector[detIndex].subtractPersistentBackgroundMean) {
+				// Subtract mean
+				global->detector[detIndex].frameBufferBlanks->subtractMean(frameData,frameMask,global->detector[detIndex].scaleBackground,global->detector[detIndex].subtractPersistentBackgroundMinAbsBgOverStdRatio);
+			} else {
+				// Subtract median
+				global->detector[detIndex].frameBufferBlanks->subtractMedian(frameData,frameMask,global->detector[detIndex].scaleBackground,global->detector[detIndex].subtractPersistentBackgroundMinAbsBgOverStdRatio);
+			}
 		}
 	}	
 }
@@ -87,7 +93,14 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 				DEBUG3("Actually calculate a persistent background from the ringbuffer now. (detectorID=%ld)",global->detector[detIndex].detectorID);
 				printf("Detector %li: Start calculation of persistent background.\n",detIndex);			
 				
-				global->detector[detIndex].frameBufferBlanks->updateMedian(medianPoint);
+				if (global->detector[detIndex].subtractPersistentBackgroundMean) {
+					global->detector[detIndex].frameBufferBlanks->updateMean();					
+				} else {
+					global->detector[detIndex].frameBufferBlanks->updateMedian(medianPoint);					
+				}
+				if (global->detector[detIndex].subtractPersistentBackgroundMinAbsBgOverStdRatio > 0.) {
+					global->detector[detIndex].frameBufferBlanks->updateStd();
+				}
 				
 				printf("Detector %li: Persistent background calculated.\n",detIndex);      
 				global->detector[detIndex].bgCalibrated = 1;

@@ -160,7 +160,9 @@ function cheetah_localbackground, data, radius
 
 end
 
-
+;;
+;;	Peakfinder 3
+;;
 function cheetah_peakfinder3, data, pState
 
 	adc_thresh = (*pstate).peaks_ADC
@@ -257,6 +259,9 @@ function cheetah_peakfinder3, data, pState
 
 end
 
+;;
+;;	Peakfinder 8
+;;
 function cheetah_peakfinder8, data, pstate
 
 	adc_thresh = (*pstate).peaks_ADC
@@ -290,7 +295,9 @@ function cheetah_peakfinder8, data, pstate
 end
 
 
-
+;;
+;;	Find peaks
+;;
 function cheetah_findpeaks, data, pState
 
 
@@ -317,11 +324,98 @@ function cheetah_findpeaks, data, pState
 end
 
 
+;;
+;;	Read data from file
+;; 	(more complex now that we have multiple file types)
+;;
+function cheetah_readdata, filename, frame, pState, title=title, file_type=file_type, $
+													image=image, peaks=peaks
+	
+		i = frame
+		
+		;; This bit is to allow the flexibility to call with and without pState being defined
+		;; (currently needed to rean an initial frame in order to set up the initial graphics window)
+		if ptr_valid(pstate) then begin	
+			file = *(*pState).pfile
+			index = (*pstate).index
+			file_type = (*pState).file_type
+			h5field = (*pstate).h5field
+			filename = file[i]
+			title = file_basename(filename)
+			(*pState).currentFile = filename
+		endif
+	
+	
+		;;
+		;; Single h5 file per frame (1st version of Cheetah)
+		;;
+		if file_type eq 'little_h5' then begin
+
+			if n_elements(h5field) eq 0 then $
+				h5field = 'data/data'
+				
+			if keyword_set(image) then begin
+				data = read_h5(filename, field=h5field)
+				return, data
+			endif
+		
+			if keyword_set(peaks) then begin
+				peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
+				return, peakinfo
+			endif $
+		
+			else begin
+				print,'Oops, unsupported option for little h5 files'
+			endelse
+		
+		endif
+		
+		;;
+		;; CXIDB format files
+		;;
+		if file_type eq 'cxi' then begin
+
+			if n_elements(h5field) eq 0 then $
+				h5field = 'data/data'
+			
+			if keyword_set(image) then begin
+				data = read_cxi_data(filename, i, field = 'entry_1/instrument_1/detector_1/data') 
+				return, data
+			endif 
+
+			if keyword_set(peaks) then begin
+				px = read_cxi_data(filename, i, field = 'entry_1/result_1/peakXPosRaw') 
+				py = read_cxi_data(filename, i, field = 'entry_1/result_1/peakYPosRaw') 
+				w = where(px ne 0 AND py ne 0)
+				peakinfo = fltarr(4,n_elements(w))
+				peakinfo[0,*] = px[w]
+				peakinfo[1,*] = py[w]
+				return, peakinfo
+			endif $
+		
+			else begin
+				print,'Unsupported option for CXI files'
+			endelse
+		
+		endif
+
+		
+		;; We have an error if we get to here
+		print,'It looks like some condition was not trapped in cheetahview_readdata()'
+		stop
+
+
+end
+
+
+;;
+;;	Display an image
+;;
 pro cheetah_displayImage, pState, image
 
 		;; Retrieve file info
 		file = *(*pState).pfile
-		i = (*pState).currentFileNum
+		i = (*pState).currentFrameNum
 		filename = file[i]
 		(*pState).currentFile = filename
 
@@ -336,9 +430,12 @@ pro cheetah_displayImage, pState, image
 			return
 		endif
 
-		data = read_h5(filename, field=(*pstate).h5field)
-		title = file_basename(filename)
+		
+		data = cheetah_readdata(filename, i, pState, title=title, /image)
+		;;data = read_h5(filename, field=(*pstate).h5field)
+		;title = file_basename(filename)
 		data = float(data)
+
 		
 		;; Apply local background to display image?
 		if (*pstate).display_localbackground eq 1 then begin
@@ -356,7 +453,8 @@ pro cheetah_displayImage, pState, image
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
+			peakinfo = cheetah_readdata(filename, i, pState, /peaks)
+			;peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
 		endif
 		if (*pState).findPeaks then begin
 			peakinfo = cheetah_findpeaks(data, pState)
@@ -432,7 +530,7 @@ pro cheetah_displayImage, pState, image
 
 
 		;; Widget_control
-		thisfile = (*pState).currentFileNum+1
+		thisfile = (*pState).currentFrameNum+1
 		numfiles = n_elements(*((*pstate).pfile))
 		str = strcompress(string('(image',thisfile,' of ',numfiles,')'))
 		widget_control, (*pState).status_label, set_value=str
@@ -533,7 +631,55 @@ pro cheetah_overwritePeaks, filename, peakinfo
 
 end
 
+;;
+;; Update file list
+;; (a little more complex now with different file types)
+;;
+function cheetahview_updatefilelist, dir
 
+	file = ['']
+	
+	;; Find .cxi files
+	file = file_search(dir,"*.cxi",/fully_qualify)
+	if n_elements(file) ne 0 AND file[0] ne '' then begin
+		file_type = 'cxi'
+		print,strcompress(string('CXI file: ', file_basename(file)))
+		
+		nframes = read_cheetah_cxi(file, /get_nframes)
+		print, strcompress(string('Number of frames: ', nframes))
+
+		file = replicate(file[0], nframes)
+		index = indgen(nframes)
+		
+	endif $
+
+	;; Find single frane .h5 files
+	else begin
+		file = file_search(dir,"LCLS*.h5",/fully_qualify)
+		index = intarr(n_elements(file))
+	
+	 	if n_elements(file) eq 0 OR file[0] eq '' then begin
+		 	message,'No files found in directory: '+dir, /info
+	 	endif
+		file_type = 'little_h5'
+		print,strcompress(string(n_elements(file),' files found'))
+	endelse
+
+	;; Return result and indexes
+	result = {	file_type : file_type, $
+					file : file, $
+					index : index $
+				}
+	return, result
+end
+
+
+
+
+
+;;
+;;	Resize the window
+;;
 pro cheetah_resizewindow, pstate
   	sState = *pState
 	s = (*pstate).image_size
@@ -545,6 +691,12 @@ pro cheetah_resizewindow, pstate
 end
 
 
+
+;;
+;;	=================================
+;;       Main event processing switch statement
+;;	=================================
+;;
 pro cheetah_event, ev
 
   	WIDGET_CONTROL, ev.top, GET_UVALUE=pState
@@ -646,14 +798,14 @@ pro cheetah_event, ev
 		sState.button_next : begin
 			;; Choose the next file
 			file = *sState.pfile
-			i = sState.currentFileNum+1
+			i = sState.currentFrameNum+1
 			if(i ge n_elements(file)) then $
 				i = 0				
 			filename = file[i]
 
 			;; Display it
 			(*pState).currentFile = filename
-			(*pState).currentFileNum = i
+			(*pState).currentFrameNum = i
 			cheetah_displayImage, pState
 
 			;; Again?			
@@ -669,14 +821,14 @@ pro cheetah_event, ev
 		sState.button_previous : begin
 			;; Choose the next file
 			file = *sState.pfile
-			i = sState.currentFileNum-1
+			i = sState.currentFrameNum-1
 			if(i lt 0) then $
 				i = n_elements(file)-1				
 			filename = file[i]
 
 			;; Display it
 			(*pState).currentFile = filename
-			(*pState).currentFileNum = i
+			(*pState).currentFrameNum = i
 			cheetah_displayImage, pState
 		end
 
@@ -693,7 +845,7 @@ pro cheetah_event, ev
 
 			;; Display it
 			(*pState).currentFile = filename
-			(*pState).currentFileNum = i
+			(*pState).currentFrameNum = i
 			cheetah_displayImage, pState
 			
 			;; Again?			
@@ -747,7 +899,15 @@ pro cheetah_event, ev
 		;;
 		sState.menu_newdir : begin
 			newdir = dialog_pickfile(/directory, path=sState.dir)
-			newfile = file_search(newdir,"LCLS*.h5",/fully_qualify)
+			
+			file_type = 'None'
+			
+			result = cheetahview_updatefilelist(sState.dir)
+			file_type = result.file_type
+			newfile = result.file
+			index = result.index
+			help, newfile
+			;;newfile = file_search(newdir,"LCLS*.h5",/fully_qualify)
 			
 			if n_elements(newfile) eq 0 then begin
 				message,'No files found in directory: '+newdir, /info
@@ -759,7 +919,9 @@ pro cheetah_event, ev
 				ptr_free, (*pState).pfile
 			(*pState).pfile = ptr_new(newfile,/no_copy)
 			(*pState).dir = newdir
-			(*pState).currentFileNum = 0
+			(*pstate).file_type = file_type
+			(*pState).currentFrameNum = 0
+			(*pstate).index = index
 
 			cheetah_displayImage, pState
 		end
@@ -769,7 +931,13 @@ pro cheetah_event, ev
 		;;	Refresh file list
 		;;
 		sState.button_updatefiles : begin
-			newfile = file_search(sState.dir,"LCLS*.h5",/fully_qualify)
+		
+			file_type = 'None'
+			result = cheetahview_updatefilelist(sState.dir)
+			file_type = result.file_type
+			newfile = result.file
+			index = result.index
+			;newfile = file_search(sState.dir,"LCLS*.h5",/fully_qualify)
 			
 			if n_elements(newfile) eq 0 then begin
 				message,'No files found in directory: '+sState.dir, /info
@@ -780,8 +948,9 @@ pro cheetah_event, ev
 			if(ptr_valid((*pState).pfile)) then $
 				ptr_free, (*pState).pfile
 			(*pState).pfile = ptr_new(newfile,/no_copy)
-			(*pState).currentFileNum = n_elements(file)-1
-
+			(*pState).currentFrameNum = n_elements(file)-1
+			(*pstate).file_type = file_type
+			(*pstate).index = index
 
 			cheetah_displayImage, pState
 
@@ -798,7 +967,7 @@ pro cheetah_event, ev
 			widget_control, sState.menu_findPeaks, set_button = 0
 			widget_control, sState.menu_savePeaks, set_button = 0
 			file = *sState.pfile
-			i = sState.currentFileNum
+			i = sState.currentFrameNum
 			filename = file[i]
 		end
 		sState.menu_findPeaks : begin
@@ -807,7 +976,7 @@ pro cheetah_event, ev
 			widget_control, sState.menu_findPeaks, set_button = (*pstate).findPeaks
 			widget_control, sState.menu_circleHDF5Peaks, set_button = 0
 			file = *sState.pfile
-			i = sState.currentFileNum
+			i = sState.currentFrameNum
 			filename = file[i]
 		end
 
@@ -906,7 +1075,7 @@ pro cheetah_event, ev
 				file = *sState.pfile
 				nfiles = n_elements(file)
 				for i=0L, nfiles-1 do begin
-					(*pState).currentFileNum = i
+					(*pState).currentFrameNum = i
 					cheetah_displayImage, pState
 				endfor
 			endif
@@ -1038,7 +1207,7 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 1
+			(*pstate).image_boost = 2
 			(*pstate).image_histclip = 0.0001
 			(*pstate).circleHDF5Peaks = 1
 			(*pstate).findPeaks = 0
@@ -1096,8 +1265,11 @@ pro cheetah_event, ev
 end
 
 
-
-
+;;
+;;	=================================
+;;       Main GUI setup code
+;;	=================================
+;;
 pro cheetahview, geometry=geometry, dir=dir
 
 	;;	Select data directory
@@ -1106,30 +1278,22 @@ pro cheetahview, geometry=geometry, dir=dir
 		if dir eq '' then return
 	endif
 	
-	file = file_search(dir,"LCLS*.h5",/fully_qualify)
-	savedir=dir
+
+	;; Find files and file type
+	file_type = 'None'
+	result = cheetahview_updatefilelist(dir)
+	file_type = result.file_type
+	file = result.file
+	index = result.index
 	
 	if n_elements(file) eq 0 OR file[0] eq '' then begin
 		message,'No files found in directory: '+dir, /info
 		return
 	endif
 
-
-
-	
-	;; Sample data
-	filename = file[0]
-	data = read_h5(filename)
+	savedir=dir
 	
 
-	;; Set default pixel map (none)
-	s = size(data, /dim)
-	pixmap = 0
-	pixmap_x = fltarr(s[0],s[1])
-	pixmap_y = fltarr(s[0],s[1])
-	pixmap_dx = 110e-6
-	centeredPeaks = 0
-	
 	;; If geometry file is specified...
 	if keyword_set(geometry) then begin
 		pixmap = 1
@@ -1137,10 +1301,28 @@ pro cheetahview, geometry=geometry, dir=dir
 		pixmap_y = read_h5(geometry,field='y')
 		pixmap_dx = 110e-6		;; cspad
 		centeredPeaks = 1
+	endif $
+	else begin
+		;; Set default pixel map (none)
+		s = size(data, /dim)
+		pixmap = 0
+		pixmap_x = fltarr(s[0],s[1])
+		pixmap_y = fltarr(s[0],s[1])
+		pixmap_dx = 110e-6
+		centeredPeaks = 0
+	endelse
+
+
+	;; Sample data
+	filename = file[0]
+;	data = read_h5(filename)
+	data = cheetah_readdata(filename, 0, file_type=file_type,/image)
+	if n_elements(data) eq 0 then begin
+		 s = size(pixmap_x, /dim)
+		 data = xarr(s[0],s[1])
 	endif
-
-
 	
+		
 	image = (data>0)
 	image = image < 10000
 
@@ -1212,7 +1394,7 @@ pro cheetahview, geometry=geometry, dir=dir
 	mbanalysis_findPeaks = widget_button(mbcryst, value='Circle IDL found peaks', /checked)
 	mbanalysis_peakfinding = widget_button(mbcryst, value='Peak finding settings')
 	mbanalysis_savePeaks = widget_button(mbcryst, value='Save IDL found peaks to H5 file', /checked)
-	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked)
+	mbanalysis_centeredPeaks = widget_button(mbcryst, value='Peaks relative to image centre', /checked, sensitive=0)
 	mbanalysis_displayLocalBackground = widget_button(mbcryst, value='Display with local background subtraction', /checked)
 	widget_control, mbanalysis_centeredPeaks, set_button=centeredPeaks
 
@@ -1269,8 +1451,9 @@ pro cheetahview, geometry=geometry, dir=dir
 		sState = {data : data, $
 				  image: image, $
 				  currentFile : filename, $
-				  currentFileNum : 0L, $
+				  currentFrameNum : 0L, $
 				  h5field : "data/data", $
+				  file_type : file_type, $
 				  image_gamma : 1.0, $
 				  image_boost : 2., $
 				  image_max : 16000., $
@@ -1283,6 +1466,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  pixmap_dx : pixmap_dx, $
 				  scroll : scroll, $
 				  pfile : ptr_new(), $
+				  index : index, $
 				  dir : dir, $
 				  autoShuffle : 0, $
 				  autoNext : 0, $
@@ -1302,7 +1486,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  Colours : mbcolours, $
 				  ColourList : mbcolours_1, $
 				  ColourListID : mbcolours_IDs, $
-				  colour_table : 4, $
+				  colour_table : 41, $
 
 				  menu_geom : mbfile_geom, $
 				  menu_save : mbfile_si, $
@@ -1335,9 +1519,9 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_detector0 : mbanalysis_detector0, $
 				  menu_detector1 : mbanalysis_detector1, $
 
-				  peaks_localbackground : 2, $
+				  peaks_localbackground : 0, $
 				  peaks_algorithm : 0, $
-				  peaks_ADC : 300, $
+				  peaks_ADC : 50, $
 				  peaks_minpix : 2, $
 				  peaks_maxpix : 20, $
 				  peaks_minsnr : 8., $
@@ -1365,8 +1549,9 @@ pro cheetahview, geometry=geometry, dir=dir
  		device, retain=3, decomposed=0
  	
  		wset, slide_window
+ 		;loadct, 41, /silent
  		loadct, 4, /silent
-	    tvscl, image
+	    ;tvscl, image
 		WIDGET_CONTROL, scroll, SET_DRAW_VIEW=[(s[0]-xview)/2, (s[0]-yview)/2]
 		
 		if oldwin ne -1 then $
@@ -1374,10 +1559,10 @@ pro cheetahview, geometry=geometry, dir=dir
 
     	XMANAGER, 'cheetah', base, event='cheetah_event', /NO_BLOCK
     	
-		thisfile = (*pState).currentFileNum+1
+		thisfile = (*pState).currentFrameNum+1
 		numfiles = n_elements(*((*pstate).pfile))
 		str = strcompress(string('(image',thisfile,' of ',numfiles,')'))
 		widget_control, (*pState).status_label, set_value=str
-
+		cheetah_displayImage, pState
 
 end

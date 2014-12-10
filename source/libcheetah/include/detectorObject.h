@@ -78,7 +78,8 @@ static const uint16_t PIXEL_IS_NOISY = 1024;                 // bit 10
 static const uint16_t PIXEL_IS_ARTIFACT_CORRECTED = 2048;    // bit 11
 static const uint16_t PIXEL_FAILED_ARTIFACT_CORRECTION = 4096;    // bit 12
 static const uint16_t PIXEL_IS_PEAK_FOR_HITFINDER = 8192;    // bit 13
-static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_NOISY | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION | PIXEL_IS_PEAK_FOR_HITFINDER;   // all bits
+static const uint16_t PIXEL_IS_PHOTON_BACKGROUND_CORRECTED = 16384;    // bit 14
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_NOISY | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION | PIXEL_IS_PEAK_FOR_HITFINDER | PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -88,7 +89,6 @@ inline bool isNoneOfBitOptionsUnset(uint16_t value, uint16_t option) {return ((v
 // for single options
 inline bool isBitOptionSet(uint16_t value, uint16_t option) {return isNoneOfBitOptionsUnset(value,option);}
 inline bool isBitOptionUnset(uint16_t value, uint16_t option) {return isNoneOfBitOptionsSet(value,option);}
-//inline bool isNthBitOptionSet (uint16_t c, int n) { static unsigned char mask[] = {32768, 16384, 8192, 4096, 2048, 1024, 512 ,256, 128, 64, 32, 16, 8, 4, 2, 1}; return ((c & mask[n]) != 0);}
 
 /*
  * Assemble modes (see assemble2Dimage.cpp)
@@ -240,7 +240,8 @@ public:
 	long   localBackgroundRadius;
 	// Running background subtraction
 	int    useSubtractPersistentBackground;
-	float  subtractPersistentBackgroundMinAbsMedianOverStdRatio;
+	int    subtractPersistentBackgroundMean;
+	float  subtractPersistentBackgroundMinAbsBgOverStdRatio;
 	//int    subtractBg;
 	int    scaleBackground;
 	int    useBackgroundBufferMutex;

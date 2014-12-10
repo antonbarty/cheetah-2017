@@ -55,17 +55,34 @@ pro crawler_merge
 		else fcrystfel = 0
 	endif	
 	
+	
+	;; Find unique run numbers
+	h5run = fix(h5run)
+	runlist = [xtcrun, h5run]
+	runlist = runlist[sort(runlist)]
+	u = uniq(runlist)
+	runlist = runlist[u]	
+	
+	
 	;; Populate the output table
 	openw, fout, 'crawler.txt', /get
 	printf, fout, '#Run, Dataset, XTC, Cheetah, CrystFEL, H5 Directory, Nprocessed, Nhits, Nindex, Hitrate%'
 	
 	
-	for i = 0L, n_elements(xtcrun)-1 do begin	
+	;for i = 0L, n_elements(xtcrun)-1 do begin	
+	for i = 0L, n_elements(runlist)-1 do begin	
 		
+		;; Retrieve XTC status for this run
+		xtcstat = '---'
+		wxtc = where(xtcrun eq runlist[i])
+		if wxtc[0] ne -1 then begin
+			xtcstat = xtcstatus[wxtc]
+		endif		
+
 		;; Retrieve dataset ID for this run
 		ds = '---'
 		if fdataset ne 0 then begin
-			wdataset = where(datarun eq xtcrun[i])
+			wdataset = where(datarun eq runlist[i])
 			if wdataset[0] ne -1 then begin
 				ds = dataset[wdataset] 
 				dsdir = datasetdir[wdataset] 
@@ -79,7 +96,7 @@ pro crawler_merge
 		processed = '---'
 		hits = '---'
 		hitrate = '---'
-		whdf5 = where(h5run eq xtcrun[i])
+		whdf5 = where(h5run eq runlist[i])
 		if whdf5[0] ne -1 then begin
 			s = sort(h5mtime[whdf5])
 			mtime = 0
@@ -99,11 +116,11 @@ pro crawler_merge
 			endfor
 		endif 
 		
-		;; Now gather information about Crystfel (or whatever else)
+		;;  Gather information about Crystfel (or whatever else)
 		status2 = '---'
 		hits2 = '---'
 		if fcrystfel ne 0 then begin
-			wcf = where(cfrun eq xtcrun[i])
+			wcf = where(cfrun eq runlist[i])
 			if wcf[0] ne -1 then begin
 				for j=0L, n_elements(wcf)-1 do begin
 					status2 = cfstatus[wcf[j]]
@@ -112,7 +129,7 @@ pro crawler_merge
 			endif 
 		endif 		
 		
-		str = strcompress(string(xtcrun[i], ',', ds, ',', xtcstatus[i], ',', status, ',', status2, ',', dir, ',', processed, ',', hits, ',', hits2, ',', hitrate))
+		str = strcompress(string(runlist[i], ',', ds, ',', xtcstat, ',', status, ',', status2, ',', dir, ',', processed, ',', hits, ',', hits2, ',', hitrate))
 		writeu, fout, str
 		printf, fout, ' '
 		

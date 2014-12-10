@@ -19,7 +19,6 @@ class Client(QtCore.QObject):
         self.pipe_end_worker.send(r)
     def recvUpdate(self):
         if self.pipe_end_worker.poll():
-            t0 = time.time()
             rList = self.pipe_end_worker.recv()
             if rList != []:
                 self.newRList.emit(rList)
@@ -59,5 +58,8 @@ class ClientHelper:
             self.socket.send_json(msg)
             #print "Client loop 3", time.time()-t0
             #t0 = time.time()
-            self.workerPipe.send(self.socket.recv_json())
+            msg = self.socket.recv_json()
+            #print "b",msg
+            self.workerPipe.send(msg)
             #print "Client loop 4", time.time()-t0
+

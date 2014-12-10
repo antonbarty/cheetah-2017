@@ -1116,7 +1116,11 @@ void writeAccumulatedCXI(cGlobal * global){
 			if (global->detector[detIndex].useSubtractPersistentBackground) {
 				long	pix_nn = global->detector[detIndex].pix_nn;
 				float	*background = (float *) malloc(pix_nn*sizeof(float));
-				global->detector[detIndex].frameBufferBlanks->copyMedian(background);
+				if (global->detector[detIndex].subtractPersistentBackgroundMean) {
+					global->detector[detIndex].frameBufferBlanks->copyMean(background);
+				} else { 
+					global->detector[detIndex].frameBufferBlanks->copyMedian(background);
+				}
 				sprintf(sBuffer,"perisistent_background"); 
 				det_node[sBuffer].write(background, -1, pix_nn);
 				free(background);
