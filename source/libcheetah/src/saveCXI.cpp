@@ -903,6 +903,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 
 	Node * lcls = root->createGroup("LCLS");	
 	lcls->createStack("machineTime",H5T_NATIVE_INT32);
+	lcls->createStack("machineTimeNanoSeconds",H5T_NATIVE_INT32);
 	lcls->createStack("fiducial",H5T_NATIVE_INT32);
 	lcls->createStack("ebeamCharge",H5T_NATIVE_DOUBLE);
 	lcls->createStack("ebeamL3Energy",H5T_NATIVE_DOUBLE);
@@ -1401,6 +1402,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		lcls.child("detector",detIndex+1)["SolidAngleConst"].write(&global->detector[detIndex].solidAngleConst,stackSlice);
 	}
 	lcls["machineTime"].write(&eventData->seconds,stackSlice);
+	lcls["machineTimeNanoSeconds"].write(&eventData->nanoSeconds, stackSlice);
 	lcls["fiducial"].write(&eventData->fiducial,stackSlice);
 	lcls["ebeamCharge"].write(&eventData->fEbeamCharge,stackSlice);
 	lcls["ebeamL3Energy"].write(&eventData->fEbeamL3Energy,stackSlice);
