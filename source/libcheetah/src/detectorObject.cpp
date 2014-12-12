@@ -1046,7 +1046,7 @@ bounds:
 	if(ymax > max) max = ymax;
 	if(fabs(xmin) > max) max = fabs(xmin);
 	if(fabs(ymin) > max) max = fabs(ymin);
-	image_nx = 2*(unsigned)max;
+	image_nx = 2*((unsigned) max + 1);
 	image_ny = image_nx;
 	image_nn = image_nx*image_ny;
 	printf("\tImage output array will be %li x %li\n",image_ny,image_nx);
