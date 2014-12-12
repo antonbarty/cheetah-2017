@@ -103,7 +103,8 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		pix_nn                     = detectorCommon->pix_nn;
 		pix_nx                     = detectorCommon->pix_nx;
 		pix_ny                     = detectorCommon->pix_ny;
-	} else if (dataFormat == DATA_FORMAT_ASSEMBLED) {
+	}
+	else if (dataFormat == DATA_FORMAT_ASSEMBLED) {
 		sprintf(name_format,"assembled");
 		if (detectorEvent != NULL) {
 			// Event
@@ -126,7 +127,8 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		pix_nn                    = detectorCommon->image_nn;
 		pix_nx                    = detectorCommon->image_nx;
 		pix_ny                    = detectorCommon->image_ny;
-	} else if (dataFormat == DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED) {
+	}
+	else if (dataFormat == DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED) {
 		sprintf(name_format,"assembled_and_downsampled");
 		if (detectorEvent != NULL) {
 			// Event
@@ -149,7 +151,8 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		pix_nn                    = detectorCommon->imageXxX_nn;
 		pix_nx                    = detectorCommon->imageXxX_nx;
 		pix_ny                    = detectorCommon->imageXxX_ny;
-	} else if (dataFormat == DATA_FORMAT_RADIAL_AVERAGE) {
+	}
+	else if (dataFormat == DATA_FORMAT_RADIAL_AVERAGE) {
 		sprintf(name_format,"radial_average");
 		if (detectorEvent != NULL) {
 			// Event
@@ -172,7 +175,8 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		pix_nn                  = detectorCommon->radial_nn;
 		pix_nx                  = 0;
 		pix_ny                  = 0;
-	} else {
+	}
+	else {
 		ERROR("cDataVersion initialised with incorrect data format!");
 	}
 }
