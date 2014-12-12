@@ -130,7 +130,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Identify persistently hot pixels
 	useAutoHotPixel = 0;
 	hotPixFreq = 0.9;
-	hotPixADC = 1000;
+	hotPixADC = 10000;
+	hotPixMemory = 50;
+	useAutoHotPixel = 0;
+	hotPixFreq = 0.9;
+	hotPixADC = 10000;
 	hotPixMemory = bgMemory;
 	hotPixRecalc = bgMemory;
 	useHotPixelBufferMutex = 0;
@@ -175,10 +179,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Saving options
 	saveDetectorRaw                          = 0;
-	saveDetectorCorrected                    = 0;
-	saveDetectorAndPhotonCorrected           = 1;
+	saveDetectorCorrected                    = 1;
+	saveDetectorAndPhotonCorrected           = 0;
     saveNonAssembled                         = 1;
-	saveAssembled                            = 1;
+	saveAssembled                            = 0;
 	saveAssembledAndDownsampled              = 0;
 	saveRadialAverage                        = 1;
 
