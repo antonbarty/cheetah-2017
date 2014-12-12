@@ -969,6 +969,7 @@ pro cheetah_event, ev
 			file = *sState.pfile
 			i = sState.currentFrameNum
 			filename = file[i]
+			cheetah_displayImage, pState
 		end
 		sState.menu_findPeaks : begin
 			(*pstate).findPeaks = 1-sState.findPeaks
@@ -978,6 +979,7 @@ pro cheetah_event, ev
 			file = *sState.pfile
 			i = sState.currentFrameNum
 			filename = file[i]
+			cheetah_displayImage, pState
 		end
 
 		sState.menu_savePeaks : begin
@@ -1207,7 +1209,7 @@ pro cheetah_event, ev
 			loadct, 41, /silent		
 			(*pstate).colour_table = 41
 			(*pstate).image_gamma = 1
-			(*pstate).image_boost = 2
+			(*pstate).image_boost = 1
 			(*pstate).image_histclip = 0.0001
 			(*pstate).circleHDF5Peaks = 1
 			(*pstate).findPeaks = 0
@@ -1455,10 +1457,10 @@ pro cheetahview, geometry=geometry, dir=dir
 				  h5field : "data/data", $
 				  file_type : file_type, $
 				  image_gamma : 1.0, $
-				  image_boost : 2., $
+				  image_boost : 1., $
 				  image_max : 16000., $
 				  image_zoom : 1.0, $
-				  image_histclip : 0.0, $
+				  image_histclip : 0.0001, $
 				  image_size: size(image,/dim), $
 				  use_pixmap : pixmap, $
 				  pixmap_x : pixmap_x, $
@@ -1549,8 +1551,8 @@ pro cheetahview, geometry=geometry, dir=dir
  		device, retain=3, decomposed=0
  	
  		wset, slide_window
- 		;loadct, 41, /silent
- 		loadct, 4, /silent
+ 		loadct, 41, /silent
+ 		;loadct, 4, /silent
 	    ;tvscl, image
 		WIDGET_CONTROL, scroll, SET_DRAW_VIEW=[(s[0]-xview)/2, (s[0]-yview)/2]
 		
