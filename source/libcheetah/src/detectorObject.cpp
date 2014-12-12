@@ -171,7 +171,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	usePnccdLineMasking = 0;
 
 	// Downsampling factor (0: no downsampling)
-	downsampling = 1;
+	downsampling = 0;
 	downsamplingConservative = 1;
 
 	// Pixelmask
@@ -302,6 +302,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	    saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
 	}
+	
 	// Data formats
 	saveFormat = cDataVersion::DATA_FORMAT_NONE;
 	if (saveRadialAverage) {
@@ -320,6 +321,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 	}
+	
 	// P-O-W-D-E-R
 	// Accumulating data to pseudo-powder patterns etc.
 	// Data versions

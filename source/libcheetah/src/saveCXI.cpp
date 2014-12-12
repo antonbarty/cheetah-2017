@@ -891,13 +891,17 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		result->createStack("peakYPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		
-		result->createStack("peakIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+		result->createStack("peakTotalIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakMaximumValue", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakSNR", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 
 
-		result->createLink("data", "peakIntensity");
+		result->createLink("data", "peakTotalIntensity");
 		resultIndex++;
 	}
 
@@ -1393,7 +1397,9 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		result["peakXPosRaw"].write(eventData->peaklist.peak_com_x, stackSlice, nPeaks, true);
 		result["peakYPosRaw"].write(eventData->peaklist.peak_com_y, stackSlice, nPeaks, true);
 
-		result["peakIntensity"].write(eventData->peaklist.peak_totalintensity, stackSlice, nPeaks, true);
+		result["peakTotalIntensity"].write(eventData->peaklist.peak_totalintensity, stackSlice, nPeaks, true);
+		result["peakMaximumValue"].write(eventData->peaklist.peak_maxintensity, stackSlice, nPeaks, true);
+		result["peakSNR"].write(eventData->peaklist.peak_snr, stackSlice, nPeaks, true);
 		result["peakNPixels"].write(eventData->peaklist.peak_npix, stackSlice, nPeaks, true);
 		result["nPeaks"].write(&nPeaks, stackSlice);
 	}
