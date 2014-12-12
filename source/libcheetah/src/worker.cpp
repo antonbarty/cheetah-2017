@@ -133,15 +133,15 @@ void *worker(void *threadarg) {
 	// Apply gain correction
 	applyGainCorrection(eventData, global);
 	
-    // Apply polarization correction
-	applyPolarizationCorrection(eventData, global);
-    
-    // Apply solid angle correction
-	applySolidAngleCorrection(eventData, global);
-	
 	// Zero out bad pixels
 	setBadPixelsToZero(eventData, global);
  
+    // Apply polarization correction
+    applyPolarizationCorrection(eventData, global);
+    
+    // Apply solid angle correction
+    applySolidAngleCorrection(eventData, global);
+    
 	//  Inside-thread speed test
 	if(global->ioSpeedTest==4) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);

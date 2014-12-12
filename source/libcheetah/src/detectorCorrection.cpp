@@ -581,27 +581,6 @@ void applyRigorousSolidAngleCorrection(float *data, float *pix_x, float *pix_y, 
  *  Sanity check makes sure that the zero-photon peak lies within the max/min of
  *  the insensitive pixels (12 pixels closest to the edge), see detector map below:
  *
- *              ---> x
- *              |
- *              v y
- *
- *              insensitive pixels at the edge
- *              |                 |
- *              v                 v
- *              --------- ---------
- *  read out <- |       | |       | -> read-out
- *           <- |  q=0  | |  q=1  | ->
- *           <- |       | |       | ->
- *           <- | - - - |x| - - - | ->
- *           <- |       | |       | ->
- *           <- |  q=2  | |  q=3  | ->
- *           <- |       | |       | ->
- *              --------- ---------
- *              ^                 ^
- *              |                 |
- *              insensitive pixels at the edge
- *
- *
  */
 void pnccdModuleSubtract(cEventData *eventData, cGlobal *global) {
     
@@ -764,24 +743,30 @@ void pnccdModuleSubtract(float *data, uint16_t *mask, int start, int stop, float
   ---> x
   |
   v y
+  
+                insensitive pixels at the edge
+                |                         |
+                v                         v
+                |A |A |A |A | |A |A |A |A |
+                ------------- -------------
+                |           | |           |
+                |           | |           |
+                |  q=0      | |  q=1      |
+                |           | |           |
+                |           | |           |
+                | - - - - - |x| - - - - - |
+                |           | |           |
+                |           | |           |
+                |  q=2      | |  q=3      |
+                |           | |           |
+                |           | |           |
+                ------------- -------------
+                |A |A |A |A | |A |A |A |A |
+                ^                         ^
+                |                         |
+                insensitive pixels at the edge
+  
 
- 
-  insensitive pixels at the edge
-  |                 | 
-  v                 v 
-  --------- ---------
-  read out <- |       | |       | -> read-out
-  <- |  q=0  | |  q=1  | ->
-  <- |       | |       | ->
-  <- | - - - |x| - - - | ->
-  <- |       | |       | ->
-  <- |  q=2  | |  q=3  | ->
-  <- |       | |       | ->
-  --------- ---------
-  ^                 ^
-  |                 | 
-  insensitive pixels at the edge
-	
 	
 */
 void pnccdOffsetCorrection(cEventData *eventData, cGlobal *global){

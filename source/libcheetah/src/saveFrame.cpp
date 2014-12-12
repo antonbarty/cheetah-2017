@@ -170,7 +170,14 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 				H5Fclose(hdf_fileID);
 				return;
 			}
-			hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->detector[detIndex].image_detPhotCorr);
+			// Which type of data to save (default to detector corrected)
+			float *data_to_save = eventData->detector[detIndex].image_detCorr;
+			if(global->detector[detIndex].saveDetectorRaw)
+				data_to_save = eventData->detector[detIndex].image_raw;
+			else if (global->detector[detIndex].saveDetectorAndPhotonCorrected)
+				data_to_save = eventData->detector[detIndex].image_detPhotCorr;
+			
+			hdf_error = H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_to_save);
 			if ( hdf_error < 0 ) {
 				ERROR("%li: Couldn't write data\n", eventData->threadNum);
 				H5Dclose(dataspace_id);
@@ -215,12 +222,20 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 				//H5Pset_shuffle(h5compression);			// De-interlace bytes
 				H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 			}
+			
+			// Which type of data to save (default to detector corrected)
+			float *data_to_save = eventData->detector[detIndex].data_detCorr;
+			if(global->detector[detIndex].saveDetectorRaw)
+				data_to_save = eventData->detector[detIndex].data_raw;
+			else if (global->detector[detIndex].saveDetectorAndPhotonCorrected)
+				data_to_save = eventData->detector[detIndex].data_detPhotCorr;			
+			
 			// rawdata
 			sprintf(fieldID, "rawdata%li", detIndex);
             if(!strcmp(global->dataSaveFormat,"INT16") ) {
                 int16_t* corrected_data_int16 = (int16_t*) calloc(global->detector[detIndex].pix_nn,sizeof(int16_t));
                 for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-                    corrected_data_int16[i] = (int16_t) lrint(eventData->detector[detIndex].data_detPhotCorr[i]);
+                    corrected_data_int16[i] = (int16_t) lrint(data_to_save[i]);
                 }
                 dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
                 if ( dataset_id < 0 ) {
@@ -242,7 +257,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
             if(!strcmp(global->dataSaveFormat,"INT32") ) {
                 int32_t* corrected_data_int32 = (int32_t*) calloc(global->detector[detIndex].pix_nn,sizeof(int32_t));
                 for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-                    corrected_data_int32[i] = (int32_t) lrint(eventData->detector[detIndex].data_detPhotCorr[i]);
+                    corrected_data_int32[i] = (int32_t) lrint(data_to_save[i]);
                 }
                 dataset_id = H5Dcreate(gid, fieldID, H5T_STD_I32LE, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
                 if ( dataset_id < 0 ) {
@@ -264,7 +279,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
             else if (!strcmp(global->dataSaveFormat,"float")) {
                 float* corrected_data_float = (float*) calloc(global->detector[detIndex].pix_nn,sizeof(float));
                 for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-                    corrected_data_float[i] = (float) (eventData->detector[detIndex].data_detPhotCorr[i]);
+                    corrected_data_float[i] = (float) (data_to_save[i]);
                 }
                 dataset_id = H5Dcreate(gid, fieldID, H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
                 if ( dataset_id < 0 ) {

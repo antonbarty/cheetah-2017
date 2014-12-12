@@ -192,9 +192,12 @@ pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry, 
 	print,'Displaying: ', filename
 	data = read_h5(filename, field=field)
 	
+	;; Histogram saturate (but revert if this makes max=min)
 	if keyword_set(hist) then begin
-		data = data > 0
-		data = histogram_clip(data, 0.002)	
+		temp = data > 0
+		temp = histogram_clip(temp, 0.002)	
+		if max(temp) ne min(temp) then $
+			data=temp
 	endif 
 	
 	if keyword_set(gamma) then $
@@ -211,12 +214,19 @@ end
 pro crawler_updateDatasetLog, pstate
 	sState = *pState
 
-	;; Update datasets.txt files		
+	;; Get table data info
 	widget_control, sState.table, get_value = table_data
 	run = reform(table_data[0,*])
 	dataset = reform(table_data[sState.table_datasetcol,*])
 	dirname = reform(table_data[sState.table_dircol,*])
+
+	;; Sort it
+	s = sort(fix(run))
+	run = run[s]
+	dataset = dataset[s]
+	dirname = dirname[s]
 	
+	;; Update datasets.txt files		
 	openw, lun, 'datasets.txt', /get
 	printf, lun, '# Run, DatasetID, Directory'		
 	for i=0L, n_elements(dataset)-1 do begin
@@ -292,10 +302,11 @@ pro crawler_startCheetah, pState, run
 				widget_control, sState.table, use_table_select = [sState.table_statuscol, w[0], sState.table_statuscol, w[0]], set_value = ['Submitted']
 				widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir]
 			endif
+			crawler_updateDatasetLog, pstate
 		endfor
 
 		;; Update the datasets file
-		crawler_updateDatasetLog, pstate
+		;crawler_updateDatasetLog, pstate
 		
 	endif
 end

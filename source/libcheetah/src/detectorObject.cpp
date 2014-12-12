@@ -108,7 +108,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
     
 	// Subtraction of running background (persistent photon background) 
 	useSubtractPersistentBackground = 0;
-	subtractPersistentBackgroundMinAbsMedianOverStdRatio = 0.;
+	subtractPersistentBackgroundMean = 0;
+	subtractPersistentBackgroundMinAbsBgOverStdRatio = 0.;
 	bgMemory = 50;
 	startFrames = 0;
 	scaleBackground = 0;
@@ -129,7 +130,11 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	// Identify persistently hot pixels
 	useAutoHotPixel = 0;
 	hotPixFreq = 0.9;
-	hotPixADC = 1000;
+	hotPixADC = 10000;
+	hotPixMemory = 50;
+	useAutoHotPixel = 0;
+	hotPixFreq = 0.9;
+	hotPixADC = 10000;
 	hotPixMemory = bgMemory;
 	hotPixRecalc = bgMemory;
 	useHotPixelBufferMutex = 0;
@@ -166,7 +171,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	usePnccdLineMasking = 0;
 
 	// Downsampling factor (0: no downsampling)
-	downsampling = 1;
+	downsampling = 0;
 	downsamplingConservative = 1;
 
 	// Pixelmask
@@ -174,10 +179,10 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Saving options
 	saveDetectorRaw                          = 0;
-	saveDetectorCorrected                    = 0;
-	saveDetectorAndPhotonCorrected           = 1;
+	saveDetectorCorrected                    = 1;
+	saveDetectorAndPhotonCorrected           = 0;
     saveNonAssembled                         = 1;
-	saveAssembled                            = 1;
+	saveAssembled                            = 0;
 	saveAssembledAndDownsampled              = 0;
 	saveRadialAverage                        = 1;
 
@@ -297,6 +302,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	    saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
 	}
+	
 	// Data formats
 	saveFormat = cDataVersion::DATA_FORMAT_NONE;
 	if (saveRadialAverage) {
@@ -315,6 +321,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 	}
+	
 	// P-O-W-D-E-R
 	// Accumulating data to pseudo-powder patterns etc.
 	// Data versions
@@ -583,8 +590,11 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "usesubtractpersistentbackground")) {
 		useSubtractPersistentBackground = atoi(value);
 	}
-	else if (!strcmp(tag, "subtractpersistentbackgroundminabsmedianoverstdratio")) {
-		subtractPersistentBackgroundMinAbsMedianOverStdRatio = atof(value);
+	else if (!strcmp(tag, "subtractpersistentbackgroundmean")) {
+		subtractPersistentBackgroundMean = atoi(value);
+	}
+	else if (!strcmp(tag, "subtractpersistentbackgroundminabsbgoverstdratio")) {
+		subtractPersistentBackgroundMinAbsBgOverStdRatio = atof(value);
 	}
 	else if (!strcmp(tag, "usebackgroundbuffermutex")) {
 		useBackgroundBufferMutex = atoi(value);

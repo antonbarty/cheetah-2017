@@ -7,6 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D0A404A1A3B511D00FAC112 /* dataVersion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40491A3B511D00FAC112 /* dataVersion.cpp */; };
+		4D0A40571A3B51DC00FAC112 /* downsample.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A404B1A3B51DC00FAC112 /* downsample.cpp */; };
+		4D0A40581A3B51DC00FAC112 /* event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A404C1A3B51DC00FAC112 /* event.cpp */; };
+		4D0A40591A3B51DC00FAC112 /* frameBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A404D1A3B51DC00FAC112 /* frameBuffer.cpp */; };
+		4D0A405A1A3B51DC00FAC112 /* global.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A404E1A3B51DC00FAC112 /* global.cpp */; };
+		4D0A405B1A3B51DC00FAC112 /* gmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A404F1A3B51DC00FAC112 /* gmd.cpp */; };
+		4D0A405C1A3B51DC00FAC112 /* integratePattern.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40501A3B51DC00FAC112 /* integratePattern.cpp */; };
+		4D0A405D1A3B51DC00FAC112 /* log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40511A3B51DC00FAC112 /* log.cpp */; };
+		4D0A405E1A3B51DC00FAC112 /* modularDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40521A3B51DC00FAC112 /* modularDetector.cpp */; };
+		4D0A405F1A3B51DC00FAC112 /* peakDetect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40531A3B51DC00FAC112 /* peakDetect.cpp */; };
+		4D0A40601A3B51DC00FAC112 /* pixelmask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40541A3B51DC00FAC112 /* pixelmask.cpp */; };
+		4D0A40611A3B51DC00FAC112 /* processRateMonitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40551A3B51DC00FAC112 /* processRateMonitor.cpp */; };
+		4D0A40621A3B51DC00FAC112 /* tofDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A40561A3B51DC00FAC112 /* tofDetector.cpp */; };
+		4D0A40681A3B51F600FAC112 /* dataVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D0A40631A3B51F600FAC112 /* dataVersion.h */; };
+		4D0A40691A3B51F600FAC112 /* frameBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D0A40641A3B51F600FAC112 /* frameBuffer.h */; };
+		4D0A406A1A3B51F600FAC112 /* peakDetect.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D0A40651A3B51F600FAC112 /* peakDetect.h */; };
+		4D0A406B1A3B51F600FAC112 /* processRateMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D0A40661A3B51F600FAC112 /* processRateMonitor.h */; };
+		4D0A406C1A3B51F600FAC112 /* tofDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D0A40671A3B51F600FAC112 /* tofDetector.h */; };
+		4D0A406E1A3B60D400FAC112 /* event_copy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0A406D1A3B60D400FAC112 /* event_copy.cpp */; };
 		4D5697FD18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D5697FB18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp */; };
 		4DA51BE7189AC55000C97F32 /* main-sacla-hdf5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */; };
 		4DA51BE8189ACCA600C97F32 /* libcheetah.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */; };
@@ -24,7 +43,6 @@
 		4DA51BF6189ACD6200C97F32 /* radialAverage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D934174F9F80004A0BB4 /* radialAverage.cpp */; };
 		4DA51BF7189ACD6500C97F32 /* saveCXI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D935174F9F80004A0BB4 /* saveCXI.cpp */; };
 		4DA51BF8189ACD6A00C97F32 /* saveFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D936174F9F80004A0BB4 /* saveFrame.cpp */; };
-		4DA51BF9189ACD6D00C97F32 /* setup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D937174F9F80004A0BB4 /* setup.cpp */; };
 		4DA51BFA189ACD7000C97F32 /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D938174F9F80004A0BB4 /* spectrum.cpp */; };
 		4DA51BFB189ACD7400C97F32 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D939174F9F80004A0BB4 /* worker.cpp */; };
 /* End PBXBuildFile section */
@@ -52,6 +70,25 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4D0A40491A3B511D00FAC112 /* dataVersion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dataVersion.cpp; sourceTree = "<group>"; };
+		4D0A404B1A3B51DC00FAC112 /* downsample.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = downsample.cpp; sourceTree = "<group>"; };
+		4D0A404C1A3B51DC00FAC112 /* event.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = event.cpp; sourceTree = "<group>"; };
+		4D0A404D1A3B51DC00FAC112 /* frameBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = frameBuffer.cpp; sourceTree = "<group>"; };
+		4D0A404E1A3B51DC00FAC112 /* global.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = global.cpp; sourceTree = "<group>"; };
+		4D0A404F1A3B51DC00FAC112 /* gmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gmd.cpp; sourceTree = "<group>"; };
+		4D0A40501A3B51DC00FAC112 /* integratePattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = integratePattern.cpp; sourceTree = "<group>"; };
+		4D0A40511A3B51DC00FAC112 /* log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log.cpp; sourceTree = "<group>"; };
+		4D0A40521A3B51DC00FAC112 /* modularDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modularDetector.cpp; sourceTree = "<group>"; };
+		4D0A40531A3B51DC00FAC112 /* peakDetect.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = peakDetect.cpp; sourceTree = "<group>"; };
+		4D0A40541A3B51DC00FAC112 /* pixelmask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pixelmask.cpp; sourceTree = "<group>"; };
+		4D0A40551A3B51DC00FAC112 /* processRateMonitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = processRateMonitor.cpp; sourceTree = "<group>"; };
+		4D0A40561A3B51DC00FAC112 /* tofDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tofDetector.cpp; sourceTree = "<group>"; };
+		4D0A40631A3B51F600FAC112 /* dataVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dataVersion.h; sourceTree = "<group>"; };
+		4D0A40641A3B51F600FAC112 /* frameBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = frameBuffer.h; sourceTree = "<group>"; };
+		4D0A40651A3B51F600FAC112 /* peakDetect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = peakDetect.h; sourceTree = "<group>"; };
+		4D0A40661A3B51F600FAC112 /* processRateMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = processRateMonitor.h; sourceTree = "<group>"; };
+		4D0A40671A3B51F600FAC112 /* tofDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tofDetector.h; sourceTree = "<group>"; };
+		4D0A406D1A3B60D400FAC112 /* event_copy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = event_copy.cpp; sourceTree = "<group>"; };
 		4D5697FB18A4E63C0008E0C2 /* sacla-hdf5-reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "sacla-hdf5-reader.cpp"; sourceTree = "<group>"; };
 		4D5697FC18A4E63C0008E0C2 /* sacla-hdf5-reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "sacla-hdf5-reader.h"; sourceTree = "<group>"; };
 		4D93D91A174F9F80004A0BB4 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
@@ -80,7 +117,6 @@
 		4D93D934174F9F80004A0BB4 /* radialAverage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = radialAverage.cpp; sourceTree = "<group>"; };
 		4D93D935174F9F80004A0BB4 /* saveCXI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = saveCXI.cpp; sourceTree = "<group>"; };
 		4D93D936174F9F80004A0BB4 /* saveFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = saveFrame.cpp; sourceTree = "<group>"; };
-		4D93D937174F9F80004A0BB4 /* setup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = setup.cpp; sourceTree = "<group>"; };
 		4D93D938174F9F80004A0BB4 /* spectrum.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = spectrum.cpp; sourceTree = "<group>"; };
 		4D93D939174F9F80004A0BB4 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = worker.cpp; sourceTree = "<group>"; };
 		4D93D94C174F9F98004A0BB4 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
@@ -154,11 +190,16 @@
 				4D93D920174F9F80004A0BB4 /* cheetahGlobal.h */,
 				4D93D921174F9F80004A0BB4 /* cheetahmodules.h */,
 				4D93D922174F9F80004A0BB4 /* data2d.h */,
+				4D0A40631A3B51F600FAC112 /* dataVersion.h */,
 				4D93D923174F9F80004A0BB4 /* detectorObject.h */,
+				4D0A40641A3B51F600FAC112 /* frameBuffer.h */,
 				4D93D924174F9F80004A0BB4 /* hitfinders.h */,
 				4D93D925174F9F80004A0BB4 /* median.h */,
+				4D0A40651A3B51F600FAC112 /* peakDetect.h */,
 				4D93D926174F9F80004A0BB4 /* peakfinders.h */,
+				4D0A40661A3B51F600FAC112 /* processRateMonitor.h */,
 				4D93D927174F9F80004A0BB4 /* saveCXI.h */,
+				4D0A40671A3B51F600FAC112 /* tofDetector.h */,
 			);
 			name = include;
 			path = libcheetah/include;
@@ -170,19 +211,31 @@
 				4D93D929174F9F80004A0BB4 /* assemble2DImage.cpp */,
 				4D93D92A174F9F80004A0BB4 /* backgroundCorrection.cpp */,
 				4D93D92B174F9F80004A0BB4 /* data2d.cpp */,
+				4D0A40491A3B511D00FAC112 /* dataVersion.cpp */,
 				4D93D92C174F9F80004A0BB4 /* detectorCorrection.cpp */,
 				4D93D92D174F9F80004A0BB4 /* detectorObject.cpp */,
+				4D0A404B1A3B51DC00FAC112 /* downsample.cpp */,
+				4D0A404C1A3B51DC00FAC112 /* event.cpp */,
+				4D0A404D1A3B51DC00FAC112 /* frameBuffer.cpp */,
+				4D0A404E1A3B51DC00FAC112 /* global.cpp */,
+				4D0A404F1A3B51DC00FAC112 /* gmd.cpp */,
 				4D93D92E174F9F80004A0BB4 /* histogram.cpp */,
 				4D93D92F174F9F80004A0BB4 /* hitfinders.cpp */,
+				4D0A40501A3B51DC00FAC112 /* integratePattern.cpp */,
 				4D93D930174F9F80004A0BB4 /* libcheetah.cpp */,
+				4D0A40511A3B51DC00FAC112 /* log.cpp */,
 				4D93D931174F9F80004A0BB4 /* median.cpp */,
+				4D0A40521A3B51DC00FAC112 /* modularDetector.cpp */,
+				4D0A40531A3B51DC00FAC112 /* peakDetect.cpp */,
 				4D93D932174F9F80004A0BB4 /* peakfinders.cpp */,
+				4D0A40541A3B51DC00FAC112 /* pixelmask.cpp */,
 				4D93D933174F9F80004A0BB4 /* powder.cpp */,
+				4D0A40551A3B51DC00FAC112 /* processRateMonitor.cpp */,
 				4D93D934174F9F80004A0BB4 /* radialAverage.cpp */,
 				4D93D935174F9F80004A0BB4 /* saveCXI.cpp */,
 				4D93D936174F9F80004A0BB4 /* saveFrame.cpp */,
-				4D93D937174F9F80004A0BB4 /* setup.cpp */,
 				4D93D938174F9F80004A0BB4 /* spectrum.cpp */,
+				4D0A40561A3B51DC00FAC112 /* tofDetector.cpp */,
 				4D93D939174F9F80004A0BB4 /* worker.cpp */,
 			);
 			path = src;
@@ -231,6 +284,7 @@
 		4D93D957174F9F98004A0BB4 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				4D0A406D1A3B60D400FAC112 /* event_copy.cpp */,
 				4D93D958174F9F98004A0BB4 /* cheetah_ana_mod.cpp */,
 			);
 			path = src;
@@ -253,6 +307,11 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D0A40691A3B51F600FAC112 /* frameBuffer.h in Headers */,
+				4D0A406C1A3B51F600FAC112 /* tofDetector.h in Headers */,
+				4D0A406B1A3B51F600FAC112 /* processRateMonitor.h in Headers */,
+				4D0A406A1A3B51F600FAC112 /* peakDetect.h in Headers */,
+				4D0A40681A3B51F600FAC112 /* dataVersion.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,22 +395,35 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DA51BF4189ACD5C00C97F32 /* peakfinders.cpp in Sources */,
+				4D0A40591A3B51DC00FAC112 /* frameBuffer.cpp in Sources */,
+				4D0A40571A3B51DC00FAC112 /* downsample.cpp in Sources */,
 				4DA51BF3189ACD5900C97F32 /* median.cpp in Sources */,
 				4DA51BEE189ACD4900C97F32 /* detectorCorrection.cpp in Sources */,
+				4D0A40621A3B51DC00FAC112 /* tofDetector.cpp in Sources */,
+				4D0A40581A3B51DC00FAC112 /* event.cpp in Sources */,
 				4DA51BF0189ACD4F00C97F32 /* histogram.cpp in Sources */,
 				4DA51BEB189ACD4100C97F32 /* assemble2DImage.cpp in Sources */,
+				4D0A406E1A3B60D400FAC112 /* event_copy.cpp in Sources */,
+				4D0A405D1A3B51DC00FAC112 /* log.cpp in Sources */,
+				4D0A405A1A3B51DC00FAC112 /* global.cpp in Sources */,
 				4DA51BEC189ACD4400C97F32 /* backgroundCorrection.cpp in Sources */,
 				4DA51BF1189ACD5200C97F32 /* hitfinders.cpp in Sources */,
 				4DA51BEF189ACD4C00C97F32 /* detectorObject.cpp in Sources */,
 				4DA51BF2189ACD5600C97F32 /* libcheetah.cpp in Sources */,
 				4DA51BED189ACD4600C97F32 /* data2d.cpp in Sources */,
+				4D0A405C1A3B51DC00FAC112 /* integratePattern.cpp in Sources */,
 				4DA51BF5189ACD5F00C97F32 /* powder.cpp in Sources */,
 				4DA51BF7189ACD6500C97F32 /* saveCXI.cpp in Sources */,
 				4DA51BF6189ACD6200C97F32 /* radialAverage.cpp in Sources */,
 				4DA51BF8189ACD6A00C97F32 /* saveFrame.cpp in Sources */,
-				4DA51BF9189ACD6D00C97F32 /* setup.cpp in Sources */,
+				4D0A40611A3B51DC00FAC112 /* processRateMonitor.cpp in Sources */,
 				4DA51BFA189ACD7000C97F32 /* spectrum.cpp in Sources */,
+				4D0A404A1A3B511D00FAC112 /* dataVersion.cpp in Sources */,
 				4DA51BFB189ACD7400C97F32 /* worker.cpp in Sources */,
+				4D0A40601A3B51DC00FAC112 /* pixelmask.cpp in Sources */,
+				4D0A405E1A3B51DC00FAC112 /* modularDetector.cpp in Sources */,
+				4D0A405F1A3B51DC00FAC112 /* peakDetect.cpp in Sources */,
+				4D0A405B1A3B51DC00FAC112 /* gmd.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -891,18 +891,23 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		result->createStack("peakYPosRaw", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		
-		result->createStack("peakIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+		result->createStack("peakTotalIntensity", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakMaximumValue", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
+							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
+		result->createStack("peakSNR", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 
 
-		result->createLink("data", "peakIntensity");
+		result->createLink("data", "peakTotalIntensity");
 		resultIndex++;
 	}
 
 	Node * lcls = root->createGroup("LCLS");	
 	lcls->createStack("machineTime",H5T_NATIVE_INT32);
+	lcls->createStack("machineTimeNanoSeconds",H5T_NATIVE_INT32);
 	lcls->createStack("fiducial",H5T_NATIVE_INT32);
 	lcls->createStack("ebeamCharge",H5T_NATIVE_DOUBLE);
 	lcls->createStack("ebeamL3Energy",H5T_NATIVE_DOUBLE);
@@ -1115,7 +1120,11 @@ void writeAccumulatedCXI(cGlobal * global){
 			if (global->detector[detIndex].useSubtractPersistentBackground) {
 				long	pix_nn = global->detector[detIndex].pix_nn;
 				float	*background = (float *) malloc(pix_nn*sizeof(float));
-				global->detector[detIndex].frameBufferBlanks->copyMedian(background);
+				if (global->detector[detIndex].subtractPersistentBackgroundMean) {
+					global->detector[detIndex].frameBufferBlanks->copyMean(background);
+				} else { 
+					global->detector[detIndex].frameBufferBlanks->copyMedian(background);
+				}
 				sprintf(sBuffer,"perisistent_background"); 
 				det_node[sBuffer].write(background, -1, pix_nn);
 				free(background);
@@ -1388,7 +1397,9 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		result["peakXPosRaw"].write(eventData->peaklist.peak_com_x, stackSlice, nPeaks, true);
 		result["peakYPosRaw"].write(eventData->peaklist.peak_com_y, stackSlice, nPeaks, true);
 
-		result["peakIntensity"].write(eventData->peaklist.peak_totalintensity, stackSlice, nPeaks, true);
+		result["peakTotalIntensity"].write(eventData->peaklist.peak_totalintensity, stackSlice, nPeaks, true);
+		result["peakMaximumValue"].write(eventData->peaklist.peak_maxintensity, stackSlice, nPeaks, true);
+		result["peakSNR"].write(eventData->peaklist.peak_snr, stackSlice, nPeaks, true);
 		result["peakNPixels"].write(eventData->peaklist.peak_npix, stackSlice, nPeaks, true);
 		result["nPeaks"].write(&nPeaks, stackSlice);
 	}
@@ -1401,6 +1412,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		lcls.child("detector",detIndex+1)["SolidAngleConst"].write(&global->detector[detIndex].solidAngleConst,stackSlice);
 	}
 	lcls["machineTime"].write(&eventData->seconds,stackSlice);
+	lcls["machineTimeNanoSeconds"].write(&eventData->nanoSeconds, stackSlice);
 	lcls["fiducial"].write(&eventData->fiducial,stackSlice);
 	lcls["ebeamCharge"].write(&eventData->fEbeamCharge,stackSlice);
 	lcls["ebeamL3Energy"].write(&eventData->fEbeamL3Energy,stackSlice);
