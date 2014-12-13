@@ -2,7 +2,7 @@
 //-----------------------
 // This Class's Header --
 //-----------------------
-#include <cheetah_ana_mod.h>
+#include "cheetah_ana_mod.h"
 #include <cheetah.h>
 //-----------------
 // C/C++ Headers --
@@ -39,12 +39,15 @@ namespace cheetah_ana_pkg {
 	volatile static long frameNumberIncludingSkipped = 0;
 	volatile static long frameNumber = 0;
 
+	// Copy event data
 	void cheetah_ana_mod::copy_event(boost::shared_ptr<Event> evtp, boost::shared_ptr<Env> envp) {
 		frameNumberIncludingSkipped ++;
 		float random_float = (float)rand()/(float)RAND_MAX;
 		Event& evt = *evtp;
 		Env& env = *envp;
-	  
+		
+		
+		
 		if (cheetahGlobal.skipFract > random_float && frameNumberIncludingSkipped > cheetahGlobal.nInitFrames && cheetahGlobal.calibrated) {
 			printf("Skipping a frame (%ld)\n",frameNumberIncludingSkipped);
 			skip();
@@ -565,6 +568,8 @@ namespace cheetah_ana_pkg {
 			}
 		}
 		
+
+		
         
 		/*
 		 *  Copy data into worker thread structure if we got this far.
@@ -612,7 +617,8 @@ namespace cheetah_ana_pkg {
 		 *  FEE photon inline spectrometer
 		 *  Psana::Bld::BldDataSpectrometerV0.get()
 		 */
-		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0 = evt.get(m_srcFeeSpec);
+		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0;
+		FEEspectrum0 = evt.get(m_srcFeeSpec);
 		eventData->FEEspec_present=0;
 		if(cheetahGlobal.useFEEspectrum) {
 			if (FEEspectrum0.get()) {
@@ -805,8 +811,8 @@ namespace cheetah_ana_pkg {
 
 				// Neither V1 nor V2
 				else {
-					printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
-					printf("Event %li: Warning: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
+					//printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
+					printf("Event %li: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					pthread_exit(NULL);
 				}
@@ -837,7 +843,65 @@ namespace cheetah_ana_pkg {
 					pthread_exit(NULL);
 				}
 			}
-       
+			
+			/*
+			 *	Rayonix MX170HS
+			 */
+			else if (strcmp(cheetahGlobal.detector[detIndex].detectorType, "mx170hs-1x") == 0 ||
+					 strcmp(cheetahGlobal.detector[detIndex].detectorType, "mx170hs-2x") == 0 ) {
+				
+				long    pix_nx = cheetahGlobal.detector[detIndex].pix_nx;
+				long    pix_ny = cheetahGlobal.detector[detIndex].pix_ny;
+				long    pix_nn = cheetahGlobal.detector[detIndex].pix_nn;
+				
+				shared_ptr<Psana::Camera::FrameV1> rayonix = evt.get(m_srcRayonix0, m_key);;
+
+				
+				if (rayonix.get()) {
+					//const ndarray<const uint8_t, 2>& data_uint8 = rayonix->data8();
+					const ndarray<const uint16_t, 2>& data_uint16 = rayonix->data16();
+					
+					// Diagnostics to check what data type is returned
+					if(0) {
+						cout << "Rayonix:Camera::FrameV1: width=" << rayonix->width()
+						<< " height=" << rayonix->height()
+						<< " depth=" << rayonix->depth();
+						cout << endl;
+						
+						printf("target size = (%li x %li)\n", pix_nx, pix_ny);
+						
+					//	if (not data_uint8.empty()) {
+					//		cout << " data8=[" << int(data_uint8[0][0])
+					//		<< ", " << int(data_uint8[0][1])
+					//		<< ", " << int(data_uint8[0][2]) << ", ...]";
+					//	}
+						if (not data_uint16.empty()) {
+							cout << " data16=[" << int(data_uint16[0][0])
+							<< ", " << int(data_uint16[0][1])
+							<< ", " << int(data_uint16[0][2]) << ", ...]";
+						}
+						cout << endl;
+						
+					}
+					
+					if( rayonix->height() != pix_ny || rayonix->width() != pix_nx) {
+						printf("Rayonix source size: %li x %li; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
+					}
+					
+					//memcpy(&eventData->detector[detIndex].data_raw16[0],&data_uint16[0][0],pix_nn*sizeof(uint16_t));
+					
+					for(long i=0; i< cheetahGlobal.detector[detIndex].pix_nn; i++)
+							eventData->detector[detIndex].data_raw16[i] = *(&data_uint16[0][0]+i);
+					
+				}
+				else {
+					printf("Event %li: Rayonix frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detIndex].detectorID);
+					//cheetahDestroyEvent(eventData);
+					pthread_exit(NULL);
+				}
+			}
+			
+			
 			/*
 			 *
 			 *	The data format used for pnccd data has changed in recent releases. 
@@ -879,10 +943,13 @@ namespace cheetah_ana_pkg {
 				}
 			}
 			
-			// Didn't find any recognised detectors??
+			/*
+			 *	Did not find any recognised detectors in this event
+			 */
 			else {
-				printf("Unknown detector type: %s, aborting/n", cheetahGlobal.detector[detIndex].detectorType);
-				exit(1);
+				printf("Detector type type %s not recognised\n", cheetahGlobal.detector[detIndex].detectorType);
+				cheetahDestroyEvent(eventData);
+				pthread_exit(NULL);
 			}
 
 		}	// end loop over detectors
@@ -910,7 +977,8 @@ namespace cheetah_ana_pkg {
 		eventData->pulnixFail = 1;
 		int usePulnix = 0;		// Ignore Pulnix camera
 		if(usePulnix) {
-			shared_ptr<Psana::Camera::FrameV1> frmData = evt.get(m_srcCam);
+			shared_ptr<Psana::Camera::FrameV1> frmData;
+			frmData = evt.get(m_srcCam);
 			if (frmData.get()) {
 				if (verbose) {
 					cout << "Camera::FrameV1: width=" << frmData->width()
@@ -1012,7 +1080,11 @@ namespace cheetah_ana_pkg {
 		pthread_exit(eventData);
 	}
 
-	// Event code present?
+	
+	
+	/*
+	 *	Event code present?
+	 */
 	template <typename T>
 	bool cheetah_ana_mod::eventCodePresent(const ndarray<T, 1>& array, unsigned EvrCode){
 		for (unsigned i = 0; i < array.size(); ++i) {
@@ -1022,5 +1094,7 @@ namespace cheetah_ana_pkg {
 		}
 		return false;
 	}
+	
+
 
 } // namespace cheetah_ana_pkg

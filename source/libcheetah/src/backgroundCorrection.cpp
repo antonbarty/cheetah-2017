@@ -246,7 +246,7 @@ void subtractLocalBackground(cEventData *eventData, cGlobal *global){
 			long		nasics_x = global->detector[detIndex].nasics_x;
 			long		nasics_y = global->detector[detIndex].nasics_y;
 			long		radius = global->detector[detIndex].localBackgroundRadius;
-			float		*data = eventData->detector[detIndex].data_detCorr;
+			float		*data = eventData->detector[detIndex].data_detPhotCorr;
 			
 			subtractLocalBackground(data, radius, asic_nx, asic_ny, nasics_x, nasics_y);
 		}

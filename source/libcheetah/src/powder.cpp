@@ -263,7 +263,8 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 						H5Pset_chunk(h5compression, 2, size);
 						H5Pset_deflate(h5compression, global->h5compress);		// Compression levels are 0 (none) to 9 (max)
 					}
-				} else {
+				}
+				else {
 					// size for 1D data (radial average)
 					size[0] = dataV.pix_nn;
 					size[1] = 0;
@@ -271,9 +272,10 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 					// Compression for 1D
 					h5compression = H5P_DEFAULT;
 				}
-				double * powder = dataV.getPowder(powderClass);
-				double * powder_squared = dataV.getPowderSquared(powderClass);
-				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
+				double *powder = dataV.getPowder(powderClass);
+				double *powder_squared = dataV.getPowderSquared(powderClass);
+				pthread_mutex_t *mutex = dataV.getPowderMutex(powderClass);
+				
 				// Powder
 				powderBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if (global->threadSafetyLevel > 0)
@@ -290,7 +292,9 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 					// Create symbolic link if this is the main dataset
 					sprintf(sBuffer,"/data/%s",dataV.name);
 					H5Lcreate_soft(sBuffer, fh, "/data/data",0,0);
+					H5Lcreate_soft(sBuffer, fh, "/data/correcteddata",0,0);
 				}
+				
 				// Fluctuations (sigma)
 				powderSquaredBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				powderSigmaBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));

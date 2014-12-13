@@ -148,6 +148,33 @@ void *worker(void *threadarg) {
 		goto cleanup;
 	}
   
+	// Subtract residual common mode offsets (cmModule=2)
+	cspadModuleSubtract2(eventData, global);
+  
+	// Set bad pixels to zero
+	setBadPixelsToZero(eventData, global);
+	
+	// Identify hot pixels and set them to zero
+	updateHotPixelBuffer(eventData, global);
+	setHotPixelsToZero(eventData,global);
+
+
+	// Inside-thread speed test
+	if(global->ioSpeedTest==5) {
+		printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
+		goto cleanup;
+	}
+
+	// Initialise data_detPhotCorr with data_detCorr
+	initPhotonCorrection(eventData,global);
+	
+
+	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end /Max)
+	subtractRadialBackground(eventData, global);
+	
+	// If darkcal file available: Subtract persistent background here (background = photon background)
+	subtractPersistentBackground(eventData, global);
+	
 	// This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
 	// Useful for local background subtraction (which is effective but slow)
 	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6 || global->hitfinderAlgorithm==8)) {
@@ -157,39 +184,17 @@ void *worker(void *threadarg) {
 		else
 			goto hitknown;
 	}
-
-	// Local background subtraction 
+	
+	// Local background subtraction - this is photon background correction
 	subtractLocalBackground(eventData, global);
-
+	
 localBGCalculated:
-	// Subtract residual common mode offsets (cmModule=2) 
-	cspadModuleSubtract2(eventData, global);
-  
-	// Set bad pixels to zero
-	setBadPixelsToZero(eventData, global);
+
 	
-	// Identify hot pixels and set them to zero
-	updateHotPixelBuffer(eventData, global);
-	setHotPixelsToZero(eventData,global);
-	
-	// Inside-thread speed test
-	if(global->ioSpeedTest==5) {
-		printf("r%04u:%li (%3.1fHz): I/O Speed test #5 (photon background correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
-		goto cleanup;
-	}
-    
 	//---PHOTON-BACKGROUND-CORRECTION---//
 
 	DEBUG2("Background correction");
 	  
-	// Initialise data_detPhotCorr with data_detCorr
-	initPhotonCorrection(eventData,global);
-
-	// If darkcal file available: Subtract persistent background here (background = photon background)
-	subtractPersistentBackground(eventData, global);
-	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end /Max)
-	subtractRadialBackground(eventData, global);
-
 	//---HITFINDING---//
 
 	if(global->hitfinder && (global->hitfinderForInitials ||

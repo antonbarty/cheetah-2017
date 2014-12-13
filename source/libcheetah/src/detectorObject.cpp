@@ -170,8 +170,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	usePnccdLineInterpolation = 0;
 	usePnccdLineMasking = 0;
 
-	// Downsampling factor (0: no downsampling)
-	downsampling = 0;
+	// Downsampling factor (1: no downsampling)
+	downsampling = 1;
 	downsamplingConservative = 1;
 
 	// Pixelmask
@@ -251,6 +251,32 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		pix_nn = pix_nx * pix_ny;
 		pixelSize = 50e-6;
       
+	}
+	else if(strcmp(detectorName, "mx170hs-1x") == 0 ) {
+		strcpy(detectorType, "mx170hs-1x");
+		asic_nx = MX170HS_ASIC_NX;
+		asic_ny = MX170HS_ASIC_NY;
+		nasics_x = 1;
+		nasics_y = 1;
+		asic_nn = asic_nx*asic_ny;
+		pix_nx = asic_nx * nasics_x;
+		pix_ny = asic_ny * nasics_y;
+		pix_nn = pix_nx * pix_ny;
+		pixelSize = 44e-6;
+		
+	}
+	else if(strcmp(detectorName, "mx170hs-2x") == 0 ) {
+		strcpy(detectorType, "mx170hs-2x");
+		asic_nx = MX170HS_ASIC_NX/2;
+		asic_ny = MX170HS_ASIC_NY/2;
+		nasics_x = 1;
+		nasics_y = 1;
+		asic_nn = asic_nx*asic_ny;
+		pix_nx = asic_nx * nasics_x;
+		pix_ny = asic_ny * nasics_y;
+		pix_nn = pix_nx * pix_ny;
+		pixelSize = 89e-6;
+		
 	}
 	else {
 		printf("Error: unknown detector name %s\n", detectorName);

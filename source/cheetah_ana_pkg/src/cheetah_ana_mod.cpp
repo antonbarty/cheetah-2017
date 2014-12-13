@@ -70,6 +70,9 @@ namespace cheetah_ana_pkg {
 	void sig_handler(int signo)
 	{
 		if (signo == SIGINT){
+			
+			printf("signal handler (signo == SIGINT)\n");
+
 			// Wait for threads to finish
 			printf("Waiting for cheetah caller to terminate\n");
 			runCheetahCaller = false;
@@ -85,6 +88,8 @@ namespace cheetah_ana_pkg {
 			kill(getpid(),SIGINT);
 	    
 		}
+			
+		
 	}
 
 
@@ -97,8 +102,10 @@ namespace cheetah_ana_pkg {
 		: Module(name) 
 	{
 		startT = 0;
-//		cout << "*** Constructor ***" << endl;
-        
+
+		printf("Constructor (cheetah_ana_mod::cheetah_ana_mod)\n");
+
+		
 		// Check if we're using psana of the same git commit
 		if(!getenv("PSANA_GIT_SHA") || strcmp(getenv("PSANA_GIT_SHA"),GIT_SHA1)){
 			fprintf(stderr,    "*******************************************************************************************\n");
@@ -119,6 +126,7 @@ namespace cheetah_ana_pkg {
 		m_key = configStr("inputKey", "");
 		m_srcCspad0 = configStr("cspadSource0","DetInfo(:Cspad)");
 		m_srcCspad1 = configStr("cspadSource1","DetInfo(:Cspad)");
+		m_srcRayonix0 = configStr("rayonixSource0","DetInfo(:Rayonix)");
 		m_srcCspad2x2 = configStr("cspad2x2Source0","DetInfo(:Cspad2x2)");
 		m_srcPnccd0 = configStr("pnccdSource0","DetInfo(:pnCCD)");
 		m_srcPnccd1 = configStr("pnccdSource1","DetInfo(:pnCCD)");
@@ -148,6 +156,7 @@ namespace cheetah_ana_pkg {
 	//--------------
 	cheetah_ana_mod::~cheetah_ana_mod ()
 	{
+		printf("Destructor (cheetah_ana_mod::~cheetah_ana_mod)\n");
 	}
 
 	
@@ -157,6 +166,9 @@ namespace cheetah_ana_pkg {
 		// This is to silence compiler warning about unused variable
 		(void)evt;
 		(void)env;
+		
+		printf("Begin job (cheetah_ana_mod::beginJob)\n");
+		
 		//
 		//cout << "*** beginJob ***" << endl;
 		time(&startT);
@@ -183,6 +195,9 @@ namespace cheetah_ana_pkg {
 	///	Pass new run information to Cheetah
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
+		
+		printf("Begin run (cheetah_ana_mod::beginRun)\n");
+
 		cout << "Experiment = " << env.experiment() << endl;
 		//cout << "*** beginRun ***" << endl;
 		int runNumber = 0;
@@ -205,13 +220,15 @@ namespace cheetah_ana_pkg {
 
 
 	/// Method which is called at the beginning of the calibration cycle
-	void 
-	cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
+	void cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 	{
 		// This is to silence compiler warning about unused variable
 		(void)evt;
 		//
 
+		printf("Calibration cycle (cheetah_ana_mod::beginCalibCycle)\n");
+
+		
 		//cout << "beginCalibCycle()" << endl;
 		
 		/*
@@ -234,6 +251,7 @@ namespace cheetah_ana_pkg {
 				shared_ptr<Psana::PNCCD::ConfigV1> config1 = env.configStore().get(m_srcPnccd0);
 				shared_ptr<Psana::PNCCD::ConfigV2> config2 = env.configStore().get(m_srcPnccd0);
 
+				printf("Configuring pnccd detector\n");
 				if (config1.get()) {
 					cout << "PNCCD::ConfigV1:" << endl;
                     cout << "\tnumLinks = " << config1->numLinks() << endl;
@@ -259,9 +277,26 @@ namespace cheetah_ana_pkg {
 					exit(1);
 				}
 			}
-			else {
-				cout << "No configuration data" << endl;
+			
+			if (!strcmp(cheetahGlobal.detector[detIndex].detectorType, "rayonix-mx170hs-1x") ||
+				!strcmp(cheetahGlobal.detector[detIndex].detectorType, "rayonix-mx170hs-2x") ) {
+				
+				printf("Configuring Rayonix detector\n");
+				//shared_ptr<Psana::Rayonix::ConfigV2> psana_config = env.configStore().get(m_srcRayonix0);
+				//shared_ptr<Pds::Rayonix::ConfigV2> pds_config = env.configStore().get(m_srcRayonix0);
+	
+				//if(psana_config.get()) {
+				//	printf("shared_ptr<Psana::Rayonix::ConfigV2> found\n");
+				//}
+				//if (pds_config.get()) {
+				//	printf("shared_ptr<Pds::Rayonix::ConfigV2> found\n");
+				//}
 			}
+			
+			else {
+				cout << "No configuration data needed" << endl;
+			}
+
 		}
 	}
 
@@ -272,14 +307,20 @@ namespace cheetah_ana_pkg {
 	///	Start the threads which will copy across data into Cheetah structure and process
 	///
 	void cheetah_ana_mod::event(PSEvt::Event& evt, PSEnv::Env& env) {
+		
+		// This can be useful for debugging
+		//printf("Event (cheetah_ana_mod::event)\n");
+		
 		boost::shared_ptr<Event> evtp = evt.shared_from_this();
 		boost::shared_ptr<Env> envp = env.shared_from_this();
 		pthread_t thread;
 		int returnStatus;
+		
 		/*
 		 *  Wait until we have a spare thread in the thread pool
 		 */		
 		sem_wait(&availableAnaThreads);
+		
 		// Create a new worker thread for this data frame
 		returnStatus = pthread_create(&thread, NULL, threaded_event, (void*) new AnaModEventData(this, evtp, envp));		
 
@@ -412,6 +453,8 @@ namespace cheetah_ana_pkg {
 		(void)env;
 		//
 		
+		printf("Ending run (cheetah_ana_mod::endRun)\n");
+	
 		/*
 		 *	Wait for all worker threads to finish
 		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
@@ -437,7 +480,8 @@ namespace cheetah_ana_pkg {
 		(void)env;
 		//
 
-		printf("Ending job. ");
+		printf("Ending job (cheetah_ana_mod::endJob)\n");
+		
 		waitForAnaModWorkers();		
 		cheetahExit(&cheetahGlobal);
 	  
@@ -452,7 +496,7 @@ namespace cheetah_ana_pkg {
 	}
 
 
-	void * threaded_event(void* threadData){
+	void *threaded_event(void* threadData){
 		boost::shared_ptr<AnaModEventData> data((AnaModEventData*) threadData);
 		data->module->copy_event(data->evtp, data->envp);
 		return 0;
@@ -468,11 +512,11 @@ namespace cheetah_ana_pkg {
 			if(empty){
 				// Unlikely to happen after the beginning
 				pthread_mutex_unlock(&pthread_queue_mutex);
-				usleep(100000);
+				usleep(10000);
 				continue;
 			}
 			pthread_t thread = runningThreads.front();
-			cEventData * eventData;
+			cEventData *eventData;
 			runningThreads.pop();
 			pthread_mutex_unlock(&pthread_queue_mutex);
 			pthread_join(thread,(void **)&eventData);
