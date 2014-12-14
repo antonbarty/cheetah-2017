@@ -30,18 +30,28 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 		if(global->detector[detIndex].useSubtractPersistentBackground) {
 			DEBUG3("Subtract persistent background. (detectorID=%ld)",global->detector[detIndex].detectorID);
 			uint16_t * frameMask = eventData->detector[detIndex].pixelmask;
+			
 			// Running background subtraction to suppress the photon background after dark subtraction
 			if (eventData->detector[detIndex].pedSubtracted && global->detector[detIndex].useDarkcalSubtraction) {
 				frameData = eventData->detector[detIndex].data_detPhotCorr;
+			}
+
 			// Running background subtraction to suppress both electronic and photon background (without using dark subtraction)
-			} else if (!eventData->detector[detIndex].pedSubtracted && !global->detector[detIndex].useDarkcalSubtraction) {
+			else if (!eventData->detector[detIndex].pedSubtracted && !global->detector[detIndex].useDarkcalSubtraction) {
 				frameData = eventData->detector[detIndex].data_detCorr;
 				eventData->detector[detIndex].pedSubtracted = 1;
 			}
+			
+			// Remember the input to persistent background correction for addition to the frame buffer
+			frameData = eventData->detector[detIndex].data_detPhotCorr;
+			memcpy(eventData->detector[detIndex].data_forPersistentBackgroundBuffer, frameData, global->detector[detIndex].pix_nn*sizeof(float));
+			
+			
 			if (global->detector[detIndex].subtractPersistentBackgroundMean) {
 				// Subtract mean
 				global->detector[detIndex].frameBufferBlanks->subtractMean(frameData,frameMask,global->detector[detIndex].scaleBackground,global->detector[detIndex].subtractPersistentBackgroundMinAbsBgOverStdRatio);
-			} else {
+			}
+			else {
 				// Subtract median
 				global->detector[detIndex].frameBufferBlanks->subtractMedian(frameData,frameMask,global->detector[detIndex].scaleBackground,global->detector[detIndex].subtractPersistentBackgroundMinAbsBgOverStdRatio);
 			}
@@ -61,12 +71,17 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 			float	medianPoint = global->detector[detIndex].bgMedian;
 
 			// Select data type to add
+			// We keep a buffer for the input frame in the subtraction step.
 			float* data;
-			if (global->detector[detIndex].useDarkcalSubtraction){
-				data = eventData->detector[detIndex].data_detCorr;
-			} else {
-				data = eventData->detector[detIndex].data_raw;
-			}
+			//if (global->detector[detIndex].useDarkcalSubtraction){
+			//	data = eventData->detector[detIndex].data_detCorr;
+			//}
+			//else {
+			//	data = eventData->detector[detIndex].data_raw;
+			//}
+			data = eventData->detector[detIndex].data_forPersistentBackgroundBuffer;
+			
+			
 			// Adding frame to buffer
 			DEBUG3("Add a new frame to the persistent background buffer. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			long counter = global->detector[detIndex].frameBufferBlanks->writeNextFrame(data);

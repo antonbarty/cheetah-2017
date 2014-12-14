@@ -203,7 +203,8 @@ pro crawler_displayfile, filename, field=field, gamma=gamma, geometry=geometry, 
 	if keyword_set(gamma) then $
 		data = data ^ gamma
 
-	loadct, 4
+	;loadct, 4, /silent
+	loadct, 41, /silent
 	scrolldisplay, data, title=file_basename(filename), geometry=geometry
 
 end
@@ -828,27 +829,46 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			resolution, dir
 		end
+
+		sState.mbview_cxipowder_class1_detcorr : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class1-sum.h5')
+			crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+		end
+		sState.mbview_cxipowder_class1_detphotcorr : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class1-sum.h5')
+			crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+		end
+		sState.mbview_cxipowder_class0_detcorr : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class0-sum.h5')
+			crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+		end
+		sState.mbview_cxipowder_class0_detphotcorr : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class0-sum.h5')
+			crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+		end
 		sState.mbview_powder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
-			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=1
 		end
 		sState.mbview_powderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
-			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=0.5
+			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=1
 		end
 		sState.mbview_peakpowder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
 		end
 		sState.mbview_peakpowderdark : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=0.5
+			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
 		end
 		sState.mbview_bsub : begin
 			dir = crawler_whichRun(pstate, /path)
@@ -972,22 +992,27 @@ pro crawler_view
 
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
+	mbview_satplot1 = widget_button(mbtool, value='Plot peak maximum vs radius')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')
 	mbview_gainmap = widget_button(mbtool, value='Create CSPAD gain map')
 
 
 
 	mbfile = widget_button(bar, value='View')
-	mbview_bsub = widget_button(mbfile, value='View bsub log file')
-	mbview_clog = widget_button(mbfile, value='View cheetah log file')
-	mbview_cstatus = widget_button(mbfile, value='View cheetah status file')
-	mbview_images = widget_button(mbfile, value='View HDF5 files')
-	mbview_hitrate = widget_button(mbfile, value='View hit rate plot')
-	mbview_resolution = widget_button(mbfile, value='View resolution plot')
-	mbview_powder = widget_button(mbfile, value='View virtual powder')
-	mbview_powderdark = widget_button(mbfile, value='View virtual powder (dark)')
-	mbview_peakpowder = widget_button(mbfile, value='View peakfinder virtual powder')
-	mbview_peakpowderdark = widget_button(mbfile, value='View peakfinder virtual powder (dark)')
+	mbview_bsub = widget_button(mbfile, value='bsub log file')
+	mbview_clog = widget_button(mbfile, value='cheetah log file')
+	mbview_cstatus = widget_button(mbfile, value='cheetah status file')
+	mbview_images = widget_button(mbfile, value='HDF5 files')
+	mbview_hitrate = widget_button(mbfile, value='Hit rate plot')
+	mbview_resolution = widget_button(mbfile, value='Resolution plot')
+	mbview_cxipowder_class1_detphotcorr = widget_button(mbfile, value='Virtual powder hits (class 1, background subtracted)')
+	mbview_cxipowder_class1_detcorr = widget_button(mbfile, value='Virtual powder hits (class 1, detector corrected only)')
+	mbview_cxipowder_class0_detphotcorr = widget_button(mbfile, value='Virtual powder blanks (class 0, background subtracted)')
+	mbview_cxipowder_class0_detcorr = widget_button(mbfile, value='Virtual powder blanks (class 0, detector corrected only)')
+	mbview_peakpowder = widget_button(mbfile, value='Peakfinder virtual powder hits (class 1)')
+	mbview_peakpowderdark = widget_button(mbfile, value='Peakfinder virtual powder blanks (class 0)')
+	mbview_powder = widget_button(mbfile, value='Virtual powder hits (data/correcteddata)')
+	mbview_powderdark = widget_button(mbfile, value='Virtual powder blanks (data/correcteddata)')
 	mbview_waxs = widget_button(mbfile, value='View WAXS traces')
 
 
@@ -1072,6 +1097,10 @@ pro crawler_view
 			mbview_powderdark : mbview_powderdark, $
 			mbview_peakpowder : mbview_peakpowder, $
 			mbview_peakpowderdark : mbview_peakpowderdark, $
+			mbview_cxipowder_class1_detcorr : mbview_cxipowder_class1_detcorr, $
+			mbview_cxipowder_class1_detphotcorr : mbview_cxipowder_class1_detphotcorr, $
+			mbview_cxipowder_class0_detcorr : mbview_cxipowder_class0_detcorr, $
+			mbview_cxipowder_class0_detphotcorr : mbview_cxipowder_class0_detphotcorr, $
 			
 			mbview_badpix : mbview_badpix, $
 			mbview_satcheck : mbview_satcheck, $

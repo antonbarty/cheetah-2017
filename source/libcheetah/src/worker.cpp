@@ -54,15 +54,19 @@ void *worker(void *threadarg) {
 	std::ofstream outHit;
 
 
+	//---------------------------//
 	//--------MONITORING---------//
-
+	//---------------------------//
 	DEBUG2("Monitoring");
 
 	updateDatarate(global);
 	processRate = global->processRateMonitor.getRate();
+	
+	
 
+	//--------------------------------------//
 	//---INITIALIZATIONS-AND-PREPARATIONS---//
-
+	//--------------------------------------//
 	DEBUG2("Initializations and preparations");
 
 	/*
@@ -96,8 +100,10 @@ void *worker(void *threadarg) {
 	// Initialise raw data array (float) THIS MIGHT SLOW THINGS DOWN, WE MIGHT WANT TO CHANGE THIS
 	initRaw(eventData, global);
 	
+	
+	//-------------------------//
 	//---DETECTOR-CORRECTION---//
-
+	//-------------------------//
 	DEBUG2("Detector correction");
 
 	// Initialise data_detCorr with data_raw16
@@ -108,8 +114,10 @@ void *worker(void *threadarg) {
 
 	// Subtract darkcal image (static electronic offsets)
 	subtractDarkcal(eventData, global);
+	
 	// If no darkcal file: Subtract persistent background here (background = photon background + static electronic offsets)
-	subtractPersistentBackground(eventData, global);
+	// Commenting this out because it was was causing crashes with memory access violations (and the problem went away when this was commented out) <-- Anton 14 Dec 2014
+	//subtractPersistentBackground(eventData, global);
 
 	// Fix CSPAD artefacts:
 	// Subtract common mode offsets (electronic offsets)
@@ -165,15 +173,20 @@ void *worker(void *threadarg) {
 		goto cleanup;
 	}
 
+	//----------------------------------//
+	//---PHOTON-BACKGROUND-CORRECTION---//
+	//----------------------------------//
+	DEBUG2("Background correction");
+
 	// Initialise data_detPhotCorr with data_detCorr
 	initPhotonCorrection(eventData,global);
-	
 
-	// Radial background subtraction (!!! I assume that the radial background subtraction subtracts a photon background, therefore moved here to the end /Max)
+	// Radial background subtraction (!!! Radial background subtraction subtracts a photon background, therefore moved here)
 	subtractRadialBackground(eventData, global);
 	
-	// If darkcal file available: Subtract persistent background here (background = photon background)
+	// If a darkcal file is available: Subtract persistent background is for photon subtraction (persistent background = photon background)
 	subtractPersistentBackground(eventData, global);
+	
 	
 	// This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
 	// Useful for local background subtraction (which is effective but slow)
@@ -191,12 +204,10 @@ void *worker(void *threadarg) {
 localBGCalculated:
 
 	
-	//---PHOTON-BACKGROUND-CORRECTION---//
-
-	DEBUG2("Background correction");
-	  
+	
+	//----------------//
 	//---HITFINDING---//
-
+	//----------------//
 	if(global->hitfinder && (global->hitfinderForInitials ||
 							 !(eventData->threadNum < global->nInitFrames || !calibrated))){ 
 		
@@ -214,15 +225,15 @@ localBGCalculated:
 		sortPowderClass(eventData, global);		
 	}
 
-hitknown: 
+hitknown:
+	//-------------------------------------//
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
-	// Slightly wrong that all initial frames are blanks
-	// when hitfinderForInitials is 0
-    /*
-     *	Sort event into different classes (eg: laser on/off)
-     */
-  
+	//-------------------------------------//
 	DEBUG2("Procedures depending on hit tag");
+
+	// Sort event into different classes (eg: laser on/off)
+	// Slightly wrong that all initial frames are blanks when hitfinderForInitials is 0
+	
 	
 	// Update central hit counter
 	pthread_mutex_lock(&global->nhits_mutex);	
@@ -253,9 +264,11 @@ hitknown:
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #6 (after hitfinding)\n", global->runNumber, eventData->frameNumber, global->datarate);
 		goto cleanup;
 	}
-    
+	
+	
+	//----------------------------------//
 	//---ASSEMBLE-AND-ACCUMULATE-DATA---//
-
+	//----------------------------------//
 	DEBUG2("Assemble and accumulate data");
 
 	// Inside-thread speed test
@@ -297,8 +310,10 @@ hitknown:
 		goto cleanup;
 	}
 
-	//---WRITE-DATA-TO-H5---//
 
+	//----------------------//
+	//---WRITE-DATA-TO-H5---//
+	//----------------------//
 	DEBUG2("Write data to h5");
 
 	updateDatarate(global);  
@@ -347,8 +362,10 @@ hitknown:
 		writePeakFile(eventData, global);
 	}
 
+	
+	//---------------------//
 	//---LOGBOOK-KEEPING---//
-
+	//---------------------//
 	DEBUG2("Logbook keeping");
 
 	writeLog(eventData, global);
@@ -358,12 +375,15 @@ hitknown:
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #1 (after saving frames)\n", global->runNumber, eventData->frameNumber, global->datarate);
 		goto cleanup;
 	}
+
 	
-
+	
+	//-----------------------//
 	//---CLEANUP-AND-EXIT----//
+	//-----------------------//
 cleanup:
-
 	DEBUG2("Clean up and exit");
+
 	
 	// Save accumulated data periodically
     pthread_mutex_lock(&global->saveinterval_mutex);

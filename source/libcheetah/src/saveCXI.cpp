@@ -959,6 +959,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	event_data->createStack("peakDensity",H5T_NATIVE_FLOAT);
 	event_data->createStack("pumpLaserCode",H5T_NATIVE_INT);
 	event_data->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
+	event_data->createStack("imageClass",H5T_NATIVE_INT);
 	event_data->createStack("hit",H5T_NATIVE_INT);
 	DETECTOR_LOOP{
 		Node * detector = event_data->createGroup("detector",detIndex+1);
@@ -1464,6 +1465,8 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	event_data["peakDensity"].write(&eventData->peakDensity,stackSlice);
 	event_data["pumpLaserCode"].write(&eventData->pumpLaserCode,stackSlice);
 	event_data["pumpLaserDelay"].write(&eventData->pumpLaserDelay,stackSlice);
+	event_data["imageClass"].write(&eventData->powderClass,stackSlice);
+
 	event_data["hit"].write(&eventData->hit,stackSlice);
   
 	DETECTOR_LOOP{

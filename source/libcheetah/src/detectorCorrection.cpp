@@ -365,7 +365,7 @@ void updateHotPixelBuffer(cEventData *eventData, cGlobal *global) {
 		if (global->detector[detIndex].useAutoHotPixel) {
 			long	recalc = global->detector[detIndex].hotPixRecalc;
 			long	memory = global->detector[detIndex].hotPixMemory;
-			cFrameBuffer * frameBuffer = global->detector[detIndex].frameBufferHotPix;
+			cFrameBuffer *frameBuffer = global->detector[detIndex].frameBufferHotPix;
 			long bufferDepth = frameBuffer->depth;
 
 			// Select data

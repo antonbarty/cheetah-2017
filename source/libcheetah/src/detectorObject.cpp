@@ -354,12 +354,15 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	powderVersion                 = saveVersion;
 	if (savePowderDetectorRaw) {
 		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_RAW);
+		powderVersionMain           = cDataVersion::DATA_VERSION_RAW;
 	}
 	if (savePowderDetectorCorrected) {
 		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
+		powderVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED;
 	}
 	if (savePowderDetectorAndPhotonCorrected) {
 	    powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
+		powderVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
 	}
 	// Data formats
 	powderFormat                  = saveFormat;
@@ -745,11 +748,13 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 void cPixelDetectorCommon::allocateMemory() {
 	// This is just for checking for uninitialised mutexes
 	pthread_mutex_init(&null_mutex, NULL);
+	
 	/*
 	 *  Shared static data
 	 */
 	gaincal = (float*) calloc(pix_nn, sizeof(float));
 	darkcal = (float*) calloc(pix_nn, sizeof(float));
+	
 	/*
 	 *  Shared dynamic data
 	 */
@@ -762,16 +767,20 @@ void cPixelDetectorCommon::allocateMemory() {
 	pthread_mutex_init(&pixelmask_shared_min_mutex,NULL);
 	for(long j=0; j<pix_nn; j++){
 		pixelmask_shared_min[j] = PIXEL_IS_ALL;
-	}	
+	}
+	
 	// Hot pixel map
 	pthread_mutex_init(&hotPix_update_mutex, NULL);
 	frameBufferHotPix = new cFrameBuffer(pix_nn,hotPixMemory,threadSafetyLevel);
 	// Noisy pixel map
+	
 	pthread_mutex_init(&noisyPix_update_mutex, NULL);
 	frameBufferNoisyPix = new cFrameBuffer(pix_nn,noisyPixMemory,threadSafetyLevel);
 	// Persistent background
+	
 	pthread_mutex_init(&bg_update_mutex, NULL);
 	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,threadSafetyLevel);
+	
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {
 		nPowderFrames[powderClass] = 0;

@@ -51,6 +51,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detIndex].data_raw = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detIndex].data_detCorr = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detIndex].data_detPhotCorr = (float*) calloc(pix_nn,sizeof(float));
+		eventData->detector[detIndex].data_forPersistentBackgroundBuffer = (float*) calloc(pix_nn,sizeof(float));
 		eventData->detector[detIndex].pixelmask = (uint16_t*) calloc(pix_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].image_raw = (float*) calloc(image_nn,sizeof(float));
@@ -89,6 +90,10 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	int spectrumLength = global->espectrumLength;
 	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
 	eventData->energySpectrumExist = 0;
+	eventData->FEEspec_hproj = NULL;
+	eventData->FEEspec_vproj = NULL;
+	eventData->pulnixImage = NULL;
+	eventData->specImage = NULL;
 		
 	// Return
 	return eventData;
@@ -110,6 +115,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detIndex].data_raw);
 		free(eventData->detector[detIndex].data_detCorr);
 		free(eventData->detector[detIndex].data_detPhotCorr);
+		free(eventData->detector[detIndex].data_forPersistentBackgroundBuffer);
 		free(eventData->detector[detIndex].pixelmask);
 
 		free(eventData->detector[detIndex].image_raw);
@@ -134,11 +140,13 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	
 	// Pulnix external camera
 	if(eventData->pulnixFail == 0){
-		free(eventData->pulnixImage);
+		if(eventData->pulnixImage != NULL)
+			free(eventData->pulnixImage);
 	}
 	// Opal spectrum camera
 	if(eventData->specFail == 0){
-		free(eventData->specImage);
+		if(eventData->specImage != NULL)
+			free(eventData->specImage);
 	}
 
 	if(eventData->FEEspec_present == 1) {

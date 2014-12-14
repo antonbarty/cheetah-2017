@@ -841,7 +841,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 						 */
                         float   localSigma=0;
                         float   localOffset=0;
-						long    ringWidth = hitfinderLocalBGRadius+1;
+						long    ringWidth = 2*hitfinderLocalBGRadius;
 						
 						float   sumI = 0;
 						float   sumIsquared = 0;
@@ -866,8 +866,7 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 								
 								// Within outer ring check
 								fbgr = sqrt( bi*bi + bj*bj );
-								//if( fbgr <= hitfinderLocalBGRadius || fbgr > ringWidth)				// || fbgr > hitfinderLocalBGRadius)
-								if( fbgr < hitfinderLocalBGRadius )     //|| fbgr > ringWidth )				// || fbgr > hitfinderLocalBGRadius)
+								if( fbgr > ringWidth )// || fbgr <= hitfinderLocalBGRadius )				// || fbgr > hitfinderLocalBGRadius)
 									continue;
 								
 								// Position of this point in data stream
@@ -892,11 +891,6 @@ int peakfinder8(tPeakList *peaklist, float *data, char *mask, float *pix_r, long
 									np_sigma++;
 									sumI += thisI;
 									sumIsquared += (thisI*thisI);
-								}
-                                
-								// Keep track of maximum value in the background region
-								//if(temp[e] < thisADCthresh && peakpixel[e] == 0 && mask[e] != 0) {
-								if(peakpixel[e] == 0 && mask[e] != 0) {
 									if(thisI > backgroundMaxI) {
 										backgroundMaxI = thisI;
 									}

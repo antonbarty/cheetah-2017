@@ -284,8 +284,8 @@
 		4D93D957174F9F98004A0BB4 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				4D0A406D1A3B60D400FAC112 /* event_copy.cpp */,
 				4D93D958174F9F98004A0BB4 /* cheetah_ana_mod.cpp */,
+				4D0A406D1A3B60D400FAC112 /* event_copy.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";

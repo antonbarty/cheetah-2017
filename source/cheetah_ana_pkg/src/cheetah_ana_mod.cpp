@@ -67,10 +67,13 @@ namespace cheetah_ana_pkg {
 	pthread_mutex_t pthread_queue_mutex;
     sem_t availableAnaThreads;
 
+	
+	//--------------
+	// Signal handler (to closes .cxi files)
+	//--------------
 	void sig_handler(int signo)
 	{
-		if (signo == SIGINT){
-			
+		if (signo == SIGINT || signo == SIGTERM || signo == SIGABRT){
 			printf("signal handler (signo == SIGINT)\n");
 
 			// Wait for threads to finish
@@ -86,17 +89,16 @@ namespace cheetah_ana_pkg {
 			closeCXIFiles(&cheetahGlobal);
 			signal(SIGINT,SIG_DFL);
 			kill(getpid(),SIGINT);
-	    
 		}
-			
-		
+
+	
 	}
 
 
 
 	
 	//----------------
-	// Constructors --
+	// Constructor --
 	//----------------
 	cheetah_ana_mod::cheetah_ana_mod (const std::string& name)
 		: Module(name) 
@@ -160,7 +162,9 @@ namespace cheetah_ana_pkg {
 	}
 
 	
-	/// Method which is called once at the beginning of the job
+	//--------------
+	// Method called once at the beginning of the job --
+	//--------------
 	void cheetah_ana_mod::beginJob(Event& evt, Env& env)
 	{
 		// This is to silence compiler warning about unused variable
@@ -177,6 +181,8 @@ namespace cheetah_ana_pkg {
 		}
 		if(cheetahGlobal.saveCXI){
 			signal(SIGINT, sig_handler);
+			signal(SIGTERM, sig_handler);
+			signal(SIGABRT, sig_handler);
 		}
 		// Initialize signal that keeps track of available threads
 		sem_init(&availableAnaThreads,0,cheetahGlobal.anaModThreads);
@@ -191,8 +197,9 @@ namespace cheetah_ana_pkg {
 	}
 
 	
-	/// Method which is called at the beginning of the run
-	///	Pass new run information to Cheetah
+	//--------------
+	// Method called at the beginning of the run --
+	//--------------
 	void cheetah_ana_mod::beginRun(Event& evt, Env& env)
 	{
 		
@@ -219,7 +226,10 @@ namespace cheetah_ana_pkg {
 	}
 
 
-	/// Method which is called at the beginning of the calibration cycle
+	
+	//--------------
+	// Method which is called at the beginning of the calibration cycle --
+	//--------------
 	void cheetah_ana_mod::beginCalibCycle(Event& evt, Env& env)
 	{
 		// This is to silence compiler warning about unused variable
@@ -300,15 +310,13 @@ namespace cheetah_ana_pkg {
 		}
 	}
 
-
-	///
-	///	Event method
-	/// This method is called with event data
-	///	Start the threads which will copy across data into Cheetah structure and process
-	///
+	//--------------
+	//	Event method
+	//	This method is called with event data
+	//	Start the threads which will copy across data into Cheetah structure and process
+	//--------------
 	void cheetah_ana_mod::event(PSEvt::Event& evt, PSEnv::Env& env) {
 		
-		// This can be useful for debugging
 		//printf("Event (cheetah_ana_mod::event)\n");
 		
 		boost::shared_ptr<Event> evtp = evt.shared_from_this();
@@ -316,26 +324,189 @@ namespace cheetah_ana_pkg {
 		pthread_t thread;
 		int returnStatus;
 		
-		/*
-		 *  Wait until we have a spare thread in the thread pool
-		 */		
+		//	Wait until we have a spare thread in the thread pool
 		sem_wait(&availableAnaThreads);
 		
-		// Create a new worker thread for this data frame
+
+		// Create a new thread for copying data from this psana event
 		returnStatus = pthread_create(&thread, NULL, threaded_event, (void*) new AnaModEventData(this, evtp, envp));		
 
-		if (returnStatus == 0) { // creation successful
+		
+		// Push thread to stack of thread creation was successful
+		if (returnStatus == 0) {
 			pthread_mutex_lock(&pthread_queue_mutex);
 			runningThreads.push(thread);
 			pthread_mutex_unlock(&pthread_queue_mutex);
 		}
-		else{
+		else {
 			printf("Error: thread creation failed (frame skipped)\n");
 		}
 	}
 	// End of psana event method
 
+	
+	//--------------
+	// Thread for copying data (passes execution to copy_event)
+	//--------------
+	void *threaded_event(void* threadData){
+		boost::shared_ptr<AnaModEventData> data((AnaModEventData*) threadData);
+		data->module->copy_event(data->evtp, data->envp);
+		return 0;
+	}
+	
 
+	//--------------
+	// Join all threads that copied Ana events and call cheetah
+	//--------------
+	void *cheetah_caller(void*){
+		while(runCheetahCaller){
+			pthread_mutex_lock(&pthread_queue_mutex);
+			bool empty = runningThreads.empty();
+			
+			//	Sleep if empty (unlikely to happen after the beginning)
+			if(empty){
+				pthread_mutex_unlock(&pthread_queue_mutex);
+				usleep(10000);
+				continue;
+			}
+			
+			pthread_t thread = runningThreads.front();
+			cEventData *eventData;
+			runningThreads.pop();
+			pthread_mutex_unlock(&pthread_queue_mutex);
+			pthread_join(thread,(void **)&eventData);
+			sem_post(&availableAnaThreads);
+			
+			if (eventData != NULL) {
+				cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
+			}
+		}
+		pthread_exit(NULL);
+		return 0;
+	}
+	
+
+	
+	//--------------
+	// Method called at the end of the calibration cycle
+	//--------------
+	void cheetah_ana_mod::endCalibCycle(Event& evt, Env& env)
+	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+	}
+
+
+	//--------------
+	// Method called at the end of the run
+	//--------------
+	void cheetah_ana_mod::endRun(Event& evt, Env& env)
+	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
+		
+		printf("Ending run (cheetah_ana_mod::endRun)\n");
+		
+		/*
+		 *	Wait for all worker threads to finish
+		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
+		 */
+		printf("Ending run.\n");
+		waitForAnaModWorkers();
+		waitForAllWorkers();
+		
+		if(cheetahGlobal.saveCXI) {
+			printf("Writing accumulated CXIDB file\n");
+			writeAccumulatedCXI(&cheetahGlobal);
+			closeCXIFiles(&cheetahGlobal);
+		}
+	}
+
+
+	//--------------
+	//	Method called once at the end of the job
+	//	Clean up all variables associated with libCheetah
+	//--------------
+	void cheetah_ana_mod::endJob(Event& evt, Env& env)
+	{
+		// This is to silence compiler warning about unused variable
+		(void)evt;
+		(void)env;
+		//
+		
+		printf("Ending job (cheetah_ana_mod::endJob)\n");
+		
+		waitForAnaModWorkers();
+		cheetahExit(&cheetahGlobal);
+		
+		time_t endT;
+		time(&endT);
+		double dif = difftime(endT,startT);
+		cout << "Time taken: " << dif << " seconds" << endl;
+		// We shouldn't exit, and specially not with a value of 1
+		//	  exit(1);
+		// Just retuning allows the proper destructors to be called
+		return;
+	}
+
+
+	
+
+	//--------------
+	// Thread handling stuff (waiting for threads to finish)
+	//--------------
+	void cheetah_ana_mod::waitForAllWorkers(){
+		waitForCheetahWorkers();
+		waitForAnaModWorkers();
+	}
+
+	void cheetah_ana_mod::waitForCheetahWorkers(){
+		time_t	tstart, tnow;
+		time(&tstart);
+		double	dtime;
+		int p=0, pp=0;
+
+		while(cheetahGlobal.nActiveCheetahThreads > 0) {
+			p = cheetahGlobal.nActiveCheetahThreads;
+			if ( pp != p){
+				pp = p;
+				printf("Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveCheetahThreads);
+			}
+			time(&tnow);
+			dtime = difftime(tnow, tstart);
+			if(( dtime > ((float) cheetahGlobal.threadTimeoutInSeconds) ) && (cheetahGlobal.threadTimeoutInSeconds > 0)) {
+				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveCheetahThreads, dtime);
+				printf("\tGiving up and exiting anyway\n");
+				cheetahGlobal.nActiveCheetahThreads = 0;
+				break;
+			}
+			usleep(500000);
+		}
+		printf("Cheetah workers stopped successfully.\n");
+		
+	}
+
+	void cheetah_ana_mod::waitForAnaModWorkers(){
+		while(finishedAnaThreads < cheetahGlobal.anaModThreads){			
+			printf("Waiting for %d ana mod workers to finish.\n", cheetahGlobal.anaModThreads-finishedAnaThreads);
+			//wait for a thread to finish
+			sem_wait(&availableAnaThreads);
+			finishedAnaThreads++;
+		}
+		printf("Ana mod workers stopped successfully.\n");
+	}
+
+
+
+
+
+
+	//--------------
+	// Read in TOF data
+	//--------------
 	int cheetah_ana_mod::readTOF(Event & evt, Env & env,
 								 cEventData* eventData){
 		int tofPresent = 0;
@@ -390,142 +561,7 @@ namespace cheetah_ana_pkg {
 		}
 		return tofPresent;
 	}
-								  
-	 
-		
-		
-	/// Method which is called at the end of the calibration cycle
-	void 
-	cheetah_ana_mod::endCalibCycle(Event& evt, Env& env)
-	{
-		// This is to silence compiler warning about unused variable
-		(void)evt;
-		(void)env;
-		//
-	}
-
-	void cheetah_ana_mod::waitForAllWorkers(){
-		waitForCheetahWorkers();
-		waitForAnaModWorkers();
-	}
-
-	void cheetah_ana_mod::waitForCheetahWorkers(){
-		time_t	tstart, tnow;
-		time(&tstart);
-		double	dtime;
-		int p=0, pp=0;
-
-		while(cheetahGlobal.nActiveCheetahThreads > 0) {
-			p = cheetahGlobal.nActiveCheetahThreads;
-			if ( pp != p){
-				pp = p;
-				printf("Waiting for %li worker threads to finish.\n", cheetahGlobal.nActiveCheetahThreads);
-			}
-			time(&tnow);
-			dtime = difftime(tnow, tstart);
-			if(( dtime > ((float) cheetahGlobal.threadTimeoutInSeconds) ) && (cheetahGlobal.threadTimeoutInSeconds > 0)) {
-				printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveCheetahThreads, dtime);
-				printf("\tGiving up and exiting anyway\n");
-				cheetahGlobal.nActiveCheetahThreads = 0;
-				break;
-			}
-			usleep(500000);
-		}
-		printf("Cheetah workers stopped successfully.\n");
-		
-	}
-
-	void cheetah_ana_mod::waitForAnaModWorkers(){
-		while(finishedAnaThreads < cheetahGlobal.anaModThreads){			
-			printf("Waiting for %d ana mod workers to finish.\n", cheetahGlobal.anaModThreads-finishedAnaThreads);
-			//wait for a thread to finish
-			sem_wait(&availableAnaThreads);
-			finishedAnaThreads++;
-		}
-		printf("Ana mod workers stopped successfully.\n");
-	}
-
-	/// Method which is called at the end of the run
-	void cheetah_ana_mod::endRun(Event& evt, Env& env)
-	{
-		// This is to silence compiler warning about unused variable
-		(void)evt;
-		(void)env;
-		//
-		
-		printf("Ending run (cheetah_ana_mod::endRun)\n");
 	
-		/*
-		 *	Wait for all worker threads to finish
-		 *	Sometimes the program hangs here, so wait no more than 10 minutes before exiting anyway
-		 */
-		printf("Ending run.\n");
-		waitForAnaModWorkers();		
-		waitForAllWorkers();		
-		
-		if(cheetahGlobal.saveCXI) {
-			printf("Writing accumulated CXIDB file\n");
-			writeAccumulatedCXI(&cheetahGlobal);
-			closeCXIFiles(&cheetahGlobal);
-		}
-	}
-
-
-	/// Method which is called once at the end of the job
-	///	Clean up all variables associated with libCheetah
-	void cheetah_ana_mod::endJob(Event& evt, Env& env)
-	{
-		// This is to silence compiler warning about unused variable
-		(void)evt;
-		(void)env;
-		//
-
-		printf("Ending job (cheetah_ana_mod::endJob)\n");
-		
-		waitForAnaModWorkers();		
-		cheetahExit(&cheetahGlobal);
-	  
-		time_t endT;
-		time(&endT);
-		double dif = difftime(endT,startT);
-		cout << "Time taken: " << dif << " seconds" << endl;
-		// We shouldn't exit, and specially not with a value of 1
-		//	  exit(1);
-		// Just retuning allows the proper destructors to be called
-		return;
-	}
-
-
-	void *threaded_event(void* threadData){
-		boost::shared_ptr<AnaModEventData> data((AnaModEventData*) threadData);
-		data->module->copy_event(data->evtp, data->envp);
-		return 0;
-	}
 	
 
-	// This function joins all the threads that copied the Ana events and calls cheetah
-	void * cheetah_caller(void* ){
-		while(runCheetahCaller){
-			pthread_mutex_lock(&pthread_queue_mutex);
-			bool empty = runningThreads.empty();
-			// sleep if empty
-			if(empty){
-				// Unlikely to happen after the beginning
-				pthread_mutex_unlock(&pthread_queue_mutex);
-				usleep(10000);
-				continue;
-			}
-			pthread_t thread = runningThreads.front();
-			cEventData *eventData;
-			runningThreads.pop();
-			pthread_mutex_unlock(&pthread_queue_mutex);
-			pthread_join(thread,(void **)&eventData);
-			sem_post(&availableAnaThreads);
-			if (eventData != NULL) {
-				cheetahProcessEventMultithreaded(&cheetahGlobal, eventData);
-			}
-		}
-		pthread_exit(NULL);
-		return 0;
-	}
 } // namespace cheetah_ana_pkg

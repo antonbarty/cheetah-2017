@@ -116,7 +116,7 @@ cGlobal::cGlobal(void) {
 	hitfinderMinSNR = 40;
 	hitfinderIgnoreNoisyPixels = 0;
 	hitfinderDownsampling = 0;
-	hitfinderOnDetectorCorrectedData = 1;
+	hitfinderOnDetectorCorrectedData = 0;
 	hitfinderFastScan = 0;
 
 	// Sorting (eg: pump laser on/off)
@@ -1492,6 +1492,7 @@ void cGlobal::writeInitialLog(void){
 }
 
 void cGlobal::writeHitClasses(FILE* to) {
+	return;
 	// This is quite a cryptic output and I am getting always 100% hits of every hit class (???)
     if (hitfinder) {
         fprintf(to, "Hitclasses:\n");

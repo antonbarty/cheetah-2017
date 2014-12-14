@@ -324,7 +324,10 @@ public:
 	cDataVersion::dataFormat_t dataFormatMain;
 	// Defining the data version that the main dataset link "data" shall point to
 	cDataVersion::dataVersion_t dataVersionMain;
+	cDataVersion::dataVersion_t powderVersionMain;
 
+
+	
 	int savePixelmask;
 
 	// Powder saving options
@@ -457,6 +460,7 @@ public:
 	/* FLAGS */
 	int       cspad_fail;
 	int       pedSubtracted;
+	
 	/* DATA NON-ASSEMBLED */
 	// Raw data as read from the XTC file
 	uint16_t  *data_raw16;
@@ -466,9 +470,12 @@ public:
 	float     *data_detCorr;
 	// Data after both detector corrections and photon corrections (subtraction of persistent parasitic scattering, water ring removal,...)
 	float     *data_detPhotCorr;
+	// Holding place for data to go into persistent background buffer
+	float	  *data_forPersistentBackgroundBuffer;
 	// Pixelmask
 	uint16_t  *pixelmask;
 	/* DATA ASSEMBLED */
+	
 	// Raw data as read from the XTC file but converted to float
 	float     *image_raw;
 	// Data after detector corrections applied (common-mode, detector artefacts...)

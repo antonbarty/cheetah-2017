@@ -74,6 +74,7 @@ class cDataVersion {
 	dataFormat_t dataFormatMain;
 	dataVersion_t dataVersion;
 	dataVersion_t dataVersionMain;
+	dataVersion_t powderVersionMain;
 
 	int get();
 	void clear();

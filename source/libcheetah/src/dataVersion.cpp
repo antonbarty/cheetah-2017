@@ -66,6 +66,7 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 	dataFormatMain = detectorCommon->dataFormatMain;
 	dataVersion = dataVersion0;
 	dataVersionMain = detectorCommon->dataVersionMain;
+	powderVersionMain = detectorCommon->powderVersionMain;
 	dataVersionIndex = -1;
 
 	clear();

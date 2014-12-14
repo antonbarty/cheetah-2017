@@ -276,14 +276,15 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				double *powder_squared = dataV.getPowderSquared(powderClass);
 				pthread_mutex_t *mutex = dataV.getPowderMutex(powderClass);
 				
-				// Powder
+				// Copy powder pattern to buffer
 				powderBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if (global->threadSafetyLevel > 0)
 					pthread_mutex_lock(mutex);
 				memcpy(powderBuffer, powder, dataV.pix_nn*sizeof(double));
 				if (global->threadSafetyLevel > 0)
 					pthread_mutex_unlock(mutex);
-				// Write to dataset
+				
+				// Write powder to dataset
 				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderBuffer);

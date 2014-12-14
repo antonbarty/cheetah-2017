@@ -316,7 +316,8 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
   
 	if (global->hitfinderOnDetectorCorrectedData) {
 		hitfinderData = eventData->detector[detIndex].data_detCorr;
-	} else {
+	}
+	else {
 		hitfinderData = eventData->detector[detIndex].data_detPhotCorr;
 	}
 

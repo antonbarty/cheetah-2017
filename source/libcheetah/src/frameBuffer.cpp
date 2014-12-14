@@ -227,6 +227,9 @@ void cFrameBuffer::copyMedian(float * target) {
 	if (threadSafetyLevel > 0) unlockMedianWriters();
 }
 
+/*
+ *	Subtract pre-calculated median
+ */
 void cFrameBuffer::subtractMedian(float * data, uint16_t * mask, int scale,float minAbsMedianOverStdRatio) {
 	float	top = 0;
 	float	s1 = 0;
@@ -259,7 +262,8 @@ void cFrameBuffer::subtractMedian(float * data, uint16_t * mask, int scale,float
 			/*if (i==555555){
 				printf("median[i]=%g, std[i]=%g, flag=%d\n",median[i],std[i],flag);
 				}*/
-		} else {
+		}
+		else {
 			flag = true;
 		}
 		if(flag) {

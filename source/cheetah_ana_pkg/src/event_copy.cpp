@@ -90,8 +90,7 @@ namespace cheetah_ana_pkg {
 		
 		
 		//	Create a new eventData structure in which to place all information
-		cEventData	*eventData;
-		eventData = cheetahNewEvent(&cheetahGlobal);
+		cEventData	*eventData = cheetahNewEvent(&cheetahGlobal);
 		nevents++;
         
 		
@@ -613,41 +612,6 @@ namespace cheetah_ana_pkg {
 		eventData->pumpLaserOn = pumpLaserOn;
 		eventData->pumpLaserCode = pumpLaserCode;
 	
-		/*
-		 *  FEE photon inline spectrometer
-		 *  Psana::Bld::BldDataSpectrometerV0.get()
-		 */
-		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0;
-		FEEspectrum0 = evt.get(m_srcFeeSpec);
-		eventData->FEEspec_present=0;
-		if(cheetahGlobal.useFEEspectrum) {
-			if (FEEspectrum0.get()) {
-				const ndarray<const uint32_t, 1>& hproj = FEEspectrum0->hproj();
-				const ndarray<const uint32_t, 1>& vproj = FEEspectrum0->vproj();
-				if (!hproj.empty() &&  !vproj.empty()) {
-					long	hsize = hproj.shape()[0];
-					long	vsize = hproj.shape()[0];
-					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
-					
-					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
-					eventData->FEEspec_vproj = (uint32_t*) calloc(vsize, sizeof(uint32_t));
-					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));
-					// The next line often throws a fatal memcpy() error.  No time to figure out why
-					// For now, comment out as spectrum is contained in FEEspec_hproj so we don't actually need this right now
-					//memcpy(eventData->FEEspec_vproj, vproj.data(), vsize*sizeof(uint32_t));
-					eventData->FEEspec_present = 1;
-				}
-				else {
-					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV0\n", frameNumber);
-				}
-			}
-			else {
-				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometerV0.get() failed\n", frameNumber);
-			}
-		}
-		
-
-		
 		
  				
 		/*
@@ -811,7 +775,6 @@ namespace cheetah_ana_pkg {
 
 				// Neither V1 nor V2
 				else {
-					//printf("%li: cspad frame data not available for detector ID %li\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					printf("Event %li: CSPAD frame data not available for detector ID %li, skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					pthread_exit(NULL);
@@ -836,8 +799,9 @@ namespace cheetah_ana_pkg {
 							}
 						}
 					}
-				} else {
-                    
+				}
+				
+				else {
 					printf("Event %li: Warning: CSPAD 2x2 frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
 					pthread_exit(NULL);
@@ -858,7 +822,6 @@ namespace cheetah_ana_pkg {
 
 				
 				if (rayonix.get()) {
-					//const ndarray<const uint8_t, 2>& data_uint8 = rayonix->data8();
 					const ndarray<const uint16_t, 2>& data_uint16 = rayonix->data16();
 					
 					// Diagnostics to check what data type is returned
@@ -867,36 +830,29 @@ namespace cheetah_ana_pkg {
 						<< " height=" << rayonix->height()
 						<< " depth=" << rayonix->depth();
 						cout << endl;
-						
 						printf("target size = (%li x %li)\n", pix_nx, pix_ny);
 						
-					//	if (not data_uint8.empty()) {
-					//		cout << " data8=[" << int(data_uint8[0][0])
-					//		<< ", " << int(data_uint8[0][1])
-					//		<< ", " << int(data_uint8[0][2]) << ", ...]";
-					//	}
 						if (not data_uint16.empty()) {
 							cout << " data16=[" << int(data_uint16[0][0])
 							<< ", " << int(data_uint16[0][1])
 							<< ", " << int(data_uint16[0][2]) << ", ...]";
 						}
 						cout << endl;
-						
 					}
 					
+					// Check array dimensions
 					if( rayonix->height() != pix_ny || rayonix->width() != pix_nx) {
 						printf("Rayonix source size: %li x %li; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
 					}
 					
-					//memcpy(&eventData->detector[detIndex].data_raw16[0],&data_uint16[0][0],pix_nn*sizeof(uint16_t));
-					
-					for(long i=0; i< cheetahGlobal.detector[detIndex].pix_nn; i++)
-							eventData->detector[detIndex].data_raw16[i] = *(&data_uint16[0][0]+i);
-					
+					memcpy(&eventData->detector[detIndex].data_raw16[0],&data_uint16[0][0],pix_nn*sizeof(uint16_t));
+					//for(long i=0; i< cheetahGlobal.detector[detIndex].pix_nn; i++)
+					//		eventData->detector[detIndex].data_raw16[i] = *(&data_uint16[0][0]+i);
 				}
+				
 				else {
 					printf("Event %li: Rayonix frame data not available for detector ID %li, skipping event.\n", frameNumber,cheetahGlobal.detector[detIndex].detectorID);
-					//cheetahDestroyEvent(eventData);
+					cheetahDestroyEvent(eventData);
 					pthread_exit(NULL);
 				}
 			}
@@ -936,6 +892,7 @@ namespace cheetah_ana_pkg {
 					//cout << nx << "x" << ny << " = " << pix_nn << endl;
 					memcpy(&eventData->detector[detIndex].data_raw16[0],&data[0][0],nx*ny*sizeof(uint16_t));
 				}
+				
 				else {
 					printf("Event %li: Warning: pnCCD frame data not available (detectorID=%li), skipping event.\n", frameNumber, cheetahGlobal.detector[detIndex].detectorID);
 					cheetahDestroyEvent(eventData);
@@ -1019,7 +976,42 @@ namespace cheetah_ana_pkg {
 				}  
 			}
 		}
-
+		
+		
+		/*
+		 *  FEE photon inline spectrometer
+		 *  Psana::Bld::BldDataSpectrometerV0.get()
+		 */
+		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0;
+		FEEspectrum0 = evt.get(m_srcFeeSpec);
+		eventData->FEEspec_present=0;
+		if(cheetahGlobal.useFEEspectrum) {
+			if (FEEspectrum0.get()) {
+				const ndarray<const uint32_t, 1>& hproj = FEEspectrum0->hproj();
+				const ndarray<const uint32_t, 1>& vproj = FEEspectrum0->vproj();
+				if (!hproj.empty() &&  !vproj.empty()) {
+					long	hsize = hproj.shape()[0];
+					long	vsize = hproj.shape()[0];
+					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
+					
+					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
+					eventData->FEEspec_vproj = (uint32_t*) calloc(vsize, sizeof(uint32_t));
+					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));
+					// The next line often throws a fatal memcpy() error.  No time to figure out why
+					// For now, comment out as spectrum is contained in FEEspec_hproj so we don't actually need this right now
+					//memcpy(eventData->FEEspec_vproj, vproj.data(), vsize*sizeof(uint32_t));
+					eventData->FEEspec_present = 1;
+				}
+				else {
+					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV0\n", frameNumber);
+				}
+			}
+			else {
+				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometerV0.get() failed\n", frameNumber);
+			}
+		}
+		
+		
         
 		/*
 		 *  Copy energy spectrum camera into Cheetah for processing
