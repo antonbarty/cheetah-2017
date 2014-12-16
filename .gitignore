@@ -1,5 +1,6 @@
 geometry
 *.o
+*.pyc
 upload
 *.so.*
 .sconsign.dblite

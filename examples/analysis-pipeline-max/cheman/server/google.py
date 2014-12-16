@@ -6,7 +6,30 @@ import time
 run_col = 0
 run_type_col = 1
 run_cmd_col = 2
-title = ["Run","Type","Cmd","Status","#Frames","#Hits","HRate"]
+title = ["Run","Type","Cmd","Status","FRateHz","#Frames","#Hits","HRate%"]
+
+def get_gtab(C,email,password):
+    Cs = C["spreadsheet"]
+    failed = False
+    if email == "":
+        if "email" in Cs.keys():
+            email = Cs["email"]
+        else:
+            print "WARNING: No email address given. Cannot login to google."
+            failed = True
+    if password == "":
+        if "password" in Cs.keys():
+            password = Cs["password"]
+        else:
+            print "WARNING: No password given. Cannot login to google."
+            failed = True
+
+    if not failed:
+        # Init google table client
+        return GoogleTable(email,password,spreadsheet_name,worksheet_name)
+    else:
+        return None
+
 
 class GoogleTable:
     def __init__(self,email,password,spreadsheet_name,worksheet_name):
@@ -36,9 +59,9 @@ class GoogleTable:
         for i,r in zip(range(len(run_names_old)),run_names_old):
             if r in ks:
                 d = runs[r].attrs
-                vs = [r,runs[r].type,d.get("Cmd","auto"),d.get("Status",""),d.get("#Frames",""),d.get("#Hits",""),d.get("HRate","")]
+                vs = [r,runs[r].type,d.get("Cmd","auto"),d.get("Status",""),d.get("FRateHz",""),d.get("#Frames",""),d.get("#Hits",""),d.get("HRate%","")]
             else:
-                vs = [r,D["Type"][i],D["Cmd"][i],D["Status"][i],D["#Frames"][i],D["#Hits"][i],D["HRate"][i]]
+                vs = [r,D["Type"][i],D["Cmd"][i],D["Status"][i],D["FRateHz"][i],D["#Frames"][i],D["#Hits"][i],D["HRate%"][i]]
             rows.append(vs)
         # Select a range
         s = "A1:%s%i" % (chr(len(title) - 1 + ord('a')).upper(),len(rows))

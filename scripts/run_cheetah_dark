@@ -6,9 +6,9 @@ then
 else
     cd $H5DIR_DARK
     for (( i=1; i<=$#; i++ )); do
-	eval RUN=\$$i
-	echo "Processing $RUN"
-	eval RUNDIR=$RUN"_"$(date -d "today" +"%Y%m%d_%H%M")
+	eval RUN=\${$i}
+	echo "Preparing to process $RUN"
+	eval RUNDIR=$RUN"_"$(date -d "today" +"%Y%m%d_%H%M%S")
 	echo "Creating directory: "$RUNDIR
 	mkdir $RUNDIR
 	if [ -f $CONFDIR_DARK/cheetah_$RUN.ini ];

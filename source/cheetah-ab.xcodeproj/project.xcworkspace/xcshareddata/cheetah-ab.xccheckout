@@ -11,17 +11,17 @@
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
-		<string>ssh://github.com/antonbarty/cheetah.git</string>
+		<string>github.com:antonbarty/cheetah.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>source/cheetah-ab.xcodeproj/project.xcworkspace</string>
+	<string>source/cheetah-ab.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>ssh://github.com/antonbarty/cheetah.git</string>
+	<string>github.com:antonbarty/cheetah.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>

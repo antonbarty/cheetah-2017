@@ -20,86 +20,96 @@
 #include "median.h"
 
 /*
- *	Maintain running powder patterns
+ *	Maintain histogram buffer
  */
-
-void addToHistogram(cEventData *eventData, cGlobal *global) {
+void addToHistogram(cEventData *eventData, cGlobal *global, int hit) {
 	   
 	DETECTOR_LOOP {
-		if (global->detector[detIndex].histogram) {
-			addToHistogram(eventData, global, detIndex);
+		if (global->detector[detIndex].histogram && (!(global->detector[detIndex].histogramOnlyBlanks && hit))) {
+			// Dereference common variables
+			long		pix_nx = global->detector[detIndex].pix_nx;
+
+			long		histMin = global->detector[detIndex].histogramMin;
+			long		histNbins = global->detector[detIndex].histogramNbins;
+			float       histBinSize = global->detector[detIndex].histogramBinSize;
+			long		hist_fs_min = global->detector[detIndex].histogram_fs_min;
+			long		hist_fs_max = global->detector[detIndex].histogram_fs_max;
+			long		hist_ss_min = global->detector[detIndex].histogram_ss_min;
+			long		hist_ss_max = global->detector[detIndex].histogram_ss_max;
+			long		hist_nfs = global->detector[detIndex].histogram_nfs;
+			long		hist_nn = global->detector[detIndex].histogram_nn;
+			uint16_t	*histData = global->detector[detIndex].histogramData;
+			int         dataVersion = global->detector[detIndex].histogramDataVersion;
+			float       *frameData;
+			if (dataVersion <= 0) {
+				frameData = eventData->detector[detIndex].data_raw;
+			} else if (dataVersion == 1) {
+				frameData = eventData->detector[detIndex].data_detCorr;
+			} else {
+				frameData = eventData->detector[detIndex].data_detPhotCorr;				
+			}
+
+			// Figure out which bin should be filled
+			// (done outside of mutex lock)
+			long	bin;
+			float	binf;
+			long	i_hist, i_buffer;
+			float	value;
+			
+			long	*buffer;
+			buffer = (long *) calloc(hist_nn, sizeof(long));
+	
+			//printf("histMin=%li, histBinSize=%f, histNbins=%li\n",histMin,histBinSize,histNbins);
+
+			for(long ss=hist_ss_min; ss<hist_ss_max; ss++) {
+				for(long fs=hist_fs_min; fs<hist_fs_max; fs++) {
+			
+					i_hist = fs + ss*pix_nx;
+					i_buffer = (fs-hist_fs_min) + (ss-hist_ss_min)*hist_nfs;
+			
+					value = frameData[i_hist];
+					binf = (value-histMin)/histBinSize;
+					bin = (long) lrint(binf);
+			
+					if(bin < 0) bin = 0;
+					if(bin >= histNbins) bin=histNbins-1;
+			
+					buffer[i_buffer] = bin;
+				}
+			}
+	
+	
+			// Update histogram
+			// This could be a little slow due to sparse memory access conflicting with predictive memory caching
+			pthread_mutex_lock(&global->detector[detIndex].histogram_mutex);
+			uint64_t	cell;
+			for(long i=0; i<hist_nn; i++) {
+				cell = i*histNbins;
+				histData[cell+buffer[i]] += 1;
+			}
+			global->detector[detIndex].histogram_count += 1;
+			pthread_mutex_unlock(&global->detector[detIndex].histogram_mutex);
+			
+			// Free temporary memory
+			free(buffer);
 		}
 	}
 }
 
-
-void addToHistogram(cEventData *eventData, cGlobal *global, int detIndex) {
-	
-	// Dereference common variables
-	long		pix_nx = global->detector[detIndex].pix_nx;
-
-	long		histMin = global->detector[detIndex].histogramMin;
-	long		histNbins = global->detector[detIndex].histogramNbins;
-	float       histBinSize = global->detector[detIndex].histogramBinSize;
-	long		hist_fs_min = global->detector[detIndex].histogram_fs_min;
-	long		hist_fs_max = global->detector[detIndex].histogram_fs_max;
-	long		hist_ss_min = global->detector[detIndex].histogram_ss_min;
-	long		hist_ss_max = global->detector[detIndex].histogram_ss_max;
-	long		hist_nfs = global->detector[detIndex].histogram_nfs;
-	long		hist_nn = global->detector[detIndex].histogram_nn;
-	uint16_t	*histData = global->detector[detIndex].histogramData;
-
-	
-	// Figure out which bin should be filled
-	// (done outside of mutex lock)
-	long	bin;
-	float	binf;
-	long	i_hist, i_buffer;
-	float	value;
-	
-	long	*buffer;
-	buffer = (long *) calloc(hist_nn, sizeof(long));
-	
-	for(long ss=hist_ss_min; ss<hist_ss_max; ss++) {
-		for(long fs=hist_fs_min; fs<hist_fs_max; fs++) {
-			
-			i_hist = fs + ss*pix_nx;
-			i_buffer = (fs-hist_fs_min) + (ss-hist_ss_min)*hist_nfs;
-			
-			value = eventData->detector[detIndex].corrected_data[i_hist];
-			binf = (value-histMin)/histBinSize;
-			bin = (long) lrint(binf);
-			
-			if(bin < 0) bin = 0;
-			if(bin >= histNbins) bin=histNbins-1;
-			
-			buffer[i_buffer] = bin;
-		}
+void calculateHistogramScale(long histMin, long histNbins, float histBinSize, float * scaleTarget) {
+	for (long i=0; i < histNbins; i++) {
+			scaleTarget[i] = histMin + histBinSize * i;
 	}
-	
-	
-	// Update histogram
-	// This could be a little slow due to sparse memory access conflicting with predictive memory caching
-	pthread_mutex_lock(&global->detector[detIndex].histogram_mutex);
-	uint64_t	cell;
-	for(long i=0; i<hist_nn; i++) {
-		cell = i*histNbins;
-		histData[cell+buffer[i]] += 1;
-	}
-	global->detector[detIndex].histogram_count += 1;
-	pthread_mutex_unlock(&global->detector[detIndex].histogram_mutex);
-	
-	// Free temporary memory
-	free(buffer);
 }
-
 
 /*
  *	Save histograms
  */
 void saveHistograms(cGlobal *global) {
-
-	printf("Writing histogram data \n");
+    
+    DEBUGL2_ONLY {
+        DEBUG("Writing histogram data \n");
+    }
 
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].histogram) {
