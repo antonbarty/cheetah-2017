@@ -30,11 +30,9 @@
 
 /*
  *	Create a standardised name for this event
+ *	Filename based on date, time and fiducial for this image
  */
 void nameEvent(cEventData *event, cGlobal *global){
-	/*
-	 *	Create filename based on date, time and fiducial for this image
-	 */
 	char buffer1[80];
 	char buffer2[80];	
 	time_t eventTime = event->seconds;
@@ -51,7 +49,7 @@ void nameEvent(cEventData *event, cGlobal *global){
 
 
 /*
- *	Update the subdirectory name
+ *	Update the subdirectory when we reach 1000 images in one directory
  */
 void assignSubdir(cEventData *event, cGlobal *global) {
 
