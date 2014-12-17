@@ -842,7 +842,7 @@ namespace cheetah_ana_pkg {
 					
 					// Check array dimensions
 					if( rayonix->height() != pix_ny || rayonix->width() != pix_nx) {
-						printf("Rayonix source size: %li x %li; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
+						printf("Rayonix source size: %d x %d; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
 					}
 					
 					memcpy(&eventData->detector[detIndex].data_raw16[0],&data_uint16[0][0],pix_nn*sizeof(uint16_t));
