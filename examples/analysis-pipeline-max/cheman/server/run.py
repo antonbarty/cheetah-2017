@@ -40,9 +40,11 @@ class Run:
         self._refresh_status()
         self._refresh_attrs()
         if not self.test_blocked and self.attrs["Status"] not in ["Invalid","Waiting"]:
-            if self.processdir_test == None:
+            if self.darkcal == None:
+                self.darkcal = self._get_prior_darkcal()
+            if self.processdir_test == None and self.darkcal != None:
                 self._init_processdir(test=True)
-            if self.processdir_test != None:
+            if self.processdir_test != None and self.darkcal != None:
                 self._start(test=True)
                 self.test_blocked = True
         if not self.blocked and self.attrs["Status"] in ["Ready"]:
@@ -233,16 +235,18 @@ class Run:
             self.processdir_test = processdir
             self.processexec_test = processexec
             self.processout_test = processdir + "/" + "process.out"
+            processout = self.processout_test
             self.cheetah_ini_test = processdir + "/" + "cheetah.ini"
             self.psana_cfg_test = processdir + "/" + "psana.cfg"
         else:
             self.processdir = processdir
             self.processexec = processexec
             self.processout = processdir + "/" + "process.out"
+            processout = self.processout
             self.cheetah_ini = processdir + "/" + "cheetah.ini"
             self.psana_cfg = processdir + "/" + "psana.cfg"
         self._init_process_config(test)
-        self._write_processexec(self.processout_test,processdir,self.C["locations"]["psanaexec"],processexec,test)
+        self._write_processexec(processout,processdir,self.C["locations"]["psanaexec"],processexec,test)
     def _start(self,test=False):
         if test:
             processout = self.processout_test
@@ -291,27 +295,47 @@ class Run:
             for l in ls:
                 if l[0] == "#":
                     ls_n.append(l)
+                elif "=" in l:
+                    ll = l.split("=")
+                    ls_n.append(ll[0] + "=" + os.path.expandvars(ll[1]))
+
+                    vname = l.split("=")[0].replace(" ","").lower()
+                    if self.attrs["Type"] == "Data":
+                        if vname == "detectorid":
+                            detectorID = int(l[:-1].split("=")[-1])
+                            pixelmask = self._get_pixelmask(detectorID)
+                            geometry = self._get_geometry(detectorID)
+                            ls_n.append("initialPixelmask=%s\n" % pixelmask)
+                            ls_n.append("geometry=%s\n" % geometry)
+                            #print self.name,self._get_prior_darkcal()
+                            ls_n.append("darkcal=%s\n" % self.darkcal.replace("#",str(detectorID)))
                 else:
-                    appended = False
-                    if "detectorid" in l.lower() and not "hitfinder" in l.lower():
-                        ls_n.append(l)
-                        if self.attrs["Type"] == "Data":
-                            if self.darkcal != None:
-                                detectorID = l[:-1].split("=")[-1]
-                                ls_n.append("darkcal=%s\n" % self.darkcal.replace("#",detectorID))
-                            appended = True
-                    if "darkcal" in l.lower():
-                        ls_n.append("#"+l)
-                    if not appended:
-                        if "=" in l:
-                            ll = l.split("=")
-                            ls_n.append(ll[0] + "=" + os.path.expandvars(ll[1]))	    
-                        else:
-                            ls_n.append(l)
-                        
+                    ls_n.append(l)
         with open(cheetah_ini,"w") as f:
-                f.writelines(ls_n)
-        os.system("cp %s %s" % (c["psana"],psana_cfg))        
+            f.writelines(ls_n)
+        os.system("cp %s %s" % (c["psana"],psana_cfg))       
+    def _get_pixelmask(self,detectorID):
+        ls = os.listdir(self.C["locations"]["pixelmaskdir"])
+        pixelmask_run = "pixelmask-detectorID%i_%s.h5" % (detectorID,self.name)
+        pixelmask_default = "pixelmask-detectorID%i.h5" % detectorID
+        if pixelmask_run in ls:
+            return (self.C["locations"]["pixelmaskdir"]+"/"+pixelmask_run)
+        elif pixelmask_default in ls:
+            return (self.C["locations"]["pixelmaskdir"]+"/"+pixelmask_default)
+        else:
+            print "ERROR: Did not find suitable pixelmask in %s!" % self.C["locations"]["pixelmaskdir"]
+            return None
+    def _get_geometry(self,detectorID):
+        ls = os.listdir(self.C["locations"]["geometrydir"])
+        geometry_run = "geometry-detectorID%i_%s.h5" % (detectorID,self.name)
+        geometry_default = "geometry-detectorID%i.h5" % detectorID
+        if geometry_run in ls:
+            return (self.C["locations"]["geometrydir"]+"/"+geometry_run)
+        elif geometry_default in ls:
+            return (self.C["locations"]["geometrydir"]+"/"+geometry_default)
+        else:
+            print "ERROR: Did not find suitable geometry in %s!" % self.C["locations"]["geometrydir"]
+            return None
     def _write_processexec(self,processout,processdir,psanaexec,processexec,test=False):
         txt = ["#!/bin/bash\n"]
         if os.path.expandvars(self.C["general"]["job_manager"]) == "slurm":
