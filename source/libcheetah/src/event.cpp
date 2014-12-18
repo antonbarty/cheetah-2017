@@ -94,6 +94,10 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->FEEspec_vproj = NULL;
 	eventData->pulnixImage = NULL;
 	eventData->specImage = NULL;
+	
+	eventData->pulnixFail=1;
+	eventData->specFail=1;
+	eventData->FEEspec_present=0;
 		
 	// Return
 	return eventData;

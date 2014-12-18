@@ -127,15 +127,14 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	}
 	
 	// Update central hit counter
-	// !!! This is done also in hitfinder.cpp. Therefore I comment this out. /Max   
-    /*pthread_mutex_lock(&global->nhits_mutex);
+    pthread_mutex_lock(&global->nhits_mutex);
     global->nhitsandblanks++;
 	if(hit) {
 		global->nhits++;
 		global->nrecenthits++;
 	}
     pthread_mutex_unlock(&global->nhits_mutex);
-	*/
+	
 
 	// Set the appropriate powder class
 	eventData->powderClass = hit;

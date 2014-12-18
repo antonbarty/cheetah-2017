@@ -235,14 +235,14 @@ hitknown:
 	// Slightly wrong that all initial frames are blanks when hitfinderForInitials is 0
 	
 	
-	// Update central hit counter
-	pthread_mutex_lock(&global->nhits_mutex);	
-    global->nhitsandblanks++;
-	if(hit) {
-		global->nhits++;
-		global->nrecenthits++;
-	}
-	pthread_mutex_unlock(&global->nhits_mutex);
+	// Update central hit counter - done in hitfinder.cpp
+	//pthread_mutex_lock(&global->nhits_mutex);
+    //global->nhitsandblanks++;
+	//if(hit) {
+	//	global->nhits++;
+	//	global->nrecenthits++;
+	//}
+	//pthread_mutex_unlock(&global->nhits_mutex);
 	hitRatio = 100.*( global->nhits / (float) global->nhitsandblanks);
 
 	// Update running backround estimate based on non-hits

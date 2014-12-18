@@ -22,7 +22,13 @@
 //----------------------
 // Base Class Headers --
 //----------------------
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #include "psana/Module.h"
+#pragma GCC diagnostic warning "-Wmissing-field-initializers"
+#pragma GCC diagnostic warning "-Wunused-parameter"
+#pragma GCC diagnostic warning "-Wignored-qualifiers"
 
 //-------------------------------
 // Collaborating Class Headers --
