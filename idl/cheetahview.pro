@@ -655,13 +655,12 @@ function cheetahview_updatefilelist, dir
 
 	;; Find single frane .h5 files
 	else begin
-		file = file_search(dir,"LCLS*.h5",/fully_qualify)
-		index = intarr(n_elements(file))
-	
+		file = file_search(dir,"LCLS*.h5",/fully_qualify)	
 	 	if n_elements(file) eq 0 OR file[0] eq '' then begin
 		 	message,'No files found in directory: '+dir, /info
 	 	endif
 		file_type = 'little_h5'
+		index = intarr(n_elements(file))
 		print,strcompress(string(n_elements(file),' files found'))
 	endelse
 

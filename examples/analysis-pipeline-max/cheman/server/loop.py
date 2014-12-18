@@ -39,6 +39,7 @@ def loop(configfilename):#,email,password):
         sendListUpdate = False
         #print reqs
         #print "Update"
+        reqRuns = [] 
         for req in reqs:
             if req == "REQ_FULL_LIST":
                 sendListFull = True
@@ -46,6 +47,7 @@ def loop(configfilename):#,email,password):
                 sendListUpdate = True
             elif isinstance(req,dict):
                 sendListUpdate = True
+                reqRuns.append(req["Name"])
                 rtab.R[req["Name"]].update(req) 
             else:
                 print "WARNING: Invalid package received."
@@ -54,7 +56,7 @@ def loop(configfilename):#,email,password):
         if sendListFull: 
             L = rtab.getList()
         elif sendListUpdate:
-            L = rtab.getListUpdate()
+            L = rtab.getListUpdate(reqRuns)
         S.answerReqs(L)
 
         #print "Cache table to file"
