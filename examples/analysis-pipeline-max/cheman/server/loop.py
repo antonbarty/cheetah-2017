@@ -37,7 +37,7 @@ def loop(configfilename):#,email,password):
         reqs = S.recvReqs()
         sendListFull = False
         sendListUpdate = False
-        #print reqs
+        print reqs
         #print "Update"
         reqRuns = [] 
         for req in reqs:
