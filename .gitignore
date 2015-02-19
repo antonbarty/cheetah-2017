@@ -5,4 +5,5 @@ upload
 *.so.*
 .sconsign.dblite
 *.DS_Store
+*.xcodeproj
 build
