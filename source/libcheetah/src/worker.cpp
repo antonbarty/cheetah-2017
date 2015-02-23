@@ -181,11 +181,11 @@ void *worker(void *threadarg) {
 	// Initialise data_detPhotCorr with data_detCorr
 	initPhotonCorrection(eventData,global);
 
-	// Radial background subtraction (!!! Radial background subtraction subtracts a photon background, therefore moved here)
-	subtractRadialBackground(eventData, global);
-	
 	// If a darkcal file is available: Subtract persistent background is for photon subtraction (persistent background = photon background)
 	subtractPersistentBackground(eventData, global);
+	
+	// Radial background subtraction (!!! Radial background subtraction subtracts a photon background, therefore moved here)
+	subtractRadialBackground(eventData, global);
 	
 	
 	// This bit looks at the inner part of the detector first to see whether it's worth looking at the rest

@@ -38,6 +38,13 @@ pro hitrate, dir, buffer=buffer
 	hitrate = smooth(hit,binsize,/edge_truncate)
 	hitrate *= 100
 	time = findgen(nframes)/(120.*60)
+	
+	;; There is no point having more than 500 points in this plot
+	if n_elements(hitrate) gt 500 then begin
+		hitrate = congrid(hitrate,500)
+		time = congrid(time,500)
+	endif
+	
 	p3 = plot(time,hitrate, thick=3, color='blue', yrange=[0,1.1*max(hitrate)], buffer=buffer)
 	
 	
