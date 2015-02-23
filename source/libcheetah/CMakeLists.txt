@@ -30,9 +30,8 @@ LIST(APPEND sources "src/gmd.cpp")
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIR})
-include_directories(${MPI_CXX_INCLUDE_PATH})
 
-add_library(cheetah SHARED ${sources} ${MPI_LIBRARIES})
+add_library(cheetah SHARED ${sources})
 
 target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES})
 
