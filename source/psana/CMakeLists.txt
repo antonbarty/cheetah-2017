@@ -11,6 +11,8 @@ include_directories("include")
 
 ADD_EXECUTABLE(psana ${sources})
 
+# Remove -Wextra from compile flags
+SET(CMAKE_CXX_FLAGS "-Wall")
 TARGET_LINK_LIBRARIES(psana ${PSANA_LIBRARIES} cheetah_ana_pkg)
 
 INSTALL(TARGETS psana

@@ -32,21 +32,21 @@ class RunTable:
         names.sort()
         for n in names:
             self.R[n].update()
-    def getList(self,getAll=True):
+    def getList(self,getAll=True,runs=[]):
         out = []
         names = self.R.keys()
         names.sort()
         for n in names:
             r = self.R[n]
-            if getAll:
+            if getAll or n in runs:
                 attrs = r.get()
             else:
                 attrs = r.get_if_touched()
             if attrs != None:
                 out.append(attrs)
         return out
-    def getListUpdate(self):
-        return self.getList(False)
+    def getListUpdate(self,runs):
+        return self.getList(False,runs)
     def readTable(self):
         filename = self.C["general"]["runtable_filename"] 
         runs,xtcs = self._getRunsWithXTCs()

@@ -764,7 +764,9 @@ pro cheetah_event, ev
 			cheetah_displayImage, pState, image
 
 			outfile = file_basename(sState.currentFile)
-			outfile = strmid(outfile, 0, strlen(outfile)-3)+'.png'
+			frame = (*pState).currentFrameNum
+			outfile = strmid(outfile, 0, strpos(outfile,'.',/reverse_search))
+			outfile += '-'+strcompress(string(frame),/remove_all)+'.png'
 			outfile = file_basename(outfile)
 			filename = dialog_pickfile(file=outfile, path=sState.savedir, filter='*.png', /write)
 			if (filename eq '') then $

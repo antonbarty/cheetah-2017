@@ -43,7 +43,7 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 			}
 			
 			// Remember the input to persistent background correction for addition to the frame buffer
-			frameData = eventData->detector[detIndex].data_detPhotCorr;
+			//frameData = eventData->detector[detIndex].data_detPhotCorr;
 			memcpy(eventData->detector[detIndex].data_forPersistentBackgroundBuffer, frameData, global->detector[detIndex].pix_nn*sizeof(float));
 			
 			

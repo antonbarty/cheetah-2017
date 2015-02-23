@@ -317,7 +317,8 @@ public:
 	 *	Stuff used for managing the program execution
 	 */
 	/** @brief TODO: Where is this used? */
-	unsigned runNumber;
+	unsigned	runNumber;
+	char		experimentID[MAX_FILENAME_LENGTH];
 
 	/*
 	 *	File management

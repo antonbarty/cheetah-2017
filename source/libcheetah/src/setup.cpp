@@ -109,6 +109,7 @@ cGlobal::cGlobal(void) {
 	hitfinderResolutionUnitPixel = 1;
 	hitfinderMinSNR = 40;
 	hitfinderIgnoreHaloPixels = 0;
+	hitfinderIgnoreNoisyPixels = 0;
 	hitfinderDownsampling = 0;
 	hitfinderOnDetectorCorrectedData = 0;
 	hitfinderFastScan = 0;
@@ -173,7 +174,8 @@ cGlobal::cGlobal(void) {
 	saveInterval = 1000;
 	savePixelmask = 1;
     // Do not output 1 HDF5 per image by default
-	saveCXI = 0;
+	saveCXI = 1;
+
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
 	// Save data in modular stack (see CXI version 1.4)

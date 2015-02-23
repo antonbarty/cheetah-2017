@@ -39,10 +39,11 @@ void initDetectorCorrection(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
 		DEBUG3("Initializing detector corrected data with raw data. (detectorID=%ld)",global->detector[detIndex].detectorID);
 		for(long i=0;i<global->detector[detIndex].pix_nn;i++){
-			eventData->detector[detIndex].data_detCorr[i] = eventData->detector[detIndex].data_raw16[i];
+			eventData->detector[detIndex].data_detCorr[i] = eventData->detector[detIndex].data_raw[i];
 		}
 	}
 }
+
 
 void initPhotonCorrection(cEventData *eventData, cGlobal *global){
 	// Copy detector corrected data into photon corrected array as starting point for photon corrections

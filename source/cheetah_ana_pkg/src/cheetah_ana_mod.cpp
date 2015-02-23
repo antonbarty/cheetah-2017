@@ -216,6 +216,7 @@ namespace cheetah_ana_pkg {
 		}
 
 		cheetahGlobal.runNumber = runNumber;
+		strcpy(cheetahGlobal.experimentID, env.experiment().c_str());
 
 		// Set CXI file name				
 		sprintf(cheetahGlobal.cxiFilename,"%s-r%04d.cxi", env.experiment().c_str(),runNumber);

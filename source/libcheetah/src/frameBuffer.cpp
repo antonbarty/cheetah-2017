@@ -268,7 +268,7 @@ void cFrameBuffer::subtractMedian(float * data, uint16_t * mask, int scale,float
 		}
 		if(flag) {
 			data[i] -= (factor*median[i]);
-		    //mask[i] |= PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;		<--- This is misleading; it does not get unset if data reverts to detector corrected only (it's really pixel_has_been_photon_corrected_at_some_time)
+		    mask[i] |= PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;		// <--- This is misleading; it does not get unset if data reverts to detector corrected only (it's really pixel_has_been_photon_corrected_at_some_time)
 		}
 	}
 	if (threadSafetyLevel > 0) unlockMedianWriters();
@@ -424,7 +424,7 @@ void cFrameBuffer::subtractMean(float * data, uint16_t * mask, int scale,float m
 		}
 		if(flag) {
 			data[i] -= (factor*mean[i]);
-			//mask[i] |= PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;		<--- This is misleading; it does not get unset if data reverts to detector corrected only (it's really pixel_has_been_photon_corrected_at_some_time)
+			mask[i] |= PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;		//<--- This is misleading; it does not get unset if data reverts to detector corrected only (it's really pixel_has_been_photon_corrected_at_some_time)
 		}
 	}
 	if (threadSafetyLevel > 0) unlockMeanWriters();

@@ -210,6 +210,7 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+		shared_ptr<Psana::Bld::BldDataEBeamV7> ebeam7 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
@@ -219,8 +220,32 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
 		double photonEnergyeV=-1;
+		// Ebeam v7
+		if (ebeam7.get()) {
+			charge = ebeam7->ebeamCharge();
+			L3Energy = ebeam7->ebeamL3Energy();
+			LTUPosX = ebeam7->ebeamLTUPosX();
+			LTUPosY = ebeam7->ebeamLTUPosY();
+			LTUAngX = ebeam7->ebeamLTUAngX();
+			LTUAngY = ebeam7->ebeamLTUAngY();
+			PkCurrBC2 = ebeam7->ebeamPkCurrBC2();
+			photonEnergyeV = ebeam7->ebeamPhotonEnergy();
+			
+			peakCurrent = ebeam7->ebeamPkCurrBC2();
+			DL2energyGeV = 0.001*ebeam7->ebeamL3Energy();
+			
+			if (verbose) {
+				cout << "* fEbeamCharge7=" << charge << "\n"
+				<< "* fEbeamL3Energy7=" << L3Energy << "\n"
+				<< "* fEbeamLTUPosX7=" << LTUPosX << "\n"
+				<< "* fEbeamLTUPosY7=" << LTUPosY << "\n"
+				<< "* fEbeamLTUAngX7=" << LTUAngX << "\n"
+				<< "* fEbeamLTUAngY7=" << LTUAngY << "\n"
+				<< "* fEbeamPkCurrBC27=" << PkCurrBC2 << endl;
+			}
+		}
         // Ebeam v6
-		if (ebeam6.get()) {
+		else if (ebeam6.get()) {
 			charge = ebeam6->ebeamCharge();
 			L3Energy = ebeam6->ebeamL3Energy();
 			LTUPosX = ebeam6->ebeamLTUPosX();
@@ -842,7 +867,7 @@ namespace cheetah_ana_pkg {
 					
 					// Check array dimensions
 					if( rayonix->height() != pix_ny || rayonix->width() != pix_nx) {
-						printf("Rayonix source size: %li x %li; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
+						printf("Rayonix source size: %d x %d; destination size %li x %li\n", rayonix->height(), rayonix->depth(), pix_nx, pix_ny);
 					}
 					
 					memcpy(&eventData->detector[detIndex].data_raw16[0],&data_uint16[0][0],pix_nn*sizeof(uint16_t));

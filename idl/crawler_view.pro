@@ -897,6 +897,19 @@ pro crawler_event, ev
 			print, f
 			mask = badpix_from_darkcal(f, /save, /edge, /menu)
 		end
+
+		sState.mbview_badpix2 : begin
+			dir = crawler_whichRun(pstate, /path)
+			f = file_search(dir,'*detector0-class0-sum.h5')
+			print, f
+			mask = badpix_from_powder(f, /save, /edge, /menu)
+		end
+
+		sState.mbview_combinemasks : begin
+			combine_badpix_masks, /save
+		end
+
+		
 		sState.mbview_satcheck : begin
 			dir = crawler_whichRun(pstate, /path)
 			file = file_search(dir,'peaks.txt')
@@ -992,6 +1005,8 @@ pro crawler_view
 
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
+	mbview_badpix2 = widget_button(mbtool, value='Make bad pixel mask from powder')
+	mbview_combinemasks = widget_button(mbtool, value='Combine masks')
 	mbview_satplot1 = widget_button(mbtool, value='Plot peak maximum vs radius')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')
 	mbview_gainmap = widget_button(mbtool, value='Create CSPAD gain map')
@@ -1103,6 +1118,10 @@ pro crawler_view
 			mbview_cxipowder_class0_detphotcorr : mbview_cxipowder_class0_detphotcorr, $
 			
 			mbview_badpix : mbview_badpix, $
+			mbview_badpix2 : mbview_badpix2, $
+			mbview_combinemasks : mbview_combinemasks, $
+
+
 			mbview_satcheck : mbview_satcheck, $
 			mbview_gainmap : mbview_gainmap, $
 

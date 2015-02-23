@@ -97,30 +97,41 @@ class RunRow(QtCore.QObject):
         self.cmdPButton.released.connect(self.emitCmd)       
         self.cmdTestPButton.released.connect(self.emitCmdTest)       
     def update(self,rAttr0):
-        self.disconnectSignals()
-        rAttr = dict(rAttr0)
-        if rAttr == {}:
+        # Return if no arguments
+        if rAttr0 == {}:
             return
+
+        self.disconnectSignals()
+        
+        # Take a copy
+        rAttr = dict(rAttr0)
+
+        # Status string for convenience
         s = self.rAttr["Status"]
+        
+        # Extract and slip off messages from rAttr dict
         if "Messages" in rAttr:
             M = rAttr.pop("Messages")
         else:
             M = ""
+
+        # Cache rAttr
         self.rAttr = rAttr
-        #self.nameLabel.setText(rAttr["Name"])
+
+        # Type combo
         self.typeCBox.setCurrentIndex(self.typeCBox.findText(rAttr["Type"]))
+
+        # Run button
         if s in ["Started","Waiting","Running","Finished"]:
             self.cmdPButton.setText("Delete")
         elif s in ["Ready","Invalid"]:
             self.cmdPButton.setText("Start")
+        print s
         self.cmdPButton.setEnabled(s not in ["Invalid"])
-        if not self.test_started:
-            self.cmdTestPButton.setEnabled(s not in ["Invalid"])
-        else:
-            if "Finished test run" in M:
-                self.cmdTestPButton.setEnabled(s not in ["Invalid"])
-                self.test_started = False
-        self.statusLabel.setText(rAttr.get("Status","-"))
+        self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+
+        # Staus label
+        self.statusLabel.setText(s)
         if s in ["Invalid",""]:
             self.statusLabel.setStyleSheet("background-color: rgb(150, 150, 150);")
         elif s in ["Ready"]:
@@ -129,9 +140,19 @@ class RunRow(QtCore.QObject):
             self.statusLabel.setStyleSheet("background-color: rgb(50, 50, 255);")
         elif s == "Finished":
             self.statusLabel.setStyleSheet("background-color: rgb(50, 255, 50);")
+
+        if not self.test_started:
+            self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+        else:
+            if "Finished test run" in M:
+                self.cmdTestPButton.setEnabled(s not in ["Invalid"])
+                self.test_started = False
+
+        # Write parameters into boxes
         self.pRateLabel.setText(rAttr.get("Process Rate","-"))
         self.nFramesLabel.setText(rAttr.get("No. Frames","-"))
         self.hitRatioLabel.setText(rAttr.get("Hit Ratio","-"))
+
         self.connectSignals()
     def emitChange(self):
         rAttr = {}
