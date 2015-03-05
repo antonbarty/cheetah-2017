@@ -26,7 +26,9 @@
 #include "psddl_psana/acqiris.ddl.h"
 #include "psddl_psana/camera.ddl.h"
 #include "psddl_psana/pnccd.ddl.h"
+#include "ReleaseInfo/Release.h"
 
+#define PSANA_VERSION (RELEASEINFO_VERSION_MAJOR*10000+RELEASEINFO_VERSION_MIDDLE*100+RELEASEINFO_VERSION_MINOR)
 using namespace cheetah_ana_pkg;
 using namespace std;
 
@@ -210,7 +212,9 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+#if PSANA_VERSION >= 1315
 		shared_ptr<Psana::Bld::BldDataEBeamV7> ebeam7 = evt.get(m_srcBeam);
+#endif
 		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
@@ -220,6 +224,7 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
 		double photonEnergyeV=-1;
+#if PSANA_VERSION >= 1315
 		// Ebeam v7
 		if (ebeam7.get()) {
 			charge = ebeam7->ebeamCharge();
@@ -244,8 +249,10 @@ namespace cheetah_ana_pkg {
 				<< "* fEbeamPkCurrBC27=" << PkCurrBC2 << endl;
 			}
 		}
+		else 
+#endif
         // Ebeam v6
-		else if (ebeam6.get()) {
+			if (ebeam6.get()) {
 			charge = ebeam6->ebeamCharge();
 			L3Energy = ebeam6->ebeamL3Energy();
 			LTUPosX = ebeam6->ebeamLTUPosX();
