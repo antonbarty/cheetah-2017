@@ -1060,9 +1060,7 @@ static std::vector<std::string> openFilenames = std::vector<std::string>();
 static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
 static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
-	
-//	char * filename = global->cxiFilename;
-	char * filename[MAX_FILENAME_LENGTH];
+	char filename[MAX_FILENAME_LENGTH];
 	if(global->saveByPowderClass){
 		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
 	}else{
@@ -1094,8 +1092,8 @@ void writeAccumulatedCXI(cGlobal * global){
 #endif
 	char    sBuffer[1024];
 
-	POWDER_LOOP {
-		DETECTOR_LOOP{
+	DETECTOR_LOOP{
+		POWDER_LOOP {
 			CXI::Node * cxi = getCXIFileByName(global, powderClass);
 			Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 			Node & cl = det_node.child("class",powderClass+1);
