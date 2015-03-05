@@ -175,6 +175,7 @@ cGlobal::cGlobal(void) {
 	savePixelmask = 1;
     // Do not output 1 HDF5 per image by default
 	saveCXI = 1;
+	saveByPowderClass = false;
 
 	// Flush after every image by default
 	cxiFlushPeriod = 1;
@@ -1134,6 +1135,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
+	}
+	else if (!strcmp(tag, "savebypowderclass")) {
+		saveByPowderClass = atoi(value);
 	}
 	else if (!strcmp(tag, "datasaveformat")) {
 		strcpy(dataSaveFormat, value);

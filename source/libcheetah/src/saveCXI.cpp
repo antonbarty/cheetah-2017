@@ -1059,8 +1059,15 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 static std::vector<std::string> openFilenames = std::vector<std::string>();
 static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
-static CXI::Node * getCXIFileByName(cGlobal *global){
-	char * filename = global->cxiFilename;
+static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
+	
+//	char * filename = global->cxiFilename;
+	char * filename[MAX_FILENAME_LENGTH];
+	if(global->saveByPowderClass){
+		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
+	}else{
+		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
+	}
 	pthread_mutex_lock(&global->framefp_mutex);
 	/* search again to be sure */
 	for(uint i = 0;i<openFilenames.size();i++){
@@ -1085,12 +1092,12 @@ void writeAccumulatedCXI(cGlobal * global){
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
 #endif
-	CXI::Node * cxi = getCXIFileByName(global);
 	char    sBuffer[1024];
 
-	DETECTOR_LOOP{
-		Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
-		POWDER_LOOP {
+	POWDER_LOOP {
+		DETECTOR_LOOP{
+			CXI::Node * cxi = getCXIFileByName(global, powderClass);
+			Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 			Node & cl = det_node.child("class",powderClass+1);
 			FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
 				if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
@@ -1181,7 +1188,7 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 	}
 #endif
 	/* Get the existing CXI file or open a new one */
-	CXI::Node * cxi = getCXIFileByName(global);
+	CXI::Node * cxi = getCXIFileByName(global, info->powderClass);
 
 	(*cxi)["cheetah"]["global_data"]["hit"].write(&info->hit,global->nCXIEvents);
 	(*cxi)["cheetah"]["global_data"]["nPeaks"].write(&info->nPeaks,global->nCXIEvents);
@@ -1210,7 +1217,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	}
 #endif
 	/* Get the existing CXI file or open a new one */
-	CXI::Node * cxi = getCXIFileByName(global);
+	CXI::Node * cxi = getCXIFileByName(global, eventData->powderClass);
 	Node & root = *cxi;
 	char sBuffer[1024];
 
