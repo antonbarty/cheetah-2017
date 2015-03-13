@@ -562,7 +562,5 @@ namespace cheetah_ana_pkg {
 		}
 		return tofPresent;
 	}
-	
-	
 
 } // namespace cheetah_ana_pkg

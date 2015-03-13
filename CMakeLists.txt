@@ -48,12 +48,10 @@ OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." OFF )
 OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
 OPTION(BUILD_CHEETAH_SACLA "If ON build cheetah-sacla. Otherwise skip it." OFF )
 
-SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/source/libcheetah/include CACHE PATH "libcheet
-ah include directory")
+SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/source/libcheetah/include CACHE PATH "libcheetah include directory")
 MARK_AS_ADVANCED(CHEETAH_INCLUDES)
 
-SET(CHEETAH_LIBRARY ${CMAKE_BINARY_DIR}/source/libcheetah/libcheetah.so CACHE FILEPATH 
-"libcheetah to link against")
+SET(CHEETAH_LIBRARY ${CMAKE_BINARY_DIR}/source/libcheetah/libcheetah.so CACHE FILEPATH "libcheetah to link against")
 MARK_AS_ADVANCED(CHEETAH_LIBRARY)
 
 
