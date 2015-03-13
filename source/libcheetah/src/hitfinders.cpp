@@ -215,7 +215,7 @@ long hitfinderFastScan(cEventData *eventData, cGlobal *global){
 	char	*mask = (char*) calloc(pix_nn, sizeof(char));
 	
 	//	Bad region masks  (data=0 to ignore regions)
-	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 	for(long i=0;i<pix_nn;i++)
 		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 	
@@ -307,7 +307,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 	long      pix_nn;
 	float     ADC_threshold = global->hitfinderADC;
 	// Combine pixel options for pixels to be ignored
-	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
+	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
 
 	if (global->hitfinderIgnoreNoisyPixels) {
 		pixel_options |= PIXEL_IS_NOISY;
@@ -376,7 +376,7 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
 	long	    pix_nn = global->detector[detIndex].pix_nn;  
 	float     ADC_threshold = global->hitfinderADC;
 	// Combine pixel options for pixels to be ignored
-	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED | PIXEL_IS_MISSING;
+	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
   
 	if (global->hitfinderIgnoreNoisyPixels) {
 		pixel_options |= PIXEL_IS_NOISY;
@@ -428,7 +428,7 @@ int hitfinder4(cGlobal *global,cEventData *eventData,long detIndex){
 	
 
 	// combine pixelmask bits
-	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_SATURATED;
+	uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD;
 
 	if (global->hitfinderIgnoreNoisyPixels) {
 		combined_pixel_options |= PIXEL_IS_NOISY;
