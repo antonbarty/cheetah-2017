@@ -391,7 +391,8 @@ void saveDarkcal(cGlobal *global, int detIndex) {
 	//printf("Processing darkcal\n");
 	//sprintf(filename,"r%04u-%s-%li-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
 	//sprintf(filename,"r%04u-%s-detectorID%li-darkcal.h5",global->runNumber,detector->detectorName,detector->detectorID);
-	sprintf(filename,"%s-r%04u-%s-detectorID%li-darkcal.h5",global->experimentID, global->runNumber,detector->detectorName,detector->detectorID);
+	//sprintf(filename,"%s-r%04u-%s-detector%li-darkcal.h5",global->experimentID, global->runNumber,detector->detectorName,detector->detectorID);
+    sprintf(filename,"%s-r%04u-detector%li-darkcal.h5",global->experimentID, global->runNumber,detector->detectorID);
 
 	float *buffer = (float*) calloc(pix_nn, sizeof(float));
 	pthread_mutex_lock(&detector->powderData_mutex[0]);

@@ -920,7 +920,7 @@ pro crawler_event, ev
 		sState.mbview_gainmap : begin
 			cd, current=dir
 			dir = file_dirname(dir)+'/calib'
-			make_cspad_gain_map, sState.geometry, 0, 300, 6.87526, /menu, outdir=dir
+			make_cspad_gain_map, sState.geometry, 0, 300, 6.87526, /menu
 		end
 
 
