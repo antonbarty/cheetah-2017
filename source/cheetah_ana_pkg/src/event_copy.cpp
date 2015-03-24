@@ -131,7 +131,9 @@ namespace cheetah_ana_pkg {
         int     pumpLaserCode = 0;
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
+#if PSANA_VERSION >= 1317
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
+#endif
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
@@ -189,6 +191,7 @@ namespace cheetah_ana_pkg {
                 //fclose(fp);
             }                        
 		}
+#if PSANA_VERSION >= 1317
         if (data4.get()) {
             numEvrData = data3->numFifoEvents();
             
@@ -223,10 +226,15 @@ namespace cheetah_ana_pkg {
             }
         }
 		else {
+			printf("Event %li: Warning: Psana::EvrData::DataV4 failed\n", frameNumber);
+			fiducial = frameNumber;
+		}
+#else
+		else {
 			printf("Event %li: Warning: Psana::EvrData::DataV3 failed\n", frameNumber);
 			fiducial = frameNumber;
 		}
-
+#endif
         
         
 		/*
