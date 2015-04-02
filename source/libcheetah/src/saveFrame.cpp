@@ -91,6 +91,8 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	
 	/*
 	 *	Update text file log
+     *  (If changing what's in the file, paste the new version into function saveCXI.cpp-->writeCXI() to avoid incompatibilities)
+     *  Beamtime hack at 2am - fix this with one function later.
 	 */
 	pthread_mutex_lock(&global->framefp_mutex);
 	fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, eventData->eventSubdir, eventData->eventname, eventData->frameNumber, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakResolutionA, eventData->peakDensity);

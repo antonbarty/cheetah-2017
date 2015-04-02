@@ -132,7 +132,39 @@ namespace cheetah_ana_pkg {
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
-		if (data3.get()) {
+        if (data4.get()) {
+            numEvrData = data4->numFifoEvents();
+            
+            // Timestamps
+            const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data4->fifoEvents();
+            fiducial = array[0].timestampHigh();
+            if (verbose) {
+                cout << "*** fiducial: ";
+                for (int i=0; i<numEvrData; i++) {
+                    fiducial = array[i].timestampHigh(); // array[0],array[1]
+                    cout << fiducial << " ";
+                }
+                cout << endl;
+            }
+            
+            // Beam on
+            beamOn = eventCodePresent(data4->fifoEvents(), beamCode);
+            if (verbose) {
+                cout << "***** beamOn: " << beamOn << endl;
+            }
+            
+            /*
+             *  Pump laser logic
+             *  (usually based on the EVR codes in some way)
+             *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+             */
+            if(strcmp(cheetahGlobal.pumpLaserScheme, "evr41") == 0) {
+                int evr41 = eventCodePresent(data4->fifoEvents(), 41);
+                pumpLaserOn = evr41;
+                pumpLaserCode = evr41;
+            }
+        }
+		else if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
 			// Timestamps
@@ -189,41 +221,8 @@ namespace cheetah_ana_pkg {
                 //fclose(fp);
             }                        
 		}
-        if (data4.get()) {
-            numEvrData = data3->numFifoEvents();
-            
-            // Timestamps
-            const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
-            fiducial = array[0].timestampHigh();
-            if (verbose) {
-                cout << "*** fiducial: ";
-                for (int i=0; i<numEvrData; i++) {
-                    fiducial = array[i].timestampHigh(); // array[0],array[1]
-                    cout << fiducial << " ";
-                }
-                cout << endl;
-            }
-            
-            // Beam on
-            beamOn = eventCodePresent(data3->fifoEvents(), beamCode);
-            if (verbose) {
-                cout << "***** beamOn: " << beamOn << endl;
-            }
-            
-            
-            /*
-             *  Pump laser logic
-             *  (usually based on the EVR codes in some way)
-             *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
-             */
-            if(strcmp(cheetahGlobal.pumpLaserScheme, "evr41") == 0) {
-                int evr41 = eventCodePresent(data3->fifoEvents(), 41);
-                pumpLaserOn = evr41;
-                pumpLaserCode = evr41;
-            }
-        }
 		else {
-			printf("Event %li: Warning: Psana::EvrData::DataV3 failed\n", frameNumber);
+			printf("Event %li: Warning: Psana::EvrData::Data failed\n", frameNumber);
 			fiducial = frameNumber;
 		}
 

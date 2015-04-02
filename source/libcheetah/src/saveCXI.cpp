@@ -1214,6 +1214,19 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
 #endif
+    
+    
+    /*
+     *	Update text file log
+     *  (If changing what's in the file, paste the new version into function saveCXI.cpp-->writeCXI() and saveFrame.cpp00>writeHDF5 to avoid incompatibilities)
+     *  Beamtime hack at 2am - fix this with one function later.
+     */
+    pthread_mutex_lock(&global->framefp_mutex);
+    fprintf(global->cleanedfp, "r%04u/%s/%s, %li, %i, %g, %g, %g, %g, %g\n",global->runNumber, eventData->eventSubdir, eventData->eventname, eventData->frameNumber, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakResolutionA, eventData->peakDensity);
+    pthread_mutex_unlock(&global->framefp_mutex);
+
+    
+    
 	/* Get the existing CXI file or open a new one */
 	CXI::Node * cxi = getCXIFileByName(global, eventData->powderClass);
 	Node & root = *cxi;
