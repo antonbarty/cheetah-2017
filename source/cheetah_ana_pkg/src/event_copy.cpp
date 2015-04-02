@@ -132,6 +132,8 @@ namespace cheetah_ana_pkg {
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
+
+		// EvrData v4
         if (data4.get()) {
             numEvrData = data4->numFifoEvents();
             
@@ -164,6 +166,8 @@ namespace cheetah_ana_pkg {
                 pumpLaserCode = evr41;
             }
         }
+
+		// EvrData v3
 		else if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
@@ -225,7 +229,6 @@ namespace cheetah_ana_pkg {
 			printf("Event %li: Warning: Psana::EvrData::Data failed\n", frameNumber);
 			fiducial = frameNumber;
 		}
-
         
         
 		/*
@@ -245,9 +248,7 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
-#if PSANA_VERSION >= 1315
 		shared_ptr<Psana::Bld::BldDataEBeamV7> ebeam7 = evt.get(m_srcBeam);
-#endif
 		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
@@ -257,7 +258,6 @@ namespace cheetah_ana_pkg {
 		shared_ptr<Psana::Bld::BldDataEBeamV0> ebeam0 = evt.get(m_srcBeam);
 
 		double photonEnergyeV=-1;
-#if PSANA_VERSION >= 1315
 		// Ebeam v7
 		if (ebeam7.get()) {
 			charge = ebeam7->ebeamCharge();
@@ -283,7 +283,6 @@ namespace cheetah_ana_pkg {
 			}
 		}
 		else 
-#endif
         // Ebeam v6
 			if (ebeam6.get()) {
 			charge = ebeam6->ebeamCharge();
