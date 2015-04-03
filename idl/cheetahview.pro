@@ -643,14 +643,24 @@ function cheetahview_updatefilelist, dir
 	file = file_search(dir,"*.cxi",/fully_qualify)
 	if n_elements(file) ne 0 AND file[0] ne '' then begin
 		file_type = 'cxi'
-		print,strcompress(string('CXI file: ', file_basename(file)))
+		print,strcompress(string('CXI files: ', file_basename(file)))
+		total_nframes = 0
 		
-		nframes = read_cheetah_cxi(file, /get_nframes)
-		print, strcompress(string('Number of frames: ', nframes))
+		for i=0, n_elements(file)-1 do begin
+			nframes = read_cheetah_cxi(file[i], /get_nframes)
+			print, strcompress(string('Number of frames in ', file_basename(file[i]), ' = ', nframes))
 
-		file = replicate(file[0], nframes)
-		index = indgen(nframes)
-		
+			if total_nframes eq 0 AND nframes gt 0 then begin
+				file = replicate(file[i], nframes)
+				index = indgen(nframes)
+				total_nframes += nframes
+			endif $
+			else if nframes ne 0 then  begin
+				file = [file, replicate(file[i], nframes)]
+				index = [index, indgen(nframes)]
+				total_nframes += nframes
+			endif
+		endfor
 	endif $
 
 	;; Find single frane .h5 files

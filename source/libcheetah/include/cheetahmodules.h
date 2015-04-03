@@ -69,17 +69,18 @@ void updateNoisyPixelBuffer(cEventData*, cGlobal*,int);
 // saveFrame.cpp
 void nameEvent(cEventData*, cGlobal*);
 void writeHDF5(cEventData*, cGlobal*);
-void writePeakFile(cEventData *eventData, cGlobal *global);
+void writePeakFile(cEventData*, cGlobal*);
 void writeSimpleHDF5(const char*, const void*, int, int, int);
 void writeSimpleHDF5(const char*, const void*, int, int, int, const char*,long);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
 // saveCXI.cpp
-void writeCXI(cEventData *info, cGlobal *global);
-void writeCXIHitstats(cEventData *info, cGlobal *global);
-void writeAccumulatedCXI(cGlobal * global);
-void closeCXIFiles(cGlobal * global);
-herr_t cheetahHDF5ErrorHandler(hid_t,void *unused);
+void writeCXI(cEventData*, cGlobal*);
+void writeCXIHitstats(cEventData*, cGlobal*);
+void writeAccumulatedCXI(cGlobal*);
+void closeCXIFiles(cGlobal*);
+void flushCXIFiles(cGlobal*);
+herr_t cheetahHDF5ErrorHandler(hid_t,void*);
 
 // assemble2DImage.cpp
 void assemble2D(cEventData*, cGlobal*);

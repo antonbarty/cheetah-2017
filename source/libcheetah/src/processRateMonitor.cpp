@@ -29,7 +29,8 @@ double ProcessRateMonitor::getRate(){
 	double weight = 1;
 	if(curPos < 0 || ringGet(curPos) < 0){
 		return 0;
-    }else{
+    }
+	else{
 		tEnd = ringGet(curPos);
 	}
 	double nextT = tEnd;

@@ -243,7 +243,8 @@ bool cDataVersion::next(){
 			isMainVersion = (dataVersionMain == DATA_VERSION_RAW);
 			isMainDataset = isMainVersion && (dataFormatMain == dataFormat);
 			return true;
-		} else if ((dataVersionIndex == 1) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_CORRECTED)) {
+		}
+		else if ((dataVersionIndex == 1) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_CORRECTED)) {
 			data = detCorr;
 			memcpy(&(powder[0]), &(powder_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 			memcpy(&(powder_squared[0]), &(powder_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
@@ -252,7 +253,8 @@ bool cDataVersion::next(){
 			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED);
 			isMainDataset = isMainVersion && (dataFormatMain == dataFormat);
 			return true;
-		} else if ((dataVersionIndex == 2) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED)) {
+		}
+		else if ((dataVersionIndex == 2) && isBitOptionSet(dataVersion,DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED)) {
 			data = detPhotCorr;
 			memcpy(&(powder[0]), &(powder_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 			memcpy(&(powder_squared[0]), &(powder_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);

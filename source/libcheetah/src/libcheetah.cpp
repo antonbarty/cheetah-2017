@@ -22,42 +22,9 @@
 
 #include "cheetah.h"
 
-/* Very crude embedding of a Python interpreter for shared memory visualization */
-/* Note that this code implicitly assumes to be the only Python interpreter within the process */
-/* No synchronization at all, not even proper signal handling */
+void spawnPython(char*);
+void* pythonWorker(void*);
 
-void* pythonWorker(void* threadarg)
-{
-	char* pythonFile = (char*) threadarg;
-	FILE* fileHandle = fopen(pythonFile, "r");
-	if (!fileHandle)
-    {
-		fprintf(stderr, "Unable to open Python script %s, error code %d, continuing without Python visualizer.", pythonFile, errno);
-    }
-	// Note: no call to Py_SetProgramName for now
-	//char buffer [50];
-	//sprintf (buffer, "/reg/neh/home/hantke/software/bin/python");
-	//Py_SetProgramName(buffer);
-	Py_Initialize();
-	//  PyThreadState* ourThread = Py_NewInterpreter();
-	PyRun_SimpleFile(fileHandle, pythonFile);
-	//  Py_EndInterpreter(ourThread);
-	//  Py_Finalize();
-
-	return 0;
-}
-
-void spawnPython(char* pythonFile)
-{
-	pthread_t         thread;
-	pthread_attr_t    threadAttribute;
-	pthread_attr_init(&threadAttribute);
-	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
-	int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
-	if(returnStatus){
-		ERROR("Failed to create python thread!");
-	}
-}
 
 /*
  *  libCheetah initialisation function
@@ -484,4 +451,46 @@ void cheetahError(const char *filename, int line, const char *format, ...){
 	puts("");
 	abort();
 }
+
+
+
+
+/* Very crude embedding of a Python interpreter for shared memory visualization */
+/* Note that this code implicitly assumes to be the only Python interpreter within the process */
+/* No synchronization at all, not even proper signal handling */
+void* pythonWorker(void* threadarg)
+{
+	char* pythonFile = (char*) threadarg;
+	FILE* fileHandle = fopen(pythonFile, "r");
+	if (!fileHandle)
+	{
+		fprintf(stderr, "Unable to open Python script %s, error code %d, continuing without Python visualizer.", pythonFile, errno);
+	}
+	// Note: no call to Py_SetProgramName for now
+	//char buffer [50];
+	//sprintf (buffer, "/reg/neh/home/hantke/software/bin/python");
+	//Py_SetProgramName(buffer);
+	Py_Initialize();
+	//  PyThreadState* ourThread = Py_NewInterpreter();
+	PyRun_SimpleFile(fileHandle, pythonFile);
+	//  Py_EndInterpreter(ourThread);
+	//  Py_Finalize();
+	
+	return 0;
+}
+
+void spawnPython(char* pythonFile)
+{
+	pthread_t         thread;
+	pthread_attr_t    threadAttribute;
+	pthread_attr_init(&threadAttribute);
+	pthread_attr_setdetachstate(&threadAttribute, PTHREAD_CREATE_DETACHED);
+	int returnStatus = pthread_create(&thread, &threadAttribute, pythonWorker, (void *) pythonFile);
+	if(returnStatus){
+		ERROR("Failed to create python thread!");
+	}
+}
+
+
+
 

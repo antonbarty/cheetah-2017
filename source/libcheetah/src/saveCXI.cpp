@@ -17,7 +17,8 @@
 #include <saveCXI.h>
 
 namespace CXI{
-	Node * Node::createDataset(const char * s, hid_t dataType, hsize_t width, hsize_t height,
+	
+	Node *Node::createDataset(const char * s, hid_t dataType, hsize_t width, hsize_t height,
 							   hsize_t length, hsize_t stackSize, int chunkSize, int heightChunkSize, const char * userAxis){
 		hid_t loc = hid();
 
@@ -31,6 +32,7 @@ namespace CXI{
 			height = 0;
 		}
 
+		
 		// Count dimensions
 		// First right shift the dimensions
 		hsize_t * dimsP[4] = {&width, &height, &length, &stackSize};
@@ -457,16 +459,17 @@ namespace CXI{
 		return datatype;
 	}
 
+	
 	uint Node::getStackSlice(){
-#ifdef __GNUC__
+	#ifdef __GNUC__
 	return __sync_fetch_and_add(&stackCounter,1);
-#else
+	#else
 	pthread_mutex_lock(&global->framefp_mutex);
 	uint ret = stackCounter;
 	cxi->stackCounter++;
 	pthread_mutex_unlock(&global->framefp_mutex);
 	return ret;
-#endif
+	#endif
 }
 
 }
@@ -548,10 +551,13 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
  
 */
 
-static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
-	/* Creates the initial skeleton for the CXI file.
-	   We'll rely on HDF5 automatic error reporting. It's usually loud enough.
-	*/
+
+
+/*
+ *	Create the initial skeleton for the CXI file.
+ *  We'll rely on HDF5 automatic error reporting. It's usually loud enough.
+ */
+static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 	int debugLevel = global->debugLevel;
 
 	using CXI::Node;
@@ -578,9 +584,11 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	hid_t h5type = H5T_NATIVE_FLOAT;
 	if(!strcasecmp(global->dataSaveFormat,"INT16")){
 		h5type = H5T_STD_I16LE;
-	}else if(!strcasecmp(global->dataSaveFormat,"INT32")){
+	}
+	else if(!strcasecmp(global->dataSaveFormat,"INT32")){
 		h5type = H5T_STD_I32LE;
-	}else if(!strcasecmp(global->dataSaveFormat,"float")){
+	}
+	else if(!strcasecmp(global->dataSaveFormat,"float")){
 		h5type = H5T_NATIVE_FLOAT;
 	}
 	
@@ -656,9 +664,10 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing non-assembled data."); }
 			cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
 			while (dataV.next()) {
-				if (global->saveModular) {
-					// Non-assembled images, modular (4D: N_frames x N_modules x Ny_module x Nx_module)
 
+				// Non-assembled images, modular (4D: N_frames x N_modules x Ny_module x Nx_module)
+				if (global->saveModular) {
+					
 					// Create group /entry_1/instrument_1/detector_[i]/modular_[datver]/
 					sprintf(sBuffer,"modular_%s",dataV.name);
 					Node * data_node = detector->createGroup(sBuffer);
@@ -693,8 +702,10 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 						detector->addDatasetLink("mask_shared_max",data_node->path().c_str());
 						detector->addDatasetLink("mask_shared_min",data_node->path().c_str());
 					}
-				} else {
-					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
+				}
+
+				// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
+				else {
 					// Create group /entry_1/instrument_1/detector_[i]/[datver]/
 					Node * data_node = detector->createGroup(dataV.name_version);
 					data_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
@@ -725,6 +736,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		// DATA_FORMAT_ASSEMBLED
 		// Assembled images (3D: N_frames x Ny_image x Nx_image)
 		DEBUGL2_ONLY{ DEBUG("Data format assembled."); }
+		
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_ASSEMBLED)) {
 			DEBUGL2_ONLY{ DEBUG("Initialize event groups and datasets for writing assembled data."); }
 			// Create group /entry_1/image_i
@@ -1040,7 +1052,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		DEBUG("Skeleton created.");
 	}
 
-#if defined H5F_ACC_SWMR_READ
+	#if defined H5F_ACC_SWMR_READ
 	if(global->cxiSWMR){  
 		root->closeAll();
 		if(H5Fstart_swmr_write(root->hid()) < 0){
@@ -1049,13 +1061,18 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 		puts("Changed to SWMR mode.");
 		root->openAll();
 	}
-#endif
+	#endif
 
 	H5Fflush(root->hid(), H5F_SCOPE_GLOBAL);
 
 	return root;
 }
 
+
+
+/*
+ *	CXI file handling
+ */
 static std::vector<std::string> openFilenames = std::vector<std::string>();
 static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
@@ -1063,9 +1080,11 @@ static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
 	char filename[MAX_FILENAME_LENGTH];
 	if(global->saveByPowderClass){
 		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
-	}else{
+	}
+	else{
 		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
 	}
+
 	pthread_mutex_lock(&global->framefp_mutex);
 	/* search again to be sure */
 	for(uint i = 0;i<openFilenames.size();i++){
@@ -1077,7 +1096,7 @@ static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
 	}
 	openFilenames.push_back(filename);
 	DEBUG2("Creating a new file.");
-	CXI::Node * cxi = createCXISkeleton(filename,global);
+	CXI::Node *cxi = createCXISkeleton(filename,global);
 	openFiles.push_back(cxi);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	return cxi;
@@ -1085,11 +1104,11 @@ static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
 
 void writeAccumulatedCXI(cGlobal * global){
 	using CXI::Node;
-#ifdef H5F_ACC_SWMR_WRITE  
+	#ifdef H5F_ACC_SWMR_WRITE
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
-#endif
+	#endif
 	char    sBuffer[1024];
 
 	DETECTOR_LOOP{
@@ -1145,14 +1164,19 @@ void writeAccumulatedCXI(cGlobal * global){
 			}
 		}
 	}
-#ifdef H5F_ACC_SWMR_WRITE  
+	
+	#ifdef H5F_ACC_SWMR_WRITE
 	if(global->cxiSWMR){
 		pthread_mutex_unlock(&global->swmr_mutex);
 	}
-#endif
+	#endif
 }
 
-static void  closeCXI(CXI::Node * cxi){
+
+/*
+ *	Close CXI files
+ */
+static void  closeCXI(CXI::Node *cxi){
 	cxi->trimAll();
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 	H5Fclose(cxi->hid());
@@ -1160,12 +1184,14 @@ static void  closeCXI(CXI::Node * cxi){
 }
 
 void closeCXIFiles(cGlobal * global){
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 8 && H5_VERS_RELEASE < 9
-#warning "HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n"
-#warning "Please update your HDF5 to get properly truncated output files.\n"
+
+	#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR == 8 && H5_VERS_RELEASE < 9
+	#warning "HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n"
+	#warning "Please update your HDF5 to get properly truncated output files.\n"
 	fprintf(stderr,"HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n");
 	fprintf(stderr,"Please update your HDF5 to get properly truncated output files.\n");
-#else
+	
+	#else
 	pthread_mutex_lock(&global->framefp_mutex);
 	/* Go through each file and resize them to their right size */
 	for(uint i = 0;i<openFilenames.size();i++){
@@ -1174,35 +1200,55 @@ void closeCXIFiles(cGlobal * global){
 	openFiles.clear();
 	openFilenames.clear();
 	pthread_mutex_unlock(&global->framefp_mutex);
-#endif
+	#endif
 	H5close();
 }
 
+
+/*
+ *	Flush CXI file data
+ */
+static void  flushCXI(CXI::Node *cxi){
+	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
+}
+
+void flushCXIFiles(cGlobal * global){
+	
+	/* Go through each file and resize them to their right size */
+	pthread_mutex_lock(&global->framefp_mutex);
+	for(uint i = 0;i<openFilenames.size();i++){
+		flushCXI(openFiles[i]);
+	}
+	pthread_mutex_unlock(&global->framefp_mutex);
+}
+
+
+
 void writeCXIHitstats(cEventData *info, cGlobal *global ){
 	DEBUG2("Writing Hitstats.");
-#ifdef H5F_ACC_SWMR_WRITE  
+	#ifdef H5F_ACC_SWMR_WRITE
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
-#endif
+	#endif
 	/* Get the existing CXI file or open a new one */
 	CXI::Node * cxi = getCXIFileByName(global, info->powderClass);
 
 	(*cxi)["cheetah"]["global_data"]["hit"].write(&info->hit,global->nCXIEvents);
 	(*cxi)["cheetah"]["global_data"]["nPeaks"].write(&info->nPeaks,global->nCXIEvents);
 	global->nCXIEvents += 1;
-#ifdef H5F_ACC_SWMR_WRITE  
+	#ifdef H5F_ACC_SWMR_WRITE
 	if(global->cxiSWMR){
 		pthread_mutex_unlock(&global->swmr_mutex);
 	}
-#endif
+	#endif
 }
 
 
 void writeCXI(cEventData *eventData, cGlobal *global ){
 	DEBUG2("Write a data of one frame to CXI file.");
 	using CXI::Node;
-#ifdef H5F_ACC_SWMR_WRITE
+	#ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;
 	if(global->cxiSWMR){
 		pthread_mutex_lock(&global->nActiveThreads_mutex);
@@ -1213,7 +1259,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		pthread_mutex_unlock(&global->nActiveThreads_mutex);
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
-#endif
+	#endif
     
     
     /*
@@ -1497,7 +1543,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		Node & detector2 = root["cheetah"]["event_data"].child("detector",detIndex+1);
 		detector2["sum"].write(&eventData->detector[detIndex].sum,stackSlice);		
 	}
-#ifdef H5F_ACC_SWMR_WRITE  
+	#ifdef H5F_ACC_SWMR_WRITE
 	if(global->cxiSWMR){
 		if(global->cxiFlushPeriod && (stackSlice % global->cxiFlushPeriod) == 0){
 			H5Fflush(cxi->hid(),H5F_SCOPE_LOCAL);
@@ -1510,7 +1556,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		}
 		pthread_mutex_unlock(&global->swmr_mutex);
 	}
-#endif
+	#endif
 }
 
 

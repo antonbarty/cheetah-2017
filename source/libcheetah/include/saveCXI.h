@@ -37,13 +37,13 @@ namespace CXI{
 				ERROR("Cannot set file access properties.\n");
 			}
 			if(swmr){
-#ifdef H5F_ACC_SWMR_WRITE
+				#ifdef H5F_ACC_SWMR_WRITE
 				if(H5Pset_libver_bounds(fapl_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST) < 0){
 					ERROR("Cannot set file access properties.\n");
 				}
-#else
+				#else
 				ERROR("Cannot write in SWMR mode, HDF5 library does not support it.\n");
-#endif
+				#endif
 			}
 
 			id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);

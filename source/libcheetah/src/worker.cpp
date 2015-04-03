@@ -390,7 +390,10 @@ cleanup:
 	// Update counters
     global->nprocessedframes += 1;
 	global->nrecentprocessedframes += 1;
-	// Save some types of information from time to timeperiodic powder patterns
+	
+	
+	
+	// Save some types of information from time to time (for example, powder patterns get updated while running)
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
 		DEBUG3("Save data.");
 		// Assemble, downsample and radially average powder
@@ -408,7 +411,14 @@ cleanup:
 		}
 		global->updateLogfile();
 		global->writeStatus("Not finished");
+
+		// try this - periodically flush the H5 file to let us to see data as it's being saved 
+		if(global->saveCXI) {
+			flushCXIFiles(global);
+		}
 	}
+	
+	
 	pthread_mutex_unlock(&global->saveinterval_mutex);
 
 	// Decrement thread pool counter by one
