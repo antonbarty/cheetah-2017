@@ -299,7 +299,8 @@ double * cDataVersion::getPowderSquared(long powderClass) {
 
 pthread_mutex_t * cDataVersion::getPowderMutex(long powderClass) {
 	if (powder_mutex[powderClass] == &detectorCommon->null_mutex) {
-		ERROR("Trying to access powder mutex that does not exist!");
+		printf("powderclass: %li \n", powderClass);
+      ERROR("Trying to access powder mutex that does not exist!");
 	} 
 	return powder_mutex[powderClass];
 }

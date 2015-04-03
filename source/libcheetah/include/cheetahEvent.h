@@ -45,7 +45,7 @@ public:
 	// TOF Detector data
 	cTOFDetectorEvent		tofDetector[MAX_TOF_DETECTORS];
 	int			TOFPresent;
-	
+
 	// Pulnix 120Hz visible camera
 	int				pulnixFail;
 	int				pulnixWidth, pulnixHeight;
@@ -118,7 +118,7 @@ public:
 	int         pumpLaserOn;
 	int         pumpLaserCode;
 	double      pumpLaserDelay;
-	
+   double      TimeToolDelay; // Marius beamtime	
 	// Position of the sample stage
 	double      samplePos[3]; // in um
 

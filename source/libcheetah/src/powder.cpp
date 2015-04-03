@@ -29,7 +29,7 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
 
 	int hit = eventData->hit;
 	int	powderClass = eventData->powderClass;
-    
+
 	DETECTOR_LOOP {
 		if(global->generateDarkcal || global->generateGaincal) {
 			DEBUG3("Add data to powder - this is a darkcal or a gaincal run. (detectorID=%ld)",global->detector[detIndex].detectorID);									
@@ -59,6 +59,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 			while (dataV.next()) {
+
 				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);

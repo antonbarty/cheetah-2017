@@ -130,7 +130,7 @@ namespace cheetah_ana_pkg {
         int     pumpLaserOn = 0;
         int     pumpLaserCode = 0;
 
-		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
+		shared_ptr<Psana::EvrData::DataV4> data3 = evt.get(m_srcEvr);
 		if (data3.get()) {
 			numEvrData = data3->numFifoEvents();
 
@@ -599,8 +599,24 @@ namespace cheetah_ana_pkg {
 			}
 		}
 		
-
-		
+      // For Marius beamtime Time-Tool delay..
+      float  prev_val = 0;
+	   for(long detIndex=0; detIndex<=cheetahGlobal.nDetectors; detIndex++) {
+         shared_ptr<Psana::Epics::EpicsPvHeader> pv = estore.getPV(cheetahGlobal.TimeToolDelayPV);
+         if (pv && pv->numElements() > 0) { 
+            eventData->TimeToolDelay = estore.value(cheetahGlobal.TimeToolDelayPV,0);
+            float delay = estore.value("LAS:FS5:VIT:FS_TGT_TIME_DIAL",0);
+            delay *=10e5;
+            eventData->TimeToolDelay = std::abs((2*eventData->TimeToolDelay) + delay);
+            if (verbose) {
+               if (eventData->TimeToolDelay != prev_val) {
+                   cout << "TimeToolDelay[" << detIndex << "]: " << eventData->TimeToolDelay << endl;
+                   prev_val = eventData->TimeToolDelay;  // just to check epics values are properly synchronized
+               }
+            }
+         }
+      }    
+	
         
 		/*
 		 *  Copy data into worker thread structure if we got this far.
@@ -616,6 +632,7 @@ namespace cheetah_ana_pkg {
 		eventData->beamOn = beamOn;
 		eventData->nPeaks = 0;
 		eventData->pumpLaserDelay = 0;
+     // eventData->TimeToolDelay = TimeToolDelay; // Marius beamtime
 		eventData->gmd1 = gmd1;
 		eventData->gmd2 = gmd2;
 		eventData->gmd11 = gmd11;
@@ -1116,6 +1133,7 @@ namespace cheetah_ana_pkg {
 				return true;
 			}
 		}
+      printf("\n");
 		return false;
 	}
 	

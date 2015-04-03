@@ -926,6 +926,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("f_12_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_21_ENRC",H5T_NATIVE_DOUBLE);
 	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
+   lcls->createStack("TimeToolDelay",H5T_NATIVE_DOUBLE);
 	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
 	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,26);
 	lcls->createLink("eventTime","eventTimeString");
@@ -959,6 +960,7 @@ static CXI::Node * createCXISkeleton(const char * filename,cGlobal *global){
 	event_data->createStack("peakDensity",H5T_NATIVE_FLOAT);
 	event_data->createStack("pumpLaserCode",H5T_NATIVE_INT);
 	event_data->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
+   //event_data->createStack("TimeToolDelay",H5T_NATIVE_DOUBLE);
 	event_data->createStack("imageClass",H5T_NATIVE_INT);
 	event_data->createStack("hit",H5T_NATIVE_INT);
 	DETECTOR_LOOP{
@@ -1433,6 +1435,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	lcls["phaseCavityCharge2"].write(&eventData->phaseCavityCharge2,stackSlice);
 	lcls["photon_energy_eV"].write(&eventData->photonEnergyeV,stackSlice);
 	lcls["photon_wavelength_A"].write(&eventData->wavelengthA,stackSlice);
+   lcls["TimeToolDelay"].write(&eventData->TimeToolDelay,stackSlice); // Marius beamtime
 	lcls["f_11_ENRC"].write(&eventData->gmd11,stackSlice);
 	lcls["f_12_ENRC"].write(&eventData->gmd12,stackSlice);
 	lcls["f_21_ENRC"].write(&eventData->gmd12,stackSlice);
@@ -1470,6 +1473,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	event_data["peakDensity"].write(&eventData->peakDensity,stackSlice);
 	event_data["pumpLaserCode"].write(&eventData->pumpLaserCode,stackSlice);
 	event_data["pumpLaserDelay"].write(&eventData->pumpLaserDelay,stackSlice);
+  // event_data["TimeToolDelay"].write(&eventData->TimeToolDelay,stackSlice); // Marius beamtime
 	event_data["imageClass"].write(&eventData->powderClass,stackSlice);
 
 	event_data["hit"].write(&eventData->hit,stackSlice);

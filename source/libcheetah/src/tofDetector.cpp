@@ -57,8 +57,8 @@ void cTOFDetectorCommon::configFromName(){
 	if(strcasecmp(detectorName,"acqiris0") == 0){
 		numSamples = 12288;
 		strcpy(sourceIdentifier,"DetInfo(:Acqiris.0)");
-	}else if(strcasecmp(detectorName,"acqiris1") == 0){
+	}else if(strcasecmp(detectorName,"acqiris2") == 0){
 		numSamples = 12288;
-		strcpy(sourceIdentifier,"DetInfo(:Acqiris.1)");
+		strcpy(sourceIdentifier,"DetInfo(:Acqiris.2)");
 	}
 }

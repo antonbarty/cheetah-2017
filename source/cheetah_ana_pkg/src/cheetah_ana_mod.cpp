@@ -43,7 +43,7 @@
 #include "psddl_psana/pnccd.ddl.h"
 
 // LCLS event codes
-#define beamCode 140
+#define beamCode 184
 #define verbose 0
 
 //-----------------------------------------------------------------------

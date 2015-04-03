@@ -72,6 +72,8 @@ cGlobal::cGlobal(void) {
 	samplePosZPV[0] = 0;
 	sampleVoltage[0] = 0;
 
+
+
 	// Misc. PV values
 	nEpicsPvFloatValues = 0;
 
@@ -338,7 +340,7 @@ void cGlobal::setup() {
 	// Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
 	if(sortPumpLaserOn) {
         if(strcmp(pumpLaserScheme, "evr41") == 0) {
-            nPowderClasses *= 2;
+            nPowderClasses = 2;
         }
         else if(strcmp(pumpLaserScheme, "LD57") == 0) {
             nPowderClasses = 6;
@@ -362,6 +364,7 @@ void cGlobal::setup() {
 	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
 		pthread_mutex_init(&nPeaksMin_mutex[powderClass], NULL);
 		pthread_mutex_init(&nPeaksMax_mutex[powderClass], NULL);
+      pthread_mutex_init(&powder_mutex[powderClass], NULL); // Sbasu debugging powder for sort laser
 	}
 	pthread_mutex_init(&process_mutex, NULL);
 	pthread_mutex_init(&nActiveThreads_mutex, NULL);
@@ -584,9 +587,10 @@ void cGlobal::setup() {
 
 void cGlobal::unlockMutexes(void) {
 	pthread_mutex_unlock(&hitclass_mutex);
-	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
+	for(long powderClass = 0; powderClass<nPowderClasses; powderClass++){
 		pthread_mutex_unlock(&nPeaksMin_mutex[powderClass]);
 		pthread_mutex_unlock(&nPeaksMax_mutex[powderClass]);
+      pthread_mutex_unlock(&powder_mutex[powderClass]);
 	}
 	pthread_mutex_unlock(&process_mutex);
 	pthread_mutex_unlock(&nActiveThreads_mutex);
@@ -1021,6 +1025,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "pumplaserscheme")) {
 		strcpy(pumpLaserScheme, value);
 	}
+   else if (!strcmp(tag, "timetooldelaypv")) {
+     strcpy(TimeToolDelayPV, value);  // Marius beamtime
+   }
+
 	// Energy spectrum parameters
 	else if (!strcmp(tag, "usefeespectrum")) {
 		useFEEspectrum = atoi(value);
@@ -1471,7 +1479,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay, eventData->pumpLaserOn\n");
+	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay, eventData->pumpLaserOn, eventData->TimeToolDelay \n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");

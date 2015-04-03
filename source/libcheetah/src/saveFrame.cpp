@@ -693,7 +693,11 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/pumpLaserOn", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
 	H5Dclose(dataset_id);
-
+   
+   //time-tool
+   dataset_id = H5Dcreate1(hdf_fileID, "LCLS/TimeToolDelay", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
+   H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->TimeToolDelay );
+   H5Dclose(dataset_id);
 
 	// Misc EPICS PVs
 	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {	

@@ -241,6 +241,9 @@ public:
 	/** @brief The pump laser delay. */
 	float    pumpLaserDelay;
 
+   /** @Epics variable for time-tool delay */
+   char     TimeToolDelayPV[MAX_EPICS_PV_NAME_LENGTH];
+
 	/** @brief The Epics process variable for the sample translation. */
 	char     samplePosXPV[MAX_FILENAME_LENGTH];
 	char     samplePosYPV[MAX_FILENAME_LENGTH];
@@ -386,6 +389,7 @@ public:
 	int nPeaksMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t nPeaksMin_mutex[MAX_POWDER_CLASSES];
 	pthread_mutex_t nPeaksMax_mutex[MAX_POWDER_CLASSES];
+   pthread_mutex_t powder_mutex[MAX_POWDER_CLASSES];
 
 	std::map<std::pair<int, int>, int> hitClasses[3];
 

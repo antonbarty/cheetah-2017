@@ -780,6 +780,7 @@ void cPixelDetectorCommon::allocateMemory() {
 	
 	pthread_mutex_init(&bg_update_mutex, NULL);
 	frameBufferBlanks = new cFrameBuffer(pix_nn,bgMemory,threadSafetyLevel);
+   printf("nClasses: %li \n",nPowderClasses);
 	
 	// Powder data (accumulated sums and sums of squared values)  
 	for(long powderClass=0; powderClass<nPowderClasses; powderClass++) {

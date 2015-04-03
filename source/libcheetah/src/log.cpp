@@ -29,7 +29,8 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 	fprintf(global->framefp, "%g, ", eventData->peakDensity);
 	fprintf(global->framefp, "%d, ", eventData->pumpLaserCode);
 	fprintf(global->framefp, "%g, ", eventData->pumpLaserDelay);
-    fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
+    fprintf(global->framefp, "%d,", eventData->pumpLaserOn);
+   fprintf(global->framefp, "%g\n ", eventData->TimeToolDelay);
 	pthread_mutex_unlock(&global->framefp_mutex);
 
 	// Keep track of what has gone into each image class

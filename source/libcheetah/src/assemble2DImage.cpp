@@ -259,14 +259,16 @@ void assemble2DPowder(cGlobal *global) {
 			float		*pix_x = global->detector[detIndex].pix_x;
 			float		*pix_y = global->detector[detIndex].pix_y;
 			int             assembleInterpolation = global->assembleInterpolation;
-        
+       
+         
 			// Assemble each powder type
 			for(long powderClass=0; powderClass < global->nPowderClasses; powderClass++) {
+
 
 				cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
 				cDataVersion imageV(NULL, &global->detector[detIndex], global->detector[detIndex].powderVersion, cDataVersion::DATA_FORMAT_ASSEMBLED);
 				while (dataV.next() && imageV.next()) {
-
+ 
 					double * data = dataV.getPowder(powderClass);
 					double * image = imageV.getPowder(powderClass);
 
@@ -275,21 +277,23 @@ void assemble2DPowder(cGlobal *global) {
 					float   *fimage = (float*) calloc(image_nn,sizeof(float));
 
 					// Assembly is done using float; powder data is double (!!)	
-					for(long i=0; i<pix_nn; i++)
+					for(long i=0; i<pix_nn; i++) 
 						fdata[i] = (float) data[i];
 
 					// Assemble image
 					assemble2DImage(fimage, fdata, pix_x, pix_y, pix_nn, image_nx, image_nn, assembleInterpolation);
-
+               
 					// Assembly is done using float; powder data is double (!!)
 					for(long i=0; i<image_nn; i++)
 						image[i] = (double) fimage[i];
 				
-					// Cleanup
+               // Cleanup
 					free(fdata);
 					free(fimage);
 				}
 			}
+
+
 		}
 	}
 }

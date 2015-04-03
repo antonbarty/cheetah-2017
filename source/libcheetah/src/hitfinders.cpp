@@ -150,7 +150,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	
 	eventData->powderClass = eventData->hit;
-	
+   	
     
 	/*
      *  Pump laser logic
@@ -162,13 +162,18 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
      *      pumpLaserCode = 0,1,2... depending on the schema
      *
 	 */
-	if(global->sortPumpLaserOn == 1) {
+/*	if(global->sortPumpLaserOn == 1) {
 		int hit = eventData->hit;
 		int	pumpLaserOn = eventData->pumpLaserOn;
 		int	pumpLaserCode = eventData->pumpLaserCode;
 		
         if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
-            eventData->powderClass = hit + 2*pumpLaserOn;
+           if (hit == 0){
+                eventData->powderClass = 0;
+           }
+           else { 
+               eventData->powderClass = 1 + pumpLaserOn;
+           }
         }
         else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {
             if(hit == 0){
@@ -180,7 +185,7 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
             }
         }
 
-	}
+	}*/
 	
 }
 
