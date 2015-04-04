@@ -78,7 +78,8 @@ namespace CXI{
 		// Calculate dimensions for the first chunk
 		if(heightChunkSize == 0){
 			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/height/length);
-		}else{
+		}
+		else{
 			dims[0] = chunkSize/heightChunkSize;
 			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/height);
 		}
@@ -89,7 +90,8 @@ namespace CXI{
 				stackSize = 1;
 			}
 			dims[0] = stackSize;
-		}else{
+		}
+		else{
 			if(dims[0] == 0){
 				// Make sure the chunk is not 0
 				dims[0] = 1;
@@ -332,7 +334,8 @@ namespace CXI{
 	std::string Node::path(){
 		if(parent){
 			return parent->path()+std::string("/")+name;
-		}else{
+		}
+		else{
 			return name;
 		}
 	}
@@ -395,13 +398,17 @@ namespace CXI{
 		const char * axis;
 		if(userAxis != NULL){
 			axis = userAxis;
-		}else if(ndims == 1){
+		}
+		else if(ndims == 1){
 			axis = axis_1d;
-		}else if(ndims == 2){
+		}
+		else if(ndims == 2){
 			axis = axis_2d;
-		}else if(ndims == 3){
+		}
+		else if(ndims == 3){
 			axis = axis_3d;
-		}else if(ndims == 4){
+		}
+		else if(ndims == 4){
 			axis = axis_4d;
 	    }
 		
@@ -435,25 +442,35 @@ namespace CXI{
 		hid_t datatype = 0;
 		if(typeid(T) == typeid(bool) && sizeof(bool) == 1){
 			datatype = H5T_NATIVE_INT8;
-		}else if(typeid(T) == typeid(short)){
+		}
+		else if(typeid(T) == typeid(short)){
 			datatype = H5T_NATIVE_INT16;
-		}else if(typeid(T) == typeid(unsigned short)){
+		}
+		else if(typeid(T) == typeid(unsigned short)){
 			datatype = H5T_NATIVE_UINT16;
-		}else if((typeid(T) == typeid(int))) {
+		}
+		else if((typeid(T) == typeid(int))) {
 			datatype = H5T_NATIVE_INT32;
-		}else if(typeid(T) == typeid(unsigned int)){
+		}
+		else if(typeid(T) == typeid(unsigned int)){
 			datatype = H5T_NATIVE_UINT32;
-		}else if(typeid(T) == typeid(long)){
+		}
+		else if(typeid(T) == typeid(long)){
 			datatype = H5T_NATIVE_LONG;
-		}else if(typeid(T) == typeid(unsigned long)){
+		}
+		else if(typeid(T) == typeid(unsigned long)){
 			datatype = H5T_NATIVE_ULONG;
-		}else if(typeid(T) == typeid(float)){
+		}
+		else if(typeid(T) == typeid(float)){
 			datatype = H5T_NATIVE_FLOAT;
-		}else if(typeid(T) == typeid(double)){
+		}
+		else if(typeid(T) == typeid(double)){
 			datatype = H5T_NATIVE_DOUBLE;
-		}else if(typeid(T) == typeid(char)){
+		}
+		else if(typeid(T) == typeid(char)){
 			datatype = H5T_NATIVE_CHAR;
-		}else{
+		}
+		else{
 			ERROR("Do not understand type: %s",typeid(T).name());
 		}
 		return datatype;
@@ -557,7 +574,7 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
  *	Create the initial skeleton for the CXI file.
  *  We'll rely on HDF5 automatic error reporting. It's usually loud enough.
  */
-static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
+static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 	int debugLevel = global->debugLevel;
 
 	using CXI::Node;
@@ -578,7 +595,7 @@ static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 	if(global->ignoreConversionNAN){
 		ignoreConversionFlags |= CXI::IgnoreNAN;
 	}
-	CXI::Node * root = new Node(filename,global->cxiSWMR,ignoreConversionFlags);
+	CXI::Node *root = new Node(filename,global->cxiSWMR,ignoreConversionFlags);
 
 	// Check what data type format we want to save things in. Defaults to float
 	hid_t h5type = H5T_NATIVE_FLOAT;
@@ -595,15 +612,15 @@ static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 
 	root->createDataset("cxi_version",H5T_NATIVE_INT,1)->write(&CXI::version);
 	root->createDataset("cheetah_version_commit",H5T_NATIVE_CHAR,strlen(GIT_SHA1))->write(GIT_SHA1);
-	char * psana_git_sha = getenv("PSANA_GIT_SHA");
+	char *psana_git_sha = getenv("PSANA_GIT_SHA");
 	if (psana_git_sha)
 		root->createDataset("psana_version_commit",H5T_NATIVE_CHAR,strlen(psana_git_sha))->write(psana_git_sha);
 
-	Node * entry = root->addClass("entry");
+	Node *entry = root->addClass("entry");
 	entry->createStack("experiment_identifier",H5T_NATIVE_CHAR,CXI::stringSize);
 
-	Node * instrument = entry->addClass("instrument");
-	Node * source = instrument->addClass("source");
+	Node *instrument = entry->addClass("instrument");
+	Node *source = instrument->addClass("source");
 	char sBuffer[1024];
 
 	source->createStack("energy",H5T_NATIVE_DOUBLE);
@@ -836,13 +853,13 @@ static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 			// Create group /entry_1/image_[i]
 			int i_image = 1+global->nDetectors*image_counter+detIndex;
 			image_counter += 1;
-			Node * image_node = entry->createGroup("image",i_image);
+			Node *image_node = entry->createGroup("image",i_image);
 			image_node->addClassLink("detector",detector->path());
 			image_node->addClassLink("source",source->path());			
 			cDataVersion dataV(NULL, &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
 			while (dataV.next()) {
 				// Create group /entry_1/image_i/[datver]/
-				Node * data_node = image_node->createGroup(dataV.name_version);		
+				Node *data_node = image_node->createGroup(dataV.name_version);
 				data_node->createStack("data", H5T_NATIVE_FLOAT, radial_nn);
 				if(global->detector[detIndex].savePixelmask){
 					data_node->createStack("mask",H5T_NATIVE_UINT16, radial_nn);
@@ -942,7 +959,17 @@ static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,26);
 	lcls->createLink("eventTime","eventTimeString");
 	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
-
+	
+	// TimeTool
+	if(global->useTimeTool) {
+		lcls->createStack("timeToolTrace", H5T_NATIVE_FLOAT, global->TimeToolStackWidth);
+	}
+	// FEE spectrum
+	if(global->useFEEspectrum) {
+		lcls->createStack("FEEspectrum", H5T_NATIVE_FLOAT, global->FEEspectrumWidth);
+	}
+	
+	
 	DETECTOR_LOOP{
 		Node * detector = lcls->createGroup("detector",detIndex+1);
 		detector->createStack("position",H5T_NATIVE_DOUBLE);
@@ -978,7 +1005,7 @@ static CXI::Node *createCXISkeleton(const char * filename,cGlobal *global){
 		detector->createStack("sum",H5T_NATIVE_FLOAT);
 	}
 
-	Node * global_data = cheetah->createGroup("global_data");
+	Node *global_data = cheetah->createGroup("global_data");
 	global_data->createStack("hit",H5T_NATIVE_INT);
 	global_data->createStack("nPeaks",H5T_NATIVE_INT);
 
@@ -1368,7 +1395,8 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 						data_node["mask"].write(maskModular,stackSlice, nn);
 						free(maskModular);
 					}
-				} else {
+				}
+				else {
 					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
 					Node & data_node = detector[dataV.name_version];
 					data_node["data"].write(data, stackSlice, pix_nn);	
@@ -1470,7 +1498,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	}
 
 	/*Write LCLS informations*/
-	Node & lcls = root["LCLS"];
+	Node &lcls = root["LCLS"];
 	DETECTOR_LOOP{
 		lcls.child("detector",detIndex+1)["position"].write(&global->detector[detIndex].detectorZ,stackSlice);
 		lcls.child("detector",detIndex+1)["EncoderValue"].write(&global->detector[detIndex].detectorEncoderValue,stackSlice);
@@ -1496,6 +1524,16 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	lcls["f_12_ENRC"].write(&eventData->gmd12,stackSlice);
 	lcls["f_21_ENRC"].write(&eventData->gmd12,stackSlice);
 	lcls["f_22_ENRC"].write(&eventData->gmd22,stackSlice);
+	
+	// Time tool trace
+	if(eventData->TimeTool_present) {
+		lcls["timeToolTrace"].write(&(eventData->TimeTool_hproj[0]), stackSlice);
+	}
+	// FEE spectrometer
+	if(eventData->FEEspec_present) {
+		lcls["FEEspectrum"].write(&(eventData->FEEspec_hproj[0]), stackSlice);
+	}
+	
 	if(eventData->TOFPresent){
 		for(int i = 0; i<global->nTOFDetectors;i++){
 			int tofDetIndex = i+global->nDetectors;

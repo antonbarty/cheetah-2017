@@ -301,20 +301,16 @@ public:
 	/** @brief Toggle the verbosity of Cheetah. */
 	int      debugLevel;
 
-	/** @brief TODO: Explain what goes here. */
 	char     logfile[MAX_FILENAME_LENGTH];
-	/** @brief TODO: Explain what goes here. */
 	char     framefile[MAX_FILENAME_LENGTH];
-	/** @brief TODO: Explain what goes here. */
 	char     cleanedfile[MAX_FILENAME_LENGTH];
-	/** @brief TODO: Explain what goes here. */
 	char     peaksfile[MAX_FILENAME_LENGTH];
 
-	/** @brief Check the file input/output speed, without data processing. */
 	int      ioSpeedTest;
 	
 	/** @brief Time different sections of the code. */
 	bool     profilerDiagnostics;
+
 	/*
 	 *	Stuff used for managing the program execution
 	 */
@@ -409,6 +405,17 @@ public:
 	float   *FEEspectrumStack[MAX_POWDER_CLASSES];
 	pthread_mutex_t FEEspectrumStack_mutex[MAX_POWDER_CLASSES];
 	FILE    *FEElogfp[MAX_POWDER_CLASSES];
+
+	
+	// Time Tool (lineout of Opal1000)
+	int		useTimeTool;
+	long	TimeToolStackSize;
+	long	TimeToolStackWidth;
+	long	TimeToolStackCounter[MAX_POWDER_CLASSES];
+	float   *TimeToolStack[MAX_POWDER_CLASSES];
+	pthread_mutex_t TimeToolStack_mutex[MAX_POWDER_CLASSES];
+	FILE    *TimeToolLogfp[MAX_POWDER_CLASSES];
+
 	
 	// CXI downstream spectrometer
 	double  *espectrumRun;

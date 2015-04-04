@@ -1055,7 +1055,7 @@ namespace cheetah_ana_pkg {
 				const ndarray<const uint32_t, 1>& vproj = FEEspectrum0->vproj();
 				if (!hproj.empty() &&  !vproj.empty()) {
 					long	hsize = hproj.shape()[0];
-					long	vsize = hproj.shape()[0];
+					long	vsize = vproj.shape()[0];
 					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
 					
 					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
@@ -1076,7 +1076,51 @@ namespace cheetah_ana_pkg {
 		}
 		
 		
-        
+		/*
+		 *	Time Tool camera image
+		 *	Take horizontal and vertical projections of the CCD image
+		 */
+		eventData->TimeTool_present=0;
+		if(cheetahGlobal.useTimeTool) {
+			shared_ptr<Psana::Camera::FrameV1> timeTool = evt.get(m_srcTimeTool);
+			
+			if (timeTool.get()) {
+				eventData->TimeTool_width = timeTool->width();
+				eventData->TimeTool_height = timeTool->height();
+				
+				//printf("timeTool->width() = %li, timeTool->height() = %li\n", timeTool->width(), timeTool->height());
+
+				const ndarray<const uint8_t, 2>& data8 = timeTool->data8();
+				if (not data8.empty()) {
+					cout << "Opal2k(uint8_t) will not be passed to Cheetah. Complain if you need this!" << endl;
+				}
+				
+				const ndarray<const uint16_t, 2>& data16 = timeTool->data16();
+				if (not data16.empty()) {
+					long tt_nx = timeTool->width();
+					long tt_ny = timeTool->height();
+					long tt_nn = tt_nx*tt_ny;
+					long value;
+					
+					eventData->TimeTool_hproj = (float*) calloc(tt_nx, sizeof(float));
+					eventData->TimeTool_vproj = (float*) calloc(tt_ny, sizeof(float));
+					
+					// Take horizontal and vertical projections of time tool data
+					for(long jj=0; jj<tt_ny; jj++) {
+						for(long ii=0; ii<tt_nx; ii++) {
+							value = data16[jj][ii];
+							eventData->TimeTool_hproj[ii] += value;
+							eventData->TimeTool_vproj[jj] += value;
+						}
+					}
+					
+					eventData->TimeTool_present = 1;
+				}
+			}
+		}
+		
+		
+		
 		/*
 		 *  Copy energy spectrum camera into Cheetah for processing
 		 *  Currently an Opal2k camera (or Opal1k)
@@ -1128,8 +1172,10 @@ namespace cheetah_ana_pkg {
 			}
 		}
 		
-		// Update detector positions
-		for(long detIndex=0; detIndex<cheetahGlobal.nDetectors; detIndex++) {        
+		/*
+		 *	Detector Z encoders
+		 */
+		for(long detIndex=0; detIndex<cheetahGlobal.nDetectors; detIndex++) {
 			eventData->detector[detIndex].detectorZ = detectorPosition[detIndex];
 		}
 

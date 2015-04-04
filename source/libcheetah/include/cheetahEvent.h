@@ -67,6 +67,12 @@ public:
 	long			FEEspec_hproj_size;
 	long			FEEspec_vproj_size;
 	
+	// Time tool data
+	int				TimeTool_present;
+	float			*TimeTool_hproj;
+	float			*TimeTool_vproj;
+	long			TimeTool_width;
+	long			TimeTool_height;
 	
 
 	// Hit finding

@@ -77,6 +77,7 @@ namespace cheetah_ana_pkg {
 			printf("signal handler (signo == SIGINT)\n");
 
 			// Wait for threads to finish
+			printf("Error handler triggered:\n");
 			printf("Waiting for cheetah caller to terminate\n");
 			runCheetahCaller = false;
 			pthread_join(cheetahCallerThread,NULL);
@@ -136,6 +137,7 @@ namespace cheetah_ana_pkg {
 		m_srcBeam = configStr("beamSource","BldInfo(EBeam)");
 		m_srcFee = configStr("feeSource","BldInfo(FEEGasDetEnergy)");
 		m_srcFeeSpec = configStr("feeSpectrum","BldInfo(FEE-SPEC0)");
+		m_srcTimeTool = configStr("timetoolSource","DetInfo(CxiDsu.0:Opal1000.0)");
 		m_srcCav = configStr("cavitySource","BldInfo(PhaseCavity)");
 		m_srcSpec = configStr("spectrumSource","DetInfo()");
 		m_srcCam = configStr("cameraSource","DetInfo()");

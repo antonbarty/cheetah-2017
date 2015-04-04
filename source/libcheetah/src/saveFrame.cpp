@@ -843,14 +843,14 @@ void writePeakFile(cEventData *eventData, cGlobal *global){
 }
 
 
-void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type)  {
-	writeSimpleHDF5(filename, data, width, height, type, NULL,-1);
+void writeSimpleHDF5(const char *filename, const void *data, long width, long height, int type)  {
+	writeSimpleHDF5(filename, data, width, height, type, NULL, -1);
 }
 
 /*
  *	Write data to a simple HDF5 file
  */
-void writeSimpleHDF5(const char *filename, const void *data, int width, int height, int type, const char *detectorName, long detectorID)  {
+void writeSimpleHDF5(const char *filename, const void *data, long width, long height, int type, const char *detectorName, long detectorID)  {
 	hid_t fh, gh, sh, dh;	/* File, group, dataspace and data handles */
 	herr_t r;
 	hsize_t size[2];
@@ -899,6 +899,8 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	}
 	
 	/* Write attributes */
+	/* Commented out because it was causing crashes when writing TimeTool stacks, for some unknown reason */
+	/*
 	hsize_t one = 1;
 	hid_t memspace = H5Screate_simple(1,&one,NULL);
 
@@ -912,13 +914,14 @@ void writeSimpleHDF5(const char *filename, const void *data, int width, int heig
 	H5Awrite(attr_id,H5T_NATIVE_INT64,&detectorID);
 	H5Aclose(attr_id);
 
-	/* Closing */
 	H5Tclose(datatype);
 	H5Sclose(memspace);
+	 */
+	
 
+	// Close group and data handles
 	H5Gclose(gh);
 	H5Dclose(dh);
-	
 	
 	/*
 	 *	Clean up stale HDF5 links

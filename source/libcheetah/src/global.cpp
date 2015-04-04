@@ -138,6 +138,11 @@ cGlobal::cGlobal(void) {
 	FEEspectrumStackSize = 200000;
 	FEEspectrumWidth = 1024;
 
+	// TimeTool (Opal1k)
+	useTimeTool = 0;
+	TimeToolStackSize = 200000;
+	TimeToolStackWidth = 1024;
+
 	
     // CXI downstream energy spectrum default configuration
     espectrum = 0;
@@ -552,6 +557,7 @@ void cGlobal::setup() {
 			for(long j=0; j<espectrumStackSize*spectrumLength; j++) {
 				espectrumStack[i][j] = 0;
 			}
+			pthread_mutex_init(&espectrumStack_mutex[i], NULL);
 		}
 		printf("Spectral stack allocated\n");
 	}
@@ -560,12 +566,18 @@ void cGlobal::setup() {
 		for(long i=0; i<nPowderClasses; i++) {
 			FEEspectrumStackCounter[i] = 0;
 			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
+			pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
 		}
 	}
-	for(long i=0; i<nPowderClasses; i++) {
-		pthread_mutex_init(&espectrumStack_mutex[i], NULL);
-		pthread_mutex_init(&FEEspectrumStack_mutex[i], NULL);
+	if (useTimeTool) {
+		printf("Allocating TimeTool stacks\n");
+		for(long i=0; i<nPowderClasses; i++) {
+			TimeToolStackCounter[i] = 0;
+			TimeToolStack[i] = (float *) calloc(TimeToolStackSize*TimeToolStackWidth, sizeof(float));
+			pthread_mutex_init(&TimeToolStack_mutex[i], NULL);
+		}
 	}
+
 	/*
 	 * Set up arrays for powder classes and radial stacks
 	 * Currently only tracked for detector[0]  (generalise this later)
@@ -575,11 +587,14 @@ void cGlobal::setup() {
 		char  filename[1024];
 		powderlogfp[i] = NULL;
 		FEElogfp[i] = NULL;
+		TimeToolLogfp[i] = NULL;
 		if(runNumber > 0) {
 			sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
 			powderlogfp[i] = fopen(filename, "w");
             sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",runNumber,i);
-			powderlogfp[i] = fopen(filename, "w");
+			FEElogfp[i] = fopen(filename, "w");
+			sprintf(filename,"r%04u-TimeTool-class%ld-index.txt",runNumber,i);
+			TimeToolLogfp[i] = fopen(filename, "w");
 		}
 	}
     pthread_mutex_unlock(&powderfp_mutex);
@@ -615,6 +630,7 @@ void cGlobal::unlockMutexes(void) {
 	for(long i=0; i<nPowderClasses; i++) {
 		pthread_mutex_unlock(&espectrumStack_mutex[i]);
 		pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
+		pthread_mutex_unlock(&TimeToolStack_mutex[i]);
 	}
 }
 
@@ -1026,10 +1042,15 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
     else if (!strcmp(tag, "pumplaserscheme")) {
 		strcpy(pumpLaserScheme, value);
 	}
-	// Energy spectrum parameters
+	// FEE spectrometer
 	else if (!strcmp(tag, "usefeespectrum")) {
 		useFEEspectrum = atoi(value);
 	}
+	// Time tool
+	else if (!strcmp(tag, "usetimetool")) {
+		useTimeTool = atoi(value);
+	}
+	// CXI bent Si crystal spectrometer
 	else if (!strcmp(tag, "espectrum")) {
 		espectrum = atoi(value);
 	}
@@ -1577,6 +1598,7 @@ void cGlobal::updateLogfile(void){
 	for(long i=0; i<nPowderClasses; i++) {
 		fflush(powderlogfp[i]);
         fflush(FEElogfp[i]);
+		fflush(TimeToolLogfp[i]);
 	}
 
 }
@@ -1706,6 +1728,8 @@ void cGlobal::writeFinalLog(void){
 			fclose(powderlogfp[i]);
         if(FEElogfp[i] != NULL)
             fclose(FEElogfp[i]);
+		if(TimeToolLogfp[i] != NULL)
+			fclose(TimeToolLogfp[i]);
 	}
 
 

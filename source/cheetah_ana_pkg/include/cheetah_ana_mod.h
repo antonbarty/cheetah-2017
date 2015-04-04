@@ -117,12 +117,13 @@ namespace cheetah_ana_pkg {
 		Source m_srcBeam;
 		Source m_srcFee;
 		Source m_srcFeeSpec;
+		Source m_srcTimeTool;
 		Source m_srcCav;
-		std::vector<Source> m_srcAcq;
 		Source m_srcCam;
 		Source m_srcSpec;
 		Source m_srcPnccd0;
 		Source m_srcPnccd1;
+		std::vector<Source> m_srcAcq;
 
 		time_t startT;	
 

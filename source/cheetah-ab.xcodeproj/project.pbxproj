@@ -45,6 +45,7 @@
 		4DA51BF8189ACD6A00C97F32 /* saveFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D936174F9F80004A0BB4 /* saveFrame.cpp */; };
 		4DA51BFA189ACD7000C97F32 /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D938174F9F80004A0BB4 /* spectrum.cpp */; };
 		4DA51BFB189ACD7400C97F32 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D939174F9F80004A0BB4 /* worker.cpp */; };
+		4DF8E8631ACF8991003F9F0B /* timetool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DF8E8621ACF8991003F9F0B /* timetool.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -131,6 +132,7 @@
 		4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libcheetah.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE5189AC39500C97F32 /* cheetah-sacla */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "cheetah-sacla"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "main-sacla-hdf5.cpp"; sourceTree = "<group>"; };
+		4DF8E8621ACF8991003F9F0B /* timetool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timetool.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,6 +237,7 @@
 				4D93D935174F9F80004A0BB4 /* saveCXI.cpp */,
 				4D93D936174F9F80004A0BB4 /* saveFrame.cpp */,
 				4D93D938174F9F80004A0BB4 /* spectrum.cpp */,
+				4DF8E8621ACF8991003F9F0B /* timetool.cpp */,
 				4D0A40561A3B51DC00FAC112 /* tofDetector.cpp */,
 				4D93D939174F9F80004A0BB4 /* worker.cpp */,
 			);
@@ -400,6 +403,7 @@
 				4DA51BF3189ACD5900C97F32 /* median.cpp in Sources */,
 				4DA51BEE189ACD4900C97F32 /* detectorCorrection.cpp in Sources */,
 				4D0A40621A3B51DC00FAC112 /* tofDetector.cpp in Sources */,
+				4DF8E8631ACF8991003F9F0B /* timetool.cpp in Sources */,
 				4D0A40581A3B51DC00FAC112 /* event.cpp in Sources */,
 				4DA51BF0189ACD4F00C97F32 /* histogram.cpp in Sources */,
 				4DA51BEB189ACD4100C97F32 /* assemble2DImage.cpp in Sources */,

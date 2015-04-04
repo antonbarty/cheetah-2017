@@ -70,8 +70,8 @@ void updateNoisyPixelBuffer(cEventData*, cGlobal*,int);
 void nameEvent(cEventData*, cGlobal*);
 void writeHDF5(cEventData*, cGlobal*);
 void writePeakFile(cEventData*, cGlobal*);
-void writeSimpleHDF5(const char*, const void*, int, int, int);
-void writeSimpleHDF5(const char*, const void*, int, int, int, const char*,long);
+void writeSimpleHDF5(const char*, const void*, long, long, int);
+void writeSimpleHDF5(const char*, const void*, long, long, int, const char*,long);
 void writeSpectrumInfoHDF5(const char*, const void*, const void*, int, int, const void*, int, int);
 
 // saveCXI.cpp
@@ -133,6 +133,11 @@ void integrateRunSpectrum(cEventData*, cGlobal*);
 void saveIntegratedRunSpectrum(cGlobal*);
 void readSpectrumDarkcal(cGlobal*, char *);
 void readSpectrumEnergyScale(cGlobal*, char*);
+
+// timetool.cpp
+void addTimeToolToStack(cEventData*, cGlobal*, int);
+void saveTimeToolStack(cGlobal*, int);
+void saveTimeToolStacks(cGlobal*);
 
 // powder.cpp
 void addToPowder(cEventData*, cGlobal*);

@@ -106,6 +106,14 @@ void cheetahNewRun(cGlobal *global) {
 				global->FEElogfp[i] = fopen(filename, "w");
 				fprintf(global->FEElogfp[i], "Stack element, eventData->frameNumber, eventData->eventname\n");
 			}
+
+			if(global->useTimeTool) {
+				sprintf(filename,"r%04u-TimeTool-class%ld-index.txt",global->runNumber,i);
+				if(global->TimeToolLogfp[i] != NULL)
+					fclose(global->TimeToolLogfp[i]);
+				global->TimeToolLogfp[i] = fopen(filename, "w");
+				fprintf(global->TimeToolLogfp[i], "Stack element, eventData->frameNumber, eventDaya->stackSlice, eventData->eventname\n");
+			}
 		}
     }
     pthread_mutex_unlock(&global->powderfp_mutex);
@@ -397,8 +405,12 @@ void cheetahExit(cGlobal *global) {
 	if(global->writeRunningSumsFiles){
 		saveRunningSums(global);
 		saveHistograms(global);
-		saveSpectrumStacks(global);
 	}
+	if(global->useFEEspectrum)
+		saveSpectrumStacks(global);
+	if(global->useTimeTool)
+		saveTimeToolStacks(global);
+	
     global->writeFinalLog();
 
     // Close all CXI files

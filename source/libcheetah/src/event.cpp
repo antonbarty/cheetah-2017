@@ -157,7 +157,12 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);
 	}
-    
+
+	if(eventData->TimeTool_present == 1) {
+		free(eventData->TimeTool_hproj);
+		free(eventData->TimeTool_vproj);
+	}
+
     free(eventData->energySpectrum1D);
    
 	delete eventData;

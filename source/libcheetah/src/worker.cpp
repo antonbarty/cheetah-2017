@@ -356,7 +356,11 @@ hitknown:
 	// FEE spectrometer data stack
 	// (needs knowledge of subdirectory for file list, which is why it's done here)
 	addFEEspectrumToStack(eventData, global, hit);
-    
+	
+	// Time tool stack
+	addTimeToolToStack(eventData, global, hit);
+	
+	
 	// If this is a hit, write out peak info to peak list file	
 	if(hit && global->savePeakInfo) {
 		writePeakFile(eventData, global);
@@ -408,6 +412,7 @@ cleanup:
 			saveRunningSums(global);
 			saveHistograms(global);
 			saveSpectrumStacks(global);
+			saveTimeToolStacks(global);
 		}
 		global->updateLogfile();
 		global->writeStatus("Not finished");
