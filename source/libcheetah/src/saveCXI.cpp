@@ -1318,10 +1318,11 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	double en = eventData->photonEnergyeV * 1.60217646e-19;
 	root["entry_1"]["instrument_1"]["source_1"]["energy"].write(&en,stackSlice);
 	// remove the '.h5' from eventname
-	eventData->eventname[strlen(eventData->eventname) - 3] = 0;
+	// This is now done in nameEvent procedure
+	//eventData->eventname[strlen(eventData->eventname) - 3] = 0;
 	root["entry_1"]["experiment_identifier"].write(eventData->eventname,stackSlice);
 	// put it back
-	eventData->eventname[strlen(eventData->eventname)] = '.';
+	//eventData->eventname[strlen(eventData->eventname)] = '.';
   
 	if(global->samplePosXPV[0] || global->samplePosYPV[0] || global->samplePosZPV[0] || global->sampleVoltage[0]){
 		root["entry_1"]["sample_1"]["geometry_1"]["translation"].write(eventData->samplePos,stackSlice);
