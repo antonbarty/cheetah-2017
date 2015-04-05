@@ -71,8 +71,18 @@ print, file
 	x = max(r) * findgen(n_elements(y))/n_elements(y)
 	p2 = plot(	x, y, xrange=[0,1000])
 	p2.xtitle = 'Radius on detector (pixels)'
-	p2.ytitle='Percent of saturated peaks (Imax>90%)'
+	p2.ytitle='Percent of saturated peaks (I_max>90%)'
 	p2.title =  file_basename(file_dirname(file))
+
+
+	;; Percentage of peaks that are too weak
+	tlow= total(h[*,0:0.15*sh[1]], 2)
+	y = tlow/t2
+	y *= 100.
+	p3 = plot(	x, y, xrange=[0,1000])
+	p3.xtitle = 'Radius on detector (pixels)'
+	p3.ytitle='Percent of very weak peaks (I_max<15%)'
+	p3.title =  file_basename(file_dirname(file))
 		
 	
 	;; Plot of number of peaks at each intensity level
@@ -93,6 +103,7 @@ print, file
 	p.save, dir + '/' + label + '-satScatter.png'
 	p1.save, dir + '/' + label + '-satMax.png'
 	p2.save, dir + '/' + label + '-satRatio.png'
+	p3.save, dir + '/' + label + '-satLow.png'
 	q.save, dir + '/' + label + '-sat2d.png'
 	
 
