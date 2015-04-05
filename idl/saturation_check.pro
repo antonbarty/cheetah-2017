@@ -18,9 +18,9 @@ print, file
 	
 	
 	
-	;; Read data (maximum 1e6)
+	;; Read data (maximum 500,000)
 	
-	npeaks_max = 1000000
+	npeaks_max = 500000
 	a = read_csv(file, num_records=npeaks_max, header=h)
 	print, 'File read... plotting'
 	
@@ -53,7 +53,7 @@ print, file
 
 
 	
-	;; Percentages at each radius 
+	;; Projections of the histogram
 	sh = size(h, /dim)
 	ph = h
 	ph[*] = 0

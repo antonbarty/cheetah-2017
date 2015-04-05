@@ -969,6 +969,12 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 		lcls->createStack("FEEspectrum", H5T_NATIVE_FLOAT, global->FEEspectrumWidth);
 	}
 	
+	// EPICS
+	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {
+		lcls->createStack(&global->epicsPvFloatAddresses[i][0], H5T_NATIVE_FLOAT);
+	}
+	
+
 	
 	DETECTOR_LOOP{
 		Node * detector = lcls->createGroup("detector",detIndex+1);
@@ -1533,6 +1539,12 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	if(eventData->FEEspec_present) {
 		lcls["FEEspectrum"].write(&(eventData->FEEspec_hproj[0]), stackSlice);
 	}
+	
+	// EPICS
+	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {
+		lcls[&global->epicsPvFloatAddresses[i][0]].write(&(eventData->epicsPvFloatValues[i]), stackSlice);
+	}
+
 	
 	if(eventData->TOFPresent){
 		for(int i = 0; i<global->nTOFDetectors;i++){
