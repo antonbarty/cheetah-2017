@@ -85,11 +85,18 @@ namespace cheetah_ana_pkg {
 				printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveCheetahThreads);
 				usleep(500000);
 			}
+            
+            // Close CXI files
 			printf("Attempting to close CXIs cleanly\n");
 			writeAccumulatedCXI(&cheetahGlobal);
 			closeCXIFiles(&cheetahGlobal);
 			signal(SIGINT,SIG_DFL);
 			kill(getpid(),SIGINT);
+            
+            // Update status file
+            cheetahGlobal.writeStatus("Terminated");
+            
+            
 		}
 
 	

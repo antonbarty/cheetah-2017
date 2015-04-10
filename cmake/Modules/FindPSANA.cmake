@@ -22,7 +22,7 @@ endif(rhel5)
 
 LIST(APPEND ana_libs AppUtils Cint ConfigSvc Core ErrSvc ExpNameDb Gpad 
 Graf Graf3d Hist IData MathCore Matrix MsgLogger Net PSEnv PSEvt PSHist 
-PSTime PSXtcInput Physics Postscript RIO RdbMySQL Rint RootHistoManager 
+PSTime PSXtcInput Physics Postscript RIO RdbMySQL Rint 
 Thread Tree appdata psddl_pdsdata psddl_psana xtcdata XtcInput 
 PSShmemInput psana boost_thread boost_filesystem boost_regex)
 
