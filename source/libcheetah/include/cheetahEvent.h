@@ -47,14 +47,14 @@ public:
 	int			TOFPresent;
 	
 	// Pulnix 120Hz visible camera
-	int				pulnixFail;
+	bool			Pulnix_present;
 	int				pulnixWidth, pulnixHeight;
 	unsigned short	*pulnixImage;
 	
 	// Opal2k energy spectrum camera
-	int             specFail;
+	bool            CXIspec_present;
 	int             specWidth, specHeight;
-	unsigned short  *specImage;
+	unsigned short  *CXIspec_image;
 	
 	// energy spectrum data (2D camera downstream)
 	int             energySpectrumExist;

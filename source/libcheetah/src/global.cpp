@@ -23,6 +23,7 @@
 #include <vector>
 #include <sstream> 
 #include <errno.h>
+#include <unistd.h>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -632,6 +633,36 @@ void cGlobal::unlockMutexes(void) {
 		pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
 		pthread_mutex_unlock(&TimeToolStack_mutex[i]);
 	}
+}
+
+/*
+ *	Wait for all worker threads to finish
+ *	Sometimes the program hangs here, so allow for some delay (in seconds) before giving up
+ */
+void cGlobal::waitForThreadsToFinish(void) {
+	// Default wait time of 5 minutes 
+	waitForThreadsToFinish(5*60);
+}
+
+void cGlobal::waitForThreadsToFinish(float waitTime) {
+	time_t	tstart, tnow;
+	double	dtime;
+
+	time(&tstart);
+	
+	while(nActiveCheetahThreads > 0) {
+		printf("Waiting for %li worker threads to terminate\n", nActiveCheetahThreads);
+		usleep(100000);
+		time(&tnow);
+		dtime = difftime(tnow, tstart);
+		if(dtime > waitTime) {
+			printf("\t%li threads still active after waiting %f seconds\n", nActiveCheetahThreads, dtime);
+			printf("\tGiving up and exiting anyway\n");
+			unlockMutexes();
+			break;
+		}
+	}
+
 }
 
 

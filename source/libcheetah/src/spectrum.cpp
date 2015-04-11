@@ -150,16 +150,16 @@ void saveFEEspectrumStack(cGlobal *global, int powderClass) {
 void integrateSpectrum(cEventData *eventData, cGlobal *global) {
 	// proceed if event is a 'hit', spectrum data exists & spectrum required
 	int hit = eventData->hit;
-	int opalfail = eventData->specFail;
+	bool opalPresent = eventData->CXIspec_present;
 	int specWidth = eventData->specWidth;
 	int specHeight = eventData->specHeight;
 	int spectra = global->espectrum;
 	
-	if(global->generateDarkcal && !opalfail && spectra){
+	if(global->generateDarkcal && opalPresent && spectra){
 		eventData->energySpectrumExist = 1;
 		genSpectrumBackground(eventData,global,specWidth,specHeight);
 	}
-	if(hit && !opalfail && spectra){
+	if(hit && opalPresent && spectra){
 		eventData->energySpectrumExist = 1;
 		integrateSpectrum(eventData,global,specWidth,specHeight);
 		addToSpectrumStack(eventData,global, hit);
@@ -180,7 +180,7 @@ void integrateSpectrum(cEventData *eventData, cGlobal *global, int specWidth,int
 			newind = i + (int) ceilf(j*ttilt);        // index of the integrated array, must be integer,!
 			if (newind >= 0 && newind < specHeight) {
 				opalindex = i*specWidth + j;   // index of the 2D camera array
-				eventData->energySpectrum1D[newind]+=eventData->specImage[opalindex];
+				eventData->energySpectrum1D[newind]+=eventData->CXIspec_image[opalindex];
 				if (global->espectrumDarkSubtract) {
 					eventData->energySpectrum1D[newind]-=global->espectrumDarkcal[opalindex];
 				}
@@ -316,7 +316,7 @@ void genSpectrumBackground(cEventData *eventData, cGlobal *global, int specWidth
 
 	pthread_mutex_lock(&global->espectrumBuffer_mutex);
 	for (int i=0; i<spectrumpix; i++) {
-		global->espectrumBuffer[i]+=eventData->specImage[i];
+		global->espectrumBuffer[i]+=eventData->CXIspec_image[i];
 	}
 	pthread_mutex_unlock(&global->espectrumBuffer_mutex);
 	pthread_mutex_lock(&global->nespechits_mutex);

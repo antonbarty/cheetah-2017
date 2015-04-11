@@ -398,7 +398,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	/*
 	 *	Save microscope images (Pulnix CCD) as data/pulnixCCD
 	 */
-	if(eventData->pulnixFail == 0) {
+	if(eventData->Pulnix_present == true) {
 		size[0] = eventData->pulnixHeight;	
 		size[1] = eventData->pulnixWidth;	
 		if (global->h5compress) {
@@ -416,7 +416,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
     /*
 	 *	Save energy spectrum images (Opal2k CCD) as data/energySpectrumCCD
 	 */
-	if(eventData->specFail == 0) {
+	if(eventData->CXIspec_present == true) {
 		size[0] = eventData->specHeight;
 		size[1] = eventData->specWidth;
 		if (global->h5compress) {
@@ -426,7 +426,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 		}
 		dataspace_id = H5Screate_simple(2, size, size);
 		dataset_id = H5Dcreate(gid, "energySpectrumCCD", H5T_NATIVE_USHORT, dataspace_id, H5P_DEFAULT, h5compression, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->specImage);
+		H5Dwrite(dataset_id, H5T_NATIVE_USHORT, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->CXIspec_image);
 		H5Dclose(dataset_id);
 		H5Sclose(dataspace_id);
 	}

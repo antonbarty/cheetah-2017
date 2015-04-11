@@ -83,22 +83,35 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	
 	allocatePeakList(&(eventData->peaklist), NpeaksMax);
 	
+
+	
+	/*
+	 *	Make it clear we dont know certain things until this data is read
+	 */
+	eventData->TimeTool_present=0;
+	eventData->FEEspec_present=0;
+	eventData->TOFPresent = 0;
+	eventData->Pulnix_present = false;
+	eventData->CXIspec_present = false;
+
+
 	
 	/*
 	 *	Create arrays for energy spectrum data
+	 *	Setting non-allocated arrays to NULL is useful for preventing double free() errors 
+	 *	(ie: we are not completely clean with knowing when we have allocated arrays and when we haven't)
 	 */
 	int spectrumLength = global->espectrumLength;
 	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
 	eventData->energySpectrumExist = 0;
 	eventData->FEEspec_hproj = NULL;
 	eventData->FEEspec_vproj = NULL;
+	eventData->TimeTool_hproj = NULL;
+	eventData->TimeTool_vproj = NULL;
 	eventData->pulnixImage = NULL;
-	eventData->specImage = NULL;
+	eventData->CXIspec_image = NULL;
 	
-	eventData->pulnixFail=1;
-	eventData->specFail=1;
-	eventData->FEEspec_present=0;
-		
+	
 	// Return
 	return eventData;
 }
@@ -143,14 +156,14 @@ void cheetahDestroyEvent(cEventData *eventData) {
 	
 	
 	// Pulnix external camera
-	if(eventData->pulnixFail == 0){
+	if(eventData->Pulnix_present == true){
 		if(eventData->pulnixImage != NULL)
 			free(eventData->pulnixImage);
 	}
 	// Opal spectrum camera
-	if(eventData->specFail == 0){
-		if(eventData->specImage != NULL)
-			free(eventData->specImage);
+	if(eventData->CXIspec_present == true){
+		if(eventData->CXIspec_image != NULL)
+			free(eventData->CXIspec_image);
 	}
 
 	if(eventData->FEEspec_present == 1) {

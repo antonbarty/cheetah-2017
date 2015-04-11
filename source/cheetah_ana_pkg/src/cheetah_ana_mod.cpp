@@ -76,27 +76,47 @@ namespace cheetah_ana_pkg {
 		if (signo == SIGINT || signo == SIGTERM || signo == SIGABRT){
 			printf("signal handler (signo == SIGINT)\n");
 
-			// Wait for threads to finish
+			
+			// Wait for threads to finish (but give up after a reasonable delay)
 			printf("Error handler triggered:\n");
 			printf("Waiting for cheetah caller to terminate\n");
+
 			runCheetahCaller = false;
 			pthread_join(cheetahCallerThread,NULL);
-			while(cheetahGlobal.nActiveCheetahThreads > 0) {
-				printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveCheetahThreads);
-				usleep(500000);
-			}
+			cheetahGlobal.waitForThreadsToFinish(60);
+			
+			//time_t	tstart, tnow;
+			//double	dtime;
+			//time(&tstart);
+			//float	maxwait = 5*60.;
+			//while(cheetahGlobal.nActiveCheetahThreads > 0) {
+			//	printf("Waiting for %li worker threads to terminate\n", cheetahGlobal.nActiveCheetahThreads);
+			//	usleep(500000);
+
+			//	time(&tnow);
+			//	dtime = difftime(tnow, tstart);
+			//	if(dtime > maxwait) {
+			//		printf("\t%li threads still active after waiting %f seconds\n", cheetahGlobal.nActiveCheetahThreads, dtime);
+			//		printf("\tGiving up and exiting anyway\n");
+			//		cheetahGlobal.unlockMutexes();
+			//		break;
+			//	}
+			//}
+			
             
             // Close CXI files
 			printf("Attempting to close CXIs cleanly\n");
 			writeAccumulatedCXI(&cheetahGlobal);
 			closeCXIFiles(&cheetahGlobal);
+
+			// Update status file
+			printf("Updting status to terminated\n");
+			cheetahGlobal.writeStatus("Terminated");
+			
+			// Terminate
 			signal(SIGINT,SIG_DFL);
 			kill(getpid(),SIGINT);
-            
-            // Update status file
-            cheetahGlobal.writeStatus("Terminated");
-            
-            
+			
 		}
 
 	

@@ -995,7 +995,7 @@ namespace cheetah_ana_pkg {
 		 *      CxiSc1
 		 *  SLAC libraries are not thread safe: must copy data into event structure for processing
 		 */
-		eventData->pulnixFail = 1;
+		eventData->Pulnix_present = false;
 		int usePulnix = 0;		// Ignore Pulnix camera
 		if(usePulnix) {
 			shared_ptr<Psana::Camera::FrameV1> frmData;
@@ -1022,7 +1022,7 @@ namespace cheetah_ana_pkg {
 					}  
 					cout << endl;
 				}
-				eventData->pulnixFail = 0;
+				eventData->Pulnix_present = true;
 				eventData->pulnixWidth = frmData->width();
 				eventData->pulnixHeight = frmData->height();
 
@@ -1105,6 +1105,9 @@ namespace cheetah_ana_pkg {
 					eventData->TimeTool_hproj = (float*) calloc(tt_nx, sizeof(float));
 					eventData->TimeTool_vproj = (float*) calloc(tt_ny, sizeof(float));
 					
+					if(eventData->TimeTool_hproj == NULL)
+						printf("Event %li: Warning: Error allocating memory for time tool\n", frameNumber);
+					
 					// Take horizontal and vertical projections of time tool data
 					for(long jj=0; jj<tt_ny; jj++) {
 						for(long ii=0; ii<tt_nx; ii++) {
@@ -1128,7 +1131,7 @@ namespace cheetah_ana_pkg {
 		 *  SLAC libraries are not thread safe: must copy data into event structure
 		 *  Only retrieve camera info if we want to look at the spectrum
 		 */
-		eventData->specFail = 1;
+		eventData->CXIspec_present = false;
 		if (cheetahGlobal.espectrum) {
 			shared_ptr<Psana::Camera::FrameV1> specData = evt.get(m_srcSpec);
 
@@ -1155,7 +1158,7 @@ namespace cheetah_ana_pkg {
 					cout << endl;
 				}
 
-				eventData->specFail = 0;
+				eventData->CXIspec_present = true;
 				eventData->specWidth = specData->width();
 				eventData->specHeight = specData->height();
             
@@ -1166,8 +1169,8 @@ namespace cheetah_ana_pkg {
             
 				const ndarray<const uint16_t, 2>& data16 = specData->data16();
 				if (not data16.empty()) {
-					eventData->specImage = (uint16_t*) calloc(eventData->specWidth*eventData->specHeight, sizeof(uint16_t));
-					memcpy(eventData->specImage, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
+					eventData->CXIspec_image = (uint16_t*) calloc(eventData->specWidth*eventData->specHeight, sizeof(uint16_t));
+					memcpy(eventData->CXIspec_image, &data16[0][0], (long)eventData->specWidth*(long)eventData->specHeight*sizeof(uint16_t));
 				}  
 			}
 		}

@@ -467,7 +467,7 @@ public:
 	 **/
 	void setup(void);
 	void updateCalibrated(void);
-	int validateConfiguration(void);
+	int	 validateConfiguration(void);
 
 	void writeHitClasses(FILE* to);
 	void writeInitialLog(void);
@@ -477,6 +477,8 @@ public:
 	void writeConfigurationLog(void);
 	void unlockMutexes(void);
 	void freeMemory();
+	void waitForThreadsToFinish(float);
+	void waitForThreadsToFinish(void);
 	
 	/**
 	 * @brief Read text file with list of hits.
