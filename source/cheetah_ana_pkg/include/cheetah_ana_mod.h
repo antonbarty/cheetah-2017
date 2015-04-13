@@ -76,11 +76,11 @@ namespace cheetah_ana_pkg {
         /// Method which is called at the beginning of the calibration cycle
         virtual void beginCalibCycle(Event& evt, Env& env);
         
-        void copy_event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env);
         /// Method which is called with event data, this is the only required
         /// method, all other methods are optional
         virtual void event(PSEvt::Event& evt, PSEnv::Env& env);
-        
+		void copy_event(boost::shared_ptr<Event> evt, boost::shared_ptr<Env> env);
+		
         /// Method which is called at the end of the calibration cycle
         virtual void endCalibCycle(Event& evt, Env& env);
         

@@ -70,17 +70,14 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 		eventData->detector[detIndex].radialAverage_pixelmask = (uint16_t*) calloc(radial_nn,sizeof(uint16_t));
 
 		eventData->detector[detIndex].pedSubtracted=0;
-		eventData->detector[detIndex].sum=0.;		
-		
+		eventData->detector[detIndex].sum=0.;
 	}
 
+	
 	/*
 	 *	Create arrays for remembering Bragg peak data
 	 */
-	//global->hitfinderPeakBufferSize = global->hitfinderNpeaksMax*2;
 	long NpeaksMax = global->hitfinderNpeaksMax;
-	//eventData->good_peaks = (int *) calloc(NpeaksMax, sizeof(int));
-	
 	allocatePeakList(&(eventData->peaklist), NpeaksMax);
 	
 
@@ -97,13 +94,14 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 
 	
 	/*
-	 *	Create arrays for energy spectrum data
+	 *	Create arrays for various spectrum data 
 	 *	Setting non-allocated arrays to NULL is useful for preventing double free() errors 
 	 *	(ie: we are not completely clean with knowing when we have allocated arrays and when we haven't)
 	 */
 	int spectrumLength = global->espectrumLength;
 	eventData->energySpectrum1D = (double *) calloc(spectrumLength, sizeof(double));
 	eventData->energySpectrumExist = 0;
+	
 	eventData->FEEspec_hproj = NULL;
 	eventData->FEEspec_vproj = NULL;
 	eventData->TimeTool_hproj = NULL;
@@ -126,7 +124,7 @@ void cheetahDestroyEvent(cEventData *eventData) {
     
     cGlobal	*global = eventData->pGlobal;;
     
-    // Free memory
+    // Free primary detector memory
 	DETECTOR_LOOP {
 		free(eventData->detector[detIndex].data_raw16);
 		free(eventData->detector[detIndex].data_raw);
@@ -150,27 +148,27 @@ void cheetahDestroyEvent(cEventData *eventData) {
 		free(eventData->detector[detIndex].radialAverage_detPhotCorr);
 		free(eventData->detector[detIndex].radialAverage_pixelmask);
 	}
-	
+
+	// Free peak lists
 	freePeakList(eventData->peaklist);
-	//free(eventData->good_peaks);
 	
 	
 	// Pulnix external camera
-	if(eventData->Pulnix_present == true){
-		if(eventData->pulnixImage != NULL)
-			free(eventData->pulnixImage);
+	if(eventData->Pulnix_present == true && eventData->pulnixImage != NULL){
+		free(eventData->pulnixImage);
 	}
 	// Opal spectrum camera
-	if(eventData->CXIspec_present == true){
-		if(eventData->CXIspec_image != NULL)
-			free(eventData->CXIspec_image);
+	if(eventData->CXIspec_present == true && eventData->CXIspec_image != NULL){
+		free(eventData->CXIspec_image);
 	}
 
+	// FEE spectrum trace
 	if(eventData->FEEspec_present == 1) {
 		free(eventData->FEEspec_hproj);
 		free(eventData->FEEspec_vproj);
 	}
 
+	// TimeTool trace
 	if(eventData->TimeTool_present == 1) {
 		free(eventData->TimeTool_hproj);
 		free(eventData->TimeTool_vproj);

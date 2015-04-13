@@ -73,9 +73,12 @@ namespace cheetah_ana_pkg {
 	//--------------
 	void sig_handler(int signo)
 	{
-		if (signo == SIGINT || signo == SIGTERM || signo == SIGABRT){
-			printf("signal handler (signo == SIGINT)\n");
-
+		if (signo == SIGINT || signo == SIGTERM || signo == SIGABRT || signo == SIGBUS){
+			printf("signal handler invoked (signo == SIGINT)\n");
+			char *message = strsignal(signo);
+			printf("signal handler invoked (%s)\n", message);
+			psignal(signo, message);
+			
 			
 			// Wait for threads to finish (but give up after a reasonable delay)
 			printf("Error handler triggered:\n");
@@ -110,8 +113,11 @@ namespace cheetah_ana_pkg {
 			closeCXIFiles(&cheetahGlobal);
 
 			// Update status file
-			printf("Updting status to terminated\n");
-			cheetahGlobal.writeStatus("Terminated");
+			printf("Updating status file\n");
+			if (signo == SIGINT || signo == SIGTERM || signo == SIGABRT)
+				cheetahGlobal.writeStatus("Terminated");
+			else if (signo == SIGBUS)
+				cheetahGlobal.writeStatus("Error");
 			
 			// Terminate
 			signal(SIGINT,SIG_DFL);
@@ -208,10 +214,13 @@ namespace cheetah_ana_pkg {
 		if (cheetahInit(&cheetahGlobal)){
 			exit(0);
 		}
+		
+		// Initialise signal handler when using .cxi file (so we can close it clenaly)
 		if(cheetahGlobal.saveCXI){
 			signal(SIGINT, sig_handler);
 			signal(SIGTERM, sig_handler);
 			signal(SIGABRT, sig_handler);
+			signal(SIGBUS, sig_handler);
 		}
 		// Initialize signal that keeps track of available threads
 		sem_init(&availableAnaThreads,0,cheetahGlobal.anaModThreads);
