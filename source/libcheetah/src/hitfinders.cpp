@@ -149,39 +149,45 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
  */
 void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	
-	eventData->powderClass = eventData->hit;
+	// This is the logic for when we run hitfinding
+	if (global->hitfinder) {
+		eventData->powderClass = eventData->hit;
 	
     
-	/*
-     *  Pump laser logic
-     *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
-     *
-     *  Typically:
-	 *		hit = 0 or 1
-	 *		pumpLaserOn = 0 or 1
-     *      pumpLaserCode = 0,1,2... depending on the schema
-     *
-	 */
-	if(global->sortPumpLaserOn == 1) {
-		int hit = eventData->hit;
-		int	pumpLaserOn = eventData->pumpLaserOn;
-		int	pumpLaserCode = eventData->pumpLaserCode;
-		
-        if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
-            eventData->powderClass = hit + 2*pumpLaserOn;
-        }
-        else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {
-            if(hit == 0){
-                eventData->powderClass = 0;
-            }
-            else {
-                eventData->powderClass = 1+pumpLaserCode;
-                
-            }
-        }
+		/*
+		 *  Pump laser logic
+		 *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+		 *
+		 *  Typically:
+		 *		hit = 0 or 1
+		 *		pumpLaserOn = 0 or 1
+		 *      pumpLaserCode = 0,1,2... depending on the schema
+		 *
+		 */
+		if(global->sortPumpLaserOn == 1) {
+			int hit = eventData->hit;
+			int	pumpLaserOn = eventData->pumpLaserOn;
+			int	pumpLaserCode = eventData->pumpLaserCode;
+			
+			if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
+				eventData->powderClass = hit + 2*pumpLaserOn;
+			}
+			else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {
+				if(hit == 0){
+					eventData->powderClass = 0;
+				}
+				else {
+					eventData->powderClass = 1+pumpLaserCode;
+					
+				}
+			}
 
+		}
 	}
-	
+	// And this is the logic when everything is a hit
+	else {
+		eventData->powderClass = eventData->pumpLaserCode;
+	}
 }
 
 

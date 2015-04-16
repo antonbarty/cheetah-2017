@@ -34,10 +34,12 @@ void addToPowder(cEventData *eventData, cGlobal *global) {
 		if(global->generateDarkcal || global->generateGaincal) {
 			DEBUG3("Add data to powder - this is a darkcal or a gaincal run. (detectorID=%ld)",global->detector[detIndex].detectorID);									
 			addToPowder(eventData, global, 0, detIndex);
-		} else if (hit && global->powderSumHits) {
+		}
+		else if (hit && global->powderSumHits) {
 			DEBUG3("Add data to powder of hits. (detectorID=%ld)",global->detector[detIndex].detectorID);										
 			addToPowder(eventData, global, powderClass, detIndex);
-		} else if (!hit && global->powderSumBlanks) {
+		}
+		else if (!hit && global->powderSumBlanks) {
 			DEBUG3("Add data to powder of blanks. (detectorID=%ld)",global->detector[detIndex].detectorID);									   
 			addToPowder(eventData, global, powderClass, detIndex);
 		}

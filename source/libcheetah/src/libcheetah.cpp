@@ -411,6 +411,9 @@ void cheetahExit(cGlobal *global) {
 		saveSpectrumStacks(global);
 	if(global->useTimeTool)
 		saveTimeToolStacks(global);
+	if(global->saveRadialStacks)
+		saveRadialStacks(global);
+	
 	
     global->writeFinalLog();
 

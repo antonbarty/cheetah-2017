@@ -223,13 +223,12 @@ public:
 	/** @brief Toggle the writing of Bragg peak information into a text file. */
 	int      savePeakList;
 
-	/** @brief Toggle the writing of radial intensity profile data. */
-	int      saveRadialStacks;
 	/** @brief The number of radial profiles per data file. */
 	long     radialStackSize;
 
 	/** @brief Toggle the writing of radial intensity profile data. */
-	int      saveRadialAverage;
+	//int      saveRadialAverage;
+	int      saveRadialStacks;
 
 	/** @brief The number of initial calibration frames */
 	long       nInitFrames;

@@ -57,6 +57,34 @@ pro crawler_autorun, xtcdir=xtcdir, hdf5dir=hdf5dir, hdf5filter=hdf5filter, data
 	if NOT KEYWORD_SET(datasetdb) then $
 		datasetdb = 'datasets.txt'
 
+
+	;;
+	;;	Check whether directories exist (and have the right permissions)
+	;;
+	t = file_test(xtcdir)
+	if t ne 1 then begin
+		str = string('XTC directory does not exist , or you do not have permission to access it. Please check your crawler.config file and restart. (', xtcdir, ')')
+		r = dialog_message(str,/center)
+		return
+	endif
+
+	t = file_test(hdf5dir)
+	if t ne 1 then begin
+		str = string('HDF5 directory does not exist. Please check your crawler.config file and restart (', hdf5dir, ')')
+		r = dialog_message(str,/center)
+		return
+	endif
+
+	t = file_test('crawler.txt', /write)
+	if t ne 1 then begin
+		str = string('crawler.txt file is not writeable.  Crawler will not work.  Please check and restart.')
+		r = dialog_message(str,/center)
+		return
+	endif
+
+
+
+
 	;;
 	;;	Configure the GUI
 	;;

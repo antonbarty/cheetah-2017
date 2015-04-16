@@ -205,9 +205,10 @@ localBGCalculated:
 
 	
 	
-	//----------------//
-	//---HITFINDING---//
-	//----------------//
+	//----------------------------------------//
+	//---HITFINDING AND POWDERCLASS SORTING---//
+	//----------------------------------------//
+	int powderClass;
 	if(global->hitfinder && (global->hitfinderForInitials ||
 							 !(eventData->threadNum < global->nInitFrames || !calibrated))){ 
 		
@@ -222,8 +223,11 @@ localBGCalculated:
 			global->hitClasses[coord][std::make_pair(eventData->samplePos[coord] * 1000, hit)]++;
 		}
 		pthread_mutex_unlock(&global->hitclass_mutex);
-		sortPowderClass(eventData, global);		
 	}
+	
+	sortPowderClass(eventData, global);
+	powderClass = eventData->powderClass;
+	
 
 hitknown:
 	//-------------------------------------//
@@ -285,6 +289,11 @@ hitknown:
 	// Maintain a running sum of data (powder patterns)
 	addToPowder(eventData, global);
 	
+	// Calculate radial averages
+	calculateRadialAverage(eventData, global);
+	addToRadialAverageStack(eventData, global);
+
+	
 	// Calculate the one dimesional beam spectrum
 	integrateSpectrum(eventData, global);
 	integrateRunSpectrum(eventData, global);
@@ -301,6 +310,7 @@ hitknown:
 		goto cleanup;
 	}
 
+	
 	// Histogram
 	addToHistogram(eventData, global, hit);
 
@@ -355,10 +365,12 @@ hitknown:
 
 	// FEE spectrometer data stack
 	// (needs knowledge of subdirectory for file list, which is why it's done here)
-	addFEEspectrumToStack(eventData, global, hit);
+	addFEEspectrumToStack(eventData, global, powderClass);
 	
 	// Time tool stack
-	addTimeToolToStack(eventData, global, hit);
+	addTimeToolToStack(eventData, global, powderClass);
+	
+	
 	
 	
 	// If this is a hit, write out peak info to peak list file	
@@ -404,6 +416,8 @@ cleanup:
 		assemble2DPowder(global);
 		downsamplePowder(global);
 		calculateRadialAveragePowder(global);
+		
+		
 		// Save accumulated data
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
@@ -416,6 +430,10 @@ cleanup:
 		}
 		global->updateLogfile();
 		global->writeStatus("Not finished");
+		
+		// Save radial average stacks
+		saveRadialStacks(global);
+		
 
 		// try this - periodically flush the H5 file to let us to see data as it's being saved 
 		if(global->saveCXI) {

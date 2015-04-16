@@ -28,6 +28,31 @@
  */
 
 void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
+
+	DETECTOR_LOOP {
+		if(global->detector[detIndex].saveRadialAverage) {
+			//cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
+			//cDataVersion dataV_r(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+			//uint16_t *pixelmask_2d = dataV_2d.getPixelmask();
+	
+			float	 *data_2d = eventData->detector[detIndex].data_detCorr;
+			float	 *radialAverage = eventData->detector[detIndex].radialAverage_detCorr;
+			long	 radial_nn = global->detector[detIndex].radial_nn;
+			long     pix_nn = global->detector[detIndex].pix_nn;
+			float    *pix_r = global->detector[detIndex].pix_r;
+			uint16_t *pixelmask_2d = eventData->detector[detIndex].pixelmask;
+			uint16_t *pixelmask_r = (uint16_t*) calloc(radial_nn, sizeof(uint16_t));
+
+			calculateRadialAverage(data_2d, pixelmask_2d, radialAverage, pixelmask_r, pix_r, radial_nn, pix_nn);
+			free(pixelmask_r);
+		}
+	}
+
+	
+	/*
+	 *	Had to comment this out because it screwed up the sortinbg by laser code needed for time resolved WAXS analysis
+	 *	Don't know why - make sure after beamtime panic that any changes are compatible with ALL uses of Cheetah.
+	 *
  	DETECTOR_LOOP {
 		if (isBitOptionSet(global->detector[detIndex].saveFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
 			cDataVersion dataV_2d(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].saveVersion, cDataVersion::DATA_FORMAT_NON_ASSEMBLED);
@@ -44,6 +69,8 @@ void calculateRadialAverage(cEventData *eventData, cGlobal *global) {
 			}
 		}
 	}
+	 */
+	
 }
 
 template <class T>
@@ -52,7 +79,14 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 	// Alloc temporary arrays
 	int *      tempRadialAverageCounter = (int*) calloc(radial_nn, sizeof(int));
 	uint16_t * tempBadBins              = (uint16_t*) calloc(radial_nn, sizeof(uint16_t));
-	uint16_t maskOutBits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_MISSING | PIXEL_IS_NOISY;
+	//uint16_t maskOutBits = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_MISSING | PIXEL_IS_NOISY;
+	uint16_t maskOutBits = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_SATURATED|PIXEL_IS_INVALID|PIXEL_IS_DEAD;
+
+	//char	*mask = (char*) calloc(pix_nn, sizeof(char));
+	//uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_BAD|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	//for(long i=0;i<pix_nn;i++)
+	//	mask[i] = isNoneOfBitOptionsSet(pixelmask2d[i], combined_pixel_options);
+
 	
 	// Init arrays
 	for(long i=0; i<radial_nn; i++) {
@@ -60,6 +94,8 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 		pixelmaskRadial[i] = 0;
 		tempBadBins[i] = PIXEL_IS_MISSING;
 	}
+	
+	printf("%li\n",radial_nn);
 	
 	// Radial average
 	long	rbin;
@@ -73,6 +109,7 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 		}
 
 		// Don't count bad pixels in radial average
+		//if (isNoneOfBitOptionsSet(pixelmask2d[i],maskOutBits)) {
         if (isAnyOfBitOptionsSet(pixelmask2d[i],maskOutBits)) {
 			tempBadBins[rbin] |= pixelmaskRadial[rbin];
 			continue;
@@ -97,6 +134,7 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
 	// Free temporary arrays
 	free(tempRadialAverageCounter);
 	free(tempBadBins);
+	//free(mask);
 }
 
 
@@ -104,7 +142,7 @@ void calculateRadialAverage(T *data2d, uint16_t *pixelmask2d, T *dataRadial, uin
  * Calculate radial average of powder data
  */
 void calculateRadialAveragePowder(cGlobal *global) {
- 	DETECTOR_LOOP {
+	DETECTOR_LOOP {
 		if (isBitOptionSet(global->detector[detIndex].powderFormat, cDataVersion::DATA_FORMAT_RADIAL_AVERAGE)) {
 			long	 radial_nn = global->detector[detIndex].radial_nn;
 			long     pix_nn = global->detector[detIndex].pix_nn;
@@ -134,7 +172,9 @@ void calculateRadialAveragePowder(cGlobal *global) {
  *	Add radial average to stack
  */
 void addToRadialAverageStack(cEventData *eventData, cGlobal *global){
-    
+	
+	printf("%i\n",global->saveRadialStacks);
+	
     // If not keeping stacks, simply return now
     if(!global->saveRadialStacks)
         return;
@@ -155,7 +195,7 @@ void addToRadialAverageStack(cEventData *eventData, cGlobal *global, int powderC
     cPixelDetectorCommon     *detector = &global->detector[detIndex];
     
     float   *stack = detector->radialAverageStack[powderClass];
-    float   *radialAverage = eventData->detector[detIndex].radialAverage_detPhotCorr;
+    float   *radialAverage = eventData->detector[detIndex].radialAverage_detCorr;
     long	radial_nn = detector->radial_nn;
     long    stackCounter = detector->radialStackCounter[powderClass];
     long    stackSize = detector->radialStackSize;

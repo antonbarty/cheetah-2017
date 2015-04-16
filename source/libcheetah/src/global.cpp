@@ -1470,7 +1470,7 @@ void cGlobal::writeConfigurationLog(void){
 		fprintf(fp, "saveNonAssembled=%d\n",detector[i].saveNonAssembled);
 		fprintf(fp, "saveAssembled=%d\n",detector[i].saveAssembled);
 		fprintf(fp, "saveAssembledAndDownsampled=%d\n",detector[i].saveAssembledAndDownsampled);
-		fprintf(fp, "saveRadialAverage=%d\n",detector[i].saveRadialAverage);
+		//fprintf(fp, "saveRadialAverage=%d\n",detector[i].saveRadialAverage);
 		fprintf(fp, "savePowderDetectorRaw=%d\n",detector[i].savePowderDetectorRaw);
 		fprintf(fp, "savePowderDetectorCorrected=%d\n",detector[i].savePowderDetectorCorrected);
 		fprintf(fp, "savePowderDetectorAndPhotonCorrected=%d\n",detector[i].savePowderDetectorAndPhotonCorrected);
