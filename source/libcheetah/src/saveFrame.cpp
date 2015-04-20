@@ -87,6 +87,9 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	char outfile[1024];
 	assignSubdir(eventData, global);
 	sprintf(outfile, "%s/%s.h5", global->subdirName, eventData->eventname);
+	
+	strcpy(eventData->filename, outfile);
+	eventData->stackSlice = 0;
 
 	
 	/*

@@ -156,16 +156,37 @@ namespace cheetah_ana_pkg {
             }
             
             /*
-             *  Pump laser logic
-             *  (usually based on the EVR codes in some way)
+             *  Pump laser schemas (EvrData::DataV4)
              *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+			 *  (usually based on the EVR codes in some way)
              */
             if(strcmp(cheetahGlobal.pumpLaserScheme, "evr41") == 0) {
                 int evr41 = eventCodePresent(data4->fifoEvents(), 41);
                 pumpLaserOn = evr41;
                 pumpLaserCode = evr41;
             }
-        }
+			// Neutze, April 2015 LH95
+			else if(strcmp(cheetahGlobal.pumpLaserScheme, "evr183") == 0) {
+				//	Use some long semi-random sequence to avoid any systematic bias from running at 60 Hz, eg: ON, OFF, OFF, ON, ON, ON, ON, OFF, OFF
+				//	evr183 = laserOn
+				//	evr184 = laserOFF
+				
+				//	EventCode   Laser    EVRdelay
+				//	183              ON        657202 ns
+				//	184              OFF       657244 ns
+				//	184              OFF       657244 ns
+				//	183              ON        657202 ns
+				int evr183 = eventCodePresent(data4->fifoEvents(), 183);
+				int evr184 = eventCodePresent(data4->fifoEvents(), 184);
+				pumpLaserOn = evr183;
+				pumpLaserCode = evr183;
+				
+				// Stupidity check
+				if(evr183 == evr184) {
+					printf("WARNING: evr183 and evr184 are both equal (Laser ON and laser OFF at the same time)\n");
+				}
+			}
+       }
 
 		// EvrData v3
 		else if (data3.get()) {
@@ -191,9 +212,9 @@ namespace cheetah_ana_pkg {
 
             
             /*
-             *  Pump laser logic 
-             *  (usually based on the EVR codes in some way)
+			 *  Pump laser schemas (EvrData::DataV3)
              *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+			 *  (usually based on the EVR codes in some way)
              */
             if(strcmp(cheetahGlobal.pumpLaserScheme, "evr41") == 0) {
                 int evr41 = eventCodePresent(data3->fifoEvents(), 41);
@@ -218,12 +239,7 @@ namespace cheetah_ana_pkg {
                 if(evr186) pumpLaserCode = 3;
                 //if(evr187) pumpLaserCode = 4;
                 if(!evr183 && !evr184 && !evr186) pumpLaserCode = 4;
-            
-                //FILE *fp;
-                //fp = fopen("evrcodes.txt","a");
-                //fprintf(fp, "%i, %i, %i, %i, %i\n", fiducial, evr183, evr184, evr186, evr187);
-                //fclose(fp);
-            }                        
+            }
 		}
 		else {
 			printf("Event %li: Warning: Psana::EvrData::Data failed\n", frameNumber);

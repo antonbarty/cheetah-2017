@@ -351,12 +351,14 @@ namespace CXI{
 			stackSize = stackCounter;
 		}
 
+
 		if(hid() >= 0 && type == Dataset){
 			hsize_t block[4];
 			hsize_t mdims[4];
 			int ndims;
 			hid_t dataspace = H5Dget_space(hid());
 			if( dataspace<0 ) {ERROR("Cannot get dataspace.\n");}
+			
 			H5Sget_simple_extent_dims(dataspace, block, mdims);
 			ndims = H5Sget_simple_extent_ndims(dataspace);
 			if(ndims > 0 && mdims[0] == H5S_UNLIMITED){
@@ -492,8 +494,7 @@ namespace CXI{
 }
 
 
-herr_t
-cheetahHDF5ErrorHandler(hid_t,void *)
+herr_t cheetahHDF5ErrorHandler(hid_t,void *)
 {
 	// print the error message
 	//H5Eprint1(stderr);
@@ -908,6 +909,8 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 	if(global->savePeakInfo && global->hitfinder){
 		Node * result = entry->createGroup("result",resultIndex);
 
+		result->createStack("powderClass", H5T_NATIVE_INT);
+		
 		result->createStack("nPeaks", H5T_NATIVE_INT);
 
 		result->createStack("peakXPosAssembled", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
@@ -928,7 +931,6 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
 		result->createStack("peakNPixels", H5T_NATIVE_FLOAT, 0,H5S_UNLIMITED,H5S_UNLIMITED,0,
 							CXI::peaksChunkSize[0],CXI::peaksChunkSize[1],"experiment_identifier:nPeaks");
-
 
 		result->createLink("data", "peakTotalIntensity");
 		resultIndex++;
@@ -1109,7 +1111,7 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 static std::vector<std::string> openFilenames = std::vector<std::string>();
 static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
-static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
+static CXI::Node *getCXIFileByName(cGlobal *global, cEventData *eventData, int powderClass){
 	char filename[MAX_FILENAME_LENGTH];
 	if(global->saveByPowderClass){
 		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
@@ -1117,19 +1119,24 @@ static CXI::Node * getCXIFileByName(cGlobal *global, int powderClass){
 	else{
 		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
 	}
+	if (eventData != NULL)
+		strcpy(eventData->filename, filename);
+	
 
 	pthread_mutex_lock(&global->framefp_mutex);
-	/* search again to be sure */
-	for(uint i = 0;i<openFilenames.size();i++){
+	/* search for filename in list */
+	for(uint i=0; i<openFilenames.size(); i++){
 		if(openFilenames[i] == std::string(filename)){
-			pthread_mutex_unlock(&global->framefp_mutex);
 			DEBUG2("Found file pointer to already opened file.");
+			pthread_mutex_unlock(&global->framefp_mutex);
 			return openFiles[i];
 		}
 	}
-	openFilenames.push_back(filename);
+
 	DEBUG2("Creating a new file.");
-	CXI::Node *cxi = createCXISkeleton(filename,global);
+	printf("Creating %s\n",filename);
+	CXI::Node *cxi = createCXISkeleton(filename, global);
+	openFilenames.push_back(filename);
 	openFiles.push_back(cxi);
 	pthread_mutex_unlock(&global->framefp_mutex);
 	return cxi;
@@ -1146,7 +1153,7 @@ void writeAccumulatedCXI(cGlobal * global){
 
 	DETECTOR_LOOP{
 		POWDER_LOOP {
-			CXI::Node * cxi = getCXIFileByName(global, powderClass);
+			CXI::Node * cxi = getCXIFileByName(global, NULL, powderClass);
 			Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 			Node & cl = det_node.child("class",powderClass+1);
 			FOREACH_DATAFORMAT_T(i_f, cDataVersion::DATA_FORMATS) {
@@ -1223,17 +1230,22 @@ void closeCXIFiles(cGlobal * global){
 	#warning "Please update your HDF5 to get properly truncated output files.\n"
 	fprintf(stderr,"HDF5 < 1.8.9 contains a bug which makes it impossible to shrink certain datasets.\n");
 	fprintf(stderr,"Please update your HDF5 to get properly truncated output files.\n");
+	//#else
+	#endif
 	
-	#else
 	pthread_mutex_lock(&global->framefp_mutex);
+	
 	/* Go through each file and resize them to their right size */
-	for(uint i = 0;i<openFilenames.size();i++){
-		closeCXI(openFiles[i]);    
+	for(uint i=0; i<openFilenames.size(); i++){
+		printf("Closing %s\n",openFilenames[i].c_str());
+		closeCXI(openFiles[i]);
 	}
 	openFiles.clear();
 	openFilenames.clear();
 	pthread_mutex_unlock(&global->framefp_mutex);
-	#endif
+	//#endif
+	
+
 	H5close();
 }
 
@@ -1245,11 +1257,13 @@ static void  flushCXI(CXI::Node *cxi){
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 }
 
+
 void flushCXIFiles(cGlobal * global){
+	/* Flush each open file */
 	
-	/* Go through each file and resize them to their right size */
 	pthread_mutex_lock(&global->framefp_mutex);
-	for(uint i = 0;i<openFilenames.size();i++){
+	for(uint i=0; i<openFilenames.size(); i++){
+		printf("Flushing %s\n",openFilenames[i].c_str());
 		flushCXI(openFiles[i]);
 	}
 	pthread_mutex_unlock(&global->framefp_mutex);
@@ -1265,7 +1279,7 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 	}
 	#endif
 	/* Get the existing CXI file or open a new one */
-	CXI::Node * cxi = getCXIFileByName(global, info->powderClass);
+	CXI::Node * cxi = getCXIFileByName(global, info, info->powderClass);
 
 	(*cxi)["cheetah"]["global_data"]["hit"].write(&info->hit,global->nCXIEvents);
 	(*cxi)["cheetah"]["global_data"]["nPeaks"].write(&info->nPeaks,global->nCXIEvents);
@@ -1281,6 +1295,7 @@ void writeCXIHitstats(cEventData *info, cGlobal *global ){
 void writeCXI(cEventData *eventData, cGlobal *global ){
 	DEBUG2("Write a data of one frame to CXI file.");
 	using CXI::Node;
+	
 	#ifdef H5F_ACC_SWMR_WRITE
 	bool didDecreaseActive = false;
 	if(global->cxiSWMR){
@@ -1293,11 +1308,21 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		pthread_mutex_lock(&global->swmr_mutex);
 	}
 	#endif
-    
+
+	/* Get the existing CXI file or open a new one */
+	CXI::Node *cxi = getCXIFileByName(global, eventData, eventData->powderClass);
+	Node &root = *cxi;
+	char sBuffer[1024];
+	uint stackSlice = cxi->getStackSlice();
+	eventData->stackSlice = stackSlice;
+	//printf("WriteCXI: powderClass=%i, stackSlice=%u\n",eventData->powderClass, stackSlice);
+	
+	
+	
     
     /*
      *	Update text file log
-     *  (If changing what's in the file, paste the new version into function saveCXI.cpp-->writeCXI() and saveFrame.cpp00>writeHDF5 to avoid incompatibilities)
+     *  (If changing what's in the file, paste the new version into function saveCXI.cpp-->writeCXI() and saveFrame.cpp-->writeHDF5 to avoid incompatibilities)
      *  Beamtime hack at 2am - fix this with one function later.
      */
     pthread_mutex_lock(&global->framefp_mutex);
@@ -1306,14 +1331,6 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 
     
     
-	/* Get the existing CXI file or open a new one */
-	CXI::Node * cxi = getCXIFileByName(global, eventData->powderClass);
-	Node & root = *cxi;
-	char sBuffer[1024];
-
-	uint stackSlice = cxi->getStackSlice();
-	eventData->stackSlice = stackSlice;
-
 	global->nCXIHits += 1;
 	double en = eventData->photonEnergyeV * 1.60217646e-19;
 	root["entry_1"]["instrument_1"]["source_1"]["energy"].write(&en,stackSlice);
@@ -1488,8 +1505,12 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	int resultIndex = 1;
 	if(global->savePeakInfo && global->hitfinder) {
 		long nPeaks = eventData->peaklist.nPeaks;
+		long powderClass = eventData->powderClass;
 		
 		Node & result = root["entry_1"].child("result",resultIndex);
+
+		result["powderClass"].write(&powderClass, stackSlice);
+		result["nPeaks"].write(&nPeaks, stackSlice);
 
 		result["peakXPosAssembled"].write(eventData->peaklist.peak_com_x_assembled, stackSlice, nPeaks, true);
 		result["peakYPosAssembled"].write(eventData->peaklist.peak_com_y_assembled, stackSlice, nPeaks, true);
@@ -1501,7 +1522,6 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		result["peakMaximumValue"].write(eventData->peaklist.peak_maxintensity, stackSlice, nPeaks, true);
 		result["peakSNR"].write(eventData->peaklist.peak_snr, stackSlice, nPeaks, true);
 		result["peakNPixels"].write(eventData->peaklist.peak_npix, stackSlice, nPeaks, true);
-		result["nPeaks"].write(&nPeaks, stackSlice);
 	}
 
 	/*Write LCLS informations*/

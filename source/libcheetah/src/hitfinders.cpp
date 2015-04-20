@@ -149,13 +149,16 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
  */
 void  sortPowderClass(cEventData *eventData, cGlobal *global){
 	
-	// This is the logic for when we run hitfinding
+	// This is the default option when hitfinding is turned off
+	eventData->powderClass = eventData->pumpLaserCode;
+	
+
+	// This is the additional logic when hitfinding is used
 	if (global->hitfinder) {
 		eventData->powderClass = eventData->hit;
 	
-    
 		/*
-		 *  Pump laser logic
+		 *  Pump laser schemas
 		 *  Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
 		 *
 		 *  Typically:
@@ -172,6 +175,9 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 			if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
 				eventData->powderClass = hit + 2*pumpLaserOn;
 			}
+			else if(strcmp(global->pumpLaserScheme, "evr183") == 0) {
+				eventData->powderClass = hit + 2*pumpLaserOn;
+			}
 			else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {
 				if(hit == 0){
 					eventData->powderClass = 0;
@@ -183,10 +189,6 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 			}
 
 		}
-	}
-	// And this is the logic when everything is a hit
-	else {
-		eventData->powderClass = eventData->pumpLaserCode;
 	}
 }
 

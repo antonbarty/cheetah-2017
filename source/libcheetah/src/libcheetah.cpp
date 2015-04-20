@@ -97,7 +97,7 @@ void cheetahNewRun(cGlobal *global) {
             if(global->powderlogfp[i] != NULL)
                 fclose(global->powderlogfp[i]);
 			global->powderlogfp[i] = fopen(filename, "w");
-			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->frameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay\n");
+			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->filename, eventData->stackSlice, eventData->xtcFrameNumber, eventData->threadNum, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay\n");
 
 			if(global->useFEEspectrum) {
 				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
@@ -118,6 +118,7 @@ void cheetahNewRun(cGlobal *global) {
     }
     pthread_mutex_unlock(&global->powderfp_mutex);
 }
+
 
 /*
  *  libCheetah function to update global variables where needed from new event data

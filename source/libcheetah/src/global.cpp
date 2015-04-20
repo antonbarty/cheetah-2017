@@ -250,7 +250,6 @@ cGlobal::cGlobal(void) {
 
 	// Only one thread during calibration
 	useSingleThreadCalibration = 0;
-	strcpy(cxiFilename, "");
 
 
 }
@@ -273,6 +272,49 @@ void cGlobal::setup() {
 	gettimeofday(&datarateWorkerTimevalLast,NULL);
 	time(&tstart);  
 
+	
+	
+	/*
+	 *  HOW MANY TYPES OF POWDER PATTERN?
+	 */
+	if(hitfinder==0)
+		nPowderClasses=1;
+	else
+		nPowderClasses=2;
+	if(generateDarkcal || generateGaincal)
+		nPowderClasses=1;
+	
+	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
+		nPeaksMin[powderClass] = 1000000000;
+		nPeaksMax[powderClass] = 0;
+	}
+	
+
+	/*
+	 *  Pump laser schemas
+	 *	Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
+	 *	This changes the number of powder patterns required, so has to be done early on in setup()
+	 */
+	if(sortPumpLaserOn) {
+		if(strcmp(pumpLaserScheme, "evr41") == 0) {
+			nPowderClasses *= 2;
+		}
+		else if(strcmp(pumpLaserScheme, "evr183") == 0) {
+			nPowderClasses *= 2;
+		}
+		else if(strcmp(pumpLaserScheme, "LD57") == 0) {
+			nPowderClasses = 6;
+		}
+		else {
+			printf("Error: Unknown pump laser scheme\n");
+			printf("pumpLaserScheme = %s\n", pumpLaserScheme);
+			printf("Known schemes are: evr41, LD57\n");
+			exit(1);
+		}
+	}
+	
+	
+	
 	/*
 	 *	AREA DETECTORS
 	 */
@@ -328,40 +370,7 @@ void cGlobal::setup() {
 
 	
 	
-	/*
-	 *  POWDERS
-	 */
-	// How many types of powder pattern do we need?
-	if(hitfinder==0)
-		nPowderClasses=1;
-	else
-		nPowderClasses=2;
-	if(generateDarkcal || generateGaincal)
-		nPowderClasses=1;
-	for(int powderClass = 0; powderClass<nPowderClasses; powderClass++){
-		nPeaksMin[powderClass] = 1000000000;
-		nPeaksMax[powderClass] = 0;
-	}
-
-    /*
-     *  PUMP LASER LOGIC
-     */
-	// Search for 'Pump laser logic' to find all places in which code needs to be changed to implement a new schema
-	if(sortPumpLaserOn) {
-        if(strcmp(pumpLaserScheme, "evr41") == 0) {
-            nPowderClasses *= 2;
-        }
-        else if(strcmp(pumpLaserScheme, "LD57") == 0) {
-            nPowderClasses = 6;
-        }
-        else {
-            printf("Error: Unknown pump laser scheme\n");
-            printf("pumpLaserScheme = %s\n", pumpLaserScheme);
-            printf("Known schemes are: evr41, LD57\n");
-            exit(1);
-        }
-    }
-    	
+	
 
 	/*
 	 *  THREAD MANAGEMENT
@@ -1528,7 +1537,7 @@ void cGlobal::writeInitialLog(void){
 		exit(1);
 	}
 
-	fprintf(framefp, "# eventData->Filename, eventData->frameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay, eventData->pumpLaserOn\n");
+	fprintf(framefp, "# eventData->eventName, eventData->filename, eventData->stackSlice, eventData->xtcFrameNumber, eventData->threadNum, eventData->hit, eventData->powderClass, eventData->photonEnergyeV, eventData->wavelengthA, eventData->gmd1, eventData->gmd2, eventData->detector[0].detectorZ, eventData->energySpectrumExist,  eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay, eventData->pumpLaserOn\n");
 
 	sprintf(cleanedfile,"cleaned.txt");
 	cleanedfp = fopen (cleanedfile,"w");
@@ -1798,8 +1807,9 @@ void cGlobal::readHits(char *filename) {
 	std::cout << "\tList contained " << hitlist.size() << " hits." << std::endl;
 }
 
-template<typename T>
-void cGlobal::splitList(char * values, std::vector<T> & elems) {
+
+
+template<typename T> void cGlobal::splitList(char * values, std::vector<T> & elems) {
 	char delim = ',';
     std::stringstream ss(values);
     std::string item;

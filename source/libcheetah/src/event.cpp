@@ -20,6 +20,9 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData = new cEventData();
 	eventData->pGlobal = global;
 
+	strcpy(eventData->eventname,"---");
+	strcpy(eventData->filename,"---");
+
 	/*
 	 *	Initialise any common default values
 	 */
@@ -31,7 +34,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	eventData->nPeaks=0;
 	eventData->peakNpix=0.;
 	eventData->peakTotal=0.;
-	eventData->stackSlice=0;
+	eventData->stackSlice=-1;
 
 	//long		pix_nn1 = global->detector[0].pix_nn;
 	//long		asic_nx = global->detector[0].asic_nx;

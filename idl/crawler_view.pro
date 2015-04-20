@@ -248,10 +248,12 @@ pro crawler_updateDatasetLog, pstate
 
 end
 
+
+
 ;;
 ;;	Dialog to start Cheetah
 ;;
-pro crawler_startCheetah, pState, run
+pro crawler_startCheetah, pState, run, menu=menu
 
   	sState = *pState
 	table_data = *(sState.table_pdata)
@@ -266,51 +268,120 @@ pro crawler_startCheetah, pState, run
 	cheetah = sState.process
 	ini = sState.cheetahIni
 	
-	desc = [ 	'1, base, , column', $
-				'0, label, Start run: '+startrun+', left', $
-				'0, label, End run: '+endrun+', left', $
-				'0, label, Command: '+cheetah+', left', $
-				'2, text, '+ini+', label_left=cheetah.ini file:, width=50, tag=ini', $
-				'1, base,, row', $
-				'0, button, OK, Quit, Tag=OK', $
-				'2, button, Cancel, Quit' $
-	]		
-	a = cw_form(desc, /column, title='Start cheetah')
 	
-	;; Only do this if OK is pressed (!!)
-	if a.OK eq 1 then begin		
+	;; Menu when performing this interactively
+	if keyword_set(menu) then begin
+		desc = [ 	'1, base, , column', $
+					'0, label, Start run: '+startrun+', left', $
+					'0, label, End run: '+endrun+', left', $
+					'0, label, Command: '+cheetah+', left', $
+					'2, text, '+ini+', label_left=cheetah.ini file:, width=50, tag=ini', $
+					'1, base,, row', $
+					'0, button, OK, Quit, Tag=OK', $
+					'2, button, Cancel, Quit' $
+		]		
+		a = cw_form(desc, /column, title='Start cheetah')
+		
+		if a.OK ne 1 then $
+			return
+
+		;; Only do this if OK is pressed (!!)
 		ini = a.ini
 		(*pstate).cheetahIni = a.ini
-		
-		;; Base of the .ini filename is the run tag
-		wini = strpos(ini,'.ini')
-		if wini ne -1 then $
-			tag=strmid(ini,0,wini) $
-		else $
-			tag=ini
-		print, tag
-		
-		for i=0L, nruns do begin
-			cmnd = strcompress(string(cheetah, ' ', run[i], ' ', ini, ' ', tag))
-			dir = string(format='(%"r%04i-%s")', run[i], tag) 
-			print, cmnd
-			spawn, cmnd
-			
-			;; Swap the Cheetah status label to 'Submitted'
-			w = where(table_runs eq run[i])
-			if w[0] ne -1 then begin
-				widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
-				widget_control, sState.table, use_table_select = [sState.table_statuscol, w[0], sState.table_statuscol, w[0]], set_value = ['Submitted']
-				widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir]
-			endif
-			crawler_updateDatasetLog, pstate
-		endfor
-
-		;; Update the datasets file
-		;crawler_updateDatasetLog, pstate
-		
 	endif
+		
+		
+	
+	
+	;; Base of the .ini filename is the run tag
+	wini = strpos(ini,'.ini')
+	if wini ne -1 then $
+		tag=strmid(ini,0,wini) $
+	else $
+		tag=ini
+	print, tag
+	
+	for i=0L, nruns do begin
+		cmnd = strcompress(string(cheetah, ' ', run[i], ' ', ini, ' ', tag))
+		dir = string(format='(%"r%04i-%s")', run[i], tag) 
+		print, cmnd
+		spawn, cmnd
+		
+		;; Swap the Cheetah status label to 'Submitted'
+		w = where(table_runs eq run[i])
+		if w[0] ne -1 then begin
+			widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
+			widget_control, sState.table, use_table_select = [sState.table_statuscol, w[0], sState.table_statuscol, w[0]], set_value = ['Submitted']
+			widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir]
+		endif
+		crawler_updateDatasetLog, pstate
+	endfor
+	
 end
+
+;;
+;;	Auto-run Cheetah when new runs become available
+;;
+pro crawler_autostart, pState
+	sState = *pState 
+
+
+	;; Return if Autorun is not selected
+	if (*pstate).mode_autorun eq 0 then $
+		return
+
+	;; Autorun only works in run-mode list (when runs are in columns, does not work in summary modes!)
+	if (sState.table_viewmode ne 0) then $
+		return
+
+	print,'Autorun:'
+
+	;; Collect status
+	table_data = *(sState.table_pdata)
+	run = reform(table_data[0,*])
+	xtc_status = reform(table_data[2,*])
+	cheetah_status = reform(table_data[sState.table_statuscol,*])
+	rundir = reform(table_data[sState.table_dircol,*])
+	h5dir = sState.h5dir
+
+	
+	;; Figure out which runs need processing
+	last_processed = max(where(cheetah_status ne '---'))
+	print,'Last run processed: ', run[last_processed]
+	
+	last_ready_xtc = max(where(xtc_status eq 'Ready'))
+	print,'Last ready XTC file: ', run[last_ready_xtc]
+
+
+	;; If there are runs to process...
+	if last_ready_xtc gt last_processed then begin
+		runs_to_process = run[last_processed+1:last_ready_xtc]
+		print,'Runs to be processed: ', runs_to_process
+		
+		;; Loop through runs to process
+		for i=0L, n_elements(runs_to_process)-1 do begin
+			this_run = runs_to_process[i]
+			dir = string(format='(%"r%04i")', this_run)
+			;;dir = string(format='(%"r%04i-%s")', run[i], tag) 
+			
+			;; Does the directory exist? If yes then processing must have been started already
+			dir_exists = file_test(h5dir+'/'+dir+'-*', /dir)
+			if dir_exists then begin
+				print, 'Run ', this_run, ' - output directory exists (skipping)'
+				continue
+			endif
+			
+			;; Start Cheetah
+			print,'Starting Cheetah for run ', this_run
+			crawler_startCheetah, pState, this_run 
+			
+		endfor			
+	endif
+
+
+end
+
+
 
 
 ;;
@@ -651,6 +722,9 @@ function crawler_whichRun, pState, runname=runname, dirname=dirname, pathname=pa
 
 end
 
+
+
+
 ;;
 ;;	Crawler event processor
 ;;
@@ -706,8 +780,10 @@ pro crawler_event, ev
 		;;
 		sState.button_refresh : begin
 			crawler_updateTable, pState
+			crawler_autostart, pState
+
+			;; Schedule the next click
 			if sState.table_autorefresh ne 0 then begin
-					;print,'Auto refreshing table'
 					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
 			endif
 		end
@@ -740,7 +816,7 @@ pro crawler_event, ev
 		;; Launch Cheetah
 		sState.button_cheetah : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
-			crawler_startCheetah, pState, run
+			crawler_startCheetah, pState, run, /menu
 		end			
 
 		sState.button_postprocess : begin
@@ -788,6 +864,7 @@ pro crawler_event, ev
 			widget_control, sState.mbfile_crawl, sensitive=1
 			widget_control, sState.mbcheetah_run, sensitive=1
 			widget_control, sState.mbcheetah_label, sensitive=1
+			widget_control, sState.mbcheetah_autorun, sensitive=1
 			widget_control, sState.button_postprocess, sensitive=1
 			widget_control, sState.button_cheetah, sensitive=1
 			widget_control, sState.button_crystfel, sensitive=1
@@ -810,8 +887,9 @@ pro crawler_event, ev
 		end
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
-			crawler_startCheetah, pState, run
+			crawler_startCheetah, pState, run, /menu
 		end
+
 		sState.mbcheetah_label : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
 			crawler_labelDataset, pState, run
@@ -924,8 +1002,14 @@ pro crawler_event, ev
 		end
 
 
+		sState.mbview_translategainmap : begin
+			cd, current=dir
+			dir = file_dirname(dir)+'/calib'
+			translate_cspad_gain_map, gainval=6.87526, geometry=sState.geometry, /menu
+		end
+
+
 		sState.mbfile_autorefresh : begin
-			;;help, sState.table_autorefresh
 			desc = [ 	'1, base, , column', $
 						'2, FLOAT, '+ string(sState.table_autorefresh)+', label_left=Auto refresh delay (sec):, width=10, tag=delay', $
 						'1, base,, row', $
@@ -938,6 +1022,34 @@ pro crawler_event, ev
 			if a.OK eq 1 then begin		
 				(*pstate).table_autorefresh = a.delay
 			endif
+		end
+
+
+		;; Auto-run menu item
+		sState.mbcheetah_autorun : begin
+			;; Start with a menu item to let people know what will happen, and give a chance to cancel
+			if  (*pstate).mode_autorun eq 0 then begin
+				desc = [ 	'1, base, , column', $
+							'0, label, Automatically start Cheetah when new runs appear using last used .ini file., left', $
+							'0, label, (current .ini file would be '+sState.cheetahIni+'), left', $
+							'2, label, Uncheck menu item to stop, left', $
+							'1, base,, row', $
+							'0, button, OK, Quit, Tag=OK', $
+							'2, button, Cancel, Quit' $
+				]		
+				a = cw_form(desc, /column, title='Autorun Cheetah')
+				if a.OK eq 1 then begin		
+					(*pstate).mode_autorun = 1 - (*pstate).mode_autorun
+					widget_control, sState.mbcheetah_autorun, set_button=(*pstate).mode_autorun
+					print,'Autorun enabled, uncheck menu item to cancel'
+				endif
+			endif $
+			else begin
+				(*pstate).mode_autorun = 1 - (*pstate).mode_autorun
+				widget_control, sState.mbcheetah_autorun, set_button=(*pstate).mode_autorun
+				print,'Autorun disabled'
+			endelse
+			
 		end
 
 
@@ -1002,6 +1114,8 @@ pro crawler_view
 	mbfile = widget_button(bar, value='Cheetah')
 	mbcheetah_run = widget_button(mbfile, value='Process selected runs', sensitive=0)
 	mbcheetah_label = widget_button(mbfile, value='Label dataset', sensitive=0)
+	mbcheetah_autorun = widget_button(mbfile, value='Autorun when new data is ready', sensitive=0, /checked)
+	
 
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
@@ -1010,6 +1124,8 @@ pro crawler_view
 	mbview_satplot1 = widget_button(mbtool, value='Plot peak maximum vs radius')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')
 	mbview_gainmap = widget_button(mbtool, value='Create CSPAD gain map')
+	mbview_translategainmap = widget_button(mbtool, value='Translate CSPAD gain map')
+
 
 
 
@@ -1104,7 +1220,12 @@ pro crawler_view
 			mbfile_quit : mbfile_quit, $
 			mbcheetah_run : mbcheetah_run, $
 			mbcheetah_label : mbcheetah_label, $
+			mbcheetah_autorun : mbcheetah_autorun, $
 			
+			mbview_satcheck : mbview_satcheck, $
+			mbview_gainmap : mbview_gainmap, $
+			mbview_translategainmap : mbview_translategainmap, $
+
 			mbview_images : mbview_images, $
 			mbview_hitrate : mbview_hitrate, $
 			mbview_resolution : mbview_resolution, $
@@ -1120,11 +1241,6 @@ pro crawler_view
 			mbview_badpix : mbview_badpix, $
 			mbview_badpix2 : mbview_badpix2, $
 			mbview_combinemasks : mbview_combinemasks, $
-
-
-			mbview_satcheck : mbview_satcheck, $
-			mbview_gainmap : mbview_gainmap, $
-
 			
 			mbview_waxs : mbview_waxs, $
 			
@@ -1142,6 +1258,8 @@ pro crawler_view
 			button_resolution : button_resolution, $
 			button_powder : button_powder, $
 			
+			mode_autorun : 0, $
+
 			xtcdir : 'Not set', $
 			h5dir : 'Not set', $
 			h5filter : 'Not set', $

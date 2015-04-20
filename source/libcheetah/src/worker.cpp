@@ -332,26 +332,29 @@ hitknown:
 		writeCXIHitstats(eventData, global);
 	}
 
-	eventData->writeFlag = 
+	// If this is a hit, write out to our favourite HDF5 format
+	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
+	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
+
+	eventData->writeFlag =
 		(hit && global->saveHits && (eventData->nPeaks >= global->saveHitsMinNPeaks)) || 
 		(!hit && global->saveBlanks) || 
 		( (global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) );
 
-	// If this is a hit, write out to our favourite HDF5 format
-	// Put here anything only needed for data saved to file (why waste the time on events that are not saved)
-	// eg: only assemble 2D images, 2D masks and downsample if we are actually saving this frame
 	
     if (global->generateDarkcal || global->generateGaincal) {
         // Print frames for dark/gain
         printf("r%04u:%li (%2.1lf Hz): Processed %s\n", global->runNumber, eventData->threadNum, processRate, eventData->eventStamp);
-    } else {
+    }
+	else {
         if(eventData->writeFlag){
-            // one CXI or many H5?
             DEBUG2("About to write frame.");
+			// one CXI or many H5?
             if(global->saveCXI){
                 printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
                 writeCXI(eventData, global);
-            } else {
+            }
+			else {
                 printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to %s.h5 (hit=%i,npeaks=%i)\n",global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
                 writeHDF5(eventData, global);
             }
@@ -363,14 +366,12 @@ hitknown:
         }
     }
 
+	// The following contain file names, which needs knowledge of the file and subdirectory, which is why it's done here and not above
 	// FEE spectrometer data stack
-	// (needs knowledge of subdirectory for file list, which is why it's done here)
 	addFEEspectrumToStack(eventData, global, powderClass);
 	
 	// Time tool stack
 	addTimeToolToStack(eventData, global, powderClass);
-	
-	
 	
 	
 	// If this is a hit, write out peak info to peak list file	
@@ -419,9 +420,12 @@ cleanup:
 		
 		
 		// Save accumulated data
+		// try this - periodically flush the H5 file to let us to see data as it's being saved
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
-		} 
+			flushCXIFiles(global);
+		}
+		
 		if(global->writeRunningSumsFiles){
 			saveRunningSums(global);
 			saveHistograms(global);
@@ -433,12 +437,6 @@ cleanup:
 		
 		// Save radial average stacks
 		saveRadialStacks(global);
-		
-
-		// try this - periodically flush the H5 file to let us to see data as it's being saved 
-		if(global->saveCXI) {
-			flushCXIFiles(global);
-		}
 	}
 	
 	

@@ -11,7 +11,9 @@
 void writeLog(cEventData *eventData, cGlobal * global) {
 	// Write out information on each frame to a log file
 	pthread_mutex_lock(&global->framefp_mutex);
-    fprintf(global->framefp, "%s/%s, ", eventData->eventSubdir, eventData->eventname);
+    fprintf(global->framefp, "%s, ", eventData->eventname);
+	fprintf(global->framefp, "%s, ", eventData->filename);
+	fprintf(global->framefp, "%ld, ", eventData->stackSlice);
 	fprintf(global->framefp, "%li, ", eventData->frameNumber);
 	fprintf(global->framefp, "%li, ", eventData->threadNum);
 	fprintf(global->framefp, "%i, ", eventData->hit);
@@ -36,7 +38,9 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 	long powderClass = eventData->powderClass;
     if(global->powderlogfp[powderClass] != NULL) {
 		pthread_mutex_lock(&global->powderfp_mutex);
-        fprintf(global->powderlogfp[powderClass], "%s/%s, ", eventData->eventSubdir, eventData->eventname);
+        fprintf(global->powderlogfp[powderClass], "%s, ", eventData->eventname);
+		fprintf(global->powderlogfp[powderClass], "%s, ", eventData->filename);
+		fprintf(global->powderlogfp[powderClass], "%ld, ", eventData->stackSlice);
         fprintf(global->powderlogfp[powderClass], "%li, ", eventData->frameNumber);
         fprintf(global->powderlogfp[powderClass], "%li, ", eventData->threadNum);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->photonEnergyeV);

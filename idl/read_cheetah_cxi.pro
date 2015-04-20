@@ -15,7 +15,8 @@ function read_cheetah_cxi, filename, frameNum,  $
 	if n_elements(frameNum) eq 0 then $
 		frameNum = 0L
 	if not keyword_set(field) then $
-		field = 'entry_1/instrument_1/detector_1/data'
+		field = 'entry_1/data_1/data'
+		;;field = 'entry_1/instrument_1/detector_1/data'
 	
 	
 	if keyword_set(verbose) then begin

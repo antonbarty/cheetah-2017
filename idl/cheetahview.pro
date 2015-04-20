@@ -640,23 +640,38 @@ function cheetahview_updatefilelist, dir
 	file = ['']
 	
 	;; Find .cxi files
-	file = file_search(dir,"*.cxi",/fully_qualify)
-	if n_elements(file) ne 0 AND file[0] ne '' then begin
+	cxifile = file_search(dir,"*.cxi",/fully_qualify)
+	if n_elements(cxifile) ne 0 AND cxifile[0] ne '' then begin
 		file_type = 'cxi'
-		print,strcompress(string('CXI files: ', file_basename(file)))
+		print,strcompress(string('CXI files: ', file_basename(cxifile)))
 		total_nframes = 0
+
+		print, cxifile
 		
-		for i=0, n_elements(file)-1 do begin
-			nframes = read_cheetah_cxi(file[i], /get_nframes)
-			print, strcompress(string('Number of frames in ', file_basename(file[i]), ' = ', nframes))
+		for i=0, n_elements(cxifile)-1 do begin
+			nframes = read_cheetah_cxi(cxifile[i], /get_nframes)
+
+			help, cxifile
+			
+			;; Cross-check against number of non-zero elements in pixel size array
+			;; (this is to avoid the blank frames problem when the file is not completed)
+			check = read_h5(cxifile[i], field = 'entry_1/instrument_1/detector_1/x_pixel_size')
+			help, check
+			
+			w = where(check ne 0)
+			if w[0] ne -1 then ncheck=n_elements(w) else ncheck=0
+			if nframes gt ncheck then $
+				nframes = ncheck
+				
+			print, strcompress(string('Number of frames in ', file_basename(cxifile[i]), ' = ', nframes))
 
 			if total_nframes eq 0 AND nframes gt 0 then begin
-				file = replicate(file[i], nframes)
+				file = replicate(cxifile[i], nframes)
 				index = indgen(nframes)
 				total_nframes += nframes
 			endif $
-			else if nframes ne 0 then  begin
-				file = [file, replicate(file[i], nframes)]
+			else if nframes ne 0 then begin
+				file = [file, replicate(cxifile[i], nframes)]
 				index = [index, indgen(nframes)]
 				total_nframes += nframes
 			endif
@@ -679,6 +694,7 @@ function cheetahview_updatefilelist, dir
 					file : file, $
 					index : index $
 				}
+				
 	return, result
 end
 

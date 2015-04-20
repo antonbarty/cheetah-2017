@@ -24,7 +24,7 @@ pro waxsview, directory, offset=offset
 	y = fltarr(xmax)
 	p = plot(y,/nodata, dimensions=[800,1000])
 	
-	p.yrange=[-0.05,ymax]
+	;p.yrange=[-0.05,ymax]
 	p.xtitle = 'Radius (pixels)'
 	p.ytitle = 'WAXS trace'
 	p.title = 'Radial lineouts for different runs'

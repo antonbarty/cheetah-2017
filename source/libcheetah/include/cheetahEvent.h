@@ -33,8 +33,14 @@ public:
 	long        frameNumber;
 	long        frameNumberIncludingSkipped;
 	long        frameNum;
-	uint stackSlice;
-	bool writeFlag;
+	long		stackSlice;
+	bool		writeFlag;
+	
+	char		eventname[1024];
+	char		filename[1024];
+	char		eventStamp[1024];
+	char		eventSubdir[1024];
+
 	
 	// Detector data
 	cPixelDetectorEvent		detector[MAX_DETECTORS];
@@ -103,9 +109,6 @@ public:
 	int			nanoSeconds;
 	unsigned	fiducial;
 	char		timeString[1024];
-	char		eventname[1024];
-	char		eventStamp[1024];
-	char		eventSubdir[1024];
 
 	bool		beamOn;
 	unsigned	runNumber;

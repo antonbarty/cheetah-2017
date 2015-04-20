@@ -42,7 +42,6 @@ public:
 	/** @brief Path to the global configuration file */
 	char     configFile[MAX_FILENAME_LENGTH];
 	char     configOutFile[MAX_FILENAME_LENGTH];
-	char     cxiFilename[MAX_FILENAME_LENGTH];
 	/** @brief Default photon energy. */
 	float    defaultPhotonEnergyeV;
 
@@ -393,8 +392,8 @@ public:
 	long     nrecentprocessedframes;
 	long     nrecenthits;
     long     nespechits;
-    long nCXIEvents;
-    long nCXIHits;
+    long	nCXIEvents;
+    long	nCXIHits;
     
 	// FEE spectrum
 	int		useFEEspectrum;
