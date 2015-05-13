@@ -44,7 +44,8 @@ void assemble2DImage(cEventData *eventData, cGlobal *global) {
 } 
     
 void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long pix_nn, long image_nx, long image_nn,int assembleInterpolation) {
- 
+
+
     if(assembleInterpolation == ASSEMBLE_INTERPOLATION_NEAREST){
         // Loop through all pixels and interpolate onto regular grid
         float	x, y;
@@ -65,13 +66,8 @@ void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long
 
     else if(assembleInterpolation == ASSEMBLE_INTERPOLATION_LINEAR){
 		// Allocate temporary arrays for pixel interpolation (needs to be floating point)
-		float	*data = (float*) calloc(image_nn,sizeof(float));
+		float	*temp = (float*) calloc(image_nn,sizeof(float));
 		float	*weight = (float*) calloc(image_nn,sizeof(float));
-		for(long i=0; i<image_nn; i++){
-			data[i] = 0;
-			weight[i]= 0;
-		}
-	
 	
 		// Loop through all pixels and interpolate onto regular grid
 		float	x, y;
@@ -85,7 +81,7 @@ void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long
 			x = pix_x[i] + image_nx/2.;
 			y = pix_y[i] + image_nx/2.;
 			pixel_value = data[i];
-		
+			
 			// Split coordinate into integer and fractional parts
 			ix = (long) floor(x);
 			iy = (long) floor(y);
@@ -97,28 +93,28 @@ void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long
 			if(ix>=0 && iy>=0 && ix<image_nx && iy<image_nx) {
 				w = (1-fx)*(1-fy);
 				image_index = ix + image_nx*iy;
-				data[image_index] += w*pixel_value;
+				temp[image_index] += w*pixel_value;
 				weight[image_index] += w;
 			}
 			// (+1,0)
 			if((ix+1)>=0 && iy>=0 && (ix+1)<image_nx && iy<image_nx) {
 				w = (fx)*(1-fy);
 				image_index = (ix+1) + image_nx*iy;
-				data[image_index] += w*pixel_value;
+				temp[image_index] += w*pixel_value;
 				weight[image_index] += w;
 			}
 			// (0,+1)
 			if(ix>=0 && (iy+1)>=0 && ix<image_nx && (iy+1)<image_nx) {
 				w = (1-fx)*(fy);
 				image_index = ix + image_nx*(iy+1);
-				data[image_index] += w*pixel_value;
+				temp[image_index] += w*pixel_value;
 				weight[image_index] += w;
 			}
 			// (+1,+1)
 			if((ix+1)>=0 && (iy+1)>=0 && (ix+1)<image_nx && (iy+1)<image_nx) {
 				w = (fx)*(fy);
 				image_index = (ix+1) + image_nx*(iy+1);
-				data[image_index] += w*pixel_value;
+				temp[image_index] += w*pixel_value;
 				weight[image_index] += w;
 			}
 		}
@@ -127,19 +123,19 @@ void assemble2DImage(float *image, float *data, float *pix_x, float *pix_y, long
 		// Reweight pixel interpolation
 		for(long i=0; i<image_nn; i++){
 			if(weight[i] < 0.05)
-				data[i] = 0;
+				temp[i] = 0;
 			else
-				data[i] /= weight[i];
+				temp[i] /= weight[i];
 		}
     
         // Copy to output array
         for(long i=0; i<image_nn; i++){
-            image[i] = data[i];
-		}
-	
+            image[i] = temp[i];
+		}	 
+		
 	
 		// Free temporary arrays
-		free(data);
+		free(temp);
 		free(weight);
 	}
 }
@@ -259,7 +255,6 @@ void assemble2DPowder(cGlobal *global) {
 			float		*pix_x = global->detector[detIndex].pix_x;
 			float		*pix_y = global->detector[detIndex].pix_y;
 			int             assembleInterpolation = global->assembleInterpolation;
-        
 			// Assemble each powder type
 			for(long powderClass=0; powderClass < global->nPowderClasses; powderClass++) {
 
