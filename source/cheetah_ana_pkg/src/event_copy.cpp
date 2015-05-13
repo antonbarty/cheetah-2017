@@ -131,6 +131,7 @@ namespace cheetah_ana_pkg {
         int     pumpLaserCode = 0;
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
+#if PSANA_VERSION >= 1317
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
 
 		// EvrData v4
@@ -186,13 +187,13 @@ namespace cheetah_ana_pkg {
 					printf("WARNING: evr183 and evr184 are both equal (Laser ON and laser OFF at the same time)\n");
 				}
 			}
-       }
-
-		// EvrData v3
-		else if (data3.get()) {
-			numEvrData = data3->numFifoEvents();
-
-			// Timestamps
+		} else
+#endif
+		   // EvrData v3
+			if (data3.get()) {
+			   numEvrData = data3->numFifoEvents();
+			   
+			   // Timestamps
 			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();
 			if (verbose) { 
@@ -264,7 +265,9 @@ namespace cheetah_ana_pkg {
 		double peakCurrent = 0;
 		double DL2energyGeV = 0;
 		
+#if PSANA_VERSION >= 1315
 		shared_ptr<Psana::Bld::BldDataEBeamV7> ebeam7 = evt.get(m_srcBeam);
+#endif
 		shared_ptr<Psana::Bld::BldDataEBeamV6> ebeam6 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV5> ebeam5 = evt.get(m_srcBeam);
 		shared_ptr<Psana::Bld::BldDataEBeamV4> ebeam4 = evt.get(m_srcBeam);
@@ -275,6 +278,7 @@ namespace cheetah_ana_pkg {
 
 		double photonEnergyeV=-1;
 		// Ebeam v7
+#if PSANA_VERSION >= 1315
 		if (ebeam7.get()) {
 			charge = ebeam7->ebeamCharge();
 			L3Energy = ebeam7->ebeamL3Energy();
@@ -299,7 +303,8 @@ namespace cheetah_ana_pkg {
 			}
 		}
 		else 
-        // Ebeam v6
+#endif
+		// Ebeam v6
 			if (ebeam6.get()) {
 			charge = ebeam6->ebeamCharge();
 			L3Energy = ebeam6->ebeamL3Energy();
