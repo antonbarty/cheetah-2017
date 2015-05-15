@@ -315,68 +315,119 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
     // Set modes in accordance to configuration
 	// S-A-V-E
 	// Data versions
+	printf("-- Saving configuration:\n");
+	printf("\tData versions:\n");
 	saveVersion = cDataVersion::DATA_VERSION_NONE;
 	if (saveDetectorRaw) {
 		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_RAW);
-		dataVersionMain           = cDataVersion::DATA_VERSION_RAW; 
+		dataVersionMain           = cDataVersion::DATA_VERSION_RAW;
+		printf("\t\tRaw: YES \n");
+	} else {
+		printf("\t\tRaw: NO \n");
 	}
 	if (saveDetectorCorrected) {
 		saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
-		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED; 
+		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED;
+		printf("\t\tDetector corrected: YES \n");
+	} else {
+		printf("\t\tDetector corrected: NO \n");
 	}
 	if (saveDetectorAndPhotonCorrected) {
 	    saveVersion               = (cDataVersion::dataVersion_t) (saveVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 		dataVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED; 
+		printf("\t\tDetector and photon corrected: YES \n");
+	} else {
+		printf("\t\tDetector and photon corrected: NO \n");
 	}
 	
+	
 	// Data formats
+	printf("\tData formats:\n");
 	saveFormat = cDataVersion::DATA_FORMAT_NONE;
 	if (saveRadialAverage) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
+		printf("\t\tRaidal average: YES \n");
+	} else {
+		printf("\t\tRaidal average: NO \n");
 	}
 	if (saveNonAssembled) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
 		dataFormatMain            = cDataVersion::DATA_FORMAT_NON_ASSEMBLED; 
+		printf("\t\tNon-assembled: YES \n");
+	} else {
+		printf("\t\tNon-assembled: NO \n");
 	}
 	if (saveAssembled) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED;
+		printf("\t\tAssembled: YES \n");
+	} else {
+		printf("\t\tAssembled: NO \n");
 	}
 	if (saveAssembledAndDownsampled) {
 		saveFormat                = (cDataVersion::dataFormat_t) (saveFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
+		printf("\t\tAssembled and downsampled: YES \n");
+	} else {
+		printf("\t\tAssembled and downsampled: YES \n");
 	}
+
 	
 	// P-O-W-D-E-R
 	// Accumulating data to pseudo-powder patterns etc.
 	// Data versions
+	printf("-- Powder configuration:\n");
+	printf("\tData versions:\n");
 	powderVersion                 = saveVersion;
 	if (savePowderDetectorRaw) {
 		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_RAW);
 		powderVersionMain           = cDataVersion::DATA_VERSION_RAW;
+		printf("\t\tRaw: YES \n");
+	} else {
+		printf("\t\tRaw: NO \n");
 	}
 	if (savePowderDetectorCorrected) {
 		powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_CORRECTED); 
 		powderVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_CORRECTED;
+		printf("\t\tDetector corrected: YES \n");
+	} else {
+		printf("\t\tDetector corrected: NO \n");
 	}
 	if (savePowderDetectorAndPhotonCorrected) {
 	    powderVersion             = (cDataVersion::dataVersion_t) (powderVersion | cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 		powderVersionMain           = cDataVersion::DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED;
+		printf("\t\tDetector and photon corrected: YES \n");
+	} else {
+		printf("\t\tDetector and photon corrected: NO \n");
 	}
-	// Data formats
+	
+	// Data formats	
+	printf("\tData formats:\n");
 	powderFormat                  = saveFormat;
 	if (savePowderRadialAverage) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_RADIAL_AVERAGE);
+		printf("\t\tRadial average: YES \n");
+	} else {
+		printf("\t\tRadial average: NO \n");
 	}
 	if (savePowderNonAssembled) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_NON_ASSEMBLED); 
+		printf("\t\tNon-assembled: YES \n");
+	} else {
+		printf("\t\tNon-assembled: NO \n");
 	}
 	if (savePowderAssembled) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED);
+		printf("\t\tAssembled: YES \n");
+	} else {
+		printf("\t\tAssembled: NO \n");
 	}
 	if (savePowderAssembledAndDownsampled) {
 		powderFormat              = (cDataVersion::dataFormat_t) (powderFormat | cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+		printf("\t\tAssembled and downsampled: YES \n");
+	} else {
+		printf("\t\tAssembled and downsampled: NO \n");
 	}
 }
 
