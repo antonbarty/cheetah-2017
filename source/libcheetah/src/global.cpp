@@ -325,10 +325,11 @@ void cGlobal::setup() {
 		detector[detIndex].allocateMemory();
 		detector[detIndex].readDarkcal(detector[detIndex].darkcalFile);
 		detector[detIndex].readGaincal(detector[detIndex].gaincalFile);
-		detector[detIndex].readPeakmask(self, peaksearchFile);
 		detector[detIndex].readInitialPixelmask(detector[detIndex].initialPixelmaskFile);
 		detector[detIndex].readBaddataMask(detector[detIndex].baddataFile);
 		detector[detIndex].readWireMask(detector[detIndex].wireMaskFile);
+		if(detIndex == hitfinderDetectorID)
+			detector[detIndex].readPeakmask(self, peaksearchFile);
 	}
 
 	/*

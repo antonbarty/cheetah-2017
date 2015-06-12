@@ -337,7 +337,7 @@ function cheetah_readdata, filename, frame, pState, title=title, file_type=file_
 		;; (currently needed to rean an initial frame in order to set up the initial graphics window)
 		if ptr_valid(pstate) then begin	
 			file = *(*pState).pfile
-			index = (*pstate).index
+			index = *(*pState).pindex
 			file_type = (*pState).file_type
 			h5field = (*pstate).h5field
 			filename = file[i]
@@ -731,7 +731,7 @@ pro cheetah_event, ev
 	
 	;; Establish polite error handler to catch crashes
 	;; (only if not in debug mode)
-	if 1 then begin
+	if sState.debug eq 0  then begin
 		catch, Error_status 
 		if Error_status ne 0 then begin
 			message = 'Execution error: ' + !error_state.msg
@@ -739,7 +739,8 @@ pro cheetah_event, ev
 			catch, /cancel
 			return
 		endif 
-	endif
+	endif $
+	else catch, /cancel
 
 	
 	case ev.id of 
@@ -781,6 +782,12 @@ pro cheetah_event, ev
 				loadct, 4, /silent
 				tvscl, sState.image
 			endif
+		end
+
+		;; Debug mode
+		sState.menu_debugmode : begin
+			(*pstate).debug = 1-sState.debug
+				widget_control, sState.menu_debugmode, set_button=(*pstate).debug
 		end
 
 		;;
@@ -944,11 +951,16 @@ pro cheetah_event, ev
 			
 			if(ptr_valid((*pState).pfile)) then $
 				ptr_free, (*pState).pfile
+			if(ptr_valid((*pState).pindex)) then $
+				ptr_free, (*pState).pindex
+
 			(*pState).pfile = ptr_new(newfile,/no_copy)
+			(*pstate).pindex = ptr_new(index,/no_copy)
+			;(*pstate).index = index
+
 			(*pState).dir = newdir
 			(*pstate).file_type = file_type
 			(*pState).currentFrameNum = 0
-			(*pstate).index = index
 
 			cheetah_displayImage, pState
 		end
@@ -974,10 +986,14 @@ pro cheetah_event, ev
 			
 			if(ptr_valid((*pState).pfile)) then $
 				ptr_free, (*pState).pfile
+			if(ptr_valid((*pState).pindex)) then $
+				ptr_free, (*pState).pindex
+				
 			(*pState).pfile = ptr_new(newfile,/no_copy)
+			(*pstate).pindex = ptr_new(index,/no_copy)
+			;(*pstate).index = index
 			(*pState).currentFrameNum = n_elements(file)-1
 			(*pstate).file_type = file_type
-			(*pstate).index = index
 
 			cheetah_displayImage, pState
 
@@ -1399,6 +1415,8 @@ pro cheetahview, geometry=geometry, dir=dir
 	mbfile_random = widget_button(mbfile, value='Auto random image')
 	mbfile_newdir = widget_button(mbfile, value='Change directory')
 	mbfile_updatefilelist = widget_button(mbfile, value='Refresh file list')
+	mbfile_debugmode = widget_button(mbfile, value='Debug mode', /checked)
+	widget_control, mbfile_debugmode, set_button=0
 
 	;; Colour scales
 	mbcolours = widget_button(bar, value='Colours')
@@ -1495,7 +1513,8 @@ pro cheetahview, geometry=geometry, dir=dir
 				  pixmap_dx : pixmap_dx, $
 				  scroll : scroll, $
 				  pfile : ptr_new(), $
-				  index : index, $
+				  pindex : ptr_new(), $
+				  ;index : index, $
 				  dir : dir, $
 				  autoShuffle : 0, $
 				  autoNext : 0, $
@@ -1511,6 +1530,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  yvisible: yview, $
 				  padding : draw_padding, $
 				  base : base, $
+				  debug : 0, $
 				  
 				  Colours : mbcolours, $
 				  ColourList : mbcolours_1, $
@@ -1524,6 +1544,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_random : mbfile_random, $
 				  menu_newdir : mbfile_newdir, $ 
 				  menu_updtefiles : mbfile_updatefilelist, $
+				  menu_debugmode : mbfile_debugmode, $
 				  menu_display: mbanalysis_imagescaling, $
 				  menu_peakfinding : mbanalysis_peakfinding, $
 				  menu_profiles : mbanalysis_profiles, $
@@ -1569,6 +1590,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  status_label : status_label $
 				 }
 		sState.pfile = ptr_new(file)
+		sState.pindex = ptr_new(index)
 		pstate = ptr_new(sState)
 		WIDGET_CONTROL, base, SET_UVALUE=pState
 
