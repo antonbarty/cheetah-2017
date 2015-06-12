@@ -315,6 +315,7 @@ void cGlobal::setup() {
 	
 	
 	
+	
 	/*
 	 *	AREA DETECTORS
 	 */

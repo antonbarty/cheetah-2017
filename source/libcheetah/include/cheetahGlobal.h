@@ -176,7 +176,7 @@ public:
 	// Sorting criteria
 	int		sortPumpLaserOn;
     char    pumpLaserScheme[MAX_FILENAME_LENGTH];
-
+	
 	/** @brief Path to the file with list of hits.
 	 * Used by hitfinderAlgorithm=11 as hit criterion.
 	 * The hits have to be in chronological order as they appear in the data stream!

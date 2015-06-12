@@ -123,7 +123,8 @@ void *worker(void *threadarg) {
 	// Subtract common mode offsets (electronic offsets)
 	// cmModule = 1
 	// (these corrections will be automatically skipped for any non-CSPAD detector)
-	cspadModuleSubtract(eventData, global);
+	cspadModuleSubtractMedian(eventData, global);
+	cspadModuleSubtractHistogram(eventData, global);
 	cspadSubtractUnbondedPixels(eventData, global);
 	cspadSubtractBehindWires(eventData, global);
 
@@ -144,6 +145,9 @@ void *worker(void *threadarg) {
 	// Zero out bad pixels
 	setBadPixelsToZero(eventData, global);
  
+	// Convert to photons
+	photonCount(eventData, global);
+	
     // Apply polarization correction
     applyPolarizationCorrection(eventData, global);
     

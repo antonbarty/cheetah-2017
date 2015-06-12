@@ -83,8 +83,14 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 
 	// Static dark calibration (electronic offsets)
 	useDarkcalSubtraction = 0;
+	
+	// Photon counting
+	photonCount = 0;
+	photconv_adu = 27;
+	photconv_ev = 8000;
 
 	// Common mode subtraction from each ASIC
+	strcpy(commonModeCorrection, "undefined");
 	cmModule = 0;
 	cmFloor = 0.1;
     cmStart = -100;
@@ -289,7 +295,42 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 	printf("\tASIC geometry: %lix%li\n",nasics_x,nasics_y);
 	printf("\tASIC size: %lix%li\n",asic_nx,asic_ny);
 	printf("\tPixel size: %g (m)\n",pixelSize);
+	
+	
+	/*
+	 *	Common mode subtraction methods
+	 *	Simple keywords set default methods of operation
+	 *	Old keywords still work behind the scenes
+	 */
+	if(strcmp(commonModeCorrection, "undefined") != 0) {
+		if( strcmp(commonModeCorrection, "none" ) == 0) {
+			cmModule = 0;
+			cspadSubtractUnbondedPixels = 0;
+		}
+		else if( strcmp(commonModeCorrection, "asic_unbonded" ) == 0) {
+			cmModule = 0;
+			cspadSubtractUnbondedPixels = 1;
+		}
+		else if( strcmp(commonModeCorrection, "asic_median" ) == 0) {
+			cmModule = 1;
+			cspadSubtractUnbondedPixels = 0;
+		}
+		else if( strcmp(commonModeCorrection, "asic_histogram" ) == 0) {
+			cmModule = 3;
+			cspadSubtractUnbondedPixels = 0;
+		}
+		else {
+			fprintf(stderr,"Error: Unknown common mode method: %s\n", commonModeCorrection);
+			fprintf(stderr,"Valid options are\n");
+			fprintf(stderr,"{none, asic_unbonded, asic_median, asic_histogram}\n");
+			exit(1);
+		}
+	}
+	
 
+	/*
+	 *	Downsampling, etc
+	 */
 	if ((downsampling <= 1) && (saveAssembledAndDownsampled == 1)) {
 		fprintf(stderr,"Error: downsampling = %ld and saveAssembledAndDownsampled = 1.\n",downsampling);
 		fprintf(stderr,"This does not make sense.\n");
@@ -522,8 +563,15 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
  	else if (!strcmp(tag, "saveradialaverage")) {
 		saveRadialAverage = atoi(value);
 	}
-
-
+	else if (!strcmp(tag, "photoncount")) {
+		photonCount = atoi(value);
+	}
+	else if (!strcmp(tag, "photconv_adu")) {
+		photconv_adu = atof(value);
+	}
+	else if (!strcmp(tag, "photconv_ev")) {
+		photconv_ev = atoi(value);
+	}
 	else if (!strcmp(tag, "savepowderdetectorraw")) {
 		savePowderDetectorRaw = atoi(value);
 	}
@@ -628,6 +676,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "halopixincludehits") || !strcmp(tag, "noisypixincludehits")) {
 		noisyPixIncludeHits = atoi(value);
+	}
+	else if (!strcmp(tag, "commonmodecorrection")) {
+		strcpy(commonModeCorrection, value);
 	}
 	else if (!strcmp(tag, "cmmodule")) {
 		cmModule = atoi(value);

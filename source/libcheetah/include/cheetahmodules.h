@@ -23,13 +23,15 @@ void applyGainCorrection(cEventData*, cGlobal*);
 void applyPolarizationCorrection(cEventData*, cGlobal*);
 void applySolidAngleCorrection(cEventData*, cGlobal*);
 void setBadPixelsToZero(cEventData*, cGlobal*);
-void cspadModuleSubtract(cEventData*, cGlobal*);
+void cspadModuleSubtractMedian(cEventData*, cGlobal*);
+void cspadModuleSubtractHistogram(cEventData*, cGlobal*);
 void cspadModuleSubtract2(cEventData*, cGlobal*);
 void cspadModuleSubtract(cEventData*, cGlobal*, int);
 void cspadSubtractUnbondedPixels(cEventData*, cGlobal*);
 void cspadSubtractBehindWires(cEventData*, cGlobal*);
 void updateHotPixelBuffer(cEventData*, cGlobal*);
 void setHotPixelsToZero(cEventData*, cGlobal*);
+void photonCount(cEventData*, cGlobal*);
 
 void subtractDarkcal(float*, float*, long);
 void applyGainCorrection(float*, float*, long);
@@ -37,20 +39,22 @@ void applyPolarizationCorrection(float*, float*, float*, float*, float, double, 
 void applyAzimuthallySymmetricSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void applyRigorousSolidAngleCorrection(float*, float*, float*, float*, float, double, float, double, long);
 void setBadPixelsToZero(float*, uint16_t*, long);
-void cspadModuleSubtract(float*, uint16_t*, float, long, long, long, long);
+void cspadModuleSubtractMedian(float*, uint16_t*, float, long, long, long, long);
+void cspadModuleSubtractHistogram(float*, uint16_t*, long, long, long, long, long);
 void cspadSubtractUnbondedPixels(float*, long, long, long, long);
 void cspadSubtractBehindWires(float*, uint16_t*, float, long, long, long, long);
 long calculateHotPixelMask(uint16_t*, int16_t*, long, long, long);
+void photonCount(float*, uint16_t*, long, float);
 
 void pnccdModuleSubtract(cEventData*, cGlobal*);
-void pnccdModuleSubtract(float*, uint16_t*, int, int, float, float, int);
 void pnccdOffsetCorrection(cEventData*, cGlobal*);
-void pnccdOffsetCorrection(float*, uint16_t*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
-void pnccdOffsetCorrection(float*);
-void pnccdFixWiringError(float*);
 void pnccdLineInterpolation(cEventData*, cGlobal*);
 void pnccdLineMasking(cEventData*, cGlobal*);
+void pnccdModuleSubtract(float*, uint16_t*, int, int, float, float, int);
+void pnccdOffsetCorrection(float*, uint16_t*);
+void pnccdOffsetCorrection(float*);
+void pnccdFixWiringError(float*);
 
 // backgroundCorrection.cpp
 void initPhotonCorrection(cEventData *eventData, cGlobal *global);

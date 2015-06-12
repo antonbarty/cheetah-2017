@@ -80,7 +80,6 @@ void applyGainCorrection(float *data, float *gaincal, long pix_nn) {
 /*
  *	Set bad pixels to zero
  */
-
 void setBadPixelsToZero(cEventData *eventData, cGlobal *global){	
 	
 	DETECTOR_LOOP {
@@ -104,11 +103,63 @@ void setBadPixelsToZero(float *data, uint16_t *mask, long pix_nn) {
 
 
 /*
+ *	Photon counting
+ *	Convert ADU to photon counts, given a photon to a single ADU calibration value
+ */
+void photonCount(cEventData *eventData, cGlobal *global){
+
+	DETECTOR_LOOP {
+		if(global->detector[detIndex].photonCount) {
+			DEBUG3("Photon count conversion (detectorID=%ld)",global->detector[detIndex].detectorID);
+			long	 pix_nn = global->detector[detIndex].pix_nn;
+			float	 *data = eventData->detector[detIndex].data_detCorr;
+			uint16_t *mask = eventData->detector[detIndex].pixelmask;
+			
+			float	photconv_adu = global->detector[detIndex].photconv_adu;
+			float	photconv_ev = global->detector[detIndex].photconv_ev;
+			float	adu_per_photon = photconv_adu * (eventData->photonEnergyeV/photconv_ev);
+
+			photonCount(data, mask, pix_nn, adu_per_photon);
+		}
+	}
+}
+
+void photonCount(float *data, uint16_t *mask, long pix_nn, float adu_per_photon) {
+
+	float	adu;
+	float	temp;
+	
+	for(long i=0; i<pix_nn; i++) {
+		adu = data[i];
+		if( isBitOptionSet(mask[i],PIXEL_IS_BAD) ) {
+			data[i] = 0;
+		}
+		else {
+			data[i] = 0;
+			if(adu >= 0.7*adu_per_photon && adu <= 1.5*adu_per_photon) {
+				data[i] = 1;
+			}
+			else if (adu > 1.5*adu_per_photon){
+				temp = (adu - 0.5*adu_per_photon)/adu_per_photon;
+				data[i] = floorf(temp);
+			}
+		}
+	}
+}
+
+
+
+
+
+/*
  *	Subtract common mode on each module
  *	Common mode is the kth lowest pixel value in the whole ASIC (similar to a median calculation)
  */
-void cspadModuleSubtract(cEventData *eventData, cGlobal *global){
+void cspadModuleSubtractMedian(cEventData *eventData, cGlobal *global){
     cspadModuleSubtract(eventData, global, 1);
+}
+void cspadModuleSubtractHistogram(cEventData *eventData, cGlobal *global){
+	cspadModuleSubtract(eventData, global, 3);
 }
 
 void cspadModuleSubtract2(cEventData *eventData, cGlobal *global){
@@ -130,14 +181,23 @@ void cspadModuleSubtract(cEventData *eventData, cGlobal *global, int flag){
 				long		nasics_x = global->detector[detIndex].nasics_x;
 				long		nasics_y = global->detector[detIndex].nasics_y;
 			
-				cspadModuleSubtract(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+				if(flag==1 || flag==2) {
+					cspadModuleSubtractMedian(data, mask, threshold, asic_nx, asic_ny, nasics_x, nasics_y);
+				}
+				else if(flag==3) {
+					long span = 16384;
+					cspadModuleSubtractHistogram(data, mask, span, asic_nx, asic_ny, nasics_x, nasics_y);
+				}
 			
 			}
 		}
 	}
 }
 
-void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+/*
+ *	Subtract the median value on each ASIC
+ */
+void cspadModuleSubtractMedian(float *data, uint16_t *mask, float threshold, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
 	
 	long		e;
 	long		mval;
@@ -169,7 +229,6 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 				}
 			}
 			
-			
             // Calculate background using median value 
 			//median = kth_smallest(buffer, global->asic_nx*global->asic_ny, mval);
 			if(counter>0) {
@@ -194,6 +253,74 @@ void cspadModuleSubtract(float *data, uint16_t *mask, float threshold, long asic
 	free(buffer);
 }
 
+
+/*
+ *	Subtract the location of the maximum of a histogram of ASIC values
+ *	(the LCLS/psana apporach)
+ */
+void cspadModuleSubtractHistogram(float *data, uint16_t *mask, long hist_span, long asic_nx, long asic_ny, long nasics_x, long nasics_y) {
+	long		e;
+	long		counter;
+	
+	
+	// Create histogram array
+	long	hist_offset = hist_span;
+	long	hist_index;
+	long	*histogram = (long*) calloc(2*hist_span, sizeof(long));
+	
+	
+	// Loop over modules (8x8 array)
+	for(long mi=0; mi<nasics_x; mi++){
+		for(long mj=0; mj<nasics_y; mj++){
+			
+			// Zero histogram array
+			for(long i=0; i<2*hist_span; i++)
+				histogram[i] = 0;
+			
+			// Loop over pixels within a module and populate the histogram
+			// Ignoring bad pixels avoids being dominated by those pixels being set to 0
+			// Remember to do an array bounds check
+			counter = 0;
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					e += i + mi*asic_nx;
+					if( isBitOptionUnset(mask[e],PIXEL_IS_BAD) ) {
+						hist_index = lrint(data[e]) + hist_offset;
+						if(hist_index >= 0 && hist_index < 2*hist_span)
+							histogram[hist_index] += 1;
+					}
+				}
+			}
+			
+			// Maximum of the histogram is the common mode offset
+			long	hist_max_value = -1;
+			long	hist_max_position = -1;
+			
+			for(long i=0; i<2*hist_span; i++) {
+				if(histogram[i] > hist_max_value) {
+					hist_max_value = histogram[i];
+					hist_max_position = i;
+				}
+			}
+			if(hist_max_position != -1)
+				hist_max_position -= hist_offset;
+			else
+				hist_max_position = 0;
+			
+			
+			// Subtract median value
+			for(long j=0; j<asic_ny; j++){
+				for(long i=0; i<asic_nx; i++){
+					e = (j + mj*asic_ny) * (asic_nx*nasics_x);
+					e += i + mi*asic_nx;
+					data[e] -= hist_max_position;
+				}
+			}
+		}
+	}
+	free(histogram);
+}
 
 
 /*
@@ -256,7 +383,6 @@ void cspadSubtractUnbondedPixels(float *data, long asic_nx, long asic_ny, long n
 			}
 		}
 	}
-	
 }
 
 

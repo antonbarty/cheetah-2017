@@ -218,6 +218,7 @@ public:
 	int    useBadDataMask;
 	int    useDarkcalSubtraction;
 	// Subtract common mode from each ASIC
+	char	commonModeCorrection[MAX_FILENAME_LENGTH];
 	int    cmModule;
 	int    cspadSubtractUnbondedPixels;
 	int    cspadSubtractBehindWires;
@@ -284,6 +285,10 @@ public:
 	int    noisyPixCalibrated;
 	long   nNoisy;
 	long   noisyPixLastUpdate;
+	// Photon counting
+	int		photonCount;
+	float	photconv_adu;
+	float	photconv_ev;
 	// Start frames for calibration before output
 	int    startFrames;
 	// correction for PNCCD read out artifacts on back detector
