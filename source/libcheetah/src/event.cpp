@@ -28,6 +28,7 @@ cEventData* cheetahNewEvent(cGlobal	*global) {
 	 */
 	eventData->useThreads = 0;
 	eventData->hit = 0;
+	eventData->hitScore = 0;
 	eventData->powderClass = 0;
 	eventData->pumpLaserOn = 0;
 	eventData->peakResolution=0.;

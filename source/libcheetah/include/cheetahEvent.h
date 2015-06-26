@@ -83,6 +83,7 @@ public:
 
 	// Hit finding
 	int			hit;
+	float		hitScore;
 	int			powderClass;
 	
 	

@@ -60,6 +60,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	case 3 : 	// Count number of Bragg peaks (Anton's "number of connected peaks above threshold" algorithm)
 		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
+		eventData->hitScore = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
 		//hit = peakfinder3(global,eventData, detID);
@@ -72,6 +73,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	case 6 : 	// Count number of Bragg peaks (Rick's algorithm)
 		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
+		eventData->hitScore = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
 		//hit = peakfinder6(global,eventData, detID);
@@ -84,6 +86,7 @@ int  hitfinder(cEventData *eventData, cGlobal *global){
 	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
 		nPeaks = peakfinder(global,eventData, detIndex);
 		eventData->nPeaks = nPeaks;
+		eventData->hitScore = nPeaks;
 		if(nPeaks >= global->hitfinderNpeaks && nPeaks <= global->hitfinderNpeaksMax)
 			hit = 1;
 		break;
@@ -350,6 +353,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 	eventData->peakTotal = tat;
 	eventData->peakNpix = nat;
 	eventData->nPeaks = nat;
+	eventData->hitScore = nat;
 
 	if(global->hitfinderDownsampling > 1){
 		free(data);
@@ -373,7 +377,6 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
  *	Hitfinder #2
  *	Hit if integrated value of pixels above ADC threshold exceeds TAT threshold
  */
-
 int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
   
 	int       hit = 0;
@@ -400,6 +403,7 @@ int hitfinder2(cGlobal *global, cEventData *eventData, long detIndex){
 	eventData->peakTotal = tat;
 	eventData->peakNpix = nat;
 	eventData->nPeaks = nat;
+	eventData->hitScore = tat;
 
 	if(tat >= global->hitfinderTAT){
 		hit = 1;

@@ -15,9 +15,9 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 	fprintf(global->framefp, "%s, ", eventData->filename);
 	fprintf(global->framefp, "%ld, ", eventData->stackSlice);
 	fprintf(global->framefp, "%li, ", eventData->frameNumber);
-	fprintf(global->framefp, "%li, ", eventData->threadNum);
 	fprintf(global->framefp, "%i, ", eventData->hit);
     fprintf(global->framefp, "%i, ", eventData->powderClass);
+	fprintf(global->framefp, "%g, ", eventData->hitScore);
 	fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
 	fprintf(global->framefp, "%g, ", eventData->wavelengthA);
 	fprintf(global->framefp, "%g, ", eventData->gmd1);
@@ -42,7 +42,7 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 		fprintf(global->powderlogfp[powderClass], "%s, ", eventData->filename);
 		fprintf(global->powderlogfp[powderClass], "%ld, ", eventData->stackSlice);
         fprintf(global->powderlogfp[powderClass], "%li, ", eventData->frameNumber);
-        fprintf(global->powderlogfp[powderClass], "%li, ", eventData->threadNum);
+        fprintf(global->powderlogfp[powderClass], "%g, ", eventData->hitScore);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->photonEnergyeV);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->wavelengthA);
         fprintf(global->powderlogfp[powderClass], "%g, ", eventData->detector[0].detectorZ);
