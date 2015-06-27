@@ -18,8 +18,8 @@
 
 namespace CXI{
 	
-	Node *Node::createDataset(const char * s, hid_t dataType, hsize_t width, hsize_t height,
-							   hsize_t length, hsize_t stackSize, int chunkSize, int heightChunkSize, const char * userAxis){
+	Node *Node::createDataset(const char *s, hid_t dataType, hsize_t width, hsize_t height,
+							   hsize_t length, hsize_t stackSize, int chunkSize, int heightChunkSize, const char *userAxis){
 		hid_t loc = hid();
 
 		// Exception for char arrays
@@ -35,7 +35,7 @@ namespace CXI{
 		
 		// Count dimensions
 		// First right shift the dimensions
-		hsize_t * dimsP[4] = {&width, &height, &length, &stackSize};
+		hsize_t *dimsP[4] = {&width, &height, &length, &stackSize};
 		for (int i=2; i>=0; i--){
 			for (int j=i+1; j<4; j++){
 				if(*dimsP[j]==0){
@@ -62,15 +62,17 @@ namespace CXI{
 		if(width == 0){
 			width = 1;
 		}
-		// Build then dimensions list
+		// Build the dimensions list
 		hsize_t dims[4] = {0, length, height, width};
 
-		// For stacks define the chunk size
+		
+		// Define the chunk size for stacks
 		if(stackSize == H5S_UNLIMITED && chunkSize <= 0){
 			chunkSize = CXI::chunkSize1D;
 			if(ndims == 3){
 				chunkSize = CXI::chunkSize2D;
-			} else if(ndims == 4){
+			}
+			else if(ndims == 4){
 				chunkSize = CXI::chunkSize2D;
 			}
 		}
@@ -79,38 +81,53 @@ namespace CXI{
 		if(heightChunkSize == 0){
 			dims[0] = lrintf(((float)chunkSize)/H5Tget_size(dataType)/height/length);
 		}
-		else{
+		else {
 			dims[0] = chunkSize/heightChunkSize;
 			dims[1] = lrintf(((float)heightChunkSize)/H5Tget_size(dataType)/height);
 		}
 
-		// Chunk size
 		if(!chunkSize){
 			if(stackSize == 0){
 				stackSize = 1;
 			}
 			dims[0] = stackSize;
 		}
-		else{
-			if(dims[0] == 0){
-				// Make sure the chunk is not 0
-				dims[0] = 1;
-			}
+
+		// Make sure the chunk size is not 0
+		if(dims[0] == 0){
+			dims[0] = 1;
 		}
+
+		
+
 		hsize_t maxdims[4] = {stackSize,length,height,width};
+		hsize_t chunkdims[4] = {1L, dims[1], dims[2], dims[3]};
+		printf("    + %s (%iD: %llu x %llu x %llu x %llu)\n",s, ndims, dims[0], dims[1], dims[2], dims[3]);
+		
+		
 		hid_t dataspace = H5Screate_simple(ndims, dims, maxdims);
 		if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
+
+		// Set chunking and compression
+		// (optimise for reading one event at a time, ie: avoid decompressing multiple frames to read one)
 		hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
-		if(chunkSize){
-			H5Pset_chunk(cparms, ndims, dims);
+		if(chunkSize) {
+			H5Pset_chunk(cparms, ndims, chunkdims);
+			//H5Pset_chunk(cparms, ndims, dims);
+			if (ndims >= 2)
+				H5Pset_deflate(cparms, 3);
 		}
-		//  H5Pset_deflate (cparms, 2);
+		
+		// Set optimal chunk cache size
 		hid_t dapl_id = H5Pcreate(H5P_DATASET_ACCESS);
-		if((ndims == 3 || ndims == 4) && chunkSize){
+		if( (ndims == 3 || ndims == 4) && chunkSize){
 			H5Pset_chunk_cache(dapl_id,H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
 		}
+		
+		// Create data set
 		hid_t dataset = H5Dcreate(loc, s, dataType, dataspace, H5P_DEFAULT, cparms, dapl_id);
 		if( dataset<0 ) {ERROR("Cannot create dataset.\n");}
+		
 		H5Sclose(dataspace);
 		H5Pclose(cparms);		
 		H5Pclose(dapl_id);		
@@ -122,6 +139,7 @@ namespace CXI{
 		return addNode(s, dataset, Dataset);    
 	}
 
+	
 	H5T_conv_ret_t handle_conversion_exceptions( H5T_conv_except_t except_type, hid_t , hid_t,
 												 void *, void *, void *op_data){
 		int ignoreFlags = *((int *)op_data);
@@ -187,10 +205,13 @@ namespace CXI{
 		int ndims = H5Sget_simple_extent_ndims(dataspace);
 		H5Sget_simple_extent_dims(dataspace, block, mdims);
 		
-		/* check if we need to extend the dataset */
+		/*
+		 * check if we need to extend the dataset 
+		 */
 		if(ndims > 0 && (int)block[0] <= stackSlice){
 			while((int)block[0] <= stackSlice){
-				block[0] *= 2;
+				//block[0] *= 2;
+				block[0] += 512;
 			}
 			H5Dset_extent (dataset, block);
 			/* get enlarged dataspace */
@@ -202,7 +223,9 @@ namespace CXI{
 			block[0] = 1;
 		}
 
-		/* check if we need to extend the dataset in the second dimension */
+		/* 
+		 *	check if we need to extend the dataset in the second dimension 
+		 */
 		if(variableSlice && (int)block[1] <= sliceSize){
 			int tmp_block = block[0];
 			H5Sget_simple_extent_dims(dataspace, block, mdims);
