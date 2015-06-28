@@ -154,12 +154,6 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	}
 
 	
-	/*
-	 *	eliminate closely spaced peaks
-	 */
-	if(hitfinderMinPeakSeparation > 0 )
-		nPeaks = killNearbyPeaks(peaklist, hitfinderMinPeakSeparation);
-	
 
 
 	/*
@@ -178,9 +172,17 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 		peaklist->peak_com_r_assembled[k] = global->detector[detIndex].pix_r[e];
 	}
 	
+
+	/*
+	 *	eliminate closely spaced peaks
+	 */
+	if(hitfinderMinPeakSeparation > 0 )
+		nPeaks = killNearbyPeaks(peaklist, hitfinderMinPeakSeparation);
+	
+
 	
 	/*
-	 *	Find radius whcih encircles the peaks
+	 *	Find radius which encircles the peaks
 	 *	Radius in pixels (bigger is better)
 	 */
 	float	resolution, resolutionA;
@@ -1707,6 +1709,7 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 					nat = 1;
 					nexte[0] = e;
 					ce = 0;
+					maxI = 0;
 					itot = temp[e] - bg;
 					cf = e % stride;
 					cs = e / stride;
@@ -1786,16 +1789,16 @@ int peakfinder6(tPeakList *peaklist, float *data, char *mask, long asic_nx, long
 					// Remember peak information
 					if (counter < hitfinderNpeaksMax) {
 						
-						peaklist->peakNpix += 1;
+						peaklist->peakNpix += nat;
 						peaklist->peakTotal += itot;
 						
-						peaklist->peak_totalintensity[counter] = itot;
-						peaklist->peak_npix[counter] = 1;
-						peaklist->peak_com_x[counter] = ftot/itot;
-						peaklist->peak_com_y[counter] = stot/itot;
-						peaklist->peak_maxintensity[counter] = maxI;
-						peaklist->peak_snr[counter] =snr;
-						peaklist->peak_com_index[counter] = e;
+						peaklist->peak_totalintensity[peakindex] = itot;
+						peaklist->peak_npix[peakindex] = nat;
+						peaklist->peak_com_x[peakindex] = ftot/itot;
+						peaklist->peak_com_y[peakindex] = stot/itot;
+						peaklist->peak_maxintensity[peakindex] = maxI;
+						peaklist->peak_snr[peakindex] =snr;
+						peaklist->peak_com_index[peakindex] = e;
 						peaklist->nPeaks = counter+1;
 						//peaklist->peak_com_x_assembled[counter] = global->detector[detIndex].pix_x[e];
 						//peaklist->peak_com_y_assembled[counter] = global->detector[detIndex].pix_y[e];
