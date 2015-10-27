@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <iostream>
 #include "detectorObject.h"

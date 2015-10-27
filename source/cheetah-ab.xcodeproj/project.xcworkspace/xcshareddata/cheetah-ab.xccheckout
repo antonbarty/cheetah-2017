@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>C7BA3CEA-C548-457C-9BD7-09BF590DBE26</string>
 	<key>IDESourceControlProjectName</key>
-	<string>cheetah-ab</string>
+	<string>project</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
 		<string>github.com:antonbarty/cheetah.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>source/cheetah-ab.xcodeproj</string>
+	<string>source/cheetah-ab.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>8E86FAA221CB022DF6BDA70560B3AFCCFD7E6832</key>
