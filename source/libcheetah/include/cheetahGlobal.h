@@ -376,6 +376,7 @@ public:
 	long     nPowderClasses;
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	FILE    *powderlogfp[MAX_POWDER_CLASSES];
+	FILE	*framelist[MAX_POWDER_CLASSES];
 	int nPeaksMin[MAX_POWDER_CLASSES];
 	int nPeaksMax[MAX_POWDER_CLASSES];
 	pthread_mutex_t nPeaksMin_mutex[MAX_POWDER_CLASSES];

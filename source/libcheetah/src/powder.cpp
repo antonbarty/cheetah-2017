@@ -374,6 +374,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
      */
     for(long i=0; i<global->nPowderClasses; i++) {
         fflush(global->powderlogfp[i]);
+		fflush(global->framelist[i]);
     }
 
 }

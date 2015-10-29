@@ -99,6 +99,11 @@ void cheetahNewRun(cGlobal *global) {
 			global->powderlogfp[i] = fopen(filename, "w");
 			fprintf(global->powderlogfp[i], "eventData->eventname, eventData->filename, eventData->stackSlice, eventData->xtcFrameNumber, eventData->hitScore, eventData->photonEnergyeV, eventData->wavelengthA, eventData->detector[0].detectorZ, eventData->gmd1, eventData->gmd2, eventData->energySpectrumExist, eventData->nPeaks, eventData->peakNpix, eventData->peakTotal, eventData->peakResolution, eventData->peakDensity, eventData->pumpLaserCode, eventData->pumpLaserDelay\n");
 
+			sprintf(filename,"r%04u-class%ld.lst",global->runNumber,i);
+			if(global->framelist[i] != NULL)
+				fclose(global->framelist[i]);
+			global->framelist[i] = fopen(filename, "w");
+
 			if(global->useFEEspectrum) {
 				sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",global->runNumber,i);
 				if(global->FEElogfp[i] != NULL)

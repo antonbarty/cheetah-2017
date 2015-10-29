@@ -59,4 +59,11 @@ void writeLog(cEventData *eventData, cGlobal * global) {
         fprintf(global->powderlogfp[powderClass], "%d\n", eventData->pumpLaserOn);
 		pthread_mutex_unlock(&global->powderfp_mutex);
 	}
+
+	// Frame lists for CrystFEL (may not be in sync with events, but should contain all events)
+	if(global->framelist[powderClass] != NULL) {
+		fprintf(global->powderlogfp[powderClass], "%s \\\\%li\n", eventData->filename, eventData->stackSlice);
+	}
+	
+	
 }

@@ -172,9 +172,9 @@ cGlobal::cGlobal(void) {
 	assembleInterpolation = ASSEMBLE_INTERPOLATION_DEFAULT;
 
 	// Saving options
-	saveHits = 0;
+	saveHits = 1;
 	saveBlanks = 0;
-	h5compress = 5;
+	h5compress = 3;
 	hdf5dump = 0;
 	saveInterval = 1000;
 	
@@ -598,11 +598,14 @@ void cGlobal::setup() {
 	for(long i=0; i<nPowderClasses; i++) {
 		char  filename[1024];
 		powderlogfp[i] = NULL;
+		framelist[i] = NULL;
 		FEElogfp[i] = NULL;
 		TimeToolLogfp[i] = NULL;
 		if(runNumber > 0) {
 			sprintf(filename,"r%04u-class%ld-log.txt",runNumber,i);
 			powderlogfp[i] = fopen(filename, "w");
+			sprintf(filename,"r%04u-class%ld.lst",runNumber,i);
+			framelist[i] = fopen(filename, "w");
             sprintf(filename,"r%04u-FEEspectrum-class%ld-index.txt",runNumber,i);
 			FEElogfp[i] = fopen(filename, "w");
 			sprintf(filename,"r%04u-TimeTool-class%ld-index.txt",runNumber,i);
@@ -1639,6 +1642,7 @@ void cGlobal::updateLogfile(void){
     fflush(peaksfp);
 	for(long i=0; i<nPowderClasses; i++) {
 		fflush(powderlogfp[i]);
+		fflush(framelist[i]);
         fflush(FEElogfp[i]);
 		fflush(TimeToolLogfp[i]);
 	}
@@ -1768,6 +1772,8 @@ void cGlobal::writeFinalLog(void){
 	for(long i=0; i<nPowderClasses; i++) {
         if(powderlogfp[i] != NULL)
 			fclose(powderlogfp[i]);
+		if(framelist[i] != NULL)
+			fclose(framelist[i]);
         if(FEElogfp[i] != NULL)
             fclose(FEElogfp[i]);
 		if(TimeToolLogfp[i] != NULL)
