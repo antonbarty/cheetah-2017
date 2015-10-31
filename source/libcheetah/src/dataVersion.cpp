@@ -224,6 +224,7 @@ void cDataVersion::clear() {
 	isMainDataset = 0;
 	isMainVersion = 0;
 	data      = NULL;
+	//dataVersionIndex = -1;
 	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {		
 		powder[powderClass]                     = NULL;
 		powder_squared[powderClass]             = NULL;
@@ -263,10 +264,12 @@ bool cDataVersion::next(){
 			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
 			isMainDataset = isMainVersion && (dataFormatMain == dataFormat);
 			return true;
-		} else { 
+		}
+		else {
 			clear();
 		}
 	}
+	//dataVersionIndex = -1;
 	return false;
 }
 

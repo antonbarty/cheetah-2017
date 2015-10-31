@@ -166,25 +166,28 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 
 void downsample(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
-		long        downsampling = global->detector[detIndex].downsampling;
-		long		image_nx = global->detector[detIndex].image_nx;
-		long		image_nn = global->detector[detIndex].image_nn;
-		uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
-		long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
-		long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
-		uint16_t	*imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
-		cDataVersion imageV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED);
-		cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
-		int          debugLevel = global->debugLevel;
-		while (imageV.next() && imageXxXV.next()) {		   
-			float	*image = imageV.getData();
-			float	*imageXxX = imageXxXV.getData();
-			if (global->detector[detIndex].downsamplingConservative == 1){
-				downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
-				downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
-			} else {
-				downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling,debugLevel);
-				downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);	
+		if (global->detector[detIndex].saveDownsampled != 0 || global->detector[detIndex].saveAssembledAndDownsampled != 0) {
+			
+			long        downsampling = global->detector[detIndex].downsampling;
+			long		image_nx = global->detector[detIndex].image_nx;
+			long		image_nn = global->detector[detIndex].image_nn;
+			uint16_t	*image_pixelmask = eventData->detector[detIndex].image_pixelmask;
+			long		imageXxX_nx = global->detector[detIndex].imageXxX_nx;
+			long		imageXxX_nn = global->detector[detIndex].imageXxX_nn;
+			uint16_t	*imageXxX_pixelmask = eventData->detector[detIndex].imageXxX_pixelmask;
+			cDataVersion imageV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED);
+			cDataVersion imageXxXV(&eventData->detector[detIndex],&global->detector[detIndex],global->detector[detIndex].saveVersion,cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED);
+			int          debugLevel = global->debugLevel;
+			while (imageV.next() && imageXxXV.next()) {		   
+				float	*image = imageV.getData();
+				float	*imageXxX = imageXxXV.getData();
+				if (global->detector[detIndex].downsamplingConservative == 1){
+					downsampleImageConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
+					downsampleMaskConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);
+				} else {
+					downsampleImageNonConservative(image,imageXxX,image_nn,image_nx,imageXxX_nn,imageXxX_nx,image_pixelmask,downsampling,debugLevel);
+					downsampleMaskNonConservative(image_pixelmask,imageXxX_pixelmask,image_nn,image_nx,imageXxX_nn,imageXxX_nx,downsampling,debugLevel);	
+				}
 			}
 		}
 	}

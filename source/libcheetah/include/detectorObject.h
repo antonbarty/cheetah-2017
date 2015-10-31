@@ -345,6 +345,9 @@ public:
 	int   savePowderAssembled;
 	int   savePowderAssembledAndDownsampled;
 	int   savePowderRadialAverage;
+	int	  saveThumbnail;
+	int	  saveDownsampled;
+	
 	// Bit options defining formats in which powder data shall be created and saved (non-assembled / assembled / assembled and downsampled / radial average)
 	cDataVersion::dataFormat_t powderFormat;
 	// Bit options defining versions of the data to be used for creating and saving powders (raw / detector corrected / detector and photon corrected)	

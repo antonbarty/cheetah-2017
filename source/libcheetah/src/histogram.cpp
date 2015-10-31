@@ -41,11 +41,14 @@ void addToHistogram(cEventData *eventData, cGlobal *global, int hit) {
 			uint16_t	*histData = global->detector[detIndex].histogramData;
 			int         dataVersion = global->detector[detIndex].histogramDataVersion;
 			float       *frameData;
+			
 			if (dataVersion <= 0) {
 				frameData = eventData->detector[detIndex].data_raw;
-			} else if (dataVersion == 1) {
+			}
+			else if (dataVersion == 1) {
 				frameData = eventData->detector[detIndex].data_detCorr;
-			} else {
+			}
+			else {
 				frameData = eventData->detector[detIndex].data_detPhotCorr;				
 			}
 

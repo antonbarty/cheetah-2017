@@ -168,7 +168,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	histogram_nss = 1480;
 	histogramMaxMemoryGb = 4;
 	histogram_count = 0;
-	histogramDataVersion = 2; // 0: raw; 1: detector corrected; 2: detector and photon corrected
+	histogramDataVersion = 1; // 0: raw; 1: detector corrected; 2: detector and photon corrected
 
 	// correction for PNCCD read out artifacts 
 	usePnccdOffsetCorrection = 0;
@@ -191,6 +191,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	saveAssembled                            = 0;
 	saveAssembledAndDownsampled              = 0;
 	saveRadialAverage                        = 1;
+	saveThumbnail							 = 0;
+	saveDownsampled							 = 0;
 
 	// Powder saving options
     savePowderDetectorRaw                    = 1;

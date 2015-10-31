@@ -299,7 +299,10 @@ void cGlobal::setup() {
 		if(strcmp(pumpLaserScheme, "evr41") == 0) {
 			nPowderClasses *= 2;
 		}
-		else if(strcmp(pumpLaserScheme, "evr183") == 0) {
+		else if(strncmp(pumpLaserScheme, "evr",3) == 0) {
+			nPowderClasses *= 2;
+		}
+		else if(strcmp(pumpLaserScheme, "LH95") == 0) {
 			nPowderClasses *= 2;
 		}
 		else if(strcmp(pumpLaserScheme, "LD57") == 0) {
@@ -312,8 +315,6 @@ void cGlobal::setup() {
 			exit(1);
 		}
 	}
-	
-	
 	
 	
 	/*

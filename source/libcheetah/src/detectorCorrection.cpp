@@ -112,12 +112,18 @@ void photonCount(cEventData *eventData, cGlobal *global){
 		if(global->detector[detIndex].photonCount) {
 			DEBUG3("Photon count conversion (detectorID=%ld)",global->detector[detIndex].detectorID);
 			long	 pix_nn = global->detector[detIndex].pix_nn;
-			float	 *data = eventData->detector[detIndex].data_detCorr;
+			float	 *data = eventData->detector[detIndex].data_detPhotCorr;
 			uint16_t *mask = eventData->detector[detIndex].pixelmask;
 			
 			float	photconv_adu = global->detector[detIndex].photconv_adu;
 			float	photconv_ev = global->detector[detIndex].photconv_ev;
-			float	adu_per_photon = photconv_adu * (eventData->photonEnergyeV/photconv_ev);
+			
+			float	adu_per_photon;
+			if (photconv_ev > 0){
+				adu_per_photon = photconv_adu * (eventData->photonEnergyeV/photconv_ev);
+			} else {
+				adu_per_photon = photconv_adu;
+			}
 
 			photonCount(data, mask, pix_nn, adu_per_photon);
 		}
@@ -569,7 +575,7 @@ void applyPolarizationCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].usePolarizationCorrection) {
 			DEBUG3("Apply polarization correction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-			float	*data = eventData->detector[detIndex].data_detCorr;
+			float	*data = eventData->detector[detIndex].data_detPhotCorr;
             float   *pix_x = global->detector[detIndex].pix_x;
             float   *pix_y = global->detector[detIndex].pix_y;
             float   *pix_z = global->detector[detIndex].pix_z;
@@ -606,7 +612,7 @@ void applySolidAngleCorrection(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if (global->detector[detIndex].useSolidAngleCorrection) {
 			DEBUG3("Apply solid angle correction. (detectorID=%ld)",global->detector[detIndex].detectorID);										
-            float	*data = eventData->detector[detIndex].data_detCorr;
+            float	*data = eventData->detector[detIndex].data_detPhotCorr;
             float   *pix_x = global->detector[detIndex].pix_x;
             float   *pix_y = global->detector[detIndex].pix_y;
             float   *pix_z = global->detector[detIndex].pix_z;

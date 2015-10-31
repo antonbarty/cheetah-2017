@@ -115,7 +115,7 @@ namespace CXI{
 			H5Pset_chunk(cparms, ndims, chunkdims);
 			//H5Pset_chunk(cparms, ndims, dims);
 			if (ndims >= 2)
-				H5Pset_deflate(cparms, 3);
+				H5Pset_deflate(cparms, CXI::h5compress);
 		}
 		
 		// Set optimal chunk cache size
@@ -601,10 +601,12 @@ static T * generateThumbnail(const T * src,const int srcWidth, const int srcHeig
  */
 static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 	int debugLevel = global->debugLevel;
-
+	
 	using CXI::Node;
 	
 	DEBUGL2_ONLY{ DEBUG("Create Skeleton."); }
+
+	CXI::h5compress = global->h5compress;
 
 
 	int ignoreConversionFlags = 0;
@@ -758,8 +760,10 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 					data_node->createDataset("mask_shared",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared, -1, pix_nn);
 					data_node->createDataset("mask_shared_max",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared_max, -1, pix_nn);
 					data_node->createDataset("mask_shared_min",H5T_NATIVE_UINT16,pix_nx, pix_ny)->write(pixelmask_shared_min, -1, pix_nn);
-					data_node->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
-
+					if(global->detector[detIndex].saveThumbnail) {
+						data_node->createStack("thumbnail",H5T_STD_I16LE, pix_nx/CXI::thumbnailScale, pix_ny/CXI::thumbnailScale);
+					}
+					
 					// If this is the main data version we create links to all datasets
 					if (dataV.isMainVersion) {
 						detector->addDatasetLink("data",data_node->path().c_str());
@@ -813,7 +817,9 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 					image_node->addDatasetLink("mask_shared",data_node->path().c_str());
 					image_node->addDatasetLink("data_type",data_node->path().c_str());
 					image_node->addDatasetLink("data_space",data_node->path().c_str());
-					image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					if(global->detector[detIndex].saveThumbnail) {
+						image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					}
 					image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 				}
 			}
@@ -864,7 +870,9 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 					image_node->addDatasetLink("mask_shared",data_node->path().c_str());
 					image_node->addDatasetLink("data_type",data_node->path().c_str());
 					image_node->addDatasetLink("data_space",data_node->path().c_str());
-					image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					if(global->detector[detIndex].saveThumbnail) {
+						image_node->addDatasetLink("thumbnail",data_node->path().c_str());
+					}
 					image_node->createLink("experiment_identifier", "/entry_1/experiment_identifier");
 				}
 			}
@@ -1446,16 +1454,18 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				}
 				else {
 					// Non-assembled images (3D: N_frames x Ny_frame x Nx_frame)
-					Node & data_node = detector[dataV.name_version];
+					Node &data_node = detector[dataV.name_version];
 					data_node["data"].write(data, stackSlice, pix_nn);	
-					if(global->detector[detIndex].savePixelmask){
+					if(global->detector[detIndex].savePixelmask) {
 						data_node["mask"].write(pixelmask, stackSlice, pix_nn);
 					}
-					long nn = (pix_nx/CXI::thumbnailScale) * (pix_ny/CXI::thumbnailScale);
-					float * thumbnail = generateThumbnail(data, pix_nx, pix_ny, CXI::thumbnailScale);
-					data_node["thumbnail"].write(thumbnail, stackSlice, nn);
-					delete [] thumbnail;
-				}			
+					if(global->detector[detIndex].saveThumbnail) {
+						long nn = (pix_nx/CXI::thumbnailScale) * (pix_ny/CXI::thumbnailScale);
+						float *thumbnail = generateThumbnail(data, pix_nx, pix_ny, CXI::thumbnailScale);
+						data_node["thumbnail"].write(thumbnail, stackSlice, nn);
+						delete [] thumbnail;
+					}
+				}
 			}
 		}
 
@@ -1474,12 +1484,14 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				if(global->detector[detIndex].savePixelmask){
 					data_node["mask"].write(pixelmask, stackSlice, image_nn);
 				}
-				long nn = (image_nx/CXI::thumbnailScale) * (image_ny/CXI::thumbnailScale);
-				float * thumbnail = generateThumbnail(data,image_nx,image_ny,CXI::thumbnailScale);
-				data_node["thumbnail"].write(thumbnail, stackSlice, nn);
-				data_node["data_type"].write("intensities", stackSlice);
-				data_node["data_space"].write("diffraction", stackSlice);
-				delete [] thumbnail;
+				if(global->detector[detIndex].saveThumbnail) {
+					long nn = (image_nx/CXI::thumbnailScale) * (image_ny/CXI::thumbnailScale);
+					float * thumbnail = generateThumbnail(data,image_nx,image_ny,CXI::thumbnailScale);
+					data_node["thumbnail"].write(thumbnail, stackSlice, nn);
+					data_node["data_type"].write("intensities", stackSlice);
+					data_node["data_space"].write("diffraction", stackSlice);
+					delete [] thumbnail;
+				}
 			}
 		}
 
@@ -1497,12 +1509,14 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 				if(global->detector[detIndex].savePixelmask){
 					data_node["mask"].write(pixelmask, stackSlice, imageXxX_nn);
 				}
-				long nn = (imageXxX_nx/CXI::thumbnailScale) * (imageXxX_ny/CXI::thumbnailScale);
-				float * thumbnail = generateThumbnail(data,imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
-				data_node["thumbnail"].write(thumbnail, stackSlice, nn);
-				data_node["data_type"].write("intensities", stackSlice);
-				data_node["data_space"].write("diffraction", stackSlice);
-				delete [] thumbnail;
+				if(global->detector[detIndex].saveThumbnail) {
+					long nn = (imageXxX_nx/CXI::thumbnailScale) * (imageXxX_ny/CXI::thumbnailScale);
+					float * thumbnail = generateThumbnail(data,imageXxX_nx,imageXxX_ny,CXI::thumbnailScale);
+					data_node["thumbnail"].write(thumbnail, stackSlice, nn);
+					data_node["data_type"].write("intensities", stackSlice);
+					data_node["data_space"].write("diffraction", stackSlice);
+					delete [] thumbnail;
+				}
 			}
 		}
 

@@ -36,6 +36,8 @@ namespace CXI{
 	const int peaksChunkSize[2] = {4194304, 4096};
 	// The preferred size of charracter (data_type, experimental_identifier,...)
 	const int stringSize = 128;
+	// HDF5 compression level (default=3)
+	int	h5compress = 3;
 
 	
 	class Node {

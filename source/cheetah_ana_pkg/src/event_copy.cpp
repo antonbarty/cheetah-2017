@@ -166,8 +166,15 @@ namespace cheetah_ana_pkg {
                 pumpLaserOn = evr41;
                 pumpLaserCode = evr41;
             }
+			// Simple trigger on any arbitrary evr code (which one determined using strncmp).
+			else if (strncmp(cheetahGlobal.pumpLaserScheme, "evr", 3) == 0) {
+				int	evrCode = atoi(cheetahGlobal.pumpLaserScheme+3);
+				int evrState = eventCodePresent(data4->fifoEvents(), evrCode);
+				pumpLaserOn = evrState;
+				pumpLaserCode = evrState;
+			}
 			// Neutze, April 2015 LH95
-			else if(strcmp(cheetahGlobal.pumpLaserScheme, "evr183") == 0) {
+			else if(strcmp(cheetahGlobal.pumpLaserScheme, "LH95") == 0) {
 				//	Use some long semi-random sequence to avoid any systematic bias from running at 60 Hz, eg: ON, OFF, OFF, ON, ON, ON, ON, OFF, OFF
 				//	evr183 = laserOn
 				//	evr184 = laserOFF

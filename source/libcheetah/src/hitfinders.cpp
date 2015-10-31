@@ -178,7 +178,10 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 			if(strcmp(global->pumpLaserScheme, "evr41") == 0) {
 				eventData->powderClass = hit + 2*pumpLaserOn;
 			}
-			else if(strcmp(global->pumpLaserScheme, "evr183") == 0) {
+			else if(strncmp(global->pumpLaserScheme, "evr",3) == 0) {
+				eventData->powderClass = hit + 2*pumpLaserOn;
+			}
+			else if(strcmp(global->pumpLaserScheme, "LH95") == 0) {
 				eventData->powderClass = hit + 2*pumpLaserOn;
 			}
 			else if(strcmp(global->pumpLaserScheme, "LD57") == 0) {

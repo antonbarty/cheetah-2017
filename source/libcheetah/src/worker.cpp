@@ -144,16 +144,12 @@ void *worker(void *threadarg) {
 	
 	// Zero out bad pixels
 	setBadPixelsToZero(eventData, global);
- 
-	// Convert to photons
-	photonCount(eventData, global);
 	
-    // Apply polarization correction
-    applyPolarizationCorrection(eventData, global);
-    
-    // Apply solid angle correction
-    applySolidAngleCorrection(eventData, global);
-    
+	// Histogram of detector values
+	addToHistogram(eventData, global, 0);
+	//addToHistogram(eventData, global, hit);
+ 
+	
 	//  Inside-thread speed test
 	if(global->ioSpeedTest==4) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test 4 (after detector correction)\n", global->runNumber, eventData->frameNumber, global->datarate);
@@ -185,6 +181,19 @@ void *worker(void *threadarg) {
 	// Initialise data_detPhotCorr with data_detCorr
 	initPhotonCorrection(eventData,global);
 
+	// Some of these conversions are mutually exclusive
+	// For example, it does not make sense to photon count (sparse data), when applying polarisation or
+	// solid angle correction (which affect ADU values and not the Poisson photon count)
+	// Convert to photons
+	photonCount(eventData, global);
+	
+	// Apply polarization correction
+	applyPolarizationCorrection(eventData, global);
+	
+	// Apply solid angle correction
+	applySolidAngleCorrection(eventData, global);
+
+	
 	// If a darkcal file is available: Subtract persistent background is for photon subtraction (persistent background = photon background)
 	subtractPersistentBackground(eventData, global);
 	
@@ -287,7 +296,7 @@ hitknown:
 
 	// Assemble, downsample and radially average current frame
 	assemble2D(eventData, global);
-	downsample(eventData, global);
+	//downsample(eventData, global);
   
 	// Powder
 	// Maintain a running sum of data (powder patterns)
@@ -307,6 +316,10 @@ hitknown:
 
 	// Integrate pattern
 	integratePattern(eventData,global);
+	
+	// Histogram of detector values
+	//addToHistogram(eventData, global, hit);
+
 
 	// Inside-thread speed test
 	if(global->ioSpeedTest==8) {
@@ -315,9 +328,6 @@ hitknown:
 	}
 
 	
-	// Histogram
-	addToHistogram(eventData, global, hit);
-
 	// Inside-thread speed test
 	if(global->ioSpeedTest==9) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #9 (After histograms)\n", global->runNumber, eventData->frameNumber, global->datarate);
