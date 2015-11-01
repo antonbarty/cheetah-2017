@@ -22,6 +22,7 @@ pro crawler_pickdir
 				'0, droplist, '+str+', label_left=Dataset:,  tag=selection', $
 				'1, base,, row', $
 				'0, button, Go to selected experiment, Quit, Tag=OK', $
+				'0, button, Set up new experiment, Quit, Tag=Setup', $
 				'0, button, Find a different experiment, Quit, Tag=Other', $
 				'2, button, Cancel, Quit, tag=Cancel' $
 			]		
@@ -36,6 +37,16 @@ pro crawler_pickdir
 ;				dir=dialog_pickfile(/dir)
 				dir=dialog_pickfile(filter='crawler.config',/fix_filter, title='Please select crawler directory')
 				dir = file_dirname(dir)
+				dirlist = [dir, dirlist]			
+			endif
+
+			if a.Setup eq 1 then begin
+				dir=dialog_pickfile(title='Select target directory', /dir)
+				print, 'Target directory: ', dir
+				print, dir
+				crawler_autosetup	, dir
+				dir += 'cheetah/gui'
+				print, 'Directory added to list: ', dir
 				dirlist = [dir, dirlist]			
 			endif
 			
@@ -59,6 +70,7 @@ pro crawler_pickdir
 		;; Go to this directory
 		cd,dir[0]
 end
+
 
 ;; 
 ;;	Try to auto-detect a configuration

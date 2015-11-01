@@ -340,14 +340,14 @@ function cheetah_readdata, filename, frame, pState, title=title, file_type=file_
 			index = *(*pState).pindex
 			file_type = (*pState).file_type
 			h5field = (*pstate).h5field
-			filename = file[i]			
+			;;filename = file[i]			
 			(*pState).currentFile = filename
 			title = file_basename(filename) + ' #' + strcompress(string(frame), /remove_all)
 
 		endif
 	
 		;; Debugging
-		print, file_basename(filename), frame
+		;;print, file_basename(filename), frame
 	
 		;;
 		;; Single h5 file per frame (1st version of Cheetah)
@@ -425,6 +425,7 @@ pro cheetah_displayImage, pState, image
 		
 		(*pState).currentFile = filename
 
+		;;print, file_basename(filename), framenum
 
 		catch, error
 
@@ -661,7 +662,7 @@ function cheetahview_updatefilelist, dir
 			;; Cross-check against number of non-zero elements in pixel size array
 			;; (this is to avoid the blank frames problem when the file is not completed)
 			check = read_h5(cxifile[i], field = 'entry_1/instrument_1/detector_1/x_pixel_size')
-			help, check
+			;;help, check
 			
 			w = where(check ne 0)
 			if w[0] ne -1 then ncheck=n_elements(w) else ncheck=0
@@ -883,10 +884,19 @@ pro cheetah_event, ev
 
 			;; Choose a random file
 			file = *sState.pfile
-			i = randomu(systime(1))*n_elements(file)
-			filename = file[i]
+			index = *sState.pindex
+			;;help, file, index
+			
+			n = n_elements(file)
+			;;i = n*randomu(systime(1))
+			i = n*randomu(seed)
+			i = fix(i)
+			
+			;;print, i
+			;;print, file_basename(file[i]), index[i]
 
 			;; Display it
+			filename = file[i]
 			(*pState).currentFile = filename
 			(*pState).currentFrameNum = i
 			cheetah_displayImage, pState

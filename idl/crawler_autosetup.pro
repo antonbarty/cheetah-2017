@@ -1,0 +1,93 @@
+;;
+;;	Automatically set up a new experiment in the specified directory, then return
+;;
+pro crawler_autosetup, dir
+
+		;; Move to target directory, remembering current directory
+		cd, dir, current=starting_dir
+		
+		
+		;; Deduce experiment number, etc using de-referenced paths
+		;;	This assumes the file path follows the pattern:   /reg/d/psdm/cxi/cxij4915/scratch/...
+		print,'Deducing experiment and instrument from file paths...'
+		spawn, 'pwd', path
+		ss = strsplit(path, '/', /extract)
+		
+		instr = ss[3]
+		expt = ss[4]
+		xtcdir = '/' + strjoin(ss[0:4],'/') + '/xtc'
+		
+		
+		print,'    Full path: ', path
+		print,'    Instrument: ', instr
+		print,'    Experiment: ', expt
+		print,'    XTC directory: ', xtcdir
+				
+		
+		
+		;; Unpack template
+		print,'Extracting template...'
+		cmd = 'tar -xf /reg/g/cfel/cheetah/template.tar'
+		print, cmd
+		spawn, cmd
+		
+		
+		;;
+		;; Modify gui/crawler.config
+		;;
+		file = 'cheetah/gui/crawler.config'
+		print,'Modifying ', file
+
+		xtcsed = '\/' + strjoin(ss[0:4],'\/') + '\/xtc\/'
+		cmd = "sed -i -r 's/(xtcdir=).*/\1"+xtcsed+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+
+		h5sed = '\/' + strjoin(ss,'\/') + '\/cheetah\/hdf5\/'
+		cmd = "sed -i -r 's/(hdf5dir=).*/\1"+h5sed+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+		
+		print,'>-------------------------<'
+		spawn, 'cat '+file
+		print,'>-------------------------<'
+		
+
+
+		;;
+		;; Modify process/process
+		;;
+		file = 'cheetah/process/process'
+		print,'Modifying ', file
+
+		expstr = '"' + expt + '"'
+		cmd = "sed -i -r 's/(expt=).*/\1"+expstr+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+
+		xtcsed = '"\/' + strjoin(ss[0:4],'\/') + '\/xtc\/"'
+		cmd = "sed -i -r 's/(XTCDIR=).*/\1"+xtcsed+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+
+		h5sed = '"\/' + strjoin(ss,'\/') + '\/cheetah\/hdf5\/"'
+		cmd = "sed -i -r 's/(H5DIR=).*/\1"+h5sed+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+
+		configsed = '"\/' + strjoin(ss,'\/') + '\/cheetah\/process\/"'
+		cmd = "sed -i -r 's/(CONFIGDIR=).*/\1"+configsed+"/'" + ' ' + file
+		;print, cmd
+		spawn, cmd
+
+
+		print,'>-------------------------<'
+		spawn, 'cat '+file
+		print,'>-------------------------<'
+		
+		
+		;; Return to the main directory (circular, but it's what is expected from the calling code)
+		cd, starting_dir
+
+end
+
