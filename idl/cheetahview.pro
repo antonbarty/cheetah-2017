@@ -331,7 +331,6 @@ end
 function cheetah_readdata, filename, frame, pState, title=title, file_type=file_type, $
 													image=image, peaks=peaks
 	
-		i = frame
 		
 		;; This bit is to allow the flexibility to call with and without pState being defined
 		;; (currently needed to rean an initial frame in order to set up the initial graphics window)
@@ -382,13 +381,14 @@ function cheetah_readdata, filename, frame, pState, title=title, file_type=file_
 				h5field = 'data/data'
 			
 			if keyword_set(image) then begin
-				data = read_cxi_data(filename, i, field = 'entry_1/instrument_1/detector_1/data') 
+				data = read_cxi_data(filename, frame, field = 'entry_1/instrument_1/detector_1/data') 
 				return, data
 			endif 
 
 			if keyword_set(peaks) then begin
-				px = read_cxi_data(filename, i, field = 'entry_1/result_1/peakXPosRaw') 
-				py = read_cxi_data(filename, i, field = 'entry_1/result_1/peakYPosRaw') 
+				print, file_basename(filename), frame
+				px = read_cxi_data(filename, frame, field = 'entry_1/result_1/peakXPosRaw') 
+				py = read_cxi_data(filename, frame, field = 'entry_1/result_1/peakYPosRaw') 
 				w = where(px ne 0 AND py ne 0)
 				peakinfo = fltarr(4,n_elements(w))
 				peakinfo[0,*] = px[w]
@@ -460,7 +460,7 @@ pro cheetah_displayImage, pState, image
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
-			peakinfo = cheetah_readdata(filename, i, pState, /peaks)
+			peakinfo = cheetah_readdata(filename, framenum, pState, /peaks)
 			;peakinfo = read_h5(filename, field='processing/hitfinder/peakinfo-raw')
 		endif
 		if (*pState).findPeaks then begin
@@ -661,13 +661,15 @@ function cheetahview_updatefilelist, dir
 
 			;; Cross-check against number of non-zero elements in pixel size array
 			;; (this is to avoid the blank frames problem when the file is not completed)
-			check = read_h5(cxifile[i], field = 'entry_1/instrument_1/detector_1/x_pixel_size')
-			;;help, check
+			if(nframes gt 0) then begin
+				check = read_h5(cxifile[i], field = 'entry_1/instrument_1/detector_1/x_pixel_size')
+				;;help, check
 			
-			w = where(check ne 0)
-			if w[0] ne -1 then ncheck=n_elements(w) else ncheck=0
-			if nframes gt ncheck then $
-				nframes = ncheck
+				w = where(check ne 0)
+				if w[0] ne -1 then ncheck=n_elements(w) else ncheck=0
+				if nframes gt ncheck then $
+					nframes = ncheck
+			endif
 				
 			print, strcompress(string('Number of frames in ', file_basename(cxifile[i]), ' = ', nframes))
 

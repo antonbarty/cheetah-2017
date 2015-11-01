@@ -13,6 +13,7 @@ pro crawler_autosetup, dir
 		spawn, 'pwd', path
 		ss = strsplit(path, '/', /extract)
 		
+		ss[2] = 'psdm'
 		instr = ss[3]
 		expt = ss[4]
 		xtcdir = '/' + strjoin(ss[0:4],'/') + '/xtc'
