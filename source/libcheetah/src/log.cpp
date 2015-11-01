@@ -62,7 +62,7 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 
 	// Frame lists for CrystFEL (may not be in sync with events, but should contain all events)
 	if(global->framelist[powderClass] != NULL) {
-		fprintf(global->framelist[powderClass], "%s \\\\%li\n", eventData->filename, eventData->stackSlice);
+		fprintf(global->framelist[powderClass], "%s //%li\n", eventData->filename, eventData->stackSlice);
 	}
 	
 	

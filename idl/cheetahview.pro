@@ -340,11 +340,14 @@ function cheetah_readdata, filename, frame, pState, title=title, file_type=file_
 			index = *(*pState).pindex
 			file_type = (*pState).file_type
 			h5field = (*pstate).h5field
-			filename = file[i]
-			title = file_basename(filename)
+			filename = file[i]			
 			(*pState).currentFile = filename
+			title = file_basename(filename) + ' #' + strcompress(string(frame), /remove_all)
+
 		endif
 	
+		;; Debugging
+		print, file_basename(filename), frame
 	
 		;;
 		;; Single h5 file per frame (1st version of Cheetah)
@@ -414,9 +417,12 @@ end
 pro cheetah_displayImage, pState, image
 
 		;; Retrieve file info
-		file = *(*pState).pfile
 		i = (*pState).currentFrameNum
+		file = *(*pState).pfile
+		index = *(*pState).pindex
 		filename = file[i]
+		framenum = index[i]
+		
 		(*pState).currentFile = filename
 
 
@@ -431,7 +437,7 @@ pro cheetah_displayImage, pState, image
 		endif
 
 		
-		data = cheetah_readdata(filename, i, pState, title=title, /image)
+		data = cheetah_readdata(filename, framenum, pState, title=title, /image)
 		;;data = read_h5(filename, field=(*pstate).h5field)
 		;title = file_basename(filename)
 		data = float(data)
@@ -645,14 +651,13 @@ function cheetahview_updatefilelist, dir
 		file_type = 'cxi'
 		print,strcompress(string('CXI files: ', file_basename(cxifile)))
 		total_nframes = 0
+		index = 0
 
 		print, cxifile
 		
 		for i=0, n_elements(cxifile)-1 do begin
 			nframes = read_cheetah_cxi(cxifile[i], /get_nframes)
 
-			help, cxifile
-			
 			;; Cross-check against number of non-zero elements in pixel size array
 			;; (this is to avoid the blank frames problem when the file is not completed)
 			check = read_h5(cxifile[i], field = 'entry_1/instrument_1/detector_1/x_pixel_size')
@@ -694,7 +699,11 @@ function cheetahview_updatefilelist, dir
 					file : file, $
 					index : index $
 				}
-				
+
+	;; Debugging				
+	;;print, result.file
+	;;print, result.index
+	
 	return, result
 end
 
