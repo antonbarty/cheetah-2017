@@ -810,6 +810,8 @@ pro cheetah_event, ev
 
 			outfile = file_basename(sState.currentFile)
 			frame = (*pState).currentFrameNum
+			print, frame
+			frame = (*(sState.pindex))[frame]
 			outfile = strmid(outfile, 0, strpos(outfile,'.',/reverse_search))
 			outfile += '-'+strcompress(string(frame),/remove_all)+'.png'
 			outfile = file_basename(outfile)
