@@ -198,12 +198,21 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	
 	
 	// Resolution to real space (in Angstrom)
-	// Crystallographic resolution d = lambda/sin(theta)
+	// Crystallographic resolution d = lambda/2sin(theta)
+	//
+	//	From Takenori:
+	//		It looks that calculation of spot resolution is wrong.
+	//		The correct formula is d = lambda / 2 / sin(theta), while the code calculates lambda / sin(2 theta).
+	//		The variable "sintheta" is actually sin(2 theta).
+	//		For small theta, sin(2 theta) is close to 2 sin(theta), so the error is not very big.
+
 	float z = global->detector[0].detectorZ*1e-3;
 	float dx = global->detector[0].pixelSize;
 	double r = sqrt(z*z+dx*dx*resolution*resolution);
-	double sintheta = dx*resolution/r;
-	resolutionA = eventData->wavelengthA/sintheta;
+	//double sintheta = dx*resolution/r;
+	double twotheta = asin(dx*resolution/r);
+	double sintheta = sin(twotheta/2.0);
+	resolutionA = eventData->wavelengthA/(2*sintheta);
 	peaklist->peakResolutionA = resolutionA;
 	eventData->peakResolutionA = resolutionA;
 	eventData->peakResolution = resolution;
@@ -218,12 +227,15 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	for(long k=0; k<np; k++) {
 		r = eventData->peaklist.peak_com_r_assembled[k];
 		r2 = sqrt(z*z+(dx*dx*r*r));
-		sintheta = dx*r/r2;
-		A = eventData->wavelengthA/sintheta;
+		//sintheta = dx*r/r2;
+		twotheta = asin(dx*r/r2);
+		sintheta = sin(twotheta/2.0);
+		A = eventData->wavelengthA/(2*sintheta);
 		peaklist->peak_com_res[k] = A;
 		peaklist->peak_com_q[k] = 10./A;
 	}
 
+	
 	
 	
 	
