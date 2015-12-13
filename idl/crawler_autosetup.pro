@@ -13,29 +13,71 @@ pro crawler_autosetup, dir
 		spawn, 'pwd', path
 		ss = strsplit(path, '/', /extract)
 		
-		ss[2] = 'psdm'
+		if(ss[0] eq 'reg') then begin
+			;; We are at SLAC
+			ss[1] = 'd'
+			ss[2] = 'psdm'
+		endif
 		instr = ss[3]
 		expt = ss[4]
 		xtcdir = '/' + strjoin(ss[0:4],'/') + '/xtc'
+		userdir = '/' + strjoin(ss,'/') + '/'
 		
 		
 		print,'    Full path: ', path
 		print,'    Instrument: ', instr
 		print,'    Experiment: ', expt
 		print,'    XTC directory: ', xtcdir
+		print,'    User directory: ', userdir
 				
 		
 		
+		
+		;; User feedback
+		desc = [ 	'1, base, , column', $
+					'0, label, Instrument: '+instr, $
+					'0, label, Experiment: '+expt, $
+					'0, label, XTC directory: '+xtcdir, $
+					'2, label, Processing directory: '+userdir, $
+					'1, base,, row', $
+					'0, button, OK, Quit, Tag=OK', $
+					'2, button, Cancel, Quit' $
+		]		
+
+		a = cw_form(desc, /column, title='Auto-detected parameters')
+
+		;; Only do this if OK is pressed (!!)
+		if a.OK ne 1 then begin		
+			exit
+		endif 
+
+		
+		
+		
 		;; Unpack template
+		print,'>---------------------<'
 		print,'Extracting template...'
 		cmd = 'tar -xf /reg/g/cfel/cheetah/template.tar'
 		print, cmd
 		spawn, cmd
 		
+		;; Automatically fix permissions!
+		print,'>---------------------<'
+		print,'Fixing permissions...'
+		cmd = 'chgrp -R ' + expt + ' cheetah/'
+		print, cmd
+		spawn, cmd
+
+		cmd = 'chmod -R  g+w cheetah/'
+		print, cmd
+		spawn, cmd
+		
+		
 		
 		;;
 		;; Modify gui/crawler.config
 		;;
+		print,'>---------------------<'
 		file = 'cheetah/gui/crawler.config'
 		print,'Modifying ', file
 

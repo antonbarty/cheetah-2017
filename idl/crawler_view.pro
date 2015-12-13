@@ -1131,7 +1131,7 @@ pro crawler_view
 
 	mbtool = widget_button(bar, value='Tools')
 	mbview_badpix = widget_button(mbtool, value='Make bad pixel mask from darkcal')
-	mbview_badpix2 = widget_button(mbtool, value='Make bad pixel mask from powder')
+	mbview_badpix2 = widget_button(mbtool, value='Make bad pixel mask from brightfield')
 	mbview_combinemasks = widget_button(mbtool, value='Combine masks')
 	mbview_satplot1 = widget_button(mbtool, value='Plot peak maximum vs radius')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')

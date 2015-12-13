@@ -433,24 +433,26 @@ cleanup:
 		calculateRadialAveragePowder(global);
 		
 		
-		// Save accumulated data
-		// try this - periodically flush the H5 file to let us to see data as it's being saved
+		// Save accumulated data - periodically flush the H5 file to let us to see data as it's being saved
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
 			flushCXIFiles(global);
 		}
-		
+
+		// Write running sums
 		if(global->writeRunningSumsFiles){
 			saveRunningSums(global);
 			saveHistograms(global);
 			saveSpectrumStacks(global);
 			saveTimeToolStacks(global);
 		}
-		global->updateLogfile();
-		global->writeStatus("Not finished");
 		
 		// Save radial average stacks
 		saveRadialStacks(global);
+		
+		global->updateLogfile();
+		global->writeStatus("Not finished");
+		
 	}
 	
 	

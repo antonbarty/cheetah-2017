@@ -13,6 +13,12 @@ function badpix_from_darkcal, filename, noise=noise, value=value, save=save, edg
 
 	if KEYWORD_SET(menu) then begin
 		desc = [ 	'1, base, , column', $
+					'0, label, Identifies bad pixels based on strange behaviour when not illuminated, left', $
+					'0, label, ie: pixels in a darkcal which are either noisy or, left', $
+					'0, label, have a significantly different offset to other pixels on the same ASIC, left', $
+					'0, label, mask_noise = sigma_pix gt noise, left', $
+					'0, label, mask_offset = dark gt (median(ASIC)+value*stddev(ASIC)), left', $
+					'0, label, mask = mask_noise OR mask_offset, left', $
 					'0, float, '+string(noise)+', label_left=Noise: , tag=noise', $
 					'2, float, '+string(value)+', label_left=Value: , tag=value', $
 					'1, base,, row', $
@@ -48,7 +54,7 @@ function badpix_from_darkcal, filename, noise=noise, value=value, save=save, edg
 	
 	
 	
-	;; Noise mask
+	;; Noisy pixel mask
 	;; (pixels with higher standard deviation than some threshold)
 	maskn = b gt noise
 	

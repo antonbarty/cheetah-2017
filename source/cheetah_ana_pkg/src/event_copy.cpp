@@ -131,6 +131,7 @@ namespace cheetah_ana_pkg {
         int     pumpLaserCode = 0;
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
+		
 #if PSANA_VERSION >= 1317
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
 
@@ -194,12 +195,36 @@ namespace cheetah_ana_pkg {
 					printf("WARNING: evr183 and evr184 are both equal (Laser ON and laser OFF at the same time)\n");
 				}
 			}
+			// Standfuss, December 2015 LK27
+			else if(strcmp(cheetahGlobal.pumpLaserScheme, "LK27") == 0) {
+				//  Step  EventCode  X-ray	           Device
+				//	0     142        None              30 Hz Pump laser trigger
+				//  1     183        X-ray pulse 1     Delay 1 (30Hz)
+				//  2     179        X-ray pulse 2     Delay 2 (30Hz)
+				//  3     180        X-ray pulse 3     Delay 3 (30Hz)
+				//  4     181        X-ray pulse 4     Delay 4 (30Hz)
+				//
+				// IR camera = evr140
+				// Dropshots = evr162
+				
+				int evr179 = eventCodePresent(data4->fifoEvents(), 179);
+				int evr180 = eventCodePresent(data4->fifoEvents(), 180);
+				int evr181 = eventCodePresent(data4->fifoEvents(), 181);
+				int evr183 = eventCodePresent(data4->fifoEvents(), 183);
+				int evr142 = eventCodePresent(data4->fifoEvents(), 142);
+				
+				pumpLaserOn = evr183;
+				if(evr183) pumpLaserCode = 0;
+				if(evr179) pumpLaserCode = 1;
+				if(evr180) pumpLaserCode = 2;
+				if(evr181) pumpLaserCode = 3;
+			}
 		} else
 #endif
 		   // EvrData v3
 			if (data3.get()) {
 			   numEvrData = data3->numFifoEvents();
-			   
+				
 			   // Timestamps
 			const ndarray<const Psana::EvrData::FIFOEvent, 1> array = data3->fifoEvents();
 			fiducial = array[0].timestampHigh();

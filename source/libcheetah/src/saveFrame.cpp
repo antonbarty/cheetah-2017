@@ -883,7 +883,7 @@ void writeSimpleHDF5(const char *filename, const void *data, long width, long he
 	sh = H5Screate_simple(2, size, max_size);
 	H5Pset_chunk(h5compression, 2, size);
 	//H5Pset_shuffle(h5compression);			// De-interlace bytes
-	H5Pset_deflate(h5compression, 5);		// Compression levels are 0 (none) to 9 (max)
+	H5Pset_deflate(h5compression, 3);		// Compression levels are 0 (none) to 9 (max)
 	
 	dh = H5Dcreate(gh, "data", type, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 	if ( dh < 0 ) {

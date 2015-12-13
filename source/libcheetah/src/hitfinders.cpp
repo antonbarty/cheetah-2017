@@ -193,7 +193,9 @@ void  sortPowderClass(cEventData *eventData, cGlobal *global){
 					
 				}
 			}
-
+			else if(strcmp(global->pumpLaserScheme, "LK27") == 0) {
+				eventData->powderClass = 2*pumpLaserCode + hit;
+			}
 		}
 	}
 }

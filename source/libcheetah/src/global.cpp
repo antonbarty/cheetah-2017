@@ -141,7 +141,7 @@ cGlobal::cGlobal(void) {
 
 	// TimeTool (Opal1k)
 	useTimeTool = 0;
-	TimeToolStackSize = 200000;
+	TimeToolStackSize = 100000;
 	TimeToolStackWidth = 1024;
 
 	
@@ -308,10 +308,19 @@ void cGlobal::setup() {
 		else if(strcmp(pumpLaserScheme, "LD57") == 0) {
 			nPowderClasses = 6;
 		}
+		else if(strcmp(pumpLaserScheme, "LK27") == 0) {
+			nPowderClasses = 8;
+		}
 		else {
 			printf("Error: Unknown pump laser scheme\n");
 			printf("pumpLaserScheme = %s\n", pumpLaserScheme);
 			printf("Known schemes are: evr41, LD57\n");
+			exit(1);
+		}
+		if(nPowderClasses >= MAX_POWDER_CLASSES) {
+			printf("Error: Number of powder classes exceeds allocated array size\n");
+			printf("nPowderClasses = %li\n", nPowderClasses);
+			printf("MAX_POWDER_CLASSES = %li\n", MAX_POWDER_CLASSES);
 			exit(1);
 		}
 	}
@@ -586,7 +595,8 @@ void cGlobal::setup() {
 		printf("Allocating TimeTool stacks\n");
 		for(long i=0; i<nPowderClasses; i++) {
 			TimeToolStackCounter[i] = 0;
-			TimeToolStack[i] = (float *) calloc(TimeToolStackSize*TimeToolStackWidth, sizeof(float));
+			//TimeToolStack[i] = (float *) calloc(TimeToolStackSize*TimeToolStackWidth, sizeof(float));
+			TimeToolStack[i] = (float *) malloc(TimeToolStackSize*TimeToolStackWidth*sizeof(float));
 			pthread_mutex_init(&TimeToolStack_mutex[i], NULL);
 		}
 	}
@@ -1628,7 +1638,7 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
-    writeHitClasses(::stdout);
+	writeHitClasses(::stdout);
     writeHitClasses(fp);
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);

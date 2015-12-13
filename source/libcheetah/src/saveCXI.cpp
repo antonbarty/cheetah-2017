@@ -114,7 +114,7 @@ namespace CXI{
 		if(chunkSize) {
 			H5Pset_chunk(cparms, ndims, chunkdims);
 			//H5Pset_chunk(cparms, ndims, dims);
-			if (ndims >= 2)
+			if (ndims >= 2 && CXI::h5compress != 0)
 				H5Pset_deflate(cparms, CXI::h5compress);
 		}
 		
@@ -183,7 +183,7 @@ namespace CXI{
 
 
 	template <class T> 
-	void Node::write(T * data, int stackSlice, int sliceSize, bool variableSlice){  
+	void Node::write(T *data, int stackSlice, int sliceSize, bool variableSlice){
 		bool sliced = true;
 		if(stackSlice == -1){
 			stackSlice = 0;
@@ -192,7 +192,7 @@ namespace CXI{
 
 		hid_t hs,w;
 		hsize_t count[4] = {1,1,1,1};
-		hsize_t offset[4] = {stackSlice,0,0,0};
+		hsize_t offset[4] = {static_cast<hsize_t>(stackSlice),0,0,0};
 		/* stride is irrelevant in this case */
 		hsize_t stride[4] = {1,1,1,1};
 		hsize_t block[4];
@@ -210,8 +210,12 @@ namespace CXI{
 		 */
 		if(ndims > 0 && (int)block[0] <= stackSlice){
 			while((int)block[0] <= stackSlice){
-				//block[0] *= 2;
-				block[0] += 512;
+				if(block[0] < 1024) {
+					block[0] *= 2;
+				}
+				else {
+					block[0] += 1024;
+				}
 			}
 			H5Dset_extent (dataset, block);
 			/* get enlarged dataspace */
@@ -230,7 +234,12 @@ namespace CXI{
 			int tmp_block = block[0];
 			H5Sget_simple_extent_dims(dataspace, block, mdims);
 			while((int)block[1] <= sliceSize){
-				block[1] *= 2;
+				if(block[1] < 1024) {
+					block[1] *= 2;
+				}
+				else {
+					block[1] += 1024;
+				}
 			}
 			H5Dset_extent (dataset, block);
 			block[0] = tmp_block;
