@@ -108,20 +108,22 @@ namespace CXI{
 		hid_t dataspace = H5Screate_simple(ndims, dims, maxdims);
 		if( dataspace<0 ) {ERROR("Cannot create dataspace.\n");}
 
-		// Set chunking and compression
+		// Set chunking and compression (only makes sense for datasets of dimension > 2)
 		// (optimise for reading one event at a time, ie: avoid decompressing multiple frames to read one)
-		hid_t cparms = H5Pcreate (H5P_DATASET_CREATE);
+		hid_t cparms = H5Pcreate(H5P_DATASET_CREATE);
 		if(chunkSize) {
 			H5Pset_chunk(cparms, ndims, chunkdims);
-			//H5Pset_chunk(cparms, ndims, dims);
-			if (ndims >= 2 && CXI::h5compress != 0)
+			if (ndims >= 2 && CXI::h5compress != 0) {
 				H5Pset_deflate(cparms, CXI::h5compress);
+			}
 		}
 		
 		// Set optimal chunk cache size
 		hid_t dapl_id = H5Pcreate(H5P_DATASET_ACCESS);
-		if( (ndims == 3 || ndims == 4) && chunkSize){
-			H5Pset_chunk_cache(dapl_id,H5D_CHUNK_CACHE_NSLOTS_DEFAULT,1024*1024*16,1);
+		if(chunkSize && ndims >= 2 && CXI::h5compress != 0) {
+			//long	opt_cachesize = 1024*1024*16;
+			long	opt_cachesize = 1*chunkdims[1]*chunkdims[2]*chunkdims[3]*H5Tget_size(dataType);
+			H5Pset_chunk_cache(dapl_id,H5D_CHUNK_CACHE_NSLOTS_DEFAULT,opt_cachesize,1);
 		}
 		
 		// Create data set

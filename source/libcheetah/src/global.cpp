@@ -136,12 +136,12 @@ cGlobal::cGlobal(void) {
 	
 	// FEE spectrum
 	useFEEspectrum = 0;
-	FEEspectrumStackSize = 200000;
+	FEEspectrumStackSize = 10000;
 	FEEspectrumWidth = 1024;
 
 	// TimeTool (Opal1k)
 	useTimeTool = 0;
-	TimeToolStackSize = 100000;
+	TimeToolStackSize = 10000;
 	TimeToolStackWidth = 1024;
 
 	
@@ -1578,32 +1578,6 @@ void cGlobal::writeInitialLog(void){
 
 }
 
-void cGlobal::writeHitClasses(FILE* to) {
-	return;
-	// This is quite a cryptic output and I am getting always 100% hits of every hit class (???)
-    if (hitfinder) {
-        fprintf(to, "Hitclasses:\n");
-        for (int coord = 0; coord < 3; coord++) {
-            int lastFirst = 1 << 30;
-            int lastVal = 0;
-            for (std::map<std::pair<int, int>, int>::iterator i = hitClasses[coord].begin(); i != hitClasses[coord].end(); i++) {
-                fprintf(to, "Coord %d: %05d %d %d\n", coord, i->first.first, i->first.second, i->second);
-                if (i->first.second)
-                {
-                    if (lastFirst != i->first.first) {
-                        lastVal = 0;
-                    }
-                    double sum = lastVal + i->second;
-                    fprintf(to, "\t%0.03lf %%\n", i->second / sum * 100);
-                } else {
-                    lastFirst = i->first.first;
-                    lastVal = i->second;
-                }
-            }
-        }
-	//fprintf(to, "\n\n");
-    }
-}
 
 /*
  * Update log file
@@ -1638,8 +1612,6 @@ void cGlobal::updateLogfile(void){
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
-	writeHitClasses(::stdout);
-    writeHitClasses(fp);
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
 
@@ -1648,16 +1620,15 @@ void cGlobal::updateLogfile(void){
 
 
     // Flush frame file buffers
-	fflush(framefp);
-	fflush(cleanedfp);
-    fflush(peaksfp);
+	if (framefp != NULL) fflush(framefp);
+	if (cleanedfp != NULL) fflush(cleanedfp);
+    if (peaksfp != NULL) fflush(peaksfp);
 	for(long i=0; i<nPowderClasses; i++) {
-		fflush(powderlogfp[i]);
-		fflush(framelist[i]);
-        fflush(FEElogfp[i]);
-		fflush(TimeToolLogfp[i]);
+		if (powderlogfp[i] != NULL) fflush(powderlogfp[i]);
+		if (framelist[i] != NULL) fflush(framelist[i]);
+        if (FEElogfp[i] != NULL) fflush(FEElogfp[i]);
+		if (TimeToolLogfp[i] != NULL) fflush(TimeToolLogfp[i]);
 	}
-
 }
 
 /*
@@ -1718,8 +1689,6 @@ void cGlobal::writeFinalLog(void){
 	printf("Writing log file: %s\n", logfile);
 	fp = fopen (logfile,"a");
 
-    writeHitClasses(::stdout);
-    writeHitClasses(fp);
 	// Calculate hit rate
 	float hitrate;
 	hitrate = 100.*( nhits / (float) nprocessedframes);

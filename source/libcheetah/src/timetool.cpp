@@ -112,9 +112,8 @@ void saveTimeToolStack(cGlobal *global, int powderClass) {
 	pthread_mutex_lock(&mutex);
 	
 	
-	// We re-use stacks, what is this number?
+	// We re-use stacks - this number is so that we dont overwrite old stacks
 	long	stackNum = stackCounter / stackSize;
-// 	if(stackNum == 0) stackNum = 1;
 	
 	// If stack is not full, how many rows are full?
     long    nRows = stackSize;

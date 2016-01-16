@@ -193,29 +193,30 @@ void *worker(void *threadarg) {
 	// Apply solid angle correction
 	applySolidAngleCorrection(eventData, global);
 
-	
 	// If a darkcal file is available: Subtract persistent background is for photon subtraction (persistent background = photon background)
 	subtractPersistentBackground(eventData, global);
 	
 	// Radial background subtraction (!!! Radial background subtraction subtracts a photon background, therefore moved here)
 	subtractRadialBackground(eventData, global);
 	
-	
-	// This bit looks at the inner part of the detector first to see whether it's worth looking at the rest
+	// Hitfinder fast-scan
+	// Looks at the inner part of the detector first to see whether it's worth looking at the rest
 	// Useful for local background subtraction (which is effective but slow)
-	if(global->hitfinder && global->hitfinderFastScan && (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6 || global->hitfinderAlgorithm==8)) {
-		hit = hitfinderFastScan(eventData, global);
-		if(hit)
-			goto localBGCalculated;
-		else
-			goto hitknown;
+	if(global->hitfinder && global->hitfinderFastScan) {
+		if (global->hitfinderAlgorithm==3 || global->hitfinderAlgorithm==6 || global->hitfinderAlgorithm==8) {
+			
+			hit = hitfinderFastScan(eventData, global);
+			eventData->hit = hit;
+
+			if(!hit)
+				goto hitknown;
+		}
 	}
 	
 	// Local background subtraction - this is photon background correction
-	subtractLocalBackground(eventData, global);
-	
-localBGCalculated:
-
+	if (!global->hitfinderFastScan) {
+		subtractLocalBackground(eventData, global);
+	}
 	
 	
 	//----------------------------------------//
@@ -238,18 +239,17 @@ localBGCalculated:
 		pthread_mutex_unlock(&global->hitclass_mutex);
 	}
 	
-	sortPowderClass(eventData, global);
-	powderClass = eventData->powderClass;
-	
-
 hitknown:
 	//-------------------------------------//
 	//---PROCEDURES-DEPENDENT-ON-HIT-TAG---//
 	//-------------------------------------//
 	DEBUG2("Procedures depending on hit tag");
-
+	
 	// Sort event into different classes (eg: laser on/off)
 	// Slightly wrong that all initial frames are blanks when hitfinderForInitials is 0
+	
+	sortPowderClass(eventData, global);
+	powderClass = eventData->powderClass;
 	
 	
 	// Update central hit counter - done in hitfinder.cpp
@@ -367,10 +367,14 @@ hitknown:
             if(global->saveCXI){
                 printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
                 writeCXI(eventData, global);
+				addTimeToolToStack(eventData, global, powderClass);
+				addFEEspectrumToStack(eventData, global, powderClass);
             }
 			else {
                 printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing to %s.h5 (hit=%i,npeaks=%i)\n",global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
                 writeHDF5(eventData, global);
+				addTimeToolToStack(eventData, global, powderClass);
+				addFEEspectrumToStack(eventData, global, powderClass);
             }
             DEBUG2("Frame written.");
         }
@@ -380,12 +384,6 @@ hitknown:
         }
     }
 
-	// The following contain file names, which needs knowledge of the file and subdirectory, which is why it's done here and not above
-	// FEE spectrometer data stack
-	addFEEspectrumToStack(eventData, global, powderClass);
-	
-	// Time tool stack
-	addTimeToolToStack(eventData, global, powderClass);
 	
 	
 	// If this is a hit, write out peak info to peak list file	

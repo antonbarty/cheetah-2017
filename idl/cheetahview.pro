@@ -1349,6 +1349,7 @@ pro cheetahview, geometry=geometry, dir=dir
 
 	;; Find files and file type
 	file_type = 'None'
+	;;h5_close		;; Clear previous HDF5 errors
 	result = cheetahview_updatefilelist(dir)
 	file_type = result.file_type
 	file = result.file
@@ -1360,6 +1361,7 @@ pro cheetahview, geometry=geometry, dir=dir
 	endif
 
 	savedir=dir
+	
 	
 
 	;; If geometry file is specified...

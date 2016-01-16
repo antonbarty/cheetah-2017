@@ -1155,10 +1155,10 @@ namespace cheetah_ana_pkg {
 					long tt_nn = tt_nx*tt_ny;
 					long value;
 					
-					eventData->TimeTool_hproj = (float*) calloc(tt_nx, sizeof(float));
-					eventData->TimeTool_vproj = (float*) calloc(tt_ny, sizeof(float));
+					eventData->TimeTool_hproj = (float*) malloc(tt_nx * sizeof(float));
+					eventData->TimeTool_vproj = (float*) malloc(tt_ny * sizeof(float));
 					
-					if(eventData->TimeTool_hproj == NULL)
+					if(eventData->TimeTool_hproj == NULL || eventData->TimeTool_vproj == NULL )
 						printf("Event %li: Warning: Error allocating memory for time tool\n", frameNumber);
 					
 					// Take horizontal and vertical projections of time tool data

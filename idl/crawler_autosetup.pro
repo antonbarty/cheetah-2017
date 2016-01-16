@@ -34,11 +34,15 @@ pro crawler_autosetup, dir
 		
 		
 		;; User feedback
-		desc = [ 	'1, base, , column', $
-					'0, label, Instrument: '+instr, $
-					'0, label, Experiment: '+expt, $
-					'0, label, XTC directory: '+xtcdir, $
-					'2, label, Processing directory: '+userdir, $
+		desc = [ 	'1, base, , column, frame', $
+					'0, label, Parameters', $
+					'0, label, Instrument: '+instr+', left', $
+					'0, label, Experiment: '+expt+', left', $
+					'0, label, XTC directory: '+xtcdir+', left', $
+					'2, label, Processing directory: '+userdir+', left', $
+					'1, base, , column, frame', $
+					'0, label, Options', $
+					'2, button, Fix group permissions|Place configuration in /res, set_value=1, tag=option', $
 					'1, base,, row', $
 					'0, button, OK, Quit, Tag=OK', $
 					'2, button, Cancel, Quit' $
@@ -53,7 +57,6 @@ pro crawler_autosetup, dir
 
 		
 		
-		
 		;; Unpack template
 		print,'>---------------------<'
 		print,'Extracting template...'
@@ -62,17 +65,25 @@ pro crawler_autosetup, dir
 		spawn, cmd
 		
 		;; Automatically fix permissions!
-		print,'>---------------------<'
-		print,'Fixing permissions...'
-		cmd = 'chgrp -R ' + expt + ' cheetah/'
-		print, cmd
-		spawn, cmd
+		if a.option[0] eq 1 then begin
+			print,'>---------------------<'
+			print,'Fixing permissions...'
+			cmd = 'chgrp -R ' + expt + ' cheetah/'
+			print, cmd
+			spawn, cmd
 
-		cmd = 'chmod -R  g+w cheetah/'
-		print, cmd
-		spawn, cmd
-		
-		
+			cmd = 'chmod -R  g+w cheetah/'
+			print, cmd
+			spawn, cmd
+		endif
+				
+		;; Place configuration into /res
+		if a.option[1] eq 1 then begin
+			print,'>---------------------<'
+			print,'Placing configuration into /res...'
+			cmd = '/reg/g/cfel/cheetah/cheetah-latest/bin/make-labrynth'
+			spawn, cmd
+		endif
 		
 		;;
 		;; Modify gui/crawler.config

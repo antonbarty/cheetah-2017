@@ -17,6 +17,17 @@ pro crawler_autorun_event, ev
 		sState.mbrun : begin
 			widget_control, sState.mbrun, sensitive=0
 
+			;; Check if lock file present
+			if file_test('crawler.lock') then begin
+				print,'Crawler already running somewhere - file gui/crawler.lock file detected'
+				print,'Skipping'
+				widget_control, sState.mbrun,  timer=60
+				widget_control, sState.mbrun, sensitive=1
+				return
+			endif
+
+			spawn, 'touch crawler.lock'
+
 			widget_control, sState.text, set_value='XTC files'
 			crawler_xtc, sState.xtcdir
 			;widget_control, sState.text, set_value='Datasets'
@@ -32,8 +43,7 @@ pro crawler_autorun_event, ev
 			widget_control, sState.text, set_value='Waiting for next scan event'
 			widget_control, sState.mbrun,  timer=60
 			widget_control, sState.mbrun, sensitive=1
-
-
+			file_delete, 'crawler.lock'
 		end
 		
 		else : begin 

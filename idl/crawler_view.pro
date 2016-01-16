@@ -823,6 +823,11 @@ pro crawler_event, ev
 		end
 
 		;;
+		;;	Clear previous HDF5 errors
+		;;
+		;;h5_close
+
+		;;
 		;;	Action buttons
 		;;
 		;; Launch Cheetah

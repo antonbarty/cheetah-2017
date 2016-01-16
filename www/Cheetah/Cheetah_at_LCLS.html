@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="Generator" content="iWeb 3.0.4" />
-    <meta name="iWeb-Build" content="local-build-20150402" />
+    <meta name="iWeb-Build" content="local-build-20151213" />
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
     <meta name="viewport" content="width=700" />
     <title>Cheetah at LCLS</title>
@@ -46,12 +46,12 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
 //--><!]]></script>
           <div style="clear: both; height: 0px; line-height: 0px; " class="spacer"> </div>
         </div>
-        <div style="height: 1017px; margin-left: 0px; position: relative; width: 700px; z-index: 10; " id="header_layer">
+        <div style="height: 2464px; margin-left: 0px; position: relative; width: 700px; z-index: 10; " id="header_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id2" style="height: 43px; left: 20px; position: absolute; top: 974px; width: 515px; z-index: 1; " class="style_SkipStroke shape-with-text">
+          <div id="id2" style="height: 43px; left: 20px; position: absolute; top: 2421px; width: 515px; z-index: 1; " class="style_SkipStroke shape-with-text">
             <div class="text-content Normal_External_515_43" style="padding: 0px; ">
               <div class="Normal">
-                <div class="paragraph Header" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id1" style="height: 43px; position: relative; width: 515px; " class="style_SkipStroke shape-with-text inline-block"><div class="text-content Normal_External_515_43" style="padding: 0px; "><div class="Normal"><p style="padding-bottom: 0pt; padding-top: 0pt; " class="Header">Setup</p></div></div></div></div>
+                <div class="paragraph Header" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id1" style="height: 43px; position: relative; width: 515px; " class="style_SkipStroke shape-with-text inline-block"><div class="text-content Normal_External_515_43" style="padding: 0px; "><div class="Normal"><p style="padding-bottom: 0pt; padding-top: 0pt; " class="Header">Manual Setup</p></div></div></div></div>
               </div>
               <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
             </div>
@@ -146,15 +146,183 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           <div style="height: 216px; width: 564px;  height: 216px; left: 68px; position: absolute; top: 120px; width: 564px; z-index: 1; " class="tinyText style_SkipStroke_2">
             <img src="Cheetah_at_LCLS_files/droppedImage.jpg" alt="" style="border: none; height: 217px; width: 564px; " />
           </div>
+          
+
+
+          <div id="id11" style="height: 43px; left: 20px; position: absolute; top: 969px; width: 515px; z-index: 1; " class="style_SkipStroke shape-with-text">
+            <div class="text-content Normal_External_515_43" style="padding: 0px; ">
+              <div class="Normal">
+                <div class="paragraph Header" style="padding-bottom: 0pt; padding-top: 0pt; "><div id="id10" style="height: 43px; position: relative; width: 515px; " class="style_SkipStroke shape-with-text inline-block"><div class="text-content Normal_External_515_43" style="padding: 0px; "><div class="Normal"><p style="padding-bottom: 0pt; padding-top: 0pt; " class="Header">Automatic experiment setup</p></div></div></div></div>
+              </div>
+              <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id12" style="height: 64px; left: 18px; position: absolute; top: 1004px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_64" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">   <br /></p>
+                <p class="Free_Form">The LCLS file system layout is very predictable, enabling a significant amount of the experiment configuration process to be automated. <br /></p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id13" style="height: 36px; left: 20px; position: absolute; top: 1069px; width: 539px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+            <div class="text-content Normal_External_539_36" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">1. Create a working directory in the experiment scratch space</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id14" style="height: 148px; left: 18px; position: absolute; top: 1095px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_148" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">At CXI, all data for your experiment will usually be in a location such as<br /></p>
+                <p class="Free_Form">    /reg/d/psdm/cxi/cxi12345<br /></p>
+                <p class="Free_Form">(Of course your experiment number will be different)<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">In this directory will be subdirectories with the raw data (xtc/), somewhere to write temporary files (scratch/), and a few other directories that don’t matter for now. <br /></p>
+                <p class="Free_Form">    [psexport02] cxi12345 &gt; ls<br /></p>
+                <p class="Free_Form">    calib  ftc  hdf5  res  scratch  usr  xtc<br /></p>
+                <p class="Free_Form"><br /></p>
+                <p style="padding-bottom: 0pt; " class="Free_Form">Create yourself a working directory inside this scratch space.</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id15" style="height: 36px; left: 20px; position: absolute; top: 1264px; width: 539px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+            <div class="text-content Normal_External_539_36" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">2. Start the GUI and follow the ‘new experiment’ option</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id16" style="height: 67px; left: 19px; position: absolute; top: 1294px; width: 662px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_662_67" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="paragraph_style"><br /></p>
+                <p class="paragraph_style">[psanacs055:barty]~&gt; cheetah-gui<br /></p>
+                <p class="paragraph_style">IDL Version 8.0 (linux x86_64 m64). (c) 2010, ITT Visual Information Solutions<br /></p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id17" style="height: 39px; left: 18px; position: absolute; top: 1376px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_39" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">You will be presented with an experiment selection dialog box.  Select the option option ‘Set up new experiment’.</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 124px; width: 490px;  height: 124px; left: 105px; position: absolute; top: 1400px; width: 490px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage.png" alt="" style="border: none; height: 124px; width: 491px; " />
+          </div>
+          
+
+
+          <div style="height: 263px; width: 300px;  height: 263px; left: 200px; position: absolute; top: 1575px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_1.png" alt="" style="border: none; height: 263px; width: 301px; " />
+          </div>
+          
+
+
+          <div id="id18" style="height: 39px; left: 18px; position: absolute; top: 1545px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_39" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Navigate to your working directory using the file selection dialog box and select ‘OK’</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div style="height: 160px; width: 356px;  height: 160px; left: 172px; position: absolute; top: 1888px; width: 356px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_2.png" alt="" style="border: none; height: 160px; width: 357px; " />
+          </div>
+          
+
+
+          <div id="id19" style="height: 39px; left: 18px; position: absolute; top: 1857px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_39" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Verify that the detected parameters are correct and press ‘OK’</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id20" style="height: 39px; left: 18px; position: absolute; top: 2054px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_39" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">A script will set up your experiment using the same manual setup operations described below, using the detected parameters to modify files accordingly. </p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id21" style="height: 36px; left: 20px; position: absolute; top: 2121px; width: 539px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+            <div class="text-content Normal_External_539_36" style="padding: 0px; ">
+              <div class="Normal">
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">3. Check that it works</p>
+              </div>
+            </div>
+          </div>
+          
+
+
+          <div id="id22" style="height: 190px; left: 18px; position: absolute; top: 2143px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_190" style="padding: 0px; ">
+              <div class="graphic_textbox_layout_style_default">
+                <p style="padding-top: 0pt; " class="Free_Form">You should be ready to go.  <br /></p>
+                <p class="Free_Form"><br /></p>
+                <p class="Free_Form">The following quick tests will verify whether everything has been properly set up:<br /></p>
+                <p class="Free_Form"><br /></p>
+                <ol>
+                  <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="1">
+                    <p style="text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">1)</span><span style="width: 3px; " class="inline-block"></span>Start the crawler.  New XTC files should be detected.  Check for complaints.  Remember maybe only one run exists.<br /></p>
+                  </li>
+                </ol>
+                <p class="Free_Form">    (Step 4 below)<br /></p>
+                <p class="Free_Form"><br /></p>
+                <ol>
+                  <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="2">
+                    <p style="text-indent: -13px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">2)</span><span style="width: 3px; " class="inline-block"></span>Run “darkcal.ini” on the first run.  This should work, automatically sending jobs to the batch queue. <br /></p>
+                  </li>
+                </ol>
+                <p class="paragraph_style_4">    (Step 5 below)<br /></p>
+                <p class="paragraph_style_4"><br /></p>
+                <p style="padding-bottom: 0pt; " class="paragraph_style_4">Note:  CXI sometimes swaps detectors around.  This can change detector names in the XTC file.  When this happens it is necessary to swap detector names in the psana.cfg file.  Check with your point of contact or other analysis guru as to which detector is where, and look at the FAQ page for how to fix this if errors occur.  </p>
+              </div>
+            </div>
+          </div>
         </div>
         <div style="margin-left: 0px; position: relative; width: 700px; z-index: 5; " id="body_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id10" style="height: 246px; left: 18px; position: absolute; top: 14px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_664_246" style="padding: 0px; ">
+          <div id="id23" style="height: 232px; left: 18px; position: absolute; top: 12px; width: 664px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_664_232" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="Free_Form">Cheetah does not magically know the details about your experiment - it is necessary to tell Cheetah about the location and format of data files, detector calibration, and what analysis to perform.  <br /></p>
+                <p style="padding-top: 0pt; " class="Free_Form">What lies below are the old instructions for manual configuration.  Auto-setup attempts to do this automatically. <br /></p>
                 <p class="Free_Form"><br /></p>
-                <p class="Free_Form">Most of this mess has been hidden behind a few configuration scripts which you will need to edit in order to provide the necessary information. This page will guide you through the key steps in setting up these scripts from scratch for a new experiment.<br /></p>
+                <p class="Free_Form">If auto-setup does not work or you want to do something a little different (such as draw data from the fast feedback file system), it is necessary to manually edit a few files to tell Cheetah about the location and format of data files, detector calibration, and what analysis to perform.   <br /></p>
                 <p class="Free_Form"><br /></p>
                 <p class="Free_Form">First, know the location of your data and where temporary files can be written.<br /></p>
                 <p class="Free_Form"><br /></p>
@@ -170,7 +338,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id11" style="height: 20px; left: 20px; position: absolute; top: 368px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id24" style="height: 20px; left: 20px; position: absolute; top: 355px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">1. Download the template</p>
@@ -180,7 +348,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id12" style="height: 120px; left: 16px; position: absolute; top: 388px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id25" style="height: 120px; left: 16px; position: absolute; top: 375px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_120" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Expand the file /reg/g/cfel/cheetah/template.tar into the location where you want files to be placed:<br /></p>
@@ -196,7 +364,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id13" style="height: 20px; left: 20px; position: absolute; top: 537px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id26" style="height: 20px; left: 20px; position: absolute; top: 524px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">2. edit gui/crawler.config</p>
@@ -206,7 +374,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id14" style="height: 54px; left: 16px; position: absolute; top: 558px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id27" style="height: 54px; left: 16px; position: absolute; top: 545px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_54" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Edit the file cheetah/gui/crawler.config<br /></p>
@@ -216,7 +384,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id15" style="height: 64px; left: 16px; position: absolute; top: 808px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id28" style="height: 64px; left: 16px; position: absolute; top: 795px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_64" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">xtcdir should point to the location of your XTC files<br /></p>
@@ -228,7 +396,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id16" style="height: 20px; left: 20px; position: absolute; top: 921px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id29" style="height: 20px; left: 20px; position: absolute; top: 908px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">3. edit process/process</p>
@@ -238,7 +406,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id17" style="height: 92px; left: 16px; position: absolute; top: 946px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id30" style="height: 92px; left: 16px; position: absolute; top: 933px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_92" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Edit the file cheetah/process/process<br /></p>
@@ -252,7 +420,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id18" style="height: 134px; left: 16px; position: absolute; top: 1416px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id31" style="height: 134px; left: 16px; position: absolute; top: 1403px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_134" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">It should only be necessary to edit the experiment name. The rest should should not need modification, but should be self-explanatory if changes need to be made (for example configuration files in ${expt}/res instead of ${expt}/scratch).<br /></p>
@@ -266,19 +434,19 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 227px; width: 516px;  height: 227px; left: 12px; position: absolute; top: 582px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage.png" alt="" style="border: none; height: 227px; width: 516px; " />
+          <div style="height: 227px; width: 516px;  height: 227px; left: 12px; position: absolute; top: 569px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_3.png" alt="" style="border: none; height: 227px; width: 516px; " />
           </div>
           
 
 
-          <div style="height: 370px; width: 516px;  height: 370px; left: 20px; position: absolute; top: 1044px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_1.png" alt="" style="border: none; height: 370px; width: 516px; " />
+          <div style="height: 370px; width: 516px;  height: 370px; left: 20px; position: absolute; top: 1031px; width: 516px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_4.png" alt="" style="border: none; height: 370px; width: 516px; " />
           </div>
           
 
 
-          <div id="id19" style="height: 20px; left: 20px; position: absolute; top: 270px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id32" style="height: 20px; left: 20px; position: absolute; top: 257px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">New users must first Set up the Slac analysis environment</p>
@@ -288,7 +456,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id20" style="height: 50px; left: 16px; position: absolute; top: 290px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id33" style="height: 50px; left: 16px; position: absolute; top: 277px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_50" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Cheetah at SLAC runs inside the SLAC psana analysis framework.<br /></p>
@@ -296,37 +464,37 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
               </div>
             </div>
           </div>
-          <div style="height: 1550px; line-height: 1550px; " class="spacer"> </div>
+          <div style="height: 1537px; line-height: 1537px; " class="spacer"> </div>
         </div>
-        <div style="height: 3087px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
+        <div style="height: 2998px; margin-left: 0px; position: relative; width: 700px; z-index: 15; " id="footer_layer">
           <div style="height: 0px; line-height: 0px; " class="bumper"> </div>
-          <div id="id21" style="height: 907px; left: 24px; position: absolute; top: 1720px; width: 651px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id34" style="height: 907px; left: 24px; position: absolute; top: 1631px; width: 651px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_651_907" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style_1">Configuring what Cheetah does is done by editing the cheetah.ini file.  <br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">There is a sample nanocrystal analysis file in process/lys.ini, and will look for Bragg peaks to find hits. <br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">Open this file and edit it.<br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">In particular, change the line starting with “darkcal=” to point to the dark calibration file you just created.<br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1"><br /></span></p>
-                <div class="paragraph paragraph_style_2"><span class="style_1"></span><div style="height: 370px; width: 516px;  height: 370px; position: relative; width: 516px; " class="tinyText style_SkipStroke_2 inline-block"><img src="Cheetah_at_LCLS_files/droppedImage_2.png" alt="" style="border: none; height: 370px; width: 516px; " /></div><span class="tinyText"> </span><span class="style_1"><br /></span></div>
-                <p class="paragraph_style_2"><span class="style_1"><br /></span></p>
+                <p style="padding-top: 0pt; " class="paragraph_style_5"><span class="style_1">Configuring what Cheetah does is done by editing the cheetah.ini file.  <br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1"><br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">There is a sample nanocrystal analysis file in process/lys.ini, and will look for Bragg peaks to find hits. <br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">Open this file and edit it.<br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1"><br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">In particular, change the line starting with “darkcal=” to point to the dark calibration file you just created.<br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1"><br /></span></p>
+                <div class="paragraph paragraph_style_5"><span class="style_1"></span><div style="height: 370px; width: 516px;  height: 370px; position: relative; width: 516px; " class="tinyText style_SkipStroke_2 inline-block"><img src="Cheetah_at_LCLS_files/droppedImage_5.png" alt="" style="border: none; height: 370px; width: 516px; " /></div><span class="tinyText"> </span><span class="style_1"><br /></span></div>
+                <p class="paragraph_style_5"><span class="style_1"><br /></span></p>
                 <p class="Free_Form"><span class="style_1">Select a run with data and </span>click the “Run Cheetah” button and specify ‘lys.ini’ as the configuration file<br /></p>
                 <p class="Free_Form">(it is possible to select more than one run at a time).<br /></p>
                 <p class="Free_Form"><span class="style_1"><br /></span></p>
-                <div class="paragraph Free_Form"><span class="style_1"></span><div style="height: 206px; width: 483px;  height: 206px; position: relative; width: 483px; " class="tinyText style_SkipStroke_2 inline-block"><img src="Cheetah_at_LCLS_files/droppedImage_3.png" alt="" style="border: none; height: 206px; width: 483px; " /></div><span class="tinyText"> </span><span class="style_1"><br /></span></div>
+                <div class="paragraph Free_Form"><span class="style_1"></span><div style="height: 206px; width: 483px;  height: 206px; position: relative; width: 483px; " class="tinyText style_SkipStroke_2 inline-block"><img src="Cheetah_at_LCLS_files/droppedImage_6.png" alt="" style="border: none; height: 206px; width: 483px; " /></div><span class="tinyText"> </span><span class="style_1"><br /></span></div>
                 <p class="Free_Form"><span class="style_1"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">And things should start to happen.  <br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">Once again jobs should appear in the batch queue<br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">And things should start to happen.  <br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">Once again jobs should appear in the batch queue<br /></span></p>
                 <p class="Free_Form">&gt; bjobs -u all -q psfehq<br /></p>
                 <p class="Free_Form">690066  barty   RUN   psfehq     psexport02  6*psana1311 r0001      Oct 23 07:3<br /></p>
                 <p class="Free_Form">If the crawler is running, the Cheetah status and number of processed frames should update periodically<br /></p>
                 <p class="Free_Form">Data should start to appear in the cheetah/hdf5 directory<br /></p>
-                <p class="paragraph_style_2"><br /></p>
+                <p class="paragraph_style_5"><br /></p>
                 <p class="Free_Form">If not, something is wrong and it’s time for debugging.  In particular look at the output of hdf5/run0xxx/bsub.log.<span class="style_1"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1"><br /></span></p>
-                <p class="paragraph_style_2"><span class="style_1">The setup is now done and it’s time for optimisation of the output.<br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1"><br /></span></p>
+                <p class="paragraph_style_5"><span class="style_1">The setup is now done and it’s time for optimisation of the output.<br /></span></p>
               </div>
               <div style="clear: both; height: 0px; line-height: 0px; " class="tinyText"> </div>
             </div>
@@ -334,7 +502,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id22" style="height: 20px; left: 20px; position: absolute; top: 136px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id35" style="height: 20px; left: 20px; position: absolute; top: 47px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">4. Start the gui</p>
@@ -344,13 +512,13 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 113px; width: 429px;  height: 113px; left: 12px; position: absolute; top: 183px; width: 429px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_4.png" alt="" style="border: none; height: 114px; width: 429px; " />
+          <div style="height: 113px; width: 429px;  height: 113px; left: 12px; position: absolute; top: 94px; width: 429px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_7.png" alt="" style="border: none; height: 114px; width: 429px; " />
           </div>
           
 
 
-          <div id="id23" style="height: 36px; left: 16px; position: absolute; top: 158px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id36" style="height: 36px; left: 16px; position: absolute; top: 69px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_36" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Start the GUI interface using the cheetah-gui command as described on the <a title="Cheetah_at_home.html" href="Cheetah_at_home.html">getting started</a> page.<br /></p>
@@ -360,19 +528,19 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 112px; width: 183px;  height: 112px; left: 484px; position: absolute; top: 184px; width: 183px; z-index: 1; " class="tinyText style_SkipStroke_2">
+          <div style="height: 112px; width: 183px;  height: 112px; left: 484px; position: absolute; top: 106px; width: 183px; z-index: 1; " class="tinyText style_SkipStroke_2">
             <img src="Cheetah_at_LCLS_files/droppedImage_1.jpg" alt="" style="border: none; height: 113px; width: 183px; " />
           </div>
           
 
 
-          <div style="height: 95px; width: 300px;  height: 95px; left: 381px; position: absolute; top: 314px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_5.png" alt="" style="border: none; height: 95px; width: 300px; " />
+          <div style="height: 95px; width: 300px;  height: 95px; left: 381px; position: absolute; top: 246px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_8.png" alt="" style="border: none; height: 95px; width: 300px; " />
           </div>
           
 
 
-          <div id="id24" style="height: 246px; left: 16px; position: absolute; top: 315px; width: 356px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id37" style="height: 246px; left: 16px; position: absolute; top: 226px; width: 356px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_356_246" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">Click the IDL virtual machine box to dismiss it.<br /></p>
@@ -380,7 +548,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
                 <p class="Free_Form"><br /></p>
                 <p class="Free_Form">You should then be presented with a list of all previous experiments.  <br /></p>
                 <p class="Free_Form"><br /></p>
-                <p class="Free_Form">Either select one of the existing experiments, or use ‘Different Directory’ to navigate to the location of the cheetah/gui folder described above and click OK.<br /></p>
+                <p class="Free_Form">Either select one of the existing experiments, or use ‘Different Directory’ to navigate to the location of the cheetah/gui folder described above, select ‘crawler.config’, and click OK.<br /></p>
                 <p class="Free_Form"><br /></p>
                 <p class="Free_Form">This should bring up the interface shown on the <a title="Cheetah_at_home.html" href="Cheetah_at_home.html">getting started</a> page.<br /></p>
                 <p class="Free_Form"><br /></p>
@@ -391,13 +559,13 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 263px; width: 300px;  height: 263px; left: 381px; position: absolute; top: 405px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_6.png" alt="" style="border: none; height: 263px; width: 300px; " />
+          <div style="height: 263px; width: 300px;  height: 263px; left: 381px; position: absolute; top: 337px; width: 300px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_9.png" alt="" style="border: none; height: 263px; width: 300px; " />
           </div>
           
 
 
-          <div id="id25" style="height: 20px; left: 20px; position: absolute; top: 712px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id38" style="height: 20px; left: 20px; position: absolute; top: 623px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">4. enabling command operations and the crawler</p>
@@ -407,7 +575,7 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id26" style="height: 64px; left: 16px; position: absolute; top: 731px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id39" style="height: 64px; left: 16px; position: absolute; top: 642px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_64" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-bottom: 0pt; padding-top: 0pt; " class="Free_Form">Processing of data and updating of the GUI table as an experiment progresses requires the crawler to be started. This little process runs in the background gathering information on the status of XTC files available on disk and the progress of Cheetah jobs.   It can overwrite the current table contents, and only one person should run this at any one time (even though many people can view the GUI at once). </p>
@@ -417,19 +585,19 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 175px; width: 167px;  height: 175px; left: 340px; position: absolute; top: 789px; width: 167px; z-index: 1; " class="tinyText style_SkipStroke_2">
+          <div style="height: 175px; width: 167px;  height: 175px; left: 340px; position: absolute; top: 727px; width: 167px; z-index: 1; " class="tinyText style_SkipStroke_2">
             <img src="Cheetah_at_LCLS_files/droppedImage_2.jpg" alt="" style="border: none; height: 175px; width: 167px; " />
           </div>
           
 
 
-          <div style="height: 178px; width: 164px;  height: 178px; left: 521px; position: absolute; top: 788px; width: 164px; z-index: 1; " class="tinyText style_SkipStroke_2">
+          <div style="height: 178px; width: 164px;  height: 178px; left: 521px; position: absolute; top: 726px; width: 164px; z-index: 1; " class="tinyText style_SkipStroke_2">
             <img src="Cheetah_at_LCLS_files/droppedImage_3.jpg" alt="" style="border: none; height: 178px; width: 164px; " />
           </div>
           
 
 
-          <div id="id27" style="height: 176px; left: 16px; position: absolute; top: 814px; width: 303px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id40" style="height: 176px; left: 16px; position: absolute; top: 725px; width: 303px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_303_176" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">To start the crawler it is first necessary to go <br /></p>
@@ -446,23 +614,23 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 85px; width: 295px;  height: 85px; left: 368px; position: absolute; top: 975px; width: 295px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_7.png" alt="" style="border: none; height: 85px; width: 295px; " />
+          <div style="height: 85px; width: 295px;  height: 85px; left: 368px; position: absolute; top: 917px; width: 295px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_10.png" alt="" style="border: none; height: 85px; width: 295px; " />
           </div>
           
 
 
-          <div id="id28" style="height: 20px; left: 20px; position: absolute; top: 1098px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id41" style="height: 20px; left: 20px; position: absolute; top: 1009px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">4. create a dark calibration file</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">5. create a dark calibration file</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id29" style="height: 78px; left: 16px; position: absolute; top: 1121px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id42" style="height: 78px; left: 16px; position: absolute; top: 1032px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_78" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">The detector needs to be corrected for static offsets, often known as ‘dark frames’.  Make sure to take one at the start of the experiment and every few hours during the experiment. <br /></p>
@@ -474,13 +642,13 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div style="height: 206px; width: 483px;  height: 206px; left: 36px; position: absolute; top: 1189px; width: 483px; z-index: 1; " class="tinyText style_SkipStroke_2">
-            <img src="Cheetah_at_LCLS_files/droppedImage_8.png" alt="" style="border: none; height: 206px; width: 483px; " />
+          <div style="height: 206px; width: 483px;  height: 206px; left: 36px; position: absolute; top: 1100px; width: 483px; z-index: 1; " class="tinyText style_SkipStroke_2">
+            <img src="Cheetah_at_LCLS_files/droppedImage_11.png" alt="" style="border: none; height: 206px; width: 483px; " />
           </div>
           
 
 
-          <div id="id30" style="height: 218px; left: 16px; position: absolute; top: 1424px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id43" style="height: 218px; left: 16px; position: absolute; top: 1335px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_218" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form">The job should now be go to the batch queue for processing.<br /></p>
@@ -502,48 +670,48 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id31" style="height: 20px; left: 20px; position: absolute; top: 1692px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id44" style="height: 20px; left: 20px; position: absolute; top: 1603px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">4. Edit your cheetah.ini file</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">6. Edit your cheetah.ini file</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id32" style="height: 20px; left: 20px; position: absolute; top: 2834px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id45" style="height: 20px; left: 20px; position: absolute; top: 2745px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">4. Time for some analysis (and a cup of tea)</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">8. Time for some analysis (and a cup of tea)</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id33" style="height: 235px; left: 16px; position: absolute; top: 2852px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+          <div id="id46" style="height: 235px; left: 16px; position: absolute; top: 2763px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
             <div class="text-content graphic_textbox_layout_style_default_External_660_235" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
-                <p style="padding-top: 0pt; " class="paragraph_style_2"><span class="style_1">Setup of the guI should now be done and it’s time to analyse some data.<br /></span></p>
+                <p style="padding-top: 0pt; " class="paragraph_style_5"><span class="style_1">Setup of the guI should now be done and it’s time to analyse some data.<br /></span></p>
                 <p class="Free_Form"><span class="style_1"><br /></span></p>
                 <p class="Free_Form"><span class="style_1">A few hints:<br /></span></p>
                 <p class="Free_Form"><span class="style_1"><br /></span></p>
                 <ol>
                   <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="1">
-                    <p style="text-indent: -13px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">1)</span><span style="width: 3px; " class="inline-block"></span>Review your output.  Often.  Default parameters may work, or they may not.  No analysis should ever be done completely blind.  Use the ‘Show hits” button to look at images and refine the hit finding parameters. <br /></p>
+                    <p style="text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">1)</span><span style="width: 3px; " class="inline-block"></span>Review your output.  Often.  Default parameters may work, or they may not.  No analysis should ever be done completely blind.  Use the ‘Show hits” button to look at images and refine the hit finding parameters. <br /></p>
                   </li>
                 </ol>
                 <p class="Free_Form"><br /></p>
                 <ol>
                   <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="2">
-                    <p style="text-indent: -13px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">2)</span><span style="width: 3px; " class="inline-block"></span><span class="style_1">It is convenient to start a new .ini file for each type of sample.  The name of the .ini file is used by the GUI to tag runs and update the table, and ends up as the tag name on the HDF5 directories created.  Separate names helps keep separate samples apart, and makes it easy to copy/tar/grep directories based on sample name or other experiment parameters.  This helps keep data organised and will be of great benefit later on. <br /></span></p>
+                    <p style="text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">2)</span><span style="width: 3px; " class="inline-block"></span><span class="style_1">It is convenient to start a new .ini file for each type of sample.  The name of the .ini file is used by the GUI to tag runs and update the table, and ends up as the tag name on the HDF5 directories created.  Separate names helps keep separate samples apart, and makes it easy to copy/tar/grep directories based on sample name or other experiment parameters.  This helps keep data organised and will be of great benefit later on. <br /></span></p>
                   </li>
                 </ol>
                 <p class="Free_Form"><br /></p>
                 <ol>
                   <li style="line-height: 14px; padding-left: 13px; text-indent: -13px; " class="full-width" value="3">
-                    <p style="padding-bottom: 0pt; text-indent: -13px; " class="paragraph_style_3"><span style="font-size: 12px; " class="Bullet">3)</span><span style="width: 3px; " class="inline-block"></span>Nothing happening?  Seems like your processing job never starts, and nothing is waiting in the batch queue?  <br />Check the View-&gt;bsub.log file.  This displays the log file from the batch submission process and likely will show some kind of error message.  Common mistakes are an error in typing in the darkcal or mask file names.</p>
+                    <p style="padding-bottom: 0pt; text-indent: -13px; " class="paragraph_style_2"><span style="font-size: 12px; " class="Bullet">3)</span><span style="width: 3px; " class="inline-block"></span>Nothing happening?  Seems like your processing job never starts, and nothing is waiting in the batch queue?  <br />Check the View-&gt;bsub.log file.  This displays the log file from the batch submission process and likely will show some kind of error message.  Common mistakes are an error in typing in the darkcal or mask file names.</p>
                   </li>
                 </ol>
               </div>
@@ -552,18 +720,18 @@ new NavBar('widget0', 'Scripts/Widgets/Navbar', 'Scripts/Widgets/SharedResources
           
 
 
-          <div id="id34" style="height: 20px; left: 20px; position: absolute; top: 2650px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
+          <div id="id47" style="height: 20px; left: 20px; position: absolute; top: 2561px; width: 515px; z-index: 1; " class="style_SkipStroke_3 shape-with-text">
             <div class="text-content Normal_External_515_20" style="padding: 0px; ">
               <div class="Normal">
-                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">5. Permissions</p>
+                <p style="padding-bottom: 0pt; padding-top: 0pt; " class="paragraph_style_1">7. Permissions</p>
               </div>
             </div>
           </div>
           
 
 
-          <div id="id35" style="height: 176px; left: 16px; position: absolute; top: 2674px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
-            <div class="text-content graphic_textbox_layout_style_default_External_660_176" style="padding: 0px; ">
+          <div id="id48" style="height: 132px; left: 16px; position: absolute; top: 2585px; width: 660px; z-index: 1; " class="style_SkipStroke_1 shape-with-text">
+            <div class="text-content graphic_textbox_layout_style_default_External_660_132" style="padding: 0px; ">
               <div class="graphic_textbox_layout_style_default">
                 <p style="padding-top: 0pt; " class="Free_Form"><span class="style_1">Working on your own is easy.  Working as a part of a group during an experiment involves setting up directory access permissions so that everyone can see and access the files.<br /></span></p>
                 <p class="Free_Form"><span class="style_1"><br /></span></p>
