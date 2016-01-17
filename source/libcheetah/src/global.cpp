@@ -24,6 +24,11 @@
 #include <sstream> 
 #include <errno.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <fenv.h>
+#include <unistd.h>
+#include <vector>
 
 #include "data2d.h"
 #include "detectorObject.h"
@@ -406,9 +411,13 @@ void cGlobal::setup() {
 	pthread_mutex_init(&espectrumRun_mutex, NULL);
 	pthread_mutex_init(&espectrumBuffer_mutex, NULL);
 	pthread_mutex_init(&datarateWorker_mutex, NULL);  
-	pthread_mutex_init(&saveCXI_mutex, NULL);  
+	pthread_mutex_init(&saveCXI_mutex, NULL);
+	pthread_mutex_init(&saveinterval_mutex, NULL);
+	
+	pthread_mutex_init(&gmd_mutex, NULL);
+	pthread_mutex_init(&swmr_mutex, NULL);
+	
 	threadID = (pthread_t*) calloc(nThreads, sizeof(pthread_t));
-	pthread_mutex_init(&gmd_mutex, NULL);  
 
 	sem_init(&availableCheetahThreads, 0, nThreads);
 
@@ -646,6 +655,8 @@ void cGlobal::unlockMutexes(void) {
 	pthread_mutex_unlock(&espectrumBuffer_mutex);
 	pthread_mutex_unlock(&datarateWorker_mutex);
 	pthread_mutex_unlock(&saveCXI_mutex);
+	pthread_mutex_unlock(&saveinterval_mutex);
+	
 
 	for(long detIndex=0; detIndex<nDetectors; detIndex++) {
 		detector[detIndex].unlockMutexes();
@@ -1611,24 +1622,31 @@ void cGlobal::updateLogfile(void){
 
 	// Update logfile
 	printf("Writing log file: %s\n", logfile);
+	pthread_mutex_lock(&framefp_mutex);
 	fp = fopen (logfile,"a");
 	fprintf(fp, "nFrames: %li,  nHits: %li (%2.2f%%), recentHits: %li (%2.2f%%), wallTime: %ihr %imin %isec (%2.1f fps)\n", nprocessedframes, nhits, hitrate, nrecenthits, recenthitrate, hrs, mins, secs, fps);
 	fclose (fp);
+	pthread_mutex_unlock(&framefp_mutex);
 
 	nrecenthits = 0;
 	nrecentprocessedframes = 0;
-
+	printf("Writing log file done\n");
 
     // Flush frame file buffers
-	if (framefp != NULL) fflush(framefp);
-	if (cleanedfp != NULL) fflush(cleanedfp);
-    if (peaksfp != NULL) fflush(peaksfp);
+
+	printf("Flushing file buffers\n");
+	fflush(stdout);
+	fflush(framefp);
+	fflush(cleanedfp);
+    fflush(peaksfp);
+	/*
 	for(long i=0; i<nPowderClasses; i++) {
 		if (powderlogfp[i] != NULL) fflush(powderlogfp[i]);
 		if (framelist[i] != NULL) fflush(framelist[i]);
         if (FEElogfp[i] != NULL) fflush(FEElogfp[i]);
 		if (TimeToolLogfp[i] != NULL) fflush(TimeToolLogfp[i]);
 	}
+	*/
 }
 
 /*
@@ -1663,8 +1681,6 @@ void cGlobal::writeStatus(const char* message) {
 	fprintf(fp, "Frames processed: %li\n",nprocessedframes);
 	fprintf(fp, "Number of hits: %li\n",nhits);
     fclose (fp);
-
-
 }
 
 void cGlobal::updateCalibrated(void){
@@ -1823,4 +1839,7 @@ void cGlobal::freeMemory() {
     pthread_mutex_destroy(&espectrumRun_mutex);
     pthread_mutex_destroy(&nespechits_mutex);
     pthread_mutex_destroy(&gmd_mutex);
+	pthread_mutex_destroy(&saveCXI_mutex);
+	pthread_mutex_destroy(&saveinterval_mutex);
+	
 }

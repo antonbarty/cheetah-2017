@@ -41,7 +41,7 @@ pro crawler_autosetup, dir
 					'0, label, XTC directory: '+xtcdir+', left', $
 					'2, label, Processing directory: '+userdir+', left', $
 					'1, base, , column, frame', $
-					'0, label, Options', $
+					'0, label, Options, left', $
 					'2, button, Fix group permissions|Place configuration in /res, set_value=1, tag=option', $
 					'1, base,, row', $
 					'0, button, OK, Quit, Tag=OK', $

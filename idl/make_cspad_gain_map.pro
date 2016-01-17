@@ -12,7 +12,7 @@ pro make_cspad_gain_map, geometry, rlow, rhi, gainval, menu=menu
 	
 	if n_elements(rlow) eq 0 then rlow=0
 	if n_elements(rhi) eq 0 then rhi=300
-	if n_elements(gainval) eq 0 then gainval= 6.87526
+	if n_elements(gainval) eq 0 then gainval= 7.2			;;6.87526
 	
 	
 	

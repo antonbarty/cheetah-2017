@@ -19,8 +19,11 @@ pro crawler_autorun_event, ev
 
 			;; Check if lock file present
 			if file_test('crawler.lock') then begin
-				print,'Crawler already running somewhere - file gui/crawler.lock file detected'
-				print,'Skipping'
+				print,'Crawler already running somewhere:
+				print,'Lock file "gui/crawler.lock" detected (delete this file if an error)'
+				widget_control, sState.text, set_value='Lock file gui/crawler.lock detected'
+				wait, 1
+				widget_control, sState.text, set_value='Waiting for next scan event'
 				widget_control, sState.mbrun,  timer=60
 				widget_control, sState.mbrun, sensitive=1
 				return

@@ -343,7 +343,7 @@ hitknown:
 	updateDatarate(global);  
 
 	if(global->saveCXI==1){
-		writeCXIHitstats(eventData, global);
+		//writeCXIHitstats(eventData, global);
 	}
 
 	// If this is a hit, write out to our favourite HDF5 format
@@ -367,6 +367,7 @@ hitknown:
             if(global->saveCXI){
                 printf("r%04u:%li (%2.1lf Hz, %3.3f %% hits): Writing %s (hit=%i,npeaks=%i)\n", global->runNumber, eventData->threadNum, processRate, hitRatio, eventData->eventStamp, hit, eventData->nPeaks);
                 writeCXI(eventData, global);
+				writeCXIHitstats(eventData, global);
 				addTimeToolToStack(eventData, global, powderClass);
 				addFEEspectrumToStack(eventData, global, powderClass);
             }
@@ -415,28 +416,27 @@ cleanup:
 
 	
 	// Save accumulated data periodically
-    pthread_mutex_lock(&global->saveinterval_mutex);
 	// Update counters
+	pthread_mutex_lock(&global->saveinterval_mutex);
     global->nprocessedframes += 1;
 	global->nrecentprocessedframes += 1;
-	
-	
 	
 	// Save some types of information from time to time (for example, powder patterns get updated while running)
 	if(global->saveInterval!=0 && (global->nprocessedframes%global->saveInterval)==0 && (global->nprocessedframes > global->detector[0].startFrames+50) ){
 		DEBUG3("Save data.");
+
 		// Assemble, downsample and radially average powder
 		assemble2DPowder(global);
 		downsamplePowder(global);
 		calculateRadialAveragePowder(global);
+		saveRadialStacks(global);
 		
-		
-		// Save accumulated data - periodically flush the H5 file to let us to see data as it's being saved
+		// Flush CXI files (makes them readable if program crashes)
 		if(global->saveCXI){
 			writeAccumulatedCXI(global);
 			flushCXIFiles(global);
 		}
-
+		
 		// Write running sums
 		if(global->writeRunningSumsFiles){
 			saveRunningSums(global);
@@ -445,17 +445,12 @@ cleanup:
 			saveTimeToolStacks(global);
 		}
 		
-		// Save radial average stacks
-		saveRadialStacks(global);
-		
 		global->updateLogfile();
 		global->writeStatus("Not finished");
-		
 	}
-	
-	
 	pthread_mutex_unlock(&global->saveinterval_mutex);
 
+	
 	// Decrement thread pool counter by one
 	pthread_mutex_lock(&global->nActiveThreads_mutex);
 	global->nActiveCheetahThreads -= 1;

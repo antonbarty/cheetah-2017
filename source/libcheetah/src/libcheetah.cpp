@@ -454,12 +454,19 @@ void cheetahExit(cGlobal *global) {
     printf("Cheetah clean exit\n");
 }
 
-
+/*
+ *	Error handling
+ *	Output directed to stdout so that it appears in batch system log files for debugging
+ *	(stderr goes elsewhere)
+ */
 void cheetahDebug(const char *filename, int line, const char *format, ...){
 	va_list ap;
 	va_start(ap,format);
+	fprintf(stdout,"*********************************************\n");
+	fprintf(stdout,"cheetahDebug(...) in libCheetah.cpp triggered\n");
 	fprintf(stdout,"CHEETAH-DEBUG in %s:%d: ",filename,line);
 	vfprintf(stdout,format,ap);
+	fprintf(stdout,"*********************************************\n");
 	va_end(ap);
 	puts("");
 }
@@ -467,8 +474,11 @@ void cheetahDebug(const char *filename, int line, const char *format, ...){
 void cheetahError(const char *filename, int line, const char *format, ...){
 	va_list ap;
 	va_start(ap,format);
-	fprintf(stderr,"CHEETAH-ERROR in %s:%d: ",filename,line);
-	vfprintf(stderr,format,ap);
+	fprintf(stdout,"*********************************************\n");
+	fprintf(stdout,"cheetahError(...) in libCheetah.cpp triggered\n");
+	fprintf(stdout,"CHEETAH-ERROR in %s:%d: ",filename,line);
+	vfprintf(stdout,format,ap);
+	fprintf(stdout,"*********************************************\n");
 	va_end(ap);
 	puts("");
 	abort();

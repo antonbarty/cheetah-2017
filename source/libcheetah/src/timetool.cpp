@@ -64,10 +64,11 @@ void addTimeToolToStack(cEventData *eventData, cGlobal *global, int powderClass)
     long dataoffset = stackoffset*length;
 	
     // Copy data and increment counter
-    for(long i=0; i<length; i++) {
-        stack[dataoffset+i] = (float) timetrace[i];
-    }
-	
+	if (timetrace != NULL) {
+		for(long i=0; i<length; i++) {
+			stack[dataoffset+i] = (float) timetrace[i];
+		}
+	}
 	
 	// Write filename to log file in sync with stack positions (** Important for being able to index the patterns!)
 	fprintf(global->TimeToolLogfp[powderClass], "%li, %li, %li, %s/%s\n", stackCounter, eventData->frameNumber, eventData->stackSlice, eventData->eventSubdir, eventData->eventname);
