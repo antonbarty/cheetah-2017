@@ -37,6 +37,7 @@ LIST(APPEND sources "src/cheetah_extensions_yaroslav/streakfinder.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/streakFinder.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/pythonWrapperConversions.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/mask.cpp")
+LIST(APPEND sources "src/cheetah_extensions_yaroslav/detectorGeometry.cpp")
 
 include_directories("include")
 include_directories("include/cheetah_extensions_yaroslav")
