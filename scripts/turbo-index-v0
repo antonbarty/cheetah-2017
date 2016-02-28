@@ -1,0 +1,27 @@
+#!/bin/sh
+
+RUN=$1
+NOSAMPLE=`echo $RUN | sed -e 's/\-.*$//'`
+
+GEOM=../cxih0115-taw4.geom
+
+find /reg/d/psdm/cxi/cxih0115/scratch/anton/cheetah/hdf5/$RUN -name '*.cxi' > files-${RUN}.lst
+list_events -i files-${RUN}.lst -g $GEOM -o events-${RUN}.lst
+wc -l events-${RUN}.lst
+rm -f split-events-${RUN}.lst files-${RUN}.lst
+split -d -l 500 events-${RUN}.lst split-events-${RUN}.lst
+rm -f events-${RUN}.lst
+
+for FILE in split-events-${RUN}.lst*; do
+
+	STREAM=`echo $FILE | sed -e "s/split-events-${RUN}.lst/${RUN}.stream/"`
+	NAME=`echo $FILE | sed -e "s/split-events-${RUN}.lst/${NOSAMPLE}-/"`
+	echo "$NAME: $FILE  --->  $STREAM"
+
+	bsub -q psanaq -o $NAME.log -J $NAME -n 12 -R "span[hosts=1]" \
+	           ~taw/crystfel-testme/src/indexamajig \
+	                -i $FILE -o $STREAM -j 32 -g $GEOM --peaks=cxi \
+                        --indexing=mosflm-raw,dirax-raw,mosflm-raw-nolatt \
+			--tolerance=15,15,15,3 -p lysozyme.cell --no-refine
+
+done
