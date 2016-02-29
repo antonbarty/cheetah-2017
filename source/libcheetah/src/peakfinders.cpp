@@ -115,7 +115,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 
 	//	Masks for bad regions  (mask=0 to ignore regions)
 	char	*mask = (char*) calloc(pix_nn, sizeof(char));
-	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_SATURATED|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+	uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 	for(long i=0;i<pix_nn;i++)
 		mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 

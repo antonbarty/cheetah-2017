@@ -89,6 +89,8 @@ pro crawler_config, pState
 	(*pstate).geometry = '../calib/geometry/cspad-front-12feb2013.h5'
 	(*pstate).process = '../process/process'
 	(*pstate).cheetahIni = 'lys.ini'
+	(*pstate).cheetahTag = 'lys'
+	
 
 
 	;; Configuration file names
@@ -123,6 +125,16 @@ pro crawler_config, pState
 			(*pstate).process = (info[4])[1]
 			(*pstate).cheetahIni = (info[5])[1]
 		endif 
+		if n_elements(info) eq 7 then begin
+			info = strsplit(info, '=', /extract)
+			(*pstate).xtcdir = (info[0])[1]
+			(*pstate).h5dir = (info[1])[1]
+			(*pstate).h5filter = (info[2])[1]
+			(*pstate).geometry = (info[3])[1]
+			(*pstate).process = (info[4])[1]
+			(*pstate).cheetahIni = (info[5])[1]
+			(*pstate).cheetahTag = (info[6])[1]
+		endif 
 	endif  $
 	
 	;; Else throw an error
@@ -143,6 +155,7 @@ pro crawler_config, pState
 	print, 'Process script: ', (*pState).process
 	print, 'Geometry file: ', (*pState).geometry
 	print, 'Default cheetah.ini: ', (*pstate).cheetahIni
+	print, 'Default tag: ', (*pstate).cheetahTag
 
 end
 
@@ -179,6 +192,7 @@ pro crawler_configMenu, pState
 			printf, lun, 'geometry=',(*pstate).geometry
 			printf, lun, 'process=',(*pstate).process
 			printf, lun, 'cheetahini=',(*pstate).cheetahIni
+			printf, lun, 'cheetahtag=',(*pstate).cheetahTag
 			close, lun
 			free_lun, lun
 	endif
@@ -279,6 +293,8 @@ pro crawler_startCheetah, pState, run, menu=menu
 	endrun = run[nruns]
 	cheetah = sState.process
 	ini = sState.cheetahIni
+	tag = sState.cheetahTag
+	
 	
 	
 	;; Menu when performing this interactively
@@ -287,7 +303,8 @@ pro crawler_startCheetah, pState, run, menu=menu
 					'0, label, Start run: '+startrun+', left', $
 					'0, label, End run: '+endrun+', left', $
 					'0, label, Command: '+cheetah+', left', $
-					'2, text, '+ini+', label_left=cheetah.ini file:, width=50, tag=ini', $
+					'0, text, '+tag+', label_left=Directory tag:, width=50, tag=ctag', $
+					'2, text, '+ini+', label_left=cheetah.ini file:, width=50, tag=cini', $
 					'1, base,, row', $
 					'0, button, OK, Quit, Tag=OK', $
 					'2, button, Cancel, Quit' $
@@ -298,19 +315,15 @@ pro crawler_startCheetah, pState, run, menu=menu
 			return
 
 		;; Only do this if OK is pressed (!!)
-		ini = a.ini
-		(*pstate).cheetahIni = a.ini
+		ini = a.cini
+		tag = a.ctag
+		(*pstate).cheetahIni = a.cini
+		(*pstate).cheetahTag = a.ctag
 	endif
 		
 		
-	
-	
-	;; Base of the .ini filename is the run tag
-	wini = strpos(ini,'.ini')
-	if wini ne -1 then $
-		tag=strmid(ini,0,wini) $
-	else $
-		tag=ini
+	;; Strip whitespace from tag
+	tag = strcompress(tag, /remove_all)	
 	print, tag
 	
 	for i=0L, nruns do begin
@@ -328,7 +341,6 @@ pro crawler_startCheetah, pState, run, menu=menu
 		endif
 		crawler_updateDatasetLog, pstate
 	endfor
-	
 end
 
 ;;
@@ -468,9 +480,7 @@ pro crawler_labelDataset, pState, run
 	endrun = run[nruns]
 	
 	ini = sState.cheetahIni
-	wini = strpos(ini,'.ini')
-	if wini ne -1 then tag=strmid(ini,0,wini) $
-		else tag=ini
+	tag = sState.cheetahTag
 
 	desc = [ 	'1, base, , column', $
 				'0, label, Start run: '+startrun+', left', $
@@ -486,13 +496,28 @@ pro crawler_labelDataset, pState, run
 	if a.OK eq 1 then begin		
 		tag = a.tag
 
-		;; Swap labels to the new tag		
+		;; Swap labels to the new tag	 and rename directory
+		;; Warning:  renaming the directory may terminate jobs still in progress
 		for i=0L, nruns do begin
 			w = where(table_runs eq run[i])
 			if w[0] ne -1 then begin 
 				widget_control, sState.table, use_table_select = [sState.table_datasetcol, w[0], sState.table_datasetcol, w[0]], set_value = [tag]
+
+				dir_old = ''
+				widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], get_value = dir_old		
+				dir_old = dir_old[0]
+							
+				if dir_old[0] ne '---'  then begin
+					dir_new = string(format='(%"r%04i-%s")', run[i], tag) 
+					print, dir_old, ' --> ', dir_new
+					cmd = 'mv ../hdf5/'+dir_old+'  ../hdf5/'+dir_new
+					print, cmd
+					spawn, cmd
+					widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir_new]		
+				endif
 			endif
 		endfor
+
 
 		;; Update the datasets file
 		crawler_updateDatasetLog, pstate
@@ -1012,6 +1037,17 @@ pro crawler_event, ev
 			saturation_check, file
 		end
 		
+		sState.mbview_peakogram : begin
+			dir = crawler_whichRun(pstate, /path)
+			file = file_search(dir,'peaks.txt')
+			cmd = 'peakogram -i '+file
+			print, cmd
+			spawn, cmd, unit=unit
+			;wait, 10
+			;free_lun, unit
+		end
+		
+		
 		sState.mbview_gainmap : begin
 			cd, current=dir
 			dir = file_dirname(dir)+'/calib'
@@ -1049,6 +1085,7 @@ pro crawler_event, ev
 				desc = [ 	'1, base, , column', $
 							'0, label, Automatically start Cheetah when new runs appear using last used .ini file., left', $
 							'0, label, (current .ini file would be '+sState.cheetahIni+'), left', $
+							'0, label, (current sample tag would be '+sState.cheetahTag+'), left', $
 							'2, label, Uncheck menu item to stop, left', $
 							'1, base,, row', $
 							'0, button, OK, Quit, Tag=OK', $
@@ -1130,7 +1167,7 @@ pro crawler_view
 
 	mbfile = widget_button(bar, value='Cheetah')
 	mbcheetah_run = widget_button(mbfile, value='Process selected runs', sensitive=0)
-	mbcheetah_label = widget_button(mbfile, value='Label dataset', sensitive=0)
+	mbcheetah_label = widget_button(mbfile, value='Label or relabel dataset', sensitive=0)
 	mbcheetah_autorun = widget_button(mbfile, value='Autorun when new data is ready', sensitive=0, /checked)
 	
 
@@ -1140,6 +1177,7 @@ pro crawler_view
 	mbview_combinemasks = widget_button(mbtool, value='Combine masks')
 	mbview_satplot1 = widget_button(mbtool, value='Plot peak maximum vs radius')
 	mbview_satcheck = widget_button(mbtool, value='Saturation check')
+	mbview_peakogram = widget_button(mbtool, value='Peakogram')
 	mbview_gainmap = widget_button(mbtool, value='Create CSPAD gain map')
 	mbview_translategainmap = widget_button(mbtool, value='Translate CSPAD gain map')
 
@@ -1240,6 +1278,7 @@ pro crawler_view
 			mbcheetah_autorun : mbcheetah_autorun, $
 			
 			mbview_satcheck : mbview_satcheck, $
+			mbview_peakogram : mbview_peakogram, $
 			mbview_gainmap : mbview_gainmap, $
 			mbview_translategainmap : mbview_translategainmap, $
 
@@ -1283,6 +1322,7 @@ pro crawler_view
 			process : 'Not set', $
 			geometry : 'Not set', $
 			cheetahIni : 'Not set', $
+			cheetahTag : 'Not set', $
 			crystfelIni : '../process/lys.crystfel', $
 			postprocess_command : '../process/postprocess.sh' $
 	}
