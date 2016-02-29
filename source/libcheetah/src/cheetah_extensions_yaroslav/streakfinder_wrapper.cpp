@@ -5,7 +5,7 @@
  *      Author: vmariani
  */
 
-#include "streakfinder.h"
+#include "streakfinder_wrapper.h"
 #include "cheetahConversion.h"
 #include "pythonWrapperConversions.h"
 #include "mask.h"
