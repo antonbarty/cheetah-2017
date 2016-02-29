@@ -1100,7 +1100,9 @@ namespace cheetah_ana_pkg {
 		 *  Psana::Bld::BldDataSpectrometerV0.get()
 		 */
 		shared_ptr<Psana::Bld::BldDataSpectrometerV0> FEEspectrum0;
+		shared_ptr<Psana::Bld::BldDataSpectrometerV1> FEEspectrum1;
 		FEEspectrum0 = evt.get(m_srcFeeSpec);
+		FEEspectrum1 = evt.get(m_srcFeeSpec);
 		eventData->FEEspec_present=0;
 		if(cheetahGlobal.useFEEspectrum) {
 			if (FEEspectrum0.get()) {
@@ -1123,8 +1125,24 @@ namespace cheetah_ana_pkg {
 					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV0\n", frameNumber);
 				}
 			}
+			else if (FEEspectrum1.get()) {
+				/* 
+				 *	BldDataSpectrometerV1 does not have member vproj 
+				 */
+				const ndarray<const int32_t, 1>& hproj = FEEspectrum1->hproj();
+				if (!hproj.empty()) {
+					long	hsize = hproj.shape()[0];
+					
+					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
+					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));
+					eventData->FEEspec_present = 1;
+				}
+				else {
+					printf("Event %li: Warning: Empty Psana::Bld::BldDataSpectrometerV1\n", frameNumber);
+				}
+			}
 			else {
-				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometerV0.get() failed\n", frameNumber);
+				printf("Event %li: Warning: Psana::Bld::BldDataSpectrometer.get() failed\n", frameNumber);
 			}
 		}
 		
