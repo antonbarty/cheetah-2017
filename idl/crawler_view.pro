@@ -298,13 +298,22 @@ pro crawler_startCheetah, pState, run, menu=menu
 	
 	
 	;; Menu when performing this interactively
+	;;					'2, text, '+ini+', ', $
 	if keyword_set(menu) then begin
+		;;	Find .ini files
+		list_in = file_search('../process/*.ini')
+		list_in = file_basename(list_in)
+		list_str = 	strjoin(list_in,'|')
+		list_w = where(list_in eq ini)
+		list_w = list_w[0]
+		if list_w eq -1 then list_w = 0
+
 		desc = [ 	'1, base, , column', $
 					'0, label, Start run: '+startrun+', left', $
 					'0, label, End run: '+endrun+', left', $
 					'0, label, Command: '+cheetah+', left', $
 					'0, text, '+tag+', label_left=Directory tag:, width=50, tag=ctag', $
-					'2, text, '+ini+', label_left=cheetah.ini file:, width=50, tag=cini', $
+					'2, droplist, '+list_str+', label_left=cheetah.ini file:, set_value='+string(list_w)+', tag=wini', $
 					'1, base,, row', $
 					'0, button, OK, Quit, Tag=OK', $
 					'2, button, Cancel, Quit' $
@@ -315,11 +324,14 @@ pro crawler_startCheetah, pState, run, menu=menu
 			return
 
 		;; Only do this if OK is pressed (!!)
-		ini = a.cini
+		;;ini = a.cini
+		ini = list_in[a.wini]
 		tag = a.ctag
-		(*pstate).cheetahIni = a.cini
-		(*pstate).cheetahTag = a.ctag
+		(*pstate).cheetahIni = ini
+		(*pstate).cheetahTag = tag
 	endif
+
+	print, 'Selected .ini file: ', ini
 		
 		
 	;; Strip whitespace from tag
