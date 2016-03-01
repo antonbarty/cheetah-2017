@@ -521,11 +521,13 @@ pro crawler_labelDataset, pState, run
 							
 				if dir_old[0] ne '---'  then begin
 					dir_new = string(format='(%"r%04i-%s")', run[i], tag) 
-					print, dir_old, ' --> ', dir_new
-					cmd = 'mv ../hdf5/'+dir_old+'  ../hdf5/'+dir_new
-					print, cmd
-					spawn, cmd
-					widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir_new]		
+					if dir_old ne dir_new then begin
+						print, dir_old, ' --> ', dir_new
+						cmd = 'mv ../hdf5/'+dir_old+'  ../hdf5/'+dir_new
+						print, cmd
+						spawn, cmd
+						widget_control, sState.table, use_table_select = [sState.table_dircol, w[0], sState.table_dircol, w[0]], set_value = [dir_new]		
+					endif
 				endif
 			endif
 		endfor
