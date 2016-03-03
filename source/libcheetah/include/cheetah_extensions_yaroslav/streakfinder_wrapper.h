@@ -23,7 +23,7 @@ streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(uint
 
 void free_precomputed_streak_finder_constant_arguments(streakFinderConstantArguments_t *streakfinder_constant_arguments);
 
-void streakfinder(float* data, uint8_t* streak_mask, streakFinderConstantArguments_t* streakfinder_constant_arguments);
+void streakfinder(float* data, uint8_t* streak_mask, uint8_t* input_mask, streakFinderConstantArguments_t* streakfinder_constant_arguments);
 
 #endif /* INCLUDE_STREAKFINDER_WRAPPER_H_ */
 

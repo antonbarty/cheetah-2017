@@ -10,7 +10,6 @@
 #include "pythonWrapperConversions.h"
 #include "mask.h"
 
-
 streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(uint_fast8_t filter_length, uint_fast8_t min_filter_length, float filter_step,
                                         float sigma_factor, uint_fast8_t streak_elongation_min_steps_count,
                                         float streak_elongation_radius_factor,
@@ -38,11 +37,12 @@ streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(uint
     streakfinder_accuracy_constants->streakElongationMinStepsCount = streak_elongation_min_steps_count;
     streakfinder_accuracy_constants->streakElongationRadiusFactor = streak_elongation_radius_factor;
     streakfinder_accuracy_constants->streakPixelMaskRadius = streak_pixel_mask_radius;
-    for ( uint_fast8_t line_idx=0; line_idx<num_lines_to_check; ++line_idx) {
+    for ( uint_fast8_t line_idx=1; line_idx<num_lines_to_check+1; ++line_idx) {
         streakfinder_accuracy_constants->linesToCheck.push_back(line_idx);
     }
 
     setStreakDetectorIndices(*streakfinder_accuracy_constants, detector_type);
+
     setUserSelection_backgroundEstimationRegionInDetector(*streakfinder_accuracy_constants, *detector_raw_size_cheetah,
                                                           background_region_preset,
                                                           background_region_dist_from_edge,
@@ -81,8 +81,9 @@ void free_precomputed_streak_finder_constant_arguments(streakFinderConstantArgum
     freePrecomputeStreakFinderConstants(*(streakFinder_precomputedConstants_t *)streakfinder_constant_arguments->streakFinder_precomputedConstant);
 }
 
-void streakfinder(float* data, uint8_t* streak_mask, streakFinderConstantArguments_t* streakfinder_constant_arguments)
+void streakfinder(float* data, uint8_t* streak_mask, uint8_t* input_mask, streakFinderConstantArguments_t* streakfinder_constant_arguments)
 {
+	mergeMaskIntoData(data, (const uint8_t *)input_mask, *(const detectorRawSize_cheetah_t*)streakfinder_constant_arguments->detectorRawSize_cheetah);
     pythonWrapper_streakFinder(data, streakfinder_constant_arguments);
     getMaskFromMergedMaskInData(data, streak_mask, *(detectorRawSize_cheetah_t*)streakfinder_constant_arguments->detectorRawSize_cheetah);
 }

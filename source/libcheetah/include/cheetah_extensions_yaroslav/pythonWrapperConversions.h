@@ -9,6 +9,7 @@
 #define PYTHONWRAPPERCONVERSIONS_H_
 
 #include <vector>
+#include <stddef.h>
 #include "streakFinder.h"
 #include "detectorGeometry.h"
 
@@ -23,10 +24,11 @@ typedef struct {
     void* streakFinder_precomputedConstant;
 } streakFinderConstantArguments_t;
 
-void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracyConstants_t streakFinder_accuracyConstants,
-        detectorRawSize_cheetah_t detectorRawSize_cheetah, int presetNumber, int distanceFromDetectorBottom, char* backgroundRegionMask_forVisualization);
+void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants,
+        detectorRawSize_cheetah_t detectorRawSize_cheetah, int presetNumber, int distanceFromDetectorBottom,
+        char* backgroundRegionMask_forVisualization = NULL);
 
-void setStreakDetectorIndices(streakFinder_accuracyConstants_t streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory);
+void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory);
 
 void setStreakFinderConstantArguments(streakFinderConstantArguments_t* streakFinderConstantArguments, const streakFinder_accuracyConstants_t& accuracyConstants,
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
