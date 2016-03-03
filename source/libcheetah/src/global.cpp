@@ -142,7 +142,7 @@ cGlobal::cGlobal(void) {
 	// FEE spectrum
 	useFEEspectrum = 0;
 	FEEspectrumStackSize = 10000;
-	FEEspectrumWidth = 1024;
+	FEEspectrumWidth = 2048;
 
 	// TimeTool (Opal1k)
 	useTimeTool = 0;
@@ -228,9 +228,9 @@ cGlobal::cGlobal(void) {
 	// deprecated?
 	useHelperThreads = 0;
 	// deprecated?
-	threadPurge = 10000;
+	//threadPurge = 10000;
 	// Timeout of thread activity, if set to 0 or negative no timeout
-	threadTimeoutInSeconds = 60.;
+	threadTimeoutInSeconds = 5*60.;
 
 	anaModThreads = 8;
 	
@@ -593,7 +593,7 @@ void cGlobal::setup() {
 		printf("Spectral stack allocated\n");
 	}
 	if (useFEEspectrum) {
-		printf("Allocating FEE spectrum stacks\n");
+		printf("Allocating FEE spectrum stacks of width %lix%li\n", FEEspectrumWidth, FEEspectrumStackSize);
 		for(long i=0; i<nPowderClasses; i++) {
 			FEEspectrumStackCounter[i] = 0;
 			FEEspectrumStack[i] = (float *) calloc(FEEspectrumStackSize*FEEspectrumWidth, sizeof(float));
@@ -993,9 +993,9 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "profilerdiagnostics")) {
 		profilerDiagnostics = atoi(value);
 	}
-	else if (!strcmp(tag, "threadpurge")) {
-		threadPurge = atoi(value);
-	}
+	//else if (!strcmp(tag, "threadpurge")) {
+	//	threadPurge = atoi(value);
+	//}
 	else if (!strcmp(tag, "peakmask")) {
 		strcpy(peaksearchFile, value);
 		hitfinderUsePeakmask = 1;
@@ -1409,7 +1409,7 @@ void cGlobal::writeConfigurationLog(void){
     fprintf(fp, "nThreads=%ld\n",nThreads);
     fprintf(fp, "threadTimeoutInSeconds=%d\n",threadTimeoutInSeconds);
     fprintf(fp, "useHelperThreads=%d\n",useHelperThreads);
-    fprintf(fp, "threadPurge=%ld\n",threadPurge);
+    //fprintf(fp, "threadPurge=%ld\n",threadPurge);
     fprintf(fp, "ioSpeedTest=%d\n",ioSpeedTest);
     //fprintf(fp, "tofName=%s\n",tofName);
     //fprintf(fp, "tofChannel=%d\n",TOFchannel);

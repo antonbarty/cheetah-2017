@@ -29,14 +29,14 @@ void saveSpectrumStacks(cGlobal *global) {
 	
     if(global->useFEEspectrum) {
 		printf("Saving FEE spectral stacks\n");
-		for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+		for(int powderType=0; powderType < global->nPowderClasses; powderType++) {
 			saveFEEspectrumStack(global, powderType);
 		}
 	}
 	
 	if(global->espectrum) {
 		printf("Saving CXI spectral stacks\n");
-		for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+		for(int powderType=0; powderType < global->nPowderClasses; powderType++) {
 			saveEspectrumStack(global, powderType);
 		}
 	}
@@ -70,7 +70,7 @@ void addFEEspectrumToStack(cEventData *eventData, cGlobal *global, int powderCla
     long dataoffset = stackoffset*speclength;
 	
     // Copy data and increment counter
-    for(long i=0; i<speclength; i++) {
+    for(long i=0; i<eventData->FEEspec_hproj_size; i++) {
         stack[dataoffset+i] = (float) spectrum[i];
     }
 	
@@ -118,17 +118,17 @@ void saveFEEspectrumStack(cGlobal *global, int powderClass) {
 	pthread_mutex_lock(&mutex);
 	
 	
+	// If stack is not full, how many rows are full?
+	long    nRows = stackSize;
+	if(stackCounter % stackSize != 0)
+		nRows = (stackCounter % stackSize);
+	
 	// We re-use stacks, what is this number?
 	long	stackNum = stackCounter / stackSize;
  	if(stackNum == 0) stackNum = 1;
 	
-	// If stack is not full, how many rows are full?
-    long    nRows = stackSize;
-    if(stackCounter % stackSize != 0)
-        nRows = (stackCounter % stackSize);
-	
     sprintf(filename,"r%04u-FEEspectrum-class%i-stack%li.h5", global->runNumber, powderClass, stackNum);
-    printf("Saving FEE spectral stack: %s\n", filename);
+    printf("Saving FEE spectral stack of length %li: %s with length\n", speclength, filename);
     writeSimpleHDF5(filename, stack, speclength, nRows, H5T_NATIVE_FLOAT);
 	
 	

@@ -83,7 +83,7 @@ void checkSaturatedPixels(cEventData *eventData, cGlobal *global){
 void updateNoisyPixelBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	int threadSafetyLevel = global->threadSafetyLevel;
 	DETECTOR_LOOP {
-		if (global->detector[detIndex].useAutoHotPixel && (hit == 0 || global->detector[detIndex].noisyPixIncludeHits)) {
+		if (global->detector[detIndex].useAutoNoisyPixel && (hit == 0 || global->detector[detIndex].noisyPixIncludeHits)) {
 			long	recalc = global->detector[detIndex].noisyPixRecalc;
 			long	memory = global->detector[detIndex].noisyPixMemory;
 			cFrameBuffer * frameBuffer = global->detector[detIndex].frameBufferNoisyPix;

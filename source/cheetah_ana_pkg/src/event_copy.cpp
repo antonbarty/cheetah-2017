@@ -1111,6 +1111,8 @@ namespace cheetah_ana_pkg {
 				if (!hproj.empty() &&  !vproj.empty()) {
 					long	hsize = hproj.shape()[0];
 					long	vsize = vproj.shape()[0];
+					eventData->FEEspec_hproj_size = hsize;
+					eventData->FEEspec_vproj_size = vsize;
 					//printf("FEEspectrum is %li x %li\n", hsize, vsize);
 					
 					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
@@ -1132,6 +1134,7 @@ namespace cheetah_ana_pkg {
 				const ndarray<const int32_t, 1>& hproj = FEEspectrum1->hproj();
 				if (!hproj.empty()) {
 					long	hsize = hproj.shape()[0];
+					eventData->FEEspec_hproj_size = hsize;
 					
 					eventData->FEEspec_hproj = (uint32_t*) calloc(hsize, sizeof(uint32_t));
 					memcpy(eventData->FEEspec_hproj, hproj.data(), hsize*sizeof(uint32_t));

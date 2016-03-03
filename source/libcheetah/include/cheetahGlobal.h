@@ -336,7 +336,7 @@ public:
 	long     nThreads;
 	long     nActiveCheetahThreads;
 	long     threadCounter;
-	long     threadPurge;
+	//long     threadPurge;
 	int      threadTimeoutInSeconds;
 	int      threadSafetyLevel;
 

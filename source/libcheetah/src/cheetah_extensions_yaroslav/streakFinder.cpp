@@ -174,7 +174,8 @@ static inline void precomputeFilterDirectionVectors(const streakFinder_accuracyC
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         for (uint8_t lineToCheckNumber = 0; lineToCheckNumber < streakFinder_accuracyConstants.linesToCheck.size(); ++lineToCheckNumber) {
-            float y_raw = detectorPosition.rawCoordinates_uint16.getLowerRightCorner().getY() - streakFinder_accuracyConstants.linesToCheck[lineToCheckNumber];
+            float y_raw = detectorPosition.rawCoordinates_uint16.getLowerRightCorner().getY()
+                    - streakFinder_accuracyConstants.linesToCheck[lineToCheckNumber];
 
             for (uint16_t x_raw = detectorPosition.rawCoordinates_uint16.getUpperLeftCorner().getX() + 1, posOnLineToCheck = 0;
                     x_raw <= detectorPosition.rawCoordinates_uint16.getLowerRightCorner().getX() - 1;
@@ -351,7 +352,8 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
 
 }
 
-static inline void getAllPixelCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius, vector< Point< int16_t > >& pixelCoordinatesInRadius)
+static inline void getAllPixelCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius,
+        vector< Point< int16_t > >& pixelCoordinatesInRadius)
 {
     pixelCoordinatesInRadius.clear();
     pixelCoordinatesInRadius.reserve((2 * radius + 1) * (2 * radius + 1));
@@ -421,12 +423,15 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
 
 //            vector< float > debug;
 
-            for (uint16_t y = streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getY() + backgroundEstimationRegion.getUpperLeftCorner().getY();
+            for (uint16_t y = streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getY()
+                    + backgroundEstimationRegion.getUpperLeftCorner().getY();
                     y <= streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getY() + backgroundEstimationRegion.getLowerRightCorner().getY();
                     ++y) {
                 for (uint16_t x = streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getX()
                         + backgroundEstimationRegion.getUpperLeftCorner().getX();
-                        x <= streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getX() + backgroundEstimationRegion.getLowerRightCorner().getX();
+                        x
+                                <= streakDetektorPosition.rawCoordinates_uint16.getUpperLeftCorner().getX()
+                                        + backgroundEstimationRegion.getLowerRightCorner().getX();
                         ++x) {
 
                     float filterValue = computeRadialFilter(x, y, data_linear, detectorRawSize_cheetah, streakFinder_precomputedConstants,
@@ -447,7 +452,8 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
                 means[validRegionsEstimated] = currentMean;
 //                sigmas[validRegionsEstimated] = sqrt(
 //                        (float) sumOfSquares / (validValuesCount - 1) - (currentMean) * (currentMean) * validValuesCount / (float) (validValuesCount - 1));
-                sigmas[validRegionsEstimated] = sqrt(((float) sumOfSquares - currentMean * currentMean * validValuesCount) / (float) (validValuesCount - 1));
+                sigmas[validRegionsEstimated] = sqrt(
+                        ((float) sumOfSquares - currentMean * currentMean * validValuesCount) / (float) (validValuesCount - 1));
                 validRegionsEstimated++;
             }
         }
@@ -464,7 +470,8 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
 }
 
 static inline float computeRadialFilter(uint16_t x, uint16_t y, const float* data_linear, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
-        const streakFinder_precomputedConstants_t& streakFinder_precomputedConstants, const streakFinder_accuracyConstants_t& streakFinder_accuracyConstants)
+        const streakFinder_precomputedConstants_t& streakFinder_precomputedConstants,
+        const streakFinder_accuracyConstants_t& streakFinder_accuracyConstants)
 {
 
     int32_t (*radialFilterContributors)[detectorRawSize_cheetah.pix_nx][streakFinder_accuracyConstants.filterLength + 1] =

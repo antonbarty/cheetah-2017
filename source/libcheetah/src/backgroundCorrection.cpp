@@ -65,7 +65,8 @@ void subtractPersistentBackground(cEventData *eventData, cGlobal *global){
 void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 	
 	DETECTOR_LOOP {
-		if (global->detector[detIndex].useSubtractPersistentBackground && (hit==0 || global->detector[detIndex].bgIncludeHits)) {
+		if ((global->detector[detIndex].useSubtractPersistentBackground || global->detector[detIndex].useAutoNoisyPixel )&&
+			(hit==0 || global->detector[detIndex].bgIncludeHits)) {
 			long	recalc = global->detector[detIndex].bgRecalc;
 			long	memory = global->detector[detIndex].bgMemory;
 			float	medianPoint = global->detector[detIndex].bgMedian;
@@ -119,6 +120,7 @@ void updateBackgroundBuffer(cEventData *eventData, cGlobal *global, int hit) {
 				
 				printf("Detector %li: Persistent background calculated.\n",detIndex);      
 				global->detector[detIndex].bgCalibrated = 1;
+				//global->detector[detIndex].noisyPixCalibrated = 1;
 
 				if(keepThreadsLocked)	pthread_mutex_unlock(&global->detector[detIndex].bg_update_mutex);		   
 
