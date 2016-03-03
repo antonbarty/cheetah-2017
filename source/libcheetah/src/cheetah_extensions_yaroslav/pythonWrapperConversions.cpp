@@ -18,7 +18,7 @@
 
 using namespace std;
 
-void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracyConstants_t streakFinder_accuracyConstants,
+void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants,
         detectorRawSize_cheetah_t detectorRawSize_cheetah, int presetNumber, int distanceFromDetectorBottom, char* backgroundRegionMask_forVisualization)
 {
 
@@ -169,26 +169,28 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
             break;
     }
 
-    char (*backgroundRegionMask)[detectorRawSize_cheetah.pix_nx] = (char (*)[detectorRawSize_cheetah.pix_nx]) backgroundRegionMask_forVisualization;
+    if (backgroundRegionMask_forVisualization != NULL) {
+        char (*backgroundRegionMask)[detectorRawSize_cheetah.pix_nx] = (char (*)[detectorRawSize_cheetah.pix_nx]) backgroundRegionMask_forVisualization;
 
-    memset(backgroundRegionMask, 0, detectorRawSize_cheetah.pix_nx);
+        memset(backgroundRegionMask, 0, detectorRawSize_cheetah.pix_nx);
 
-    for (int x_offsetFactor = 0; x_offsetFactor < 7; x_offsetFactor = x_offsetFactor + 2) {
-        typedef ImageRectangle< uint16_t > backgroundEstimationRegionInDetector_t;
-        BOOST_FOREACH (const backgroundEstimationRegionInDetector_t & backgroundEstimationRegionInDetector , backgroundEstimationRegionsInDetector)
-        {
-            for (int y = backgroundEstimationRegionInDetector.getUpperLeftCorner().getY();
-                    y <= backgroundEstimationRegionInDetector.getLowerRightCorner().getY(); ++y) {
-                for (int x = backgroundEstimationRegionInDetector.getUpperLeftCorner().getX();
-                        x <= backgroundEstimationRegionInDetector.getLowerRightCorner().getX(); ++x) {
-                    backgroundRegionMask[y + detectorRawSize_cheetah.asic_ny][x + x_offsetFactor * detectorRawSize_cheetah.asic_nx] = 1;
+        for (int x_offsetFactor = 0; x_offsetFactor < 7; x_offsetFactor = x_offsetFactor + 2) {
+            typedef ImageRectangle< uint16_t > backgroundEstimationRegionInDetector_t;
+            BOOST_FOREACH (const backgroundEstimationRegionInDetector_t & backgroundEstimationRegionInDetector , backgroundEstimationRegionsInDetector)
+            {
+                for (int y = backgroundEstimationRegionInDetector.getUpperLeftCorner().getY();
+                        y <= backgroundEstimationRegionInDetector.getLowerRightCorner().getY(); ++y) {
+                    for (int x = backgroundEstimationRegionInDetector.getUpperLeftCorner().getX();
+                            x <= backgroundEstimationRegionInDetector.getLowerRightCorner().getX(); ++x) {
+                        backgroundRegionMask[y + detectorRawSize_cheetah.asic_ny][x + x_offsetFactor * detectorRawSize_cheetah.asic_nx] = 1;
+                    }
                 }
             }
         }
     }
 }
 
-void setStreakDetectorIndices(streakFinder_accuracyConstants_t streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory)
+void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory)
 {
     switch (detectorCathegory) {
         case detectorCathegory_CSPAD:
