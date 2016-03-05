@@ -45,6 +45,7 @@
 		4DA51BF8189ACD6A00C97F32 /* saveFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D936174F9F80004A0BB4 /* saveFrame.cpp */; };
 		4DA51BFA189ACD7000C97F32 /* spectrum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D938174F9F80004A0BB4 /* spectrum.cpp */; };
 		4DA51BFB189ACD7400C97F32 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D93D939174F9F80004A0BB4 /* worker.cpp */; };
+		4DB277B61C8A74BD006B900B /* streakFinderWrapperWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DB277B51C8A74BD006B900B /* streakFinderWrapperWrapper.cpp */; settings = {ASSET_TAGS = (); }; };
 		4DF8E8631ACF8991003F9F0B /* timetool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DF8E8621ACF8991003F9F0B /* timetool.cpp */; };
 /* End PBXBuildFile section */
 
@@ -132,6 +133,9 @@
 		4DA51BE1189AC1B200C97F32 /* libcheetah.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libcheetah.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE5189AC39500C97F32 /* cheetah-sacla */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "cheetah-sacla"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DA51BE6189AC55000C97F32 /* main-sacla-hdf5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "main-sacla-hdf5.cpp"; sourceTree = "<group>"; };
+		4DB277B31C8A259B006B900B /* cheetah_extensions_yaroslav */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cheetah_extensions_yaroslav; sourceTree = "<group>"; };
+		4DB277B41C8A25AE006B900B /* cheetah_extensions_yaroslav */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cheetah_extensions_yaroslav; sourceTree = "<group>"; };
+		4DB277B51C8A74BD006B900B /* streakFinderWrapperWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = streakFinderWrapperWrapper.cpp; sourceTree = "<group>"; };
 		4DF8E8621ACF8991003F9F0B /* timetool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timetool.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -202,6 +206,7 @@
 				4D0A40661A3B51F600FAC112 /* processRateMonitor.h */,
 				4D93D927174F9F80004A0BB4 /* saveCXI.h */,
 				4D0A40671A3B51F600FAC112 /* tofDetector.h */,
+				4DB277B41C8A25AE006B900B /* cheetah_extensions_yaroslav */,
 			);
 			name = include;
 			path = libcheetah/include;
@@ -236,10 +241,12 @@
 				4D93D934174F9F80004A0BB4 /* radialAverage.cpp */,
 				4D93D935174F9F80004A0BB4 /* saveCXI.cpp */,
 				4D93D936174F9F80004A0BB4 /* saveFrame.cpp */,
+				4DB277B51C8A74BD006B900B /* streakFinderWrapperWrapper.cpp */,
 				4D93D938174F9F80004A0BB4 /* spectrum.cpp */,
 				4DF8E8621ACF8991003F9F0B /* timetool.cpp */,
 				4D0A40561A3B51DC00FAC112 /* tofDetector.cpp */,
 				4D93D939174F9F80004A0BB4 /* worker.cpp */,
+				4DB277B31C8A259B006B900B /* cheetah_extensions_yaroslav */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -362,7 +369,7 @@
 		4D93D905174F9F52004A0BB4 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0460;
+				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = "Anton Barty";
 			};
 			buildConfigurationList = 4D93D908174F9F52004A0BB4 /* Build configuration list for PBXProject "cheetah-ab" */;
@@ -416,6 +423,7 @@
 				4DA51BF2189ACD5600C97F32 /* libcheetah.cpp in Sources */,
 				4DA51BED189ACD4600C97F32 /* data2d.cpp in Sources */,
 				4D0A405C1A3B51DC00FAC112 /* integratePattern.cpp in Sources */,
+				4DB277B61C8A74BD006B900B /* streakFinderWrapperWrapper.cpp in Sources */,
 				4DA51BF5189ACD5F00C97F32 /* powder.cpp in Sources */,
 				4DA51BF7189ACD6500C97F32 /* saveCXI.cpp in Sources */,
 				4DA51BF6189ACD6200C97F32 /* radialAverage.cpp in Sources */,
@@ -446,7 +454,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -456,6 +463,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -490,7 +498,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -503,6 +510,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
@@ -588,6 +596,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -616,6 +625,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				EXECUTABLE_PREFIX = "";
 				GCC_C_LANGUAGE_STANDARD = "compiler-default";

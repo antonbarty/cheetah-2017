@@ -20,6 +20,12 @@
 #include "dataVersion.h"
 #include "frameBuffer.h"
 
+#include "streakfinder_wrapper.h"
+#include "cheetahConversion.h"
+#include "pythonWrapperConversions.h"
+#include "mask.h"
+
+
 #define MAX_DETECTORS 2
 #define MAX_FILENAME_LENGTH 1024
 
@@ -85,7 +91,8 @@ static const uint16_t PIXEL_IS_ARTIFACT_CORRECTED = 2048;    // bit 11
 static const uint16_t PIXEL_FAILED_ARTIFACT_CORRECTION = 4096;    // bit 12
 static const uint16_t PIXEL_IS_PEAK_FOR_HITFINDER = 8192;    // bit 13
 static const uint16_t PIXEL_IS_PHOTON_BACKGROUND_CORRECTED = 16384;    // bit 14
-static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_NOISY | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION | PIXEL_IS_PEAK_FOR_HITFINDER | PIXEL_IS_PHOTON_BACKGROUND_CORRECTED;   // all bits
+static const uint16_t PIXEL_IS_IN_JET = 32768;				// bit 15
+static const uint16_t PIXEL_IS_ALL = PIXEL_IS_INVALID | PIXEL_IS_SATURATED | PIXEL_IS_HOT | PIXEL_IS_DEAD | PIXEL_IS_SHADOWED | PIXEL_IS_IN_PEAKMASK | PIXEL_IS_TO_BE_IGNORED | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_MISSING | PIXEL_IS_NOISY | PIXEL_IS_ARTIFACT_CORRECTED | PIXEL_FAILED_ARTIFACT_CORRECTION | PIXEL_IS_PEAK_FOR_HITFINDER | PIXEL_IS_PHOTON_BACKGROUND_CORRECTED | PIXEL_IS_IN_JET;   // all bits
 
 // for combined options
 inline bool isAnyOfBitOptionsSet(uint16_t value, uint16_t option) {return ((value & option)!=0);}
@@ -300,6 +307,26 @@ public:
 	// declare pixel bad if they are located in bad lines
 	int    usePnccdLineMasking;
 
+	
+	/*
+	 *	Streak finding
+	 */
+	int		useStreakFinder = 0;
+	long	streak_filter_length = 9;
+	long	streak_min_filter_length = 5;
+	float	streak_filter_step = 1.3;
+	float	streak_sigma_factor = 9;
+	float	streak_elongation_min_steps_count = 4;
+	float	streak_elongation_radius_factor = 0.01;
+	float	streak_pixel_mask_radius = 2;
+	int		streak_num_lines_to_check = 3;
+	int		streak_background_region_preset = 1;
+	int		streak_background_region_dist_from_edge = 10;
+	char	streak_mask_filename[MAX_FILENAME_LENGTH];
+	char	streak_mask_hdf5_path[MAX_FILENAME_LENGTH ];
+
+	streakFinderConstantArguments_t streakfinderConstants;
+	
 	// Ring frame buffers
 	cFrameBuffer *frameBufferBlanks;
 	cFrameBuffer *frameBufferHotPix;

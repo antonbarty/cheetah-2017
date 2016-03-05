@@ -984,6 +984,21 @@ pro crawler_event, ev
 			f = file_search(dir,'*detector0-class0-sum.h5')
 			crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
 		end
+
+		sState.mbview_cxipowder_diff : begin
+			dir = crawler_whichRun(pstate, /path)
+			f0 = file_search(dir,'*detector0-class0-sum.h5')
+			f1 = file_search(dir,'*detector0-class1-sum.h5')
+			d0 = read_h5(f0[0], field='data/non_assembled_detector_corrected')
+			d1 = read_h5(f1[0], field='data/non_assembled_detector_corrected')
+			diff = d1 - (total(d1)/total(d0))*d0
+			fout = strmid(f1[0], 0, strlen(f1[0])-6) + 'class0-diff.h5'
+			write_h5,fout, diff
+			crawler_displayfile, fout, field='data/data', geometry=sState.geometry, /hist, gamma=1
+		end
+		
+		
+		
 		sState.mbview_powder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
@@ -1209,6 +1224,7 @@ pro crawler_view
 	mbview_cxipowder_class1_detcorr = widget_button(mbfile, value='Virtual powder hits (class 1, detector corrected only)')
 	mbview_cxipowder_class0_detphotcorr = widget_button(mbfile, value='Virtual powder blanks (class 0, background subtracted)')
 	mbview_cxipowder_class0_detcorr = widget_button(mbfile, value='Virtual powder blanks (class 0, detector corrected only)')
+	mbview_cxipowder_diff = widget_button(mbfile, value='Virtual powder difference (class1-class0, detector corrected)')
 	mbview_peakpowder = widget_button(mbfile, value='Peakfinder virtual powder hits (class 1)')
 	mbview_peakpowderdark = widget_button(mbfile, value='Peakfinder virtual powder blanks (class 0)')
 	mbview_powder = widget_button(mbfile, value='Virtual powder hits (data/correcteddata)')
@@ -1307,6 +1323,7 @@ pro crawler_view
 			mbview_cxipowder_class1_detphotcorr : mbview_cxipowder_class1_detphotcorr, $
 			mbview_cxipowder_class0_detcorr : mbview_cxipowder_class0_detcorr, $
 			mbview_cxipowder_class0_detphotcorr : mbview_cxipowder_class0_detphotcorr, $
+			mbview_cxipowder_diff : mbview_cxipowder_diff, $
 			
 			mbview_badpix : mbview_badpix, $
 			mbview_badpix2 : mbview_badpix2, $

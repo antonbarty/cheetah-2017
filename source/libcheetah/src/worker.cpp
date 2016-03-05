@@ -196,8 +196,13 @@ void *worker(void *threadarg) {
 	// If a darkcal file is available: Subtract persistent background is for photon subtraction (persistent background = photon background)
 	subtractPersistentBackground(eventData, global);
 	
+	// Streak finder
+	streakFinder(eventData, global);
+	
 	// Radial background subtraction (!!! Radial background subtraction subtracts a photon background, therefore moved here)
 	subtractRadialBackground(eventData, global);
+	
+	
 	
 	// Hitfinder fast-scan
 	// Looks at the inner part of the detector first to see whether it's worth looking at the rest

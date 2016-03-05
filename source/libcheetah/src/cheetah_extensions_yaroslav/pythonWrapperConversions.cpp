@@ -190,7 +190,7 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
     }
 }
 
-void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory)
+void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCategory_t detectorCategory)
 {
     switch (detectorCathegory) {
         case detectorCathegory_CSPAD:
