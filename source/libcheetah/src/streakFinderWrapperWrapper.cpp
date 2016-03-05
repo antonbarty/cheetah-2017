@@ -16,10 +16,10 @@
 #include <emmintrin.h>
 
 
-//#include "cheetah_extensions_yaroslav/streakFinder.h"
-//#include "cheetah_extensions_yaroslav/streakfinder_wrapper.h"
-//#include "cheetah_extensions_yaroslav/pythonWrapperConversions.h"
-//#include "cheetah_extensions_yaroslav/cheetahConversion.h"
+#include "cheetah_extensions_yaroslav/streakFinder.h"
+#include "cheetah_extensions_yaroslav/streakfinder_wrapper.h"
+#include "cheetah_extensions_yaroslav/pythonWrapperConversions.h"
+#include "cheetah_extensions_yaroslav/cheetahConversion.h"
 
 #include "detectorObject.h"
 #include "cheetahGlobal.h"
