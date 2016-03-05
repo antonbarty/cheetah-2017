@@ -115,6 +115,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 
 			long    pix_nn = global->detector[detIndex].pix_nn;
 			float	*data = eventData->detector[detIndex].data_detPhotCorr;
+			uint16_t	*pixelmask = eventData->detector[detIndex].pixelmask;
 
 			streakFinderConstantArguments_t	*streakfinderConstants = global->detector[detIndex].streakfinderConstants;
 			
@@ -129,6 +130,17 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			
 			// Streakfinder
 			streakfinder(data, streak_mask, input_mask,  streakfinderConstants);
+			
+			
+			// Set frame mask
+			for(long i=0; i<pix_nn; i++) {
+				if ( streak_mask[i])
+					pixelmask[i] |= PIXEL_IS_IN_JET;
+				else
+					pixelmask[i] &= ~PIXEL_IS_IN_JET;
+				}
+			}
+
 			
 			
 			//	Cleanup memory
