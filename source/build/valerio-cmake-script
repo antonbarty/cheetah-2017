@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export HDF5_ROOT=/reg/g/cfel/dependencies/
+export PATH=~filipe/cmake/bin:${PATH}
+source /reg/g/psdm/etc/ana_env.sh
+cmake ./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/reg/g/cfel/cheetah/cheetah-stable/ -DBUILD_PSANA=ON -DBUILD_CHEETAH_ANA_MOD=ON
+
