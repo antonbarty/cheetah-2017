@@ -20,10 +20,10 @@
 #include "dataVersion.h"
 #include "frameBuffer.h"
 
-#include "streakfinder_wrapper.h"
-#include "cheetahConversion.h"
-#include "pythonWrapperConversions.h"
-#include "mask.h"
+//#include "streakfinder_wrapper.h"
+//#include "cheetahConversion.h"
+//#include "pythonWrapperConversions.h"
+//#include "mask.h"
 
 
 #define MAX_DETECTORS 2
@@ -325,7 +325,7 @@ public:
 	char	streak_mask_filename[MAX_FILENAME_LENGTH];
 	char	streak_mask_hdf5_path[MAX_FILENAME_LENGTH ];
 
-	streakFinderConstantArguments_t streakfinderConstants;
+	//streakFinderConstantArguments_t streakfinderConstants;
 	
 	// Ring frame buffers
 	cFrameBuffer *frameBufferBlanks;
