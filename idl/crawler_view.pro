@@ -887,11 +887,31 @@ pro crawler_event, ev
 
 
 		;; View hits
-		sState.button_hits : begin
+		sState.mbview_idlviewer : begin
 			dir = crawler_whichRun(pstate, /path)
 			print, 'Launching cheetahview, dir=', dir, ', geometry= ', sState.geometry
 			cheetahview, dir=dir, geometry=sState.geometry
 		end
+		
+		sState.mbview_pyqtviewer : begin
+			dir = crawler_whichRun(pstate, /path)
+			print, 'Launching CXIview.py'			
+			file = file_search(dir,'*.cxi')
+			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
+			print, cmd
+			spawn, cmd, unit=unit
+		end
+
+		sState.button_hits : begin
+			dir = crawler_whichRun(pstate, /path)
+			print, 'Launching CXIview.py'			
+			file = file_search(dir,'*.cxi')
+			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
+			print, cmd
+			spawn, cmd, unit=unit
+		end
+
+	
 
 		;; View hitrate graph
 		sState.button_hitrate : begin
@@ -1220,6 +1240,8 @@ pro crawler_view
 	mbview_images = widget_button(mbfile, value='HDF5 files')
 	mbview_hitrate = widget_button(mbfile, value='Hit rate plot')
 	mbview_resolution = widget_button(mbfile, value='Resolution plot')
+	mbview_idlviewer = widget_button(mbfile, value='View hits (IDL viewer)')
+	mbview_pyqtviewer = widget_button(mbfile, value='View hits (pyQtGraph viewer)')
 	mbview_cxipowder_class1_detphotcorr = widget_button(mbfile, value='Virtual powder hits (class 1, background subtracted)')
 	mbview_cxipowder_class1_detcorr = widget_button(mbfile, value='Virtual powder hits (class 1, detector corrected only)')
 	mbview_cxipowder_class0_detphotcorr = widget_button(mbfile, value='Virtual powder blanks (class 0, background subtracted)')
@@ -1319,6 +1341,8 @@ pro crawler_view
 			mbview_powderdark : mbview_powderdark, $
 			mbview_peakpowder : mbview_peakpowder, $
 			mbview_peakpowderdark : mbview_peakpowderdark, $
+			mbview_idlviewer : mbview_idlviewer, $
+			mbview_pyqtviewer : mbview_pyqtviewer, $
 			mbview_cxipowder_class1_detcorr : mbview_cxipowder_class1_detcorr, $
 			mbview_cxipowder_class1_detphotcorr : mbview_cxipowder_class1_detphotcorr, $
 			mbview_cxipowder_class0_detcorr : mbview_cxipowder_class0_detcorr, $

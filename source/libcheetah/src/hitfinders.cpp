@@ -17,13 +17,14 @@
 /*
  *	Various flavours of hitfinder
  *		0 - Everything is a hit
- *		1 - Number of pixels above ADC threshold
+ *		1 - Number of pixels (hitfinderMinPixCount) above ADC threshold
  *		2 - Total intensity above ADC threshold
  *		3 - Count Bragg peaks
  *		4 - Use TOF
  *		5 - Depreciated and no longer exists
  *		6 - Experimental - find peaks by SNR criteria
  *      7 - Laser on event code (usually EVR41)
+ *		8 - Use Peakfinder8
  */
 int  hitfinder(cEventData *eventData, cGlobal *global){
 	
