@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo Deleting old build directory
+rm -rf build
+echo Creating new build directory
+mkdir build
+cd build
+echo Configuring....
+export HDF5_ROOT=/reg/g/cfel/dependencies/
+export PATH=~filipe/cmake/bin:${PATH}
+source /reg/g/psdm/etc/ana_env.sh
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/reg/g/cfel/cheetah/cheetah-stable/ -DBUILD_PSANA=ON -DBUILD_CHEETAH_ANA_MOD=ON
+echo ""
+echo ""
+read -p "Finished. Press any key to open ccmake and double ceck all settings. Remember to set CMAKE_INSTALLATION_PREFIX to the install directory " -n1 -s
+ccmake ../
+echo ""
+echo ""
+echo Done, now change into the build directory, then type make and make install
