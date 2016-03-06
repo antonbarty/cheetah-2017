@@ -16,4 +16,6 @@ read -p "Finished. Press any key to open ccmake and double ceck all settings. Re
 ccmake ../
 echo ""
 echo ""
+echo "********** IMPORTANT ************"
 echo Done, now change into the build directory, then type make and make install
+echo "**********************************"
