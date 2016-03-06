@@ -190,10 +190,10 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
     }
 }
 
-void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory)
+void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCategory_t detectorCategory)
 {
-    switch (detectorCathegory) {
-        case detectorCathegory_CSPAD:
+    switch (detectorCategory) {
+        case detectorCategory_CSPAD:
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (0, 1));
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (2, 1));
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (4, 1));

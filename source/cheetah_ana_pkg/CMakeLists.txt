@@ -10,7 +10,7 @@ add_definitions(-DCHEETAH_SIT_DATA="${ANA_SIT_DATA}")
 
 include_directories("include")
 #include_directories("../libpsana/include")
-include_directories(${PSANA_INCLUDES} ${CHEETAH_INCLUDES})
+include_directories(${PSANA_INCLUDES} ${CHEETAH_INCLUDES} ${CHEETAH_INCLUDES}/cheetah_extensions_yaroslav)
 include_directories(${HDF5_INCLUDE_DIR})
 
 add_library(cheetah_ana_pkg SHARED ${sources})

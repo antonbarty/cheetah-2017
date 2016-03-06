@@ -311,17 +311,17 @@ public:
 	/*
 	 *	Streak finding
 	 */
-	int		useStreakFinder = 0;
-	long	streak_filter_length = 9;
-	long	streak_min_filter_length = 5;
-	float	streak_filter_step = 1.3;
-	float	streak_sigma_factor = 9;
-	float	streak_elongation_min_steps_count = 4;
-	float	streak_elongation_radius_factor = 0.01;
-	float	streak_pixel_mask_radius = 2;
-	int		streak_num_lines_to_check = 3;
-	int		streak_background_region_preset = 1;
-	int		streak_background_region_dist_from_edge = 10;
+	int		useStreakFinder;
+	long	streak_filter_length;
+	long	streak_min_filter_length;
+	float	streak_filter_step;
+	float	streak_sigma_factor;
+	float	streak_elongation_min_steps_count;
+	float	streak_elongation_radius_factor;
+	float	streak_pixel_mask_radius;
+	int		streak_num_lines_to_check;
+	int		streak_background_region_preset;
+	int		streak_background_region_dist_from_edge;
 	char	streak_mask_filename[MAX_FILENAME_LENGTH];
 	char	streak_mask_hdf5_path[MAX_FILENAME_LENGTH ];
 
