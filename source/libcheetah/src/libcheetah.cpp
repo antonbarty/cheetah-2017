@@ -273,7 +273,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	}
    
 	/* Further wavelength testing */
-	if ( ! isfinite(eventData->photonEnergyeV ) ) {
+	if ( ! std::isfinite(eventData->photonEnergyeV ) ) {
 		if ( global->defaultPhotonEnergyeV > 0 ) {
 			eventData->photonEnergyeV = global->defaultPhotonEnergyeV;
 			eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;

@@ -59,7 +59,7 @@ streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(uint
 
     streakFinder_precomputedConstants_t *streakfinder_precomputed_constants = new streakFinder_precomputedConstants_t;
 
-    precomputeStreakFinderConstants(*streakfinder_accuracy_constants, *detector_raw_size_cheetah, *detector_positions, mask,
+    precomputeStreakFinderConstants(*streakfinder_accuracy_constants, *detector_raw_size_cheetah, *detector_positions, input_mask,
                                     *streakfinder_precomputed_constants);
 
     streakFinderConstantArguments_t *streak_finder_constant_arguments = new streakFinderConstantArguments_t();

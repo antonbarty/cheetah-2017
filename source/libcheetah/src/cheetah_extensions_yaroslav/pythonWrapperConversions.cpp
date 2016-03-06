@@ -31,60 +31,60 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 1:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 2:
             height = 6;
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 3:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 4:
             height = 6;
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 5:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (44, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (124, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
 
         case 6:
@@ -92,78 +92,78 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 40 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 40 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 7:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 45 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 40 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 40 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 8:
             height = 6;
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 30 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 30 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 9:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 35 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 30 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 30 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 10:
             height = 6;
             width = 6;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 20 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 20 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         case 11:
             height = 10;
             width = 10;
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (22, (detectorRawSize_cheetah.asic_ny - 1) - 25 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 20 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (89, (detectorRawSize_cheetah.asic_ny - 1) - 20 - height - distanceFromDetectorBottom), width, height));
             backgroundEstimationRegionsInDetector.push_back(
                     ImageRectangle < uint16_t >
-                            (Point < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
+                            (Point2D < uint16_t > (144, (detectorRawSize_cheetah.asic_ny - 1) - 0 - height - distanceFromDetectorBottom), width, height));
             break;
         default:
             break;
@@ -192,12 +192,12 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
 
 void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCategory_t detectorCategory)
 {
-    switch (detectorCathegory) {
-        case detectorCathegory_CSPAD:
-            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point < uint_fast8_t > (0, 1));
-            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point < uint_fast8_t > (2, 1));
-            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point < uint_fast8_t > (4, 1));
-            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point < uint_fast8_t > (6, 1));
+    switch (detectorCategory) {
+        case detectorCategory_CSPAD:
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (0, 1));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (2, 1));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (4, 1));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (6, 1));
             break;
     }
 }

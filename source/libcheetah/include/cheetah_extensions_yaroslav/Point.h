@@ -20,41 +20,41 @@
 #define STATIC_ASSERT( e ) static_assert( e, "!(" #e ")" )
 
 template< typename T >
-class Point
+class Point2D
 {
 private:
     T data[2];
 
 public:
 
-    Point()
+    Point2D()
     {
         data[0] = 0;
         data[1] = 0;
     }
 
-    Point(T x, T y)
+    Point2D(T x, T y)
     {
         this->data[0] = x;
         this->data[1] = y;
     }
 
     template< typename Derived >
-    Point(const Eigen::EigenBase< Derived >& matrix)
+    Point2D(const Eigen::EigenBase< Derived >& matrix)
     {
         Eigen::Matrix< typename Derived::Scalar, 2, 1 > tmp = matrix;
         data[0] = tmp(0);
         data[1] = tmp(1);
     }
 
-    Point(Point const& copy)
+    Point2D(Point2D const& copy)
     {
         data[0] = static_cast< T >(copy.data[0]);
         data[1] = static_cast< T >(copy.data[1]);
     }
 
     template< typename newTypeT >
-    Point& operator=(const Point< newTypeT > &rhs)
+    Point2D& operator=(const Point2D< newTypeT > &rhs)
     {
         data[0] = static_cast< newTypeT >(rhs.getX());
         data[1] = static_cast< newTypeT >(rhs.getY());
@@ -64,9 +64,9 @@ public:
 
     //casting
     template< typename newTypeT >
-    operator Point< newTypeT >() const
+    operator Point2D< newTypeT >() const
     {
-        return Point< newTypeT >(static_cast< T >(data[0]), static_cast< T >(data[1]));
+        return Point2D< newTypeT >(static_cast< T >(data[0]), static_cast< T >(data[1]));
     }
 
     const T& getX(void) const
@@ -88,42 +88,42 @@ public:
     }
 
     template< typename RHS >
-    void operator+=(Point< RHS > const& rhs)
+    void operator+=(Point2D< RHS > const& rhs)
     {
         data[0] += rhs.getX();
         data[1] += rhs.getY();
     }
 
     template< typename RHS >
-    friend Point< typename boost::common_type< T, RHS >::type > operator+(Point< T > const&a, Point< RHS > const& b)
+    friend Point2D< typename boost::common_type< T, RHS >::type > operator+(Point2D< T > const&a, Point2D< RHS > const& b)
     {
         typedef typename boost::common_type< T, RHS >::type currentCommonType;
 
-        Point< currentCommonType > ret(a);
+        Point2D< currentCommonType > ret(a);
         ret += b;
         return ret;
     }
 
     template< typename RHS >
-    void operator-=(Point< RHS > const& rhs)
+    void operator-=(Point2D< RHS > const& rhs)
     {
         data[0] -= rhs.getX();
         data[1] -= rhs.getY();
     }
 
     template< typename RHS >
-    friend Point< typename boost::common_type< T, RHS >::type > operator-(Point< T > const&a, Point< RHS > const& b)
+    friend Point2D< typename boost::common_type< T, RHS >::type > operator-(Point2D< T > const&a, Point2D< RHS > const& b)
     {
         typedef typename boost::common_type< T, RHS >::type currentCommonType;
 
-        Point< currentCommonType > ret(a);
+        Point2D< currentCommonType > ret(a);
         ret -= b;
         return ret;
     }
 //should not be used, is slow! *= is better (not yet implemented)
-    friend Point operator*(const T constant, const Point & myPoint)
+    friend Point2D operator*(const T constant, const Point2D & myPoint)
     {
-        Point ret(myPoint);
+        Point2D ret(myPoint);
 
         ret.data[0] *= constant;
         ret.data[1] *= constant;
@@ -131,12 +131,12 @@ public:
         return ret;
     }
 
-    friend Point operator*(const Point & myPoint, const T constant)
+    friend Point2D operator*(const Point2D & myPoint, const T constant)
     {
         return constant * myPoint;
     }
 
-    friend bool operator>(const Point & a, const Point &b)
+    friend bool operator>(const Point2D & a, const Point2D &b)
     {
         if (a.getX() > b.getX() && a.getY() > b.getY()) {
             return true;
@@ -145,7 +145,7 @@ public:
         }
     }
 
-    friend bool operator>=(const Point & a, const Point &b)
+    friend bool operator>=(const Point2D & a, const Point2D &b)
     {
         if (a.getX() >= b.getX() && a.getY() >= b.getY()) {
             return true;
@@ -154,7 +154,7 @@ public:
         }
     }
 
-    friend bool operator<(const Point & a, const Point &b)
+    friend bool operator<(const Point2D & a, const Point2D &b)
     {
         if (a.getX() < b.getX() && a.getY() < b.getY()) {
             return true;
@@ -162,7 +162,7 @@ public:
             return false;
         }
     }
-    friend bool operator<=(const Point & a, const Point &b)
+    friend bool operator<=(const Point2D & a, const Point2D &b)
     {
         if (a.getX() <= b.getX() && a.getY() <= b.getY()) {
             return true;
@@ -177,9 +177,9 @@ public:
         data[1] = boost::math::round(data[1]);
     }
 
-    Point getRounded() const
+    Point2D getRounded() const
     {
-        Point ret(*this);
+        Point2D ret(*this);
         ret.round();
         return ret;
     }
@@ -189,7 +189,7 @@ public:
         return (T*) data;
     }
 
-    friend std::ostream& operator<<(std::ostream &out, const Point &myPoint)
+    friend std::ostream& operator<<(std::ostream &out, const Point2D &myPoint)
     {
         out << "(" << myPoint.data[0] << "," << myPoint.data[1] << ")";
         return out;

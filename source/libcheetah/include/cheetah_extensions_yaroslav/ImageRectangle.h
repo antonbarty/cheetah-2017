@@ -13,7 +13,7 @@
 template< typename T >
 class ImageRectangle {
 private:
-    Point< T > upperLeftCorner, lowerRightCorner;
+    Point2D< T > upperLeftCorner, lowerRightCorner;
 
 public:
     ImageRectangle() :
@@ -21,40 +21,40 @@ public:
     {
     }
 
-    ImageRectangle(Point< T > upperLeftCorner, Point< T > lowerRightCorner) :
+    ImageRectangle(Point2D< T > upperLeftCorner, Point2D< T > lowerRightCorner) :
             upperLeftCorner(upperLeftCorner), lowerRightCorner(lowerRightCorner)
     {
     }
 
-    ImageRectangle(Point< T > upperLeftCorner, T width, T height) :
+    ImageRectangle(Point2D< T > upperLeftCorner, T width, T height) :
             upperLeftCorner(upperLeftCorner)
     {
         lowerRightCorner.setX(upperLeftCorner.getX() + width - 1);
         lowerRightCorner.setY(upperLeftCorner.getY() + height - 1);
     }
 
-    const Point< T >& getLowerRightCorner() const
+    const Point2D< T >& getLowerRightCorner() const
     {
         return lowerRightCorner;
     }
 
-    void setLowerRightCorner(const Point< T >& lowerRightCorner)
+    void setLowerRightCorner(const Point2D< T >& lowerRightCorner)
     {
         this->lowerRightCorner = lowerRightCorner;
     }
 
-    const Point< T >& getUpperLeftCorner() const
+    const Point2D< T >& getUpperLeftCorner() const
     {
         return upperLeftCorner;
     }
 
-    void setUpperLeftCorner(const Point< T >& upperLeftCorner)
+    void setUpperLeftCorner(const Point2D< T >& upperLeftCorner)
     {
         this->upperLeftCorner = upperLeftCorner;
     }
 
     template< typename someType >
-    bool contains(const Point< someType >& pointToTest) const
+    bool contains(const Point2D< someType >& pointToTest) const
             {
         if (pointToTest >= upperLeftCorner && pointToTest <= lowerRightCorner) {
             return true;
