@@ -2,6 +2,7 @@
 
 echo Deleting old build directory
 rm -rf build
+rm -rf CMakeCache.txt CMakeFiles
 echo Creating new build directory
 mkdir build
 cd build
@@ -16,4 +17,7 @@ read -p "Finished. Press any key to open ccmake and double ceck all settings. Re
 ccmake ../
 echo ""
 echo ""
+echo "********** IMPORTANT ************"
 echo Done, now change into the build directory, then type make and make install
+echo "**********************************"
+
