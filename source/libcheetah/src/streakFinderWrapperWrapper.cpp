@@ -65,8 +65,10 @@ void initStreakFinder(cGlobal *global) {
 			//	Masks for bad regions  (mask=0 to ignore regions)
 			uint8_t		*mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-			for(long i=0;i<pix_nn;i++)
+			for(long i=0;i<pix_nn;i++) {
 				mask[i] = isNoneOfBitOptionsSet(global->detector[detIndex].pixelmask_shared[i], combined_pixel_options);
+				mask[i] = !mask[1];
+			}
 
 			
 			global->detector[detIndex].streakfinderConstants = precompute_streakfinder_constant_arguments(streak_filter_length, streak_min_filter_length, streak_filter_step, streak_sigma_factor, streak_elongation_min_steps_count, streak_elongation_radius_factor, streak_pixel_mask_radius,streak_num_lines_to_check, streak_detector_type, streak_background_region_preset, streak_background_region_dist_from_edge, asic_nx, asic_ny, nasics_x, nasics_y, pix_x, pix_y, mask, streak_background_region_mask);
