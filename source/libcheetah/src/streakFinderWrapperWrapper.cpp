@@ -137,61 +137,46 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useStreakFinder) {
 
-			long    pix_nn = global->detector[detIndex].pix_nn;
-			float	*data = eventData->detector[detIndex].data_detPhotCorr;
+			long		pix_nn = global->detector[detIndex].pix_nn;
+			float		*data = eventData->detector[detIndex].data_detPhotCorr;
 			uint16_t	*pixelmask = eventData->detector[detIndex].pixelmask;
 
 			streakFinderConstantArguments_t	*streakfinderConstants = global->detector[detIndex].streakfinderConstants;
 			
 
 			/*
-			 *	Create a buffer for image data so we don't nuke the main image by mistake
+			 *	The data gets corrupted by the streak finder.
+			 *	So we must make a copy and pass it to the algorithm.
 			 */
-			float *tempdata = (float*) malloc(pix_nn*sizeof(float));
+			float		*tempdata = (float*) malloc(pix_nn*sizeof(float));
 			memcpy(tempdata, data, pix_nn*sizeof(float));
 
 			
 			//	Masks pre-existing bad regions  (mask=0 to ignore regions)
-			// COMMENT BY VALERIO: Now that I look at it better, I think this mask is inverted
-			//                     The streak finder expects this mask to be 1(or other): ignore,mask 0: look at the data in the pixels
-			
-			uint8_t	*input_mask = (uint8_t*) malloc(pix_nn*sizeof(uint8_t));
+			//	The streak finder expects this mask to be
+			//		mask = 1(or other): ignore,
+			//		mask = 0: look at the data in the pixels
+			uint8_t		*input_mask = (uint8_t*) malloc(pix_nn*sizeof(uint8_t));
+			uint8_t		*streak_mask = (uint8_t*) malloc(pix_nn*sizeof(uint8_t));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 			for(long i=0;i<pix_nn;i++)
-				input_mask[i] = isAnyOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
+				input_mask[i] = isAnyOfBitOptionsSet(pixelmask[i], combined_pixel_options);
 
-			//	Mask to hold streak info
-			uint8_t	*streak_mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
+			
 
-			// COMMENT BY VALERO: The data here gets corrupted by the streak finder. So we must make a copy and pass it to the algorithm.
-			//                    Something along the lines of:
-			//
-			// float * data_copy = (float*) calloc(pix_nn, sizeof(float));
-			// memcpy ( data_copy, data, nn*sizeof(float));
-			// streakfinder(data_copy, streak_mask, input_mask,  streakfinderConstants);
-			// free (data_copy);			
-			//
-			     			
-			// Streakfinder
+			//	Streakfinder
+			//	The data gets corrupted by the streak finder, so we must pass a copy to the algorithm.
 			streakfinder(tempdata, streak_mask, input_mask,  streakfinderConstants);
 			
-			/*
-			 void streakfinder(float* data,
-					uint8_t* streak_mask, 
-					uint8_t* input_mask, 
-					streakFinderConstantArguments_t* streakfinder_constant_arguments)
-			 */
 			
 			// Set frame mask
-			//
-			//	
-			// COMMENT BY VALERIO: This is definitely inverted. In the output mask, 1 means there is a streak, 0 means that there is data
-			//                     So !=0 pixel is in jet, ==0 pixel is not in jet  
+			// In the output mask, 1 means there is a streak, 0 means that there is data
+			// So !=0 pixel is in jet, ==0 pixel is not in jet
 			for(long i=0; i<pix_nn; i++) {
-				if ( streak_mask[i]!=0)
-					pixelmask[i] |= PIXEL_IS_IN_JET;
+				if (streak_mask[i] != 0)
+					eventData->detector[detIndex].pixelmask[i] |= PIXEL_IS_IN_JET;
 				else
-					pixelmask[i] &= ~PIXEL_IS_IN_JET;
+					eventData->detector[detIndex].pixelmask[i] &= ~PIXEL_IS_IN_JET;
 			}
 		
 			
