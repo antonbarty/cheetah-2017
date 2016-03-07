@@ -162,7 +162,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			
 			// Set frame mask
 			for(long i=0; i<pix_nn; i++) {
-				if ( streak_mask[i]==0)
+				if ( streak_mask[i]!=0)
 					pixelmask[i] |= PIXEL_IS_IN_JET;
 				else
 					pixelmask[i] &= ~PIXEL_IS_IN_JET;
