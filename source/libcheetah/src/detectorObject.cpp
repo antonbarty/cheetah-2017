@@ -132,7 +132,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	streak_filter_length = 9;
 	streak_min_filter_length = 5;
 	streak_filter_step = 1.3;
-	streak_sigma_factor = 9;
+	streak_sigma_factor = 2.0;
 	streak_elongation_min_steps_count = 4;
 	streak_elongation_radius_factor = 0.01;
 	streak_pixel_mask_radius = 2;

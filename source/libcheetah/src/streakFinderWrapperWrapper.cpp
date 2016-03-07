@@ -58,20 +58,19 @@ void initStreakFinder(cGlobal *global) {
 			uint_fast8_t	streak_elongation_min_steps_count = global->detector[detIndex].streak_elongation_min_steps_count;
 			uint_fast8_t	streak_pixel_mask_radius = global->detector[detIndex].streak_pixel_mask_radius;
 			uint_fast8_t	streak_num_lines_to_check = global->detector[detIndex].streak_num_lines_to_check;
-//			detectorCategory_t	streak_detector_type = global->detector[detIndex].streak_detector_type;
-//			detectorCategory_t	streak_detector_type = detectorCategory_CSPAD;
-			
-			//char			*streak_background_region_mask = global->detector[detIndex].streak_background_region_mask;
+			detectorCategory_t	streak_detector_type = global->detector[detIndex].streak_detector_type;
+			detectorCategory_t	streak_detector_type = detectorCategory_CSPAD;
+			char			*streak_background_region_mask = NULL;
 
 			
 			//	Masks for bad regions  (mask=0 to ignore regions)
 			char	*mask = (char*) calloc(pix_nn, sizeof(char));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
-			//for(long i=0;i<pix_nn;i++)
-			//	mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
+			for(long i=0;i<pix_nn;i++)
+				mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 
 			
-//			global->detector[detIndex].streakfinderConstants = precompute_streakfinder_constant_arguments(streak_filter_length, streak_min_filter_length, streak_filter_step, streak_sigma_factor, streak_elongation_min_steps_count, streak_elongation_radius_factor, streak_pixel_mask_radius,streak_num_lines_to_check, streak_detector_type, streak_background_region_preset, streak_background_region_dist_from_edge, asic_nx, asic_ny, nasics_x, nasics_y, mask, streak_background_region_mask);
+			global->detector[detIndex].streakfinderConstants = precompute_streakfinder_constant_arguments(streak_filter_length, streak_min_filter_length, streak_filter_step, streak_sigma_factor, streak_elongation_min_steps_count, streak_elongation_radius_factor, streak_pixel_mask_radius,streak_num_lines_to_check, streak_detector_type, streak_background_region_preset, streak_background_region_dist_from_edge, asic_nx, asic_ny, nasics_x, nasics_y, mask, streak_background_region_mask);
 			
 			//	Cleanup memory
 			free(mask);
@@ -88,7 +87,7 @@ void initStreakFinder(cGlobal *global) {
 void destroyStreakFinder(cGlobal *global) {
 	DETECTOR_LOOP {
 		if(global->detector[detIndex].useStreakFinder) {
-//			free_precomputed_streak_finder_constant_arguments(global->detector[detIndex].streakfinderConstants);
+			free_precomputed_streak_finder_constant_arguments(global->detector[detIndex].streakfinderConstants);
 		}
 	}
 }
@@ -117,7 +116,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			float	*data = eventData->detector[detIndex].data_detPhotCorr;
 			uint16_t	*pixelmask = eventData->detector[detIndex].pixelmask;
 
-//			streakFinderConstantArguments_t	*streakfinderConstants = global->detector[detIndex].streakfinderConstants;
+			streakFinderConstantArguments_t	*streakfinderConstants = global->detector[detIndex].streakfinderConstants;
 			
 			//	Masks pre-existing bad regions  (mask=0 to ignore regions)
 			char	*input_mask = (char*) calloc(pix_nn, sizeof(char));
@@ -129,7 +128,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			char	*streak_mask = (char*) calloc(pix_nn, sizeof(char));
 			
 			// Streakfinder
-//			streakfinder(data, streak_mask, input_mask,  streakfinderConstants);
+			streakfinder(data, streak_mask, input_mask,  streakfinderConstants);
 			
 			
 			// Set frame mask
