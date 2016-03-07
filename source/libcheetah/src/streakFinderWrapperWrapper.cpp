@@ -58,7 +58,6 @@ void initStreakFinder(cGlobal *global) {
 			uint_fast8_t	streak_elongation_min_steps_count = global->detector[detIndex].streak_elongation_min_steps_count;
 			uint_fast8_t	streak_pixel_mask_radius = global->detector[detIndex].streak_pixel_mask_radius;
 			uint_fast8_t	streak_num_lines_to_check = global->detector[detIndex].streak_num_lines_to_check;
-			detectorCategory_t	streak_detector_type = global->detector[detIndex].streak_detector_type;
 			detectorCategory_t	streak_detector_type = detectorCategory_CSPAD;
 			char			*streak_background_region_mask = NULL;
 
@@ -70,13 +69,37 @@ void initStreakFinder(cGlobal *global) {
 				mask[i] = isNoneOfBitOptionsSet(global->detector[detIndex].pixelmask_shared[i], combined_pixel_options);
 
 			
-			global->detector[detIndex].streakfinderConstants = precompute_streakfinder_constant_arguments(streak_filter_length, streak_min_filter_length, streak_filter_step, streak_sigma_factor, streak_elongation_min_steps_count, streak_elongation_radius_factor, streak_pixel_mask_radius,streak_num_lines_to_check, streak_detector_type, streak_background_region_preset, streak_background_region_dist_from_edge, asic_nx, asic_ny, nasics_x, nasics_y, mask, streak_background_region_mask);
+			global->detector[detIndex].streakfinderConstants = precompute_streakfinder_constant_arguments(streak_filter_length, streak_min_filter_length, streak_filter_step, streak_sigma_factor, streak_elongation_min_steps_count, streak_elongation_radius_factor, streak_pixel_mask_radius,streak_num_lines_to_check, streak_detector_type, streak_background_region_preset, streak_background_region_dist_from_edge, asic_nx, asic_ny, nasics_x, nasics_y, pix_x, pix_y, mask, streak_background_region_mask);
 			
 			//	Cleanup memory
 			free(mask);
 		}
 	}
 }
+
+
+/*
+ streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(
+	uint_fast8_t	filter_length,
+	uint_fast8_t	min_filter_length,
+	float			filter_step,
+	float			sigma_factor,
+	uint_fast8_t	streak_elongation_min_steps_count,
+	float			streak_elongation_radius_factor,
+	uint_fast8_t	streak_pixel_mask_radius,
+	uint_fast8_t	num_lines_to_check,
+	detectorCategory_t detector_type,
+	int				background_region_preset,
+	int				background_region_dist_from_edge,
+	long			asic_nx,
+	long			asic_ny,
+	long			nasics_x,
+	long			nasics_y,
+	float			*pixel_map_x,
+	float			*pixel_map_y,
+	uint8_t			*input_mask,
+	char*			background_region_mask)
+*/
 
 
 /*
