@@ -64,7 +64,7 @@ void initStreakFinder(cGlobal *global) {
 
 			
 			//	Masks for bad regions  (mask=0 to ignore regions)
-			uint8_t		*mask = (char*) calloc(pix_nn, sizeof(char));
+			uint8_t		*mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 			for(long i=0;i<pix_nn;i++)
 				mask[i] = isNoneOfBitOptionsSet(global->detector[detIndex].pixelmask_shared[i], combined_pixel_options);
@@ -125,7 +125,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 				input_mask[i] = isNoneOfBitOptionsSet(eventData->detector[detIndex].pixelmask[i], combined_pixel_options);
 
 			//	Mask to hold streak info
-			char	*streak_mask = (char*) calloc(pix_nn, sizeof(char));
+			uint8_t	*streak_mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
 			
 			// Streakfinder
 			streakfinder(data, streak_mask, input_mask,  streakfinderConstants);
