@@ -143,6 +143,7 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	strcpy(streak_mask_hdf5_path, "/data/data");
 
 	
+	
 	// Local background subtraction
 	useLocalBackgroundSubtraction = 0;
 	localBackgroundRadius = 3;
