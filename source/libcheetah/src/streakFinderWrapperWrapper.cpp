@@ -144,6 +144,8 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			streakFinderConstantArguments_t	*streakfinderConstants = global->detector[detIndex].streakfinderConstants;
 			
 			//	Masks pre-existing bad regions  (mask=0 to ignore regions)
+			// COMMENT BY VALERIO: Now that I look at it better, I think this mask is inverted
+			//                     The streak finder expects this mask to be 1(or other): ignore,mask 0: look at the data in the pixels 
 			uint8_t	*input_mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 			for(long i=0;i<pix_nn;i++)
@@ -151,7 +153,16 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 
 			//	Mask to hold streak info
 			uint8_t	*streak_mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
-			
+
+			// COMMENT BY VALERO: The data here gets corrupted by the streak finder. So we must make a copy and pass it to the algorithm.
+			//                    Something along the lines of:
+			//
+			// float * data_copy = (float*) calloc(pix_nn, sizeof(float));
+			// memcpy ( data_copy, data, nn*sizeof(float));
+			// streakfinder(data_copy, streak_mask, input_mask,  streakfinderConstants);
+			// free (data_copy);			
+			//
+			     			
 			// Streakfinder
 			streakfinder(data, streak_mask, input_mask,  streakfinderConstants);
 			
@@ -163,6 +174,10 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			 */
 			
 			// Set frame mask
+			//
+			//	
+			// COMMENT BY VALERIO: This is definitely inverted. In the output mask, 1 means there is a streak, 0 means that there is data
+			//                     So !=0 pixel is in jet, ==0 pixel is not in jet  
 			for(long i=0; i<pix_nn; i++) {
 				if ( streak_mask[i]==0)
 					pixelmask[i] |= PIXEL_IS_IN_JET;
