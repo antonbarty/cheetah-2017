@@ -65,7 +65,7 @@ void initStreakFinder(cGlobal *global) {
 			//	Masks for bad regions  (mask=0 to ignore regions)
 			//	All these mask are supposed to use this convention: 0 means passthrough, !=0 means that the pixel is masked
 			uint8_t		*mask = (uint8_t*) calloc(pix_nn, sizeof(uint8_t));
-			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+			uint16_t	combined_pixel_options = PIXEL_IS_HOT|PIXEL_IS_BAD;
 			for(long i=0;i<pix_nn;i++) {
 				mask[i] = isAnyOfBitOptionsSet(global->detector[detIndex].pixelmask_shared[i], combined_pixel_options);
 			}
@@ -158,7 +158,7 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			//		mask = 0: look at the data in the pixels
 			uint8_t		*input_mask = (uint8_t*) malloc(pix_nn*sizeof(uint8_t));
 			uint8_t		*streak_mask = (uint8_t*) malloc(pix_nn*sizeof(uint8_t));
-			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
+			uint16_t	combined_pixel_options = PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_NOISY;
 			for(long i=0;i<pix_nn;i++) {
 				input_mask[i] = isAnyOfBitOptionsSet(pixelmask[i], combined_pixel_options);
 			}
