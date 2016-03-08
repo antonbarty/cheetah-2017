@@ -61,10 +61,12 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 		if (isBitOptionSet(global->detector[detIndex].powderFormat,*i_f)) {
 			cDataVersion dataV(&eventData->detector[detIndex], &global->detector[detIndex], global->detector[detIndex].powderVersion, *i_f);
 			while (dataV.next()) {
-				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
 				float * data = dataV.getData();
 				double * powder = dataV.getPowder(powderClass);
 				double * powder_squared = dataV.getPowderSquared(powderClass);
+				long * powder_counter = dataV.getPowderCounter(powderClass);
+				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
+				
                 // Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
 				if(!global->usePowderThresh) {
@@ -81,14 +83,30 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 							buffer[i] = 0;
 					}
 				}
-				if (global->threadSafetyLevel > 0)
+				if (global->threadSafetyLevel > 0) {
 					pthread_mutex_lock(mutex);
-                for(long i=0; i<dataV.pix_nn; i++){
-                    // Powder
-                    powder[i] += data[i];
-                    // Powder squared
-					powder_squared[i] += buffer[i];
 				}
+				
+				if(global->detector[detIndex].savePowderMasked == 0 || powder_counter==NULL) {
+					for(long i=0; i<dataV.pix_nn; i++){
+						// Powder
+						powder[i] += data[i];
+						// Powder squared
+						powder_squared[i] += buffer[i];
+					}
+				}
+				else if(global->detector[detIndex].savePowderMasked != 0 && powder_counter!=NULL) {
+					for(long i=0; i<dataV.pix_nn; i++){
+						// Powder
+						powder[i] += data[i];
+						// Powder squared
+						powder_squared[i] += buffer[i];
+						// Counter
+						powder_counter[i] += 1;
+					}
+				}
+
+				
 				if (global->threadSafetyLevel > 0)
 					pthread_mutex_unlock(mutex);
 				free(buffer);
@@ -276,6 +294,7 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				}
 				double *powder = dataV.getPowder(powderClass);
 				double *powder_squared = dataV.getPowderSquared(powderClass);
+				long *powder_counter = dataV.getPowderCounter(powderClass);
 				pthread_mutex_t *mutex = dataV.getPowderMutex(powderClass);
 				
 				// Copy powder pattern to buffer
@@ -285,18 +304,17 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				memcpy(powderBuffer, powder, dataV.pix_nn*sizeof(double));
 				if (global->threadSafetyLevel > 0)
 					pthread_mutex_unlock(mutex);
-				
+				// Masked powders require a per-pixel correction
+				if(global->detector[detIndex].savePowderMasked != 0 && powder_counter != NULL) {
+					for (long i=0; i<dataV.pix_nn; i++) {
+						powderBuffer[i] /= powder_counter[i];
+					}
+				}
 				// Write powder to dataset
 				dh = H5Dcreate(gh, dataV.name, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderBuffer);
 				H5Dclose(dh);
-				if (dataV.isMainDataset) {
-					// Create symbolic link if this is the main dataset
-					sprintf(sBuffer,"/data/%s",dataV.name);
-					H5Lcreate_soft(sBuffer, fh, "/data/data",0,0);
-					H5Lcreate_soft(sBuffer, fh, "/data/correcteddata",0,0);
-				}
 				
 				// Fluctuations (sigma)
 				powderSquaredBuffer = (double*) calloc(dataV.pix_nn, sizeof(double));
@@ -306,14 +324,33 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				memcpy(powderSquaredBuffer, powder_squared, dataV.pix_nn*sizeof(double));
 				if (global->threadSafetyLevel > 0)
 					pthread_mutex_unlock(mutex);
-				for (long i=0; i<dataV.pix_nn; i++) {
-                    powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes));
+				// Masked powders require a per-pixel correction
+				if(global->detector[detIndex].savePowderMasked != 0 && powder_counter != NULL) {
+					for (long i=0; i<dataV.pix_nn; i++) {
+						powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/powder_counter[i] - powderBuffer[i]*powderBuffer[i]);
+					}
 				}
+				else {
+					for (long i=0; i<dataV.pix_nn; i++) {
+						powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/nframes - (powderBuffer[i]/nframes)*(powderBuffer[i]/nframes));
+					}
+				}
+				// Write to data set
 				sprintf(sBuffer,"%s_sigma",dataV.name);
 				dh = H5Dcreate(gh, sBuffer, H5T_NATIVE_DOUBLE, sh, H5P_DEFAULT, h5compression, H5P_DEFAULT);
 				if (dh < 0) ERROR("Could not create dataset.\n");
 				H5Dwrite(dh, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, powderSigmaBuffer);
 				H5Dclose(dh);
+
+				// Soft link if main data set
+				if (dataV.isMainDataset) {
+					// Create symbolic link if this is the main dataset
+					sprintf(sBuffer,"/data/%s",dataV.name);
+					H5Lcreate_soft(sBuffer, fh, "/data/data",0,0);
+					H5Lcreate_soft(sBuffer, fh, "/data/correcteddata",0,0);
+				}
+
+				
                 free(powderBuffer);
 				free(powderSquaredBuffer);
 				free(powderSigmaBuffer);

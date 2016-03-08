@@ -372,6 +372,7 @@ public:
 	int   savePowderAssembled;
 	int   savePowderAssembledAndDownsampled;
 	int   savePowderRadialAverage;
+	int	  savePowderMasked;
 	int	  saveThumbnail;
 	int	  saveDownsampled;
 	
@@ -401,10 +402,13 @@ public:
 	long     nPowderFrames[MAX_POWDER_CLASSES];
 	double   *powderData_raw[MAX_POWDER_CLASSES];
 	double   *powderData_raw_squared[MAX_POWDER_CLASSES];
+	long	 *powderData_raw_counter[MAX_POWDER_CLASSES];
 	double   *powderData_detCorr[MAX_POWDER_CLASSES];
 	double   *powderData_detCorr_squared[MAX_POWDER_CLASSES];
+	long   *powderData_detCorr_counter[MAX_POWDER_CLASSES];
 	double   *powderData_detPhotCorr[MAX_POWDER_CLASSES];
 	double   *powderData_detPhotCorr_squared[MAX_POWDER_CLASSES];
+	long   *powderData_detPhotCorr_counter[MAX_POWDER_CLASSES];
 	double   *powderImage_raw[MAX_POWDER_CLASSES];
 	double   *powderImage_raw_squared[MAX_POWDER_CLASSES];
 	double   *powderImage_detCorr[MAX_POWDER_CLASSES];

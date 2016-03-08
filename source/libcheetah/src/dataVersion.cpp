@@ -72,7 +72,8 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 
 	clear();
 	pixelmask = NULL;
-	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {		
+	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {
+		powder_counter[powderClass]             = NULL;
 		powder_raw[powderClass]                 = NULL;
 		powder_raw_squared[powderClass]         = NULL;
 		powder_detCorr[powderClass]             = NULL;
@@ -94,10 +95,13 @@ cDataVersion::cDataVersion(cPixelDetectorEvent * detectorEvent0, cPixelDetectorC
 		// Global
 		memcpy(&(powder_raw[0]), &(detectorCommon->powderData_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_raw_squared[0]), &(detectorCommon->powderData_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_raw_counter[0]), &(detectorCommon->powderData_raw_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detCorr[0]), &(detectorCommon->powderData_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detCorr_squared[0]), &(detectorCommon->powderData_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detCorr_counter[0]), &(detectorCommon->powderData_detCorr_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr[0]), &(detectorCommon->powderData_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 		memcpy(&(powder_detPhotCorr_squared[0]), &(detectorCommon->powderData_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+		memcpy(&(powder_detPhotCorr_counter[0]), &(detectorCommon->powderData_detPhotCorr_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 		for (long i = 0; i < detectorCommon->nPowderClasses; i++) {
 			powder_mutex[i] = &detectorCommon->powderData_mutex[i];
 		}
@@ -228,6 +232,7 @@ void cDataVersion::clear() {
 	for (long powderClass=0; powderClass < MAX_POWDER_CLASSES; powderClass++) {		
 		powder[powderClass]                     = NULL;
 		powder_squared[powderClass]             = NULL;
+		powder_counter[powderClass]             = NULL;
 	}
 }
 
@@ -239,6 +244,7 @@ bool cDataVersion::next(){
 			data = raw;
 			memcpy(&(powder[0]), &(powder_raw[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 			memcpy(&(powder_squared[0]), &(powder_raw_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_counter[0]), &(powder_raw_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 			sprintf(name_version,"raw");
 			sprintf(name,"%s_%s",name_format,name_version);
 			isMainVersion = (dataVersionMain == DATA_VERSION_RAW);
@@ -249,6 +255,7 @@ bool cDataVersion::next(){
 			data = detCorr;
 			memcpy(&(powder[0]), &(powder_detCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 			memcpy(&(powder_squared[0]), &(powder_detCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_counter[0]), &(powder_detCorr_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 			sprintf(name_version,"detector_corrected");
 			sprintf(name,"%s_%s",name_format,name_version);
 			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_CORRECTED);
@@ -259,6 +266,7 @@ bool cDataVersion::next(){
 			data = detPhotCorr;
 			memcpy(&(powder[0]), &(powder_detPhotCorr[0]), sizeof(double*)*detectorCommon->nPowderClasses);
 			memcpy(&(powder_squared[0]), &(powder_detPhotCorr_squared[0]), sizeof(double*)*detectorCommon->nPowderClasses);
+			memcpy(&(powder_counter[0]), &(powder_detPhotCorr_counter[0]), sizeof(long*)*detectorCommon->nPowderClasses);
 			sprintf(name_version,"detector_and_photon_corrected");
 			sprintf(name,"%s_%s",name_format,name_version);
 			isMainVersion = (dataVersionMain == DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED);
@@ -301,6 +309,15 @@ double * cDataVersion::getPowderSquared(long powderClass) {
 	} 
 	return powder_squared[powderClass]; 
 }
+
+
+long * cDataVersion::getPowderCounter(long powderClass) {
+	if (powder_counter[powderClass] == NULL) {
+		ERROR("Trying to access powder counter that does not exist");
+	}
+	return powder_counter[powderClass];
+}
+
 
 pthread_mutex_t *cDataVersion::getPowderMutex(long powderClass) {
 	if (powder_mutex[powderClass] == &detectorCommon->null_mutex) {
