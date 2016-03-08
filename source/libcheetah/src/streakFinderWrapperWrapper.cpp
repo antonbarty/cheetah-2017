@@ -68,7 +68,6 @@ void initStreakFinder(cGlobal *global) {
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 			for(long i=0;i<pix_nn;i++) {
 				mask[i] = isAnyOfBitOptionsSet(global->detector[detIndex].pixelmask_shared[i], combined_pixel_options);
-				//mask[i] = 0;  		// Crude testing
 			}
 
 			
@@ -162,7 +161,6 @@ void streakFinder(cEventData *eventData, cGlobal *global) {
 			uint16_t	combined_pixel_options = PIXEL_IS_IN_PEAKMASK|PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_OUT_OF_RESOLUTION_LIMITS;
 			for(long i=0;i<pix_nn;i++) {
 				input_mask[i] = isAnyOfBitOptionsSet(pixelmask[i], combined_pixel_options);
-				//input_mask[i] = 0;		// Crude testing
 			}
 
 			
