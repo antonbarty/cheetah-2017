@@ -2,6 +2,7 @@
 
 echo Deleting old build directory
 rm -rf build
+rm -rf CMakeCache.txt CMakeFiles
 echo Creating new build directory
 mkdir build
 cd build
