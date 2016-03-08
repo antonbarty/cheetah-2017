@@ -615,7 +615,7 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
  	else if (!strcmp(tag, "savepowderradialaverage")) {
 		savePowderRadialAverage = atoi(value);
 	}
-	else if (!strcmp(tag, "savePowderMasked")) {
+	else if (!strcmp(tag, "savepowdermasked")) {
 		savePowderMasked = atoi(value);
 	}
 	else if (!strcmp(tag, "downsampling")) {
