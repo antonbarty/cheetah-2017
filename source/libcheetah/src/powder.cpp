@@ -66,6 +66,7 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 				double * powder_squared = dataV.getPowderSquared(powderClass);
 				long * powder_counter = dataV.getPowderCounter(powderClass);
 				pthread_mutex_t * mutex = dataV.getPowderMutex(powderClass);
+
 				
                 // Powder squared
 				buffer = (double*) calloc(dataV.pix_nn, sizeof(double));
@@ -96,13 +97,17 @@ void addToPowder(cEventData *eventData, cGlobal *global, int powderClass, long d
 					}
 				}
 				else if(global->detector[detIndex].savePowderMasked != 0 && powder_counter!=NULL) {
+					uint16_t	*pixelmask = eventData->detector[detIndex].pixelmask;
+					uint16_t	combined_pixel_options = PIXEL_IS_HOT|PIXEL_IS_BAD|PIXEL_IS_IN_JET;
 					for(long i=0; i<dataV.pix_nn; i++){
-						// Powder
-						powder[i] += data[i];
-						// Powder squared
-						powder_squared[i] += buffer[i];
-						// Counter
-						powder_counter[i] += 1;
+						if(isNoneOfBitOptionsSet(pixelmask[i], combined_pixel_options)) {
+							// Powder
+							powder[i] += data[i];
+							// Powder squared
+							powder_squared[i] += buffer[i];
+							// Counter
+							powder_counter[i] += 1;
+						}
 					}
 				}
 
@@ -307,7 +312,10 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				// Masked powders require a per-pixel correction
 				if(global->detector[detIndex].savePowderMasked != 0 && powder_counter != NULL) {
 					for (long i=0; i<dataV.pix_nn; i++) {
-						powderBuffer[i] /= powder_counter[i];
+						if(powder_counter[i] != 0)
+							powderBuffer[i] /= powder_counter[i];
+						else
+							powderBuffer[i] = 0;
 					}
 				}
 				// Write powder to dataset
@@ -327,7 +335,8 @@ void savePowderPattern(cGlobal *global, int detIndex, int powderClass) {
 				// Masked powders require a per-pixel correction
 				if(global->detector[detIndex].savePowderMasked != 0 && powder_counter != NULL) {
 					for (long i=0; i<dataV.pix_nn; i++) {
-						powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/powder_counter[i] - powderBuffer[i]*powderBuffer[i]);
+						if(powder_counter[i] != 0)
+							powderSigmaBuffer[i] = sqrt(powderSquaredBuffer[i]/powder_counter[i] - powderBuffer[i]*powderBuffer[i]);
 					}
 				}
 				else {
