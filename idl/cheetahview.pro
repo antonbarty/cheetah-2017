@@ -457,6 +457,13 @@ pro cheetah_displayImage, pState, image
 			data = histogram_clip(data, hist_thresh, hist_thresh)
 		endif
 
+		;; Subtract class0 background
+		if (*pState).subtract_class0 ne 0 then begin
+			class0_file = file_search(file_dirname(filename), '*class0-sum.h5')
+			bg = read_h5(class0_file) 
+			data = data - (total(data)/total(bg)) * bg
+		endif
+
 
 		;; Find or load peaks
 		if (*pState).circleHDF5Peaks then begin
@@ -1255,6 +1262,13 @@ pro cheetah_event, ev
 		end
 
 
+		sState.mbanalysis_subtractavg : begin
+			(*pstate).subtract_class0 = 1-(*pstate).subtract_class0
+			widget_control, sState.mbanalysis_subtractavg, set_button = (*pstate).subtract_class0	
+			cheetah_displayImage, pState
+	
+		end
+
 		sState.menu_centeredPeaks : begin
 			(*pstate).centeredPeaks = 1-(*pstate).centeredPeaks
 			widget_control, sState.menu_centeredPeaks, set_button = (*pstate).centeredPeaks
@@ -1474,6 +1488,7 @@ pro cheetahview, geometry=geometry, dir=dir
 	mbanalysis_imagescaling = widget_button(mbview, value='Image display settings')
 	mbanalysis_resolution2 = widget_button(mbview, value='Resolution rings (Crystallographer, wl = d sin(theta))', /checked)
 	mbanalysis_resolution1 = widget_button(mbview, value='Resolution rings (Lithographer, wl = 2d sin(theta))', /checked)
+	mbanalysis_subtractavg = widget_button(mbview, value='Subtract class0 average', sensitive=1, /checked,/separator)
 	mbanalysis_datadata = widget_button(mbview, value='data/data', sensitive=1, /separator)
 	mbanalysis_detector0 = widget_button(mbview, value='data/rawdata0', sensitive=1)
 	mbanalysis_detector1 = widget_button(mbview, value='data/rawdata1', sensitive=1)
@@ -1548,6 +1563,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  resolutionRings2 : 0, $
 				  findPeaks : 0, $
 				  savePeaks : 0, $
+				  subtract_class0 : 0, $
 				  centeredPeaks : centeredPeaks, $
 				  savedir: savedir, $
 				  slideWin: SLIDE_WINDOW, $
@@ -1593,6 +1609,7 @@ pro cheetahview, geometry=geometry, dir=dir
 				  menu_datadata : mbanalysis_datadata, $
 				  menu_detector0 : mbanalysis_detector0, $
 				  menu_detector1 : mbanalysis_detector1, $
+				  mbanalysis_subtractavg : mbanalysis_subtractavg, $
 
 				  peaks_localbackground : 0, $
 				  peaks_algorithm : 0, $

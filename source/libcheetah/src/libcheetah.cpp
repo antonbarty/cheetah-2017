@@ -39,7 +39,8 @@ int cheetahInit(cGlobal *global) {
 		if(getenv("PSANA_GIT_SHA")){
 			fprintf(stderr,"***        Using psana from git commit %s         ***\n",getenv("PSANA_GIT_SHA"));
 			fprintf(stderr,"***        and cheetah_ana_mod from git commit %s ***\n",GIT_SHA1);
-		}else{
+		}
+		else{
 			fprintf(stderr,"***         Using a psana version not compiled with cheetah!                            ***\n");
 		}
 		fprintf(stderr,    "*******************************************************************************************\n");
@@ -69,7 +70,8 @@ int cheetahInit(cGlobal *global) {
 		spawnPython(global->pythonFile);
 	}
 
-
+	// Initialise streak finder (will skip contents if streakfinder not in use)
+	initStreakFinder(global);
 
 	printf("Cheetah clean initialisation\n");
 	return 0;
@@ -271,7 +273,7 @@ void cheetahProcessEvent(cGlobal *global, cEventData *eventData){
 	}
    
 	/* Further wavelength testing */
-	if ( ! isfinite(eventData->photonEnergyeV ) ) {
+	if ( ! std::isfinite(eventData->photonEnergyeV ) ) {
 		if ( global->defaultPhotonEnergyeV > 0 ) {
 			eventData->photonEnergyeV = global->defaultPhotonEnergyeV;
 			eventData->wavelengthA = 12398.42/eventData->photonEnergyeV;
@@ -438,7 +440,8 @@ void cheetahExit(cGlobal *global) {
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[1],global->nPeaksMax[1]);
 		printf("Blanks: %li (%2.2f%%) ",global->nhitsandblanks-global->nhits, 100.*( (global->nhitsandblanks-global->nhits)/ (float) global->nhitsandblanks));
 		printf("with Npeaks ranging from %i to %i\n",global->nPeaksMin[0],global->nPeaksMax[0]);
-    } else {
+    }
+	else {
 		printf("%li hits (%2.2f%%)\n",global->nhits, 100.*( global->nhits / (float) global->nhitsandblanks));
     }
     printf("%li frames processed\n",global->nprocessedframes);
@@ -449,6 +452,7 @@ void cheetahExit(cGlobal *global) {
 
 	// Destroy memory and destroy mutexes
 	global->freeMemory();
+	destroyStreakFinder(global);
 
     global->writeStatus("Finished");    
     printf("Cheetah clean exit\n");

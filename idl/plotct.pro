@@ -20,4 +20,8 @@ pro plotct, ct
 	p.xrange=[0.0, 1.0]
 
 
+	;; Print it
+	arr = [ [x], [r], [g], [b], [deriv(r)], [deriv(g)], [deriv(b)]]
+	print, strcompress(string(transpose(arr)))
+
 end

@@ -13,8 +13,8 @@
 #include "streakFinder.h"
 #include "detectorGeometry.h"
 
-enum detectorCathegory_t {
-    detectorCathegory_CSPAD
+enum detectorCategory_t {
+    detectorCategory_CSPAD
 };
 
 typedef struct {
@@ -28,7 +28,7 @@ void setUserSelection_backgroundEstimationRegionInDetector(streakFinder_accuracy
         detectorRawSize_cheetah_t detectorRawSize_cheetah, int presetNumber, int distanceFromDetectorBottom,
         char* backgroundRegionMask_forVisualization = NULL);
 
-void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCathegory_t detectorCathegory);
+void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_accuracyConstants, detectorCategory_t detectorCategory);
 
 void setStreakFinderConstantArguments(streakFinderConstantArguments_t* streakFinderConstantArguments, const streakFinder_accuracyConstants_t& accuracyConstants,
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,

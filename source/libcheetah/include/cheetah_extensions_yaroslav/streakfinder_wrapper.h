@@ -16,10 +16,10 @@ streakFinderConstantArguments_t *precompute_streakfinder_constant_arguments(uint
                                         float sigma_factor, uint_fast8_t streak_elongation_min_steps_count,
                                         float streak_elongation_radius_factor,
                                         uint_fast8_t streak_pixel_mask_radius, uint_fast8_t num_lines_to_check,
-                                        detectorCathegory_t detector_type, int background_region_preset,
+                                        detectorCategory_t detector_type, int background_region_preset,
                                         int background_region_dist_from_edge,
                                         long asic_nx, long asic_ny, long nasics_x, long nasics_y,
-                                        float *pixel_map_x, float *pixel_map_y, uint8_t *mask, char* background_region_mask);
+                                        float *pixel_map_x, float *pixel_map_y, uint8_t *input_mask, char* background_region_mask);
 
 void free_precomputed_streak_finder_constant_arguments(streakFinderConstantArguments_t *streakfinder_constant_arguments);
 

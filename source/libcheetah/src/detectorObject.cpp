@@ -126,6 +126,24 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	bgNoBeamReset = 0;
 	bgFiducialGlitchReset = 0;
 	
+	
+	// Streak finding
+	useStreakFinder = 0;
+	streak_filter_length = 9;
+	streak_min_filter_length = 5;
+	streak_filter_step = 1.3;
+	streak_sigma_factor = 2.0;
+	streak_elongation_min_steps_count = 4;
+	streak_elongation_radius_factor = 0.01;
+	streak_pixel_mask_radius = 2;
+	streak_num_lines_to_check = 3;
+	streak_background_region_preset = 1;
+	streak_background_region_dist_from_edge = 10;
+	strcpy(streak_mask_filename,"No_file_specified");
+	strcpy(streak_mask_hdf5_path, "/data/data");
+
+	
+	
 	// Local background subtraction
 	useLocalBackgroundSubtraction = 0;
 	localBackgroundRadius = 3;
@@ -678,6 +696,12 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
 	}
 	else if (!strcmp(tag, "halopixincludehits") || !strcmp(tag, "noisypixincludehits")) {
 		noisyPixIncludeHits = atoi(value);
+	}
+	else if (!strcmp(tag, "usestreakfinder" )) {
+		useStreakFinder = atoi(value);
+	}
+	else if (!strcmp(tag, "streakfindermask" )) {
+		strcpy(streak_mask_filename, value);
 	}
 	else if (!strcmp(tag, "commonmodecorrection")) {
 		strcpy(commonModeCorrection, value);

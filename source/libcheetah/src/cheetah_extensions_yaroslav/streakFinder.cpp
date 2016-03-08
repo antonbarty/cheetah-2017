@@ -39,8 +39,8 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const vector< vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions, const uint8_t* mask_linear,
         streakFinder_precomputedConstants_t& streakFinder_precomputedConstants);
-static inline void getAllPixelCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius, vector< Point< int16_t > >& pixelCoordinatesInRadius);
-static inline void getValidPixelCoordinates(const vector< Point< int16_t > >& pixelCoordinates, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
+static inline void getAllPixelCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius, vector< Point2D< int16_t > >& pixelCoordinatesInRadius);
+static inline void getValidPixelCoordinates(const vector< Point2D< int16_t > >& pixelCoordinates, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const detectorPosition_t& detectorPosition, const uint8_t* mask_linear, vector< uint32_t >& linearValidPixelCoordinates);
 static inline void getLinearValidCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius,
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
@@ -68,7 +68,7 @@ void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& ac
             detectorPositions);
 
     for (uint8_t streakDetektorNumber = 0; streakDetektorNumber < accuracyConstants.streakDetektorsIndices.size(); ++streakDetektorNumber) {
-        Point < uint_fast8_t > detectorToCheckIndex = accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
+        Point2D < uint_fast8_t > detectorToCheckIndex = accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         for (uint8_t lineToCheckNumber = 0; lineToCheckNumber < accuracyConstants.linesToCheck.size(); ++lineToCheckNumber) {
@@ -91,7 +91,7 @@ void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& ac
                     float currentRadius = (detectorPosition.virtualZeroPositionRaw - pointOnStreak).norm();
                     float streakElongationStepCount = max((float) accuracyConstants.streakElongationMinStepsCount,
                             accuracyConstants.streakElongationRadiusFactor * currentRadius);
-                    while (stepsWithoutStreakPixel < streakElongationStepCount && detectorPosition.rawCoordinates_float.contains(Point< float >(pointOnStreak))) {
+                    while (stepsWithoutStreakPixel < streakElongationStepCount && detectorPosition.rawCoordinates_float.contains(Point2D< float >(pointOnStreak))) {
                         streakLength++;
 
                         float filterValue = computeRadialFilter(boost::math::round((float) pointOnStreak(0)), boost::math::round((float) pointOnStreak(1)),
@@ -170,7 +170,7 @@ static inline void precomputeFilterDirectionVectors(const streakFinder_accuracyC
     }
 
     for (uint8_t streakDetektorNumber = 0; streakDetektorNumber < streakFinder_accuracyConstants.streakDetektorsIndices.size(); ++streakDetektorNumber) {
-        Point < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
+        Point2D < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         for (uint8_t lineToCheckNumber = 0; lineToCheckNumber < streakFinder_accuracyConstants.linesToCheck.size(); ++lineToCheckNumber) {
@@ -211,7 +211,7 @@ static inline void precomputeRadialFilterContributors(const streakFinder_accurac
     vector < int32_t > currentFilterContributors;
     currentFilterContributors.reserve(streakFinder_accuracyConstants.filterLength);
 
-    typedef Point< uint_fast8_t > detectorToCheck_t;
+    typedef Point2D< uint_fast8_t > detectorToCheck_t;
     BOOST_FOREACH(const detectorToCheck_t & detectorToCheck, streakFinder_accuracyConstants.streakDetektorsIndices)
     {
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheck.getY()][detectorToCheck.getX()];
@@ -231,7 +231,7 @@ static inline void precomputeRadialFilterContributors(const streakFinder_accurac
                 for (uint_fast8_t i = 0; i < streakFinder_accuracyConstants.filterLength; ++i) {
                     Vector2f nextFilterPixel_pos = Vector2f(x, y) + i * filterDirectionVector_adapted;
 
-                    Point < uint16_t > nextFilterPixel_posRounded = Point< float >(nextFilterPixel_pos).getRounded(); // was before: Point < uint16_t, 2 > nextFilterPixel_posRounded(round(nextFilterPixel_pos.getX()), round(nextFilterPixel_pos.getY()));
+                    Point2D < uint16_t > nextFilterPixel_posRounded = Point2D< float >(nextFilterPixel_pos).getRounded(); // was before: Point < uint16_t, 2 > nextFilterPixel_posRounded(round(nextFilterPixel_pos.getX()), round(nextFilterPixel_pos.getY()));
                     if (nextFilterPixel_posRounded > detectorPosition.rawCoordinates_uint16.getUpperLeftCorner()
                             && nextFilterPixel_posRounded < detectorPosition.rawCoordinates_uint16.getLowerRightCorner()
                             && mask[nextFilterPixel_posRounded.getY()][nextFilterPixel_posRounded.getX()] == 0) {
@@ -278,7 +278,7 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
     numberOfPixelsToMaskForStreakLength.reserve(detectorRawSize_cheetah.asic_nx + detectorRawSize_cheetah.asic_ny);
 
     for (uint8_t streakDetektorNumber = 0; streakDetektorNumber < streakFinder_accuracyConstants.streakDetektorsIndices.size(); ++streakDetektorNumber) {
-        Point < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
+        Point2D < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         for (uint8_t lineToCheckNumber = 0; lineToCheckNumber < streakFinder_accuracyConstants.linesToCheck.size(); ++lineToCheckNumber) {
@@ -297,7 +297,7 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
 
                 //backtrack streak
                 Vector2f currentStreakPos_backtrack(x_streakStart, y_streakStart);
-                while (detectorPosition.rawCoordinates_float.contains(Point< float >(currentStreakPos_backtrack))) {
+                while (detectorPosition.rawCoordinates_float.contains(Point2D< float >(currentStreakPos_backtrack))) {
                     getLinearValidCoordinatesInRadius((uint16_t) boost::math::round((float) currentStreakPos_backtrack(0)),
                             (uint16_t) boost::math::round((float) currentStreakPos_backtrack(1)),
                             streakFinder_accuracyConstants.streakPixelMaskRadius, detectorRawSize_cheetah, detectorPosition, mask_linear, newPixelsToMask);
@@ -316,7 +316,7 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
                 sort(pixelsToMask_sorted.begin(), pixelsToMask_sorted.end());
 
                 //mask as long as streak is possible
-                Point< float > currentStreakPos = Point< float >(Vector2f(x_streakStart, y_streakStart) + filterDirectionVector_normalized);
+                Point2D< float > currentStreakPos = Point2D< float >(Vector2f(x_streakStart, y_streakStart) + filterDirectionVector_normalized);
                 while (detectorPosition.rawCoordinates_float.contains(currentStreakPos)) {
                     getLinearValidCoordinatesInRadius(currentStreakPos.getRounded().getX(), currentStreakPos.getRounded().getY(),
                             streakFinder_accuracyConstants.streakPixelMaskRadius, detectorRawSize_cheetah, detectorPosition, mask_linear, newPixelsToMask);
@@ -332,7 +332,7 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
                     pixelsToMask_sorted.insert(pixelsToMask_sorted.end(), newPixelsToMask_cleaned.begin(), newPixelsToMask_cleaned.end());
                     sort(pixelsToMask_sorted.begin(), pixelsToMask_sorted.end());
 
-                    currentStreakPos += Point< float >(filterDirectionVector_normalized);
+                    currentStreakPos += Point2D< float >(filterDirectionVector_normalized);
                 }
 
                 vector < uint32_t > &pixelsToMask_inPrecomputedArray =
@@ -353,32 +353,32 @@ static inline void precomputeStreakPixels(const streakFinder_accuracyConstants_t
 }
 
 static inline void getAllPixelCoordinatesInRadius(uint16_t x_middle, uint16_t y_middle, uint8_t radius,
-        vector< Point< int16_t > >& pixelCoordinatesInRadius)
+        vector< Point2D< int16_t > >& pixelCoordinatesInRadius)
 {
     pixelCoordinatesInRadius.clear();
     pixelCoordinatesInRadius.reserve((2 * radius + 1) * (2 * radius + 1));
 
     for (int16_t x = x_middle - radius; x <= x_middle + radius; ++x) {
         for (int16_t y = y_middle - radius; y <= y_middle + radius; ++y) {
-            pixelCoordinatesInRadius.push_back(Point < int16_t > (x, y));
+            pixelCoordinatesInRadius.push_back(Point2D < int16_t > (x, y));
         }
     }
 }
 
-static inline void getValidPixelCoordinates(const vector< Point< int16_t > >& pixelCoordinates, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
+static inline void getValidPixelCoordinates(const vector< Point2D< int16_t > >& pixelCoordinates, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const detectorPosition_t& detectorPosition, const uint8_t* mask_linear, vector< uint32_t >& linearValidPixelCoordinates)
 {
     const uint8_t (*mask)[detectorRawSize_cheetah.pix_nx] = (uint8_t (*)[detectorRawSize_cheetah.pix_nx]) mask_linear;
 
     linearValidPixelCoordinates.clear();
 
-    vector < Point< int16_t > > validPixelCoordinates_debug;
+    vector < Point2D< int16_t > > validPixelCoordinates_debug;
 
-    typedef Point< int16_t > pixelCoordinate_t;
+    typedef Point2D< int16_t > pixelCoordinate_t;
     BOOST_FOREACH(const pixelCoordinate_t & pixelCoordinate , pixelCoordinates)
     {
-        if (pixelCoordinate >= Point < int16_t > (detectorPosition.rawCoordinates_uint16.getUpperLeftCorner())
-                && pixelCoordinate <= Point < int16_t > (detectorPosition.rawCoordinates_uint16.getLowerRightCorner())
+        if (pixelCoordinate >= Point2D < int16_t > (detectorPosition.rawCoordinates_uint16.getUpperLeftCorner())
+                && pixelCoordinate <= Point2D < int16_t > (detectorPosition.rawCoordinates_uint16.getLowerRightCorner())
                 && mask[pixelCoordinate.getY()][pixelCoordinate.getX()] == 0) {
 
             validPixelCoordinates_debug.push_back(pixelCoordinate);
@@ -391,7 +391,7 @@ static inline void getLinearValidCoordinatesInRadius(uint16_t x_middle, uint16_t
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const detectorPosition_t& detectorPosition, const uint8_t* mask_linear, vector< uint32_t >& linearValidPixelCoordinates)
 {
-    vector < Point< int16_t > > pixelCoordinatesInRadius;
+    vector < Point2D< int16_t > > pixelCoordinatesInRadius;
 
     getAllPixelCoordinatesInRadius(x_middle, y_middle, radius, pixelCoordinatesInRadius);
     getValidPixelCoordinates(pixelCoordinatesInRadius, detectorRawSize_cheetah, detectorPosition, mask_linear, linearValidPixelCoordinates);
@@ -411,7 +411,7 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
     float sigmas[maxRegionsCount]; //using #define instead of pix_nx gives a tiny performance boost
     uint_fast8_t validRegionsEstimated = 0;
 
-    typedef Point< uint_fast8_t > streakDetektorIndex_t;
+    typedef Point2D< uint_fast8_t > streakDetektorIndex_t;
     BOOST_FOREACH (const streakDetektorIndex_t & streakDetektorIndex , streakFinder_accuracyConstants.streakDetektorsIndices)
     {
         const detectorPosition_t &streakDetektorPosition = detectorPositions[streakDetektorIndex.getY()][streakDetektorIndex.getX()];
@@ -510,7 +510,7 @@ static float computeDetectorPositionsHash(
     float hash = 0;
 
     for (uint8_t streakDetektorNumber = 0; streakDetektorNumber < streakFinder_accuracyConstants.streakDetektorsIndices.size(); ++streakDetektorNumber) {
-        Point < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
+        Point2D < uint_fast8_t > detectorToCheckIndex = streakFinder_accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
         detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         hash += (detectorPosition.fs * 128 + detectorPosition.corner).sum();

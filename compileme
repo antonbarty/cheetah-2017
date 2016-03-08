@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo Deleting old build directory
+rm -rf build
+echo Creating new build directory
+mkdir build
+cd build
+echo Configuring....
+export HDF5_ROOT=/reg/g/cfel/dependencies/
+export PATH=~filipe/cmake/bin:${PATH}
+source /reg/g/psdm/etc/ana_env.sh
+cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/reg/g/cfel/cheetah/cheetah-stable/ -DBUILD_PSANA=ON -DBUILD_CHEETAH_ANA_MOD=ON -DPYTHON_LIBRARY=/reg/g/psdm/sw/releases/ana-current/arch/x86_64-rhel7-gcc48-opt/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/reg/g/psdm/sw/releases/ana-current/arch/x86_64-rhel7-gcc48-opt/geninc/python/
+echo ""
+echo ""
+read -p "Finished. Press any key to open ccmake and double ceck all settings. Remember to set CMAKE_INSTALLATION_PREFIX to the install directory " -n1 -s
+ccmake ../
+echo ""
+echo ""
+echo "********** IMPORTANT ************"
+echo Done, now change into the build directory, then type make and make install
+echo "**********************************"

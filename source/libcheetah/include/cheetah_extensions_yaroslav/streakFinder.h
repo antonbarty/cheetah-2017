@@ -26,7 +26,7 @@ typedef struct {
     float streakElongationRadiusFactor;
     uint_fast8_t streakPixelMaskRadius;
     std::vector< uint_fast8_t > linesToCheck; //slow scan lines to check
-    std::vector< Point< uint_fast8_t > > streakDetektorsIndices; //Point (x,y) in the way the detector is positioned in the rawImage (top left detector is (0,0), it's right neighbor is (1,0) )
+    std::vector< Point2D< uint_fast8_t > > streakDetektorsIndices; //Point (x,y) in the way the detector is positioned in the rawImage (top left detector is (0,0), it's right neighbor is (1,0) )
     std::vector< ImageRectangle< uint16_t > > backgroundEstimationRegionsInDetector;
 } streakFinder_accuracyConstants_t;
 

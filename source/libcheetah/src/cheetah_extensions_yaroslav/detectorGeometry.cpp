@@ -53,10 +53,10 @@ void computeDetectorPositionsFromDetectorGeometryMatrix(const detectorRawSize_ch
             detectorPositions[asic_y][asic_x].ss = ss;
             detectorPositions[asic_y][asic_x].corner = corner;
 
-            detectorPositions[asic_y][asic_x].rawCoordinates_uint16 = ImageRectangle < uint16_t > (Point < uint16_t > (min_fs, min_ss),
-                    Point < uint16_t > (max_fs, max_ss));
-            detectorPositions[asic_y][asic_x].rawCoordinates_float = ImageRectangle< float >(Point< float >(min_fs, min_ss),
-                    Point< float >(max_fs, max_ss));
+            detectorPositions[asic_y][asic_x].rawCoordinates_uint16 = ImageRectangle < uint16_t > (Point2D < uint16_t > (min_fs, min_ss),
+                    Point2D < uint16_t > (max_fs, max_ss));
+            detectorPositions[asic_y][asic_x].rawCoordinates_float = ImageRectangle< float >(Point2D< float >(min_fs, min_ss),
+                    Point2D< float >(max_fs, max_ss));
 
             computeVirtualZeroPosition(detectorPositions[asic_y][asic_x]);
         }

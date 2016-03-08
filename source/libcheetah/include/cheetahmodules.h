@@ -167,7 +167,13 @@ void addToRadialAverageStack(cEventData*, cGlobal*, int, int);
 void saveRadialAverageStack(cGlobal*, int, int);
 void saveRadialStacks(cGlobal*);
 void calculateRadialAveragePowder(cGlobal*);
-    
+
+// streakFinderWrapperWrapper.cpp
+void initStreakFinder(cGlobal*);
+void destroyStreakFinder(cGlobal*);
+void streakFinder(cEventData*, cGlobal *);
+
+
 // median.cpp
 int16_t kth_smallest(int16_t*, long, long);
 
