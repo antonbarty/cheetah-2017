@@ -220,6 +220,8 @@ cPixelDetectorCommon::cPixelDetectorCommon() {
 	savePowderAssembled                      = 1;
 	savePowderAssembledAndDownsampled        = 0;
 	savePowderRadialAverage                  = 1;
+	savePowderMasked						 = 0;
+
 }
 
 void cPixelDetectorCommon::configure(cGlobal * global) {
@@ -613,7 +615,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value) {
  	else if (!strcmp(tag, "savepowderradialaverage")) {
 		savePowderRadialAverage = atoi(value);
 	}
-
+	else if (!strcmp(tag, "savepowdermasked")) {
+		savePowderMasked = atoi(value);
+	}
 	else if (!strcmp(tag, "downsampling")) {
 		downsampling = atoi(value);
 	}
@@ -914,10 +918,13 @@ void cPixelDetectorCommon::allocateMemory() {
 		nPowderFrames[powderClass] = 0;
 		powderData_raw[powderClass]                           = (double*) calloc(pix_nn, sizeof(double));
 		powderData_raw_squared[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
+		powderData_raw_counter[powderClass]                   = (long*) calloc(pix_nn, sizeof(long));
 		powderData_detCorr[powderClass]                       = (double*) calloc(pix_nn, sizeof(double));
 		powderData_detCorr_squared[powderClass]               = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detCorr_counter[powderClass]               = (long*) calloc(pix_nn, sizeof(long));
 		powderData_detPhotCorr[powderClass]                   = (double*) calloc(pix_nn, sizeof(double));
 		powderData_detPhotCorr_squared[powderClass]           = (double*) calloc(pix_nn, sizeof(double));
+		powderData_detPhotCorr_counter[powderClass]           = (long*) calloc(pix_nn, sizeof(long));
 		pthread_mutex_init(&powderData_mutex[powderClass], NULL);
 		
 		powderImage_raw[powderClass]                          = (double*) calloc(image_nn, sizeof(double));
@@ -1017,10 +1024,13 @@ void cPixelDetectorCommon::freeMemory() {
 		nPowderFrames[powderClass] = 0;
 		free(powderData_raw[powderClass]);
 		free(powderData_raw_squared[powderClass]);
+		free(powderData_raw_counter[powderClass]);
 		free(powderData_detCorr[powderClass]);
 		free(powderData_detCorr_squared[powderClass]);
+		free(powderData_detCorr_counter[powderClass]);
 		free(powderData_detPhotCorr[powderClass]);
 		free(powderData_detPhotCorr_squared[powderClass]);
+		free(powderData_detPhotCorr_counter[powderClass]);
 		free(powderImage_raw[powderClass]);
 		free(powderImage_raw_squared[powderClass]);
 		free(powderImage_detCorr[powderClass]);

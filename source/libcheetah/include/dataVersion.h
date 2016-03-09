@@ -25,20 +25,25 @@ class cDataVersion {
 				  DATA_VERSION_DETECTOR_AND_PHOTON_CORRECTED = 4,
 				  DATA_VERSION_NONE = 0,
 				  DATA_VERSION_ALL = 1|2|4} dataVersion_t;
+	
 	typedef enum {DATA_FORMAT_NON_ASSEMBLED = 1,
 				  DATA_FORMAT_ASSEMBLED = 2,
 				  DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED = 4,
 				  DATA_FORMAT_RADIAL_AVERAGE = 16,
 				  DATA_FORMAT_NONE = 0,
 				  DATA_FORMAT_ALL = 1|2|4|16} dataFormat_t;
+	
 	static const dataFormat_t DATA_FORMATS[4];
 	cDataVersion(cPixelDetectorEvent *detectorEvent, cPixelDetectorCommon *detectorCommon, const dataVersion_t dataVersion, const dataFormat_t dataFormat);
+	
 	bool next();
-	float * getData();
-	uint16_t * getPixelmask();
-	double * getPowder(long powderClass);
-	double * getPowderSquared(long powderClass);
+	float *getData();
+	double *getPowder(long powderClass);
+	double *getPowderSquared(long powderClass);
+	long   *getPowderCounter(long powderClass);
+	uint16_t *getPixelmask();
 	pthread_mutex_t * getPowderMutex(long powderClass);
+	
 	char name[1024];
 	char name_format[1024];
 	char name_version[1024];
@@ -53,6 +58,7 @@ class cDataVersion {
 	uint16_t *pixelmask;
 	double *powder[MAX_POWDER_CLASSES];
 	double *powder_squared[MAX_POWDER_CLASSES];
+	long *powder_counter[MAX_POWDER_CLASSES];
 	pthread_mutex_t * powder_mutex[MAX_POWDER_CLASSES];	
 
 	float *raw;
@@ -60,10 +66,13 @@ class cDataVersion {
 	float *detPhotCorr;
 	double *powder_raw[MAX_POWDER_CLASSES];
 	double *powder_raw_squared[MAX_POWDER_CLASSES];
+	long   *powder_raw_counter[MAX_POWDER_CLASSES];
 	double *powder_detCorr[MAX_POWDER_CLASSES];
 	double *powder_detCorr_squared[MAX_POWDER_CLASSES];
+	long   *powder_detCorr_counter[MAX_POWDER_CLASSES];
 	double *powder_detPhotCorr[MAX_POWDER_CLASSES];
 	double *powder_detPhotCorr_squared[MAX_POWDER_CLASSES];
+	long   *powder_detPhotCorr_counter[MAX_POWDER_CLASSES];
 
 	int dataVersionIndex;
 
