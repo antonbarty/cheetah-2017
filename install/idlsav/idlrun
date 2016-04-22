@@ -1,0 +1,8 @@
+#!/bin/tcsh
+
+
+setenv IDL_DIR /reg/g/cfel/idl/idl85
+setenv IDL_STARTUP /reg/g/cfel/cheetah/cheetah/idlstartup.pro
+
+
+$IDL_DIR/bin/idl -vm=/reg/neh/home/barty/idlsav/$1

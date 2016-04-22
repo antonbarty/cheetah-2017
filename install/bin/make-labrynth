@@ -1,0 +1,40 @@
+#!/bin/bash
+
+WORKINGDIR=`pwd -P`
+RESDIR=`pwd -P | sed 's/scratch/res/'`
+FTCDIR=`pwd -P | sed 's/scratch/ftc/'`
+echo "Working directory:" $WORKINGDIR
+echo "Results directory:" $RESDIR
+
+echo "Creating directory in " $RESDIR
+mkdir -p $RESDIR/cheetah
+
+if [ -d $WORKINGDIR/cheetah/gui ]; then
+echo "Moving cheetah/gui to res and linking"
+mv $WORKINGDIR/cheetah/gui $RESDIR/cheetah/gui
+ln -s $RESDIR/cheetah/gui cheetah/gui
+fi
+
+if [ -d $WORKINGDIR/cheetah/process ]; then
+echo "Moving cheetah/process to res and linking"
+mv $WORKINGDIR/cheetah/process $RESDIR/cheetah/process
+ln -s $RESDIR/cheetah/process cheetah/process
+fi
+
+if [ -d $WORKINGDIR/cheetah/calib ]; then
+echo "Moving cheetah/calib to res and linking"
+mv $WORKINGDIR/cheetah/calib $RESDIR/cheetah/calib
+ln -s $RESDIR/cheetah/calib cheetah/calib
+fi
+
+echo "Linking hdf5 directory"
+ln -s $WORKINGDIR/cheetah/hdf5 $RESDIR/cheetah/hdf5
+
+echo "Linking indexing directory"
+ln -s $WORKINGDIR/cheetah/indexing $RESDIR/cheetah/indexing
+
+echo "Cross-linking scratch, res and ftc directories"
+
+
+
+echo "Done"

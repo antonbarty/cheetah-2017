@@ -1,0 +1,5 @@
+#!/bin/tcsh
+
+cd /reg/g/cfel/cheetah/cheetah-latest/idlsav
+
+./idlrun crawler_view.sav
