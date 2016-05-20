@@ -286,6 +286,19 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		pixelSize = 89e-6;
 		
 	}
+    else if(strcmp(detectorName, "pilatus6M") == 0 ) {
+		strcpy(detectorType, "pilatus6M");
+		asic_nx = PILATUS6M_ASIC_NX;
+		asic_ny = PILATUS6M_ASIC_NY;
+		nasics_x = PILATUS6M_nASICS_X;
+		nasics_y = PILATUS6M_nASICS_Y;
+		asic_nn = asic_nx*asic_ny;
+		pix_nx = asic_nx * nasics_x;
+		pix_ny = asic_ny * nasics_y;
+		pix_nn = pix_nx * pix_ny;
+		pixelSize = 172e-6;
+		
+	}
 	else {
 		printf("Error: unknown detector name %s\n", detectorName);
 		printf("cPixelDetectorCommon::configure()\n");

@@ -47,6 +47,7 @@ OPTION(BUILD_CHEETAH_ANA_MOD "If ON build cheetah_ana_mod. Otherwise skip it." O
 OPTION(BUILD_PSANA "If ON build psana. Otherwise skip it." OFF )
 OPTION(BUILD_CHEETAH_MYANA "If ON build cheetah_myana. Otherwise skip it." OFF )
 OPTION(BUILD_CHEETAH_SACLA "If ON build cheetah-sacla. Otherwise skip it." OFF )
+OPTION(BUILD_CHEETAH_CBF "If ON build cheetah-rayonix. Otherwise skip it." OFF )
 
 SET(CHEETAH_INCLUDES ${CMAKE_SOURCE_DIR}/source/libcheetah/include CACHE PATH "libcheetah include directory")
 MARK_AS_ADVANCED(CHEETAH_INCLUDES)

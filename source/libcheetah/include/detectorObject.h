@@ -55,6 +55,12 @@ static const unsigned  MX170HS_ASIC_NY = 3840;		// ASIC ny = extent of one ASIC 
 static const unsigned  MX170HS_nASICS_X = 1;		// 2 ASICs across in raw data stream
 static const unsigned  MX170HS_nASICS_Y = 1;		// 2 ASICs down in raw data stresm
 
+// Pilatus 6M //
+static const unsigned  PILATUS6M_ASIC_NX = 2463;		// ASIC nx = extent of one ASIC in x
+static const unsigned  PILATUS6M_ASIC_NY = 2527;		// ASIC ny = extent of one ASIC in y
+static const unsigned  PILATUS6M_nASICS_X = 1;		// Probably really 5x12 ASIC, but then
+static const unsigned  PILATUS6M_nASICS_Y = 1;		// ASIC dimensions aren't whole numbers
+
 static const unsigned int cbufsize = 1024;
 
 /*
