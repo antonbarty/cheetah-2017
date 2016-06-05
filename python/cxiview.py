@@ -377,7 +377,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         # Extract info from command line arguments
         geom_filename = args.g
         img_file_pattern = args.i
-        img_h5_field = args.f
+        img_h5_field = args.e
 
         # Create event list of all events in all files matching pattern
         # This is for multi-file flexibility - importing of file lists, enables multiple input files, format flexibility
@@ -496,7 +496,11 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.imageView.ui.histogram.setHistogramRange(-100, 10000, padding=0.1)
                 
         self.draw_things()
-        self.ui.statusBar.setText('Ready') 
+        #self.ui.imageView.imageItem.setPxMode(True)
+        self.ui.imageView.imageItem.setAutoDownsample(False)     # True/False
+        #self.ui.imageView.imageItem.clipToView(False)     # True/False
+        #self.ui.imageView.imageItem.antialias(True)     # True/False
+        self.ui.statusBar.setText('Ready')
         
         
         

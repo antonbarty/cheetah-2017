@@ -1173,11 +1173,13 @@ static CXI::Node *getCXIFileByName(cGlobal *global, cEventData *eventData, int p
 	long chunk;
 	
 	if(global->saveByPowderClass){
+		// Powder class CXI chunks according to number of frames in each powder class
 		chunk = global->detector[0].nPowderFrames[powderClass];
 		chunk = (long) floorf(chunk / (float) global->cxiChunkSize);
 		sprintf(filename,"%s-r%04d-class%d-c%02ld.cxi", global->experimentID, global->runNumber, powderClass, chunk);
 	}
 	else{
+		// All-in-one CXI file chunks by number of hits
 		chunk = global->nhits;
 		chunk = (long) floorf(chunk / (float) global->cxiChunkSize);
 		sprintf(filename,"%s-r%04d-c%02ld.cxi", global->experimentID, global->runNumber, chunk);
