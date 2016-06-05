@@ -897,18 +897,25 @@ pro crawler_event, ev
 			dir = crawler_whichRun(pstate, /path)
 			print, 'Launching CXIview.py'			
 			file = file_search(dir,'*.cxi')
-			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
-			print, cmd
-			spawn, cmd, unit=unit
+			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
+			;print, cmd
+			;spawn, cmd, unit=unit
+			cmdarr = ['python3', 'cxiview.py', '-g', sState.geometry,'-i', file]
+			print, cmdarr
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 		sState.button_hits : begin
 			dir = crawler_whichRun(pstate, /path)
 			print, 'Launching CXIview.py'			
 			file = file_search(dir,'*.cxi')
-			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
-			print, cmd
-			spawn, cmd, unit=unit
+			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
+			;print, cmd
+			;spawn, cmd, unit=unit
+			;cmdarr = ['python3', '/nfs/cfel/cxi/common/cfelsoft-any/python/cxiview.py', '-g', sState.geometry,'-i', file]
+			cmdarr = ['cxiview.py', '-g', sState.geometry,'-i', file]
+			print, cmdarr
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 	

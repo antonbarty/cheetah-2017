@@ -1170,11 +1170,14 @@ static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
 static CXI::Node *getCXIFileByName(cGlobal *global, cEventData *eventData, int powderClass){
 	char filename[MAX_FILENAME_LENGTH];
+	long chunk = global->detector[0].nPowderFrames[powderClass];
+	chunk = (long) floorf(chunk / (float) global->cxiChunkSize);
+	
 	if(global->saveByPowderClass){
-		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
+		sprintf(filename,"%s-r%04d-class%d-c%02d.cxi", global->experimentID, global->runNumber, powderClass, chunk);
 	}
 	else{
-		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
+		sprintf(filename,"%s-r%04d-c%02d.cxi", global->experimentID, global->runNumber, chunk);
 	}
 	if (eventData != NULL)
 		strcpy(eventData->filename, filename);
