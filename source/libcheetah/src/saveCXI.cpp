@@ -1177,7 +1177,7 @@ static CXI::Node *getCXIFileByName(cGlobal *global, cEventData *eventData, int p
 		sprintf(filename,"%s-r%04d-class%d-c%02d.cxi", global->experimentID, global->runNumber, powderClass, chunk);
 	}
 	else{
-		sprintf(filename,"%s-r%04d-c%02d.cxi", global->experimentID, global->runNumber, chunk);
+		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
 	}
 	if (eventData != NULL)
 		strcpy(eventData->filename, filename);
