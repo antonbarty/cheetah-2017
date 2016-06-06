@@ -5,6 +5,7 @@
 #
 
 import numpy
+import pyqtgraph.exporters
 
 
 
@@ -72,51 +73,12 @@ def histogram_clip(data, value):
 
 def pixel_remap(data, gx, gy, dx=1.0):
     """
-    Used for assembly of images in memory into images useful for display
-    Accepts any shaped array of data, along with corresponding X and Y coordinates of the pixels
-    Re-maps this into a 2D array for display
-    
-    IDL code:
-    function pixelremap, data, pix_x, pix_y, pix_dx
-
-	;; Default pixel size
-	if n_elements(pix_dx) eq 0 then $
-		pix_dx = 1
-
-	;; Array bounds check
-	if(n_elements(data) ne n_elements(pix_x) OR n_elements(data) ne n_elements(pix_y)) then begin
-		print,'pixelremap: array sizes do not match'
-		print, 'size(data) = ', size(data,/dim)
-		print, 'size(pix_x) = ', size(pix_x,/dim)
-		print, 'size(pix_y) = ', size(pix_y,/dim)
-		print, 'Returning original data'
-		return, data
-	endif
-	
-
-	;; Correct for pixel size
-	temp_x  = pix_x/pix_dx
-	temp_y  = pix_y/pix_dx
-
-	
-	;; Size of remapped image
-	max_x = max(abs(temp_x))
-	max_y = max(abs(temp_y))
-	nx = 2*max_x+2
-	ny = 2*max_y+2
-
-	;; Put image centre in centre
-	temp_x += nx/2
-	temp_y += ny/2
-
-
-	;; Remap image (quick)
-	image = fltarr(nx, ny)
-	image[*] = missing
-	image[temp_x, temp_y] = data
-	
-	return, image
-     """
+    :param data:
+    :param gx:
+    :param gy:
+    :param dx:
+    :return:
+    """
     
     # So we don't overwrite gx, gy by accident     
     temp_x = gx / dx
@@ -255,7 +217,12 @@ def write_png(filename, image):
     end
     """
     
-    print("Not yet implemented...")    
+    print("Not yet implemented...")
+    print(image.shape)
+    print(filename)
+
+    exporter = pyqtgraph.exporters.ImageExporter()
+
 #end write_png
 
       

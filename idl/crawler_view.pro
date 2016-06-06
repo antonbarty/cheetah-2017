@@ -895,19 +895,21 @@ pro crawler_event, ev
 		
 		sState.mbview_pyqtviewer : begin
 			dir = crawler_whichRun(pstate, /path)
-			print, 'Launching CXIview.py'			
+			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
 			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
 			;print, cmd
 			;spawn, cmd, unit=unit
-			cmdarr = ['python3', 'cxiview.py', '-g', sState.geometry,'-i', file]
+			;cmdarr = ['python3', '/reg/g/cfel/cheetah/cheetah-dev/python/cxiview.py', '-g', sState.geometry,'-i', file]
+			;cmdarr = ['python3', 'cxiview.py', '-g', sState.geometry,'-i', file]
+			cmdarr = ['cxiview.py', '-g', sState.geometry,'-i', file]
 			print, cmdarr
 			spawn, cmdarr, unit=unit, /noshell
 		end
 
 		sState.button_hits : begin
 			dir = crawler_whichRun(pstate, /path)
-			print, 'Launching CXIview.py'			
+			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
 			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
 			;print, cmd

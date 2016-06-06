@@ -1,9 +1,9 @@
 
 #python3 cxiview.py -g scratch/cxij4915-v12.geom -i scratch/cxik4516-r0048-class1.cxi 
 
-#python3 cxiview.py -g scratch/cxij4915-v12.geom -i 'scratch/cxik4516-r0048*.cxi' 
+python3 cxiview.py -g scratch/cxij4915-v12.geom -i 'scratch/cxik4516-r0048*.cxi' 
 
-python3 cxiview.py -g scratch/cxij4915-v12.geom -i 'scratch/r0076-detector0-class0-sum.h5'  -e 'data/non_assembled_detector_corrected'
+#python3 cxiview.py -g scratch/cxij4915-v12.geom -i 'scratch/r0076-detector0-class0-sum.h5'  -e 'data/non_assembled_detector_corrected'
 
 # Boneyard
 #python CXIview.py -g scratch/cspad-geometry.h5 -i scratch/cxik4516-r0048-class1.cxi 

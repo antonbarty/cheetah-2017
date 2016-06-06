@@ -17,23 +17,42 @@ import os
 qtApp = PyQt4.QtGui.QApplication(sys.argv)
 
 
-def dialog_pickfile(write=False, directory=False, multiple=False, filter='*.*'):
+def dialog_pickfile(write=False, directory=False, multiple=False, path=False, filter='*.*'):
     """
-    In [1]: import PyQt4
-    In [2]: from PyQt4 import QtGui
-    In [8]: import sys
-    The following line is already present in cxiview - may not always need it
-    In [9]: app = QtGui.QApplication(sys.argv)
-
-    In [14]: a = QtGui.QMainWindow()
-    In [15]: fname = QtGui.QFileDialog.getOpenFileName(a, 'Open file','/data')
-    In [16]: print(fname)
-    /Data/work/2016/lcls-scheduling-run_13_0-2.pdf
-    In [17]: fname = QtGui.QFileDialog.getSaveFileName(a, 'Open file','/data')
+    :param write:
+    :param directory:
+    :param multiple:
+    :param path:
+    :param filter:
     :return:
-    gui.QFileDialog.getExistingDirectory(a)
-
+    See: http://doc.qt.io/qt-4.8/qfiledialog.html
     """
+    QtWin= PyQt4.QtGui.QMainWindow()
+
+    if path==False:
+        path= ''
+
+    if write==True:
+        caption = 'Select destination file'
+        file = PyQt4.QtGui.QFileDialog.getSaveFileName(QtWin, caption, path, filter)
+        return file
+
+    elif directory==True:
+        caption = 'Select directory'
+        dirname= PyQt4.QtGui.QFileDialog.getExistingDirectory(QtWin, caption, path)
+        return dirname
+
+    elif multiple==True:
+        caption = 'Select Files'
+        files = PyQt4.QtGui.QFileDialog.getOpenFileNames(QtWin, caption, path, filter)
+        return files
+
+    else:
+        caption = 'Select File'
+        file = PyQt4.QtGui.QFileDialog.getOpenFileName(QtWin, caption, path, filter)
+        return file
+#end dialog_pickfile()
+
 
 
 def file_search(pattern, recursive=True, iterator=False):
@@ -48,7 +67,7 @@ def file_search(pattern, recursive=True, iterator=False):
     else:
         files = glob.glob(pattern, recursive=recursive)
     return files
-
+#end file_search()
 
 
 def read_h5(filename, field="/data/data"):

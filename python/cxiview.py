@@ -360,7 +360,42 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                 x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], camera_z_mm, resolution))
 
     #end mouse_clicked()
-    
+
+    #
+    #   Saving and other file functions
+    #
+    def action_save_png(self):
+
+        file_hint = os.path.basename(self.event_list['filename'][self.img_index])
+        file_hint = os.path.splitext(file_hint)[0]
+        file_hint += '-#'
+        file_hint += str(self.event_list['event'][self.img_index])
+        file_hint = os.path.join(self.exportdir, file_hint)
+
+        filename = cfel_file.dialog_pickfile(write=True, path=file_hint)
+        if filename=='':
+            return
+
+        if filename.endswith('.png') == False:
+            filename += '.png'
+
+        self.exportdir = os.path.dirname(filename)
+
+
+        print('Saving image to PNG: ', filename)
+
+        # Using pypng, which doesn't seem to work in Python3 (???)
+        #image = self.img_to_draw
+        #cfel_img.write_png(filename, image)
+
+        # Using pyQtGraph exporters
+        # http://www.pyqtgraph.org/documentation/exporting.html
+        exporter = pyqtgraph.exporters.ImageExporter(self.ui.imageView.getView())
+        exporter.parameters()['height'] = numpy.max(self.img_to_draw.shape)
+        exporter.export(filename)
+
+
+    #end save_png()
     
     
     #
@@ -461,6 +496,9 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.actionAuto_scale_levels.setChecked(True)
         self.ui.actionAuto_scale_levels.triggered.connect(self.action_autolevels)
 
+        self.ui.actionSave_image.triggered.connect(self.action_save_png)
+
+
         # Flags needed for play and shuffle (can probably do this better)
         self.shuffle_mode = False
         self.play_mode = False 
@@ -478,6 +516,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         # Start on the first frame
         self.img_index = 0
         self.ui.jumpToLineEdit.setText(str(self.img_index))
+        self.exportdir = ''
         
         
         # Set the colour table to inverse-BW (thanks Valerio)
@@ -496,7 +535,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.imageView.ui.histogram.setHistogramRange(-100, 10000, padding=0.1)
                 
         self.draw_things()
-        #self.ui.imageView.imageItem.setPxMode(True)
+        #self.ui.imageView.imageItem.setZoom(1)
         self.ui.imageView.imageItem.setAutoDownsample(False)     # True/False
         #self.ui.imageView.imageItem.clipToView(False)     # True/False
         #self.ui.imageView.imageItem.antialias(True)     # True/False
@@ -518,8 +557,7 @@ if __name__ == '__main__':
     #    
     parser = argparse.ArgumentParser(description='CFEL CXI file viewer')
     parser.add_argument("-g", default="none", help="Geometry file (.geom/.h5)")
-    parser.add_argument("-i", default="none", help="Input file or directory (.cxi/.h5)")
-    parser.add_argument("-d", default="none", help="Directory to scan")
+    parser.add_argument("-i", default="none", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
     parser.add_argument("-e", default="none", help="HDF5 field to read")
     parser.add_argument("-p", default=False, help="Circle peaks by default")    
     #parser.add_argument("--rmin", type=float, help="minimum pixel resolution cutoff")
@@ -532,8 +570,8 @@ if __name__ == '__main__':
     print("----------")    
     
     # This bit may be irrelevent if we can make parser.parse_args() require this field    
-    if args.i == "none" and args.d == "none":
-        print('Usage: CXIview.py -i data_file -g geom_file [-d directory_to_scan] [-f HDF5 field]')
+    if args.i == "none" and args.g == "none":
+        print('Usage: CXIview.py -i data_file_pattern -g geom_file [-e HDF5 field]')
         sys.exit()
     #endif        
 
