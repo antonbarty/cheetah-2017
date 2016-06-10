@@ -131,8 +131,6 @@ namespace cheetah_ana_pkg {
         int     pumpLaserCode = 0;
 
 		shared_ptr<Psana::EvrData::DataV3> data3 = evt.get(m_srcEvr);
-		
-#if PSANA_VERSION >= 1317
         shared_ptr<Psana::EvrData::DataV4> data4 = evt.get(m_srcEvr);
 
 		// EvrData v4
@@ -219,10 +217,8 @@ namespace cheetah_ana_pkg {
 				if(evr180) pumpLaserCode = 2;
 				if(evr181) pumpLaserCode = 3;
 			}
-		} else
-#endif
-		   // EvrData v3
-			if (data3.get()) {
+		}
+		else if (data3.get()) {
 			   numEvrData = data3->numFifoEvents();
 				
 			   // Timestamps

@@ -1221,8 +1221,11 @@ void writeAccumulatedCXI(cGlobal * global){
 
 	DETECTOR_LOOP{
 		POWDER_LOOP {
-			CXI::Node * cxi = getCXIFileByName(global, NULL, powderClass);
+			CXI::Node *cxi = getCXIFileByName(global, NULL, powderClass);
 
+			if( cxi->stackCounter == 0)
+				continue;
+			
 			pthread_mutex_lock(&global->saveCXI_mutex);
 			Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 			Node & cl = det_node.child("class",powderClass+1);
@@ -1289,6 +1292,8 @@ void writeAccumulatedCXI(cGlobal * global){
  *	Flush CXI file data
  */
 static void  flushCXI(CXI::Node *cxi){
+	//if( cxi->stackCounter == 0)
+	//	return;
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 }
 
@@ -1311,6 +1316,10 @@ void flushCXIFiles(cGlobal * global){
  *	Close CXI files
  */
 static void  closeCXI(CXI::Node *cxi){
+
+	//if( cxi->stackCounter == 0)
+	//	return;
+
 	cxi->trimAll();
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 	H5Fclose(cxi->hid());

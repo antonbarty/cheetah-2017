@@ -4,6 +4,9 @@
 #	Anton Barty
 #
 
+import os
+import sys
+import csv
 import h5py
 import glob
 import numpy as np
@@ -12,8 +15,6 @@ import numpy as np
 # Needed for dialog_pickfile()
 import PyQt4
 import PyQt4.QtGui
-import sys
-import os
 qtApp = PyQt4.QtGui.QApplication(sys.argv)
 
 
@@ -70,13 +71,20 @@ def file_search(pattern, recursive=True, iterator=False):
 #end file_search()
 
 
-def read_h5(filename, field="/data/data"):
+def read_h5(filename='', field="/data/data"):
     """
     Read a simple HDF5 file
 
     if n_elements(filename) eq 0 then $
         filename = dialog_pickfile()
     """
+
+    # Open a file selection dialog if no filename is provided
+    if filename == '':
+        filename = dialog_pickfile()
+        if filename == '':
+            return
+
 
     # Open HDF5 file
     fp = h5py.File(filename, 'r')
@@ -143,10 +151,92 @@ def write_h5(filename, field="data/data", compress=3):
 	H5G_CLOSE,group_id
 	H5F_CLOSE,fid 
      """
-
-
 # end write_h5
 
+
+#
+#   Write selected dict keys to csv file
+#
+#   Provide a list of keys to force consistent ordering
+#   Order of keys in the dict can be different each time
+#   Seriously - try it and see with print(dict.keys())
+#
+def dict_to_csv(filename, dict, keys):
+
+    ncol = len(keys)
+    nrows = len(dict[keys[0]])
+
+    # Check all keys are in the dict
+    for k in keys:
+        if not k in dict.keys():
+            print("Error in dict_to_csv")
+            print("Requested key is not in dict")
+            print("Requested key: ", k)
+            print("Available keys: ", dict.keys())
+            return
+
+
+    # Check all lines are the same length
+    for k in keys:
+        if len(dict[k]) != nrows:
+            print("Error in dict_to_csv")
+            print("Dict element ", k, "does not have the same dimensions")
+            print("nlines: ", k, ' = ', len(dict[k]))
+            print("nlines: ", keys[0], ' = ', nrows)
+            return
+        #endif
+    #endfor
+
+    # Write columns with header row
+    with open(filename, 'w') as f:
+        #w = csv.writer(sys.stderr)
+        w = csv.writer(f)
+        w.writerow(keys)
+
+        for row in range(0, nrows):
+            str_out = []
+            for k in keys:
+                str_out.append(dict[k][row])
+
+            w.writerow(str_out)
+        #endfor
+
+        f.close()
+    #endwith
+#end dict_to_csv
+
+
+
+#
+#   Read CSV file into a dictionary using the header row as dict entry names
+#   Result will be a blank dict {} if file does not exist
+#
+#   >>> import pandas as pd
+#   >>> csv = pd.read_csv('example.csv')
+#   >>> csv
+#
+def csv_to_dict(filename):
+
+    # Open CSV file
+    result = {}
+
+    with open(filename, 'r', newline='') as f:
+
+        reader = csv.DictReader(f)
+
+        for row in reader:
+           for column, value in row.items():
+                result.setdefault(column, []).append(value)
+
+        f.close()
+
+    return result
+#end csv_to_dict
+
+
+#
+#   Read event data using the appropriate reader for the format
+#
 def read_event(event_list, eventID, data=False, mask=False, peaks=False, photon_energy=False, camera_length=False, num_frames=False, slab_size=False):
     """
     Read an event from file
@@ -164,7 +254,7 @@ def read_event(event_list, eventID, data=False, mask=False, peaks=False, photon_
     """
 
     if event_list['format'][eventID] == 'cxi':
-        event_data = read_cxi(event_list['filename'][eventID], event_list['event'][eventID], data=data, peaks=peaks, photon_energy=photon_energy, camera_length=camera_length, num_frames=num_frames, slab_size=slab_size)
+        event_data = read_cxi(event_list['filename'][eventID], event_list['event'][eventID], data=data, peaks=peaks, mask=mask, photon_energy=photon_energy, camera_length=camera_length, num_frames=num_frames, slab_size=slab_size)
     #end cxi
 
     elif event_list['format'][eventID] == 'cheetah_h5':

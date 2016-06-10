@@ -361,28 +361,25 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
     #end mouse_clicked()
 
+
     #
     #   Saving and other file functions
     #
     def action_save_png(self):
-
         file_hint = os.path.basename(self.event_list['filename'][self.img_index])
         file_hint = os.path.splitext(file_hint)[0]
         file_hint += '-#'
         file_hint += str(self.event_list['event'][self.img_index])
+        file_hint += '.png'
         file_hint = os.path.join(self.exportdir, file_hint)
 
         filename = cfel_file.dialog_pickfile(write=True, path=file_hint)
         if filename=='':
             return
-
         if filename.endswith('.png') == False:
             filename += '.png'
-
-        self.exportdir = os.path.dirname(filename)
-
-
         print('Saving image to PNG: ', filename)
+        self.exportdir = os.path.dirname(filename)
 
         # Using pypng, which doesn't seem to work in Python3 (???)
         #image = self.img_to_draw
@@ -393,11 +390,23 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         exporter = pyqtgraph.exporters.ImageExporter(self.ui.imageView.getView())
         exporter.parameters()['height'] = numpy.max(self.img_to_draw.shape)
         exporter.export(filename)
+    #end action_save_png()
 
 
-    #end save_png()
-    
-    
+    def action_update_files(self):
+        self.event_list = cfel_file.list_events(self.img_file_pattern, field=self.img_h5_field)
+        self.nframes = self.event_list['nevents']
+        self.num_lines = self.nframes
+        print('Number of frames', self.nframes)
+
+        # No events?  May as well exit now
+        if self.nframes == 0:
+            print('Exiting (no events found to display)')
+            exit(1)
+    #end action_update_files
+
+
+
     #
     #	Initialisation function
     #
@@ -410,43 +419,41 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         # Initialisation stuff
         #
         # Extract info from command line arguments
-        geom_filename = args.g
-        img_file_pattern = args.i
-        img_h5_field = args.e
+        self.geom_filename = args.g
+        self.img_file_pattern = args.i
+        self.img_h5_field = args.e
 
         # Create event list of all events in all files matching pattern
         # This is for multi-file flexibility - importing of file lists, enables multiple input files, format flexibility
-        self.event_list = cfel_file.list_events(img_file_pattern, field=img_h5_field)
-        self.nframes = self.event_list['nevents']
-        self.num_lines = self.nframes
-        print('Number of frames', self.nframes)
+        self.action_update_files()
 
-        # No events?  May as well exit now
-        if self.nframes == 0:
-            print('Exiting (no events found to display)')
-            exit(1)
 
         # Load geometry
-        self.geometry = cfel_geom.read_geometry(geom_filename)
+        self.geometry = cfel_geom.read_geometry(self.geom_filename)
         self.img_shape = self.geometry['shape']
         self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
         self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
 
         # Size of images (assume all images have the same size as frame 0)
-        #temp = cfel_file.read_cxi(self.event_list['filename'][0], slab_size=True)
-        #temp = cfel_file.read_event(self.event_list, 0, slab_size=True)
-        #self.slab_size = temp.shape
-        #self.slab_shape = (self.slab_size[0],self.slab_size[1])
         temp = cfel_file.read_event(self.event_list, 0, data=True)
         print("Data shape: ", temp['data'].shape)
         self.slab_shape = temp['data'].shape
+
+        # Sanity check: Do geometry and data shape match?
+        if (temp['data'].flatten().shape != self.geometry['x'].shape):
+            print("Error: Shape of geometry and image data do not match")
+            print('Data size: ', temp.data.flatten().shape)
+            print('Geometry size: ', self.geometry['x'].shape)
+            exit(1)
 
 
         #
         # Set up the UI
         #
         super(cxiview, self).__init__()
-        pyqtgraph.setConfigOption('background', 0.2)
+        pyqtgraph.setConfigOption('background', 0.0)
+        pyqtgraph.setConfigOption('background', 'k')
+        pyqtgraph.setConfigOption('foreground', 'w')
         self.ui = UI.cxiview_ui.Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.imageView.ui.menuBtn.hide()
@@ -469,8 +476,11 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.qtintvalidator = PyQt4.QtGui.QRegExpValidator()
         self.qtintvalidator.setRegExp(self.intregex)        
 
+        self.ui.refreshfilesPushButton.clicked.connect(self.action_update_files)
         self.ui.previousPushButton.clicked.connect(self.previous_pattern)
         self.ui.nextPushButton.clicked.connect(self.next_pattern)
+        self.ui.playPushButton.clicked.connect(self.play)
+        self.ui.randomPushButton.clicked.connect(self.random_pattern)
         self.ui.shufflePushButton.clicked.connect(self.shuffle)
         self.ui.jumpToLineEdit.editingFinished.connect(self.jump_to_pattern)
         self.ui.jumpToLineEdit.setValidator(self.qtintvalidator)
@@ -488,7 +498,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.masksCheckBox.stateChanged.connect(self.showhidemasks)
         
         self.histogram_clip = True
-        #self.ui.actionHistogram_clip.setEnabled(False)
         self.ui.actionHistogram_clip.setChecked(True)
         self.ui.actionHistogram_clip.triggered.connect(self.action_histclip)
 
@@ -497,14 +506,17 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.actionAuto_scale_levels.triggered.connect(self.action_autolevels)
 
         self.ui.actionSave_image.triggered.connect(self.action_save_png)
+        self.ui.actionRefresh_file_list.triggered.connect(self.action_update_files)
 
+        # Disabled stuff
+        self.ui.actionSave_data.setEnabled(False)
+        self.ui.actionLoad_geometry.setEnabled(False)
+        self.ui.menuColours.setEnabled(False)
 
         # Flags needed for play and shuffle (can probably do this better)
         self.shuffle_mode = False
         self.play_mode = False 
         self.refresh_timer = PyQt4.QtCore.QTimer()
-        self.ui.randomPushButton.clicked.connect(self.random_pattern)
-        self.ui.playPushButton.clicked.connect(self.play)
 
         # Put menu inside the window on Macintosh and elsewhere
         self.ui.menuBar.setNativeMenuBar(False)

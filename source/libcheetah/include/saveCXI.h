@@ -128,6 +128,7 @@ namespace CXI{
 			Node & child(std::string prefix, int n);
 			void trimAll(int stackSize = -1);
 			uint getStackSlice();
+			uint stackCounter;
 
 			std::string name;
 			
@@ -148,7 +149,7 @@ namespace CXI{
 			
 			/*  This counter defines where in the file each image is stored.
 			 *  It is atomically incremented by each thread */
-			uint stackCounter;
+			//uint stackCounter;
 			int ignoreConversionExceptions;
 		
 			// Mutex

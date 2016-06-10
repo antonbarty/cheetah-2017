@@ -185,7 +185,7 @@ cGlobal::cGlobal(void) {
 	
     // Use .cxi format rather than one HDF5 per image
 	saveCXI = 1;
-	cxiChunkSize = 2000;
+	cxiChunkSize = 10000;
 	saveByPowderClass = false;
 	
 	// Flush after every image by default
