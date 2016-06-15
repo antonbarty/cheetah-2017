@@ -49,6 +49,9 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.photon_energy = cxi['photon_energy_eV']
         self.camera_length = cxi['EncoderValue']
         self.camera_length *= 1e-3
+        self.camera_z_m = (self.camera_length + self.geometry['coffset'])
+        self.camera_z_mm = self.camera_z_m * 1e3
+
         if (self.photon_energy > 0):
             self.lambd = scipy.constants.h * scipy.constants.c /(scipy.constants.e * self.photon_energy)
         else:
@@ -129,7 +132,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
        
        
         # Draw pixel mask overlay
-        if self.show_masks == True:
+        #if self.show_masks == True:
+        if self.ui.masksCheckBox.isChecked():
             #mask_from_file = read_cxi(self.filename, self.img_index, mask=True)
             mask_from_file = cxi['mask']
             bitmask = 0xFFFF
@@ -150,8 +154,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
        
 
         # Draw found peaks
-        if self.show_found_peaks == True:
-
+        #if self.show_found_peaks == True:
+        if self.ui.foundPeaksCheckBox.isChecked():
             peak_x = []
             peak_y = []
 
@@ -197,7 +201,10 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         else:
             self.predicted_peak_canvas.setData([])
         """
-        
+
+        self.update_resolution_rings()
+        self.draw_resolution_rings()
+
 
         # Set title
         self.setWindowTitle(title)
@@ -233,6 +240,50 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         #    self.refresh_timer.start(1000)
     #end next_pattern()
     
+
+    #
+    #   Resolution ring stuff
+    #   Pinched from Onda GUI - clean up code later
+    #
+    def update_resolution_rings(self):
+        items = ['3.0', '4.0', '6.0', '8.0', '10.0','20.0']
+        for ti in self.resolution_rings_textitems:
+            self.ui.imageView.getView().removeItem(ti)
+        if len(items) == 0:
+            self.resolution_rings_in_A = []
+        self.resolution_rings_in_A = [ float(item) for item in items if item != '' and float(item) != 0.0 ]
+        self.resolution_rings_textitems = [pyqtgraph.TextItem(str(x)+'A', anchor=(0.5,0.8)) for x in self.resolution_rings_in_A]
+        for ti in self.resolution_rings_textitems:
+            self.ui.imageView.getView().addItem(ti)
+        self.draw_resolution_rings()
+
+
+    def draw_resolution_rings(self):
+        dx = self.geometry['dx']
+        resolution_rings_in_pix = [2.0]
+        for resolution in self.resolution_rings_in_A:
+            resolution = float(resolution)
+            res_in_pix = (2.0 / dx) * self.camera_z_m * numpy.tan(2.0 * numpy.arcsin(self.lambd / (2.0 * resolution * 1e-10)))
+            resolution_rings_in_pix.append(res_in_pix)
+
+        if self.ui.resolutionCheckBox.isChecked():
+            nrings = len(resolution_rings_in_pix)
+            self.resolution_rings_canvas.setData([self.img_shape[0]/2] * nrings, [self.img_shape[1] / 2] * nrings,
+                                                 symbol='o',
+                                                 size=resolution_rings_in_pix,
+                                                 pen=self.resolution_rings_pen,
+                                                 brush=(0, 0, 0, 0), pxMode=False)
+            for index, item in enumerate(self.resolution_rings_textitems):
+                item.setText(str(self.resolution_rings_in_A[index]) + 'A', color='r')
+                #item.setText(str(self.resolution_rings_textitems[index]) + 'A')
+                item.setPos(self.img_shape[0]/2, self.img_shape[1]/2 + resolution_rings_in_pix[index + 1] / 2.0)
+        else:
+            self.resolution_rings_canvas.setData([], [])
+            for index, item in enumerate(self.resolution_rings_textitems):
+                item.setText('')
+
+
+
 
     #
     # Go to random pattern
@@ -326,6 +377,16 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.draw_things()
     #end showhidemasks()
 
+    def showhideresrings(self, state):
+        if state == PyQt4.QtCore.Qt.Checked:
+            self.show_resolution_rings = True
+        else:
+            self.show_resolution_rings = False
+        self.draw_things()
+    #end showhidemasks()
+
+
+
     def action_histclip(self, state):
         self.histogram_clip = state        
         self.draw_things()
@@ -349,15 +410,14 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             y_mouse = int(mouse_point.y()) 
             x_mouse_centered = x_mouse - self.img_shape[0]/2 + 1
             y_mouse_centered = y_mouse - self.img_shape[0]/2 + 1
-            radius = self.geometry['dx'] * numpy.sqrt(x_mouse_centered**2 + y_mouse_centered**2)
-            self.camera_z = (self.camera_length+self.geometry['coffset'])
-            camera_z_mm = self.camera_z * 1e3
-            camera_z_in = camera_z_mm / 25.4
-            resolution = 10e9*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius/(self.camera_length+self.geometry['coffset']))))
+            radius_in_m = self.geometry['dx'] * numpy.sqrt(x_mouse_centered**2 + y_mouse_centered**2)
+            camera_z_in = self.camera_z_mm / 25.4
+            #resolution = 10e9*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/(self.camera_length+self.geometry['coffset']))))
+            resolution = 1e10*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/self.camera_z_m)))
 
             self.ui.statusBar.setText(
                 'Last clicked pixel:     x: %4i     y: %4i     value: %4i     z: %.2f mm     resolution: %4.2f Å' % (
-                x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], camera_z_mm, resolution))
+                x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], self.camera_z_mm, resolution))
 
     #end mouse_clicked()
 
@@ -431,6 +491,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         # Load geometry
         self.geometry = cfel_geom.read_geometry(self.geom_filename)
         self.img_shape = self.geometry['shape']
+        self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
         self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
         self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
 
@@ -471,6 +532,15 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         #self.predicted_peak_canvas = pyqtgraph.ScatterPlotItem()
         #self.ui.imageView.getView().addItem(self.predicted_peak_canvas)
 
+        # Resolution rings
+        self.resolution_rings_textitems = []
+        self.resolution_rings_canvas = pyqtgraph.ScatterPlotItem()
+        self.ui.imageView.getView().addItem(self.resolution_rings_canvas)
+        self.resolution_rings_pen = pyqtgraph.mkPen('b', width=1)     # float=greyscale(0-1) or (r,g,b) or "r, g, b, c, m, y, k, w"
+        self.resolution_rings_in_A = [10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0]
+        self.resolution_rings_textitems = [pyqtgraph.TextItem('', anchor=(0.5, 0.8)) for x in self.resolution_rings_in_A]
+        for ti in self.resolution_rings_textitems:
+            self.ui.imageView.getView().addItem(ti)
 
         self.intregex = PyQt4.QtCore.QRegExp('[0-9]+')
         self.qtintvalidator = PyQt4.QtGui.QRegExpValidator()
@@ -497,6 +567,12 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.masksCheckBox.setChecked(False)
         self.ui.masksCheckBox.stateChanged.connect(self.showhidemasks)
         
+        self.show_resolution_rings = False
+        self.ui.resolutionCheckBox.setChecked(False)
+        self.ui.resolutionCheckBox.stateChanged.connect(self.showhideresrings)
+        #self.update_resolution_rings()
+
+
         self.histogram_clip = True
         self.ui.actionHistogram_clip.setChecked(True)
         self.ui.actionHistogram_clip.triggered.connect(self.action_histclip)
@@ -571,9 +647,12 @@ if __name__ == '__main__':
     parser.add_argument("-g", default="none", help="Geometry file (.geom/.h5)")
     parser.add_argument("-i", default="none", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
     parser.add_argument("-e", default="none", help="HDF5 field to read")
-    parser.add_argument("-p", default=False, help="Circle peaks by default")    
-    #parser.add_argument("--rmin", type=float, help="minimum pixel resolution cutoff")
-    #parser.add_argument("--nmax", default=np.inf, type=int, help="maximum number of peaks to read")
+    parser.add_argument("-p", default=False, help="Circle peaks by default")
+    parser.add_argument("-l", default='None', help="Read event list")
+    #parser.add_argument("-s", default='None', help="Read stream file")
+    #parser.add_argument("-z", default='50e-3', help="Detector distance (m)")
+    #parser.add_argument("-v", default='8000', help="Photon energy (eV)")
+    #parser.add_argument("-x", default='110e-6', help="Detector pixel size (m)")
     args = parser.parse_args()
     
     print("----------")    

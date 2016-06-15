@@ -420,7 +420,6 @@ def list_events(pattern='./*.cxi', field='data/data'):
     if len(files) == 0:
         print('No files found matching pattern: ', pattern)
 
-
     # List the found files (sanity check)
     #print('Found files:')
     #for filename in glob.iglob(pattern, recursive=True):
@@ -433,7 +432,7 @@ def list_events(pattern='./*.cxi', field='data/data'):
     format_out = []
 
 
-    print('Found files:')
+    #print('Found files:')
     for filename in glob.iglob(pattern, recursive=True):
 
         basename = os.path.basename(filename)
@@ -445,7 +444,9 @@ def list_events(pattern='./*.cxi', field='data/data'):
             # Number of events in file
             nframes = read_cxi(filename, num_frames=True)['nframes']
             if nframes == 0:
-                break
+                filename_short = basename
+                print(filename_short, '    ', nframes)
+                continue
 
             # Default location for data in .cxi files is not data/data
             # But leave option for passing a different hdf5 data path on the command line

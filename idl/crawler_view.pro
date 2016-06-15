@@ -898,6 +898,7 @@ pro crawler_event, ev
 			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
 			filepat = dir+'/*.cxi'
+			;filepat = "'" + filepat + "'"
 			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
 			;print, cmd
 			;spawn, cmd, unit=unit
@@ -913,12 +914,10 @@ pro crawler_event, ev
 			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
 			filepat = dir+'/*.cxi'
-			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
-			;print, cmd
-			;spawn, cmd, unit=unit
-			;cmdarr = ['python3', '/nfs/cfel/cxi/common/cfelsoft-any/python/cxiview.py', '-g', sState.geometry,'-i', file]
+			;filepat = "'" + filepat + "'"
 			cmdarr = ['cxiview.py', '-g', sState.geometry,'-i', filepat]
 			print, strjoin(cmdarr, ' ')
+			;spawn, cmdarr, unit=unit, /noshell
 			spawn, cmdarr, unit=unit, /noshell
 		end
 
@@ -944,6 +943,7 @@ pro crawler_event, ev
 			f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist
 			filepat = dir+'/*detector*-class*-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/non_assembled_detector_corrected' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1015,6 +1015,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/non_assembled_detector_corrected' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1025,6 +1026,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/non_assembled_detector_and_photon_corrected' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1035,6 +1037,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class0-sum.h5')
 			;crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/non_assembled_detector_corrected' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1045,6 +1048,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class0-sum.h5')
 			;crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/non_assembled_detector_and_photon_corrected' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1081,6 +1085,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class1-sum.h5')
 			;crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/peakpowder' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
@@ -1092,6 +1097,7 @@ pro crawler_event, ev
 			;f = file_search(dir,'*detector0-class0-sum.h5')
 			;crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
 			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
 			field ='data/peakpowder' 
 			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
 			print, strjoin(cmdarr, ' ')
