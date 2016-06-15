@@ -1,4 +1,0 @@
-
-python3 cheetah-crawler.py -l LCLS -d /data/scratch -c /data/scratch
-
-
