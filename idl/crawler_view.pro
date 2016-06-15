@@ -895,20 +895,30 @@ pro crawler_event, ev
 		
 		sState.mbview_pyqtviewer : begin
 			dir = crawler_whichRun(pstate, /path)
-			print, 'Launching CXIview.py'			
+			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
-			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
-			print, cmd
-			spawn, cmd, unit=unit
+			filepat = dir+'/*.cxi'
+			;filepat = "'" + filepat + "'"
+			;cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
+			;print, cmd
+			;spawn, cmd, unit=unit
+			;cmdarr = ['python3', '/reg/g/cfel/cheetah/cheetah-dev/python/cxiview.py', '-g', sState.geometry,'-i', file]
+			;cmdarr = ['python3', 'cxiview.py', '-g', sState.geometry,'-i', file]
+			cmdarr = ['cxiview.py', '-g', sState.geometry,'-i', filepat]
+			print, cmdarr
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 		sState.button_hits : begin
 			dir = crawler_whichRun(pstate, /path)
-			print, 'Launching CXIview.py'			
+			print, 'Launching cxiview.py'			
 			file = file_search(dir,'*.cxi')
-			cmd = 'cxiview.py -g ' +sState.geometry+ ' -i '+file
-			print, cmd
-			spawn, cmd, unit=unit
+			filepat = dir+'/*.cxi'
+			;filepat = "'" + filepat + "'"
+			cmdarr = ['cxiview.py', '-g', sState.geometry,'-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			;spawn, cmdarr, unit=unit, /noshell
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 	
@@ -931,12 +941,18 @@ pro crawler_event, ev
 		sState.button_powder : begin
 			dir = crawler_whichRun(pstate, /path)
 			f = file_search(dir,'*detector0-class1-sum.h5')
-			;crawler_displayfile, f[0]
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist
+			;crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist
+			filepat = dir+'/*detector*-class*-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/non_assembled_detector_corrected' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 		sState.mbfile_unlock : begin
 			widget_control, sState.mbfile_configure, sensitive=1
+			widget_control, sState.mbfile_pycrawl, sensitive=1
 			widget_control, sState.mbfile_crawl, sensitive=1
 			widget_control, sState.mbcheetah_run, sensitive=1
 			widget_control, sState.mbcheetah_label, sensitive=1
@@ -961,6 +977,16 @@ pro crawler_event, ev
 					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
 			endif
 		end
+		sState.mbfile_pycrawl : begin
+			cmdarr = ['cheetah-crawler.py', '-l', 'LCLS', '-d',  (*pState).xtcdir, '-c', (*pState).h5dir]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
+			if sState.table_autorefresh ne 0 then begin
+					widget_control, sState.button_refresh,  timer=sState.table_autorefresh
+			endif
+		end
+		
+		
 		sState.mbcheetah_run : begin
 			run = crawler_whichRun(pstate, /run, /multiple)
 			crawler_startCheetah, pState, run, /menu
@@ -986,23 +1012,47 @@ pro crawler_event, ev
 
 		sState.mbview_cxipowder_class1_detcorr : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class1-sum.h5')
+			;crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/non_assembled_detector_corrected' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 		sState.mbview_cxipowder_class1_detphotcorr : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class1-sum.h5')
+			;crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/non_assembled_detector_and_photon_corrected' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 		sState.mbview_cxipowder_class0_detcorr : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class0-sum.h5')
+			;crawler_displayfile, f[0], field='data/non_assembled_detector_corrected', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/non_assembled_detector_corrected' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 		sState.mbview_cxipowder_class0_detphotcorr : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class0-sum.h5')
+			;crawler_displayfile, f[0], field='data/non_assembled_detector_and_photon_corrected', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/non_assembled_detector_and_photon_corrected' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 
 		sState.mbview_cxipowder_diff : begin
@@ -1026,18 +1076,32 @@ pro crawler_event, ev
 		end
 		sState.mbview_powderdark : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class0-sum.h5')
+			;crawler_displayfile, f[0], field='data/correcteddata', geometry=sState.geometry, /hist, gamma=1
+
 		end
 		sState.mbview_peakpowder : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class1-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class1-sum.h5')
+			;crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class1-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/peakpowder' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
+
 		end
 		sState.mbview_peakpowderdark : begin
 			dir = crawler_whichRun(pstate, /path)
-			f = file_search(dir,'*detector0-class0-sum.h5')
-			crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
+			;f = file_search(dir,'*detector0-class0-sum.h5')
+			;crawler_displayfile, f[0], field='data/peakpowder', geometry=sState.geometry, /hist, gamma=1
+			filepat = dir+'/*detector0-class0-sum.h5'
+			;filepat = "'" + filepat + "'"
+			field ='data/peakpowder' 
+			cmdarr = ['cxiview.py', '-g',  sState.geometry, '-e', field, '-i', filepat]
+			print, strjoin(cmdarr, ' ')
+			spawn, cmdarr, unit=unit, /noshell
 		end
 		sState.mbview_bsub : begin
 			dir = crawler_whichRun(pstate, /path)
@@ -1209,7 +1273,8 @@ pro crawler_view
 	mbfile = widget_button(bar, value='File')
 	mbfile_configure = widget_button(mbfile, value='Configure', sensitive=0)
 	mbfile_unlock = widget_button(mbfile, value='Unlock command operations')
-	mbfile_crawl = widget_button(mbfile, value='Start crawler', sensitive=0)
+	mbfile_pycrawl = widget_button(mbfile, value='Start  crawler (python)', sensitive=0)
+	mbfile_crawl = widget_button(mbfile, value='Start old crawler (IDL)', sensitive=0)
 	mbfile_refresh = widget_button(mbfile, value='Refresh table')
 	mbfile_autorefresh = widget_button(mbfile, value='Auto refresh table')
 	mbfile_quit = widget_button(mbfile, value='Quit')
@@ -1321,6 +1386,8 @@ pro crawler_view
 			
 			mbfile_configure : mbfile_configure, $
 			mbfile_crawl : mbfile_crawl, $
+			mbfile_pycrawl : mbfile_pycrawl , $
+
 			mbfile_refresh : mbfile_refresh, $
 			mbfile_unlock : mbfile_unlock , $ 
 			mbfile_autorefresh : mbfile_autorefresh, $ 

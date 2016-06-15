@@ -1170,11 +1170,19 @@ static std::vector<CXI::Node* > openFiles = std::vector<CXI::Node *>();
 
 static CXI::Node *getCXIFileByName(cGlobal *global, cEventData *eventData, int powderClass){
 	char filename[MAX_FILENAME_LENGTH];
+	long chunk;
+	
 	if(global->saveByPowderClass){
-		sprintf(filename,"%s-r%04d-class%d.cxi", global->experimentID, global->runNumber, powderClass);
+		// Powder class CXI chunks according to number of frames in each powder class
+		chunk = global->detector[0].nPowderFrames[powderClass];
+		chunk = (long) floorf(chunk / (float) global->cxiChunkSize);
+		sprintf(filename,"%s-r%04d-class%d-c%02ld.cxi", global->experimentID, global->runNumber, powderClass, chunk);
 	}
 	else{
-		sprintf(filename,"%s-r%04d.cxi", global->experimentID, global->runNumber);
+		// All-in-one CXI file chunks by number of hits
+		chunk = global->nhits;
+		chunk = (long) floorf(chunk / (float) global->cxiChunkSize);
+		sprintf(filename,"%s-r%04d-c%02ld.cxi", global->experimentID, global->runNumber, chunk);
 	}
 	if (eventData != NULL)
 		strcpy(eventData->filename, filename);
@@ -1213,8 +1221,11 @@ void writeAccumulatedCXI(cGlobal * global){
 
 	DETECTOR_LOOP{
 		POWDER_LOOP {
-			CXI::Node * cxi = getCXIFileByName(global, NULL, powderClass);
+			CXI::Node *cxi = getCXIFileByName(global, NULL, powderClass);
 
+			if( cxi->stackCounter == 0)
+				continue;
+			
 			pthread_mutex_lock(&global->saveCXI_mutex);
 			Node & det_node = (*cxi)["cheetah"]["global_data"].child("detector",detIndex+1);
 			Node & cl = det_node.child("class",powderClass+1);
@@ -1281,6 +1292,8 @@ void writeAccumulatedCXI(cGlobal * global){
  *	Flush CXI file data
  */
 static void  flushCXI(CXI::Node *cxi){
+	//if( cxi->stackCounter == 0)
+	//	return;
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 }
 
@@ -1303,6 +1316,10 @@ void flushCXIFiles(cGlobal * global){
  *	Close CXI files
  */
 static void  closeCXI(CXI::Node *cxi){
+
+	//if( cxi->stackCounter == 0)
+	//	return;
+
 	cxi->trimAll();
 	H5Fflush(cxi->hid(), H5F_SCOPE_GLOBAL);
 	H5Fclose(cxi->hid());

@@ -185,6 +185,7 @@ cGlobal::cGlobal(void) {
 	
     // Use .cxi format rather than one HDF5 per image
 	saveCXI = 1;
+	cxiChunkSize = 10000;
 	saveByPowderClass = false;
 	
 	// Flush after every image by default
@@ -1265,6 +1266,10 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "savecxi")) {
 		saveCXI = atoi(value);
 	}
+	else if (!strcmp(tag, "cxichunksize")) {
+		cxiChunkSize = atoi(value);
+	}
+	
 	else if (!strcmp(tag, "savebypowderclass")) {
 		saveByPowderClass = atoi(value);
 	}

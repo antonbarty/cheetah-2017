@@ -1,0 +1,11 @@
+#!/bin/tcsh
+
+
+#setenv IDL_DIR /reg/g/cfel/idl/idl80
+setenv IDL_STARTUP /reg/g/cfel/cheetah/cheetah-latest/idl/idlstartup.pro
+
+
+echo Executing this version of IDL:
+echo $IDL_DIR/bin/idl 
+echo --------
+$IDL_DIR/bin/idl 

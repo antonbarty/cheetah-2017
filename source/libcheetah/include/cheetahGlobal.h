@@ -271,6 +271,7 @@ public:
     
 	/** @brief Output 1 HDF5 per image by default */
 	bool    saveCXI;
+	long	cxiChunkSize;
 	/** @brief If true save each powder class in a different file */
 	bool    saveByPowderClass;
     char    dataSaveFormat[MAX_FILENAME_LENGTH];

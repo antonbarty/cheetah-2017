@@ -299,10 +299,12 @@ void integratePixAboveThreshold(float *data,uint16_t *mask,long pix_nn,float ADC
 	*tat = 0.0;
 
 	for(long i=0;i<pix_nn;i++){
-		if((isNoneOfBitOptionsSet(mask[i],pixel_options)) && (data[i] >= ADC_threshold)){
-			*tat += data[i];
-			*nat += 1;
-			mask[i] |= PIXEL_IS_PEAK_FOR_HITFINDER;
+		if(isNoneOfBitOptionsSet(mask[i],pixel_options)) {
+			if(data[i] >= ADC_threshold) {
+				*tat += data[i];
+				*nat += 1;
+				mask[i] |= PIXEL_IS_PEAK_FOR_HITFINDER;
+			}
 		}
 	}
 }
@@ -323,6 +325,7 @@ int hitfinder1(cGlobal *global, cEventData *eventData, long detIndex){
 	float     *data;
 	long      pix_nn;
 	float     ADC_threshold = global->hitfinderADC;
+	
 	// Combine pixel options for pixels to be ignored
 	uint16_t  pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_MISSING;
 
