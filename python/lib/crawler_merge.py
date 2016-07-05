@@ -12,7 +12,22 @@ import lib.cfel_filetools as cfel_file
 
 
 def crawler_merge():
-    print("Crawler merge")
+    #print("Crawler merge")
+
+
+    #
+    #   Fix legacy issue with old datasets.txt format the first time we encounter it
+    #
+    if os.path.exists('datasets.txt') and not os.path.exists('datasets.csv'):
+        print('Updating old datasets.txt format to new datasets.csv format')
+        oldstyle = cfel_file.csv_to_dict('datasets.txt')
+
+        oldstyle.update({'Run' : oldstyle['# Run']})
+        oldstyle.update({'iniFile' : ['---']*len(oldstyle['Run'])})
+        del oldstyle['# Run']
+
+        keys_to_save = ['Run', 'DatasetID','Directory','iniFile']
+        cfel_file.dict_to_csv('datasets.csv', oldstyle, keys_to_save)
 
 
     #
@@ -24,8 +39,9 @@ def crawler_merge():
     cheetah = cfel_file.csv_to_dict('cheetah_status.csv')
     #run,status,directory,processed,hits,hitrate%
 
-    datasets = cfel_file.csv_to_dict('datasets.txt')
-    #Run, DatasetID, Directory
+    #datasets = cfel_file.csv_to_dict('datasets.txt')
+    datasets = cfel_file.csv_to_dict('datasets.csv')
+    #Run, DatasetID, Directory, iniFile
 
     # Check for missing data
     #if data=={} or cheetah=={} or datasets=={}:
@@ -47,16 +63,17 @@ def crawler_merge():
             cheetah['run'][i] = run_num
 
     if datasets != {}:
-        for i, run in enumerate(datasets['# Run']):
-            run_num = int(run[1:])
-            datasets['# Run'][i] = run_num
+        for i, run in enumerate(datasets['Run']):
+            #run_num = int(run[1:])
+            run_num = int(run)
+            datasets['Run'][i] = run_num
     #print(data['run'])
     #print(datasets['# Run'])
 
 
     # Find unique run numbers
     # (some runs may be missing from some of the tables)
-    all_runs = data['run'] + cheetah['run'] + datasets['# Run']
+    all_runs = data['run'] + cheetah['run'] + datasets['Run']
     uniq_runs = list(sorted(set(all_runs)))
     #print(uniq_runs)
 
@@ -95,11 +112,11 @@ def crawler_merge():
         dataset = '---'
         h5dir = '---'
         if datasets != {}:
-            if run in datasets['# Run']:
-                i = datasets['# Run'].index(run)
-                dataset = datasets[' DatasetID'][i].strip()
-                h5dir = datasets[' Directory'][i].strip()
-
+            if run in datasets['Run']:
+                i = datasets['Run'].index(run)
+                dataset = datasets['DatasetID'][i].strip()
+                h5dir = datasets['Directory'][i].strip()
+                inifile= datasets['iniFile'][i].strip()
 
         # Stuff contained in Cheetah status file
         # Match on dataset directory (to handle one run having multiple output directories)

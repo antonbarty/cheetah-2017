@@ -1,13 +1,11 @@
-#!/reg/g/cfel/anaconda/bin/python
+#!/usr/bin/env python3
 
 #	
-#	peakogram.py
+#	peakogram
 #
 #	Tom Grant, HWI, Buffalo NY
 #
 
-# Add this line at the top to make this an executable function
-###!/reg/g/cfel/anaconda/bin/python
 
 
 import sys

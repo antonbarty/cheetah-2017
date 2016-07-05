@@ -11,7 +11,7 @@ import lib.cfel_filetools as cfel_file
 
 
 def scan_hdf5(hdf5_dir):
-    print("Crawler HDF5: ", hdf5_dir)
+    #print("Crawler HDF5: ", hdf5_dir)
 
     debug = False
     pattern = hdf5_dir + '/r*/status.txt'

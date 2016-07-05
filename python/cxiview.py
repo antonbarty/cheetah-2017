@@ -1,5 +1,4 @@
-#!/reg/g/cfel/anaconda/bin/python3
-#!/nfs/cfel/cxi/common/cfelsoft-rh7/anaconda-py3/bin/python3
+#!/usr/bin/env python3
 #
 #   CXIview
 #   A python/Qt viewer for .cxi files (and other files output by Cheetah)
@@ -8,8 +7,6 @@
 #
 #   Tested using Anaconda / Python 3.4
 #
-#   Top line (#!/reg/g/cfel/anaconda/bin/python3) needed for interface to IDL GUI at SLAC to work properly 
-#   !/Applications/anaconda/bin/python3
 
 import argparse
 import os
@@ -37,61 +34,68 @@ class cxiview(PyQt4.QtGui.QMainWindow):
     #
     def draw_things(self):
         
-        # Retrieve CXI file data all at once
-        # (Saves opening and closing file many times)
-        #cxi = cfel_file.read_cxi(self.filename, self.img_index,  data=True, photon_energy=True, camera_length=True, mask=self.show_masks, peaks=self.show_found_peaks)
-        #cxi = cfel_file.read_cxi(self.event_list['filename'][self.img_index], self.event_list['event'][self.img_index],  data=True, photon_energy=True, camera_length=True, mask=self.show_masks, peaks=self.show_found_peaks)
+        # Retrieve CXI file data all at once (saves opening and closing file many times)
         cxi = cfel_file.read_event(self.event_list, self.img_index,  data=True, photon_energy=True, camera_length=True, mask=self.show_masks, peaks=self.show_found_peaks)
 
 
+        # Use command line eV if provided
+        if self.default_eV != 'None':
+            self.photon_energy = self.default_eV
+        else:
+            self.photon_energy = cxi['photon_energy_eV']
 
-        # Retrieve resolution related stuff
-        self.photon_energy = cxi['photon_energy_eV']
-        self.camera_length = cxi['EncoderValue']
-        self.camera_length *= 1e-3
-        self.camera_z_m = (self.camera_length + self.geometry['coffset'])
+        # Use command line camera distance if provided
+        if self.default_z != 'None':
+            self.camera_z_m = self.default_z
+        else:
+            self.camera_length = cxi['EncoderValue']
+            self.camera_length *= 1e-3
+            self.camera_z_m = (self.camera_length + self.geometry['coffset'])
         self.camera_z_mm = self.camera_z_m * 1e3
 
-        if (self.photon_energy > 0):
+
+        if (self.photon_energy > 0 and self.photon_energy != numpy.nan):
             self.lambd = scipy.constants.h * scipy.constants.c /(scipy.constants.e * self.photon_energy)
         else:
-            self.lambd = 1e-10
+            self.lambd = numpy.nan
         
-        # Set title 
-        #title = str(self.img_index)+'/'+ str(self.num_lines) + ' - ' + self.filename
-        #file_str = self.event_list['filename'][self.img_index]
+        # Set window title
         file_str = os.path.basename(self.event_list['filename'][self.img_index])
         title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines) + ')'
+        self.setWindowTitle(title)
         self.ui.jumpToLineEdit.setText(str(self.img_index))
+
 
         # Extract image to display
         # http://www.pyqtgraph.org/documentation/graphicsItems/imageitem.html
         img_data = cxi['data']
         self.img_to_draw = cfel_img.pixel_remap(img_data, self.geometry['x'], self.geometry['y'], dx=1.0)
-        self.ui.imageView.setImage(self.img_to_draw, autoLevels=True, autoRange=False)
+        self.ui.imageView.setImage(self.img_to_draw, autoLevels=False, autoRange=False)
 
-        # Histogram equalisation (saturate top 0.1% of pixels)   
-        if self.histogram_clip == True:
-            bottom, top  = cfel_img.histogram_clip_levels(img_data.ravel(),0.001)
-            self.ui.imageView.setLevels(0,top) #, update=True)
-        else:
-            top = numpy.amax(img_data.ravel())
-            self.ui.imageView.setLevels(0,top) #, update=True)
-        
-        # Set the histogram widget to auto-scale politely
+
+        # Auto-scale the image
+        if self.ui.actionAutoscale.isChecked():
+            if self.ui.actionHistogram_clip.isChecked() == True:
+                # Histogram equalisation (saturate top 0.1% of pixels)
+                bottom, top  = cfel_img.histogram_clip_levels(img_data.ravel(),0.001)
+            else:
+                # Scale from 0 to maximum intensity value
+                top = numpy.amax(img_data.ravel())
+
+            self.ui.imageView.setLevels(0,top)
+        #end autoscale
+
+        # Set the histogram widget scale bar to behave politely and not jump around
         # http://www.pyqtgraph.org/documentation/graphicsItems/histogramlutitem.html#pyqtgraph.HistogramLUTItem
-        if self.auto_levels == True:
+        if self.ui.actionAuto_scale_levels.isChecked() == True:
             hist = self.ui.imageView.getHistogramWidget()
-            hist.setHistogramRange(-100, 10000, padding=0.1)
+            hist.setHistogramRange(-100, 32768, padding=0.05)
         else:
             hist = self.ui.imageView.getHistogramWidget()
             hist.setHistogramRange(numpy.amin(img_data.ravel()), numpy.amax(img_data.ravel()), padding=0.1)
-            
+        #end histogramscale
 
 
-
-        # Static level
-        #self.ui.imageView.setLevels(0,1000) #, update=True)
 
 
         # Edit the colour table (unduly complicated - edit the editor rather than load a table of values)
@@ -206,9 +210,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.draw_resolution_rings()
 
 
-        # Set title
-        self.setWindowTitle(title)
-  
+
     #end draw_things()
     
 
@@ -387,17 +389,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
 
 
-    def action_histclip(self, state):
-        self.histogram_clip = state        
-        self.draw_things()
-    #end action_histclip()
-        
-    def action_autolevels(self, state):
-        self.auto_levels = state
-        self.draw_things()
-    #end action_autolevels()
-
-
 
     #
     # Mouse clicked somewhere in the window
@@ -463,6 +454,11 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         if self.nframes == 0:
             print('Exiting (no events found to display)')
             exit(1)
+
+        file_str = os.path.basename(self.event_list['filename'][self.img_index])
+        title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines) + ')'
+        self.ui.jumpToLineEdit.setText(str(self.img_index))
+        self.setWindowTitle(title)
     #end action_update_files
 
 
@@ -482,31 +478,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.geom_filename = args.g
         self.img_file_pattern = args.i
         self.img_h5_field = args.e
-
-        # Create event list of all events in all files matching pattern
-        # This is for multi-file flexibility - importing of file lists, enables multiple input files, format flexibility
-        self.action_update_files()
-
-
-        # Load geometry
-        self.geometry = cfel_geom.read_geometry(self.geom_filename)
-        self.img_shape = self.geometry['shape']
-        self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
-        self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
-        self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
-
-        # Size of images (assume all images have the same size as frame 0)
-        temp = cfel_file.read_event(self.event_list, 0, data=True)
-        print("Data shape: ", temp['data'].shape)
-        self.slab_shape = temp['data'].shape
-
-        # Sanity check: Do geometry and data shape match?
-        if (temp['data'].flatten().shape != self.geometry['x'].shape):
-            print("Error: Shape of geometry and image data do not match")
-            print('Data size: ', temp.data.flatten().shape)
-            print('Geometry size: ', self.geometry['x'].shape)
-            exit(1)
-
+        self.default_z = args.z
+        self.default_eV = args.v
 
         #
         # Set up the UI
@@ -517,6 +490,39 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         pyqtgraph.setConfigOption('foreground', 'w')
         self.ui = UI.cxiview_ui.Ui_MainWindow()
         self.ui.setupUi(self)
+
+
+        # Create event list of all events in all files matching pattern
+        # This is for multi-file flexibility - importing of file lists, enables multiple input files, format flexibility
+        self.img_index = 0
+        self.action_update_files()
+
+
+
+        # Size of images (assume all images have the same size as frame 0)
+        temp = cfel_file.read_event(self.event_list, 0, data=True)
+        print("Data shape: ", temp['data'].shape)
+        self.slab_shape = temp['data'].shape
+
+        # Load geometry
+        self.geometry = cfel_geom.read_geometry(self.geom_filename)
+        self.img_shape = self.geometry['shape']
+        self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
+        self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
+        self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
+
+        # Sanity check: Do geometry and data shape match?
+        if (temp['data'].flatten().shape != self.geometry['x'].shape):
+            print("Error: Shape of geometry and image data do not match")
+            print('Data size: ', temp.data.flatten().shape)
+            print('Geometry size: ', self.geometry['x'].shape)
+            exit(1)
+
+
+
+        #
+        #   UI configuration stuff
+        #
         self.ui.imageView.ui.menuBtn.hide()
         self.ui.imageView.ui.roiBtn.hide()
         
@@ -570,16 +576,13 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.show_resolution_rings = False
         self.ui.resolutionCheckBox.setChecked(False)
         self.ui.resolutionCheckBox.stateChanged.connect(self.showhideresrings)
-        #self.update_resolution_rings()
 
 
-        self.histogram_clip = True
+        self.ui.actionAutoscale.setChecked(True)
         self.ui.actionHistogram_clip.setChecked(True)
-        self.ui.actionHistogram_clip.triggered.connect(self.action_histclip)
-
-        self.auto_levels = True
         self.ui.actionAuto_scale_levels.setChecked(True)
-        self.ui.actionAuto_scale_levels.triggered.connect(self.action_autolevels)
+        self.ui.actionHistogram_clip.triggered.connect(self.draw_things)
+        self.ui.actionAuto_scale_levels.triggered.connect(self.draw_things)
 
         self.ui.actionSave_image.triggered.connect(self.action_save_png)
         self.ui.actionRefresh_file_list.triggered.connect(self.action_update_files)
@@ -602,7 +605,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
 
         # Start on the first frame
-        self.img_index = 0
         self.ui.jumpToLineEdit.setText(str(self.img_index))
         self.exportdir = ''
         
@@ -615,13 +617,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
 
 
-        # Scale QtGraph histogram to not auto-range
-        #qt_Histogram = self.ui.imageView.ui.HistogramLUTItem()
-        #qt_Histogram.autoHistogramRange()
-        #qt_Histogram.setHistogramRange(-100, 10000, padding=0.1)
-        #self.ui.imageView.ui.HistogramLUTItem().setHistogramRange(-100, 10000, padding=0.1)
-        self.ui.imageView.ui.histogram.setHistogramRange(-100, 10000, padding=0.1)
-                
         self.draw_things()
         #self.ui.imageView.imageItem.setZoom(1)
         self.ui.imageView.imageItem.setAutoDownsample(False)     # True/False
@@ -650,8 +645,8 @@ if __name__ == '__main__':
     parser.add_argument("-p", default=False, help="Circle peaks by default")
     parser.add_argument("-l", default='None', help="Read event list")
     #parser.add_argument("-s", default='None', help="Read stream file")
-    #parser.add_argument("-z", default='50e-3', help="Detector distance (m)")
-    #parser.add_argument("-v", default='8000', help="Photon energy (eV)")
+    parser.add_argument("-z", default='None', help="Detector distance (m)")
+    parser.add_argument("-v", default='None', help="Photon energy (eV)")
     #parser.add_argument("-x", default='110e-6', help="Detector pixel size (m)")
     args = parser.parse_args()
     

@@ -1,11 +1,8 @@
-#!/reg/g/cfel/anaconda/bin/python3
-#!/nfs/cfel/cxi/common/cfelsoft-rh7/anaconda-py3/bin/python3
+#!/usr/bin/env python3
 #
-#   crawler.py
+#   cxiview
 #   A python/Qt replacement for the IDL cheetah crawler
 #
-#   Top line (#!/reg/g/cfel/anaconda/bin/python3) needed for interface to IDL GUI at SLAC to work properly 
-#   !/Applications/anaconda/bin/python3
 
 import os
 import sys
