@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CDIR=/gpfs/cfel/cxi/common/cfelsoft-rh7/cheetah
-ADIR=/gpfs/cfel/cxi/common/anaconda3
+ADIR=/gpfs/cfel/cxi/common/cfelsoft-rh7/anaconda3
 
 echo Using ${CDIR}
 export PYTHONPATH=""
