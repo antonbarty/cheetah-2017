@@ -18,14 +18,14 @@ import lib.cfel_filetools as cfel_file
 import lib.gui_dialogs as gui_dialogs
 
 #TODO: Cheetah GUI
-#TODO: Setup new experiment function
-#TODO: Relabel datasets (including directory renaming and database update)
+#TODO: Calibration table (darkcal, mask, .ini for each run)
 
 #TODO: cxiview.py
 #TODO: Sensible behaviour when geometry not specified (display without geometry applied)
 #TODO: Do not display resolution rings if wavelength, z, or geometry not defined
-#TODO: Wavelength and z on command line (optional)
+#TODO: Wavelength and z on command line
 #TODO: Take file list as an argument
+
 
 #
 #	Cheetah GUI code
@@ -708,17 +708,14 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
     #   Try to avoid the worst of the ugly Linux GUI layouts
     #
     def change_skins(self):
-
         styles = PyQt4.QtGui.QStyleFactory.keys()
-        #print("Available Qt4 styles: ", styles)
-
         style = styles[-1]
+        #print("Available Qt4 styles: ", styles)
         #print("Setting Qt4 style: ", style)
-
         try:
             PyQt4.QtGui.QApplication.setStyle(PyQt4.QtGui.QStyleFactory.create(style))
         except:
-            print("Style not available:", style)
+            print("Qt style not available:", style)
     #end change_skins
 
 
@@ -758,7 +755,6 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         #self.change_skins()
 
 
-
         # Experiment selector (if not already in a gui directory)
         if not os.path.isfile('crawler.config'):
             expdir = self.select_experiment()
@@ -781,7 +777,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
         # Update window title
         dir = os.getcwd()
-        title = 'Cheetah GUI: ' + dir
+        title = 'Cheetah GUI:  ' + dir
         self.setWindowTitle(title)
 
 
@@ -837,7 +833,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
 
         # Disable action commands until enabled
-        #self.ui.button_runCheetah.setEnabled(False)
+        self.ui.button_runCheetah.setEnabled(False)
         self.ui.button_index.setEnabled(False)
         self.ui.menu_file_startcrawler.setEnabled(False)
         self.ui.menu_cheetah_processselected.setEnabled(False)

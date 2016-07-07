@@ -124,10 +124,14 @@ def read_pixelmap(filename):
     """
 
     # Open HDF5 pixelmap file
-    fp = h5py.File(filename, 'r')     
-    x = fp['x'][:]
-    y = fp['y'][:]
-    fp.close()    
+    try:
+        fp = h5py.File(filename, 'r')
+        x = fp['x'][:]
+        y = fp['y'][:]
+        fp.close()
+    except:
+        print('Error reading pixelmap:')
+        print(filename)
 
 
     # Correct for pixel size (meters --> pixels)
@@ -143,6 +147,7 @@ def read_pixelmap(filename):
 
     return x, y, r, dx
     
+
 
 def read_geometry(geometry_filename, quiet=False):
     """
@@ -172,20 +177,37 @@ def read_geometry(geometry_filename, quiet=False):
         print("Unknown geometry file format: ", geometry_filename)
         format = 'unknown'
 
+
     # Read geometry, depending on format
+    fail = False
     if format == 'CrystFEL':
-        x, y, r = pixelmap_from_CrystFEL_geometry_file(geometry_filename)
-        coffset, res, dx_m = coffset_from_CrystFEL_geometry_file(geometry_filename)
+        try:
+            x, y, r = pixelmap_from_CrystFEL_geometry_file(geometry_filename)
+            coffset, res, dx_m = coffset_from_CrystFEL_geometry_file(geometry_filename)
+        except:
+            fail = True
 
     elif format == 'pixelmap':
-        x, y, r, dx_m = read_pixelmap(geometry_filename)
-        coffset = 0.591754
-        res = 9090.91
+        try:
+            x, y, r, dx_m = read_pixelmap(geometry_filename)
+            coffset = 'nan'
+        except:
+            fail = True
 
     else:
         print('Unsupported geometry type:', geometry_filename)
+        fail = True
+    #endif
+
+
+
+    if fail:
+        print('Error reading geometry file:')
+        print(geometry_filename)
+        print('Fatal error.  Quitting.')
         exit()
-    #endif      
+
+
 
     # find the smallest size of cspad_geom that contains all
     # xy values but is symmetric about the origin

@@ -34,31 +34,58 @@ class cxiview(PyQt4.QtGui.QMainWindow):
     #
     def draw_things(self):
         
-        # Retrieve CXI file data all at once (saves opening and closing file many times)
-        cxi = cfel_file.read_event(self.event_list, self.img_index,  data=True, photon_energy=True, camera_length=True, mask=self.show_masks, peaks=self.show_found_peaks)
+        # Retrieve CXI file data all at once (avoid opening and closing file for each data set)
+        # Skip frame on any error (make this more sensible later on)
+        show_masks = self.ui.masksCheckBox.isChecked()
+        show_found_peaks = self.ui.foundPeaksCheckBox.isChecked()
+        try:
+            cxi = cfel_file.read_event(self.event_list, self.img_index,  data=True, photon_energy=True, camera_length=True, mask=show_masks, peaks=show_found_peaks)
+        except:
+            print('Error encountered reading data from file (image data, peaks, energy or masks).  Skipping frame.')
+            return
 
 
-        # Use command line eV if provided
+        # Photon energy - use command line eV if provided
+        self.photon_energy_ok = False
         if self.default_eV != 'None':
-            self.photon_energy = self.default_eV
+            self.photon_energy = float(self.default_eV)
+            self.photon_energy_ok = True
         else:
             self.photon_energy = cxi['photon_energy_eV']
+            if self.photon_energy != 'nan':
+                self.photon_energy_ok = True
+        if self.photon_energy < 0 or self.photon_energy == numpy.nan:
+            self.photon_energy_ok = False
 
-        # Use command line camera distance if provided
-        if self.default_z != 'None':
-            self.camera_z_m = self.default_z
-        else:
-            self.camera_length = cxi['EncoderValue']
-            self.camera_length *= 1e-3
-            self.camera_z_m = (self.camera_length + self.geometry['coffset'])
-        self.camera_z_mm = self.camera_z_m * 1e3
-
-
-        if (self.photon_energy > 0 and self.photon_energy != numpy.nan):
+        # Photon energy to wavelength
+        if self.photon_energy_ok:
             self.lambd = scipy.constants.h * scipy.constants.c /(scipy.constants.e * self.photon_energy)
         else:
             self.lambd = numpy.nan
-        
+
+        # Detector distance - use command line detector distance if provided
+        self.detector_distance_ok = False
+        if self.default_z != 'None':
+            self.detector_z_m = float(self.default_z)
+            self.detector_distance_ok = True
+        else:
+            detector_distance = cxi['EncoderValue']
+            if detector_distance != numpy.nan and self.geometry['coffset'] != 'nan':
+                self.detector_distance_ok = True
+                self.detector_z_m = (1e-3*detector_distance + self.geometry['coffset'])
+            else:
+                self.detector_z_m = numpy.nan
+        self.detector_z_mm = self.detector_z_m * 1e3
+
+
+        # Do not allow deceptive resolution values if we have insufficient information to calculate resolution
+        if self.geometry_ok and self.photon_energy_ok and self.detector_distance_ok:
+            self.resolution_ok = True
+        else:
+            self.resolution_ok = False
+
+
+
         # Set window title
         file_str = os.path.basename(self.event_list['filename'][self.img_index])
         title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines) + ')'
@@ -66,11 +93,14 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.jumpToLineEdit.setText(str(self.img_index))
 
 
-        # Extract image to display
-        # http://www.pyqtgraph.org/documentation/graphicsItems/imageitem.html
+        # Apply geometry to image and display
         img_data = cxi['data']
-        self.img_to_draw = cfel_img.pixel_remap(img_data, self.geometry['x'], self.geometry['y'], dx=1.0)
+        if self.geometry_ok:
+            self.img_to_draw = cfel_img.pixel_remap(img_data, self.geometry['x'], self.geometry['y'], dx=1.0)
+        else:
+            self.img_to_draw = numpy.transpose(img_data)
         self.ui.imageView.setImage(self.img_to_draw, autoLevels=False, autoRange=False)
+
 
 
         # Auto-scale the image
@@ -85,11 +115,12 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             self.ui.imageView.setLevels(0,top)
         #end autoscale
 
+
+
         # Set the histogram widget scale bar to behave politely and not jump around
-        # http://www.pyqtgraph.org/documentation/graphicsItems/histogramlutitem.html#pyqtgraph.HistogramLUTItem
         if self.ui.actionAuto_scale_levels.isChecked() == True:
             hist = self.ui.imageView.getHistogramWidget()
-            hist.setHistogramRange(-100, 32768, padding=0.05)
+            hist.setHistogramRange(-100, 16384, padding=0.05)
         else:
             hist = self.ui.imageView.getHistogramWidget()
             hist.setHistogramRange(numpy.amin(img_data.ravel()), numpy.amax(img_data.ravel()), padding=0.1)
@@ -136,9 +167,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
        
        
         # Draw pixel mask overlay
-        #if self.show_masks == True:
         if self.ui.masksCheckBox.isChecked():
-            #mask_from_file = read_cxi(self.filename, self.img_index, mask=True)
             mask_from_file = cxi['mask']
             bitmask = 0xFFFF
 
@@ -158,7 +187,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
        
 
         # Draw found peaks
-        #if self.show_found_peaks == True:
         if self.ui.foundPeaksCheckBox.isChecked():
             peak_x = []
             peak_y = []
@@ -206,9 +234,14 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             self.predicted_peak_canvas.setData([])
         """
 
-        self.update_resolution_rings()
-        self.draw_resolution_rings()
 
+        # Draw resolution rings
+        if self.ui.resolutionCheckBox.isChecked():
+            self.update_resolution_rings()
+        else:
+            self.resolution_rings_canvas.setData([], [])
+            for index, item in enumerate(self.resolution_rings_textitems):
+                item.setText('')
 
 
     #end draw_things()
@@ -237,9 +270,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         else:
             self.img_index = 0
         self.draw_things()
-        
-        #if self.play_mode == True:
-        #    self.refresh_timer.start(1000)
     #end next_pattern()
     
 
@@ -248,6 +278,13 @@ class cxiview(PyQt4.QtGui.QMainWindow):
     #   Pinched from Onda GUI - clean up code later
     #
     def update_resolution_rings(self):
+
+        # Refuse to draw deceptive resolution rings
+        if self.resolution_ok == False:
+            print("Insufficient information to calculate resolution")
+            return
+
+
         items = ['3.0', '4.0', '6.0', '8.0', '10.0','20.0']
         for ti in self.resolution_rings_textitems:
             self.ui.imageView.getView().removeItem(ti)
@@ -265,7 +302,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         resolution_rings_in_pix = [2.0]
         for resolution in self.resolution_rings_in_A:
             resolution = float(resolution)
-            res_in_pix = (2.0 / dx) * self.camera_z_m * numpy.tan(2.0 * numpy.arcsin(self.lambd / (2.0 * resolution * 1e-10)))
+            res_in_pix = (2.0 / dx) * self.detector_z_m * numpy.tan(2.0 * numpy.arcsin(self.lambd / (2.0 * resolution * 1e-10)))
             resolution_rings_in_pix.append(res_in_pix)
 
         if self.ui.resolutionCheckBox.isChecked():
@@ -352,42 +389,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
     #end jump_to_pattern()
         
 
-    #
-    # Toggle show or hide stuff
-    #
-    def showhidefoundpeaks(self, state):
-        if state == PyQt4.QtCore.Qt.Checked:
-            self.show_found_peaks = True
-        else:
-            self.show_found_peaks = False
-        self.draw_things()
-    #end showhidepeaks()
-
-    def showhidepredictedpeaks(self, state):
-        if state == PyQt4.QtCore.Qt.Checked:
-            self.show_predicted_peaks = True
-        else:
-            self.show_predicted_peaks = False
-        self.draw_things()
-    #end showhidepredictedpeaks()
-
-    def showhidemasks(self, state):
-        if state == PyQt4.QtCore.Qt.Checked:
-            self.show_masks = True
-        else:
-            self.show_masks = False
-        self.draw_things()
-    #end showhidemasks()
-
-    def showhideresrings(self, state):
-        if state == PyQt4.QtCore.Qt.Checked:
-            self.show_resolution_rings = True
-        else:
-            self.show_resolution_rings = False
-        self.draw_things()
-    #end showhidemasks()
-
-
 
 
     #
@@ -402,13 +403,25 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             x_mouse_centered = x_mouse - self.img_shape[0]/2 + 1
             y_mouse_centered = y_mouse - self.img_shape[0]/2 + 1
             radius_in_m = self.geometry['dx'] * numpy.sqrt(x_mouse_centered**2 + y_mouse_centered**2)
-            camera_z_in = self.camera_z_mm / 25.4
-            #resolution = 10e9*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/(self.camera_length+self.geometry['coffset']))))
-            resolution = 1e10*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/self.camera_z_m)))
 
-            self.ui.statusBar.setText(
-                'Last clicked pixel:     x: %4i     y: %4i     value: %4i     z: %.2f mm     resolution: %4.2f Å' % (
-                x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], self.camera_z_mm, resolution))
+            text = 'Last clicked pixel:     x: %4i     y: %4i     value: %4i' % (x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse])
+
+            # Refuse to report an incorrect detector distance
+            if self.detector_distance_ok:
+                camera_z_in = self.detector_z_mm / 25.4
+                text += '     z: %.2f mm' % (self.detector_z_mm)
+
+            # Refuse to lie about the resolution
+            if self.resolution_ok:
+                #resolution = 10e9*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/(self.camera_length+self.geometry['coffset']))))
+                resolution = 1e10*self.lambd/(2.0*numpy.sin(0.5*numpy.arctan(radius_in_m/self.detector_z_m)))
+                text += '     resolution: %4.2f Å' % (resolution)
+
+
+            self.ui.statusBar.setText(text)
+            # self.ui.statusBar.setText(
+            #    'Last clicked pixel:     x: %4i     y: %4i     value: %4i     z: %.2f mm     resolution: %4.2f Å' % (
+            #    x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], self.camera_z_mm, resolution))
 
     #end mouse_clicked()
 
@@ -481,6 +494,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.default_z = args.z
         self.default_eV = args.v
 
+
         #
         # Set up the UI
         #
@@ -498,26 +512,44 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.action_update_files()
 
 
-
         # Size of images (assume all images have the same size as frame 0)
         temp = cfel_file.read_event(self.event_list, 0, data=True)
-        print("Data shape: ", temp['data'].shape)
         self.slab_shape = temp['data'].shape
+        print("Data shape: ", self.slab_shape )
+
 
         # Load geometry
-        self.geometry = cfel_geom.read_geometry(self.geom_filename)
-        self.img_shape = self.geometry['shape']
-        self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
-        self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
-        self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
+        # read_geometry currently exits program on failure
+        if self.geom_filename != "":
+            self.geometry = cfel_geom.read_geometry(self.geom_filename)
+            self.geometry_ok = True
+            self.img_shape = self.geometry['shape']
+            self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
+            self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
+            self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
+        else:
+            self.geometry_ok = False
+            self.img_shape = self.slab_shape
+            self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
+            self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
+            self.mask_to_draw = numpy.zeros(self.img_shape + (3,), dtype=numpy.uint8)
+            # faking self.geometry is a hack to stop crashes down the line.  Fix more elegantly later
+            self.geometry = {
+                'x': numpy.zeros(self.img_shape).flatten(),
+                'y': numpy.zeros(self.img_shape).flatten(),
+                'r': numpy.zeros(self.img_shape).flatten(),
+                'dx': 1.0,
+                'coffset': 'nan',
+                'shape': self.slab_shape
+            }
+
 
         # Sanity check: Do geometry and data shape match?
-        if (temp['data'].flatten().shape != self.geometry['x'].shape):
+        if self.geometry_ok and (temp['data'].flatten().shape != self.geometry['x'].shape):
             print("Error: Shape of geometry and image data do not match")
             print('Data size: ', temp.data.flatten().shape)
             print('Geometry size: ', self.geometry['x'].shape)
             exit(1)
-
 
 
         #
@@ -526,6 +558,58 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.imageView.ui.menuBtn.hide()
         self.ui.imageView.ui.roiBtn.hide()
         
+        # Buttons on front pannel
+        self.ui.refreshfilesPushButton.clicked.connect(self.action_update_files)
+        self.ui.previousPushButton.clicked.connect(self.previous_pattern)
+        self.ui.nextPushButton.clicked.connect(self.next_pattern)
+        self.ui.playPushButton.clicked.connect(self.play)
+        self.ui.randomPushButton.clicked.connect(self.random_pattern)
+        self.ui.shufflePushButton.clicked.connect(self.shuffle)
+        self.ui.jumpToLineEdit.editingFinished.connect(self.jump_to_pattern)
+        self.intregex = PyQt4.QtCore.QRegExp('[0-9]+')
+        self.qtintvalidator = PyQt4.QtGui.QRegExpValidator()
+        self.qtintvalidator.setRegExp(self.intregex)
+        self.ui.jumpToLineEdit.setValidator(self.qtintvalidator)
+
+        # Check boxes on bottom line
+        self.ui.foundPeaksCheckBox.setChecked(False)
+        self.ui.predictedPeaksCheckBox.setChecked(False)
+        self.ui.masksCheckBox.setChecked(False)
+        self.ui.resolutionCheckBox.setChecked(False)
+        self.ui.foundPeaksCheckBox.stateChanged.connect(self.draw_things)
+        self.ui.predictedPeaksCheckBox.stateChanged.connect(self.draw_things)
+        self.ui.masksCheckBox.stateChanged.connect(self.draw_things)
+        self.ui.resolutionCheckBox.stateChanged.connect(self.draw_things)
+
+
+        # View menu
+        self.ui.actionAutoscale.setChecked(True)
+        self.ui.actionHistogram_clip.setChecked(True)
+        self.ui.actionAuto_scale_levels.setChecked(True)
+        self.ui.actionHistogram_clip.triggered.connect(self.draw_things)
+        self.ui.actionAuto_scale_levels.triggered.connect(self.draw_things)
+
+        # File menu
+        self.ui.actionSave_image.triggered.connect(self.action_save_png)
+        self.ui.actionRefresh_file_list.triggered.connect(self.action_update_files)
+
+        # Disabled stuff
+        self.ui.actionSave_data.setEnabled(False)
+        self.ui.actionLoad_geometry.setEnabled(False)
+        self.ui.menuColours.setEnabled(False)
+
+
+        # Flags needed for play and shuffle (can probably do this better)
+        self.shuffle_mode = False
+        self.play_mode = False 
+        self.refresh_timer = PyQt4.QtCore.QTimer()
+
+
+        # Put menu inside the window on Macintosh and elsewhere
+        self.ui.menuBar.setNativeMenuBar(False)
+        self.proxy = pyqtgraph.SignalProxy(self.ui.imageView.getView().scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
+
+
         # Masks
         self.mask_view = pyqtgraph.ImageItem()
         self.ui.imageView.getView().addItem(self.mask_view)
@@ -539,6 +623,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         #self.ui.imageView.getView().addItem(self.predicted_peak_canvas)
 
         # Resolution rings
+        self.resolution_ok = False
         self.resolution_rings_textitems = []
         self.resolution_rings_canvas = pyqtgraph.ScatterPlotItem()
         self.ui.imageView.getView().addItem(self.resolution_rings_canvas)
@@ -547,61 +632,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.resolution_rings_textitems = [pyqtgraph.TextItem('', anchor=(0.5, 0.8)) for x in self.resolution_rings_in_A]
         for ti in self.resolution_rings_textitems:
             self.ui.imageView.getView().addItem(ti)
-
-        self.intregex = PyQt4.QtCore.QRegExp('[0-9]+')
-        self.qtintvalidator = PyQt4.QtGui.QRegExpValidator()
-        self.qtintvalidator.setRegExp(self.intregex)        
-
-        self.ui.refreshfilesPushButton.clicked.connect(self.action_update_files)
-        self.ui.previousPushButton.clicked.connect(self.previous_pattern)
-        self.ui.nextPushButton.clicked.connect(self.next_pattern)
-        self.ui.playPushButton.clicked.connect(self.play)
-        self.ui.randomPushButton.clicked.connect(self.random_pattern)
-        self.ui.shufflePushButton.clicked.connect(self.shuffle)
-        self.ui.jumpToLineEdit.editingFinished.connect(self.jump_to_pattern)
-        self.ui.jumpToLineEdit.setValidator(self.qtintvalidator)
-
-        self.show_found_peaks = False
-        self.ui.foundPeaksCheckBox.setChecked(False)
-        self.ui.foundPeaksCheckBox.stateChanged.connect(self.showhidefoundpeaks)
-
-        self.show_predicted_peaks = False
-        self.ui.predictedPeaksCheckBox.setChecked(False)
-        self.ui.predictedPeaksCheckBox.stateChanged.connect(self.showhidepredictedpeaks)
-
-        self.show_masks = False
-        self.ui.masksCheckBox.setChecked(False)
-        self.ui.masksCheckBox.stateChanged.connect(self.showhidemasks)
-        
-        self.show_resolution_rings = False
-        self.ui.resolutionCheckBox.setChecked(False)
-        self.ui.resolutionCheckBox.stateChanged.connect(self.showhideresrings)
-
-
-        self.ui.actionAutoscale.setChecked(True)
-        self.ui.actionHistogram_clip.setChecked(True)
-        self.ui.actionAuto_scale_levels.setChecked(True)
-        self.ui.actionHistogram_clip.triggered.connect(self.draw_things)
-        self.ui.actionAuto_scale_levels.triggered.connect(self.draw_things)
-
-        self.ui.actionSave_image.triggered.connect(self.action_save_png)
-        self.ui.actionRefresh_file_list.triggered.connect(self.action_update_files)
-
-        # Disabled stuff
-        self.ui.actionSave_data.setEnabled(False)
-        self.ui.actionLoad_geometry.setEnabled(False)
-        self.ui.menuColours.setEnabled(False)
-
-        # Flags needed for play and shuffle (can probably do this better)
-        self.shuffle_mode = False
-        self.play_mode = False 
-        self.refresh_timer = PyQt4.QtCore.QTimer()
-
-        # Put menu inside the window on Macintosh and elsewhere
-        self.ui.menuBar.setNativeMenuBar(False)
-        self.proxy = pyqtgraph.SignalProxy(self.ui.imageView.getView().scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
-
-
 
 
         # Start on the first frame
@@ -616,18 +646,18 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.imageView.ui.histogram.gradient.setColorMap(self.new_color_map)
 
 
-
+        # Initial image
         self.draw_things()
-        #self.ui.imageView.imageItem.setZoom(1)
         self.ui.imageView.imageItem.setAutoDownsample(False)     # True/False
+        #self.ui.imageView.imageItem.setZoom(1)
         #self.ui.imageView.imageItem.clipToView(False)     # True/False
         #self.ui.imageView.imageItem.antialias(True)     # True/False
         self.ui.statusBar.setText('Ready')
-        
-        
-        
+
     #end __init()__
 #end cxiview
+
+
 
         
 #
@@ -639,25 +669,26 @@ if __name__ == '__main__':
     #   Use parser to process command line arguments
     #    
     parser = argparse.ArgumentParser(description='CFEL CXI file viewer')
-    parser.add_argument("-g", default="none", help="Geometry file (.geom/.h5)")
-    parser.add_argument("-i", default="none", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
-    parser.add_argument("-e", default="none", help="HDF5 field to read")
-    parser.add_argument("-p", default=False, help="Circle peaks by default")
-    parser.add_argument("-l", default='None', help="Read event list")
-    #parser.add_argument("-s", default='None', help="Read stream file")
+    parser.add_argument("-g", default="", help="Geometry file (.geom/.h5)")
+    parser.add_argument("-i", default="", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
+    parser.add_argument("-e", default="data/data", help="HDF5 field to read")
     parser.add_argument("-z", default='None', help="Detector distance (m)")
     parser.add_argument("-v", default='None', help="Photon energy (eV)")
+    parser.add_argument("-l", default='None', help="Read event list")
+    parser.add_argument("-p", default=False, help="Circle peaks by default")
+    #parser.add_argument("-s", default='None', help="Read stream file")
     #parser.add_argument("-x", default='110e-6', help="Detector pixel size (m)")
     args = parser.parse_args()
-    
+
+
     print("----------")    
     print("Parsed command line arguments")
     print(args)
     print("----------")    
     
     # This bit may be irrelevent if we can make parser.parse_args() require this field    
-    if args.i == "none" and args.g == "none":
-        print('Usage: CXIview.py -i data_file_pattern -g geom_file [-e HDF5 field]')
+    if args.i == "":
+        print('Usage: cxiview.py -i data_file_pattern [-g geom_file .geom/.h5] [-e HDF5 field] [-z Detector distance m] [-v photon energy eV]')
         sys.exit()
     #endif        
 

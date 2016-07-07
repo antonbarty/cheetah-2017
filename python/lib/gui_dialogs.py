@@ -42,8 +42,8 @@ class expt_select_gui(PyQt4.QtGui.QDialog):
         self.button4 = PyQt4.QtGui.QPushButton("Cancel",self)
         self.button4.clicked.connect(self.button4_function)
         layout2.addWidget(self.button1)
-        layout2.addWidget(self.button2)
         layout2.addWidget(self.button3)
+        layout2.addWidget(self.button2)
         layout2.addWidget(self.button4)
         layout.addLayout(layout2)
 

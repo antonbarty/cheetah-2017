@@ -87,12 +87,12 @@ def pixel_remap(data, gx, gy, dx=1.0):
     # Figure out array bounds
     max_x = numpy.fabs(gx).max()     
     max_y = numpy.fabs(gy).max()
-    nx = 2*max_x + 2     
-    ny = 2*max_y + 2
-    
+    nx = int(2*max_x + 2)
+    ny = int(2*max_y + 2)
+
     # Put (0,0) pixel at the center
-    temp_x += nx/2
-    temp_y += ny/2     
+    temp_x += nx//2
+    temp_y += ny//2
      
     # Create array of appropriate size
     image = numpy.zeros(numpy.array([nx,ny]), dtype=numpy.float32)
