@@ -1,0 +1,12 @@
+#!/bin/bash
+
+CDIR=/reg/g/cfel/cheetah/cheetah-stable
+CDEPDIR=/reg/g/cfel/dependencies
+ADIR=/reg/g/cfel/anaconda
+
+echo Using ${CDIR}
+export PYTHONPATH=""
+export PATH=${CDIR}/bin:${ADIR}/bin:${CDIR}/python:$PATH
+
+/reg/g/cfel/cheetah/cheetah-latest/python/cheetah-gui.py
+

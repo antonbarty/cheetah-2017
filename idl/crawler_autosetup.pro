@@ -81,7 +81,7 @@ pro crawler_autosetup, dir
 		if a.option[1] eq 1 then begin
 			print,'>---------------------<'
 			print,'Placing configuration into /res...'
-			cmd = '/reg/g/cfel/cheetah/cheetah-latest/bin/make-labrynth'
+			cmd = '/reg/g/cfel/cheetah/cheetah-stable/bin/make-labrynth'
 			spawn, cmd
 		endif
 		
@@ -97,10 +97,10 @@ pro crawler_autosetup, dir
 		;print, cmd
 		spawn, cmd
 
-		h5sed = '\/' + strjoin(ss,'\/') + '\/cheetah\/hdf5\/'
-		cmd = "sed -i -r 's/(hdf5dir=).*/\1"+h5sed+"/'" + ' ' + file
+		;h5sed = '\/' + strjoin(ss,'\/') + '\/cheetah\/hdf5\/'
+		;cmd = "sed -i -r 's/(hdf5dir=).*/\1"+h5sed+"/'" + ' ' + file
 		;print, cmd
-		spawn, cmd
+		;spawn, cmd
 		
 		print,'>-------------------------<'
 		spawn, 'cat '+file

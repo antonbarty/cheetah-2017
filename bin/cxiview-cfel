@@ -1,0 +1,11 @@
+#!/bin/bash
+
+CDIR=/gpfs/cfel/cxi/common/cfelsoft-rh7/cheetah
+ADIR=/gpfs/cfel/cxi/common/cfelsoft-rh7/anaconda3
+
+echo Using ${CDIR}
+export PYTHONPATH=""
+export PATH=${CDIR}/bin:${ADIR}/bin:${CDIR}/python:$PATH
+
+/gpfs/cfel/cxi/common/cfelsoft-rh7/cheetah/python/cxiview.py $@
+

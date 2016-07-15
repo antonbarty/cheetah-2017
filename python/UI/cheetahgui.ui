@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>776</width>
+    <height>855</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Cheetah GUI</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
+        <item>
+         <widget class="QPushButton" name="button_refresh">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Refresh</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_runCheetah">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Run Cheetah</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_index">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Turbo index</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_viewhits">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>View hits</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_virtualpowder">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Powder</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="button_peakogram">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Peakogram</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="table_status">
+        <property name="lineWidth">
+         <number>3</number>
+        </property>
+        <property name="verticalScrollBarPolicy">
+         <enum>Qt::ScrollBarAsNeeded</enum>
+        </property>
+        <property name="horizontalScrollBarPolicy">
+         <enum>Qt::ScrollBarAlwaysOn</enum>
+        </property>
+        <property name="sortingEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="rowCount">
+         <number>10</number>
+        </property>
+        <attribute name="horizontalHeaderCascadingSectionResizes">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>90</number>
+        </attribute>
+        <attribute name="horizontalHeaderHighlightSections">
+         <bool>false</bool>
+        </attribute>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <column>
+         <property name="text">
+          <string>Run</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Dataset</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>XTC</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Cheetah</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>CrystFEL</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>H5 Directory</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Nprocessed</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Nhits</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Nindex</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Hitrate%</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout2"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>776</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="menu_file_command"/>
+    <addaction name="menu_file_startcrawler"/>
+    <addaction name="menu_file_newgeometry"/>
+    <addaction name="separator"/>
+    <addaction name="menu_file_quit"/>
+   </widget>
+   <widget class="QMenu" name="menuCheetah">
+    <property name="title">
+     <string>Cheetah</string>
+    </property>
+    <addaction name="menu_cheetah_processselected"/>
+    <addaction name="menu_cheetah_relabel"/>
+    <addaction name="menu_cheetah_autorun"/>
+   </widget>
+   <widget class="QMenu" name="menuAnalysis">
+    <property name="title">
+     <string>Analysis</string>
+    </property>
+    <addaction name="menu_analysis_hitrate"/>
+    <addaction name="menu_analysis_resolution"/>
+    <addaction name="menu_analysis_saturation"/>
+    <addaction name="menu_analysis_peakogram"/>
+   </widget>
+   <widget class="QMenu" name="menu_masks">
+    <property name="title">
+     <string>Masks</string>
+    </property>
+    <addaction name="menu_mask_maker"/>
+    <addaction name="menu_mask_badpixdark"/>
+    <addaction name="menu_mask_badpixbright"/>
+    <addaction name="menu_mask_combine"/>
+    <addaction name="menu_mask_makecspadgain"/>
+    <addaction name="menu_mask_translatecspadgain"/>
+    <addaction name="menu_mask_view"/>
+   </widget>
+   <widget class="QMenu" name="menuPowder">
+    <property name="title">
+     <string>Powder</string>
+    </property>
+    <addaction name="menu_powder_hits"/>
+    <addaction name="menu_powder_hits_det"/>
+    <addaction name="menu_powder_blank"/>
+    <addaction name="menu_powder_blank_det"/>
+    <addaction name="menu_powder_peaks_hits"/>
+    <addaction name="menu_powder_peaks_blank"/>
+    <addaction name="separator"/>
+    <addaction name="menu_powder_darkcal"/>
+    <addaction name="menu_powder_copydarkcal"/>
+   </widget>
+   <widget class="QMenu" name="menuLogs">
+    <property name="title">
+     <string>Logs</string>
+    </property>
+    <addaction name="menu_log_batch"/>
+    <addaction name="menu_log_cheetah"/>
+    <addaction name="menu_log_cheetahstatus"/>
+   </widget>
+   <widget class="QMenu" name="menuUtilities">
+    <property name="title">
+     <string>Utilities</string>
+    </property>
+    <addaction name="menu_utilities_calibman"/>
+    <addaction name="menu_utilities_psocake"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuCheetah"/>
+   <addaction name="menuPowder"/>
+   <addaction name="menu_masks"/>
+   <addaction name="menuAnalysis"/>
+   <addaction name="menuUtilities"/>
+   <addaction name="menuLogs"/>
+  </widget>
+  <action name="menu_file_autorefresh">
+   <property name="text">
+    <string>Auto refresh table</string>
+   </property>
+  </action>
+  <action name="menu_file_refreshtable">
+   <property name="text">
+    <string>Refresh table</string>
+   </property>
+  </action>
+  <action name="menu_file_startcrawler">
+   <property name="text">
+    <string>Start crawler</string>
+   </property>
+  </action>
+  <action name="menu_file_command">
+   <property name="text">
+    <string>Unlock command operations</string>
+   </property>
+  </action>
+  <action name="menu_file_quit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="menu_mask_badpixdark">
+   <property name="text">
+    <string>Make bad pixel mask from darkcal</string>
+   </property>
+  </action>
+  <action name="menu_mask_badpixbright">
+   <property name="text">
+    <string>Make bad pixel mask from brightfield</string>
+   </property>
+  </action>
+  <action name="actionDefault_particle_display_settings">
+   <property name="text">
+    <string>Default particle display settings</string>
+   </property>
+  </action>
+  <action name="actionHistogram_clip">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Histogram clip</string>
+   </property>
+  </action>
+  <action name="actionAuto_scale_levels">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Clamp histogram scale </string>
+   </property>
+  </action>
+  <action name="menu_cheetah_processselected">
+   <property name="text">
+    <string>Process selected runs</string>
+   </property>
+  </action>
+  <action name="menu_cheetah_relabel">
+   <property name="text">
+    <string>Label or relabel dataset</string>
+   </property>
+  </action>
+  <action name="menu_cheetah_autorun">
+   <property name="text">
+    <string>Autorun when new data is ready</string>
+   </property>
+  </action>
+  <action name="menu_mask_combine">
+   <property name="text">
+    <string>Combine masks</string>
+   </property>
+  </action>
+  <action name="menu_mask_makecspadgain">
+   <property name="text">
+    <string>Create CSPAD gain map</string>
+   </property>
+  </action>
+  <action name="menu_mask_translatecspadgain">
+   <property name="text">
+    <string>Translate CSPAD gain map</string>
+   </property>
+  </action>
+  <action name="menu_analysis_peakogram">
+   <property name="text">
+    <string>Peakogram</string>
+   </property>
+  </action>
+  <action name="menu_analysis_saturation">
+   <property name="text">
+    <string>Saturation check</string>
+   </property>
+  </action>
+  <action name="menu_analysis_hitrate">
+   <property name="text">
+    <string>Hit rate plot</string>
+   </property>
+  </action>
+  <action name="menu_analysis_resolution">
+   <property name="text">
+    <string>Resolution plot</string>
+   </property>
+  </action>
+  <action name="menu_powder_hits">
+   <property name="text">
+    <string>Virtual powder hits (class 1, background subtracted)</string>
+   </property>
+  </action>
+  <action name="menu_powder_hits_det">
+   <property name="text">
+    <string>Virtual powder hits (class 1, detector corrected only)</string>
+   </property>
+  </action>
+  <action name="menu_powder_blank">
+   <property name="text">
+    <string>Virtual powder blanks (class 0, background subtracted)</string>
+   </property>
+  </action>
+  <action name="menu_powder_blank_det">
+   <property name="text">
+    <string>Virtual powder blanks (class 0, detector corrected only)</string>
+   </property>
+  </action>
+  <action name="menu_powder_peaks_hits">
+   <property name="text">
+    <string>Peakfinder virtual powder hits (class 1)</string>
+   </property>
+  </action>
+  <action name="menu_powder_peaks_blank">
+   <property name="text">
+    <string>Peakfinder virtual powder blanks (class 0)</string>
+   </property>
+  </action>
+  <action name="menu_log_batch">
+   <property name="text">
+    <string>Batch log file</string>
+   </property>
+  </action>
+  <action name="menu_log_cheetah">
+   <property name="text">
+    <string>Cheetah log file</string>
+   </property>
+  </action>
+  <action name="menu_log_cheetahstatus">
+   <property name="text">
+    <string>Cheetah status file</string>
+   </property>
+  </action>
+  <action name="menu_mask_maker">
+   <property name="text">
+    <string>Mask maker</string>
+   </property>
+  </action>
+  <action name="menu_utilities_psocake">
+   <property name="text">
+    <string>psocake (Chuck)</string>
+   </property>
+  </action>
+  <action name="menu_powder_darkcal">
+   <property name="text">
+    <string>View darkcal</string>
+   </property>
+  </action>
+  <action name="menu_mask_view">
+   <property name="text">
+    <string>View mask file</string>
+   </property>
+  </action>
+  <action name="menu_file_newgeometry">
+   <property name="text">
+    <string>Change geometry file</string>
+   </property>
+  </action>
+  <action name="menu_utilities_calibman">
+   <property name="text">
+    <string>calibman (pcds)</string>
+   </property>
+  </action>
+  <action name="menu_powder_copydarkcal">
+   <property name="text">
+    <string>Copy darkcal.h5 to calib/darkcal</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
