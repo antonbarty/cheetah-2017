@@ -325,7 +325,7 @@ public:
 	char	streak_mask_filename[MAX_FILENAME_LENGTH];
 	char	streak_mask_hdf5_path[MAX_FILENAME_LENGTH ];
 
-	streakFinderConstantArguments_t *streakfinderConstants;
+	streakFinder_constantArguments_t *streakfinderConstants;
 	
 	// Ring frame buffers
 	cFrameBuffer *frameBufferBlanks;

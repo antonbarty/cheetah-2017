@@ -12,6 +12,7 @@
 #include <boost/math/special_functions/round.hpp>
 #include <boost/algorithm/cxx11/iota.hpp>
 #include <boost/phoenix/phoenix.hpp>
+#include "sortingByOtherValues.h"
 
 #include <boost/foreach.hpp>
 #ifdef __CDT_PARSER__
@@ -69,7 +70,7 @@ void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& ac
 
     for (uint8_t streakDetektorNumber = 0; streakDetektorNumber < accuracyConstants.streakDetektorsIndices.size(); ++streakDetektorNumber) {
         Point2D < uint_fast8_t > detectorToCheckIndex = accuracyConstants.streakDetektorsIndices[streakDetektorNumber];
-        detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
+        const detectorPosition_t detectorPosition = detectorPositions[detectorToCheckIndex.getY()][detectorToCheckIndex.getX()];
 
         for (uint8_t lineToCheckNumber = 0; lineToCheckNumber < accuracyConstants.linesToCheck.size(); ++lineToCheckNumber) {
             float y_streakStart = detectorPosition.rawCoordinates_uint16.getLowerRightCorner().getY() - accuracyConstants.linesToCheck[lineToCheckNumber];
@@ -91,7 +92,8 @@ void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& ac
                     float currentRadius = (detectorPosition.virtualZeroPositionRaw - pointOnStreak).norm();
                     float streakElongationStepCount = max((float) accuracyConstants.streakElongationMinStepsCount,
                             accuracyConstants.streakElongationRadiusFactor * currentRadius);
-                    while (stepsWithoutStreakPixel < streakElongationStepCount && detectorPosition.rawCoordinates_float.contains(Point2D< float >(pointOnStreak))) {
+                    while (stepsWithoutStreakPixel < streakElongationStepCount
+                            && detectorPosition.rawCoordinates_float.contains(Point2D< float >(pointOnStreak))) {
                         streakLength++;
 
                         float filterValue = computeRadialFilter(boost::math::round((float) pointOnStreak(0)), boost::math::round((float) pointOnStreak(1)),
@@ -459,10 +461,20 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
         }
     }
 
-    using namespace boost::phoenix::placeholders;
     uint8_t indices[regionsCount];
     boost::algorithm::iota(indices, indices + validRegionsEstimated, 0);
-    nth_element(indices, indices + 1, indices + validRegionsEstimated, *(sigmas + arg1) < *(sigmas + arg2)); //compute index of second-largest element
+//    nth_element(indices, indices + 1, indices + validRegionsEstimated,
+//            *(sigmas + boost::phoenix::placeholders::arg1) < *(sigmas + boost::phoenix::placeholders::arg2)); //compute index of second-largest element
+//    struct CompareClass {
+//        float *m_values;
+//        bool operator()(uint32_t i, uint32_t j)
+//        {
+//            return (m_values[i] < m_values[j]);
+//        }
+//    } compareObject;
+//    compareObject.m_values = sigmas;
+//    nth_element(indices, indices + 1, indices + validRegionsEstimated, compareObject); //compute index of second-largest element
+    nthElementTwoArraysByFirstArray(sigmas, indices, 1, regionsCount);
 //    nth_element(indices, indices + 1, indices + validRegionsEstimated, [&](size_t a, size_t b) {return sigmas[a] < sigmas[b];}); //compute index of second-largest element
 
     float threshold = means[indices[1]] + streakFinder_accuracyConstants.sigmaFactor * sigmas[indices[1]];
@@ -498,7 +510,7 @@ static inline float computeRadialFilter(uint16_t x, uint16_t y, const float* dat
     return filterValue;
 }
 
-void freePrecomputeStreakFinderConstants(streakFinder_precomputedConstants_t& streakFinder_precomputedConstants)
+void freePrecomputedStreakFinderConstants(streakFinder_precomputedConstants_t& streakFinder_precomputedConstants)
 {
     delete[] streakFinder_precomputedConstants.radialFilterContributors;
 }

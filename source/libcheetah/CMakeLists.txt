@@ -39,6 +39,10 @@ LIST(APPEND sources "src/cheetah_extensions_yaroslav/streakFinder.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/pythonWrapperConversions.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/mask.cpp")
 LIST(APPEND sources "src/cheetah_extensions_yaroslav/detectorGeometry.cpp")
+LIST(APPEND sources "src/cheetah_extensions_yaroslav/matlabLikeFunctions.cpp")
+LIST(APPEND sources "src/cheetah_extensions_yaroslav/pnCcdWorkarounds.cpp")
+LIST(APPEND sources "src/cheetah_extensions_yaroslav/radialBackgroundSubtraction.cpp")
+
 
 include_directories("include")
 include_directories("include/cheetah_extensions_yaroslav")

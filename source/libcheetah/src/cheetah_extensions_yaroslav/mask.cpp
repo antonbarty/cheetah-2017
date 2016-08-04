@@ -71,6 +71,13 @@ void mergeMaskAndDataIntoDataCopy(const float * data, float * dataCopy, const ui
     }
 }
 
+void mergeMaskAndDataIntoDataCopy(const float * data, float * dataCopy, const std::vector< uint32_t >& sparseMask,
+        const detectorRawSize_cheetah_t& detectorRawSize_cheetah)
+{
+    copy(data, data + detectorRawSize_cheetah.pix_nn, dataCopy);
+    mergeMaskIntoData(dataCopy, sparseMask);
+}
+
 void mergeInvertedMaskAndDataIntoDataCopy(const float * data, float * dataCopy, const uint8_t * mask, const detectorRawSize_cheetah_t& detectorRawSize_cheetah)
 {
     const float *currentDataPixel;
@@ -86,14 +93,6 @@ void mergeInvertedMaskAndDataIntoDataCopy(const float * data, float * dataCopy, 
             *currentDataCopyPixel = *currentDataPixel;
         }
     }
-}
-
-void mergeMaskAndDataIntoDataCopy(const float * data, float * dataCopy, const std::vector< uint32_t >& sparseMask,
-        const detectorRawSize_cheetah_t& detectorRawSize_cheetah)
-{
-
-    copy(data, data + detectorRawSize_cheetah.pix_nn, dataCopy);
-    mergeMaskIntoData(dataCopy, sparseMask);
 }
 
 void getMaskFromMergedMaskInData(const float * data, uint8_t * mask, const detectorRawSize_cheetah_t& detectorRawSize_cheetah)

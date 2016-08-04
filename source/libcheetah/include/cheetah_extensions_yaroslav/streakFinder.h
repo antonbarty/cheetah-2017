@@ -8,10 +8,10 @@
 #ifndef INCLUDE_STREAKFINDER_H_
 #define INCLUDE_STREAKFINDER_H_
 
+#include <Point2D.h>
 #include <stdint.h>
 #include <vector>
 #include "detectorGeometry.h"
-#include "Point.h"
 #include "ImageRectangle.h"
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -52,7 +52,7 @@ void precomputeStreakFinderConstants(const streakFinder_accuracyConstants_t& str
         const std::vector< std::vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions,
         const uint8_t* mask_linear,
         streakFinder_precomputedConstants_t& streakFinder_precomputedConstants);
-void freePrecomputeStreakFinderConstants(streakFinder_precomputedConstants_t& streakFinder_precomputedConstants);
+void freePrecomputedStreakFinderConstants(streakFinder_precomputedConstants_t& streakFinder_precomputedConstants);
 
 void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& accuracyConstants, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const std::vector< std::vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions,

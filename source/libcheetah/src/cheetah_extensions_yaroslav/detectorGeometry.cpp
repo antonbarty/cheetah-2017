@@ -18,11 +18,11 @@
 using namespace std;
 using namespace Eigen;
 
-static void computeVirtualZeroPosition(detectorPosition_t& detectorPositions);
+void updateVirtualZeroPosition(detectorPosition_t& detectorPositions);
 
-void computeDetectorPositionsFromDetectorGeometryMatrix(const detectorRawSize_cheetah_t detectorRawSize_cheetah,
-        const Vector2f* detectorGeometryMatrix_linear,
-        vector< vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions)
+void computeDetectorPositionsFromDetectorGeometryMatrix(
+        vector< vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions,
+        const detectorRawSize_cheetah_t detectorRawSize_cheetah, const Vector2f* detectorGeometryMatrix_linear)
 {
     detectorPositions.resize(detectorRawSize_cheetah.nasics_x);
     typedef vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > element_t;
@@ -43,7 +43,7 @@ void computeDetectorPositionsFromDetectorGeometryMatrix(const detectorRawSize_ch
 
             Vector2f fs = detectorGeometryMatrix[min_ss][min_fs + 1] - detectorGeometryMatrix[min_ss][min_fs];
             Vector2f ss = detectorGeometryMatrix[min_ss + 1][min_fs] - detectorGeometryMatrix[min_ss][min_fs];
-            Vector2f corner = detectorGeometryMatrix[min_ss][min_fs];
+            Vector2f corner = detectorGeometryMatrix[min_ss][min_fs] - 0.5 * fs - 0.5 * ss;
 
             detectorPositions[asic_y][asic_x].min_fs = min_fs;
             detectorPositions[asic_y][asic_x].min_ss = min_ss;
@@ -58,12 +58,12 @@ void computeDetectorPositionsFromDetectorGeometryMatrix(const detectorRawSize_ch
             detectorPositions[asic_y][asic_x].rawCoordinates_float = ImageRectangle< float >(Point2D< float >(min_fs, min_ss),
                     Point2D< float >(max_fs, max_ss));
 
-            computeVirtualZeroPosition(detectorPositions[asic_y][asic_x]);
+            updateVirtualZeroPosition(detectorPositions[asic_y][asic_x]);
         }
     }
 }
 
-static void computeVirtualZeroPosition(detectorPosition_t& detectorPositions)
+void updateVirtualZeroPosition(detectorPosition_t& detectorPositions)
 {
     float numerator = detectorPositions.fs.dot(detectorPositions.corner * (-1));
     float denominator = detectorPositions.fs.norm() * detectorPositions.corner.norm();

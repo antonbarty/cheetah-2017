@@ -8,9 +8,9 @@
 #ifndef INCLUDE_DETECTORGEOMETRY_H_
 #define INCLUDE_DETECTORGEOMETRY_H_
 
+#include <Point2D.h>
 #include <stdint.h>
 #include <vector>
-#include "Point.h"
 #include "ImageRectangle.h"
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -46,8 +46,20 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } detectorPosition_t;
 
-void computeDetectorPositionsFromDetectorGeometryMatrix(const detectorRawSize_cheetah_t detectorRawSize_cheetah,
-        const Eigen::Vector2f* detectorGeometryMatrix_linear,
-        std::vector< std::vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions);
+void computeDetectorPositionsFromDetectorGeometryMatrix(
+        std::vector< std::vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions,
+        const detectorRawSize_cheetah_t detectorRawSize_cheetah, const Eigen::Vector2f* detectorGeometryMatrix_linear);
+
+void updateVirtualZeroPosition(detectorPosition_t& detectorPositions);
+
+inline uint32_t getLinearIndexFromMatrixIndex(const Point2D< uint16_t >& matrixIndex, const detectorRawSize_cheetah_t& detectorRawSize_cheetah)
+{
+    return matrixIndex.getY() * detectorRawSize_cheetah.pix_nx + matrixIndex.getX();
+}
+
+inline uint32_t getLinearIndexFromMatrixIndex(uint16_t x, uint16_t y, const detectorRawSize_cheetah_t& detectorRawSize_cheetah)
+{
+    return y * detectorRawSize_cheetah.pix_nx + x;
+}
 
 #endif /* INCLUDE_DETECTORGEOMETRY_H_ */

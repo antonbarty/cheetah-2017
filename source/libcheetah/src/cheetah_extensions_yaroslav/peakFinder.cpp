@@ -48,7 +48,6 @@ uint32_t peakFinder9(const float* data_linear, const peakFinder9_accuracyConstan
 uint32_t peakFinder9_oneDetector(const float* data_linear, uint32_t asic_x, uint32_t asic_y, const peakFinder9_accuracyConstants_t& accuracyConstants,
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah, tPeakList& peakList)
 {
-
     uint_fast16_t x_asicStart = asic_x * detectorRawSize_cheetah.asic_nx;
     uint_fast16_t y_asicStart = asic_y * detectorRawSize_cheetah.asic_ny;
 

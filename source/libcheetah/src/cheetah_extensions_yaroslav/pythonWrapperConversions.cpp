@@ -199,10 +199,16 @@ void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_acc
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (4, 1));
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (6, 1));
             break;
+        case detectorCategory_pnCCD:
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (0, 0));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (0, 1));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (1, 0));
+            streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (1, 1));
+            break;
     }
 }
 
-void setStreakFinderConstantArguments(streakFinderConstantArguments_t* streakFinderConstantArguments, const streakFinder_accuracyConstants_t& accuracyConstants,
+void setStreakFinderConstantArguments(streakFinder_constantArguments_t* streakFinderConstantArguments, const streakFinder_accuracyConstants_t& accuracyConstants,
         const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
         const std::vector< std::vector< detectorPosition_t, Eigen::aligned_allocator< detectorPosition_t > > >& detectorPositions,
         const streakFinder_precomputedConstants_t& streakFinder_precomputedConstants)
@@ -213,7 +219,7 @@ void setStreakFinderConstantArguments(streakFinderConstantArguments_t* streakFin
     streakFinderConstantArguments->streakFinder_precomputedConstant = (void*) &streakFinder_precomputedConstants;
 }
 
-void pythonWrapper_streakFinder(float* data_linear, streakFinderConstantArguments_t* streakFinderConstantArguments)
+void pythonWrapper_streakFinder(float* data_linear, streakFinder_constantArguments_t* streakFinderConstantArguments)
 {
     const streakFinder_accuracyConstants_t* accuracyConstants =
             (const streakFinder_accuracyConstants_t*) streakFinderConstantArguments->accuracyConstants;

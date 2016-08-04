@@ -8,7 +8,7 @@
 #ifndef INCLUDE_IMAGERECTANGLE_H_
 #define INCLUDE_IMAGERECTANGLE_H_
 
-#include "Point.h"
+#include <Point2D.h>
 
 template< typename T >
 class ImageRectangle {
