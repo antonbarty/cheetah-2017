@@ -45,8 +45,8 @@ int main(int argc, const char * argv[])
     printf("CBF file parser\n");
     printf("Natasha Stander, December 2015\n");
 
-    if (argc != 3) {
-        printf("Usage: cheetah-cbf listfile inifile\n");
+    if (argc != 4) {
+        printf("Usage: cheetah-cbf listfile inifile runnumber\n");
         return 0;
     }
 
@@ -56,12 +56,14 @@ int main(int argc, const char * argv[])
     // Initialize Cheetah
 	printf("Setting up Cheetah...\n");
     static long frameNumber = 0;
-    long runNumber = 0; /* ?? */
+    long runNumber = atoi(argv[3]); /* ?? */
 	static cGlobal cheetahGlobal;
 	static time_t startT = 0;
 	time(&startT);
     strcpy(cheetahGlobal.configFile, argv[2]);
+    strcpy(cheetahGlobal.experimentID, "APS2016");
 	cheetahInit(&cheetahGlobal);
+    cheetahGlobal.runNumber = runNumber;
 
     // Open List file
     FILE *fh = fopen(argv[1], "r");
@@ -94,11 +96,12 @@ int main(int argc, const char * argv[])
         cEventData * eventData = cheetahNewEvent(&cheetahGlobal);
 
         eventData->frameNumber = frameNumber;
+        strcpy(eventData->eventname,strrchr(curFile,'/')+1);
         eventData->runNumber = runNumber;
         eventData->nPeaks = 0;
         eventData->pumpLaserCode = 0;
         eventData->pumpLaserDelay = 0;
-        eventData->photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
+        eventData->photonEnergyeV = 0;
         eventData->wavelengthA = 0; // find in parseSLSHeader
         eventData->pGlobal = &cheetahGlobal;
 
@@ -153,6 +156,8 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
     char * cur = header; // start of line
     char * end = header; // end of line
     bool atEnd = false; // at end of header
+    char prefix[6];
+    prefix[5] = 0;
     while (!atEnd) {
         // find the newline that signals end of line
         while (*end != '\r' && *end != '\n' && *end != 0) end++;
@@ -165,6 +170,28 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
         // check the line for the values we're interested in
         
         sscanf(cur,"# Wavelength %lf", &(eventData->wavelengthA));
+
+        sscanf(cur,"# Exposure_time %lf", &(eventData->exposureTime));
+        sscanf(cur,"# Exposure_period %lf", &(eventData->exposurePeriod));
+        sscanf(cur,"# Tau %lf", &(eventData->tau));
+        sscanf(cur,"# Count_cutoff %i", &(eventData->countCutoff));
+        sscanf(cur,"# Threshold_setting: %lf", &(eventData->photonEnergyeV));
+        sscanf(cur,"# N_excluded_pixels %i", &(eventData->nExcludedPixels));
+        sscanf(cur,"# Detector_distance %lf", &(eventData->detectorDistance));
+        sscanf(cur,"# Beam_xy (%lf, %lf)", &(eventData->beamX), &(eventData->beamY));
+        sscanf(cur,"# Start_angle %lf", &(eventData->startAngle));
+        sscanf(cur,"# Angle_increment %lf", &(eventData->angleIncrement));
+        sscanf(cur,"# Detector_2theta %lf", &(eventData->detector2Theta));
+        sscanf(cur,"# Shutter_time %lf", &(eventData->shutterTime));
+
+
+       // This is a hack that will break after the year 2019
+       strncpy(prefix,cur,5);
+       if (strcmp(prefix,"# 201") == 0) {
+           strcpy(eventData->timeString,cur);
+       }
+           
+        
 
         // prepare current and end for next line
         end ++;

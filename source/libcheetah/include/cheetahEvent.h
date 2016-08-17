@@ -151,6 +151,20 @@ public:
 	// Thread management
 	int	threadID;
 	int     useThreads;
+
+    // APS
+    double exposureTime;
+    double exposurePeriod;
+    double tau;
+    int countCutoff;
+    int nExcludedPixels;
+    double detectorDistance;
+    double beamX;
+    double beamY;
+    double startAngle;
+    double angleIncrement;
+    double detector2Theta;
+    double shutterTime;
 	
 } ;
 

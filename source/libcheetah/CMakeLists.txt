@@ -1,11 +1,11 @@
 
 find_package(HDF5 REQUIRED)
 find_package(PythonLibs REQUIRED)
-find_package(MPI REQUIRED)
+#find_package(MPI REQUIRED)
 
 # We don't want to scare people with this
 mark_as_advanced(HDF5_DIR)
-mark_as_advanced(MPI_DIR)
+#mark_as_advanced(MPI_DIR)
 mark_as_advanced(CLEAR HDF5_C_INCLUDE_DIR)
 mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_RELEASE)
 mark_as_advanced(CLEAR HDF5_hdf5_LIBRARY_DEBUG)
@@ -34,12 +34,12 @@ LIST(APPEND sources "src/worker.cpp")
 include_directories("include")
 include_directories(${HDF5_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIR})
-include_directories(${MPI_INCLUDE_PATH})
+#include_directories(${MPI_INCLUDE_PATH})
 
 
 add_library(cheetah SHARED ${sources})
 
-target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES} ${MPI_LIBRARIES})
+target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES}) # ${MPI_LIBRARIES})
 
 set_target_properties(
  cheetah

@@ -16,22 +16,23 @@ void writeLog(cEventData *eventData, cGlobal * global) {
 	fprintf(global->framefp, "%ld, ", eventData->stackSlice);
 	fprintf(global->framefp, "%li, ", eventData->frameNumber);
 	fprintf(global->framefp, "%i, ", eventData->hit);
-    fprintf(global->framefp, "%i, ", eventData->powderClass);
-	fprintf(global->framefp, "%g, ", eventData->hitScore);
+//    fprintf(global->framefp, "%i, ", eventData->powderClass);
+//	fprintf(global->framefp, "%g, ", eventData->hitScore);
 	fprintf(global->framefp, "%g, ", eventData->photonEnergyeV);
 	fprintf(global->framefp, "%g, ", eventData->wavelengthA);
-	fprintf(global->framefp, "%g, ", eventData->gmd1);
-	fprintf(global->framefp, "%g, ", eventData->gmd2);
+//	fprintf(global->framefp, "%g, ", eventData->gmd1);
+//	fprintf(global->framefp, "%g, ", eventData->gmd2);
 	fprintf(global->framefp, "%g, ", eventData->detector[0].detectorZ);
-	fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
+//	fprintf(global->framefp, "%i, ", eventData->energySpectrumExist);
 	fprintf(global->framefp, "%d, ", eventData->nPeaks);
 	fprintf(global->framefp, "%g, ", eventData->peakNpix);
 	fprintf(global->framefp, "%g, ", eventData->peakTotal);
 	fprintf(global->framefp, "%g, ", eventData->peakResolution);
 	fprintf(global->framefp, "%g, ", eventData->peakDensity);
-	fprintf(global->framefp, "%d, ", eventData->pumpLaserCode);
-	fprintf(global->framefp, "%g, ", eventData->pumpLaserDelay);
-    fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
+//	fprintf(global->framefp, "%d, ", eventData->pumpLaserCode);
+//	fprintf(global->framefp, "%g, ", eventData->pumpLaserDelay);
+//   fprintf(global->framefp, "%d\n", eventData->pumpLaserOn);
+	fprintf(global->framefp, "%lf\n ", eventData->exposureTime);
 	pthread_mutex_unlock(&global->framefp_mutex);
 
 	// Keep track of what has gone into each image class

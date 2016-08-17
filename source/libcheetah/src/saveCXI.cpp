@@ -968,54 +968,22 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 		resultIndex++;
 	}
 
-	Node * lcls = root->createGroup("LCLS");	
-	lcls->createStack("machineTime",H5T_NATIVE_INT32);
-	lcls->createStack("machineTimeNanoSeconds",H5T_NATIVE_INT32);
-	lcls->createStack("fiducial",H5T_NATIVE_INT32);
-	lcls->createStack("ebeamCharge",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamL3Energy",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamPkCurrBC2",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamLTUPosX",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamLTUPosY",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamLTUAngX",H5T_NATIVE_DOUBLE);
-	lcls->createStack("ebeamLTUAngY",H5T_NATIVE_DOUBLE);
-	lcls->createStack("phaseCavityTime1",H5T_NATIVE_DOUBLE);
-	lcls->createStack("phaseCavityTime2",H5T_NATIVE_DOUBLE);
-	lcls->createStack("phaseCavityCharge1",H5T_NATIVE_DOUBLE);
-	lcls->createStack("phaseCavityCharge2",H5T_NATIVE_DOUBLE);
-	lcls->createStack("photon_energy_eV",H5T_NATIVE_DOUBLE);
-	lcls->createStack("photon_wavelength_A",H5T_NATIVE_DOUBLE);
-	lcls->createStack("f_11_ENRC",H5T_NATIVE_DOUBLE);
-	lcls->createStack("f_12_ENRC",H5T_NATIVE_DOUBLE);
-	lcls->createStack("f_21_ENRC",H5T_NATIVE_DOUBLE);
-	lcls->createStack("f_22_ENRC",H5T_NATIVE_DOUBLE);
-	lcls->createStack("evr41",H5T_NATIVE_DOUBLE);
-	lcls->createStack("eventTimeString",H5T_NATIVE_CHAR,26);
-	lcls->createLink("eventTime","eventTimeString");
-	lcls->createLink("experiment_identifier","/entry_1/experiment_identifier");
-	
-	// TimeTool
-	if(global->useTimeTool) {
-		lcls->createStack("timeToolTrace", H5T_NATIVE_FLOAT, global->TimeToolStackWidth);
-	}
-	// FEE spectrum
-	if(global->useFEEspectrum) {
-		lcls->createStack("FEEspectrum", H5T_NATIVE_FLOAT, global->FEEspectrumWidth);
-	}
-	
-	// EPICS
-	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {
-		lcls->createStack(&global->epicsPvFloatAddresses[i][0], H5T_NATIVE_FLOAT);
-	}
-	
-
-	
-	DETECTOR_LOOP{
-		Node * detector = lcls->createGroup("detector",detIndex+1);
-		detector->createStack("position",H5T_NATIVE_DOUBLE);
-		detector->createStack("EncoderValue",H5T_NATIVE_DOUBLE);
-		detector->createStack("SolidAngleConst",H5T_NATIVE_DOUBLE);
-	}
+	Node * aps = root->createGroup("APS");	
+	aps->createStack("exposureTime",H5T_NATIVE_DOUBLE);
+	aps->createStack("exposurePeriod",H5T_NATIVE_DOUBLE);
+	aps->createStack("tau",H5T_NATIVE_DOUBLE);
+	aps->createStack("countCutoff",H5T_NATIVE_INT32);
+	aps->createStack("nExcludedPixels",H5T_NATIVE_INT32);
+	aps->createStack("detectorDistance",H5T_NATIVE_DOUBLE);
+	aps->createStack("beamX",H5T_NATIVE_DOUBLE);
+	aps->createStack("beamY",H5T_NATIVE_DOUBLE);
+	aps->createStack("startAngle",H5T_NATIVE_DOUBLE);
+	aps->createStack("detector2Theta",H5T_NATIVE_DOUBLE);
+	aps->createStack("angleIncrement",H5T_NATIVE_DOUBLE);
+	aps->createStack("shutterTime",H5T_NATIVE_DOUBLE);
+	aps->createStack("timestamp",H5T_NATIVE_CHAR,26);
+	aps->createStack("photon_energy_eV",H5T_NATIVE_DOUBLE);
+	aps->createStack("photon_wavelength_A",H5T_NATIVE_DOUBLE);
 
 	// Save cheetah variables  
 	Node * cheetah = root->createGroup("cheetah");
@@ -1026,18 +994,12 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 	event_data->createStack("frameNumber",H5T_NATIVE_LONG);
 	event_data->createStack("frameNumberIncludingSkipped",H5T_NATIVE_LONG);
 	event_data->createStack("threadID",H5T_NATIVE_LONG);
-	event_data->createStack("gmd1",H5T_NATIVE_DOUBLE);
-	event_data->createStack("gmd2",H5T_NATIVE_DOUBLE);
-	event_data->createStack("energySpectrumExist",H5T_NATIVE_INT);
 	event_data->createStack("nPeaks",H5T_NATIVE_INT);
-    event_data->createStack("nProtons",H5T_NATIVE_INT);
 	event_data->createStack("peakNpix",H5T_NATIVE_FLOAT);
 	event_data->createStack("peakTotal",H5T_NATIVE_FLOAT);
 	event_data->createStack("peakResolution",H5T_NATIVE_FLOAT);
 	event_data->createStack("peakResolutionA",H5T_NATIVE_FLOAT);
 	event_data->createStack("peakDensity",H5T_NATIVE_FLOAT);
-	event_data->createStack("pumpLaserCode",H5T_NATIVE_INT);
-	event_data->createStack("pumpLaserDelay",H5T_NATIVE_DOUBLE);
 	event_data->createStack("imageClass",H5T_NATIVE_INT);
 	event_data->createStack("hit",H5T_NATIVE_INT);
 	DETECTOR_LOOP{
@@ -1562,82 +1524,36 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 		result["peakNPixels"].write(eventData->peaklist.peak_npix, stackSlice, nPeaks, true);
 	}
 
-	/*Write LCLS informations*/
-	Node &lcls = root["LCLS"];
-	DETECTOR_LOOP{
-		lcls.child("detector",detIndex+1)["position"].write(&global->detector[detIndex].detectorZ,stackSlice);
-		lcls.child("detector",detIndex+1)["EncoderValue"].write(&global->detector[detIndex].detectorEncoderValue,stackSlice);
-		lcls.child("detector",detIndex+1)["SolidAngleConst"].write(&global->detector[detIndex].solidAngleConst,stackSlice);
-	}
-	lcls["machineTime"].write(&eventData->seconds,stackSlice);
-	lcls["machineTimeNanoSeconds"].write(&eventData->nanoSeconds, stackSlice);
-	lcls["fiducial"].write(&eventData->fiducial,stackSlice);
-	lcls["ebeamCharge"].write(&eventData->fEbeamCharge,stackSlice);
-	lcls["ebeamL3Energy"].write(&eventData->fEbeamL3Energy,stackSlice);
-	lcls["ebeamLTUAngX"].write(&eventData->fEbeamLTUAngX,stackSlice);
-	lcls["ebeamLTUAngY"].write(&eventData->fEbeamLTUAngY,stackSlice);
-	lcls["ebeamLTUPosX"].write(&eventData->fEbeamLTUPosX,stackSlice);
-	lcls["ebeamLTUPosY"].write(&eventData->fEbeamLTUPosY,stackSlice);
-	lcls["ebeamPkCurrBC2"].write(&eventData->fEbeamPkCurrBC2,stackSlice);
-	lcls["phaseCavityTime1"].write(&eventData->phaseCavityTime1,stackSlice);
-	lcls["phaseCavityTime2"].write(&eventData->phaseCavityTime2,stackSlice);
-	lcls["phaseCavityCharge1"].write(&eventData->phaseCavityCharge1,stackSlice);
-	lcls["phaseCavityCharge2"].write(&eventData->phaseCavityCharge2,stackSlice);
-	lcls["photon_energy_eV"].write(&eventData->photonEnergyeV,stackSlice);
-	lcls["photon_wavelength_A"].write(&eventData->wavelengthA,stackSlice);
-	lcls["f_11_ENRC"].write(&eventData->gmd11,stackSlice);
-	lcls["f_12_ENRC"].write(&eventData->gmd12,stackSlice);
-	lcls["f_21_ENRC"].write(&eventData->gmd12,stackSlice);
-	lcls["f_22_ENRC"].write(&eventData->gmd22,stackSlice);
-	
-	// Time tool trace
-	if(eventData->TimeTool_present) {
-		lcls["timeToolTrace"].write(&(eventData->TimeTool_hproj[0]), stackSlice);
-	}
-	// FEE spectrometer
-	if(eventData->FEEspec_present) {
-		lcls["FEEspectrum"].write(&(eventData->FEEspec_hproj[0]), stackSlice);
-	}
-	
-	// EPICS
-	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {
-		lcls[&global->epicsPvFloatAddresses[i][0]].write(&(eventData->epicsPvFloatValues[i]), stackSlice);
-	}
-
-	
-	if(eventData->TOFPresent){
-		for(int i = 0; i<global->nTOFDetectors;i++){
-			int tofDetIndex = i+global->nDetectors;
-			Node & detector = root["entry_1"]["instrument_1"].child("detector",tofDetIndex+1);
-			detector["data"].write(&(eventData->tofDetector[i].voltage[0]),stackSlice);
-			detector["tofTime"].write(&(eventData->tofDetector[i].time[0]),stackSlice);
-		}
-	}
-	int LaserOnVal = (eventData->pumpLaserCode)?1:0;
-	lcls["evr41"].write(&LaserOnVal,stackSlice);
-	char timestr[26];
-	time_t eventTime = eventData->seconds;
-	ctime_r(&eventTime,timestr);
-	lcls["eventTimeString"].write(timestr,stackSlice);
+	/*Write APS information*/
+	Node &aps = root["APS"];
+	aps["exposureTime"].write(&eventData->exposureTime,stackSlice);
+	aps["exposurePeriod"].write(&eventData->exposurePeriod, stackSlice);
+	aps["tau"].write(&eventData->tau,stackSlice);
+	aps["countCutoff"].write(&eventData->countCutoff,stackSlice);
+	aps["nExcludedPixels"].write(&eventData->nExcludedPixels,stackSlice);
+	aps["detectorDistance"].write(&eventData->detectorDistance,stackSlice);
+	aps["beamX"].write(&eventData->beamX,stackSlice);
+	aps["beamY"].write(&eventData->beamY,stackSlice);
+	aps["startAngle"].write(&eventData->startAngle,stackSlice);
+	aps["detector2Theta"].write(&eventData->detector2Theta,stackSlice);
+	aps["angleIncrement"].write(&eventData->angleIncrement,stackSlice);
+	aps["shutterTime"].write(&eventData->shutterTime,stackSlice);
+	aps["photon_energy_eV"].write(&eventData->photonEnergyeV,stackSlice);
+	aps["photon_wavelength_A"].write(&eventData->wavelengthA,stackSlice);
+	aps["timestamp"].write(eventData->timeString,stackSlice);
 
 	Node & event_data = root["cheetah"]["event_data"];
 	event_data["eventName"].write(eventData->eventname,stackSlice);
 	event_data["frameNumber"].write(&eventData->frameNumber,stackSlice);
 	event_data["frameNumberIncludingSkipped"].write(&eventData->frameNumberIncludingSkipped,stackSlice);
 	event_data["threadID"].write(&eventData->threadNum,stackSlice);
-	event_data["gmd1"].write(&eventData->gmd1,stackSlice);
-	event_data["gmd2"].write(&eventData->gmd2,stackSlice);
-	event_data["energySpectrumExist"].write(&eventData->energySpectrumExist,stackSlice);
 	event_data["nPeaks"].write(&eventData->nPeaks,stackSlice);
-    event_data["nProtons"].write(&eventData->nProtons,stackSlice);
 	event_data["peakNpix"].write(&eventData->peakNpix,stackSlice);
 
 	event_data["peakTotal"].write(&eventData->peakTotal,stackSlice);
 	event_data["peakResolution"].write(&eventData->peakResolution,stackSlice);
 	event_data["peakResolutionA"].write(&eventData->peakResolutionA,stackSlice);
 	event_data["peakDensity"].write(&eventData->peakDensity,stackSlice);
-	event_data["pumpLaserCode"].write(&eventData->pumpLaserCode,stackSlice);
-	event_data["pumpLaserDelay"].write(&eventData->pumpLaserDelay,stackSlice);
 	event_data["imageClass"].write(&eventData->powderClass,stackSlice);
 
 	event_data["hit"].write(&eventData->hit,stackSlice);
