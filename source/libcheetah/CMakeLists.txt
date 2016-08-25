@@ -39,7 +39,7 @@ include_directories(${PYTHON_INCLUDE_DIR})
 
 add_library(cheetah SHARED ${sources})
 
-target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES}) # ${MPI_LIBRARIES})
+target_link_libraries(cheetah ${HDF5_LIBRARIES} ${PYTHON_LIBRARIES} rt) # ${MPI_LIBRARIES})
 
 set_target_properties(
  cheetah

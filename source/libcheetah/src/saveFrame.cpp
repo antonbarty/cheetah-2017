@@ -608,130 +608,69 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	H5Gclose(gidCheetah);
 	
 	/*
-	 *	Write LCLS event information
+	 *	Write APS event information
 	 */
-	gid = H5Gcreate1(hdf_fileID,"LCLS",0);
+	gid = H5Gcreate1(hdf_fileID,"APS",0);
 	size[0] = 1;
 	dataspace_id = H5Screate_simple( 1, size, NULL );
-	//dataspace_id = H5Screate(H5S_SCALAR);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/machineTime", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->seconds );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/exposureTime", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->exposureTime );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/fiducial", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fiducial );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/exposurePeriod", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->exposurePeriod );
 	H5Dclose(dataset_id);
 	
-	// Electron beam data
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamCharge", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamCharge );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/tau", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->tau );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamL3Energy", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamL3Energy );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/countCutoff", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->countCutoff );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamPkCurrBC2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamPkCurrBC2 );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/nExcludedPixels", H5T_NATIVE_INT32, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->nExcludedPixels );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUPosX", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamLTUPosX );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/detectorDistance", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->detectorDistance );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUPosY", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamLTUPosY );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/beamX", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->beamX );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUAngX", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamLTUAngX );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/beamY", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->beamY );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/ebeamLTUAngY", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->fEbeamLTUAngY );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/startAngle", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->startAngle );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityTime1", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->phaseCavityTime1 );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/detector2Theta", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->detector2Theta );
 	H5Dclose(dataset_id);
 	
-	// Phase cavity information
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityTime2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->phaseCavityTime2 );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/angleIncrement", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->angleIncrement );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityCharge1", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->phaseCavityCharge1 );
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/shutterTime", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->shutterTime );
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/phaseCavityCharge2", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->phaseCavityCharge2 );
-	H5Dclose(dataset_id);
-	
-	// Calculated photon energy
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/photon_energy_eV", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/photon_energy_eV", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->photonEnergyeV);
 	H5Dclose(dataset_id);
 	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/photon_wavelength_A", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/photon_wavelength_A", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->wavelengthA);
 	H5Dclose(dataset_id);
 	
-	
-	// Gas detector values
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_11_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->gmd11 );
-	H5Dclose(dataset_id);
-	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_12_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->gmd12 );
-	H5Dclose(dataset_id);
-	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_21_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->gmd21 );
-	H5Dclose(dataset_id);
-	
-	dataset_id = H5Dcreate1(hdf_fileID, "/LCLS/f_22_ENRC", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->gmd22 );	
-	H5Dclose(dataset_id);
-	
-	
-	// LaserOn event code
-	int LaserOnVal = (eventData->pumpLaserOn)?1:0;
-	//printf("LaserOnVal %d \n", LaserOnVal);
-	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/pumpLaserOn", H5T_NATIVE_INT, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, H5T_NATIVE_INT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, &LaserOnVal);
-	H5Dclose(dataset_id);
 
-
-	// Misc EPICS PVs
-	for (int i=0; i < global->nEpicsPvFloatValues; i++ ) {	
-		sprintf(fieldID, "/LCLS/%s", &global->epicsPvFloatAddresses[i][0]);
-		dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-		H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->epicsPvFloatValues[i] );	
-		H5Dclose(dataset_id);
-	}
-
-    // Detector motor positions
-    DETECTOR_LOOP {
-        sprintf(fieldID, "/LCLS/detector%li-Position", detIndex);
-        dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detIndex].detectorZ );	
-        H5Dclose(dataset_id);
-        
-        sprintf(fieldID, "/LCLS/detector%li-EncoderValue", detIndex);
-        dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detIndex].detectorEncoderValue);	
-        H5Dclose(dataset_id);
-        
-        sprintf(fieldID, "/LCLS/detector%li-SolidAngleConst", detIndex);
-        dataset_id = H5Dcreate1(hdf_fileID, fieldID, H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
-        H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &global->detector[detIndex].solidAngleConst);	
-        H5Dclose(dataset_id);
-    }    
-
-	
 	// Finished with scalar dataset ID
 	H5Sclose(dataspace_id);
 	
@@ -739,7 +678,7 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	// cspad temperature
 	//size[0] = 4;
 	//dataspace_id = H5Screate_simple(1, size, NULL);
-	//dataset_id = H5Dcreate1(hdf_fileID, "LCLS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
+	//dataset_id = H5Dcreate1(hdf_fileID, "APS/cspadQuadTemperature", H5T_NATIVE_FLOAT, dataspace_id, H5P_DEFAULT);
 	//H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->detector[0].quad_temperature[0]);
 	//H5Dclose(dataset_id);
 	//H5Sclose(dataspace_id);
@@ -749,17 +688,14 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	// Time in human readable format
 	// Writing strings in HDF5 is a little tricky --> this could be improved!
 	char ctime_buffer[1024];
-	char* timestr;
-	time_t eventTime = eventData->seconds;
-	timestr = ctime_r(&eventTime, ctime_buffer);
 	dataspace_id = H5Screate(H5S_SCALAR);
 	datatype = H5Tcopy(H5T_C_S1);  
-	H5Tset_size(datatype,strlen(timestr)+1);
-	dataset_id = H5Dcreate1(hdf_fileID, "LCLS/eventTimeString", datatype, dataspace_id, H5P_DEFAULT);
-	H5Dwrite(dataset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, timestr );
+	H5Tset_size(datatype,strlen(eventData->timeString)+1);
+	dataset_id = H5Dcreate1(hdf_fileID, "APS/timestamp", datatype, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventData->timeString );
 	H5Dclose(dataset_id);
 	H5Sclose(dataspace_id);
-	hdf_error = H5Lcreate_soft( "/LCLS/eventTimeString", hdf_fileID, "/LCLS/eventTime",0,0);
+	hdf_error = H5Lcreate_soft( "/APS/timestamp", hdf_fileID, "/APS/eventTime",0,0);
 	
 	
 	
@@ -1064,4 +1000,5 @@ void writeSpectrumInfoHDF5(const char *filename, const void *data0, const void *
 	
 	H5Fclose(fh);
 }
+
 
