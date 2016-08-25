@@ -165,6 +165,7 @@ public:
     double angleIncrement;
     double detector2Theta;
     double shutterTime;
+    double threshold;
 	
 } ;
 

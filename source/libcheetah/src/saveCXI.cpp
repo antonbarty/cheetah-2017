@@ -984,6 +984,7 @@ static CXI::Node *createCXISkeleton(const char *filename, cGlobal *global){
 	aps->createStack("timestamp",H5T_NATIVE_CHAR,26);
 	aps->createStack("photon_energy_eV",H5T_NATIVE_DOUBLE);
 	aps->createStack("photon_wavelength_A",H5T_NATIVE_DOUBLE);
+	aps->createStack("threshold",H5T_NATIVE_DOUBLE);
 
 	// Save cheetah variables  
 	Node * cheetah = root->createGroup("cheetah");
@@ -1541,6 +1542,7 @@ void writeCXI(cEventData *eventData, cGlobal *global ){
 	aps["photon_energy_eV"].write(&eventData->photonEnergyeV,stackSlice);
 	aps["photon_wavelength_A"].write(&eventData->wavelengthA,stackSlice);
 	aps["timestamp"].write(eventData->timeString,stackSlice);
+	aps["threshold"].write(&eventData->threshold,stackSlice);
 
 	Node & event_data = root["cheetah"]["event_data"];
 	event_data["eventName"].write(eventData->eventname,stackSlice);

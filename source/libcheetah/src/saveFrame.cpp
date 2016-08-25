@@ -669,6 +669,10 @@ void writeHDF5(cEventData *eventData, cGlobal *global){
 	dataset_id = H5Dcreate1(hdf_fileID, "/APS/photon_wavelength_A", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
 	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->wavelengthA);
 	H5Dclose(dataset_id);
+
+	dataset_id = H5Dcreate1(hdf_fileID, "/APS/threshold", H5T_NATIVE_DOUBLE, dataspace_id, H5P_DEFAULT);
+	H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &eventData->threshold);
+	H5Dclose(dataset_id);
 	
 
 	// Finished with scalar dataset ID

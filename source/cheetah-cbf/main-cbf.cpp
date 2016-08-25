@@ -101,7 +101,7 @@ int main(int argc, const char * argv[])
         eventData->nPeaks = 0;
         eventData->pumpLaserCode = 0;
         eventData->pumpLaserDelay = 0;
-        eventData->photonEnergyeV = 0;
+        eventData->photonEnergyeV = cheetahGlobal.defaultPhotonEnergyeV;
         eventData->wavelengthA = 0; // find in parseSLSHeader
         eventData->pGlobal = &cheetahGlobal;
 
@@ -173,10 +173,10 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
 
         sscanf(cur,"# Exposure_time %lf", &(eventData->exposureTime));
         sscanf(cur,"# Exposure_period %lf", &(eventData->exposurePeriod));
-        sscanf(cur,"# Tau %lf", &(eventData->tau));
+        sscanf(cur,"# Tau = %lf", &(eventData->tau));
         sscanf(cur,"# Count_cutoff %i", &(eventData->countCutoff));
-        sscanf(cur,"# Threshold_setting: %lf", &(eventData->photonEnergyeV));
-        sscanf(cur,"# N_excluded_pixels %i", &(eventData->nExcludedPixels));
+        sscanf(cur,"# Threshold_setting %lf", &(eventData->threshold));
+        sscanf(cur,"# N_excluded_pixels = %i", &(eventData->nExcludedPixels));
         sscanf(cur,"# Detector_distance %lf", &(eventData->detectorDistance));
         sscanf(cur,"# Beam_xy (%lf, %lf)", &(eventData->beamX), &(eventData->beamY));
         sscanf(cur,"# Start_angle %lf", &(eventData->startAngle));
@@ -186,7 +186,7 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
 
 
        // This is a hack that will break after the year 2019
-       strncpy(prefix,cur,5);
+       strncpy(prefix,cur + 2,5);
        if (strcmp(prefix,"# 201") == 0) {
            strcpy(eventData->timeString,cur);
        }
@@ -204,6 +204,7 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
     if (eventData->wavelengthA == 0)       
         printf("Warning: Could not find wavelength in cbf file!\n");
     //printf("Debugging: found wavelength %f and photon ev %f\n", eventData->wavelengthA, eventData->photonEnergyeV);
+    eventData->detector[0].detectorZ = eventData->detectorDistance;
     return 0;
 }
 
