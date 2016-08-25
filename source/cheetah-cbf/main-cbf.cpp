@@ -186,9 +186,9 @@ int parseCBFHeader(cbf_handle &cbfh, cEventData* eventData) {
 
 
        // This is a hack that will break after the year 2019
-       strncpy(prefix,cur + 2,5);
+       strncpy(prefix,cur,5);
        if (strcmp(prefix,"# 201") == 0) {
-           strcpy(eventData->timeString,cur);
+           strcpy(eventData->timeString,cur + 2);
        }
            
         
