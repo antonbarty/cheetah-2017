@@ -15,6 +15,8 @@ import PyQt4.QtGui
 
 import UI.cheetahgui_ui
 import lib.cfel_filetools as cfel_file
+import lib.cfel_locations as cfel_locations
+import lib.cfel_detcorr as cfel_detcorr
 import lib.gui_dialogs as gui_dialogs
 
 #TODO: Cheetah GUI
@@ -25,6 +27,8 @@ import lib.gui_dialogs as gui_dialogs
 #TODO: Do not display resolution rings if wavelength, z, or geometry not defined
 #TODO: Wavelength and z on command line
 #TODO: Take file list as an argument
+
+#app = PyQt4.QtGui.QApplication(sys.argv)
 
 
 #
@@ -217,7 +221,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
     #   Uses LCLS schema; will need modification to run anywhere else; do this later
     #
     def setup_new_experiment(self):
-        dir = cfel_file.dialog_pickfile(directory=True)
+        dir = cfel_file.dialog_pickfile(directory=True, qtmainwin=self)
         if dir == '':
             self.exit_gui()
         print('Selected directory: ')
@@ -264,7 +268,10 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         msgBox.addButton(PyQt4.QtGui.QMessageBox.Yes)
         msgBox.addButton(PyQt4.QtGui.QMessageBox.Cancel)
         msgBox.setDefaultButton(PyQt4.QtGui.QMessageBox.Yes)
+
         ret = msgBox.exec_();
+        #app.exit()
+
 
         if ret == PyQt4.QtGui.QMessageBox.Cancel:
             print("So long and thanks for all the fish.")
@@ -354,7 +361,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
 
         elif gui['action'] == 'find':
-            cfile = cfel_file.dialog_pickfile(filter='crawler.config')
+            cfile = cfel_file.dialog_pickfile(filter='crawler.config', qtmainwin=self)
             if cfile == '':
                 print('Selection canceled')
                 self.exit_gui()
@@ -411,18 +418,19 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         # Dialog box for dataset label and ini file
         gui, ok = gui_dialogs.run_cheetah_gui.cheetah_dialog(dialog_info)
 
-        # Extract values from return dict
-        dataset = gui['dataset']
-        inifile = gui['inifile']
-
         # Exit if cancel was pressed
         if ok == False:
             return
 
-        dataset_csv = cfel_file.csv_to_dict('datasets.csv')
-
+        # Extract values from return dict
+        dataset = gui['dataset']
+        inifile = gui['inifile']
         self.lasttag = dataset
         self.lastini = inifile
+
+
+        dataset_csv = cfel_file.csv_to_dict('datasets.csv')
+
 
         # Process all selected runs
         runs = self.selected_runs()
@@ -555,7 +563,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Autorun selected")
 
     def set_new_geometry(self):
-        gfile = cfel_file.dialog_pickfile(path='../calib/geometry', filter='Geometry files (*.h5 *.geom);;All files (*.*)')
+        gfile = cfel_file.dialog_pickfile(path='../calib/geometry', filter='Geometry files (*.h5 *.geom);;All files (*.*)', qtmainwin=self)
         if gfile == '':
             return
         gfile = os.path.relpath(gfile)
@@ -572,7 +580,16 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Talk to Andrew Morgan to add his mask maker")
 
     def badpix_from_darkcal(self):
-        print("Badpix from darkcal selected")
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return;
+
+        path = runs['path'][0]
+        path += '*detector?-class0-sum.h5'
+        for dkcal in glob.iglob(path):
+            cfel_detcorr.badpix_from_darkcal(dkcal, self)
+
+
 
     def badpix_from_bright(self):
         print("Badpix from bright selected")
@@ -581,7 +598,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Combine masks selected")
 
     def show_mask_file(self):
-        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5')
+        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5', qtmainwin=self)
         field = 'data/data'
         if file != '':
             file = os.path.relpath(file)
@@ -741,6 +758,13 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         #self.hdf5_dir = args.c
 
         #
+        #   Where are we?
+        #
+        location = cfel_locations.determine_location()
+        self.location = cfel_locations.configuration(location)
+
+
+        #
         # Set up the UI
         #
         super(cheetah_gui, self).__init__()
@@ -880,7 +904,6 @@ if __name__ == '__main__':
     #   Spawn the viewer
     #
     app = PyQt4.QtGui.QApplication(sys.argv)
-        
     ex = cheetah_gui(args)
     ex.show()
     ret = app.exec_()

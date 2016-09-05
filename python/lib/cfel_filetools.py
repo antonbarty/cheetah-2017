@@ -15,10 +15,13 @@ import numpy as np
 # Needed for dialog_pickfile()
 import PyQt4
 import PyQt4.QtGui
+
+""" Comment added by Dominik. With that line the GUI isn't rendered. The function of
+    the line is not clear to me.
 qtApp = PyQt4.QtGui.QApplication(sys.argv)
+"""
 
-
-def dialog_pickfile(write=False, directory=False, multiple=False, path=False, filter='*.*'):
+def dialog_pickfile(write=False, directory=False, multiple=False, path=False, filter='*.*', qtmainwin=None):
     """
     :param write:
     :param directory:
@@ -28,30 +31,32 @@ def dialog_pickfile(write=False, directory=False, multiple=False, path=False, fi
     :return:
     See: http://doc.qt.io/qt-4.8/qfiledialog.html
     """
-    QtWin= PyQt4.QtGui.QMainWindow()
+    if qtmainwin == None:
+        qtApp = PyQt4.QtGui.QApplication(sys.argv)
 
     if path==False:
         path= ''
 
     if write==True:
         caption = 'Select destination file'
-        file = PyQt4.QtGui.QFileDialog.getSaveFileName(QtWin, caption, path, filter)
+        file = PyQt4.QtGui.QFileDialog.getSaveFileName(qtmainwin, caption, path, filter)
         return file
 
     elif directory==True:
         caption = 'Select directory'
-        dirname= PyQt4.QtGui.QFileDialog.getExistingDirectory(QtWin, caption, path)
+        dirname= PyQt4.QtGui.QFileDialog.getExistingDirectory(qtmainwin, caption, path)
         return dirname
 
     elif multiple==True:
         caption = 'Select Files'
-        files = PyQt4.QtGui.QFileDialog.getOpenFileNames(QtWin, caption, path, filter)
+        files = PyQt4.QtGui.QFileDialog.getOpenFileNames(qtmainwin, caption, path, filter)
         return files
 
     else:
         caption = 'Select File'
-        file = PyQt4.QtGui.QFileDialog.getOpenFileName(QtWin, caption, path, filter)
+        file = PyQt4.QtGui.QFileDialog.getOpenFileName(qtmainwin, caption, path, filter)
         return file
+
 #end dialog_pickfile()
 
 
@@ -86,14 +91,15 @@ def read_h5(filename='', field="/data/data"):
             return
 
 
-    # Open HDF5 file
-    fp = h5py.File(filename, 'r')
+    # Open HDF5 file, read specified field, clean up and exit
+    try:
+        with h5py.File(filename, 'r') as fp:
+            data = fp[field][:]
+            fp.close()
+    except:
+        print('Error reading field ', field, ' from ', filename)
+        data = []
 
-    # Read the specified field
-    data = fp[field][:]
-
-    # Close and clean up
-    fp.close()
 
     # return
     return data
@@ -102,55 +108,26 @@ def read_h5(filename='', field="/data/data"):
 
 
 
-def write_h5(filename, field="data/data", compress=3):
-    """ 
+def write_h5(data_in, filename='', field="data/data"):
+    """
     Write a simple HDF5 file
+    """
 
-    IDL code
-    	if n_elements(filename) eq 0 then begin
-		print,'write_simple_hdf5: No filename specified...'
-		return
-	endif
-	
-	if n_elements(data) eq 0 then begin
-		print,'write_simple_hdf5: No data specified...'
-		return
-	endif
-	dim = size(data,/dimensions)
-	
-	
-	if not keyword_set(compress) then begin
-		compress=3
-	endif
-	
+    # Open a file selection dialog if no filename is provided
+    if filename == '':
+        filename = dialog_pickfile(write=True)
+        if filename == '':
+            return
 
-	;; HDF5 compression chunks
-	chunksize = dim
-	if n_elements(dim) ge 3 then $
-	;;	chunksize[0] = dim[0]/8;
-	;;	chunksize[0:n_elements(chunksize)-3] = 1
 
-	
-	fid = H5F_CREATE(filename) 
-	group_id = H5G_CREATE(fid, 'data')
-	datatype_id = H5T_IDL_CREATE(data) 
-	dataspace_id = H5S_CREATE_SIMPLE(dim) 
+    # Simple HDF5 writing with no data conversion
+    try:
+        with h5py.File(filename, 'w') as fp:
+            dset = fp.create_dataset(field, data=data_in)
+            fp.close()
+    except:
+        print('Error writing field ', field, ' to ', filename)
 
-	if (compress eq 0) then begin
-		dataset_id = H5D_CREATE(fid,'data/data',datatype_id,dataspace_id) 
-	endif else begin
-		;; GZIP keyword is ignored if CHUNK_DIMENSIONS is not specified.
-		dataset_id = H5D_CREATE(fid,'data/data',datatype_id,dataspace_id, gzip=compression,  chunk_dimensions=chunksize) 
-		;dataset_id = H5D_CREATE(fid,'data/data',datatype_id,dataspace_id, chunk_dimensions=chunksize, gzip=compression, /shuffle) 
-	endelse
-
-	H5D_WRITE,dataset_id,data 
-	H5D_CLOSE,dataset_id   
-	H5S_CLOSE,dataspace_id 
-	H5T_CLOSE,datatype_id 
-	H5G_CLOSE,group_id
-	H5F_CLOSE,fid 
-     """
 # end write_h5
 
 
@@ -267,18 +244,20 @@ def read_event(event_list, eventID, data=False, mask=False, peaks=False, photon_
 
     elif event_list['format'][eventID] == 'cheetah_h5':
         data_array = read_h5(event_list['filename'][eventID], field=event_list['h5field'][eventID])
+        # Need to add reading of peaks, photon energy, detector distance
+        # Lower priority since this is an old file format
+
         event_data = {
             'data': data_array,
             'data_shape': data_array.shape,
             'mask': [0],
             'nframes': 1,
-            'EncoderValue': 0,
-            'photon_energy_eV': 0,
+            'EncoderValue': np.nan,
+            'photon_energy_eV': np.nan,
             'n_peaks': 0,
             'peakXPosRaw': [0],
             'peakYPosRaw': [0]
         }
-    #end cheetah_h5
 
     elif event_list['format'][eventID] == 'generic_h5':
         data_array = read_h5(event_list['filename'][eventID], field=event_list['h5field'][eventID])
@@ -286,8 +265,8 @@ def read_event(event_list, eventID, data=False, mask=False, peaks=False, photon_
             'data': data_array,
             'data_shape': data_array.shape,
             'nframes': 1,
-            'EncoderValue': 0,
-            'photon_energy_eV': 0,
+            'EncoderValue': np.nan,
+            'photon_energy_eV': np.nan,
         }
     #end generic_h5
 
@@ -322,10 +301,15 @@ def read_cxi(filename, frameID=0, data=False, mask=False, peaks=False, photon_en
 
     # Peak list
     if peaks == True:
-        n_peaks = hdf5_fh['/entry_1/result_1/nPeaks'][frameID]
-        peakXPosRaw = hdf5_fh['/entry_1/result_1/peakXPosRaw'][frameID]
-        peakYPosRaw = hdf5_fh['/entry_1/result_1/peakYPosRaw'][frameID]
-        peak_xy = (peakXPosRaw.flatten(), peakYPosRaw.flatten())
+        try:
+            n_peaks = hdf5_fh['/entry_1/result_1/nPeaks'][frameID]
+            peakXPosRaw = hdf5_fh['/entry_1/result_1/peakXPosRaw'][frameID]
+            peakYPosRaw = hdf5_fh['/entry_1/result_1/peakYPosRaw'][frameID]
+            peak_xy = (peakXPosRaw.flatten(), peakYPosRaw.flatten())
+        except:
+            n_peaks = 0
+            peakXPosRaw = np.nan
+            peakYPosRaw = np.nan
     else:
         n_peaks = 0
         peakXPosRaw = np.nan
@@ -334,22 +318,30 @@ def read_cxi(filename, frameID=0, data=False, mask=False, peaks=False, photon_en
 
     # Masks
     if mask == True:
-        mask_array = hdf5_fh['/entry_1/data_1/mask'][frameID, :, :]
+        try:
+            mask_array = hdf5_fh['/entry_1/data_1/mask'][frameID, :, :]
+        except:
+            mask_array = np.nan
     else:
         mask_array = np.nan
 
 
     # Photon energy
     if photon_energy == True:
-        photon_energy_eV = hdf5_fh['/LCLS/photon_energy_eV'][frameID]
-        #return photon_energy_eV
+        try:
+            photon_energy_eV = hdf5_fh['/LCLS/photon_energy_eV'][frameID]
+        except:
+            photon_energy_eV = 'nan'
     else:
         photon_energy_eV = 'nan'
 
 
     # Camera length
     if camera_length == True:
-        EncoderValue = hdf5_fh['/LCLS/detector_1/EncoderValue'][frameID]
+        try:
+            EncoderValue = hdf5_fh['/LCLS/detector_1/EncoderValue'][frameID]
+        except:
+            EncoderValue = 'nan'
     else:
         EncoderValue = 'nan'
 
@@ -406,7 +398,6 @@ def read_cxi(filename, frameID=0, data=False, mask=False, peaks=False, photon_en
 
 
 
-
 def list_events(pattern='./*.cxi', field='data/data'):
     """
     :param file_pattern: Single filename, or search string
@@ -427,6 +418,8 @@ def list_events(pattern='./*.cxi', field='data/data'):
     files = glob.glob(pattern, recursive=True)
     if len(files) == 0:
         print('No files found matching pattern: ', pattern)
+    list_of_files = glob.iglob(pattern, recursive=True)
+        
 
     # List the found files (sanity check)
     #print('Found files:')
@@ -441,7 +434,8 @@ def list_events(pattern='./*.cxi', field='data/data'):
 
 
     #print('Found files:')
-    for filename in glob.iglob(pattern, recursive=True):
+    #for filename in glob.iglob(pattern, recursive=True):
+    for filename in list_of_files:
 
         basename = os.path.basename(filename)
         dirname = os.path.dirname(filename)
@@ -453,10 +447,13 @@ def list_events(pattern='./*.cxi', field='data/data'):
             nframes = read_cxi(filename, num_frames=True)['nframes']
             if nframes == 0:
                 filename_short = basename
-                print(filename_short, '    ', nframes)
+                # The following line has been commented by Dominik to avoid 
+                # verbose console output
+                #print(filename_short, '    ', nframes)
                 continue
 
             # Default location for data in .cxi files is not data/data
+
             # But leave option for passing a different hdf5 data path on the command line
             cxi_field = field
             if cxi_field == 'data/data':
@@ -497,7 +494,9 @@ def list_events(pattern='./*.cxi', field='data/data'):
 
         #filename_short = filename.split('/')[-1]
         filename_short = basename
-        print(filename_short, '    ', nframes)
+        # The following line has been commented by Dominik to avoid 
+        # verbose console output
+        #print(filename_short, '    ', nframes)
 
 
     #endfor

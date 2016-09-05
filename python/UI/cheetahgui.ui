@@ -314,7 +314,7 @@
    </widget>
    <widget class="QMenu" name="menuPowder">
     <property name="title">
-     <string>Powder</string>
+     <string>View</string>
     </property>
     <addaction name="menu_powder_hits"/>
     <addaction name="menu_powder_hits_det"/>
@@ -341,10 +341,25 @@
     <addaction name="menu_utilities_calibman"/>
     <addaction name="menu_utilities_psocake"/>
    </widget>
+   <widget class="QMenu" name="menuCrystFEL">
+    <property name="title">
+     <string>CrystFEL</string>
+    </property>
+    <addaction name="actionView_indexing_results"/>
+    <addaction name="actionIndex_mosflm_nolatt"/>
+    <addaction name="actionCell_explorer"/>
+   </widget>
+   <widget class="QMenu" name="menuCalibration">
+    <property name="title">
+     <string>Calibration</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuCheetah"/>
-   <addaction name="menuPowder"/>
+   <addaction name="menuCalibration"/>
+   <addaction name="menuCrystFEL"/>
    <addaction name="menu_masks"/>
+   <addaction name="menuPowder"/>
    <addaction name="menuAnalysis"/>
    <addaction name="menuUtilities"/>
    <addaction name="menuLogs"/>
@@ -380,6 +395,9 @@
    </property>
   </action>
   <action name="menu_mask_badpixbright">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Make bad pixel mask from brightfield</string>
    </property>
@@ -539,6 +557,21 @@
   <action name="menu_powder_copydarkcal">
    <property name="text">
     <string>Copy darkcal.h5 to calib/darkcal</string>
+   </property>
+  </action>
+  <action name="actionCell_explorer">
+   <property name="text">
+    <string>Cell explorer</string>
+   </property>
+  </action>
+  <action name="actionView_indexing_results">
+   <property name="text">
+    <string>View indexing results</string>
+   </property>
+  </action>
+  <action name="actionIndex_mosflm_nolatt">
+   <property name="text">
+    <string>Index mosflm-nolatt</string>
    </property>
   </action>
  </widget>

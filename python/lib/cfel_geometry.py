@@ -7,7 +7,9 @@
 
 import h5py
 import numpy
-
+import sys
+import traceback
+import re
 
 def pixelmap_from_CrystFEL_geometry_file(fnam):
     """
@@ -15,15 +17,20 @@ def pixelmap_from_CrystFEL_geometry_file(fnam):
     
     Input: geometry filename
     
-    Output: x: slab-like pixel map with x coordinate of each slab pixel in the reference system of the detector
-            y: slab-like pixel map with y coordinate of each slab pixel in the reference system of the detector
-            z: slab-like pixel map with distance of each pixel from the center of the reference system.
+    Output: x: slab-like pixel map with x coordinate of each slab pixel in 
+                the reference system of the detector
+            y: slab-like pixel map with y coordinate of each slab pixel in 
+                the reference system of the detector
+            z: slab-like pixel map with distance of each pixel from the center
+                of the reference system.  
     """
 
     f = open(fnam, 'r')
     f_lines = []
     for line in f:
-        f_lines.append(line)
+        line_parsed_comments = line.split(";", 1)[0] 
+        if(line_parsed_comments is not ""):
+            f_lines.append(line_parsed_comments)
 
     keyword_list = ['min_fs', 'min_ss', 'max_fs', 'max_ss', 'fs', 'ss', 'corner_x', 'corner_y']
 
@@ -54,11 +61,11 @@ def pixelmap_from_CrystFEL_geometry_file(fnam):
         parsed_detector_dict[p]['min_ss'] = int( detector_dict[p]['min_ss'] )
         parsed_detector_dict[p]['max_ss'] = int( detector_dict[p]['max_ss'] )
         parsed_detector_dict[p]['fs'] = []
-        parsed_detector_dict[p]['fs'].append( float( detector_dict[p]['fs'].split('x')[0] ) )
-        parsed_detector_dict[p]['fs'].append( float( detector_dict[p]['fs'].split('x')[1].split('y')[0] ) )
+        parsed_detector_dict[p]['fs'].append( float( detector_dict[p]['fs'].split('x')[0].replace(" ", "") ) )
+        parsed_detector_dict[p]['fs'].append( float( detector_dict[p]['fs'].split('x')[1].split('y')[0].replace(" ", "") ) )
         parsed_detector_dict[p]['ss'] = []
-        parsed_detector_dict[p]['ss'].append( float( detector_dict[p]['ss'].split('x')[0] ) )
-        parsed_detector_dict[p]['ss'].append( float( detector_dict[p]['ss'].split('x')[1].split('y')[0] ) )
+        parsed_detector_dict[p]['ss'].append( float( detector_dict[p]['ss'].split('x')[0].replace(" ", "") ) )
+        parsed_detector_dict[p]['ss'].append( float( detector_dict[p]['ss'].split('x')[1].split('y')[0].replace(" ", "") ) )
         parsed_detector_dict[p]['corner_x'] = float( detector_dict[p]['corner_x'] )
         parsed_detector_dict[p]['corner_y'] = float( detector_dict[p]['corner_y'] )
     #endfor
@@ -97,25 +104,93 @@ def pixelmap_from_CrystFEL_geometry_file(fnam):
 
 def coffset_from_CrystFEL_geometry_file(fnam):
     """
-    Read coffset from CrystFEL geometry file
-    res = The resolution (in pixels per metre) for this panel. This is one over the pixel size in metres.
-    :param fnam:
-    :return:
+    Read coffset from CrystFEL geometry file res = The resolution (in pixels
+    per metre) for this panel. This is one over the pixel size in metres.
+    :param fnam: :return: 
     """
+
     f = open(fnam, 'r')
     f_lines = []
     for line in f:
-        f_lines.append(line)
+        # handle comments
+        line_parsed_comments = line.split(";", 1)[0] 
+        if(line_parsed_comments is not ""):
+            f_lines.append(line_parsed_comments)
     # endfor
+    f.close()
 
-    coffset_lines = [x for x in f_lines if 'coffset' in x]
-    coffset = float(coffset_lines[-1].split('=')[1])
-    res_lines = [x for x in f_lines if 'res' in x]
-    res = float(res_lines[-1].split('=')[1])
-    dx_m = 1.0/res
+    coffset_lines = [x for x in f_lines if "coffset" in x]
+    
+    # There might be no coffset in the geometry file. We have to check for that.
+    if coffset_lines:
+        coffset = float(coffset_lines[-1].split('=')[1])
+    else:
+        coffset = numpy.nan
+
+    res_lines = [x for x in f_lines if "res" in x]
+    # There might be no res in the geometry file. We have to check for that.
+    if res_lines:
+        res = float(res_lines[-1].split('=')[1])
+        dx_m = 1.0/res
+    else:
+        res = numpy.nan
+        dx_m = numpy.nan
 
     return coffset, res, dx_m
 
+
+def clen_from_CrystFEL_geometry_file(fnam):
+    """
+    This fuction returns the clen from the geometry file.
+
+    Returns:
+        string: codeword under which the clen can be found in the streamfile
+        float: clen value
+        None: clen not found in the geometry file
+    
+    Note:
+        This functions opens the geometry file all alone and scans the whole
+        file for the clen flag. This might take long and is so far from being
+        optimal. This implementation has been choosen such that the original
+        geometry parser from cheetah remains unchanged.
+    """
+
+    try:
+        with open(fnam, 'r') as f:
+            clen = None
+            for line in f:
+                line_parsed_comments = line.split(";", 1)[0] 
+                if "clen = " in line_parsed_comments:
+                    clen = line.replace("clen = ", "").rstrip()
+                    break
+            if clen is None:
+                return clen
+            try:
+                clen_float = float(clen)
+                return clen_float
+            except ValueError:
+                return clen
+
+            #float_matching_pattern = r"""
+            #    [-+]? # optional sign
+            #    (?:
+            #    (?: \d* \. \d+ ) # .1 .12 .123 etc 9.1 etc 98.1 etc
+            #    |
+            #    (?: \d+ \.? ) # 1. 12. 123. etc 1 12 123 etc
+            #    )
+            #    # followed by optional exponent part if desired
+            #    (?: [Ee] [+-]? \d+ ) ?
+            #"""
+            #float_matching_regex = re.compile(
+            #    float_matching_pattern, re.VERBOSE)
+
+            #match = re.findall(float_matching_regex, clen)
+            #if match:
+            #    return float(match[0])
+            #else:
+            #    return clen
+    except IOError:
+        return None
 
 def read_pixelmap(filename):
     """
@@ -125,10 +200,10 @@ def read_pixelmap(filename):
 
     # Open HDF5 pixelmap file
     try:
-        fp = h5py.File(filename, 'r')
-        x = fp['x'][:]
-        y = fp['y'][:]
-        fp.close()
+        with h5py.File(filename, 'r') as fp:
+            x = fp['x'][:]
+            y = fp['y'][:]
+            fp.close()
     except:
         print('Error reading pixelmap:')
         print(filename)
@@ -151,12 +226,13 @@ def read_pixelmap(filename):
 
 def read_geometry(geometry_filename, quiet=False):
     """
-    Read geometry files and return pixel map
-    Determines file type and calls the appropriate routine for reading the geometry
-    Note transposition and change of axes so that images appear the same orientation in hdfsee, cheetah/IDL and pyQtGraph
+    Read geometry files and return pixel map Determines file type and calls the
+    appropriate routine for reading the geometry Note transposition and change
+    of axes so that images appear the same orientation in hdfsee, cheetah/IDL
+    and pyQtGraph
 
-    Output is the following sttructure.
-    Return unit for geometry is pixels (CrystFEL unit 'res = 1/pix_size' is depreciated)
+    Output is the following sttructure.  Return unit for geometry is pixels
+    (CrystFEL unit 'res = 1/pix_size' is depreciated)
 
     result_dict = {
         'x' : x.flatten(),      # In pixels
@@ -186,11 +262,12 @@ def read_geometry(geometry_filename, quiet=False):
             coffset, res, dx_m = coffset_from_CrystFEL_geometry_file(geometry_filename)
         except:
             fail = True
+            traceback.print_exc()
 
     elif format == 'pixelmap':
         try:
             x, y, r, dx_m = read_pixelmap(geometry_filename)
-            coffset = 'nan'
+            coffset = numpy.nan
         except:
             fail = True
 

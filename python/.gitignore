@@ -2,4 +2,5 @@
 *pycache*
 */pycache
 upload
-testing
+testdata
+*.swp
