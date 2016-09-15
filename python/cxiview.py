@@ -22,17 +22,24 @@ import UI.CXIview_ui
 import lib.cfel_filetools as cfel_file
 import lib.cfel_geometry as cfel_geom
 import lib.cfel_imgtools as cfel_img
-from lib.cfel_streamfile import *
+
+from lib.streamfile_parser.Streamfile import *
 
 
-"""
-Class implementing an exception for the case that no crystal is found in the 
-streamfile.
-"""
 class NoCrystalException(Exception):
+    """
+    Class implementing an exception for the case that no crystal is found in the
+    streamfile.
+    """
+
     pass
 
 class InsufficientInformationException(Exception):
+    """
+    Class implementing an exception for the case that required information is
+    missing to perform some task.
+    """
+
     pass
 
 #
@@ -78,7 +85,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         if self.photon_energy_ok:
             self.lambd = scipy.constants.h * scipy.constants.c /(scipy.constants.e * self.photon_energy)
         else:
-            self.lambd = numpy.nan
+            self.lambd = float('nan')
 
         # Detector distance - use command line detector distance if provided
         self.detector_distance_ok = False
@@ -98,7 +105,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                 self.detector_distance_ok = True
                 self.detector_z_m = (1e-3*detector_distance + self.geometry['coffset'])
             else:
-                self.detector_z_m = numpy.nan
+                self.detector_z_m = float('nan')
         self.detector_z_mm = self.detector_z_m * 1e3
 
 
@@ -252,9 +259,9 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                 peak_x = []
                 peak_y = []
                 
-                print("Number of peaks found: ", 
-                    self.streamfile.get_number_of_crystals(self.img_index))
-                print("At the moment just displaying the first one.")
+                #print("Number of peaks found: ", 
+                #self.streamfile.get_number_of_crystals(self.img_index))
+                #print("At the moment just displaying the first one.")
                 peak_x_data, peak_y_data = self.streamfile.get_predicted_peak_data(
                     self.img_index)
                 n_peaks = len(peak_x_data)
@@ -331,7 +338,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
         # Refuse to draw deceptive resolution rings
         if self.resolution_ok == False:
-            print("Insufficient information to calculate resolution")
+            #print("Insufficient information to calculate resolution")
             return
 
 
@@ -476,6 +483,13 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             self.ui.jumpToLineEdit.setText(str(self.img_index))
     #end jump_to_pattern()
         
+    def _overline_string(self, string):
+        out = ""
+        for c in string:
+            out += c
+            out += u"\u0305"
+            
+        return out
 
     def mouse_in_predicted_peak(self, mouse_x, mouse_y, text):
         """
@@ -512,17 +526,20 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                     self.img_index)
                 overline = "\u0305"
                 text += "     hkl: "
-                text += str(hkl[0])
                 if hkl[0] < 0:
-                    text += "\u0305 "
-                else: text += " "
-                text += str(hkl[1]) 
+                    text += self._overline_string(str(abs(hkl[0])))
+                else:
+                    text += str(hkl[0])
+                text += "  "
                 if hkl[1] < 0:
-                    text += "\u0305 "
-                else: text += " "
-                text += str(hkl[2])
+                    text += self._overline_string(str(abs(hkl[1])))
+                else:
+                    text += str(hkl[1]) 
+                text += "  "
                 if hkl[2] < 0:
-                    text += "\u0305"
+                    text += self._overline_string(str(abs(hkl[2])))
+                else:
+                    text += str(hkl[2])
                 self.ui.statusBar.setText(text)
 
     #
@@ -742,7 +759,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         # Size of images (assume all images have the same size as frame 0)
         temp = cfel_file.read_event(self.event_list, 0, data=True)
         self.slab_shape = temp['data'].shape
-        print("Data shape: ", self.slab_shape )
 
         # Sanity check: Do geometry and data shape match?
         if self.geometry_ok and (temp['data'].flatten().shape != self.geometry['x'].shape):

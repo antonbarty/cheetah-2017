@@ -10,6 +10,8 @@ import csv
 import h5py
 import glob
 import numpy as np
+import subprocess
+
 
 
 # Needed for dialog_pickfile()
@@ -20,6 +22,25 @@ import PyQt4.QtGui
     the line is not clear to me.
 qtApp = PyQt4.QtGui.QApplication(sys.argv)
 """
+
+
+#
+# Launch a subprocess (eg: viewer or analysis script) without blocking the GUI
+# Separate routine makes it easy change this globally if needed
+#
+def spawn_subprocess(cmdarr, wait=False, test=False):
+    command = str.join(' ', cmdarr)
+    print(command)
+
+    if test:
+        return
+
+    if wait:
+        subprocess.run(cmdarr)
+    else:
+        subprocess.Popen(cmdarr)
+
+
 
 def dialog_pickfile(write=False, directory=False, multiple=False, path=False, filter='*.*', qtmainwin=None):
     """

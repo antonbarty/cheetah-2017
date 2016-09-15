@@ -13,7 +13,8 @@ import PyQt4.QtGui
 
 import UI.crawler_ui
 import lib.crawler_slac as location
-import lib.crawler_hdf5 as cheetah
+import lib.crawler_hdf5 as crawler_hdf5
+import lib.crawler_crystfel as crawler_crystfel
 import lib.crawler_merge as merge
 
 
@@ -38,13 +39,13 @@ class cheetah_crawler(PyQt4.QtGui.QMainWindow):
         # Crawler HDF5 (facility independent)
         self.ui.statusBar.setText('Scanning HDF5 files')
         self.ui.progressBar.setValue(25)
-        cheetah.scan_hdf5(self.hdf5_dir)
+        crawler_hdf5.scan_hdf5(self.hdf5_dir)
 
 
         # Crawler Index (facility independent)
         self.ui.statusBar.setText('Scanning indexing results')
         self.ui.progressBar.setValue(50)
-
+        crawler_crystfel.scan_crystfel(self.index_dir)
 
         # Crawler merge (facility independent)
         self.ui.statusBar.setText('Merging results')
@@ -73,6 +74,7 @@ class cheetah_crawler(PyQt4.QtGui.QMainWindow):
         self.location = args.l
         self.data_dir = args.d
         self.hdf5_dir = args.c
+        self.index_dir = args.i
 
         #
         # Set up the UI
@@ -108,6 +110,7 @@ if __name__ == '__main__':
     parser.add_argument("-l", default="none", help="Location (LCLS, P11)")
     parser.add_argument("-d", default="none", help="Data directory (XTC, CBF, etc)")
     parser.add_argument("-c", default="none", help="Cheetah HDF5 directory")
+    parser.add_argument("-i", default="none", help="Indexing directory")
     args = parser.parse_args()
     
     print("----------")    
@@ -116,8 +119,8 @@ if __name__ == '__main__':
     print("----------")    
     
     # This bit may be irrelevent if we can make parser.parse_args() require this field    
-    if args.l == "none" or args.d == "none" or args.c == "none":
-        print('Usage: cheetah-crawler.py -l location (LCLS, P11) -d data_directory -c cheetah_hdf5_directory')
+    if args.l == "none" or args.d == "none" or args.c == "none" or args.i == "none":
+        print('Usage: cheetah-crawler.py -l location (LCLS, P11) -d data_directory -c cheetah_hdf5_directory -i indexing_directory')
         sys.exit()
     #endif        
 

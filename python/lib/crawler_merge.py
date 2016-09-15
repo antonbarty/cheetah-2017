@@ -39,6 +39,9 @@ def crawler_merge():
     cheetah = cfel_file.csv_to_dict('cheetah_status.csv')
     #run,status,directory,processed,hits,hitrate%
 
+    crystfel = cfel_file.csv_to_dict('crystfel_status.csv')
+    #run,status,directory,processed,indexed,indexrate%
+
     #datasets = cfel_file.csv_to_dict('datasets.txt')
     datasets = cfel_file.csv_to_dict('datasets.csv')
     #Run, DatasetID, Directory, iniFile
@@ -62,6 +65,11 @@ def crawler_merge():
             run_num = int(run[1:])
             cheetah['run'][i] = run_num
 
+    if crystfel != {}:
+        for i, run in enumerate(crystfel['run']):
+            run_num = int(run[1:])
+            crystfel['run'][i] = run_num
+
     if datasets != {}:
         for i, run in enumerate(datasets['Run']):
             #run_num = int(run[1:])
@@ -73,7 +81,7 @@ def crawler_merge():
 
     # Find unique run numbers
     # (some runs may be missing from some of the tables)
-    all_runs = data['run'] + cheetah['run'] + datasets['Run']
+    all_runs = data['run'] + cheetah['run'] + crystfel['run'] + datasets['Run']
     uniq_runs = list(sorted(set(all_runs)))
     #print(uniq_runs)
 
@@ -149,7 +157,19 @@ def crawler_merge():
 
         # CrystFEL stuff is not yet included
         crystfel_status = '---'
-        nindexed = '---'
+        indexrate = '---'
+        if crystfel != {}:
+            # Use any matches in the directory column (handles multiple directories per run)
+            if h5dir in crystfel['directory']:
+                i = crystfel['directory'].index(h5dir)
+                if crystfel['run'][i] == run:
+                    crystfel_status = crystfel['status'][i].strip()
+                    indexrate = crystfel['indexrate%'][i].strip()
+            # Else fall back to the first directory matching the run number
+            elif run in crystfel['run']:
+                i = crystfel['run'].index(run)
+                crystfel_status = crystfel['status'][i].strip()
+                indexrate = crystfel['indexrate%'][i].strip()
 
 
         # Concatenate info for this run into output list
@@ -162,7 +182,7 @@ def crawler_merge():
         nhits_out.append(nhits)
         hitrate_out.append(hitrate)
         crystfel_out.append(crystfel_status)
-        nindexed_out.append(nindexed)
+        nindexed_out.append(indexrate)
 
 
     #
