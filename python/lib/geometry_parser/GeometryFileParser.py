@@ -20,8 +20,13 @@ class GeometryFileParser:
 
     def __init__(self, filename = ""):
         """
+        Constructor of the class.
+
         Args:
             filename (string): Filename of the geometry file.
+
+        Note:
+            The filename is optional.
         """
 
         self._lines = []
@@ -38,15 +43,15 @@ class GeometryFileParser:
 
     def dump(self):
         """
-        This methods dumps the contents of the geometry dictionary after parsing
-        the geometry file.
+        This methods dumps the contents of the geometry dictionary.
         """
 
-        pprint.pprint(self.dictionary['panels'])
-        pprint.pprint(self.dictionary['beam_characteristics'])
-        pprint.pprint(self.dictionary['bad_regions'])
-        pprint.pprint(self.dictionary['rigid_groups'])
-        pprint.pprint(self.dictionary['rigid_group_collections'])
+        #pprint.pprint(self.dictionary['panels'])
+        #pprint.pprint(self.dictionary['beam_characteristics'])
+        #pprint.pprint(self.dictionary['bad_regions'])
+        #pprint.pprint(self.dictionary['rigid_groups'])
+        #pprint.pprint(self.dictionary['rigid_group_collections'])
+        pprint.pprint(self.dictionary)
 
 
     def _read_geometry_file(self, filename):
@@ -82,7 +87,7 @@ class GeometryFileParser:
             return ""
         
 
-    def match_rigid_group_information(self, line):
+    def _match_rigid_group_information(self, line):
         """
         This methods checks whether the current line has information about rigid
         groups in the detector
@@ -109,10 +114,10 @@ class GeometryFileParser:
         return self._match_pattern(line, rigid_group_information_pattern)
 
 
-    def match_rigid_group_collection_information(self, line):
+    def _match_rigid_group_collection_information(self, line):
         """
         This methods checks whether the current line has information about rigid
-        groups in the detector
+        group collections in the detector
 
         Args:
             line (string): Line containing the rigid group information
@@ -135,7 +140,7 @@ class GeometryFileParser:
         return self._match_pattern(line, rigid_group_information_pattern)
 
 
-    def get_rigid_group_information(self, match):
+    def _get_rigid_group_information(self, match):
         """
         This method returns the rigid group information from the given match.
 
@@ -156,7 +161,7 @@ class GeometryFileParser:
             return []
 
 
-    def get_rigid_group_collection_information(self, match):
+    def _get_rigid_group_collection_information(self, match):
         """
         This method returns the rigid group collection information from the 
         given line.
@@ -178,7 +183,7 @@ class GeometryFileParser:
             return []
 
 
-    def match_bad_region_information(self, line):
+    def _match_bad_region_information(self, line):
         """
         This methods checks whether the current line has information about bad
         regions in the detector.
@@ -192,9 +197,9 @@ class GeometryFileParser:
         """
 
         bad_region_pattern = """
-            ^[\s]*            # whitespaces at the beginning
+            ^[\s]*              # whitespaces at the beginning
             (?=bad)             
-            ([A-Za-z0-9_]+)     # panel name
+            ([A-Za-z0-9_]+)     # bad region name
             \/
             ([A-Za-z0-9_]+)     # property name 
             [\s]*          
@@ -205,7 +210,7 @@ class GeometryFileParser:
         return self._match_pattern(line, bad_region_pattern)
     
 
-    def get_bad_region_information(self, match):
+    def _get_bad_region_information(self, match):
         """
         This method returns the bad region information from the given match.
 
@@ -223,11 +228,10 @@ class GeometryFileParser:
             return "" 
 
 
-    def match_local_panel_information(self, line):
+    def _match_local_panel_information(self, line):
         """
-        This methods checks if the current line is matching a specific panel
-        flag contains information for a specific panel or for all following
-        panels.
+        This methods checks if the current line contains local panel 
+        information.
 
         Args:
             line (string): Line containing the local panel information
@@ -251,7 +255,7 @@ class GeometryFileParser:
         return self._match_pattern(line, local_panel_information_pattern) 
 
 
-    def get_panel_name(self, match):
+    def _get_panel_name(self, match):
         """
         This method returns the panel name from a given match.
 
@@ -268,7 +272,7 @@ class GeometryFileParser:
             return ""
 
 
-    def get_bad_region_name(self, match):
+    def _get_bad_region_name(self, match):
         """
         This method returns the name of the bad region from a given match.
 
@@ -286,7 +290,7 @@ class GeometryFileParser:
             return ""
 
 
-    def get_local_panel_information(self, match):
+    def _get_local_panel_information(self, match):
         """
         This method returns the local panel information from the given match.
 
@@ -305,7 +309,7 @@ class GeometryFileParser:
             return ""
 
 
-    def match_global_panel_information(self, line):
+    def _match_global_panel_information(self, line):
         """
         This method checks whether the current line has global panel
         information.
@@ -318,7 +322,7 @@ class GeometryFileParser:
         global_panel_information_pattern = """
             ^[\s]*            
             (?!rigid_group)             # may not be a rigid group
-            (?!rigid_group_collection)  # may not be a rigid group
+            (?!rigid_group_collection)  # may not be a rigid group collection
             ([A-Za-z0-9_]+)             # property name 
             [\s]*          
             =
@@ -328,7 +332,7 @@ class GeometryFileParser:
         return self._match_pattern(line, global_panel_information_pattern)
 
 
-    def get_global_panel_information(self, match):
+    def _get_global_panel_information(self, match):
         """
         This method returns the global panel information from the given match.
 
@@ -347,7 +351,7 @@ class GeometryFileParser:
             return ""
 
         
-    def match_beam_characteristics_information(self, line):
+    def _match_beam_characteristics_information(self, line):
         """
         This method checks whether the current line has beam characteristics
         information.
@@ -362,10 +366,10 @@ class GeometryFileParser:
             method just wraps the match_global_panel_information method.
         """
 
-        return self.match_global_panel_information(line)
+        return self._match_global_panel_information(line)
 
 
-    def get_beam_characteristics_information(self, match):
+    def _get_beam_characteristics_information(self, match):
         """
         This method returns the beam characteristics information from the given 
         match.
@@ -380,14 +384,14 @@ class GeometryFileParser:
         Note:
             The layout of the beam characteristic information is exactly the
             same as the layout of the global panel information. Therefore this
-            method just wraps the get_global_panel_information method.
+            method just wraps the _get_global_panel_information method.
 
         """
         
-        return self.get_global_panel_information(match)
+        return self._get_global_panel_information(match)
 
 
-    def get_flag(self, line, line_matches):
+    def _get_flag(self, line, line_matches):
         """
         This method returns the CrystFEL geometry flag (eg. ss, fs,
         photon_energy_eV, ...) from a given line. If no flag is found an empty
@@ -445,7 +449,7 @@ class GeometryFileParser:
             return flag
 
 
-    def convert_type(self, key, value):
+    def _convert_type(self, key, value):
         if (key == "ss" or key == "fs"):
             stripped = "".join(value.split())
             check_pattern = """
@@ -497,7 +501,7 @@ class GeometryFileParser:
                 y_sign = match.group(4)
                 y_value = match.group(5)
                 y_key = match.group(6)
-                # debug prints maybe also be handy later
+                # debug prints may also be handy later
                 # print("x_sign: ", x_sign)
                 # print("x_key: ", x_key)
                 # print("x_value: ", x_value)
@@ -538,7 +542,7 @@ class GeometryFileParser:
 
     def check_geometry(self, filename = ""):
         """
-        This methods check if the given geometry file or the geometry file of
+        This methods checks if the given geometry file or the geometry file
         stored in the object fulfills the definition standards of a valid
         CrystFEL geometry file.
 
@@ -548,6 +552,10 @@ class GeometryFileParser:
         Returns:
             bool: True if the geometry file fulfills the standards, False
                 otherwise
+
+        Note:
+            The filename is optional. If no filename is given the filename
+            stored in self.filename is used.  
         """
 
         self._parse(filename, exit_on_error = False)
@@ -563,9 +571,10 @@ class GeometryFileParser:
                 num_errors_string + " occured.", 80))
             for error in self.error_list:
                 print("")
-                print(textwrap.fill("Line: " + error[0], 80))
                 print(textwrap.fill("Error: " + error[1], 80))
+                print(textwrap.fill("Line: " + error[0], 80))
             self.error_list = []
+            self.dictionary = {}
             return False
         else:
             print("The geometry file fulfills the CrystFEL geometry standards.")
@@ -574,16 +583,20 @@ class GeometryFileParser:
     
     def parse(self, filename = ""):
         """
-        This methods parses the geometry file.
+        This methods parses the geometry file. 
 
         Args:
             filename (string): Path to the geometry file
+
+        Note:
+            The filename is optional. If no filename is given the filename
+            stored in self.filename is used.  
         """
 
         self._parse(filename, True)
             
 
-    def pixel_map(self):
+    def _pixel_map(self):
         """
         This method returns the pixelmap needed for the cxiviewer.py
 
@@ -600,8 +613,6 @@ class GeometryFileParser:
         if not self.dictionary['panels']:
             self.parse()
 
-        # TODO: do proper error handling in the case the geometry file does
-        # not supply all needed keys
         try:
             max_slab_fs = numpy.array([self.dictionary['panels'][k]['max_fs']  
                 for k in self.dictionary['panels'].keys()]).max()
@@ -641,8 +652,8 @@ class GeometryFileParser:
                     self.dictionary['panels'][p]['min_fs']: \
                     self.dictionary['panels'][p]['max_fs'] + 1] = r.imag
         except KeyError:
-            print("The geometry file does not provide sufficient information " +
-                "to construct the pixelmap.")
+            print(textwrap.fill("Error: The geometry file does not provide " +
+                "sufficient information to construct the pixelmap.", 80))
             exit()
 
         r = numpy.sqrt(numpy.square(x) + numpy.square(y))
@@ -651,11 +662,14 @@ class GeometryFileParser:
 
     def pixel_map_for_cxiview(self):
         """
-        This method returns the information needed for the cxiviewer.py
+        This method returns the information needed for the program cxiview.py
 
+        Returns:
+            dict: Dictionary the cxiviewer.py needs to display the information
+                correctly. The keys are: x, y, r, dx, coffset, shape, clen
         """
 
-        x, y, r = self.pixel_map()
+        x, y, r = self._pixel_map()
 
         M = 2 * int(max(abs(x.max()), abs(x.min()))) + 2       
         N = 2 * int(max(abs(y.max()), abs(y.min()))) + 2
@@ -663,17 +677,15 @@ class GeometryFileParser:
         y = -y
         img_shape = (M, N)
 
-        # numpy.nan is a bad choice because it relies on numpy. But
-        # this part of the program has to be compatible with cxiview.py
-        coffset = numpy.nan
-        clen = numpy.nan
-        res = numpy.nan
-        dx_m = numpy.nan
+        coffset = float('nan')
+        clen = float('nan')
+        res = float('nan')
+        dx_m = float('nan')
 
         try:
             panel_dict = next(iter(self.dictionary['panels'].values()))
         except KeyError:
-            print("The geometry file does not contain panel information.")
+            print("Error: The geometry file does not contain panel information.")
             exit()
         try:
             coffset = panel_dict['coffset']
@@ -710,7 +722,7 @@ class GeometryFileParser:
             filename (string): Path to the geometry file
             exit_on_error (bool): If True the program exits when an error in
                 the parsing process occurs. If False the program stores the
-                errors and linenumber and can give a complete error report.
+                errors and line content and can give a complete error report.
 
         """
 
@@ -735,21 +747,21 @@ class GeometryFileParser:
             # match all the known patterns in the line
             line_matches = {}
             line_matches['beam_characteristics_information'] = \
-                self.match_beam_characteristics_information(line)
+                self._match_beam_characteristics_information(line)
             line_matches['local_panel_information'] = \
-                self.match_local_panel_information(line)
+                self._match_local_panel_information(line)
             line_matches['global_panel_information'] = \
-                self.match_global_panel_information(line)
+                self._match_global_panel_information(line)
             line_matches['rigid_group_information'] = \
-                self.match_rigid_group_information(line)
+                self._match_rigid_group_information(line)
             line_matches['rigid_group_collection_information'] = \
-                self.match_rigid_group_collection_information( line)
+                self._match_rigid_group_collection_information( line)
             line_matches['bad_region_information'] = \
-                self.match_bad_region_information(line)
+                self._match_bad_region_information(line)
 
             try:
                 # every line has to contain a flag, get the flag first
-                flag = self.get_flag(line, line_matches)
+                flag = self._get_flag(line, line_matches)
                 if flag == "":
                     raise ParserError(
                         "A valid CrystFEL geometry flag could not be found. " +
@@ -758,21 +770,21 @@ class GeometryFileParser:
 
                 # rigid groups
                 if(line_matches['rigid_group_information']):
-                    information = self.get_rigid_group_information(
+                    information = self._get_rigid_group_information(
                         line_matches['rigid_group_information'])
                     self.dictionary['rigid_groups'][flag] = \
-                        self.convert_type(flag, information)
+                        self._convert_type(flag, information)
                 # rigid group collections
                 elif(line_matches['rigid_group_collection_information']):
-                    information = self.get_rigid_group_collection_information(
+                    information = self._get_rigid_group_collection_information(
                         line_matches['rigid_group_collection_information'])
                     self.dictionary['rigid_group_collections'][flag] = \
-                        self.convert_type(flag, information)
+                        self._convert_type(flag, information)
                 # search for panel characteristics
                 # check first if the flag is for one panel only or global
                 # information valid for many panels
                 elif line_matches['local_panel_information']:
-                    panel_name = self.get_panel_name(
+                    panel_name = self._get_panel_name(
                         line_matches['local_panel_information'])
                     # check whether the panel has already appeared in the 
                     # geometry
@@ -785,43 +797,44 @@ class GeometryFileParser:
                            self.dictionary['panels'][panel_name][key] = \
                             global_panel_properties[key] 
                     # set the local line information in the dictionary
-                    information = self.get_local_panel_information(
+                    information = self._get_local_panel_information(
                         line_matches['local_panel_information'])
                     self.dictionary['panels'][panel_name][flag] = \
-                        self.convert_type(flag, information)
+                        self._convert_type(flag, information)
                 # global panel information has the same shape as beam 
                 # characteristic information, we can just separate them by the
                 # flag
                 elif line_matches['global_panel_information']:
                     if flag in BeamCharacteristicFlags.list:
-                        information = self.get_beam_characteristics_information(
+                        information = \
+                            self._get_beam_characteristics_information(
                             line_matches['global_panel_information'])
                         self.dictionary['beam_characteristics'][flag] = \
-                            self.convert_type(flag, information)
+                            self._convert_type(flag, information)
                     else: 
-                        information = self.get_global_panel_information(
+                        information = self._get_global_panel_information(
                             line_matches['global_panel_information'])
                         global_panel_properties[flag] = \
-                            self.convert_type(flag, information)
+                            self._convert_type(flag, information)
                 # bad regions
                 elif line_matches['bad_region_information']:
-                    bad_region_name = self.get_bad_region_name(
+                    bad_region_name = self._get_bad_region_name(
                         line_matches['bad_region_information'])
                     if bad_region_name not in bad_regions:
                         bad_regions.add(bad_region_name)    
                         self.dictionary['bad_regions'][bad_region_name] = {}
-                    information = self.get_bad_region_information(
+                    information = self._get_bad_region_information(
                         line_matches['bad_region_information'])
                     self.dictionary['bad_regions'][bad_region_name][flag] = \
-                        self.convert_type(flag, information)
+                        self._convert_type(flag, information)
                 else:
                     raise ParserError("The given line has an invalid form.")
                    
             except ParserError as e:
                 if exit_on_error:
-                    print(textwrap.fill("Geometry file is corrupted in line: " +
-                    line, 80))
-                    print(textwrap.fill(e.args[0], 80))
+                    print(textwrap.fill("Error: " + e.args[0], 80))
+                    print(textwrap.fill("Line: " + line, 80))
+                    print("")
                     exit()
                 else:
                     self.error_list.append((line, e.args[0]))

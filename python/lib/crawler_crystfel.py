@@ -16,13 +16,13 @@ def scan_crystfel(crystfel_dir):
 
     #printf, fout, '# Run, status, directory, processed, hits, hitrate%, mtime'
 
-    run_out = []
-    status_out = []
-    directory_out = []
-    processed_out = []
-    indexed_out = []
-    indexrate_out = []
-    mtime_out = []
+    run_out = ['r0001']
+    status_out = ['---']
+    directory_out = ['---']
+    processed_out = ['---']
+    indexed_out = ['---']
+    indexrate_out = ['---']
+    mtime_out = ['---']
 
     # Create sorted file list or files come in seemingly random order
     directories = glob.glob(crystfel_dir + '/r*')

@@ -30,6 +30,7 @@ class PanelFlags:
         "corner_x",
         "corner_y",
         "max_adu",
+        "adu_per_photon",
         "no_index",
         "mask",
         "mask_file",

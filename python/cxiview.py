@@ -18,7 +18,7 @@ import PyQt4.QtGui
 import pyqtgraph
 import scipy.constants
 
-import UI.CXIview_ui
+import UI.cxiview_ui
 import lib.cfel_filetools as cfel_file
 import lib.cfel_geometry as cfel_geom
 import lib.cfel_imgtools as cfel_img
@@ -744,7 +744,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         pyqtgraph.setConfigOption('background', 0.0)
         pyqtgraph.setConfigOption('background', 'k')
         pyqtgraph.setConfigOption('foreground', 'w')
-        self.ui = UI.CXIview_ui.Ui_MainWindow()
+        self.ui = UI.cxiview_ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
         if self.streamfile is not None:

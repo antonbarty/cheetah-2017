@@ -55,26 +55,38 @@ def crawler_merge():
     # Compatibility: convert r0002 (string) to 2 (integer) so that run is in the same format in each dict
     #   This may disappear later if datasets['run'] is in the same format
     #
-    if data != {}:
-        for i, run in enumerate(data['run']):
-            run_num= int(run[1:])
-            data['run'][i] = run_num
+    try:
+        if data != {}:
+            for i, run in enumerate(data['run']):
+                run_num= int(run[1:])
+                data['run'][i] = run_num
+    except:
+        pass
 
-    if cheetah != {}:
-        for i, run in enumerate(cheetah['run']):
-            run_num = int(run[1:])
-            cheetah['run'][i] = run_num
+    try:
+        if cheetah != {}:
+            for i, run in enumerate(cheetah['run']):
+                run_num = int(run[1:])
+                cheetah['run'][i] = run_num
+    except:
+        pass
 
-    if crystfel != {}:
-        for i, run in enumerate(crystfel['run']):
-            run_num = int(run[1:])
-            crystfel['run'][i] = run_num
+    try:
+        if crystfel != {}:
+            for i, run in enumerate(crystfel['run']):
+                run_num = int(run[1:])
+                crystfel['run'][i] = run_num
+    except:
+        pass
 
-    if datasets != {}:
-        for i, run in enumerate(datasets['Run']):
-            #run_num = int(run[1:])
-            run_num = int(run)
-            datasets['Run'][i] = run_num
+    try:
+        if datasets != {}:
+            for i, run in enumerate(datasets['Run']):
+                #run_num = int(run[1:])
+                run_num = int(run)
+                datasets['Run'][i] = run_num
+    except:
+        pass
     #print(data['run'])
     #print(datasets['# Run'])
 
