@@ -414,6 +414,8 @@ void cGlobal::setup() {
 	pthread_mutex_init(&datarateWorker_mutex, NULL);  
 	pthread_mutex_init(&saveCXI_mutex, NULL);
 	pthread_mutex_init(&saveinterval_mutex, NULL);
+	pthread_mutex_init(&saveSynchronisation_mutex, NULL);
+	saveSynchronisation_mutex
 	
 	pthread_mutex_init(&gmd_mutex, NULL);
 	pthread_mutex_init(&swmr_mutex, NULL);
@@ -657,6 +659,8 @@ void cGlobal::unlockMutexes(void) {
 	pthread_mutex_unlock(&datarateWorker_mutex);
 	pthread_mutex_unlock(&saveCXI_mutex);
 	pthread_mutex_unlock(&saveinterval_mutex);
+	pthread_mutex_unlock(&saveSynchronisation_mutex);
+	
 	
 
 	for(long detIndex=0; detIndex<nDetectors; detIndex++) {
@@ -1846,5 +1850,6 @@ void cGlobal::freeMemory() {
     pthread_mutex_destroy(&gmd_mutex);
 	pthread_mutex_destroy(&saveCXI_mutex);
 	pthread_mutex_destroy(&saveinterval_mutex);
+	pthread_mutex_destroy(&saveSynchronisation_mutex);
 	
 }
