@@ -415,7 +415,6 @@ void cGlobal::setup() {
 	pthread_mutex_init(&saveCXI_mutex, NULL);
 	pthread_mutex_init(&saveinterval_mutex, NULL);
 	pthread_mutex_init(&saveSynchronisation_mutex, NULL);
-	saveSynchronisation_mutex
 	
 	pthread_mutex_init(&gmd_mutex, NULL);
 	pthread_mutex_init(&swmr_mutex, NULL);
@@ -674,6 +673,8 @@ void cGlobal::unlockMutexes(void) {
 		pthread_mutex_unlock(&FEEspectrumStack_mutex[i]);
 		pthread_mutex_unlock(&TimeToolStack_mutex[i]);
 	}
+	
+	nActiveCheetahThreads = 0;
 }
 
 /*
