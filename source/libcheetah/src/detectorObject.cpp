@@ -725,9 +725,6 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value)
     else if (!strcmp(tag, "streak_background_region_dist_from_edge")) {
         streak_background_region_dist_from_edge = atoi(value);
     }
-    else if (!strcmp(tag, "streakfindermask")) {
-        strcpy(streak_mask_filename, value);
-    }
     else if (!strcmp(tag, "commonmodecorrection")) {
         strcpy(commonModeCorrection, value);
     }
