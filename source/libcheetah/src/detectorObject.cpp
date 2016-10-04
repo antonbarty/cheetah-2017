@@ -137,8 +137,6 @@ cPixelDetectorCommon::cPixelDetectorCommon()
     streak_num_lines_to_check = 3;
     streak_background_region_preset = 1;
     streak_background_region_dist_from_edge = 10;
-    strcpy(streak_mask_filename, "No_file_specified");
-    strcpy(streak_mask_hdf5_path, "/data/data");
 
     // Local background subtraction
     useLocalBackgroundSubtraction = 0;
