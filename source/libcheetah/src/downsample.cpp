@@ -166,7 +166,7 @@ void downsampleMaskNonConservative(uint16_t *msk,uint16_t *mskXxX,long img_nn, l
 
 void downsample(cEventData *eventData, cGlobal *global){
 	DETECTOR_LOOP {
-		if (global->detector[detIndex].saveDownsampled != 0 || global->detector[detIndex].saveAssembledAndDownsampled != 0) {
+		if (global->detector[detIndex].saveAssembledAndDownsampled != 0 && global->detector[detIndex].saveDownsampled != 1 && global->detector[detIndex].saveDownsampled != 0) {
 			
 			long        downsampling = global->detector[detIndex].downsampling;
 			long		image_nx = global->detector[detIndex].image_nx;

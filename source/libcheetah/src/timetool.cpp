@@ -30,10 +30,11 @@ void saveTimeToolStacks(cGlobal *global) {
     if(global->useTimeTool) {
 		printf("Saving Time tool stacks\n");
 		for(long powderType=0; powderType < global->nPowderClasses; powderType++) {
+            pthread_mutex_lock(&global->TimeToolStack_mutex[powderType]);
 			saveTimeToolStack(global, powderType);
+            pthread_mutex_unlock(&global->TimeToolStack_mutex[powderType]);
 		}
 	}
-	
 }
 
 
@@ -109,8 +110,8 @@ void saveTimeToolStack(cGlobal *global, int powderClass) {
 	if(global->TimeToolStackCounter[powderClass]==0)
 		return;
 	
-    // Lock
-	pthread_mutex_lock(&mutex);
+    // Lock - moved, due to double lock when called from addTimeToolToStack() causing lockup
+	//pthread_mutex_lock(&mutex);
 	
 	
 	// We re-use stacks - this number is so that we dont overwrite old stacks
@@ -130,7 +131,7 @@ void saveTimeToolStack(cGlobal *global, int powderClass) {
 	if(global->TimeToolLogfp[powderClass] != NULL)
 		fflush(global->TimeToolLogfp[powderClass]);
 	
-	pthread_mutex_unlock(&mutex);
+	//pthread_mutex_unlock(&mutex);
 	
 }
 

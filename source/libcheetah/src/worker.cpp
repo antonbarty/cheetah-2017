@@ -360,7 +360,9 @@ hitknown:
 		(!hit && global->saveBlanks) || 
 		( (global->hdf5dump > 0) && ((eventData->frameNumber % global->hdf5dump) == 0) );
 
-	
+	// Synchronisation of all writing so that stacks, CXI file, etc stay in step with each other
+	pthread_mutex_lock(&global->saveSynchronisation_mutex);
+
     if (global->generateDarkcal || global->generateGaincal) {
         // Print frames for dark/gain
         printf("r%04u:%li (%2.1lf Hz): Processed %s\n", global->runNumber, eventData->threadNum, processRate, eventData->eventStamp);
@@ -397,14 +399,13 @@ hitknown:
 		writePeakFile(eventData, global);
 	}
 
-	
-	//---------------------//
-	//---LOGBOOK-KEEPING---//
-	//---------------------//
 	DEBUG2("Logbook keeping");
-
 	writeLog(eventData, global);
-  
+
+	// Release synchronisation lock 
+	pthread_mutex_unlock(&global->saveSynchronisation_mutex);
+
+	
 	// Inside-thread speed test
 	if(global->ioSpeedTest==10) {
 		printf("r%04u:%li (%3.1fHz): I/O Speed test #1 (after saving frames)\n", global->runNumber, eventData->frameNumber, global->datarate);

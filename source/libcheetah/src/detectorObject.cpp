@@ -433,7 +433,7 @@ void cPixelDetectorCommon::configure(cGlobal * global) {
 		dataFormatMain            = cDataVersion::DATA_FORMAT_ASSEMBLED_AND_DOWNSAMPLED; 
 		printf("\t\tAssembled and downsampled: YES \n");
 	} else {
-		printf("\t\tAssembled and downsampled: YES \n");
+		printf("\t\tAssembled and downsampled: NO \n");
 	}
 
 	

@@ -23,6 +23,24 @@ import lib.cfel_filetools as cfel_file
 import lib.cfel_geometry as cfel_geom
 import lib.cfel_imgtools as cfel_img
 
+from lib.streamfile_parser.Streamfile import *
+
+
+class NoCrystalException(Exception):
+    """
+    Class implementing an exception for the case that no crystal is found in the
+    streamfile.
+    """
+
+    pass
+
+class InsufficientInformationException(Exception):
+    """
+    Class implementing an exception for the case that required information is
+    missing to perform some task.
+    """
+
+    pass
 
 #
 #	CXI viewer code
@@ -44,24 +62,30 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             print('Error encountered reading data from file (image data, peaks, energy or masks).  Skipping frame.')
             return
 
-
         # Photon energy - use command line eV if provided
         self.photon_energy_ok = False
         if self.default_eV != 'None':
             self.photon_energy = float(self.default_eV)
             self.photon_energy_ok = True
         else:
+            # reading photon energy from streamfile failed, try cxi
             self.photon_energy = cxi['photon_energy_eV']
-            if self.photon_energy != 'nan':
+            if not numpy.isnan(self.photon_energy):
                 self.photon_energy_ok = True
-        if self.photon_energy < 0 or self.photon_energy == numpy.nan:
-            self.photon_energy_ok = False
+
+            # get photon energy from streamfile
+            if self.stream_filepath != "":
+                self.photon_energy = self.streamfile.chunks[self.img_index].photon_energy
+                if self.photon_energy > 0:
+                    self.photon_energy_ok = True
+            if self.photon_energy < 0 or numpy.isnan(self.photon_energy):
+                self.photon_energy_ok = False
 
         # Photon energy to wavelength
         if self.photon_energy_ok:
             self.lambd = scipy.constants.h * scipy.constants.c /(scipy.constants.e * self.photon_energy)
         else:
-            self.lambd = numpy.nan
+            self.lambd = float('nan')
 
         # Detector distance - use command line detector distance if provided
         self.detector_distance_ok = False
@@ -70,11 +94,18 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             self.detector_distance_ok = True
         else:
             detector_distance = cxi['EncoderValue']
-            if detector_distance != numpy.nan and self.geometry['coffset'] != 'nan':
+
+            # get detector distance from streamfile
+            if self.stream_filepath != "":
+                detector_distance = self.streamfile.chunks[self.img_index].clen
+            if detector_distance is None:
+                detector_distance = cxi['EncoderValue']
+
+            if not numpy.isnan(detector_distance) and not numpy.isnan(self.geometry['coffset']):
                 self.detector_distance_ok = True
                 self.detector_z_m = (1e-3*detector_distance + self.geometry['coffset'])
             else:
-                self.detector_z_m = numpy.nan
+                self.detector_z_m = float('nan')
         self.detector_z_mm = self.detector_z_m * 1e3
 
 
@@ -88,7 +119,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
         # Set window title
         file_str = os.path.basename(self.event_list['filename'][self.img_index])
-        title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines) + ')'
+        title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines-1) + ')'
         self.setWindowTitle(title)
         self.ui.jumpToLineEdit.setText(str(self.img_index))
 
@@ -100,7 +131,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         else:
             self.img_to_draw = numpy.transpose(img_data)
         self.ui.imageView.setImage(self.img_to_draw, autoLevels=False, autoRange=False)
-
 
 
         # Auto-scale the image
@@ -192,11 +222,16 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             peak_y = []
 
             # Read peaks in raw coordinates
-            n_peaks = cxi['n_peaks']
-            peak_x_data = cxi['peakXPosRaw']
-            peak_y_data = cxi['peakYPosRaw']
+            if self.streamfile is not None:
+                # read the peaks from the streamfile
+                peak_x_data, peak_y_data = self.streamfile.get_peak_data(self.img_index)
+                n_peaks = len(peak_x_data)
+            else:
+                n_peaks = cxi['n_peaks']
+                peak_x_data = cxi['peakXPosRaw']
+                peak_y_data = cxi['peakYPosRaw']
             
-            for ind in range(0,n_peaks):                
+            for ind in xrange(0,n_peaks):                
                 peak_fs = peak_x_data[ind]                
                 peak_ss = peak_y_data[ind]         
                 
@@ -206,33 +241,54 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                 peak_y.append(self.geometry['y'][peak_in_slab] + self.img_shape[1] / 2)
 
             ring_pen = pyqtgraph.mkPen('r', width=2)
-            self.found_peak_canvas.setData(peak_x, peak_y, symbol = 'o', size = 10, pen = ring_pen, brush = (0,0,0,0), pxMode = False)
+            self.found_peak_canvas.setData(peak_x, peak_y, symbol = 's', size = 10, pen = ring_pen, brush = (0,0,0,0), pxMode = False)
 
         else:
             self.found_peak_canvas.setData([])
 
         # Draw predicted peaks
-        """
-        if self.show_predicted_peaks == True:
+        if self.ui.predictedPeaksCheckBox.isChecked():
+            # Draw resolution limit ring
+            self.draw_resolution_limit_ring()
 
-            peak_x = []
-            peak_y = []
-            
-            for ind in range(0,n_peaks):                
-                peak_fs = peak_x_data[ind]                
-                peak_ss = peak_y_data[ind]         
+            for index, item in enumerate(self.resolution_rings_textitems):
+                item.setText('')
+
+
+            if(self.streamfile.has_crystal(self.img_index)):
+                peak_x = []
+                peak_y = []
                 
-                # Peak coordinate to pixel in image
-                peak_in_slab = int(round(peak_ss))*self.slab_shape[1]+int(round(peak_fs))
-                peak_x.append(self.pixel_map[0][peak_in_slab] + self.img_shape[0]/2)
-                peak_y.append(self.pixel_map[1][peak_in_slab] + self.img_shape[1]/2)
+                #print("Number of peaks found: ", 
+                #self.streamfile.get_number_of_crystals(self.img_index))
+                #print("At the moment just displaying the first one.")
+                peak_x_data, peak_y_data = self.streamfile.get_predicted_peak_data(
+                    self.img_index)
+                n_peaks = len(peak_x_data)
+
+                for ind in range(0,n_peaks):                
+                    peak_fs = peak_x_data[ind]                
+                    peak_ss = peak_y_data[ind]         
+                    
+                    # Peak coordinate to pixel in image
+                    peak_in_slab = int(round(peak_ss))*self.slab_shape[1]+int(round(peak_fs))
+                    peak_x.append(self.geometry['x'][peak_in_slab] + self.img_shape[0] / 2)
+                    peak_y.append(self.geometry['y'][peak_in_slab] + self.img_shape[1] / 2)
+                    #peak_x.append(self.pixel_map[0][peak_in_slab] + self.img_shape[0]/2)
+                    #peak_y.append(self.pixel_map[1][peak_in_slab] + self.img_shape[1]/2)
+            else:
+                # no crystal and thus no peaks
+                peak_x = []
+                peak_y = []
 
             ring_pen = pyqtgraph.mkPen('b', width=2)
-            self.predicted_peak_canvas.setData(peak_x, peak_y, symbol = 'o', size = 10, pen = ring_pen, brush = (0,0,0,0), pxMode = False)
-
+            self.predicted_peak_canvas.setData(peak_x, peak_y, symbol = 'o', 
+                size = 2*self.predicted_peak_circle_radius, pen = ring_pen, 
+                brush = (0,0,0,0), pxMode = False)
         else:
             self.predicted_peak_canvas.setData([])
-        """
+            self.resolution_limit_ring_canvas.setData([])
+        
 
 
         # Draw resolution rings
@@ -243,6 +299,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             for index, item in enumerate(self.resolution_rings_textitems):
                 item.setText('')
 
+        self.show_unit_cell_info()
 
     #end draw_things()
     
@@ -281,7 +338,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
         # Refuse to draw deceptive resolution rings
         if self.resolution_ok == False:
-            print("Insufficient information to calculate resolution")
+            #print("Insufficient information to calculate resolution")
             return
 
 
@@ -295,6 +352,46 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         for ti in self.resolution_rings_textitems:
             self.ui.imageView.getView().addItem(ti)
         self.draw_resolution_rings()
+
+
+    def draw_resolution_limit_ring(self):
+        """
+        This method draws the resolution limit ring corresponding to the
+        resolution limit given in the crystal of the current displayed
+        chunk. If no crystal is present no ring is drawn.
+        """
+
+        try:
+            if not self.streamfile.has_crystal(self.img_index):
+                raise NoCrystalException
+            number_of_crystals = self.streamfile.get_number_of_crystals(
+                self.img_index)
+            crystal = self.streamfile.chunks[self.img_index].crystals[0]
+            resolution_limit = crystal.resolution_limit
+            
+            if resolution_limit is None: 
+                raise InsufficientInformationException
+                
+            if numpy.isnan(self.detector_z_m):
+                raise InsufficientInformationException
+
+            if numpy.isnan(self.lambd):
+                raise InsufficientInformationException
+                
+            dx = self.geometry['dx']
+            resolution_limit_pix = (2.0 / dx) * self.detector_z_m * numpy.tan(
+                2.0 * numpy.arcsin(self.lambd / (
+                2.0 * resolution_limit * 1e-10)))
+
+            self.resolution_limit_ring_canvas.setData(
+                [self.img_shape[0] / 2], [self.img_shape[1] / 2],
+                    symbol='o',
+                    size=[resolution_limit_pix],
+                    pen=self.resolution_limit_ring_pen,
+                    brush=(0, 0, 0, 0), pxMode=False)
+        except (NoCrystalException, InsufficientInformationException):
+            print("Insufficient information to draw the resolution limit ring")
+            self.resolution_limit_ring_canvas.setData([],[])
 
 
     def draw_resolution_rings(self):
@@ -322,8 +419,6 @@ class cxiview(PyQt4.QtGui.QMainWindow):
                 item.setText('')
 
 
-
-
     #
     # Go to random pattern
     #
@@ -331,7 +426,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         pattern_to_jump = self.num_lines*numpy.random.random(1)[0]
         pattern_to_jump = pattern_to_jump.astype(numpy.int64)
         
-        if 0<pattern_to_jump<self.num_lines:
+        if 0<=pattern_to_jump<self.num_lines:
             self.img_index = pattern_to_jump
             self.draw_things()
         else:
@@ -381,30 +476,94 @@ class cxiview(PyQt4.QtGui.QMainWindow):
     def jump_to_pattern(self):
         pattern_to_jump = int(self.ui.jumpToLineEdit.text())
         
-        if 0<pattern_to_jump<self.num_lines:
+        if 0<=pattern_to_jump<self.num_lines:
             self.img_index = pattern_to_jump
             self.draw_things()
         else:
             self.ui.jumpToLineEdit.setText(str(self.img_index))
     #end jump_to_pattern()
         
+    def _overline_string(self, string):
+        out = ""
+        for c in string:
+            out += c
+            out += u"\u0305"
+            
+        return out
 
+    def mouse_in_predicted_peak(self, mouse_x, mouse_y, text):
+        """
+        This method displays the predicted peak hkl indices in the lower
+        left corner of the gui window if the mouse pointer has been clicked
+        on the corresponding predicted peak.
+        """
 
+        if self.streamfile is None:
+            return
+        
+        if not self.streamfile.has_crystal(self.img_index):
+            return
+
+        peak_x_data, peak_y_data = self.streamfile.get_predicted_peak_data(
+            self.img_index)
+        n_peaks = len(peak_x_data)
+
+        for ind in range(0,n_peaks):                
+            peak_fs = peak_x_data[ind]                
+            peak_ss = peak_y_data[ind]         
+            
+            # Peak coordinate to pixel in image
+            peak_in_slab = int(round(peak_ss))*self.slab_shape[1]+int(
+                round(peak_fs))
+            peak_x = (self.geometry['x'][peak_in_slab] + 
+                self.img_shape[0] / 2)
+            peak_y = (self.geometry['y'][peak_in_slab] + 
+                self.img_shape[1] / 2)
+                
+            if(numpy.sqrt((peak_x - mouse_x)**2 + (peak_y - mouse_y)**2) <
+                self.predicted_peak_circle_radius):
+                hkl = self.streamfile.get_hkl_indices(peak_fs, peak_ss, 
+                    self.img_index)
+                overline = "\u0305"
+                text += "     hkl: "
+                if hkl[0] < 0:
+                    text += self._overline_string(str(abs(hkl[0])))
+                else:
+                    text += str(hkl[0])
+                text += "  "
+                if hkl[1] < 0:
+                    text += self._overline_string(str(abs(hkl[1])))
+                else:
+                    text += str(hkl[1]) 
+                text += "  "
+                if hkl[2] < 0:
+                    text += self._overline_string(str(abs(hkl[2])))
+                else:
+                    text += str(hkl[2])
+                self.ui.statusBar.setText(text)
 
     #
     # Mouse clicked somewhere in the window
     #
     def mouse_clicked(self, event):
-        pos = event[0].pos()
+        #pos = event[0].pos()
+        pos = event.scenePos()
+        #print(pos)
         if self.ui.imageView.getView().sceneBoundingRect().contains(pos):
             mouse_point = self.ui.imageView.getView().mapSceneToView(pos)
             x_mouse = int(mouse_point.x())
             y_mouse = int(mouse_point.y()) 
+            #print("x: ", x_mouse, "y: ", y_mouse)
             x_mouse_centered = x_mouse - self.img_shape[0]/2 + 1
             y_mouse_centered = y_mouse - self.img_shape[0]/2 + 1
+
             radius_in_m = self.geometry['dx'] * numpy.sqrt(x_mouse_centered**2 + y_mouse_centered**2)
 
-            text = 'Last clicked pixel:     x: %4i     y: %4i     value: %4i' % (x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse])
+            try:
+                text = 'Last clicked pixel:     x: %4i     y: %4i     value: %4i' % (x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse])
+            except IndexError:
+                # click is not in image anymore
+                return
 
             # Refuse to report an incorrect detector distance
             if self.detector_distance_ok:
@@ -419,12 +578,45 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
 
             self.ui.statusBar.setText(text)
+            self.mouse_in_predicted_peak(x_mouse, y_mouse, text)
             # self.ui.statusBar.setText(
             #    'Last clicked pixel:     x: %4i     y: %4i     value: %4i     z: %.2f mm     resolution: %4.2f Å' % (
             #    x_mouse_centered, y_mouse_centered, self.img_to_draw[x_mouse, y_mouse], self.camera_z_mm, resolution))
 
     #end mouse_clicked()
 
+
+    def show_unit_cell_info(self):
+        """
+        This method displays the unit cell information in the lower left corner
+        of the gui windows if a crystal has been found.
+        """
+
+        try:
+            if self.streamfile is None:
+                raise NoCrystalException
+            if not self.streamfile.has_crystal(self.img_index):
+                raise NoCrystalException
+            unit_cell = self.streamfile.get_unit_cell(self.img_index)
+
+            if unit_cell is None:
+                # If something went wrong just don't display the crystal 
+                # information
+                raise NoCrystalException
+
+            text = "Unit cell: "
+            text += unit_cell.centering + ", "
+            text += "a = " + "{:.2f}".format(unit_cell.a) + " \u212B, "
+            text += "b = " + "{:.2f}".format(unit_cell.b) + " \u212B,"
+            text += "c = " + "{:.2f}".format(unit_cell.c) + " \u212B, "
+            text += "\u03B1 = " + "{:.1f}".format(unit_cell.alpha) + "\u00B0, "
+            text += "\u03B2 = " + "{:.1f}".format(unit_cell.beta) + "\u00B0, "
+            text += "\u03B3 = " + "{:.1f}".format(unit_cell.gamma) + "\u00B0"
+            #qtext = PyQt4.QtCore.QString(text)
+            self.ui.statusBar.setText(text) 
+        except NoCrystalException:
+            self.ui.statusBar.setText("Ready") 
+            
 
     #
     #   Saving and other file functions
@@ -437,7 +629,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         file_hint += '.png'
         file_hint = os.path.join(self.exportdir, file_hint)
 
-        filename = cfel_file.dialog_pickfile(write=True, path=file_hint)
+        filename = cfel_file.dialog_pickfile(write=True, path=file_hint, qtmainwin=self)
         if filename=='':
             return
         if filename.endswith('.png') == False:
@@ -458,10 +650,17 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
 
     def action_update_files(self):
-        self.event_list = cfel_file.list_events(self.img_file_pattern, field=self.img_h5_field)
+        # read files from streamfile if streamfile is there
+        if self.streamfile is not None:
+            self.event_list = self.streamfile.get_cxiview_event_list()
+            # we override the number of events because there may be fewer
+            # chunks in the streamfile than in the cxi
+            self.event_list['nevents'] = self.streamfile.get_number_of_chunks()
+        else:
+            self.event_list = cfel_file.list_events(self.img_file_pattern, 
+                field=self.img_h5_field)
         self.nframes = self.event_list['nevents']
         self.num_lines = self.nframes
-        print('Number of frames', self.nframes)
 
         # No events?  May as well exit now
         if self.nframes == 0:
@@ -469,12 +668,20 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             exit(1)
 
         file_str = os.path.basename(self.event_list['filename'][self.img_index])
-        title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines) + ')'
+        title = file_str + ' #' + str(self.event_list['event'][self.img_index]) + ' - (' + str(self.img_index)+'/'+ str(self.num_lines-1) + ')'
         self.ui.jumpToLineEdit.setText(str(self.img_index))
         self.setWindowTitle(title)
     #end action_update_files
 
+    """
+    def mousePressEvent(self, event):
+        p = PyQt4.QtGui.QCursor.pos()
+        print("pressed here: " + str(p.x()) + ", " + str(p.y()))
+    """
 
+    def keyPressEvent(self, e):
+        if e.key() == PyQt4.QtCore.Qt.Key_Escape:
+            self.show_unit_cell_info()
 
     #
     #	Initialisation function
@@ -493,7 +700,42 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.img_h5_field = args.e
         self.default_z = args.z
         self.default_eV = args.v
+        self.stream_filepath = args.s
+        self.streamfile = None
 
+        # Load geometry
+        # read_geometry currently exits program on failure
+        if self.stream_filepath is not "":
+            self.streamfile = Streamfile(self.stream_filepath)
+            self.geometry = self.streamfile.get_geometry()
+            self.geometry_ok = True
+            self.img_shape = self.geometry['shape']
+        elif self.geom_filename is not "":
+            self.geometry = cfel_geom.read_geometry(self.geom_filename)
+            self.geometry_ok = True
+            self.img_shape = self.geometry['shape']
+        else:
+            self.geometry_ok = False
+            self.img_shape = self.slab_shape
+            # the commented code has been moved downwards to avoid redundancy 
+            #self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
+            #self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
+            #self.mask_to_draw = numpy.zeros(self.img_shape + (3,), dtype=numpy.uint8)
+
+            # faking self.geometry is a hack to stop crashes down the line.
+            # Fix more elegantly later
+            self.geometry = {
+                'x': numpy.zeros(self.img_shape).flatten(),
+                'y': numpy.zeros(self.img_shape).flatten(),
+                'r': numpy.zeros(self.img_shape).flatten(),
+                'dx': 1.0,
+                'coffset': 'nan',
+                'shape': self.slab_shape
+            }
+        self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
+        self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
+        self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
+        self.predicted_peak_circle_radius = 5
 
         #
         # Set up the UI
@@ -505,44 +747,18 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui = UI.cxiview_ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
+        if self.streamfile is not None:
+            self.ui.predictedPeaksCheckBox.setEnabled(True)
 
         # Create event list of all events in all files matching pattern
-        # This is for multi-file flexibility - importing of file lists, enables multiple input files, format flexibility
+        # This is for multi-file flexibility - importing of file lists, enables
+        # multiple input files, format flexibility
         self.img_index = 0
         self.action_update_files()
-
 
         # Size of images (assume all images have the same size as frame 0)
         temp = cfel_file.read_event(self.event_list, 0, data=True)
         self.slab_shape = temp['data'].shape
-        print("Data shape: ", self.slab_shape )
-
-
-        # Load geometry
-        # read_geometry currently exits program on failure
-        if self.geom_filename != "":
-            self.geometry = cfel_geom.read_geometry(self.geom_filename)
-            self.geometry_ok = True
-            self.img_shape = self.geometry['shape']
-            self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
-            self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
-            self.mask_to_draw = numpy.zeros(self.img_shape+(3,), dtype=numpy.uint8)
-        else:
-            self.geometry_ok = False
-            self.img_shape = self.slab_shape
-            self.image_center = (self.img_shape[0] / 2, self.img_shape[1] / 2)
-            self.img_to_draw = numpy.zeros(self.img_shape, dtype=numpy.float32)
-            self.mask_to_draw = numpy.zeros(self.img_shape + (3,), dtype=numpy.uint8)
-            # faking self.geometry is a hack to stop crashes down the line.  Fix more elegantly later
-            self.geometry = {
-                'x': numpy.zeros(self.img_shape).flatten(),
-                'y': numpy.zeros(self.img_shape).flatten(),
-                'r': numpy.zeros(self.img_shape).flatten(),
-                'dx': 1.0,
-                'coffset': 'nan',
-                'shape': self.slab_shape
-            }
-
 
         # Sanity check: Do geometry and data shape match?
         if self.geometry_ok and (temp['data'].flatten().shape != self.geometry['x'].shape):
@@ -550,6 +766,7 @@ class cxiview(PyQt4.QtGui.QMainWindow):
             print('Data size: ', temp.data.flatten().shape)
             print('Geometry size: ', self.geometry['x'].shape)
             exit(1)
+
 
 
         #
@@ -607,7 +824,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
 
         # Put menu inside the window on Macintosh and elsewhere
         self.ui.menuBar.setNativeMenuBar(False)
-        self.proxy = pyqtgraph.SignalProxy(self.ui.imageView.getView().scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
+        self.ui.imageView.getView().scene().sigMouseClicked.connect(self.mouse_clicked)
+        #self.proxy = pyqtgraph.SignalProxy(self.ui.imageView.getView().scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
 
 
         # Masks
@@ -619,8 +837,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.ui.imageView.getView().addItem(self.found_peak_canvas)
 
         # Predicted peaks
-        #self.predicted_peak_canvas = pyqtgraph.ScatterPlotItem()
-        #self.ui.imageView.getView().addItem(self.predicted_peak_canvas)
+        self.predicted_peak_canvas = pyqtgraph.ScatterPlotItem()
+        self.ui.imageView.getView().addItem(self.predicted_peak_canvas)
 
         # Resolution rings
         self.resolution_ok = False
@@ -628,6 +846,13 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         self.resolution_rings_canvas = pyqtgraph.ScatterPlotItem()
         self.ui.imageView.getView().addItem(self.resolution_rings_canvas)
         self.resolution_rings_pen = pyqtgraph.mkPen('b', width=1)     # float=greyscale(0-1) or (r,g,b) or "r, g, b, c, m, y, k, w"
+
+        # Resolution limit ring
+        self.resolution_limit_ring_canvas = pyqtgraph.ScatterPlotItem()
+        self.ui.imageView.getView().addItem(self.resolution_limit_ring_canvas)
+        self.resolution_limit_ring_pen = pyqtgraph.mkPen(color=(0, 200, 0), width=2, style = PyQt4.QtCore.Qt.DashLine)    
+
+
         self.resolution_rings_in_A = [10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0]
         self.resolution_rings_textitems = [pyqtgraph.TextItem('', anchor=(0.5, 0.8)) for x in self.resolution_rings_in_A]
         for ti in self.resolution_rings_textitems:
@@ -652,7 +877,8 @@ class cxiview(PyQt4.QtGui.QMainWindow):
         #self.ui.imageView.imageItem.setZoom(1)
         #self.ui.imageView.imageItem.clipToView(False)     # True/False
         #self.ui.imageView.imageItem.antialias(True)     # True/False
-        self.ui.statusBar.setText('Ready')
+        #self.ui.statusBar.setText('Ready')
+        #self.show_unit_cell_info()
 
     #end __init()__
 #end cxiview
@@ -668,29 +894,58 @@ if __name__ == '__main__':
     #
     #   Use parser to process command line arguments
     #    
+    # TODO: option -p does not work
     parser = argparse.ArgumentParser(description='CFEL CXI file viewer')
     parser.add_argument("-g", default="", help="Geometry file (.geom/.h5)")
-    parser.add_argument("-i", default="", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
+    parser.add_argument("-i", 
+        default="", help="Input file pattern (eg: *.cxi, LCLS*.h5)")
     parser.add_argument("-e", default="data/data", help="HDF5 field to read")
     parser.add_argument("-z", default='None', help="Detector distance (m)")
     parser.add_argument("-v", default='None', help="Photon energy (eV)")
     parser.add_argument("-l", default='None', help="Read event list")
     parser.add_argument("-p", default=False, help="Circle peaks by default")
-    #parser.add_argument("-s", default='None', help="Read stream file")
+    # Add the functionality to read a stream file
+    parser.add_argument("-s", default="", help="""CrystFEL stream file. If 
+    the stream file is passed to the program all other options except -e are 
+    ignored. The relevant information is generated automatically from the 
+    stream file.""")
     #parser.add_argument("-x", default='110e-6', help="Detector pixel size (m)")
     args = parser.parse_args()
 
 
+    """
     print("----------")    
     print("Parsed command line arguments")
     print(args)
     print("----------")    
+    """
     
-    # This bit may be irrelevent if we can make parser.parse_args() require this field    
-    if args.i == "":
-        print('Usage: cxiview.py -i data_file_pattern [-g geom_file .geom/.h5] [-e HDF5 field] [-z Detector distance m] [-v photon energy eV]')
-        sys.exit()
-    #endif        
+    # Perform consistency checking on the command line arguments.
+    if (args.i == "" and args.s == ""):
+        print("No input or stream file given")
+        exit()
+    if (args.i is not "" and args.s is not ""):
+        print("Error! Provide either a stream file or an input file")
+        exit()
+    if args.i != "":
+        #if not os.path.isfile(args.i):
+        #    print("Error! Input file does not exist")
+        #    exit()
+        if (args.g == ""):
+            print("Error! A geometry file is required")
+            exit()
+    if args.s != "":
+        if not os.path.isfile(args.s):
+            print("Error! Stream file does not exist")
+            exit()
+
+    # This bit may be irrelevent if we can make parser.parse_args() require this
+    # field    
+    # if args.i == "":
+    #    print("""Usage: cxiview.py -i data_file_pattern [-g geom_file .geom/.h5]
+    #        [-e HDF5 field] [-z Detector distance m] [-v photon energy eV]""")
+    #    sys.exit()
+    # endif        
 
 
     #
@@ -709,7 +964,8 @@ if __name__ == '__main__':
     #
     app.exit()
     
-    # This function does the following in an attempt to ‘safely’ terminate the process:
+    # This function does the following in an attempt to ‘safely’ terminate the 
+    # process:
     #   Invoke atexit callbacks
     #   Close all open file handles
     os._exit(ret)

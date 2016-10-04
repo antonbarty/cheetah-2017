@@ -9,44 +9,29 @@ import sys
 import glob
 import argparse
 import datetime
-import subprocess
 import PyQt4.QtCore
 import PyQt4.QtGui
 
 import UI.cheetahgui_ui
 import lib.cfel_filetools as cfel_file
+import lib.cfel_locations as cfel_locations
+import lib.cfel_detcorr as cfel_detcorr
 import lib.gui_dialogs as gui_dialogs
+import lib.gui_crystfel_bridge as gui_crystfel
+
 
 #TODO: Cheetah GUI
 #TODO: Calibration table (darkcal, mask, .ini for each run)
 
 #TODO: cxiview.py
-#TODO: Sensible behaviour when geometry not specified (display without geometry applied)
-#TODO: Do not display resolution rings if wavelength, z, or geometry not defined
-#TODO: Wavelength and z on command line
 #TODO: Take file list as an argument
+
 
 
 #
 #	Cheetah GUI code
 #
 class cheetah_gui(PyQt4.QtGui.QMainWindow):
-
-    #
-    # Launch a subprocess (eg: viewer or analysis script) without blocking the GUI
-    # Separate routine makes it easy change this globally if needed
-    #
-    def spawn_subprocess(self, cmdarr, wait=False, test=False):
-        command = str.join(' ', cmdarr)
-        print(command)
-
-        if test:
-            return
-
-        if wait:
-            subprocess.run(cmdarr)
-        else:
-            subprocess.Popen(cmdarr)
 
 
     #
@@ -63,7 +48,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         # Display if some file matches pattern (avoids error when no match)
         if len(glob.glob(file)) != 0:
             cmdarr = ['cxiview.py', '-g', self.config['geometry'], '-e', field, '-i', file]
-            self.spawn_subprocess(cmdarr)
+            cfel_file.spawn_subprocess(cmdarr)
         else:
             print("File does not seem to exist:")
             print(file)
@@ -217,7 +202,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
     #   Uses LCLS schema; will need modification to run anywhere else; do this later
     #
     def setup_new_experiment(self):
-        dir = cfel_file.dialog_pickfile(directory=True)
+        dir = cfel_file.dialog_pickfile(directory=True, qtmainwin=self)
         if dir == '':
             self.exit_gui()
         print('Selected directory: ')
@@ -264,7 +249,10 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         msgBox.addButton(PyQt4.QtGui.QMessageBox.Yes)
         msgBox.addButton(PyQt4.QtGui.QMessageBox.Cancel)
         msgBox.setDefaultButton(PyQt4.QtGui.QMessageBox.Yes)
+
         ret = msgBox.exec_();
+        #app.exit()
+
 
         if ret == PyQt4.QtGui.QMessageBox.Cancel:
             print("So long and thanks for all the fish.")
@@ -275,22 +263,22 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print('>---------------------<')
         print('Extracting template...')
         cmd = ['tar','-xf','/reg/g/cfel/cheetah/template.tar']
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
         print("Done")
 
         # Fix permissions
         print('>---------------------<')
         print('Fixing permissions...')
         cmd = ['chgrp',  '-R', expt, 'cheetah/']
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
         cmd = ['chmod',  '-R', 'g+w', 'cheetah/']
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
         print("Done")
 
         # Place configuration into /res
         #print, 'Placing configuration files into /res...'
         #cmd = ['/reg/g/cfel/cheetah/cheetah-stable/bin/make-labrynth']
-        #self.spawn_subprocess(cmd, wait=True)
+        #cfel_file.spawn_subprocess(cmd, wait=True)
         #print("Done")
 
 
@@ -302,11 +290,11 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         # Replace XTC directory with the correct location using sed
         xtcsedstr = str.replace(xtcdir, '/', '\\/')
         cmd = ["sed", "-i", "-r", "s/(xtcdir=).*/\\1" + xtcsedstr + "/", file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
 
         print('>-------------------------<')
         cmd = ['cat', file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
         print('>-------------------------<')
 
 
@@ -315,23 +303,23 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print('Modifying ', file)
 
         cmd = ["sed", "-i", "-r", "s/(expt=).*/\\1\"" + expt + "\"/", file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
 
         xtcsedstr = str.replace(xtcdir, '/', '\\/')
         cmd = ["sed", "-i", "-r", "s/(XTCDIR=).*/\\1\"" + xtcsedstr + "\"/", file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
 
         h5sedstr = str.replace(userdir, '/', '\\/') + '\/hdf5'
         cmd = ["sed", "-i", "-r", "s/(H5DIR=).*/\\1\"" + h5sedstr + "\"/", file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
 
         confsedstr= str.replace(userdir, '/', '\\/') + '\/process'
         cmd = ["sed", "-i", "-r", "s/(CONFIGDIR=).*/\\1\"" + confsedstr + "\"/", file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
 
         print('>-------------------------<')
         cmd = ['head', file]
-        self.spawn_subprocess(cmd, wait=True)
+        cfel_file.spawn_subprocess(cmd, wait=True)
         print('>-------------------------<')
 
         print("Working directory: ")
@@ -354,7 +342,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
 
         elif gui['action'] == 'find':
-            cfile = cfel_file.dialog_pickfile(filter='crawler.config')
+            cfile = cfel_file.dialog_pickfile(filter='crawler.config', qtmainwin=self)
             if cfile == '':
                 print('Selection canceled')
                 self.exit_gui()
@@ -411,25 +399,32 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         # Dialog box for dataset label and ini file
         gui, ok = gui_dialogs.run_cheetah_gui.cheetah_dialog(dialog_info)
 
-        # Extract values from return dict
-        dataset = gui['dataset']
-        inifile = gui['inifile']
-
         # Exit if cancel was pressed
         if ok == False:
             return
 
-        dataset_csv = cfel_file.csv_to_dict('datasets.csv')
-
+        # Extract values from return dict
+        dataset = gui['dataset']
+        inifile = gui['inifile']
         self.lasttag = dataset
         self.lastini = inifile
+
+
+        dataset_csv = cfel_file.csv_to_dict('datasets.csv')
+
+        # Failing to read the dataset file looses all information (bad)
+        if len(dataset_csv['DatasetID']) is 0:
+            print("Error reading datasets.csv (blank file)")
+            print("Try again...")
+            return
+
 
         # Process all selected runs
         runs = self.selected_runs()
         for i, run in enumerate(runs['run']):
             print('------------ Start Cheetah process script ------------')
             cmdarr = [self.config['process'], run, inifile, dataset]
-            self.spawn_subprocess(cmdarr)
+            cfel_file.spawn_subprocess(cmdarr)
 
             # Format directory string
             dir = 'r{:04d}'.format(int(run))
@@ -488,6 +483,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
     #
     def enableCommands(self):
         self.ui.button_runCheetah.setEnabled(True)
+        self.ui.button_index.setEnabled(True)
         self.ui.menu_file_startcrawler.setEnabled(True)
         self.ui.menu_cheetah_processselected.setEnabled(True)
         self.ui.menu_cheetah_autorun.setEnabled(True)
@@ -495,8 +491,8 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
     #end enableCommands()
 
     def start_crawler(self):
-        cmdarr = ['cheetah-crawler.py', '-l', 'LCLS', '-d', self.config['xtcdir'], '-c', self.config['hdf5dir']]
-        self.spawn_subprocess(cmdarr)
+        cmdarr = ['cheetah-crawler.py', '-l', 'LCLS', '-d', self.config['xtcdir'], '-c', self.config['hdf5dir'], '-i', '../indexing/']
+        cfel_file.spawn_subprocess(cmdarr)
 
 
     def relabel_dataset(self):
@@ -540,8 +536,20 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
             # Rename the directory
             if olddir != '---':
-                cmdarr = ['mv', self.config['hdf5dir']+'/'+olddir, self.config['hdf5dir']+'/'+newdir]
-                self.spawn_subprocess(cmdarr)
+                if os.path.exists(self.config['hdf5dir'] + '/' + olddir):
+                    try:
+                        cmdarr = ['mv', self.config['hdf5dir']+'/'+olddir, self.config['hdf5dir']+'/'+newdir]
+                        cfel_file.spawn_subprocess(cmdarr)
+                    except:
+                        pass
+
+                if os.path.exists('../indexing/' + olddir):
+                    try:
+                        cmdarr = ['mv', '../indexing/'+olddir, '../indexing/'+newdir]
+                        cfel_file.spawn_subprocess(cmdarr)
+                    except:
+                        pass
+
 
 
         # Sort dataset file to keep it in order
@@ -555,7 +563,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Autorun selected")
 
     def set_new_geometry(self):
-        gfile = cfel_file.dialog_pickfile(path='../calib/geometry', filter='Geometry files (*.h5 *.geom);;All files (*.*)')
+        gfile = cfel_file.dialog_pickfile(path='../calib/geometry', filter='Geometry files (*.h5 *.geom);;All files (*.*)', qtmainwin=self)
         if gfile == '':
             return
         gfile = os.path.relpath(gfile)
@@ -572,7 +580,16 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Talk to Andrew Morgan to add his mask maker")
 
     def badpix_from_darkcal(self):
-        print("Badpix from darkcal selected")
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return;
+
+        path = runs['path'][0]
+        path += '*detector?-class0-sum.h5'
+        for dkcal in glob.iglob(path):
+            cfel_detcorr.badpix_from_darkcal(dkcal, self)
+
+
 
     def badpix_from_bright(self):
         print("Badpix from bright selected")
@@ -581,7 +598,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         print("Combine masks selected")
 
     def show_mask_file(self):
-        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5')
+        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5', qtmainwin=self)
         field = 'data/data'
         if file != '':
             file = os.path.relpath(file)
@@ -599,7 +616,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
             return;
         pkfile = runs['path'][0] + 'peaks.txt'
         cmdarr = ['peakogram.py', '-i', pkfile]
-        self.spawn_subprocess(cmdarr)
+        cfel_file.spawn_subprocess(cmdarr)
     #end show_peakogram
 
     def show_resolution(self):
@@ -642,21 +659,6 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         field = 'data/peakpowder'
         self.show_selected_images(file, field)
 
-    def show_darkcal(self):
-        file = '*detector0-darkcal.h5'
-        field = 'data/data'
-        self.show_selected_images(file, field)
-
-    def copy_darkcal(self):
-        runs = self.selected_runs()
-        if len(runs['run']) == 0:
-            return;
-        for path in runs['path']:
-            path += '*detector0-darkcal.h5'
-            for dkcal in glob.iglob(path):
-                cmdarr = ['cp', dkcal, '../calib/darkcal/.']
-                self.spawn_subprocess(cmdarr)
-
 
 
     #
@@ -670,6 +672,147 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
 
     def view_cheetah_status(self):
         print("View cheetah status selected")
+
+
+    #
+    #   Calibration menu items
+    #
+    def show_darkcal(self):
+        file = '*detector0-darkcal.h5'
+        field = 'data/data'
+        self.show_selected_images(file, field)
+
+    def copy_darkcal(self):
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return;
+        for path in runs['path']:
+            path += '*detector0-darkcal.h5'
+            for dkcal in glob.iglob(path):
+                cmdarr = ['cp', dkcal, '../calib/darkcal/.']
+                cfel_file.spawn_subprocess(cmdarr)
+
+    def set_current_darkcal(self):
+        file = cfel_file.dialog_pickfile(path='../calib/darkcal', filter='*.h5', qtmainwin=self)
+        if file != '':
+            file = os.path.relpath(file)
+            basename = os.path.basename(file)
+            dirname = os.path.dirname(file)
+            cmdarr = ['ln', '-fs', basename, '../calib/darkcal/current-darkcal.h5']
+            cfel_file.spawn_subprocess(cmdarr)
+
+    def set_current_badpix(self):
+        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5', qtmainwin=self)
+        if file != '':
+            file = os.path.relpath(file)
+            basename = os.path.basename(file)
+            dirname = os.path.dirname(file)
+            cmdarr = ['ln', '-fs', basename, '../calib/mask/current-badpix.h5']
+            cfel_file.spawn_subprocess(cmdarr)
+
+    def set_current_peakmask(self):
+        file = cfel_file.dialog_pickfile(path='../calib/mask', filter='*.h5', qtmainwin=self)
+        if file != '':
+            file = os.path.relpath(file)
+            basename = os.path.basename(file)
+            dirname = os.path.dirname(file)
+            cmdarr = ['ln', '-fs', basename, '../calib/mask/current-peakmask.h5']
+            cfel_file.spawn_subprocess(cmdarr)
+
+    def set_current_geometry(self):
+        file = cfel_file.dialog_pickfile(path='../calib/geometry', filter='*.h5', qtmainwin=self)
+        if file != '':
+            file = os.path.relpath(file)
+            basename = os.path.basename(file)
+            dirname = os.path.dirname(file)
+            cmdarr = ['ln', '-fs', basename, '../calib/geometry/current-geometry.h5']
+            cfel_file.spawn_subprocess(cmdarr)
+
+    #
+    #   CrystFEL menu items
+    #
+    def crystfel_indexpdb(self):
+        # Selected runs
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return
+
+        dirs = runs['directory']
+        gui_crystfel.index_runs(self, dirs)
+
+
+    def crystfel_mosflmnolatt(self):
+        # Selected runs
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return
+
+        dirs = runs['directory']
+        gui_crystfel.index_runs(self, dirs, nocell=True)
+
+
+    def crystfel_indexgeopt(self):
+        # Selected runs
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return
+
+        dirs = runs['directory']
+        gui_crystfel.index_runs(self, dirs, geopt=True)
+
+
+
+    def crystfel_viewindex(self):
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return;
+        dir = '../indexing/'+runs['directory'][0]
+        stream = glob.glob(dir+'/*.stream')
+        if len(stream) is 0:
+            return
+        cmdarr = ['cxiview', '-s', stream[0]]
+        cfel_file.spawn_subprocess(cmdarr)
+
+
+    def crystfel_cellexplore(self):
+        runs = self.selected_runs()
+        if len(runs['run']) == 0:
+            return;
+        dir = '../indexing/'+runs['directory'][0]
+        stream = glob.glob(dir+'/*.stream')
+        if len(stream) is 0:
+            return
+        cmdarr = ['cell_explorer', stream[0]]
+        cfel_file.spawn_subprocess(cmdarr)
+
+
+    def crystfel_viewindex_pick(self):
+        file = cfel_file.dialog_pickfile(path='../indexing/streams', filter='*.stream', qtmainwin=self)
+        if file != '':
+            cmdarr = ['cxiview', '-s', file]
+            cfel_file.spawn_subprocess(cmdarr)
+
+
+    def crystfel_cellexplore_pick(self):
+        file = cfel_file.dialog_pickfile(path='../indexing/streams', filter='*.stream', qtmainwin=self)
+        if file != '':
+            cmdarr = ['cell_explorer', file]
+            cfel_file.spawn_subprocess(cmdarr)
+
+
+
+    def crystfel_mergestreams(self):
+        gui_crystfel.merge_streams(qtmainwin=self)
+
+
+    def crystfel_listevents(self):
+        print("Not yet implemented")
+
+
+    def crystfel_listfiles(self):
+        print("Not yet implemented")
+
+
 
 
 
@@ -741,6 +884,13 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         #self.hdf5_dir = args.c
 
         #
+        #   Where are we?
+        #
+        location = cfel_locations.determine_location()
+        self.location = cfel_locations.configuration(location)
+
+
+        #
         # Set up the UI
         #
         super(cheetah_gui, self).__init__()
@@ -774,6 +924,9 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         self.config = self.parse_config()
         self.lastini = self.config['cheetahini']
         self.lasttag = self.config['cheetahtag']
+        self.lastindex = '../process/index_cell.sh'
+        self.lastcell = None
+        self.lastgeom = None
 
         # Update window title
         dir = os.getcwd()
@@ -784,7 +937,7 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         # Connect front panel buttons to actions
         self.ui.button_refresh.clicked.connect(self.refresh_table)
         self.ui.button_runCheetah.clicked.connect(self.run_cheetah)
-        self.ui.button_index.clicked.connect(self.run_crystfel)
+        self.ui.button_index.clicked.connect(self.crystfel_indexpdb)
         self.ui.button_viewhits.clicked.connect(self.view_hits)
         self.ui.button_virtualpowder.clicked.connect(self.view_powder)
         self.ui.button_peakogram.clicked.connect(self.view_peakogram)
@@ -798,6 +951,27 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         self.ui.menu_cheetah_processselected.triggered.connect(self.run_cheetah)
         self.ui.menu_cheetah_relabel.triggered.connect(self.relabel_dataset)
         self.ui.menu_cheetah_autorun.triggered.connect(self.autorun)
+
+        # Calibrations
+        self.ui.menu_calib_darkcal.triggered.connect(self.show_darkcal)
+        self.ui.menu_calib_copydarkcal.triggered.connect(self.copy_darkcal)
+        self.ui.menu_calib_currentdarkcal.triggered.connect(self.set_current_darkcal)
+        self.ui.menu_calib_currentbadpix.triggered.connect(self.set_current_badpix)
+        self.ui.menu_calib_currentpeakmask.triggered.connect(self.set_current_peakmask)
+        self.ui.menu_calib_currentgeom.triggered.connect(self.set_current_geometry)
+
+        # CrystFEL actions
+        self.ui.menu_crystfel_mosflmnolatt.triggered.connect(self.crystfel_mosflmnolatt)
+        self.ui.menu_crystfel_indexgeopt.triggered.connect(self.crystfel_indexgeopt)
+        self.ui.menu_crystfel_indexpdb.triggered.connect(self.crystfel_indexpdb)
+        self.ui.menu_crystfel_viewindexingresults.triggered.connect(self.crystfel_viewindex)
+        self.ui.menu_crystfel_viewindexing_pick.triggered.connect(self.crystfel_viewindex_pick)
+        self.ui.menu_crystfel_cellexplorer.triggered.connect(self.crystfel_cellexplore)
+        self.ui.menu_crystfel_cellexplorer_pick.triggered.connect(self.crystfel_cellexplore_pick)
+        self.ui.menu_crystfel_mergestreams.triggered.connect(self.crystfel_mergestreams)
+        self.ui.menu_crystfel_listevents.triggered.connect(self.crystfel_listevents)
+        self.ui.menu_crystfel_listfiles.triggered.connect(self.crystfel_listfiles)
+
 
         # Mask menu actions
         self.ui.menu_mask_maker.triggered.connect(self.maskmaker)
@@ -821,8 +995,6 @@ class cheetah_gui(PyQt4.QtGui.QMainWindow):
         self.ui.menu_powder_blank_det.triggered.connect(self.show_powder_blanks_det)
         self.ui.menu_powder_peaks_hits.triggered.connect(self.show_powder_peaks_hits)
         self.ui.menu_powder_peaks_blank.triggered.connect(self.show_powder_peaks_blanks)
-        self.ui.menu_powder_darkcal.triggered.connect(self.show_darkcal)
-        self.ui.menu_powder_copydarkcal.triggered.connect(self.copy_darkcal)
 
         # Log menu actions
         self.ui.menu_log_batch.triggered.connect(self.view_batch_log)
@@ -880,7 +1052,6 @@ if __name__ == '__main__':
     #   Spawn the viewer
     #
     app = PyQt4.QtGui.QApplication(sys.argv)
-        
     ex = cheetah_gui(args)
     ex.show()
     ret = app.exec_()
