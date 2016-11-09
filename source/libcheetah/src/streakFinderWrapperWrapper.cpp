@@ -66,9 +66,9 @@ void initStreakFinder(cGlobal *global)
 
             detectorCategory_t streak_detector_type = detectorCategory_UNDEFINED;
             if (strcmp(global->detector[detIndex].detectorType, "cspad") == 0) {
-                detectorCategory_t streak_detector_type = detectorCategory_CSPAD;
+                streak_detector_type = detectorCategory_CSPAD;
             } else if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) {
-                detectorCategory_t streak_detector_type = detectorCategory_pnCCD;
+                streak_detector_type = detectorCategory_pnCCD;
             }
 
             char *streak_background_region_mask = NULL;
