@@ -474,7 +474,7 @@ static inline float computeStreakThreshold(const float* data_linear, const strea
 //    } compareObject;
 //    compareObject.m_values = sigmas;
 //    nth_element(indices, indices + 1, indices + validRegionsEstimated, compareObject); //compute index of second-largest element
-    nthElementTwoArraysByFirstArray(sigmas, indices, 1, regionsCount);
+    nthElementTwoArraysByFirstArray(sigmas, indices, 1, validRegionsEstimated);
 //    nth_element(indices, indices + 1, indices + validRegionsEstimated, [&](size_t a, size_t b) {return sigmas[a] < sigmas[b];}); //compute index of second-largest element
 
     float threshold = means[indices[1]] + streakFinder_accuracyConstants.sigmaFactor * sigmas[indices[1]];
