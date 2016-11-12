@@ -13,7 +13,6 @@
 #include <boost/algorithm/cxx11/iota.hpp>
 #include <boost/phoenix/phoenix.hpp>
 #include "sortingByOtherValues.h"
-#include <stdio.h>
 
 #include <boost/foreach.hpp>
 #ifdef __CDT_PARSER__
@@ -131,7 +130,6 @@ void streakFinder(float* data_linear, const streakFinder_accuracyConstants_t& ac
         for (uint32_t* nextPixelToMaskIndex = streakPixelsShort.pixelsToMaskIndices;
                 nextPixelToMaskIndex < streakPixelsShort.pixelsToMaskIndices + streakPixelsShort.numberOfPixelsToMask; nextPixelToMaskIndex++) {
             data_linear[*nextPixelToMaskIndex] = -INFINITY;
-//            printf("DEBUG: Streakfinder masks");
         }
     }
 }

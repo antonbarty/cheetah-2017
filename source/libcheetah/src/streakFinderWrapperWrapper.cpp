@@ -64,15 +64,12 @@ void initStreakFinder(cGlobal *global)
             uint_fast8_t streak_pixel_mask_radius = global->detector[detIndex].streak_pixel_mask_radius;
             uint_fast8_t streak_num_lines_to_check = global->detector[detIndex].streak_num_lines_to_check;
 
-            printf("DEBUG: detectorCategory is set to %s\n", global->detector[detIndex].detectorType);
             detectorCategory_t streak_detector_type = detectorCategory_UNDEFINED;
             if (strcmp(global->detector[detIndex].detectorType, "cspad") == 0) {
                 streak_detector_type = detectorCategory_CSPAD;
             } else if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0) {
                 streak_detector_type = detectorCategory_pnCCD;
             }
-            printf("DEBUG: detector category coded to %i\n", detectorCategory_pnCCD);
-
 
             char *streak_background_region_mask = NULL;
 
@@ -187,7 +184,6 @@ void streakFinder(cEventData *eventData, cGlobal *global)
 // So !=0 pixel is in jet, ==0 pixel is not in jet
             for (long i = 0; i < pix_nn; i++) {
                 if (streak_mask[i] != 0) {
-                    //printf("DEBUG: Streakfinder\n");
                     eventData->detector[detIndex].pixelmask[i] |= PIXEL_IS_IN_JET;
                 } else
                     eventData->detector[detIndex].pixelmask[i] &= ~PIXEL_IS_IN_JET;

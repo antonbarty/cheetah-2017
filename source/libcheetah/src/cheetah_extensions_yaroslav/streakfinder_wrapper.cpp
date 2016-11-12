@@ -16,7 +16,6 @@ streakFinder_constantArguments_t *precomputeStreakFinderConstantArguments(uint_f
         uint_fast8_t numLinesToCheck, detectorCategory_t detectorCategory, int background_region_preset, int background_region_dist_from_edge, long asic_nx,
         long asic_ny, long nasics_x, long nasics_y, float *pixel_map_x, float *pixel_map_y, uint8_t *input_mask, char* background_region_mask)
 {
-    printf("DEBUG: Starting precomputing StreakFinder constants");
     detectorRawSize_cheetah_t *detector_raw_size_cheetah = new detectorRawSize_cheetah_t;
     detector_raw_size_cheetah->asic_nx = asic_nx;
     detector_raw_size_cheetah->asic_ny = asic_ny;
@@ -45,9 +44,7 @@ streakFinder_constantArguments_t *precomputeStreakFinderConstantArguments(uint_f
 
     streakFinder_precomputedConstants_t *streakFinder_precomputedConstants = new streakFinder_precomputedConstants_t;
 
-    printf("DEBUG: Streakfinder detector_category is %i\n", detectorCategory);
     if (detectorCategory == detectorCategory_pnCCD) {
-        printf("DEBUG Streakfinder detector_category set to pnccd");
         streakFinder_accuracyConstants->linesToCheck.push_back(1);
         streakFinder_accuracyConstants->linesToCheck.push_back(3);
         numLinesToCheck -= 2;
