@@ -19,6 +19,7 @@
 #include "median.h"
 #include "hitfinders.h"
 #include "peakfinders.h"
+#include "peakfinder9.h"
 #include "cheetahmodules.h"
 
 int box_snr(float*, char*, int, int, int, int, float*, float*, float*);
@@ -104,7 +105,14 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	long	hitfinderMaxPixCount = global->hitfinderMaxPixCount;
 	long	hitfinderLocalBGRadius = global->hitfinderLocalBGRadius;
 	float	hitfinderMinPeakSeparation = global->hitfinderMinPeakSeparation;
-	
+        float   sigmaFactorBiggestPixel = global->sigmaFactorBiggestPixel;
+        float   sigmaFactorPeakPixel = global->sigmaFactorPeakPixel;
+        float   sigmaFactorWholePeak = global->sigmaFactorWholePeak;
+        float   minimumSigma = global->minimumSigma;
+        float   minimumPeakOversizeOverNeighbours = global->minimumPeakOversizeOverNeighbours;
+        uint_fast8_t windowRadius = global->windowRadius;
+
+
 	// Data
 	float	*data = eventData->detector[detIndex].data_detPhotCorr;
 	float	*pix_r = global->detector[detIndex].pix_r;
@@ -136,7 +144,11 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	case 8 : 	// Count number of Bragg peaks (Anton's noise-varying algorithm)
 		nPeaks = peakfinder8(peaklist, data, mask, pix_r, asic_nx, asic_ny, nasics_x, nasics_y, hitfinderADCthresh, hitfinderMinSNR, hitfinderMinPixCount, hitfinderMaxPixCount, hitfinderLocalBGRadius);
 		break;
-            
+
+        case 9 : 	// Yaroslav's peakfinder
+                nPeaks = peakfinder9(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, sigmaFactorBiggestPixel, sigmaFactorPeakPixel, sigmaFactorWholePeak, minimumSigma, minimumPeakOversizeOverNeighbours, windowRadius);
+
+
 	default :
 		printf("Unknown peak finding algorithm selected: %i\n", global->hitfinderAlgorithm);
 		printf("Stopping in confusion.\n");
@@ -146,7 +158,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex) {
 	
 	
 	/*
-	 *	Too many peaks for the peaklist counter?
+         *	Too many peaks for the peaklist cou  nter?
 	 */
 	if (nPeaks > peaklist->nPeaks_max) {
 		nPeaks = peaklist->nPeaks_max;

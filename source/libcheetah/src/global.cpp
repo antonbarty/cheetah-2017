@@ -125,6 +125,16 @@ cGlobal::cGlobal(void) {
 	hitfinderOnDetectorCorrectedData = 0;
 	hitfinderFastScan = 0;
 
+        // peakfinder 9
+
+        sigmaFactorBiggestPixel = 0;
+        sigmaFactorPeakPixel = 0;
+        sigmaFactorWholePeak = 0;
+        minimumSigma = 0;
+        minimumPeakOversizeOverNeighbours = 0;
+        windowRadius = 0;
+
+
 	// Sorting (eg: pump laser on/off)
 	sortPumpLaserOn = 0;
     strcpy(pumpLaserScheme,"evr41");
@@ -1049,6 +1059,24 @@ int cGlobal::parseConfigTag(char *tag, char *value) {
 	else if (!strcmp(tag, "hitfinderdetectorid")) {
 		hitfinderDetectorID = atoi(value);
 	}
+        else if (!strcmp(tag, "sigmafactorbiggestpixel")) {
+                sigmaFactorBiggestPixel = atof(value);
+        }
+        else if (!strcmp(tag, "sigmafactorpeakpixel")) {
+                sigmaFactorPeakPixel = atof(value);
+        }
+        else if (!strcmp(tag, "sigmafactorwholepeak")) {
+                sigmaFactorWholePeak = atof(value);
+        }
+        else if (!strcmp(tag, "minimumsigma")) {
+                minimumSigma = atof(value);
+        }
+        else if (!strcmp(tag, "minimumpeakoversizeoverneighbours")) {
+                minimumPeakOversizeOverNeighbours = atof(value);
+        }
+        else if (!strcmp(tag, "windowradius")) {
+                windowRadius = atoi(value);
+        }
 	else if (!strcmp(tag, "savehits")) {
 		saveHits = atoi(value);
 	}

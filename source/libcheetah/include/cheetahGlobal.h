@@ -173,6 +173,15 @@ public:
 
 	int		hitfinderFastScan;
 
+        // Hitfinder 9 parameters
+        float   sigmaFactorBiggestPixel;
+        float   sigmaFactorPeakPixel;
+        float   sigmaFactorWholePeak;
+        float   minimumSigma;
+        float   minimumPeakOversizeOverNeighbours;
+        uint_fast8_t windowRadius;
+
+
 	// Sorting criteria
 	int		sortPumpLaserOn;
     char    pumpLaserScheme[MAX_FILENAME_LENGTH];
