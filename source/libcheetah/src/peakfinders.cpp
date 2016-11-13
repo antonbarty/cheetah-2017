@@ -143,7 +143,7 @@ int peakfinder(cGlobal *global, cEventData *eventData, int detIndex)
                     hitfinderMaxPixCount, hitfinderLocalBGRadius);
             break;
 
-        case 9: 	// Yaroslav's peakfinder
+        case 14: 	// Yaroslav's peakfinder
             nPeaks = peakfinder9(peaklist, data, mask, asic_nx, asic_ny, nasics_x, nasics_y, sigmaFactorBiggestPixel, sigmaFactorPeakPixel,
                     sigmaFactorWholePeak, minimumSigma, minimumPeakOversizeOverNeighbours, windowRadius);
             break;

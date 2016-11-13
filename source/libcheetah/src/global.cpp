@@ -380,7 +380,8 @@ void cGlobal::setup()
         if ((hitfinderAlgorithm == 3) ||
                 (hitfinderAlgorithm == 5) ||
                 (hitfinderAlgorithm == 6) ||
-                (hitfinderAlgorithm == 8))
+                (hitfinderAlgorithm == 8) ||
+                (hitfinderAlgorithm == 14))
             savePeakInfo = 1;
         savePeakList = 1;
     }
