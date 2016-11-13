@@ -8,6 +8,7 @@
 #include "peakFinder.h"
 //#include <math.h>
 #include <cmath>
+#include <stdexcept>
 
 typedef struct {
     float totalMass;
@@ -35,6 +36,10 @@ uint32_t peakFinder9(const float* data_linear, const peakFinder9_accuracyConstan
 {
     uint32_t peakCount = 0;
 
+    if (accuracyConstants.windowRadius < 2) {
+        throw std::invalid_argument("window radius must be at least 2");
+    }
+
     for (uint32_t asic_y = 0; asic_y < detectorRawSize_cheetah.nasics_y; ++asic_y) {
         for (uint32_t asic_x = 0; asic_x < detectorRawSize_cheetah.nasics_x; ++asic_x) {
             peakCount += peakFinder9_oneDetector(data_linear, asic_x, asic_y, accuracyConstants, detectorRawSize_cheetah, peakList);
@@ -56,8 +61,8 @@ uint32_t peakFinder9_oneDetector(const float* data_linear, uint32_t asic_x, uint
     uint_fast16_t windowRadius = accuracyConstants.windowRadius;
     uint32_t peakCount = 0;
 
-    for (uint_fast16_t y = y_asicStart + windowRadius; y <= y_asicStart + detectorRawSize_cheetah.asic_ny - 1 - windowRadius; ++y) {
-        for (uint_fast16_t x = x_asicStart + windowRadius; x <= x_asicStart + detectorRawSize_cheetah.asic_nx - 1 - windowRadius; ++x) {
+    for (uint_fast16_t y = y_asicStart + (windowRadius + 1); y <= y_asicStart + detectorRawSize_cheetah.asic_ny - 1 - (windowRadius + 1); ++y) {
+        for (uint_fast16_t x = x_asicStart + (windowRadius + 1); x <= x_asicStart + detectorRawSize_cheetah.asic_nx - 1 - (windowRadius + 1); ++x) {
             if (isPixelCandidateForPeak(data_linear, detectorRawSize_cheetah, accuracyConstants, x, y)) {
                 float meanBackground, sigmaBackground;
                 computeNormalDistributionParameters(data_linear, detectorRawSize_cheetah, accuracyConstants, x, y, &meanBackground, &sigmaBackground);
@@ -191,7 +196,7 @@ static inline void computeNormalDistributionParameters(const float* data_linear,
     }
 #else
 //first save everything, then compute
-    float background[20];
+    float background[20 * 2];
     uint_fast8_t validPixelCount = 0;
 
 //compute mean and sigma from border
@@ -215,6 +220,32 @@ static inline void computeNormalDistributionParameters(const float* data_linear,
 
 //lower border
     for (const float* currentPixel = &data[y + windowRadius][x - 2]; currentPixel <= &data[y + windowRadius][x + 2]; ++currentPixel) {
+        if (*currentPixel != -INFINITY) {
+            background[validPixelCount++] = *currentPixel;
+        }
+    }
+
+    //DEBUG: new: compute mean and sigma from border and border+1 (thus needs one more pixel at asic border!)
+    //upper border
+    for (const float* currentPixel = &data[y - (windowRadius + 1)][x - 2]; currentPixel <= &data[y - (windowRadius + 1)][x + 2]; ++currentPixel) {
+        if (*currentPixel != -INFINITY) {
+            background[validPixelCount++] = *currentPixel;
+        }
+    }
+
+    //left and right border
+    for (int_fast8_t i = -2; i <= 2; ++i) {
+        if (data[y + i][x - (windowRadius + 1)] != -INFINITY) {
+            background[validPixelCount++] = data[y + i][x - (windowRadius + 1)];
+        }
+
+        if (data[y + i][x + (windowRadius + 1)] != -INFINITY) {
+            background[validPixelCount++] = data[y + i][x + (windowRadius + 1)];
+        }
+    }
+
+    //lower border
+    for (const float* currentPixel = &data[y + (windowRadius + 1)][x - 2]; currentPixel <= &data[y + (windowRadius + 1)][x + 2]; ++currentPixel) {
         if (*currentPixel != -INFINITY) {
             background[validPixelCount++] = *currentPixel;
         }
