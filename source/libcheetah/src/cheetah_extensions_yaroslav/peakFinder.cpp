@@ -128,7 +128,7 @@ static inline bool isPixelCandidateForPeak(const float* data_linear, const detec
 }
 
 //theoretically best true true, but need to test!
-#define COMPUTE_ON_THE_FLY              false
+#define COMPUTE_ON_THE_FLY               false
 #define ONE_PASS_COMPUTATION_METHOD      true
 
 static inline void computeNormalDistributionParameters(const float* data_linear, const detectorRawSize_cheetah_t& detectorRawSize_cheetah,
@@ -194,20 +194,67 @@ static inline void computeNormalDistributionParameters(const float* data_linear,
         float computedSigma = sqrt((float) sumOfSquares / (validPixelCount - 1) - (*mean) * (*mean) * validPixelCount / (float) (validPixelCount - 1));
         *sigma = fmax(computedSigma, accuracyConstants.minimumSigma);
     }
+
+    //DEBUG: new: compute mean and sigma from border and border+1 (thus needs one more pixel at asic border!) (more statistics => more stable)
+    //upper border
+    for (const float* currentPixel = &data[y - (windowRadius + 1)][x - 2]; currentPixel <= &data[y - (windowRadius + 1)][x + 2]; ++currentPixel) {
+        if (*currentPixel != -INFINITY) {
+            float pixelValue = *currentPixel;
+            sumOfSquares += pixelValue * pixelValue;
+            sum += pixelValue;
+            validPixelCount++;
+        }
+    }
+
+    //left and right border
+    for (int_fast8_t i = -2; i <= 2; ++i) {
+        if (data[y + i][x - (windowRadius + 1)] != -INFINITY) {
+            float pixelValue = data[y + i][x - (windowRadius + 1)];
+            sumOfSquares += pixelValue * pixelValue;
+            sum += pixelValue;
+            validPixelCount++;
+        }
+
+        if (data[y + i][x + (windowRadius + 1)] != -INFINITY) {
+            float pixelValue = data[y + i][x + (windowRadius + 1)];
+            sumOfSquares += pixelValue * pixelValue;
+            sum += pixelValue;
+            validPixelCount++;
+        }
+    }
+
+    //lower border
+    for (const float* currentPixel = &data[y + (windowRadius + 1)][x - 2]; currentPixel <= &data[y + (windowRadius + 1)][x + 2]; ++currentPixel) {
+        if (*currentPixel != -INFINITY) {
+            int_fast32_t pixelValue = *currentPixel;
+            sumOfSquares += pixelValue * pixelValue;
+            sum += pixelValue;
+            validPixelCount++;
+        }
+    }
+
+    if (validPixelCount < 2) {
+        *mean = INFINITY;
+        *sigma = INFINITY;
+    } else {
+        *mean = (float) sum / validPixelCount;
+        float computedSigma = sqrt((float) sumOfSquares / (validPixelCount - 1) - (*mean) * (*mean) * validPixelCount / (float) (validPixelCount - 1));
+        *sigma = fmax(computedSigma, accuracyConstants.minimumSigma);
+    }
 #else
-//first save everything, then compute
+    //first save everything, then compute
     float background[20 * 2];
     uint_fast8_t validPixelCount = 0;
 
-//compute mean and sigma from border
-//upper border
+    //compute mean and sigma from border
+    //upper border
     for (const float* currentPixel = &data[y - windowRadius][x - 2]; currentPixel <= &data[y - windowRadius][x + 2]; ++currentPixel) {
         if (*currentPixel != -INFINITY) {
             background[validPixelCount++] = *currentPixel;
         }
     }
 
-//left and right border
+    //left and right border
     for (int_fast8_t i = -2; i <= 2; ++i) {
         if (data[y + i][x - windowRadius] != -INFINITY) {
             background[validPixelCount++] = data[y + i][x - windowRadius];
@@ -218,14 +265,14 @@ static inline void computeNormalDistributionParameters(const float* data_linear,
         }
     }
 
-//lower border
+    //lower border
     for (const float* currentPixel = &data[y + windowRadius][x - 2]; currentPixel <= &data[y + windowRadius][x + 2]; ++currentPixel) {
         if (*currentPixel != -INFINITY) {
             background[validPixelCount++] = *currentPixel;
         }
     }
 
-    //DEBUG: new: compute mean and sigma from border and border+1 (thus needs one more pixel at asic border!)
+    //DEBUG: new: compute mean and sigma from border and border+1 (thus needs one more pixel at asic border!) (more statistics => more stable)
     //upper border
     for (const float* currentPixel = &data[y - (windowRadius + 1)][x - 2]; currentPixel <= &data[y - (windowRadius + 1)][x + 2]; ++currentPixel) {
         if (*currentPixel != -INFINITY) {
