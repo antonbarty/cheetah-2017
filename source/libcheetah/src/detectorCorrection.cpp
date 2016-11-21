@@ -23,6 +23,7 @@
 #include "cheetahEvent.h"
 #include "cheetahmodules.h"
 #include "median.h"
+#include "pnCcdWorkarounds.h"
 
 
 /*
@@ -1023,6 +1024,19 @@ void pnccdLineMasking(cEventData *eventData,cGlobal *global){
 			}	    
 		}
 	}
+}
+
+void pnCcdModuleWiseOrderFilterBackgroundSubtraction(cEventData *eventData, cGlobal *global)
+{
+    DETECTOR_LOOP
+    {
+        if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 && global->detector[detIndex].usePnccdOffsetCorrection == 1) {
+            DEBUG3("Apply PNCCD module wise order filter background subtraction. (detectorID=%ld)", global->detector[detIndex].detectorID);
+            float *data = eventData->detector[detIndex].data_detCorr;
+            uint16_t *mask = eventData->detector[detIndex].pixelmask;
+            pnCcdModuleWiseOrderFilterBackgroundSubtraction(data, mask);
+        }
+    }
 }
 
 

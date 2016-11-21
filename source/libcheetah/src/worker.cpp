@@ -135,6 +135,7 @@ void *worker(void *threadarg)
     pnccdFixWiringError(eventData, global);
     pnccdLineInterpolation(eventData, global);
     pnccdLineMasking(eventData, global);
+    pnCcdModuleWiseOrderFilterBackgroundSubtraction(eventData, global);
 
     // Apply gain correction
     applyGainCorrection(eventData, global);

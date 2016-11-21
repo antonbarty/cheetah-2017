@@ -51,10 +51,12 @@ void pnccdOffsetCorrection(cEventData*, cGlobal*);
 void pnccdFixWiringError(cEventData*, cGlobal*);
 void pnccdLineInterpolation(cEventData*, cGlobal*);
 void pnccdLineMasking(cEventData*, cGlobal*);
+void pnCcdModuleWiseOrderFilterBackgroundSubtraction(cEventData *eventData, cGlobal *global);
 void pnccdModuleSubtract(float*, uint16_t*, int, int, float, float, int);
 void pnccdOffsetCorrection(float*, uint16_t*);
 void pnccdOffsetCorrection(float*);
 void pnccdFixWiringError(float*);
+
 
 // backgroundCorrection.cpp
 void initPhotonCorrection(cEventData *eventData, cGlobal *global);

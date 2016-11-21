@@ -187,6 +187,7 @@ cPixelDetectorCommon::cPixelDetectorCommon()
     usePnccdFixWiringError = 0;
     usePnccdLineInterpolation = 0;
     usePnccdLineMasking = 0;
+    usePnccdModuleWiseOrderFilterSubtraction = 0;
 
     // Downsampling factor (1: no downsampling)
     downsampling = 1;
@@ -813,6 +814,9 @@ int cPixelDetectorCommon::parseConfigTag(char *tag, char *value)
     }
     else if (!strcmp(tag, "usepnccdlinemasking")) {
         usePnccdLineMasking = atoi(value);
+    }
+    else if (!strcmp(tag, "usepnccdmodulewiseorderfiltersubtraction")) {
+        usePnccdModuleWiseOrderFilterSubtraction = atoi(value);
     }
     else if (!strcmp(tag, "bgrecalc")) {
         bgRecalc = atoi(value);

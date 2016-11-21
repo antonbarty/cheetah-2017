@@ -321,6 +321,9 @@ public:
     int usePnccdLineInterpolation;
     // declare pixel bad if they are located in bad lines
     int usePnccdLineMasking;
+    // for every sub-module (512x256) subtract offset computed by sorting the pixel values
+    // and taking the value at position 0.25*dataCount. Improves streakFinder performance
+    int usePnccdModuleWiseOrderFilterSubtraction;
 
     /*
      *	Streak finding

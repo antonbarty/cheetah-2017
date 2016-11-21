@@ -467,6 +467,7 @@ void cGlobal::setup()
             detector[i].usePnccdFixWiringError = 0;
             detector[i].usePnccdLineInterpolation = 0;
             detector[i].usePnccdLineMasking = 0;
+            detector[i].usePnccdModuleWiseOrderFilterSubtraction = 0;
             detector[i].maskPnccdSaturatedPixels = 0;
             detector[i].useAutoHotPixel = 0;
             detector[i].useAutoNoisyPixel = 0;

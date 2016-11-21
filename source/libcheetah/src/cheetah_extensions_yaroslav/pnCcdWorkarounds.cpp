@@ -146,3 +146,44 @@ void rearrangePnCcdGeometryForStreakFinder(
     updateVirtualZeroPosition(detectorPositions_rearranged[1][0]);
     updateVirtualZeroPosition(detectorPositions_rearranged[1][1]);
 }
+
+void pnCcdModuleWiseOrderFilterBackgroundSubtraction(float* data_linear, const uint8_t* mask_linear)
+{
+    float (*data)[1024] = (float (*)[1024]) data_linear;
+    const uint8_t (*mask)[1024] = (uint8_t (*)[1024]) mask_linear;
+
+    int blockSizeY = 512;
+    int blockSizeX = 256;
+    vector< float > blockData;
+    blockData.reserve(blockSizeY * blockSizeX);
+    for (int y_topLeft = 0; y_topLeft < 1024; y_topLeft += blockSizeY) {
+        for (int x_topLeft = 0; x_topLeft < 1024; x_topLeft += blockSizeX) {
+            blockData.clear();
+
+            //collect data from block
+            for (int y = y_topLeft; y < y_topLeft + blockSizeY; ++y) {
+                for (int x = x_topLeft; x < x_topLeft + blockSizeX; ++x) {
+                    if (mask[y][x] == 0) {
+                        blockData.push_back(data[y][x]);
+                    }
+                }
+            }
+
+            int filterRank = blockData.size() / 4;
+            cout << filterRank << endl;
+            nth_element(blockData.begin(), blockData.begin() + filterRank, blockData.end());
+            float offset = blockData[filterRank];
+
+            //subtract data from block
+            for (int y = y_topLeft; y < y_topLeft + blockSizeY; ++y) {
+                for (int x = x_topLeft; x < x_topLeft + blockSizeX; ++x) {
+                    if (mask[y][x] == 0) {
+                        data[y][x] -= offset;
+                    }
+                }
+            }
+
+        }
+    }
+
+}
