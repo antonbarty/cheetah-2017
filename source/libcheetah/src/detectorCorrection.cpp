@@ -1034,7 +1034,15 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(cEventData *eventData, cGlo
             DEBUG3("Apply PNCCD module wise order filter background subtraction. (detectorID=%ld)", global->detector[detIndex].detectorID);
             float *data = eventData->detector[detIndex].data_detCorr;
             uint16_t *mask = eventData->detector[detIndex].pixelmask;
-            pnCcdModuleWiseOrderFilterBackgroundSubtraction(data, mask);
+
+            //  Masks for bad regions  (mask=0 to ignore regions)
+            char *mask_u8 = (char*) calloc(1024 * 1024, sizeof(char));
+            uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_IN_JET;
+            for (long i = 0; i < pix_nn; i++)
+                mask_u8[i] = isNoneOfBitOptionsSet(mask, combined_pixel_options);
+
+            pnCcdModuleWiseOrderFilterBackgroundSubtraction(data, mask_u8);
+            free(mask_u8);
         }
     }
 }
