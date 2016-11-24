@@ -6,6 +6,7 @@
  */
 
 #include "pnCcdWorkarounds.h"
+#include <algorithm>
 
 void rearrangePnCcdDataForStreakFinder(float* data_rearranged_linear, const float* data_linear)
 {
@@ -170,7 +171,7 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(float* data_linear, const u
             }
 
             int filterRank = blockData.size() / 4;
-            cout << filterRank << endl;
+//            cout << filterRank << endl;
             nth_element(blockData.begin(), blockData.begin() + filterRank, blockData.end());
             float offset = blockData[filterRank];
 
