@@ -6,7 +6,7 @@
  */
 
 #include "pnCcdWorkarounds.h"
-//#include <iostream>
+#include <iostream>
 
 using namespace std;
 
@@ -173,7 +173,7 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(float* data_linear, const u
             }
 
             int filterRank = blockData.size() / 4;
-//            cout << filterRank << endl;
+            cout << filterRank << endl;
             nth_element(blockData.begin(), blockData.begin() + filterRank, blockData.end());
             float offset = blockData[filterRank];
 
