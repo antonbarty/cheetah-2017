@@ -1036,7 +1036,8 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(cEventData *eventData, cGlo
             uint16_t *mask = eventData->detector[detIndex].pixelmask;
 
             //  Masks for bad regions  (mask=0 to ignore regions)
-            char *mask_u8 = (char*) calloc(1024 * 1024, sizeof(char));
+            int pix_nn = 1024 * 1024;
+            char *mask_u8 = (char*) calloc(pix_nn, sizeof(char));
             uint16_t combined_pixel_options = PIXEL_IS_IN_PEAKMASK | PIXEL_IS_HOT | PIXEL_IS_BAD | PIXEL_IS_OUT_OF_RESOLUTION_LIMITS | PIXEL_IS_IN_JET;
             for (long i = 0; i < pix_nn; i++)
                 mask_u8[i] = isNoneOfBitOptionsSet(mask, combined_pixel_options);
