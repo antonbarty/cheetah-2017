@@ -173,10 +173,10 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(float* data_linear, const u
             }
 
             uint32_t filterRank = blockData.size() / 4;
-            cout << "filter rank " << filterRank << endl;
+//            cout << "filter rank " << filterRank << endl;
             nth_element(blockData.begin(), blockData.begin() + filterRank, blockData.end());
             float offset = blockData[filterRank];
-            cout << "offset " << offset << endl;
+//            cout << "offset " << offset << endl;
 
             //subtract data from block
             for (int y = y_topLeft; y < y_topLeft + blockSizeY; ++y) {
