@@ -6,7 +6,9 @@
  */
 
 #include "pnCcdWorkarounds.h"
-#include <algorithm>
+//#include <iostream>
+
+using namespace std;
 
 void rearrangePnCcdDataForStreakFinder(float* data_rearranged_linear, const float* data_linear)
 {
@@ -188,3 +190,4 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(float* data_linear, const u
     }
 
 }
+
