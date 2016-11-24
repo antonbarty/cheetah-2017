@@ -1030,7 +1030,7 @@ void pnCcdModuleWiseOrderFilterBackgroundSubtraction(cEventData *eventData, cGlo
 {
     DETECTOR_LOOP
     {
-        if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 && global->detector[detIndex].usePnccdOffsetCorrection == 1) {
+        if (strcmp(global->detector[detIndex].detectorType, "pnccd") == 0 && global->detector[detIndex].usePnccdModuleWiseOrderFilterSubtraction == 1) {
             DEBUG3("Apply PNCCD module wise order filter background subtraction. (detectorID=%ld)", global->detector[detIndex].detectorID);
             float *data = eventData->detector[detIndex].data_detCorr;
             uint16_t *mask = eventData->detector[detIndex].pixelmask;

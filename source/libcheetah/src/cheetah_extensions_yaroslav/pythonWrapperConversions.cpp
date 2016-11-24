@@ -205,6 +205,8 @@ void setStreakDetectorIndices(streakFinder_accuracyConstants_t& streakFinder_acc
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (1, 0));
             streakFinder_accuracyConstants.streakDetektorsIndices.push_back(Point2D < uint_fast8_t > (1, 1));
             break;
+        default:
+            break;
     }
 }
 
