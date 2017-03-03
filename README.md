@@ -1,7 +1,7 @@
-# WARNING #
+# Note #
 
 
-This repository is deprecated and is now read only. 
+This repository is now read only. 
 
 It will be periodically updated with the latest stable releases, but will likely not contain the latest versions. 
 
